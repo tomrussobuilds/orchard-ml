@@ -1,0 +1,97 @@
+# ========================
+# Python
+# ========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Build
+build/
+dist/
+*.egg-info/
+*.egg
+
+# ========================
+# IDE / Editors
+# ========================
+# VSCode
+.vscode/
+
+# PyCharm / JetBrains
+.idea/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ========================
+# Logs & temp files
+# ========================
+logs/
+*.log
+*.tmp
+*.temp
+*.bak
+
+# ========================
+# Cache / artifacts
+# ========================
+.cache/
+*.pth
+*.pt
+*.ckpt
+
+# ========================
+# Project-specific folders
+# ========================
+# Generated figures, reports, datasets, models
+figures/
+reports/
+models/
+med_mnist/
+dataset/
+data/
+
+# If you want to keep the repo clean but still allow empty folders:
+!figures/.gitkeep
+!reports/.gitkeep
+!models/.gitkeep
+
+# ========================
+# OS files
+# ========================
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Linux
+*~
+
+# ========================
+# Misc
+# ========================
+# Python profiling
+.prof
+.profile
+
+wandb/
+runs/
+
+# ========================
+# Temporary scripts
+# ========================
+
+check_pytorch.py
+check_ram.py
+checksum.py
+pipeline*.py
