@@ -790,6 +790,8 @@ def main() -> None:
     )
 
     # Random samples (only the first time)
+    # Can comment out this line if you're not interested in visualizing samples,
+    # but it's useful for dataset exploration
     show_sample_images(data)
 
     # DataLoader
