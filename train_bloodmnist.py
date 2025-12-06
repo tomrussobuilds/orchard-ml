@@ -1,3 +1,22 @@
+"""
+BloodMNIST training pipeline based on an adapted ResNet-18.
+
+This script includes:
+- dataset download with MD5 validation and atomic writes,
+- preprocessing, augmentations, and dataloaders for BloodMNIST,
+- a ResNet-18 adapted for 28×28 inputs (3×3 conv1, removed maxpool),
+- training with MixUp and SGD,
+- a two-phase learning rate schedule:
+    • CosineAnnealingLR for the first stage,
+    • ReduceLROnPlateau for adaptive fine-tuning,
+- early stopping based on validation accuracy,
+- optional Test-Time Augmentation (TTA),
+- evaluation (accuracy, macro-F1, confusion matrix),
+- saving training curves, sample predictions, logs and an Excel report.
+
+Designed to be easy to run, reproducible, and suitable for small medical-image datasets.
+"""
+
 from __future__ import annotations
 
 # Standard Library
