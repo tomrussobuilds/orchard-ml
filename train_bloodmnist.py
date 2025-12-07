@@ -90,13 +90,17 @@ BLOODMNIST_CLASSES: Final[list[str]] = [
 
 
 # Training hyperparameters
-SEED: Final[int] = 42
-BATCH_SIZE: Final[int] = 128
-NUM_WORKERS: Final[int] = 4
-EPOCHS: Final[int] = 60
-PATIENCE: Final[int] = 15
-LEARNING_RATE: Final[float] = 0.008
-MIXUP_ALPHA: Final[float] = 0.001
+@dataclass(frozen=True)
+class Config:
+    seed: int = 42
+    batch_size: int = 128
+    num_workers: int = 4
+    epochs: int = 60
+    patience: int = 15
+    learning_rate: float = 0.008
+    mixup_alpha: float = 0.001
+    use_tta: bool = True
+
 
 # =========================================================================== #
 #                                 LOGGING 
@@ -122,17 +126,17 @@ logger.addHandler(file_handler)
 #                                 SEED 
 # =========================================================================== #
 
-def set_seed(seed: int = SEED) -> None:
-    np.random.seed(SEED)
-    torch.manual_seed(SEED)
-    random.seed(SEED)
+def set_seed(seed: int) -> None:
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    random.seed(seed)
     if torch.cuda.is_available():
-        torch.cuda.manual_seed(SEED)
-        torch.cuda.manual_seed_all(SEED)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
 
-set_seed()
+set_seed(Config().seed)
 
 # =========================================================================== #
 #                               UTILITIES
@@ -166,21 +170,32 @@ def kill_duplicate_processes(script_name: str = None):
     current_pid = os.getpid()
     killed = 0
 
+    python_executables =  ('python', 'python3', 'python.exe')
+
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         try:
-            if proc.info['name'] not in ('python', 'python3', 'python.exe'):
+            if proc.info['name'] not in python_executables:
                 continue
             cmdline = proc.cmdline()
-            if len(cmdline) > 1 and script_name in cmdline[-1]:
-                if proc.pid != current_pid:
-                    proc.terminate()
-                    killed += 1
-                    logger.info(f"Killed duplicate process PID {proc.pid}")
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+
+            if proc.pid == current_pid:
+                    continue
+            
+            is_match = False
+            if cmdline and cmdline[-1] == script_name:
+                    is_match = True
+            elif len(cmdline) >= 2 and cmdline[-2] == script_name:
+                    is_match = True
+            if is_match:
+                proc.terminate()
+                killed += 1
+                logger.info(f"Killed duplicate process PID {proc.pid}")
+        
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
     
     if killed:
-        logger.info(f"Killed {killed} duplicate process(es). Proceeding...")
+        logger.info(f"Killed {killed} duplicate process(es). Waiting 1 second...")
         time.sleep(1)
 
 # =========================================================================== #
@@ -303,6 +318,7 @@ class BloodMNISTDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
 
 def get_dataloaders(
         data: BloodMNISTData,
+        cfg: Config,
         ) -> Tuple[DataLoader, DataLoader, DataLoader]:
     # Strong augmentation for small dataset
     train_transform = transforms.Compose([
@@ -327,12 +343,12 @@ def get_dataloaders(
 
     pin_memory = torch.cuda.is_available()
 
-    train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True,
-                              num_workers=NUM_WORKERS, pin_memory=pin_memory)
-    val_loader   = DataLoader(val_ds, batch_size=BATCH_SIZE, shuffle=False,
-                              num_workers=NUM_WORKERS, pin_memory=pin_memory)
-    test_loader  = DataLoader(test_ds, batch_size=BATCH_SIZE, shuffle=False,
-                              num_workers=NUM_WORKERS, pin_memory=pin_memory)
+    train_loader = DataLoader(train_ds, batch_size=cfg.batch_size, shuffle=True,
+                              num_workers=cfg.num_workers, pin_memory=pin_memory)
+    val_loader   = DataLoader(val_ds, batch_size=cfg.batch_size, shuffle=False,
+                              num_workers=cfg.num_workers, pin_memory=pin_memory)
+    test_loader  = DataLoader(test_ds, batch_size=cfg.batch_size, shuffle=False,
+                              num_workers=cfg.num_workers, pin_memory=pin_memory)
     
     return train_loader, val_loader, test_loader
 
@@ -413,32 +429,31 @@ def mixup_criterion(
 #                           TEST TIME AUGMENTATION
 # =========================================================================== #
 
-def tta_predict(
-        model: nn.Module,
-        img: torch.Tensor,
-        device: torch.device,
-    ) -> torch.Tensor:
-    """Apply 7-variant deterministic TTA."""
-    transforms = [
-        lambda x: x,
-        lambda x: torch.flip(x, dims=[2]),
-        lambda x: torch.rot90(x, k=1, dims=[2,3]),
-        lambda x: torch.rot90(x, k=3, dims=[2,3]),
-        lambda x: TF.gaussian_blur(x, kernel_size=3, sigma=0.8),
-        lambda x: (x + 0.015 * torch.rand_like(x)).clamp(0,1),
-        lambda x: x,
+def tta_predict_batch(
+    model: nn.Module,
+    inputs: torch.Tensor,
+    device: torch.device,
+) -> torch.Tensor:
+    """Efficient batched Test-Time Augmentation (7 augmentations)"""
+    model.eval()
+    inputs = inputs.to(device)
+    
+    augs = [
+        inputs,
+        torch.flip(inputs, dims=[3]),
+        torch.rot90(inputs, k=1, dims=[2, 3]),
+        torch.rot90(inputs, k=3, dims=[2, 3]),
+        TF.gaussian_blur(inputs, kernel_size=3, sigma=0.8),
+        (inputs + 0.015 * torch.randn_like(inputs)).clamp(0, 1),
     ]
     
     preds = []
     with torch.no_grad():
-        img = img.unsqueeze(0).to(device) 
-        for t in transforms:
-            aug = t(img)
-            assert aug.ndim == 4 and aug.shape[1] in (1,3), f"Invalid shape: {aug.shape}"
+        for aug in augs:
             logits = model(aug)
             preds.append(F.softmax(logits, dim=1))
     
-    return torch.mean(torch.stack(preds), dim=0)
+    return torch.stack(preds).mean(0)
 
 
 # =========================================================================== #
@@ -452,31 +467,28 @@ class ModelTrainer:
         train_loader: DataLoader,
         val_loader: DataLoader,
         device: torch.device,
-        epochs: int = EPOCHS,
-        patience: int = PATIENCE,
-        learning_rate: float = LEARNING_RATE,
-        mixup_alpha: float = MIXUP_ALPHA,
+        config: Config,
         best_path: Path | None = None,
-    ) -> Tuple[Path, List[float], List[float]]:
+    ):
         """It encapsulates the training logic, scheduler, and early stopping."""
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.device = device
-        self.epochs = epochs
-        self.patience = patience
-        self.mixup_alpha = mixup_alpha
+        self.epochs = config.epochs
+        self.patience = config.patience
+        self.mixup_alpha = config.mixup_alpha
         
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.SGD(
             model.parameters(),
-            lr=LEARNING_RATE,
+            lr=config.learning_rate,
             momentum=0.9,
             weight_decay=5e-4
         )
         self.cosine_scheduler = CosineAnnealingLR(
             self.optimizer,
-            T_max=EPOCHS * 1.5,
+            T_max=int(self.epochs * 1.5),
             eta_min=1e-4
         )
         self.plateau_scheduler = ReduceLROnPlateau(
@@ -491,7 +503,7 @@ class ModelTrainer:
 
         self.best_acc = 0.0
         self.epochs_no_improve = 0
-        self.best_path = MODELS_DIR / "resnet18_bloodmnist_best.pth"
+        self.best_path = best_path or (MODELS_DIR / "resnet18_bloodmnist_best.pth")
         self.train_losses: list[float] = []
         self.val_accuracies: list[float] = []
 
@@ -545,7 +557,7 @@ class ModelTrainer:
     def train(self) -> Tuple[Path, List[float], List[float]]:
         """Main training cycle with checkpoints and early stopping."""
         for epoch in range(1, self.epochs + 1):
-            logger.info(f"Epoch {epoch:02d}({self.epochs}".center(60, "-"))
+            logger.info(f"Epoch {epoch:02d}/{self.epochs}".center(60, "-"))
                 
             epoch_loss = self._train_epoch()
             self.train_losses.append(epoch_loss)
@@ -555,7 +567,8 @@ class ModelTrainer:
             self.val_accuracies.append(val_acc)
 
             # CosineAnnealing
-            if epoch <= 33: 
+            cosine_epochs = int(0.6 * self.epochs)
+            if epoch <= cosine_epochs: 
                 self.cosine_scheduler.step()
             # ReduceLROnPlateau
             else:
@@ -595,38 +608,38 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         '--epochs',
         type=int,
-        default=EPOCHS,
-        help=f"Number of training epochs. Default: {EPOCHS}"
+        default=Config().epochs,
+        help=f"Number of training epochs. Default: {Config().epochs}"
     )
     parser.add_argument(
         '--batch_size',
         type=int,
-        default=BATCH_SIZE,
-        help=f"Batch size for data loaders. Default: {BATCH_SIZE}"
+        default=Config().batch_size,
+        help=f"Batch size for data loaders. Default: {Config().batch_size}"
     )
     parser.add_argument(
         '--lr',
         type=float,
-        default=LEARNING_RATE,
-        help=f"Initial learning rate for SGD optimizer. Default: {LEARNING_RATE}"
+        default=Config().learning_rate,
+        help=f"Initial learning rate for SGD optimizer. Default: {Config().learning_rate}"
     )
     parser.add_argument(
         '--seed',
         type=int,
-        default=SEED,
-        help=f"Random seed for reproducibility. Default: {SEED}"
+        default=Config().seed,
+        help=f"Random seed for reproducibility. Default: {Config().seed}"
     )
     parser.add_argument(
         '--mixup_alpha',
         type=float,
-        default=MIXUP_ALPHA,
-        help=f"Alpha parameter for MixUp regularization. Set to 0 to disable. Default: {MIXUP_ALPHA}"
+        default=Config().mixup_alpha,
+        help=f"Alpha parameter for MixUp regularization. Set to 0 to disable. Default: {Config().mixup_alpha}"
     )
     parser.add_argument(
         '--patience',
         type=int,
-        default=PATIENCE,
-        help=f"Early stopping patience (epochs without improvement). Default: {PATIENCE}"
+        default=Config().patience,
+        help=f"Early stopping patience (epochs without improvement). Default: {Config().patience}"
     )
     parser.add_argument(
         '--no_tta',
@@ -655,10 +668,9 @@ def evaluate_model(
             targets = targets.numpy()
 
             if use_tta:
-                batch_preds = []
-                for img in inputs:
-                    pred = tta_predict(model, img, device)
-                    batch_preds.append(pred.argmax(dim=1).item())
+                outputs = tta_predict_batch(model, inputs, device)
+                batch_preds = outputs.argmax(dim=1).cpu().numpy()
+            
             else:
                 inputs = inputs.to(device)
                 outputs = model(inputs)
@@ -730,7 +742,37 @@ def plot_training_curves(train_losses, val_accuracies, out_path):
     plt.savefig(out_path)
     plt.close()
 
-def make_plots_and_reports(
+def plot_confusion_matrix(all_labels, all_preds, out_path: Path) -> None:
+    cm = confusion_matrix(all_labels, all_preds, normalize='true')
+    disp = ConfusionMatrixDisplay(
+        confusion_matrix=cm,
+        display_labels=BLOODMNIST_CLASSES,
+    )
+
+    fig, ax = plt.subplots(figsize=(11, 9))
+    disp.plot(ax=ax, cmap="Blues", xticks_rotation=45, colorbar=False, values_format='.3f')
+
+    plt.title("Confusion Matrix – ResNet-18 on BloodMNIST", fontsize=14, pad=20)
+    plt.tight_layout()
+    fig.savefig(out_path, dpi=300, bbox_inches="tight")
+    plt.close()
+    logger.info(f"Confusion matrix → {out_path}")
+
+def save_training_curves(train_losses, val_accuracies, out_dir: Path) -> None:
+    plot_training_curves(train_losses, val_accuracies, out_dir / "training_curves.png")
+
+    np.savez(
+        out_dir / "training_curves.npz",
+        train_losses=train_losses,
+        val_accuracies=val_accuracies,
+    )
+    logger.info(f"Training curves → {out_dir / 'training_curves.png'}")
+
+def save_sample_predictions(data, all_preds, out_path: Path) -> None:
+    show_predictions(data, all_preds, n=12, save_path=out_path)
+    logger.info(f"Sample predictions → {out_path}")
+
+def generate_all_reports(
     model: nn.Module,
     test_loader: DataLoader,
     data: BloodMNISTData,
@@ -739,49 +781,32 @@ def make_plots_and_reports(
     device: torch.device,
     use_tta: bool = False
 ) -> Tuple[float, float]:
-    """Generate all figures and save predictions after training."""
-    model.eval()
-
-    # Test set evaluation
+    
+    # --- 1) Evaluate ---
     all_preds, all_labels, test_acc, macro_f1 = evaluate_model(
         model, test_loader, data, device, use_tta=use_tta
     )
 
-    logger.info(f"TEST MACRO F1-SCORE: {macro_f1:.4f} | Test Accuracy: {test_acc:.4f}")
-
-    # Confusion Matrix
-    cm = confusion_matrix(all_labels, all_preds, normalize='true')
-    disp = ConfusionMatrixDisplay(
-        confusion_matrix=cm,
-        display_labels=BLOODMNIST_CLASSES,
+    # --- 2) Confusion Matrix ---
+    plot_confusion_matrix(
+        all_labels,
+        all_preds,
+        FIGURES_DIR / "confusion_matrix_resnet18.png"
     )
-    fig, ax = plt.subplots(figsize=(11, 9))
-    disp.plot(ax=ax, cmap="Blues", xticks_rotation=45, colorbar=False, values_format='.3f')
-    plt.title(
-        "Confusion Matrix – ResNet-18 on BloodMNIST (normalized by true class)",
-        fontsize=14, pad=20
+
+    # --- 3) Training Curves ---
+    save_training_curves(train_losses, val_accuracies, FIGURES_DIR)
+
+    # --- 4) Sample Predictions ---
+    save_sample_predictions(
+        data,
+        all_preds,
+        FIGURES_DIR / "sample_predictions.png"
     )
-    plt.tight_layout()
-    cm_path = FIGURES_DIR / "confusion_matrix_resnet18.png"
-    plt.savefig(cm_path, dpi=300, bbox_inches="tight")
-    plt.close()
-    logger.info(f"Confusion matrix → {cm_path}")
 
-    # Training curves
-    plot_training_curves(train_losses, val_accuracies, FIGURES_DIR / "training_curves.png")
-    np.savez(
-        FIGURES_DIR / "training_curves.npz",
-        train_losses=train_losses,
-        val_accuracies=val_accuracies,
-    )
-    logger.info(f"Training curves → {FIGURES_DIR / 'training_curves.png'}")
-
-    # Sample predictions
-    pred_path = FIGURES_DIR / "sample_predictions.png"
-    show_predictions(data, all_preds, n=12, save_path=pred_path)
-    logger.info(f"Sample predictions → {pred_path}")
-
+    logger.info(f"Evaluation complete → accuracy={test_acc:.4f}, macro_f1={macro_f1:.4f}")
     return macro_f1, test_acc
+
 
 # =========================================================================== #
 #                               SAMPLE IMAGES
@@ -837,7 +862,7 @@ class TrainingReport:
     normalization: str
     model_path: str
     log_path: str
-    seed: int = SEED
+    seed: int = Config().seed
 
     def to_dataframe(self) -> pd.DataFrame:
         """Converts the report into a single-row DataFrame (perfect for Excel)."""
@@ -857,6 +882,7 @@ def build_training_report(
     test_acc: float,
     train_losses: Sequence[float],
     best_path: Path,
+    cfg: Config,
 ) -> TrainingReport:
     """
     Builds a structured report with all the metadata from the experiment.
@@ -869,13 +895,13 @@ def build_training_report(
         test_accuracy=test_acc,
         test_macro_f1=macro_f1,
         epochs_trained=len(train_losses),
-        learning_rate=LEARNING_RATE,
-        batch_size=BATCH_SIZE,
-        augmentations="HorizontalFlip(0.5), Rotation(±10), ColorJitter, RandomResizedCrop(0.8-1.0)",
+        learning_rate=cfg.learning_rate,
+        batch_size=cfg.batch_size,
+        augmentations="HorizontalFlip(0.5), Rotation(±10), ColorJitter, RandomResizedCrop(0.9-1.0)",
         normalization="ImageNet mean/std",
         model_path=str(best_path),
         log_path=str(log_file),
-        seed=SEED,
+        seed=cfg.seed,
     )
 
 # =========================================================================== #
@@ -884,23 +910,23 @@ def build_training_report(
 
 def main() -> None:
     args = parse_args()
-
-    global SEED, LEARNING_RATE, BATCH_SIZE, EPOCHS, PATIENCE, MIXUP_ALPHA
-    
-    SEED = args.seed
-    set_seed(SEED)
-    LEARNING_RATE = args.lr
-    BATCH_SIZE = args.batch_size
-    EPOCHS = args.epochs
-    PATIENCE = args.patience
-    MIXUP_ALPHA = args.mixup_alpha
-    use_tta = not args.no_tta
+    cfg = Config(
+        seed=args.seed,
+        batch_size=args.batch_size,
+        learning_rate= args.lr,
+        epochs=args.epochs,
+        patience=args.patience,
+        mixup_alpha=args.mixup_alpha,
+        use_tta=not args.no_tta,
+    )
+    set_seed(cfg.seed)
 
     kill_duplicate_processes()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info(f"Using device: {device}")
-    logger.info(f"Hyperparameters: LR={LEARNING_RATE}, Batch={BATCH_SIZE}, Epochs={EPOCHS}"
-                f"MixUp={MIXUP_ALPHA}, Seed={SEED}, TTA={'Enabled' if use_tta else 'Disabled'}")
+    logger.info(f"Hyperparameters: LR={cfg.learning_rate}, Batch={cfg.batch_size}, Epochs={cfg.epochs}, "
+                f"MixUp={cfg.mixup_alpha}, Seed={cfg.seed}, TTA={'Enabled' if cfg.use_tta else 'Disabled'}"
+    )
 
     # Dataset
     data = load_bloodmnist(NPZ_PATH)
@@ -915,7 +941,7 @@ def main() -> None:
     show_sample_images(data)
 
     # DataLoader
-    train_loader, val_loader, test_loader = get_dataloaders(data)
+    train_loader, val_loader, test_loader = get_dataloaders(data, cfg)
 
     # Model
     model = get_model(device=device)
@@ -928,10 +954,7 @@ def main() -> None:
         train_loader=train_loader,
         val_loader=val_loader,
         device=device,
-        epochs=args.epochs,
-        patience=args.patience,
-        learning_rate=args.lr,
-        mixup_alpha=args.mixup_alpha,
+        config=cfg
     )
     best_path, train_losses, val_accuracies = trainer.train()
 
@@ -940,14 +963,14 @@ def main() -> None:
     logger.info(f"Best model loaded from {best_path}")
 
     # Final report
-    macro_f1, test_acc = make_plots_and_reports(
+    macro_f1, test_acc = generate_all_reports(
         model=model,
         test_loader=test_loader,
         data=data,
         train_losses=train_losses,
         val_accuracies=val_accuracies,
         device=device,
-        use_tta=use_tta,
+        use_tta=cfg.use_tta,
     )
 
     logger.info(f"FINAL RESULT → Test Accuracy: {test_acc:.4f} | "
@@ -963,6 +986,7 @@ def main() -> None:
         test_acc=test_acc,
         train_losses=train_losses,
         best_path=best_path,
+        cfg=cfg
     )
 
     logger.info(
