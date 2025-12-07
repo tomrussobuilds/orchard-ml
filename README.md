@@ -122,15 +122,15 @@ The script will:
 ### Command Line Arguments (argparse)
 You can now fully configure training from the command line.
 
-Available arguments
-Argument	Type	Default	Description
---epochs	int	60	Max training epochs
---batch_size	int	128	Batch size
---lr	float	0.008	Initial learning rate
---seed	int	42	Reproducibility seed
---mixup_alpha	float	0.001	MixUp regularization strength
---patience	int	15	Early stopping patience
---no_tta	flag	disabled	Disable Test-Time Augmentation
+| Arg | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| --epochs | int | 60 | Maximum number of training epochs. |
+| --batch_size | int | 128 | Batch size for data loaders. |
+| --lr | float | 0.008 | Initial learning rate for the SGD optimizer. |
+| --seed | int | 42 | Random seed for reproducibility (influences PyTorch, NumPy, Python). |
+| --mixup_alpha | float | 0.001 | $\alpha$ parameter for MixUp regularization. Set to 0 to disable MixUp. |
+| --patience | int | 15 | Early stopping patience (epochs without validation improvement). |
+| --no_tta | flag | (disabled) | Flag to disable Test-Time Augmentation (TTA) during final evaluation. |
 
 Examples:
 
