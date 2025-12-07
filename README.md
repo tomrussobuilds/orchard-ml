@@ -80,11 +80,9 @@ They may look overkill, but they make the whole training pipeline safe to run un
 bloodmnist/
 │
 ├── train_bloodmnist.py       # Main training script
-├── model.py                  # Adapted ResNet-18
-├── data_utils.py             # Loading, augmentation, dataloaders
-├── training_utils.py         # Training loop, scheduler logic
-├── tta.py                    # Test-Time Augmentation
 │
+├── dataset/                  # BloodMNIST dataset
+├── logs/                     # Logs to file
 ├── figures/                  # Auto-generated plots
 ├── reports/                  # Excel report + logs
 └── models/                   # Saved checkpoints
@@ -129,12 +127,14 @@ Everything is deterministic (seed 42). Run the script twice → same validation 
 
 If you use this repository in academic work or derivative projects:
 
+```bibtex
 @misc{bloodmnist_resnet18,
   title  = {BloodMNIST Classification with Adapted ResNet-18},
   author = {Tommaso Russo},
   year   = {2025},
   url    = {https://github.com/tomrussobuilds/bloodmnist}
 }
+```
 
 ### Conclusion
 
