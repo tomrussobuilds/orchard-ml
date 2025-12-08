@@ -78,6 +78,7 @@ for d in (DATASET_DIR, FIGURES_DIR, MODELS_DIR, LOG_DIR, REPORTS_DIR):
 
 # Dataset
 NPZ_PATH: Final[Path] = DATASET_DIR / "bloodmnist.npz"
+
 # MD5 of bloodmnist.npz from MedMNIST
 EXPECTED_MD5: Final[str] = "7053d0359d879ad8a5505303e11de1dc"
 URL: Final[str] = "https://zenodo.org/record/5208230/files/bloodmnist.npz?download=1"
@@ -87,7 +88,6 @@ BLOODMNIST_CLASSES: Final[list[str]] = [
     "basophil", "eosinophil", "erythroblast", "immature granulocyte",
     "lymphocyte", "monocyte", "neutrophil", "platelet"
 ]
-
 
 # Training hyperparameters
 @dataclass(frozen=True)
@@ -140,12 +140,9 @@ def setup_logger(
     logger.addHandler(fh)
 
     logger.info(f"Log file: {log_path}")
-
-    # Attach the path to logger so you can access it later
     logger.log_path = log_path
 
     return logger
-
 
 # Initialize logger
 logger = setup_logger(__name__)
