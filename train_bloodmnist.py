@@ -98,29 +98,58 @@ class Config:
     epochs: int = 60
     patience: int = 15
     learning_rate: float = 0.008
-    mixup_alpha: float = 0.001
+    mixup_alpha: float = 0.002
     use_tta: bool = True
-
 
 # =========================================================================== #
 #                                 LOGGING 
 # =========================================================================== #
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)-8s | %(message)s",
-    datefmt="%H:%M:%S",
+def setup_logger(
+        name: str = __name__,
+        log_dir: Path = LOG_DIR
+) -> logging.Logger:
+    """
+    Creates a logger with console + file logging.
+    Prevents duplicated handlers across multiple runs/imports.
+    Returns both logger and the path of the logfile.
+    """
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.INFO)
+
+    # Avoid duplicate handlers
+    if logger.handlers:
+        return logger
+
+    # --- Format ---
+    formatter = logging.Formatter(
+        "%(asctime)s | %(levelname)-8s | %(message)s",
+        datefmt="%H:%M:%S",
     )
-logger = logging.getLogger(__name__)
 
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # --- Console handler ---
+    ch = logging.StreamHandler()
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
 
-log_file: Path = LOG_DIR / f"training_{timestamp}.log"
-file_handler = logging.FileHandler(log_file, encoding='utf-8')
-file_handler.setLevel(logging.INFO)
-file_formatter = logging.Formatter("%(asctime)s | %(levelname)-8s | %(message)s")
-file_handler.setFormatter(file_formatter)
-logger.addHandler(file_handler)
+    # --- File handler ---
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_path = log_dir / f"training_{timestamp}.log"
+    fh = logging.FileHandler(log_path, encoding="utf-8")
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+    logger.info(f"Log file: {log_path}")
+
+    # Attach the path to logger so you can access it later
+    logger.log_path = log_path
+
+    return logger
+
+
+# Initialize logger
+logger = setup_logger(__name__)
+log_file = logger.log_path
 
 # =========================================================================== #
 #                                 SEED 
@@ -169,7 +198,6 @@ def kill_duplicate_processes(script_name: str = None):
     
     current_pid = os.getpid()
     killed = 0
-
     python_executables =  ('python', 'python3', 'python.exe')
 
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
@@ -177,10 +205,8 @@ def kill_duplicate_processes(script_name: str = None):
             if proc.info['name'] not in python_executables:
                 continue
             cmdline = proc.cmdline()
-
             if proc.pid == current_pid:
-                    continue
-            
+                    continue           
             is_match = False
             if cmdline and cmdline[-1] == script_name:
                     is_match = True
@@ -486,16 +512,17 @@ class ModelTrainer:
             momentum=0.9,
             weight_decay=5e-4
         )
+        cosine_epochs = int(0.6 * self.epochs)
         self.cosine_scheduler = CosineAnnealingLR(
             self.optimizer,
-            T_max=int(self.epochs * 1.5),
+            T_max=cosine_epochs,
             eta_min=1e-4
         )
         self.plateau_scheduler = ReduceLROnPlateau(
             self.optimizer,
             mode='max',
-            factor=0.5,
-            patience=3,
+            factor=0.3,
+            patience=1,
             threshold=1e-4,
             cooldown=0,
             min_lr=1e-5,
@@ -524,7 +551,7 @@ class ModelTrainer:
         
         return correct / total
     
-    def _train_epoch(self) -> float:
+    def _train_epoch(self, epoch: int) -> float:
         """Performs a training cycle with MixUp and returns the average loss."""
         self.model.train()
         running_loss = 0.0
@@ -533,9 +560,13 @@ class ModelTrainer:
         for inputs, targets in progress_bar:
             inputs, targets = inputs.to(self.device), targets.to(self.device)
 
-            if self.mixup_alpha > 0:
+            alpha = self.mixup_alpha
+            if epoch > int(0.8 * self.epochs):
+                alpha = 0.0
+
+            if alpha > 0:
                 inputs, targets_a, targets_b, lam = mixup_data(
-                    inputs, targets, self.mixup_alpha, self.device
+                    inputs, targets, alpha, self.device
                 )
                 outputs = self.model(inputs)
                 loss = mixup_criterion(self.criterion, outputs, targets_a, targets_b, lam)
@@ -559,7 +590,7 @@ class ModelTrainer:
         for epoch in range(1, self.epochs + 1):
             logger.info(f"Epoch {epoch:02d}/{self.epochs}".center(60, "-"))
                 
-            epoch_loss = self._train_epoch()
+            epoch_loss = self._train_epoch(epoch)
             self.train_losses.append(epoch_loss)
 
             # Validation
