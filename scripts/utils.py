@@ -77,15 +77,30 @@ BLOODMNIST_CLASSES: Final[list[str]] = [
     "lymphocyte", "monocyte", "neutrophil", "platelet"
 ]
 
+def _get_num_workers_config() -> int:
+    """
+    Calculates the default value for num_workers based on the environment variable.
+
+    If DOCKER_REPRODUCIBILITY_MODE is set to '1' or 'TRUE' it returns 0
+    to force single-thread execution and ensure bit-per-bit determinism
+    in containerized environments. Otherwise, it returns 4 for faster loading.
+    
+    Returns:
+        int: The determined number of data loader workers (0 or 4).
+    """
+    # Check the environment variable for strict reproducibility mode
+    is_docker_reproducible = os.environ.get("DOCKER_REPRODUCIBILITY_MODE", "0").upper() in ("1", "TRUE")
+
+    # Return 0 for strict mode 4 otherwise
+    return 0 if is_docker_reproducible else 4
+
 # Training hyperparameters configuration
 @dataclass(frozen=True)
 class Config:
     """Configuration class for training hyperparameters."""
     seed: int = 42
     batch_size: int = 128
-    is_docker_reproducible = os.environ.get("DOCKER_REPRODUCIBILITY_MODE", "0").upper() in ("1", "TRUE")
-    default_workers = 0 if is_docker_reproducible else 4
-    num_workers: int = default_workers
+    num_workers: int = _get_num_workers_config()
     epochs: int = 60
     patience: int = 15
     learning_rate: float = 0.008
