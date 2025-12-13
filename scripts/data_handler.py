@@ -28,7 +28,7 @@ from torchvision import transforms
 # =========================================================================== #
 #                                Internal Imports
 # =========================================================================== #
-from utils import (
+from .utils import (
     Config, Logger,
     md5_checksum, validate_npz_keys,
     EXPECTED_MD5, URL, NPZ_PATH

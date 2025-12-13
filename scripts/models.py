@@ -25,7 +25,7 @@ from torchvision import models
 # =========================================================================== #
 #                                Internal Imports
 # =========================================================================== #
-from utils import Logger
+from .utils import Logger
 
 # Global logger instance
 logger: Final[logging.Logger] = Logger().get_logger()

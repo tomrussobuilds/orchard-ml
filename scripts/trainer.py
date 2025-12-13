@@ -26,7 +26,7 @@ from tqdm import tqdm
 # =========================================================================== #
 #                                Internal Imports
 # =========================================================================== #
-from utils import Logger, Config, MODELS_DIR
+from .utils import Logger, Config, MODELS_DIR
 
 # Global logger instance
 logger: Final[logging.Logger] = Logger().get_logger()
@@ -154,7 +154,7 @@ class ModelTrainer:
         )
         
         # Schedulers
-        cosine_epochs = int(0.6 * self.epochs)
+        cosine_epochs = int(0.5 * self.epochs)
         self.cosine_scheduler = CosineAnnealingLR(
             self.optimizer,
             T_max=cosine_epochs,

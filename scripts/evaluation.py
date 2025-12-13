@@ -33,10 +33,10 @@ import torchvision.transforms.functional as TF
 # =========================================================================== #
 #                                Internal Imports
 # =========================================================================== #
-from utils import (
+from .utils import (
     Logger, Config, FIGURES_DIR, BLOODMNIST_CLASSES, log_file
 )
-from data_handler import BloodMNISTData
+from .data_handler import BloodMNISTData
 
 # Global logger instance
 logger: Final[logging.Logger] = Logger().get_logger()
