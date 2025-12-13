@@ -29,11 +29,13 @@ from scripts.utils import (
     Config, Logger, parse_args, set_seed, kill_duplicate_processes, get_device, 
     NPZ_PATH, REPORTS_DIR
 )
-from scripts.data_handler import load_bloodmnist, get_dataloaders
+from scripts.data_handler import (
+    load_bloodmnist, get_dataloaders, show_sample_images
+    )
 from scripts.models import get_model
 from scripts.trainer import ModelTrainer
 from scripts.evaluation import (
-    run_final_evaluation, create_structured_report, show_sample_images
+    run_final_evaluation, create_structured_report
 )
 
 # Global logger instance
