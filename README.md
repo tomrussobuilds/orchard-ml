@@ -6,9 +6,13 @@
 
 
 
-**97.11% Test Accuracy • 96.78 Macro F1 • Single pretrained ResNet-18 • 28×28 images**
+**97.52% Test Accuracy • 0.9733 Macro F1 • Single pretrained ResNet-18 • 28×28 images**
 
-This repository provides a reproducible training pipeline for the BloodMNIST (from MedMNIST v2) using an adapted pretrained ResNet-18, demonstrating solid performance with a straightforward setup.
+This repository provides a reproducible training pipeline for the BloodMNIST (from MedMNIST v2) using an adapted pretrained ResNet-18 architecture. The goal is to demonstrate solid performance using a minimal configuration that adhere to modern PyTorch best practices.
+
+### Final Results (42 Epochs via Early Stopping, seed 42)
+
+The results reflect the latest successful training run (post-refactoring).
 
 ### Confusion Matrix
 <img src="figures/confusion_matrix_resnet18.png" width="400">
@@ -38,26 +42,17 @@ Spoiler: a carefully adapted ResNet-18 performs surprisingly well, even on 28×2
 
 ---
 
-### Key Features & Design Choices
+### Key Features & Design Choices (Post-Refactoring)
+
+The code has been cleanly separated into modulare components (`data_handler.py`, `models.py`,
+`trainer.py`, `utils.py`) for enhaced clarity and maintainability.
 
 - **ResNet-18 adapted for 28×28**:  
-  – Replaced 7×7 conv with 3×3 (preserves spatial info)  
-  – Removed initial MaxPool → full 28×28 feature maps until the end  
-  – ImageNet pretrained weights transferred via bicubic upsampling of the first conv
-
-- Strong but reasonable data augmentation + very light **MixUp** (α = 0.001 – kept silent on purpose, higher values hurt here)
-
-- Cosine annealing for first ~33 epochs → ReduceLROnPlateau afterwards
-
-- Test-Time Augmentation (7 deterministic transforms, averaged)
-
-- Automatic dataset download with MD5 validation and atomic write
-
-- Full reproducibility (fixed seeds, deterministic CuDNN)
-
-- Exhaustive logging, Excel report, confusion matrix, training curves, sample predictions
-
-- A ridiculous amount of defensive utilities born from real pain at 5 AM debugging sessions (see below)
+  – Initial 7 x7 convolution replaced with 3 x 3. 
+  – Initial `MaxPool` removed to preserve 28 x 28 feature maps.
+  – ImageNet pretrained weights transferred via bicubic upsampling of the first convolutional layer.
+  – Reproduciblity & Robustness: – Full Reproducibility guaranteed (fixed seeds for PyTorch, NumPy, Python). – `worker_init_fn` implemented to ensure determinism even when using multiple data loading workers (`num_workers > 0).
+  – Defensive Utilities: Robust dataset download with MD5 validation and atomic write ensures pipeline reliablity.
 
 ---
 
@@ -79,13 +74,18 @@ They may look overkill, but they make the whole training pipeline safe to run un
 ```bash
 bloodmnist/
 │
-├── train_bloodmnist.py       # Main training script
+├── main.py                   # Main script that initiates training/evaluation
 │
-├── dataset/                  # BloodMNIST dataset
-├── logs/                     # Logs to file
+├── data_handler.py           # Handles data download, Dataset, and DataLoader setup
+├── models.py                 # Defines the adapted ResNet-18 model
+├── trainer.py                # Contains the training logic (loop, MixUp, Early Stopping)
+├── utils.py                  # Configuration (Config), Logger, and general utilities
+│
+├── dataset/                  # BloodMNIST dataset files
+├── logs/                     # File logs
 ├── figures/                  # Auto-generated plots
-├── reports/                  # Excel report + logs
-└── models/                   # Saved checkpoints
+├── reports/                  # Excel report + final logs
+└── models/                   # Saved model checkpoints
 ```
 
 ### Requirements
@@ -104,23 +104,19 @@ Install dependencies easily with pip, or check the full list here:
 ```bash
 git clone https://github.com/tomrussobuilds/bloodmnist.git
 cd bloodmnist
-python train_bloodmnist.py
+python main.py
 ```
+Note: The entry point script is now `main.py`.
 
-You can also check the training script directly: 
-
-[📄 train_bloodmnist.py](train_bloodmnist.py)
-
-That’s it.
-The script will:
+The script will automatically:
 
 - Download BloodMNIST if missing
-- Train for max 60 epochs with early stopping (patience=15)
-- Save the best model → models/resnet18_bloodmnist_best.pth
-- Generate figures, confusion matrix, Excel report → figures/ and reports/
+- Train for max 60 epochs with early stopping (`patience=15`)
+- Save the best model → `models/resnet18_bloodmnist_best.pth`
+- Generate figures, confusion matrix, Excel report → `figures/` and `reports/`
 
 ### Command Line Arguments (argparse)
-You can now fully configure training from the command line.
+You can fully configure training from the command line (via `main.py`).
 
 | Arg | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
@@ -128,7 +124,7 @@ You can now fully configure training from the command line.
 | --batch_size | int | 128 | Batch size for data loaders. |
 | --lr | float | 0.008 | Initial learning rate for the SGD optimizer. |
 | --seed | int | 42 | Random seed for reproducibility (influences PyTorch, NumPy, Python). |
-| --mixup_alpha | float | 0.001 | $\alpha$ parameter for MixUp regularization. Set to 0 to disable MixUp. |
+| --mixup_alpha | float | 0.002 | $\alpha$ parameter for MixUp regularization. Set to 0 to disable MixUp. |
 | --patience | int | 15 | Early stopping patience (epochs without validation improvement). |
 | --no_tta | flag | (disabled) | Flag to disable Test-Time Augmentation (TTA) during final evaluation. |
 
@@ -137,32 +133,32 @@ Examples:
 Run without TTA
 
 ```bash
-python train_bloodmnist.py --no_tta
+python main.py --no_tta
 ```
 Train for 100 epochs
 
 ```bash
-python train_bloodmnist.py --epochs 100
+python main.py --epochs 100
 ```
 Lower LR for finer tuning
 
 ```bash
-python train_bloodmnist.py --lr 0.001
+python main.py --lr 0.001
 ```
 Disable MixUp
 
 ```bash
-python train_bloodmnist.py --mixup_alpha 0
+python main.py --mixup_alpha 0
 ```
 Custom batch size & seed
 
 ```bash
-python train_bloodmnist.py --barch_size 64 --seed 123
+python main.py --barch_size 64 --seed 123
 ```
 
 ### Reproducibility
 
-Everything is deterministic (seed 42). Run the script twice → same validation curve, same final accuracy.
+The entire pipeline is deterministic (seed 42). Run the script twice wille yield the same validation curve and the same final accuracy.
 
 ### Citation
 
@@ -179,8 +175,8 @@ If you use this repository in academic work or derivative projects:
 
 ### Conclusion
 
-This project shows how a classic, lightweight architecture like ResNet-18 can perform extremely well on a compact medical-image dataset when paired with a careful training setup.  
+This project demonstrates how a classic, lightweight architecture like ResNet-18 can perform extremely well on a compact medical-image dataset when paired with a careful, modern training setup.
 
-The goal is not to chase leaderboard scores, but to provide a **clean, stable, reproducible** pipeline that others can reuse or extend with minimal friction.
+The goal is to provide a clean, stable, reproducible pipeline that others can reuse or extend with minimal friction.
 
-If you find this project useful, feedback and suggestions are always welcome.
+If you find this project useful, feedback and suggestions are always welcome!

@@ -73,7 +73,7 @@ desktop.ini
 *~
 
 # ========================
-# Misc / Profiling / Temporary scripts
+# Misc / Profiling / Temporary scripts / Older Versions
 # ========================
 .prof
 .profile
@@ -82,3 +82,4 @@ check_ram.py
 checksum.py
 pipeline*.py
 cnn_bloodmnist.py
+_legacy_train_bloodmnist.py
