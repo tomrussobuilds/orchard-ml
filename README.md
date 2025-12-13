@@ -6,11 +6,9 @@
 
 
 
-**97.52% Test Accuracy • 0.9733 Macro F1 • Single pretrained ResNet-18 • 28×28 images**
+**97.31% Test Accuracy • 0.9704 Macro F1 • Single pretrained ResNet-18 • 28×28 images**
 
 This repository provides a reproducible training pipeline for the BloodMNIST (from MedMNIST v2) using an adapted pretrained ResNet-18 architecture. The goal is to demonstrate solid performance using a minimal configuration that adhere to modern PyTorch best practices.
-
-### Final Results (42 Epochs via Early Stopping, seed 42)
 
 The results reflect the latest successful training run (post-refactoring).
 
@@ -26,9 +24,9 @@ The results reflect the latest successful training run (post-refactoring).
 ### Final Results (60 epochs, seed 42)
 | Metric                  | Value     |
 |-------------------------|-----------|
-| Best Validation Accuracy| **97.20%** |
-| Test Accuracy (with TTA)| **97.52%** |
-| Test Macro F1 (with TTA)| **0.9733** |
+| Best Validation Accuracy| **97.25%** |
+| Test Accuracy (with TTA)| **97.31%** |
+| Test Macro F1 (with TTA)| **0.9704** |
 
 → Confusion matrix, training curves, sample predictions and Excel report are automatically saved.
 
@@ -40,19 +38,13 @@ I wanted to see how far a **single pretrained ResNet-18** could go on the tiny 2
 
 Spoiler: a carefully adapted ResNet-18 performs surprisingly well, even on 28×28 medical images.
 
-### Training Efficiency Analysis
-
-The training achieved peak validation performance at **Epoch 27** ($\text{Val Acc}=0.9720$) but was only terminated by early stopping at **Epoch 42**. This is due to the aggressive nature of the Cosine Annealing scheduler's tail combined with a generous `patience=15`.
-
-**Analysis:** Epochs 28 through 36 (while Cosine Annealing was still active) did not contribute to the final result.
-
-**Future Work:** The next step will focus on optimizing the training efficiency by anticipating the switch to the `ReduceLROnPlateau` scheduler (e.g., changing the switch point from 60% to 50% of max epochs) to reduce idle computation time.
----
-
 ### Key Features & Design Choices (Post-Refactoring)
 
-The code has been cleanly separated into modulare components (`data_handler.py`, `models.py`,
-`trainer.py`, `utils.py`) for enhaced clarity and maintainability.
+- **Modularity and Structure**: Code has been separated into clean, modular components (`scripts/`) to enforce single responsibility principle and decouple execution (`main.py`) from business logic.
+- **Robust Pathing**: Implemented dynamic `PROJECT_ROOT` detection in `utils.py` to ensure all outputs (models, logs, figures) are correctly saved relative to the project root, regardless of where the script is executed (local or Docker container).
+
+---
+
 
 - **ResNet-18 adapted for 28×28**:  
   – Initial 7 x7 convolution replaced with 3 x 3. 
@@ -81,12 +73,14 @@ They may look overkill, but they make the whole training pipeline safe to run un
 ```bash
 bloodmnist/
 │
-├── main.py                   # Main script that initiates training/evaluation
+├── main.py                   # Main execution entry point
 │
-├── data_handler.py           # Handles data download, Dataset, and DataLoader setup
-├── models.py                 # Defines the adapted ResNet-18 model
-├── trainer.py                # Contains the training logic (loop, MixUp, Early Stopping)
-├── utils.py                  # Configuration (Config), Logger, and general utilities
+├── scripts/                  # Core modules (data loading, models, trainer, utils)
+│   ├── data_handler.py       # Handles data download, Dataset, and DataLoader setup
+│   ├── models.py             # Defines the adapted ResNet-18 model
+│   ├── trainer.py            # Contains the training logic (loop, MixUp, Early Stopping)
+│   ├── utils.py              # Configuration (Config), Logger, and general utilities
+│   └── evaluation.py         # Reporting and final evaluation logic
 │
 ├── dataset/                  # BloodMNIST dataset files
 ├── logs/                     # File logs
@@ -133,6 +127,8 @@ You can fully configure training from the command line (via `main.py`).
 | --seed | int | 42 | Random seed for reproducibility (influences PyTorch, NumPy, Python). |
 | --mixup_alpha | float | 0.002 | $\alpha$ parameter for MixUp regularization. Set to 0 to disable MixUp. |
 | --patience | int | 15 | Early stopping patience (epochs without validation improvement). |
+| --momentum | float | 0.9 | Momentum factor for the SGD optimizer. |
+| --weight_decay | float | 5e-4 | Weight decay (L2 penalty) for the optimizer |
 | --no_tta | flag | (disabled) | Flag to disable Test-Time Augmentation (TTA) during final evaluation. |
 
 Examples:
@@ -160,7 +156,7 @@ python main.py --mixup_alpha 0
 Custom batch size & seed
 
 ```bash
-python main.py --barch_size 64 --seed 123
+python main.py --batch_size 64 --seed 123
 ```
 
 ### Reproducibility

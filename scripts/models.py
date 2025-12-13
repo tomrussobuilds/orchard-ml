@@ -45,9 +45,19 @@ def get_model(device: torch.device) -> nn.Module:
        to avoid immediate downsampling.
     2. Remove the `maxpool` layer entirely to retain the 28x28 spatial resolution.
     3. Replace the final fully connected layer (`fc`) with one for 8 classes.
-    4. Interpolate and transfer weights from the old `conv1` to the new `conv1`.
+    4. Bicubic interpolation and transfer of pre-trained weights from the old `7x7`
+       kernel to the new `3x3` kernel.
 
-    Args:
+    Args:Arg,Type,Default,Description
+--epochs,int,60,Maximum number of training epochs.
+--batch_size,int,128,Batch size for data loaders.
+--lr,float,0.008,Initial learning rate for the SGD optimizer.
+--seed,int,42,"Random seed for reproducibility (influences PyTorch, NumPy, Python)."
+--mixup_alpha,float,0.002,α parameter for MixUp regularization. Set to 0 to disable MixUp.
+--patience,int,15,Early stopping patience (epochs without validation improvement).
+--momentum,float,0.9,Momentum factor for the SGD optimizer.
+--weight_decay,float,5e-4,Weight decay (L2​ penalty) for the optimizer.
+--no_tta,flag,(disabled),Flag to disable Test-Time Augmentation (TTA) during final evaluation.
         device (torch.device): The device (CPU or CUDA) to move the model to.
 
     Returns:
