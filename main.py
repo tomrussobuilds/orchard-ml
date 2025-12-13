@@ -26,7 +26,8 @@ import torch
 #                                Internal Imports
 # =========================================================================== #
 from scripts.utils import (
-    Config, Logger, parse_args, set_seed, kill_duplicate_processes, NPZ_PATH, REPORTS_DIR
+    Config, Logger, parse_args, set_seed, kill_duplicate_processes, get_device, 
+    NPZ_PATH, REPORTS_DIR
 )
 from scripts.data_handler import load_bloodmnist, get_dataloaders
 from scripts.models import get_model
@@ -67,8 +68,8 @@ def main() -> None:
 
     # 2. Environment Initialization
     kill_duplicate_processes()
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logger.info(f"Using device: {device}")
+    device = get_device(logger=logger)
+    
     logger.info(
         f"Hyperparameters: LR={cfg.learning_rate:.4f}, Momentum={cfg.momentum:.2f}, WeightDecay={cfg.weight_decay:.1e}, "
         f"Batch={cfg.batch_size}, Epochs={cfg.epochs}, "

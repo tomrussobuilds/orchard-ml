@@ -127,6 +127,21 @@ def set_seed(seed: int) -> None:
 
 set_seed(Config().seed)
 
+def get_device(logger: logging.Logger) -> torch.device:
+    """
+    Determinies the appropriate device (CUDA or CPU) for computation.
+    
+    Args:
+        logger (logging.Logger): The logger instance to report the selected device.
+    
+    Returns:
+        torch.device: The selected device object.
+    """
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Log the device selection
+    logger.info(f"Using device: {device}")
+    
+    return device 
 
 class Logger:
     """Configurable logger with rotating file handler and stdout output.
