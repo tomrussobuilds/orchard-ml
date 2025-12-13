@@ -8,7 +8,7 @@
 
 **97.31% Test Accuracy • 0.9704 Macro F1 • Single pretrained ResNet-18 • 28×28 images**
 
-This repository provides a reproducible training pipeline for the BloodMNIST (from MedMNIST v2) using an adapted pretrained ResNet-18 architecture. The goal is to demonstrate solid performance using a minimal configuration that adhere to modern PyTorch best practices.
+This repository provides a highly reproducible training pipeline for the BloodMNIST (from MedMNIST v2) using an adapted pretrained ResNet-18 architecture. The goal is to demonstrate solid performance using a minimal configuration that adheres to modern PyTorch best practices.
 
 The results reflect the latest successful training run (post-refactoring).
 
@@ -50,21 +50,19 @@ Spoiler: a carefully adapted ResNet-18 performs surprisingly well, even on 28×2
   – Initial 7 x7 convolution replaced with 3 x 3. 
   – Initial `MaxPool` removed to preserve 28 x 28 feature maps.
   – ImageNet pretrained weights transferred via bicubic upsampling of the first convolutional layer.
-  – Reproduciblity & Robustness: – Full Reproducibility guaranteed (fixed seeds for PyTorch, NumPy, Python). – `worker_init_fn` implemented to ensure determinism even when using multiple data loading workers (`num_workers > 0).
+  – Reproduciblity & Robustness: – Full Reproducibility guaranteed (fixed seeds for PyTorch, NumPy, Python). – `worker_init_fn` implemented to ensure determinism even when using multiple data loading workers (`num_workers > 0`).
   – Defensive Utilities: Robust dataset download with MD5 validation and atomic write ensures pipeline reliablity.
 
 ---
 
-### The Small Utilities That Save Large Headaches
+### Defensive Utilities
 
-A few tiny helpers included in this repo were added after very real 5AM debugging incidents:
+A few tiny helpers included in `utils.py` were added after real debugging incidents to ensure robust, unattended execution:
 
-- **`get_base_dir()`** — ensures outputs never end up in unexpected system locations  
-- **`kill_duplicate_processes()`** — stops accidental multi-launches that hog all RAM  
-- **`ensure_mnist_npz()`** — safe dataset download with retries, MD5 check, and atomic write  
-- Graceful process cleanup, checksum utilities, debug-safe file creation, etc.
-
-They may look overkill, but they make the whole training pipeline safe to run unattended.
+* **Dynamic `num_workers`:** The `Config` class automatically adjusts `num_workers` (0 vs 4) based on the `DOCKER_REPRODUCIBILITY_MODE` environment variable, balancing speed and determinism.
+* **Process Management (`kill_duplicate_processes()`):** Stops accidental multi-launches that consume excessive CPU/RAM.
+* **Safe Data I/O (`ensure_mnist_npz()`):** Robust dataset download with retries, MD5 check, and atomic write ensures pipeline reliability.
+* **Robust Pathing:** `get_base_dir()` ensures all outputs (models, logs, figures) are saved correctly relative al progetto, indipendentemente dall'ambiente di esecuzione (host o Docker).
 
 ---
 
@@ -89,7 +87,9 @@ bloodmnist/
 └── models/                   # Saved model checkpoints
 ```
 
-### Requirements
+### 1. Requirements
+
+Install dependencies easily with pip:
 
 ```bash
 pip install -r requirements.txt
@@ -100,7 +100,9 @@ Install dependencies easily with pip, or check the full list here:
 [📦 See Full Requirements](requirements.txt)
 
 
-### Usage
+### 2. Usage (Local Execution - Recommended for Speed)
+
+Run the script from the project root. It will default to the fast mode (`num_workers=4`).
 
 ```bash
 git clone https://github.com/tomrussobuilds/bloodmnist.git
@@ -115,6 +117,21 @@ The script will automatically:
 - Train for max 60 epochs with early stopping (`patience=15`)
 - Save the best model → `models/resnet18_bloodmnist_best.pth`
 - Generate figures, confusion matrix, Excel report → `figures/` and `reports/`
+
+### 3. Docker Execution (Recommended for Portability & Reproducibility)
+
+The pipeline is containerized using the included `Dockerfile`.
+
+| Mode | Command | `num_workers` | Guarantees |
+| :--- | :--- | :---: | :--- |
+| **Fast Mode (Default)** | `docker run bloodmnist_image` | 4 | Best performance on CPU, **Not fully deterministic** |
+| **Strict Reproducibility** | `-e DOCKER_REPRODUCIBILITY_MODE=TRUE` | 0 | **100% Deterministic** (bit-per-bit), but slower |
+
+Run in Strict Reproducibility Mode (Recommended for testing):
+
+```bash
+docker run -it --rm -e DOCKER_REPRODUCIBILITY_MODE=TRUE bloodmnist_image
+```
 
 ### Command Line Arguments (argparse)
 You can fully configure training from the command line (via `main.py`).
@@ -161,7 +178,7 @@ python main.py --batch_size 64 --seed 123
 
 ### Reproducibility
 
-The entire pipeline is deterministic (seed 42). Run the script twice wille yield the same validation curve and the same final accuracy.
+The entire pipeline is deterministic (seed 42). Run the script twice will yield the same validation curve and the same final accuracy.
 
 ### Citation
 

@@ -83,7 +83,9 @@ class Config:
     """Configuration class for training hyperparameters."""
     seed: int = 42
     batch_size: int = 128
-    num_workers: int = 4
+    is_docker_reproducible = os.environ.get("DOCKER_REPRODUCIBILITY_MODE", "0").upper() in ("1", "TRUE")
+    default_workers = 0 if is_docker_reproducible else 4
+    num_workers: int = default_workers
     epochs: int = 60
     patience: int = 15
     learning_rate: float = 0.008

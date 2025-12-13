@@ -50,7 +50,7 @@ def worker_init_fn(worker_id: int):
         worker_id (int): ID of the worker process.
     """
     # Use the base configuration seed
-    initial_seed = Config().seed 
+    initial_seed = Config().seed
     
     # Create a unique seed for the worker
     worker_seed = initial_seed + worker_id 
@@ -58,6 +58,7 @@ def worker_init_fn(worker_id: int):
     # Apply the seed to standard PRNGs used by transformations
     np.random.seed(worker_seed)
     random.seed(worker_seed) 
+    torch.manual_seed(worker_seed)
     
     # PyTorch handles its own PRNG for the DataLoader internally 
     # based on this logic, so no need for an explicit torch.manual_seed.

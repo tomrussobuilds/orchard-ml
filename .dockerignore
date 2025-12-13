@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+dataset/
+models/
+figures/
+reports/
+
+.git
+.gitignore
