@@ -62,7 +62,7 @@ A few tiny helpers included in `utils.py` were added after real debugging incide
 * **Dynamic `num_workers`:** The `Config` class automatically adjusts `num_workers` (0 vs 4) based on the `DOCKER_REPRODUCIBILITY_MODE` environment variable, balancing speed and determinism.
 * **Process Management (`kill_duplicate_processes()`):** Stops accidental multi-launches that consume excessive CPU/RAM.
 * **Safe Data I/O (`ensure_mnist_npz()`):** Robust dataset download with retries, MD5 check, and atomic write ensures pipeline reliability.
-* **Robust Pathing:** `get_base_dir()` ensures all outputs (models, logs, figures) are saved correctly relative al progetto, indipendentemente dall'ambiente di esecuzione (host o Docker).
+* **Robust Pathing:** The `get_base_dir()` utility ensures all outputs (models, logs, figures) are saved correctly relative to the project root, regardless of the execution environment (host or Docker).
 
 ---
 
