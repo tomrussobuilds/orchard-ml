@@ -6,11 +6,11 @@
 
 
 
-**97.31% Test Accuracy • 0.9704 Macro F1 • Single pretrained ResNet-18 • 28×28 images**
+**97.19% Test Accuracy • 0.9693 Macro F1 • Single pretrained ResNet-18 • 28×28 images**
 
 This repository provides a highly reproducible training pipeline for the BloodMNIST (from MedMNIST v2) using an adapted pretrained ResNet-18 architecture. The goal is to demonstrate solid performance using a minimal configuration that adheres to modern PyTorch best practices.
 
-The results reflect the latest successful training run (post-refactoring).
+The results reflect the latest successful training run (early stopping at epoch 44).
 
 ### Confusion Matrix
 <img src="figures/confusion_matrix_resnet18.png" width="400">
@@ -24,9 +24,9 @@ The results reflect the latest successful training run (post-refactoring).
 ### Final Results (60 epochs, seed 42)
 | Metric                  | Value     |
 |-------------------------|-----------|
-| Best Validation Accuracy| **97.25%** |
-| Test Accuracy (with TTA)| **97.31%** |
-| Test Macro F1 (with TTA)| **0.9704** |
+| Best Validation Accuracy| **96.96%** |
+| Test Accuracy (with TTA)| **97.19%** |
+| Test Macro F1 (with TTA)| **0.9693** |
 
 → Confusion matrix, training curves, sample predictions and Excel report are automatically saved.
 
@@ -42,6 +42,7 @@ Spoiler: a carefully adapted ResNet-18 performs surprisingly well, even on 28×2
 
 - **Modularity and Structure**: Code has been separated into clean, modular components (`scripts/`) to enforce single responsibility principle and decouple execution (`main.py`) from business logic.
 - **Robust Pathing**: Implemented dynamic `PROJECT_ROOT` detection in `utils.py` to ensure all outputs (models, logs, figures) are correctly saved relative to the project root, regardless of where the script is executed (local or Docker container).
+- **Accuracy vs. Reproducibility Balance**: **The pipeline prioritizes fully deterministic reproducibility.** While running in "Fast Mode" (`num_workers > 0`) is faster, the "Strict Reproducibility" mode (`num_workers=0`) guarantees bit-per-bit identical results at the expense of a longer training time. This trade-off is managed automatically via `DOCKER_REPRODUCIBILITY_MODE` environment variable.
 
 ---
 
