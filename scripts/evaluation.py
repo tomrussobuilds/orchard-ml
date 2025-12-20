@@ -397,6 +397,8 @@ def create_structured_report(
     Returns:
         TrainingReport: The fully populated report object.
     """
+    from .data_handler import get_augmentations_transforms
+
     return TrainingReport(
         timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         model="ResNet-18 (28×28 adapted, ImageNet pretrained)",
@@ -407,8 +409,8 @@ def create_structured_report(
         epochs_trained=len(train_losses),
         learning_rate=cfg.learning_rate,
         batch_size=cfg.batch_size,
-        augmentations="HorizontalFlip(0.5), Rotation(±10), ColorJitter, RandomResizedCrop(0.9-1.0)",
-        normalization="ImageNet mean/std",
+        augmentations=get_augmentations_transforms(cfg),
+        normalization=cfg.normalization_info,
         model_path=str(best_path),
         log_path=str(log_file),
         seed=cfg.seed,

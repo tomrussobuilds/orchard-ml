@@ -128,6 +128,14 @@ class Config(BaseModel):
     weight_decay: float = Field(default=5e-4, ge=0.0)
     mixup_alpha: float = Field(default=0.002, ge=0.0)
     use_tta: bool = True
+    # Metadata for the reporting
+    model_name: str = "ResNet-18 Adapted"
+    dataset_name: str = "BloodMNIST"
+    normalization_info: str = "ImageNet Mean/Std"
+    # Augmentation: Horizontal Flip, Rotation, Color Jitter
+    hflip: float = Field(default=0.5, ge=0.0, le=1.0)
+    rotation_angle: int = Field(default=10, ge=0, le=180)
+    jitter_val: float = Field(default=0.2, ge=0.0)
 
 def set_seed(seed: int) -> None:
     """Sets random seeds for reproducibility across NumPy, Python's random, and PyTorch.
@@ -411,4 +419,23 @@ def parse_args() -> argparse.Namespace:
         default=default_config.weight_decay,
         help=f"Weight decay (L2 penalty) for the optimizer. Default: {default_config.weight_decay}"
     )
+    parser.add_argument(
+        '--hflip',
+        type=float,
+        default=default_config.hflip,
+        help=f"Probability of applying Horizontal Flip augmentation. Default: {default_config.hflip}"
+    )
+    parser.add_argument(
+        '--rotation_angle',
+        type=int,
+        default=default_config.rotation_angle,
+        help=f"Maximum rotation angle (in degrees) for Rotation augmentation. Default: {default_config.rotation_angle}"
+    )
+    parser.add_argument(
+        '--jitter_val',
+        type=float,
+        default=default_config.jitter_val,
+        help=f"Color jitter value for ColorJitter augmentation. Default: {default_config.jitter_val}"
+    )
+    
     return parser.parse_args()

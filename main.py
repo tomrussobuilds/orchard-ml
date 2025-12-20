@@ -62,7 +62,10 @@ def main() -> None:
         patience=args.patience,
         mixup_alpha=args.mixup_alpha,
         # Argument --no_tta means use_tta is False
-        use_tta=not args.no_tta, 
+        use_tta=not args.no_tta,
+        hflip=args.hflip,
+        rotation_angle=args.rotation_angle,
+        jitter_val=args.jitter_val
     )
 
     # Seed
@@ -74,7 +77,7 @@ def main() -> None:
 
     logger.info(
         f"Hyperparameters: LR={cfg.learning_rate:.4f}, Momentum={cfg.momentum:.2f}, WeightDecay={cfg.weight_decay:.1e}, "
-        f"Batch={cfg.batch_size}, Epochs={cfg.epochs}, "
+        f"Batch={cfg.batch_size}, Epochs={cfg.epochs}, Rot={cfg.rotation_angle}, Jitter={cfg.jitter_val}, HFlip={cfg.hflip}, "
         f"MixUp={cfg.mixup_alpha}, Seed={cfg.seed}, TTA={'Enabled' if cfg.use_tta else 'Disabled'}"
     )
 

@@ -208,6 +208,18 @@ class BloodMNISTDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
 
         return img, torch.tensor(label, dtype=torch.long)
 
+def get_augmentations_transforms(cfg: Config) -> str:
+    """
+    Generates a descriptive string of the augmentations using values from Config.
+    """ 
+    return (
+        f"RandomHorizontalFlip({cfg.hflip}), "
+        f"RandomRotation({cfg.rotation_angle}), "
+        f"ColorJitter ({cfg.jitter_val}), "
+        f"RandomResizedCrop(28, scale=(0.9, 1.0)), "
+        f"MixUp(alpha={cfg.mixup_alpha})"
+    )
+
 def get_dataloaders(
         data: BloodMNISTData,
         cfg: Config,
@@ -224,24 +236,32 @@ def get_dataloaders(
     Returns:
         Tuple[DataLoader, DataLoader, DataLoader]: (train_loader, val_loader, test_loader).
     """
+    IMG_SIZE: Final[int] = 28
+    NORM_MEAN: Final[Tuple[float, float, float]] = (0.485, 0.456, 0.406)
+    NORM_STD: Final[Tuple[float, float, float]] = (0.229, 0.224, 0.225)
+
     # 1. Define Augmentations and Transformations
     # Strong augmentation for the training set
     train_transform = transforms.Compose([
         transforms.ToPILImage(),
-        transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomRotation(10),
-        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
-        transforms.RandomResizedCrop(28, scale=(0.9, 1.0)),
+        transforms.RandomHorizontalFlip(p=cfg.hflip),
+        transforms.RandomRotation(cfg.rotation_angle),
+        transforms.ColorJitter(
+            brightness=cfg.jitter_val,
+            contrast=cfg.jitter_val,
+            saturation=cfg.jitter_val
+        ),
+        transforms.RandomResizedCrop(IMG_SIZE, scale=(0.9, 1.0)),
         transforms.ToTensor(), # Scales to [0, 1] and converts to (C, H, W)
         # ImageNet normalization
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.Normalize(mean=NORM_MEAN, std=NORM_STD),
     ])
     
     # Standard normalization for validation and test sets
     val_transform = transforms.Compose([
         transforms.ToPILImage(),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.Normalize(mean=NORM_MEAN, std=NORM_STD),
     ])
 
     # 2. Create Datasets
