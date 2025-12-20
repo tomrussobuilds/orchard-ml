@@ -25,7 +25,7 @@ from torchvision import models
 # =========================================================================== #
 #                                Internal Imports
 # =========================================================================== #
-from scripts.core import Logger, BLOODMNIST_CLASSES
+from scripts.core import Logger, Config, BLOODMNIST_CLASSES
 
 # Global logger instance
 logger: Final[logging.Logger] = Logger().get_logger()
@@ -37,7 +37,8 @@ logger: Final[logging.Logger] = Logger().get_logger()
 
 def get_model(
         device: torch.device,
-        num_classes: int = len(BLOODMNIST_CLASSES)
+        num_classes: int = len(BLOODMNIST_CLASSES),
+        cfg: Config | None = None
     ) -> nn.Module:
     """
     Loads a pre-trained ResNet-18 model (ImageNet weights) and adapts its
@@ -99,7 +100,7 @@ def get_model(
     model = model.to(device)
     
     logger.info(
-        "ResNet-18 successfully ADAPTED for 28×28 inputs "
+        f"{cfg.model_name} successfully ADAPTED for 28×28 inputs "
         f"(3×3 conv1 + maxpool removed + head changed to {num_classes} classes)"
     )
 

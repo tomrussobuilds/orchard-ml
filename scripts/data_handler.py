@@ -67,7 +67,12 @@ def worker_init_fn(worker_id: int):
     # based on this logic, so no need for an explicit torch.manual_seed.
     pass
 
-def ensure_mnist_npz(target_npz: Path, retries: int = 5, delay: float = 5.0) -> Path:
+def ensure_mnist_npz(
+        target_npz: Path,
+        retries: int = 5,
+        delay: float = 5.0,
+        cfg: Config | None = None
+    ) -> Path:
     """
     Downloads the BloodMNIST dataset NPZ file robustly, with retries and MD5 validation.
 
@@ -99,7 +104,7 @@ def ensure_mnist_npz(target_npz: Path, retries: int = 5, delay: float = 5.0) -> 
         logger.warning(f"Corrupted or incomplete dataset found, deleting: {target_npz}")
         target_npz.unlink()
 
-    logger.info(f"Downloading BloodMNIST from {URL}")
+    logger.info(f"Downloading {cfg.model_name} from {URL}")
     tmp_path = target_npz.with_suffix(".tmp")
     
     for attempt in range(1, retries + 1):
@@ -121,7 +126,7 @@ def ensure_mnist_npz(target_npz: Path, retries: int = 5, delay: float = 5.0) -> 
 
             if attempt == retries:
                 logger.error(f"Failed to download dataset after {retries} attempts")
-                raise RuntimeError("Could not download BloodMNIST dataset") from e
+                raise RuntimeError(f"Could not download {cfg.model_name} dataset") from e
 
             logger.warning(f"Attempt {attempt}/{retries} failed: {e}. Retrying in {delay}s...")
             time.sleep(delay)
@@ -310,7 +315,11 @@ def get_dataloaders(
 #                               SAMPLE IMAGES
 # =========================================================================== #
 
-def show_sample_images(data: BloodMNISTData, save_path: Path | None = None) -> None:  
+def show_sample_images(
+        data: BloodMNISTData,
+        save_path: Path | None = None,
+        cfg: Config | None = None
+    ) -> None:  
     """
     Generates and saves a figure showing 9 random samples from the training set.
 
@@ -320,7 +329,7 @@ def show_sample_images(data: BloodMNISTData, save_path: Path | None = None) -> N
                                            Defaults to FIGURES_DIR/bloodmnist_samples.png.
     """
     if save_path is None:
-        save_path = FIGURES_DIR / "bloodmnist_samples.png"
+        save_path = FIGURES_DIR / f"{cfg.model_name}_samples.png"
 
     if save_path.exists():
         logger.info(f"Sample images figure already exists → {save_path}")
@@ -344,7 +353,7 @@ def show_sample_images(data: BloodMNISTData, save_path: Path | None = None) -> N
         plt.title(f"{label} — {BLOODMNIST_CLASSES[label]}", fontsize=11)
         plt.axis("off")
 
-    plt.suptitle("BloodMNIST — 9 Random Samples from Training Set", fontsize=16)
+    plt.suptitle(f"{cfg.model_name} — 9 Random Samples from Training Set", fontsize=16)
     # Adjust layout to prevent title overlap
     plt.tight_layout(rect=[0, 0.03, 1, 0.95]) 
     plt.savefig(save_path, dpi=200, bbox_inches="tight")

@@ -159,7 +159,12 @@ def evaluate_model(
 #                               VISUALIZATION UTILITIES
 # =========================================================================== #
 
-def show_predictions(dataset: BloodMNISTData, preds: np.ndarray, n: int = 12, save_path: Path | None = None) -> None:
+def show_predictions(dataset: BloodMNISTData,
+                     preds: np.ndarray,
+                     n: int = 12,
+                     save_path: Path | None = None,
+                     cfg: Config | None = None
+) -> None:
     """
     Displays a grid of randomly selected test images with their true and
     predicted labels, highlighting correct vs. incorrect predictions.
@@ -196,7 +201,7 @@ def show_predictions(dataset: BloodMNISTData, preds: np.ndarray, n: int = 12, sa
         )
         plt.axis("off")
 
-    plt.suptitle("Test Predictions — ResNet-18 on BloodMNIST", fontsize=16)
+    plt.suptitle(f"Test Predictions — {cfg.model_name} on {cfg.dataset_name}", fontsize=16)
     plt.tight_layout()
 
     if save_path:
@@ -208,7 +213,11 @@ def show_predictions(dataset: BloodMNISTData, preds: np.ndarray, n: int = 12, sa
     
     plt.close()
 
-def plot_training_curves(train_losses: Sequence[float], val_accuracies: Sequence[float], out_path: Path) -> None:
+def plot_training_curves(
+        train_losses: Sequence[float],
+        val_accuracies: Sequence[float],
+        out_path: Path
+) -> None:
     """
     Plots the training loss and validation accuracy curves on a dual-axis plot.
 
@@ -237,7 +246,12 @@ def plot_training_curves(train_losses: Sequence[float], val_accuracies: Sequence
     plt.savefig(out_path, dpi=200, bbox_inches="tight")
     plt.close()
 
-def plot_confusion_matrix(all_labels: np.ndarray, all_preds: np.ndarray, out_path: Path) -> None:
+def plot_confusion_matrix(
+        all_labels: np.ndarray,
+        all_preds: np.ndarray,
+        out_path: Path,
+        cfg: Config | None = None
+) -> None:
     """
     Generates and saves a normalized confusion matrix plot.
 
@@ -256,7 +270,7 @@ def plot_confusion_matrix(all_labels: np.ndarray, all_preds: np.ndarray, out_pat
     fig, ax = plt.subplots(figsize=(11, 9))
     disp.plot(ax=ax, cmap="Blues", xticks_rotation=45, colorbar=False, values_format='.3f')
 
-    plt.title("Confusion Matrix – ResNet-18 on BloodMNIST", fontsize=14, pad=20)
+    plt.title(f"Confusion Matrix – {cfg.model_name} on {cfg.dataset_name}", fontsize=14, pad=20)
     plt.tight_layout()
     fig.savefig(out_path, dpi=300, bbox_inches="tight")
     plt.close()
@@ -291,7 +305,8 @@ def run_final_evaluation(
     train_losses: List[float],
     val_accuracies: List[float],
     device: torch.device,
-    use_tta: bool = False
+    use_tta: bool = False,
+    cfg: Config | None = None
 ) -> Tuple[float, float]:
     """
     Executes the full evaluation pipeline, generating all figures and metrics and
@@ -319,7 +334,7 @@ def run_final_evaluation(
     plot_confusion_matrix(
         all_labels,
         all_preds,
-        FIGURES_DIR / "confusion_matrix_resnet18.png"
+        FIGURES_DIR / f"confusion_matrix_{cfg.model_name}.png",
     )
 
     # --- 3) Training Curves Figure & Data ---

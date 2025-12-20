@@ -119,7 +119,7 @@ class ModelTrainer:
         train_loader: DataLoader,
         val_loader: DataLoader,
         device: torch.device,
-        config: Config,
+        cfg: Config,
         best_path: Path | None = None,
     ):
         """
@@ -138,9 +138,9 @@ class ModelTrainer:
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.device = device
-        self.epochs = config.epochs
-        self.patience = config.patience
-        self.mixup_alpha = config.mixup_alpha
+        self.epochs = cfg.epochs
+        self.patience = cfg.patience
+        self.mixup_alpha = cfg.mixup_alpha
         
         # Loss function
         self.criterion = nn.CrossEntropyLoss()
@@ -148,9 +148,9 @@ class ModelTrainer:
         # Optimizer
         self.optimizer = optim.SGD(
             model.parameters(),
-            lr=config.learning_rate,
-            momentum=config.momentum,
-            weight_decay=config.weight_decay
+            lr=cfg.learning_rate,
+            momentum=cfg.momentum,
+            weight_decay=cfg.weight_decay
         )
         
         # Schedulers
@@ -173,7 +173,7 @@ class ModelTrainer:
         # Early Stopping and Checkpointing
         self.best_acc: float = 0.0
         self.epochs_no_improve: int = 0
-        self.best_path: Path = best_path or (MODELS_DIR / "resnet18_bloodmnist_best.pth")
+        self.best_path: Path = best_path or (MODELS_DIR / f"{cfg.model_name}_{cfg.dataset_name}_best.pth")
         
         # History tracking
         self.train_losses: List[float] = []

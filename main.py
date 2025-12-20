@@ -67,6 +67,8 @@ def main() -> None:
         rotation_angle=args.rotation_angle,
         jitter_val=args.jitter_val
     )
+    from scripts.core import Logger
+    logger = Logger.setup(name=cfg.model_name)
 
     # Seed
     set_seed(cfg.seed)
@@ -123,6 +125,7 @@ def main() -> None:
         val_accuracies=val_accuracies,
         device=device,
         use_tta=cfg.use_tta,
+        cfg=cfg
     )
 
     # 7. Build and Save Structured Report

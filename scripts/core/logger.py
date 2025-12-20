@@ -78,10 +78,14 @@ class Logger:
         self.logger.propagate = False
 
         # Console handler (StreamHandler)
-        if not any(isinstance(h, logging.StreamHandler) for h in self.logger.handlers):
-            stream = logging.StreamHandler(sys.stdout)
-            stream.setFormatter(formatter)
-            self.logger.addHandler(stream)
+        if self.logger.hasHandlers():
+            for handler in self.logger.handlers[:]:
+                handler.close()
+                self.logger.removeHandler(handler)
+        
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(formatter)
+        self.logger.addHandler(console_handler)
 
         # Rotating File handler
         if self.log_to_file:
@@ -89,19 +93,18 @@ class Logger:
             timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             filename = self.log_dir / f"{self.name}_{timestamp}.log"
 
-            if not any(isinstance(h, RotatingFileHandler) for h in self.logger.handlers):
-                file_handler = RotatingFileHandler(
-                    filename,
-                    maxBytes=self.max_bytes,
-                    backupCount=self.backup_count,
-                )
-                file_handler.setFormatter(formatter)
-                self.logger.addHandler(file_handler)
+            file_handler = RotatingFileHandler(
+                filename,
+                maxBytes=self.max_bytes,
+                backupCount=self.backup_count,
+            )
+            
+            file_handler.setFormatter(formatter)
+            self.logger.addHandler(file_handler)
 
-                # Update the module-level variable without using 'global'
-                # This makes it accessible as 'logger_module.log_file'
-                import scripts.core.logger as logger_module
-                logger_module.log_file = filename
+            # Update global log_file path
+            import scripts.core.logger as logger_module
+            logger_module.log_file = filename
 
     def get_logger(self) -> logging.Logger:
         """
@@ -111,6 +114,20 @@ class Logger:
             logging.Logger: The configured logger object.
         """
         return self.logger
+    
+    @classmethod
+    def setup(cls, name: str, **kwargs) -> logging.Logger:
+        """
+        Class method to get or create a logger instance.
+
+        Args:
+            name (str): Name of the logger.
+        Returns:
+            logging.Logger: The configured logger object.
+        """
+        instance = cls(name=name, **kwargs)
+        return instance.get_logger()
+        
 
 # =========================================================================== #
 #                                INITIALIZATION

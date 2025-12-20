@@ -52,7 +52,8 @@ ALL_DIRS: Final[List[Path]] = [
 # =========================================================================== #
 
 # File path to the local .npz file
-NPZ_PATH: Final[Path] = DATASET_DIR / "bloodmnist.npz"
+DATASET_NAME: Final[str] = "BloodMNIST"
+NPZ_PATH: Final[Path] = DATASET_DIR / f"{DATASET_NAME}.npz"
 
 # Integrity and Source
 EXPECTED_MD5: Final[str] = "7053d0359d879ad8a5505303e11de1dc"
