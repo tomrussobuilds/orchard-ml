@@ -360,19 +360,54 @@ class TrainingReport:
     normalization: str
     model_path: str
     log_path: str
-    seed: int = Config().seed
+    seed: int
 
-    def to_dataframe(self) -> pd.DataFrame:
-        """Converts the report dataclass into a single-row Pandas DataFrame."""
-        return pd.DataFrame([asdict(self)])
+    def to_vertical_df(self) -> pd.DataFrame:
+        """
+        Converts the report dataclass into a vertical pandas DataFrame.
+        """
+        data = asdict(self)
+        return pd.DataFrame(list(data.items()), columns=["Parameter", "Value"]) 
 
     def save(self, path: Path | str) -> None:
         """Saves the report DataFrame to an Excel file."""
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        # Use to_excel for saving (index=False prevents saving row numbers)
-        self.to_dataframe().to_excel(path, index=False)
-        logger.info(f"Training report saved → {path}")
+
+        df = self.to_vertical_df()
+
+        with pd.ExcelWriter(path, engine='xlsxwriter') as writer:
+            # Save vertical report
+            df.to_excel(writer, sheet_name='Detailed Report', index=False)
+
+            workbook = writer.book
+            worksheet = writer.sheets['Detailed Report']
+
+            header_format = workbook.add_format({
+                'bold': True,
+                'bg_color': '#D7E4BC',
+                'border': 1,
+                'align': 'center',
+            })
+            base_format = workbook.add_format({
+                'border': 1,
+                'align': 'left',
+                'valign': 'vcenter'
+            })
+            wrap_format = workbook.add_format({
+                'border': 1,
+                'text_wrap': True,
+                'valign': 'top',
+                'font_size': 10
+            })
+
+            worksheet.set_column('A:A', 25, base_format)
+            worksheet.set_column('B:B', 50, wrap_format)
+
+            for col_num, value in enumerate(df.columns.values):
+                worksheet.write(0, col_num, value, header_format)         
+
+        logger.info(f"Training report saved (Vertical Layout) → {path}")
 
 
 def create_structured_report(
