@@ -68,7 +68,7 @@ def main() -> None:
         jitter_val=args.jitter_val
     )
     from scripts.core import Logger
-    logger = Logger.setup(name=cfg.model_name)
+    Logger.setup(name=cfg.model_name)
 
     # Seed
     set_seed(cfg.seed)
