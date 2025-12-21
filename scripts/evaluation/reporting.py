@@ -11,7 +11,7 @@ final experiment summaries in Excel format.
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Sequence, Final, Any
+from typing import Sequence
 import logging
 
 # =========================================================================== #

@@ -25,13 +25,13 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 # =========================================================================== #
 #                                Internal Imports
 # =========================================================================== #
-from scripts.core import Config, PROJECT_ID
+from scripts.core import Config
 
 # =========================================================================== #
 #                               VISUALIZATION FUNCTIONS
 # =========================================================================== #
 # Global logger instance
-logger = logging.getLogger(PROJECT_ID)
+logger = logging.getLogger("medmnist_pipeline")
 
 def show_predictions(images: np.ndarray,
                      true_labels: np.ndarray,
