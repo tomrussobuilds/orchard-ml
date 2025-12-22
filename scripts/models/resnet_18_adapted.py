@@ -35,6 +35,7 @@ logger = logging.getLogger("medmnist_pipeline")
 def build_resnet18_adapted(
         device: torch.device,
         num_classes: int,
+        in_channels: int = 3,
         cfg: Config | None = None
     ) -> nn.Module:
     """
@@ -52,6 +53,7 @@ def build_resnet18_adapted(
     Args:
         device (torch.device): The device (CPU or CUDA) to move the model to.
         num_classes (int): Number of output classes.
+        in_channels (int): Number of input channels.
         cfg (Config | None): Configuration object for logging.
 
     Returns:
@@ -67,7 +69,7 @@ def build_resnet18_adapted(
     # The original ResNet-18 uses conv1(7x7, stride 2) and maxpool, which reduces
     # 28x28 input to 6x6, losing too much information. We replace it.
     new_conv = nn.Conv2d(
-        in_channels=3,
+        in_channels=in_channels,
         out_channels=64,
         kernel_size=3,  # Smaller kernel
         stride=1,       # No immediate downsampling
@@ -81,6 +83,11 @@ def build_resnet18_adapted(
         w = old_conv.weight
         # Interpolate the 7x7 weights to 3x3 using bicubic interpolation
         w = F.interpolate(w, size=(3,3), mode='bicubic', align_corners=True)
+
+        if in_channels == 1:
+            # If input is grayscale, average the weights across the RGB channels
+            w = w.mean(dim=1, keepdim=True)
+
         new_conv.weight[:] = w
     
     # Apply the adaptations to the model structure
@@ -99,8 +106,8 @@ def build_resnet18_adapted(
     model_display_name = cfg.model_name if cfg else "ResNet-18"
     
     logger.info(
-        f"{model_display_name} successfully ADAPTED for 28×28 inputs "
-        f"(3×3 conv1 + maxpool removed + head changed to {num_classes} classes)"
+        f"{model_display_name} successfully ADAPTED: in_channels={in_channels}, "
+        f"num_classes={num_classes} and moved to {device.type}."
     )
 
     return model

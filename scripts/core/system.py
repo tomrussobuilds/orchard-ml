@@ -9,6 +9,8 @@ reproducibility (seeding), file integrity (checksums), and process management.
 #                                Standard Imports
 # =========================================================================== #
 import os
+# fcntl is a Unix-specific module for file locking. 
+# This utility module currently supports Linux/macOS only.
 import fcntl
 import sys
 import random

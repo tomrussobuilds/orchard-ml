@@ -13,11 +13,11 @@ from .fetcher import (
     ensure_dataset_npz
 )
 
-from .loader import (
+from .factory import (
     get_dataloaders
 )
 
-from .visualizer import (
+from .data_explorer import (
     show_sample_images
 )
 

@@ -38,7 +38,14 @@ class DatasetMetadata(NamedTuple):
     url: str
     path: Path
     classes: List[str]
+    mean: tuple 
+    std: tuple
+    in_channels: int
 
+    @property
+    def num_classes(self) -> int:
+        """Infers the number of classes."""
+        return len(self.classes)
 
 DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
     "bloodmnist": DatasetMetadata(
@@ -56,7 +63,10 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
             "monocyte",
             "neutrophil",
             "platelet"
-        ]
+        ],
+        mean=(0.4914, 0.4822, 0.4465),
+        std=(0.2023, 0.1994, 0.2010),
+        in_channels=3,
     ),
     
     "dermamnist": DatasetMetadata(
@@ -73,6 +83,9 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
             "melanocytic nevi",
             "melanoma",
             "vascular lesions"
-        ]
+        ],
+        mean=(0.485, 0.456, 0.406),
+        std=(0.229, 0.224, 0.225),
+        in_channels=3,
     ),
 }

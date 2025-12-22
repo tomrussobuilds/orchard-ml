@@ -56,12 +56,17 @@ class RunPaths:
     Each training session gets a unique directory under 'outputs/' based on 
     the timestamp, dataset, and model name.
     """
-    def __init__(self, dataset_name: str, model_name: str):
+    def __init__(self, dataset_slug: str, model_name: str):
+        """
+        Args:
+            dataset_slug (str): Unique identifier for the dataset (from DATASET_REGISTRY).
+            model_name (str): Human-readable model name (from Config).
+        """
         # Format: 20251221_143005_bloodmnist_resnet18 (include secondi per unicità)
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         
         self.model_slug : Final[str] = model_name.lower().replace(" ", "_").replace("-", "_")
-        self.ds_slug: Final[str] = dataset_name.lower().replace(" ", "_").replace("-", "_")
+        self.ds_slug: Final[str] = dataset_slug
         self.project_id: Final[str] = f"{self.ds_slug}_{self.model_slug}"
         self.run_id: Final[str] = f"{timestamp}_{self.project_id}"
         

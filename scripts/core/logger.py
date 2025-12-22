@@ -18,21 +18,15 @@ from typing import Dict, Optional, Final
 from logging.handlers import RotatingFileHandler
 
 # =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
-from .constants import PROJECT_ROOT
-
-# =========================================================================== #
 #                               LOGGER CLASS                                  #
 # =========================================================================== #
-# Track the current active log file globally
-log_file: Optional[Path] = None
 
 class Logger:
     """
     Manages centralized logging configuration with singleton-like behavior.
     """
     _configured_names: Final[Dict[str, bool]] = {}
+    _active_log_file: Optional[Path] = None
 
     def __init__(
         self,
@@ -97,13 +91,17 @@ class Logger:
             file_h.setFormatter(formatter)
             self.logger.addHandler(file_h)
             
-            # Update global reference
-            global log_file
-            log_file = filename
+            # Update class-level reference
+            Logger._active_log_file = filename
 
     def get_logger(self) -> logging.Logger:
         """Returns the configured logging.Logger instance."""
         return self.logger
+    
+    @classmethod
+    def get_log_file(cls) -> Optional[Path]:
+        """Returns the current active log file path."""
+        return cls._active_log_file
     
     @classmethod
     def setup(cls, name: str, **kwargs) -> logging.Logger:

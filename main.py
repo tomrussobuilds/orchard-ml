@@ -48,7 +48,17 @@ def main() -> None:
     
     # 1. Configuration Setup
     args = parse_args()
+
+    dataset_key = args.dataset.lower()
+    if dataset_key not in DATASET_REGISTRY:
+        raise ValueError(f"Dataset '{args.dataset}' is not recognized. "
+                         f"Available datasets: {list(DATASET_REGISTRY.keys())}")
+    
+    ds_meta = DATASET_REGISTRY[dataset_key]
+
     cfg = Config(
+        model_name=args.model_name,
+        dataset_name=ds_meta.name,
         seed=args.seed,
         batch_size=args.batch_size,
         learning_rate=args.lr,
@@ -57,7 +67,7 @@ def main() -> None:
         epochs=args.epochs,
         patience=args.patience,
         mixup_alpha=args.mixup_alpha,
-        use_tta=not args.no_tta,
+        use_tta=args.use_tta,
         hflip=args.hflip,
         rotation_angle=args.rotation_angle,
         jitter_val=args.jitter_val
@@ -96,9 +106,11 @@ def main() -> None:
         f"TTA={'Enabled' if cfg.use_tta else 'Disabled'}"
     )
 
-    # 3. Data Loading and Preparation
     # Retrieve dataset metadata from registry
     ds_meta = DATASET_REGISTRY[cfg.dataset_name.lower()]
+    run_logger.info(f"Dataset selected: {cfg.dataset_name} with {ds_meta.num_classes} classes.")
+
+    # 3. Data Loading and Preparation
     data = load_medmnist(ds_meta)
     
     # Optional: Visual check of samples (saved to run-specific figures directory)

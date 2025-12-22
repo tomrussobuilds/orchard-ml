@@ -28,10 +28,20 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from scripts.core import Config
 
 # =========================================================================== #
-#                               VISUALIZATION FUNCTIONS
+#                                CONFIGURATION
 # =========================================================================== #
+# Set a professional style for all plots
+try:
+    plt.style.use('seaborn-v0_8-muted')
+except OSError:
+    plt.style.use('ggplot') # Fallback style
+
 # Global logger instance
 logger = logging.getLogger("medmnist_pipeline")
+
+# =========================================================================== #
+#                               VISUALIZATION FUNCTIONS
+# =========================================================================== #
 
 def show_predictions(images: np.ndarray,
                      true_labels: np.ndarray,
@@ -54,7 +64,6 @@ def show_predictions(images: np.ndarray,
         save_path (Path | None): Path to save the figure. If None, the plot is shown.
         cfg (Config | None): Configuration object for title metadata.
     """
-    # Ensure n is a multiple of 4 for a clean 3x4 grid or similar
     if n > len(images):
         n = len(images)
     
@@ -62,7 +71,6 @@ def show_predictions(images: np.ndarray,
     cols = 4
 
     plt.figure(figsize=(12, 3 * rows))
-    # Randomly select N indices from the test set
     indices = np.random.choice(len(images), n, replace=False)
 
     for i, idx in enumerate(indices):
@@ -71,7 +79,13 @@ def show_predictions(images: np.ndarray,
         pred_label = int(preds[idx])
 
         plt.subplot(rows, cols, i+1)
-        plt.imshow(img)
+        
+        # Support for grayscale (H, W) or RGB (H, W, C)
+        if img.ndim == 2:
+            plt.imshow(img, cmap='gray')
+        else:
+            plt.imshow(img)
+            
         color = "green" if true_label == pred_label else "red"
         
         plt.title(
@@ -81,9 +95,7 @@ def show_predictions(images: np.ndarray,
         plt.axis("off")
     
     model_title = cfg.model_name if cfg else "Model"
-    dataset_title = cfg.dataset_name if (cfg and hasattr(cfg, 'dataset_name')) else "Dataset"
-
-    plt.suptitle(f"Test Predictions — {model_title} on {dataset_title}", fontsize=16)
+    plt.suptitle(f"Test Predictions — {model_title}", fontsize=16)
     plt.tight_layout()
 
     if save_path:
@@ -99,34 +111,45 @@ def plot_training_curves(
         train_losses: Sequence[float],
         val_accuracies: Sequence[float],
         out_path: Path,
-        cfg: Config | None = None
+        save_npz: bool = True
 ) -> None:
     """
-    Plots the training loss and validation accuracy curves on a dual-axis plot.
+    Plots the training loss and validation accuracy curves on a dual-axis plot
+    and optionally saves the raw numerical data.
 
     Args:
         train_losses (Sequence[float]): List of training losses per epoch.
         val_accuracies (Sequence[float]): List of validation accuracies per epoch.
         out_path (Path): Path to save the generated plot.
+        save_npz (bool): Whether to save raw data to a .npz file.
     """
-    fig, ax1 = plt.subplots(figsize=(8, 6))
+    fig, ax1 = plt.subplots(figsize=(9, 6))
 
     # Plot Training Loss on the left axis (ax1)
-    ax1.plot(train_losses, 'r-', label="Training Loss")
+    ax1.plot(train_losses, color='#e74c3c', lw=2, label="Training Loss")
     ax1.set_xlabel("Epoch")
-    ax1.set_ylabel("Loss", color='r')
-    ax1.tick_params(axis='y', labelcolor='r')
-    ax1.grid(True, linestyle='--', alpha=0.6)
+    ax1.set_ylabel("Loss", color='#e74c3c', fontweight='bold')
+    ax1.tick_params(axis='y', labelcolor='#e74c3c')
+    ax1.grid(True, linestyle='--', alpha=0.4)
 
     # Plot Validation Accuracy on the right axis (ax2)
     ax2 = ax1.twinx()
-    ax2.plot(val_accuracies, 'b-', label="Validation Accuracy")
-    ax2.set_ylabel("Accuracy", color='b')
-    ax2.tick_params(axis='y', labelcolor='b')
+    ax2.plot(val_accuracies, color='#3498db', lw=2, label="Validation Accuracy")
+    ax2.set_ylabel("Accuracy", color='#3498db', fontweight='bold')
+    ax2.tick_params(axis='y', labelcolor='#3498db')
 
-    plt.title("Training Loss & Validation Accuracy", fontsize=14)
+    plt.title("Training Loss & Validation Accuracy", fontsize=14, pad=15)
     fig.tight_layout()
+    
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(out_path, dpi=200, bbox_inches="tight")
+    logger.info(f"Training curves saved → {out_path}")
+
+    if save_npz:
+        npz_path = out_path.with_suffix('.npz')
+        np.savez(npz_path, train_losses=train_losses, val_accuracies=val_accuracies)
+        logger.info(f"Raw training data saved → {npz_path}")
+
     plt.close()
 
 def plot_confusion_matrix(
@@ -154,47 +177,14 @@ def plot_confusion_matrix(
     )
 
     fig, ax = plt.subplots(figsize=(11, 9))
+    # Using a clean color map for the matrix
     disp.plot(ax=ax, cmap="Blues", xticks_rotation=45, colorbar=False, values_format='.3f')
 
-    plt.title(f"Confusion Matrix – {cfg.model_name} on {cfg.dataset_name}", fontsize=14, pad=20)
+    model_name = cfg.model_name if cfg else "Model"
+    plt.title(f"Confusion Matrix – {model_name}", fontsize=14, pad=20)
+    
     plt.tight_layout()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out_path, dpi=300, bbox_inches="tight")
     plt.close()
     logger.info(f"Confusion matrix saved → {out_path}")
-
-def save_training_curves(
-        train_losses: Sequence[float],
-        val_accuracies: Sequence[float],
-        out_dir: Path,
-        cfg: Config | None = None
-    ) -> None:
-    """Plots and saves training curves and their raw data to disk."""
-    plot_training_curves(train_losses, val_accuracies, out_dir / "training_curves.png")
-
-    # Save raw data for later analysis
-    np.savez(
-        out_dir / "training_curves.npz",
-        train_losses=train_losses,
-        val_accuracies=val_accuracies,
-    )
-    logger.info(f"Training curves data saved → {out_dir / 'training_curves.npz'}")
-
-def save_sample_predictions(
-        images: np.ndarray,
-        true_labels: np.ndarray,
-        classes: List[str],
-        all_preds: np.ndarray,
-        out_path: Path,
-        cfg: Config | None = None
-    ) -> None:
-    """Generates and saves a figure showing sample predictions."""
-    show_predictions(
-        images=images,
-        true_labels=true_labels,
-        classes=classes,
-        all_preds=all_preds,
-        n=12,
-        save_path=out_path,
-        cfg=cfg
-    )
-    logger.info(f"Sample predictions figure saved → {out_path}")

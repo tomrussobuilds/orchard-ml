@@ -57,15 +57,13 @@ class Config(BaseModel):
     mixup_alpha: float = Field(default=0.002, ge=0.0)
     use_tta: bool = True
     
-    # Metadata for Reporting
-    model_name: str = "ResNet-18 Adapted"
-    dataset_name: str = "BloodMNIST"
-    normalization_info: str = "ImageNet Mean/Std"
-    
     # Data Augmentation Parameters
     hflip: float = Field(default=0.5, ge=0.0, le=1.0)
     rotation_angle: int = Field(default=10, ge=0, le=180)
     jitter_val: float = Field(default=0.2, ge=0.0)
+
+    model_name: str = "ResNet-18 Adapted"
+    dataset_name: str = "BloodMNIST"
 
 # =========================================================================== #
 #                                ARGUMENT PARSING
@@ -78,8 +76,10 @@ def parse_args() -> argparse.Namespace:
     Returns:
         argparse.Namespace: An object containing all parsed command line arguments.
     """
+    from .dataset_metadata import DATASET_REGISTRY
+
     parser = argparse.ArgumentParser(
-        description="BloodMNIST training pipeline based on adapted ResNet-18.",
+        description="MedMNIST training pipeline based on adapted ResNet-18.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter # Aggiunge i default automaticamente nell'help
     )
     
@@ -134,7 +134,9 @@ def parse_args() -> argparse.Namespace:
     )
     aug_group.add_argument(
         '--no_tta',
-        action='store_true',
+        action='store_false',
+        dest='use_tta',
+        default=default_cfg.use_tta,
         help="Disable TTA during final evaluation."
     )
     aug_group.add_argument(
@@ -153,4 +155,25 @@ def parse_args() -> argparse.Namespace:
         default=default_cfg.jitter_val
     )
     
+    # Group: Dataset Selection
+    dataset_group = parser.add_argument_group("Dataset Configuration")
+
+    dataset_group.add_argument(
+        '--dataset',
+        type=str,
+        default="bloodmnist",
+        choices=DATASET_REGISTRY.keys(),
+        help="Target MedMNIST dataset."
+    )
+
+    # Group: Model Selection
+    model_group = parser.add_argument_group("Model Configuration")
+
+    model_group.add_argument(
+        '--model_name',
+        type=str,
+        default="ResNet-18 Adapted",
+        help="Architecture identifier."
+    )
+
     return parser.parse_args()
