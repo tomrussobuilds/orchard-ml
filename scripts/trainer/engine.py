@@ -21,6 +21,11 @@ import numpy as np
 from tqdm import tqdm
 
 # =========================================================================== #
+#                                Internal Imports                             #
+# =========================================================================== #
+from scripts.core import Config
+
+# =========================================================================== #
 #                               MIXUP UTILITY                                 #
 # =========================================================================== #
 # Global logger instance
@@ -107,7 +112,7 @@ def train_one_epoch(
     device: torch.device,
     epoch: int,
     total_epochs: int,
-    mixup_alpha: float
+    cfg: Config,
 ) -> float:
     """
     Performs a single training cycle over the training set, applying MixUp
@@ -117,18 +122,17 @@ def train_one_epoch(
     running_loss: float = 0.0
     progress_bar = tqdm(train_loader, desc=f"Training", leave=False)
     
-    # Gradually disable MixUp after 50% of epochs (as per the code logic)
-    alpha = mixup_alpha
-    if epoch > int(0.5 * total_epochs):
-        alpha = 0.0
+    # Determine if MixUp should be applied this epoch
+    cosine_limit = int(cfg.cosine_fraction * cfg.epochs)
+    current_alpha = cfg.mixup_alpha if epoch <= cosine_limit else 0.0
     
     for inputs, targets in progress_bar:
         inputs, targets = inputs.to(device), targets.to(device)
 
-        if alpha > 0:
+        if current_alpha > 0:
             # Apply MixUp
             inputs, targets_a, targets_b, lam = mixup_data(
-                inputs, targets, alpha, device
+                inputs, targets, current_alpha, device
             )
             outputs = model(inputs)
             loss = mixup_criterion(criterion, outputs, targets_a, targets_b, lam)

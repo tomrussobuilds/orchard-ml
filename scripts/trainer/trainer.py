@@ -80,10 +80,10 @@ class ModelTrainer:
         )
         
         # Schedulers
-        cosine_epochs = int(0.5 * self.epochs)
+        self.cosine_limit = int(cfg.cosine_fraction * cfg.epochs)
         self.cosine_scheduler = CosineAnnealingLR(
             self.optimizer,
-            T_max=cosine_epochs,
+            T_max=self.cosine_limit,
             eta_min=1e-4
         )
         self.plateau_scheduler = ReduceLROnPlateau(
@@ -137,8 +137,7 @@ class ModelTrainer:
             self.val_accuracies.append(val_acc)
 
             # Learning Rate Scheduling: Cosine Annealing first, then Plateau
-            cosine_epochs = int(0.6 * self.epochs)
-            if epoch <= cosine_epochs: 
+            if epoch <= self.cosine_limit:
                 self.cosine_scheduler.step()
             else:
                 self.plateau_scheduler.step(val_acc)

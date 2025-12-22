@@ -56,6 +56,7 @@ class Config(BaseModel):
     weight_decay: float = Field(default=5e-4, ge=0.0)
     mixup_alpha: float = Field(default=0.002, ge=0.0)
     use_tta: bool = True
+    cosine_fraction: float = Field(default=0.5, ge=0.0, le=1.0)
     
     # Data Augmentation Parameters
     hflip: float = Field(default=0.5, ge=0.0, le=1.0)
@@ -130,7 +131,12 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=default_cfg.weight_decay
     )
-    
+    train_group.add_argument(
+        '--cosine_fraction',
+        type=float,
+        default=default_cfg.cosine_fraction,
+        help="Fraction of total epochs to apply cosine annealing before switching to ReduceLROnPlateau."
+    )
     # Group: Regularization & Augmentation
     aug_group = parser.add_argument_group("Regularization & Augmentation")
     
