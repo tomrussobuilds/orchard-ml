@@ -40,27 +40,31 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     Orchestrates a lightweight version of the main pipeline to ensure 
     code stability and prevent regression bugs.
     """
-    # 1. Setup Config
+    # Setup Config
     # Create Config from CLI args using your Pydantic factory
     cfg = Config.from_args(args)
 
     # Use model_copy to override values because the Config class is 'frozen=True'
     cfg = cfg.model_copy(update={
-        "epochs": 1,
-        "max_samples": 16,
-        "batch_size": 4,
-        "use_weighted_sampler": False,
-        "num_workers": 0
+        "num_workers": 0,
+        "training": cfg.training.model_copy(update={
+            "epochs": 1,
+            "batch_size": 4,
+        }),
+        "dataset": cfg.dataset.model_copy(update={
+            "max_samples": 16,
+            "use_weighted_sampler": False
+        })
     })
     
     dataset_key = args.dataset.lower()
     ds_meta = DATASET_REGISTRY[dataset_key]
 
-    # 2. Environment Initialization
+    # Environment Initialization
     setup_static_directories()
 
     # Define execution paths
-    paths = RunPaths(f"SMOKE_TEST_{cfg.model_name}", cfg.dataset_name)
+    paths = RunPaths(f"SMOKE_TEST_{cfg.model_name}", cfg.dataset.dataset_name)
 
     # Setup Logger
     Logger.setup(
@@ -69,25 +73,30 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     )
     run_logger = logging.getLogger(paths.project_id)
     
-    run_logger.info("\n" + "="*60)
-    run_logger.info(f"INITIALIZING SMOKE TEST - {cfg.dataset_name.upper()}".center(60))
-    run_logger.info("="*60 + "\n")
+    header_text = f" INITIALIZING SMOKE TEST: {cfg.dataset.dataset_name.upper()} "
+    divider = "=" * max(60, len(header_text))
+    
+    run_logger.info(divider)
+    run_logger.info(header_text.center(len(divider), " "))
+    run_logger.info(divider)
+    
+    run_logger.info(f"Environment verified. Working directory: {paths.root}")
 
-    set_seed(cfg.seed)
+    set_seed(cfg.training.seed)
     device = torch.device("cpu")
     
     run_logger.info("Starting Smoke Test: Environment verified.")
 
-    # 3. Data Loading (Lazy Metadata)
+    # Data Loading (Lazy Metadata)
     data = load_medmnist(ds_meta)
-    run_logger.info(f"Generating DataLoaders with max_samples={cfg.max_samples}...")
+    run_logger.info(f"Generating DataLoaders with max_samples={cfg.dataset.max_samples}...")
     train_loader, val_loader, test_loader = get_dataloaders(data, cfg)
 
-    # 4. Model Factory Check
+    # Model Factory Check
     model = get_model(device=device, cfg=cfg)
     run_logger.info(f"Model {cfg.model_name} instantiated on {device}.")
 
-    # 5. Training Loop Execution
+    # Training Loop Execution
     run_logger.info("Executing training epoch...")
     trainer = ModelTrainer(
         model=model,
@@ -101,7 +110,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     # The trainer returns the exact path where it saved the checkpoint
     best_path, train_losses, val_accuracies = trainer.train()
 
-    # 6. Final Evaluation & Visualization Verification
+    # Final Evaluation & Visualization Verification
     run_logger.info("Running final evaluation and reporting...")
 
     # Verification: Ensure the file was actually written before loading
@@ -119,7 +128,6 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     
     aug_info = get_augmentations_description(cfg)
 
-    # Note: test_images/labels=None triggers the batch extraction logic
     macro_f1, test_acc = run_final_evaluation(
         model=model,
         test_loader=test_loader,
@@ -131,7 +139,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
         device=device,
         paths=paths,
         cfg=cfg,
-        use_tta=cfg.use_tta,
+        use_tta=cfg.training.use_tta,
         aug_info=aug_info
     )
 
@@ -147,7 +155,6 @@ if __name__ == "__main__":
     from scripts.core import parse_args
     cli_args = parse_args()
     try:
-        # We pass the parsed arguments to the smoke test function
         run_smoke_test(args=cli_args)
     except Exception as e:
         # Fallback to basic logging if run_logger initialization fails

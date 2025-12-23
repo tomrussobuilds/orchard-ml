@@ -80,15 +80,30 @@ def show_predictions(images: np.ndarray,
     indices = np.arange(n)
 
     for i, idx in enumerate(indices):
+        # Initialize img variable from the input array
         img = images[idx].copy()
+
+        # Handle Denormalization if Config is provided
+        if cfg and hasattr(cfg, 'dataset'):
+            mean = np.array(cfg.dataset.mean)
+            std = np.array(cfg.dataset.std)
+
+            if img.shape[-1] == 3:
+                mean = mean.reshape(1, 1, -1)
+                std = std.reshape(1, 1, -1)
+            else:
+                mean = mean.reshape(-1, 1, 1)
+                std = std.reshape(-1, 1, 1)
+
+            img = (img * std) + mean
+            img = np.clip(img, 0, 1)
+
+        # Transpose from (C, H, W) to (H, W, C) for matplotlib compatibility
+        if img.ndim == 3 and img.shape[0] == 3:
+            img = np.transpose(img, (1, 2, 0))
+
         true_label = int(true_labels[idx])
         pred_label = int(preds[idx])
-
-        if cfg and hasattr(cfg, 'mean') and hasattr(cfg, 'std'):
-            mean = np.array(cfg.augmentation.mean)
-            std = np.array(cfg.augmentation.std)
-            img = img * std + mean
-            img = np.clip(img, 0, 1)
 
         plt.subplot(rows, cols, i+1)
         

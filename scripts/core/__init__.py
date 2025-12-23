@@ -8,7 +8,12 @@ system management, project constants and the dynamic dataset registry.
 # =========================================================================== #
 #                                Configuration
 # =========================================================================== #
-from .config import Config
+from .config import (
+    Config,
+    DatasetConfig,
+    TrainingConfig,
+    AugmentationConfig
+)
 
 # =========================================================================== #
 #                                Constants & Paths

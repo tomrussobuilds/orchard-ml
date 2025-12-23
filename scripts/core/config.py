@@ -67,9 +67,7 @@ class SystemConfig(BaseModel):
     save_model: bool = True
     log_interval: int = Field(default=10, gt=0)
 
-    @field_validator(
-            "data_dir", "output_dir", mode="after"
-    )
+    @field_validator("data_dir", "output_dir", mode="after")
     @classmethod
     def ensure_directories_exist(cls, v: Path) -> Path:
         "Ensure paths are absolute and create folders if missing."

@@ -120,7 +120,7 @@ def create_structured_report(
         learning_rate=cfg.training.learning_rate,
         batch_size=cfg.training.batch_size,
         augmentations=aug_info,
-        normalization=cfg.training.normalization_info,
+        normalization=cfg.dataset.normalization_info,
         model_path=str(best_path),
         log_path=str(log_path),
         seed=cfg.training.seed,
