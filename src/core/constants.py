@@ -6,13 +6,14 @@ directory structure and provides the `RunPaths` orchestrator to manage
 unique, timestamped experiment directories, ensuring that logs, models, 
 and reports are never overwritten.
 """
+
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
 import time
+import re
 from pathlib import Path
 from typing import Final, List, Optional
-import re
 
 # =========================================================================== #
 #                                PATH CALCULATIONS                            #
@@ -20,18 +21,28 @@ import re
 
 def get_project_root() -> Path:
     """
-    Returns the absolute path to the project root directory.
+    Dynamically locates the project root by searching for anchor files.
     
-    The root is assumed to be two levels above the directory where this file resides.
+    Starts from the current file's directory and traverses upwards until 
+    it finds a marker (e.g., '.git', 'requirements.txt'). Fallback to 
+    fixed parents if no markers are found.
     """
-    try:
-        # Resolves: scripts/core/constants.py -> scripts/core/ -> scripts/ -> root/
-        return Path(__file__).resolve().parent.parent.parent
-    except NameError:
-        # Fallback for interactive environments
-        return Path.cwd().resolve()
+    # Start from the directory of this file
+    current_path = Path(__file__).resolve().parent
+    
+    # Look for markers that define the project root
+    root_markers = {".git",
+                    "requirements.txt",
+                    "README.md"
+                    }
+    
+    for parent in [current_path] + list(current_path.parents):
+        if any((parent / marker).exists() for marker in root_markers):
+            return parent
+            
+    return current_path.parent.parent
 
-PROJECT_ROOT: Final[Path] = get_project_root()
+PROJECT_ROOT: Final[Path] = get_project_root().resolve()
 
 # =========================================================================== #
 #                                STATIC DIRECTORIES                           #
@@ -97,7 +108,6 @@ class RunPaths:
     
     def __repr__(self) -> str:
         return f"RunPaths(run_id={self.run_id}, root={self.root})"
-
 
 # =========================================================================== #
 #                                INITIAL SETUP                                #

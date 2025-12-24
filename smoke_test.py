@@ -20,16 +20,15 @@ import argparse
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from scripts.core import (
-    Config, Logger, set_seed, DATASET_REGISTRY, RunPaths, 
-    setup_static_directories
+from src.core import (
+    Config, RootOrchestrator, DATASET_REGISTRY, parse_args
 )
-from scripts.data_handler import (
+from src.data_handler import (
     load_medmnist, get_dataloaders, get_augmentations_description
 )
-from scripts.models import get_model
-from scripts.trainer import ModelTrainer
-from scripts.evaluation import run_final_evaluation
+from src.models import get_model
+from src.trainer import ModelTrainer
+from src.evaluation import run_final_evaluation
 
 # =========================================================================== #
 #                               SMOKE TEST EXECUTION                          #
@@ -40,39 +39,28 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     Orchestrates a lightweight version of the main pipeline to ensure 
     code stability and prevent regression bugs.
     """
-    # Setup Config
-    # Create Config from CLI args using your Pydantic factory
-    cfg = Config.from_args(args)
-
-    # Use model_copy to override values because the Config class is 'frozen=True'
-    cfg = cfg.model_copy(update={
+    # 1. Configuration Setup & Override
+    # Create Config from CLI args and force minimal parameters for rapid testing
+    base_cfg = Config.from_args(args)
+    
+    cfg = base_cfg.model_copy(update={
         "num_workers": 0,
-        "training": cfg.training.model_copy(update={
+        "training": base_cfg.training.model_copy(update={
             "epochs": 1,
             "batch_size": 4,
         }),
-        "dataset": cfg.dataset.model_copy(update={
+        "dataset": base_cfg.dataset.model_copy(update={
             "max_samples": 16,
             "use_weighted_sampler": False
         })
     })
-    
-    dataset_key = args.dataset.lower()
-    ds_meta = DATASET_REGISTRY[dataset_key]
 
-    # Environment Initialization
-    setup_static_directories()
+    # 2. Root Orchestration
+    # The RootOrchestrator handles directory creation, logging, and safety
+    orchestrator = RootOrchestrator(cfg)
+    paths = orchestrator.initialize_core_services()
+    run_logger = orchestrator.run_logger
 
-    # Define execution paths
-    paths = RunPaths(f"SMOKE_TEST_{cfg.model_name}", cfg.dataset.dataset_name)
-
-    # Setup Logger
-    Logger.setup(
-        name=paths.project_id,
-        log_dir=paths.logs
-    )
-    run_logger = logging.getLogger(paths.project_id)
-    
     header_text = f" INITIALIZING SMOKE TEST: {cfg.dataset.dataset_name.upper()} "
     divider = "=" * max(60, len(header_text))
     
@@ -80,23 +68,21 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     run_logger.info(header_text.center(len(divider), " "))
     run_logger.info(divider)
     
-    run_logger.info(f"Environment verified. Working directory: {paths.root}")
-
-    set_seed(cfg.training.seed)
+    # Force CPU for smoke testing to ensure portability
     device = torch.device("cpu")
-    
-    run_logger.info("Starting Smoke Test: Environment verified.")
+    run_logger.info(f"Smoke test execution started on {device}.")
 
-    # Data Loading (Lazy Metadata)
+    # 3. Data Loading (Lazy Metadata)
+    ds_meta = DATASET_REGISTRY[cfg.dataset.dataset_name.lower()]
     data = load_medmnist(ds_meta)
     run_logger.info(f"Generating DataLoaders with max_samples={cfg.dataset.max_samples}...")
     train_loader, val_loader, test_loader = get_dataloaders(data, cfg)
 
-    # Model Factory Check
+    # 4. Model Factory Check
     model = get_model(device=device, cfg=cfg)
-    run_logger.info(f"Model {cfg.model_name} instantiated on {device}.")
+    run_logger.info(f"Model {cfg.model_name} instantiated.")
 
-    # Training Loop Execution
+    # 5. Training Loop Execution
     run_logger.info("Executing training epoch...")
     trainer = ModelTrainer(
         model=model,
@@ -107,20 +93,16 @@ def run_smoke_test(args: argparse.Namespace) -> None:
         output_dir=paths.models
     )
     
-    # The trainer returns the exact path where it saved the checkpoint
     best_path, train_losses, val_accuracies = trainer.train()
 
-    # Final Evaluation & Visualization Verification
+    # 6. Final Evaluation & Visualization Verification
     run_logger.info("Running final evaluation and reporting...")
 
-    # Verification: Ensure the file was actually written before loading
     if not best_path.exists():
         run_logger.error(f"Checkpoint missing! Expected at: {best_path}")
-        raise FileNotFoundError(
-            f"Checkpoint not found in: {best_path}"
-        )
+        raise FileNotFoundError(f"Checkpoint not found in: {best_path}")
     
-    # Load the best weights using the path provided by the trainer
+    # Load weights to verify checkpoint integrity
     model.load_state_dict(
         torch.load(best_path, map_location=device, weights_only=True)
     )
@@ -152,11 +134,11 @@ def run_smoke_test(args: argparse.Namespace) -> None:
 # =========================================================================== #
 
 if __name__ == "__main__":
-    from scripts.core import parse_args
     cli_args = parse_args()
     try:
         run_smoke_test(args=cli_args)
     except Exception as e:
-        # Fallback to basic logging if run_logger initialization fails
+        # Emergency logging if the orchestrator/logger fails
+        logging.basicConfig(level=logging.ERROR)
         logging.error(f"SMOKE TEST FAILED: {str(e)}", exc_info=True)
         raise

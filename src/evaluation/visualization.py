@@ -25,7 +25,7 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 # =========================================================================== #
 #                                Internal Imports
 # =========================================================================== #
-from scripts.core import Config
+from src.core import Config
 
 # =========================================================================== #
 #                                CONFIGURATION

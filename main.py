@@ -7,8 +7,8 @@ an adapted ResNet-18 architecture to various MedMNIST datasets (e.g., BloodMNIST
 Key Pipeline Features:
 1. Dynamic Configuration: Metadata-driven setup (mean/std, classes, channels) 
    leveraging a centralized Dataset Registry.
-2. System Safety: Ensures environment reproducibility via seeding and prevents 
-   resource conflicts through single-instance locking and process management.
+2. Root Orchestration: Centralized environment setup via RootOrchestrator 
+   (seeding, locking, directory management, and logging).
 3. Data Management: Handles automated loading, subset mocking for testing, 
    and robust PyTorch DataLoader creation with configurable augmentations.
 4. Model Orchestration: Factory-based initialization of specialized architectures.
@@ -21,96 +21,47 @@ Key Pipeline Features:
 # =========================================================================== #
 #                                Standard Imports
 # =========================================================================== #
-import logging
-from pathlib import Path
-
-# =========================================================================== #
-#                                Third-Party Imports
-# =========================================================================== #
 import torch
 
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from scripts.core import (
-    Config, Logger, parse_args, set_seed, kill_duplicate_processes, get_cuda_name, 
-    DATASET_REGISTRY, RunPaths, setup_static_directories, ensure_single_instance
+from src.core import (
+    Config, parse_args, DATASET_REGISTRY, RootOrchestrator
 )
-from scripts.data_handler import (
+from src.data_handler import (
     load_medmnist, get_dataloaders, show_sample_images, get_augmentations_description
 )
-from scripts.models import get_model
-from scripts.trainer import ModelTrainer
-from scripts.evaluation import run_final_evaluation
+from src.models import get_model
+from src.trainer import ModelTrainer
+from src.evaluation import run_final_evaluation
 
 # =========================================================================== #
 #                               MAIN EXECUTION
 # =========================================================================== #
-# Global logger instance
-logger = logging.getLogger("medmnist_pipeline")
 
 def main() -> None:
     """
     The main function that controls the entire training and evaluation flow.
     """
     
-    # 1. Configuration Setup
+    # 1. Configuration & Root Orchestration
     args = parse_args()
-    
-    # Initialize configuration from command-line arguments
     cfg = Config.from_args(args)
     
-    # Initialize Seed
-    set_seed(cfg.training.seed)
-
-    # Setup base project structure
-    setup_static_directories()
-
-    # 2. Environment Initialization
-    lock_path = Path("/tmp/medmnist_training.lock")
-
-    # Initialize dynamic paths for the current run
-    paths = RunPaths(
-        dataset_slug=cfg.dataset.dataset_name,
-        model_name=cfg.model_name,
-        base_dir=cfg.system.output_dir
-    )
+    # Initialize Core Services (Seed, Paths, Logs, Locks)
+    # This encapsulates the system-level boilerplate previously in main
+    orchestrator = RootOrchestrator(cfg)
+    paths = orchestrator.initialize_core_services()
     
-    # Setup logger with run-specific file
-    Logger.setup(
-        name=paths.project_id,
-        log_dir=paths.logs
-    )
-    run_logger = logging.getLogger(paths.project_id)
-    
-    ensure_single_instance(
-        lock_file=lock_path,
-        logger=run_logger
-    )
-    kill_duplicate_processes(
-        logger=run_logger
-    )
-
-    device_str = cfg.system.device
-    device = torch.device(device_str)
-    run_logger.info(f"Execution Device: {device_str.upper()}")
-    if args.device.lower() != device_str:
-        run_logger.warning(
-            f"Hardware Fallback: Requested '{args.device}', but using '{device_str}'"
-        )
-    
-    run_logger.info(f"Run Directory initialized: {paths.root}")
-    run_logger.info(
-        f"Hyperparameters: LR={cfg.training.learning_rate:.4f}, Momentum={cfg.training.momentum:.2f}, "
-        f"Batch={cfg.training.batch_size}, Epochs={cfg.training.epochs}, MixUp={cfg.training.mixup_alpha}, "
-        f"TTA={'Enabled' if cfg.training.use_tta else 'Disabled'}"
-    )
+    # Access the logger initialized by the orchestrator
+    run_logger = orchestrator.run_logger
 
     # Retrieve dataset metadata from registry
     ds_meta = DATASET_REGISTRY[cfg.dataset.dataset_name.lower()]
     run_logger.info(f"Dataset selected: {cfg.dataset.dataset_name} with {cfg.dataset.num_classes} classes.")
 
-    # 3. Data Loading and Preparation
+    # 2. Data Loading and Preparation
     # 'data' is now a metadata container for Lazy Loading
     data = load_medmnist(ds_meta)
 
@@ -118,7 +69,6 @@ def main() -> None:
     train_loader, val_loader, test_loader = get_dataloaders(data, cfg)
     
     # Optional: Visual check of samples (saved to run-specific figures directory)
-    # Updated to use loader instead of raw X_train for Lazy Loading compatibility
     show_sample_images(
         loader=train_loader,
         classes=ds_meta.classes,
@@ -126,10 +76,11 @@ def main() -> None:
         cfg=cfg
     )
 
-    # 4. Model Initialization (Factory Pattern)
+    # 3. Model Initialization (Factory Pattern)
+    device = torch.device(cfg.system.device)
     model = get_model(device=device, cfg=cfg)
 
-    # 5. Training Execution
+    # 4. Training Execution
     run_logger.info("Starting training pipeline".center(60, "="))
 
     trainer = ModelTrainer(
@@ -152,7 +103,7 @@ def main() -> None:
     )
     run_logger.info(f"Loaded best checkpoint weights from: {best_path}")
 
-    # 6. Final Evaluation (Metrics & Plots)
+    # 5. Final Evaluation (Metrics & Plots)
     aug_info = get_augmentations_description(cfg)
 
     # test_images and test_labels set to None to trigger Lazy extraction from loader

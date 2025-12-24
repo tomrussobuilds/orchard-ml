@@ -3,6 +3,7 @@ Core Utilities Package
 
 This package exposes the essential components for configuration, logging, 
 system management, project constants and the dynamic dataset registry.
+It also includes the RootOrchestrator to manage experiment lifecycle initialization.
 """
 
 # =========================================================================== #
@@ -30,16 +31,25 @@ from .constants import (
 # =========================================================================== #
 #                                Dataset Registry
 # =========================================================================== #
-from .dataset_metadata import (
+# Now importing from the metadata package facade
+from .metadata import (
     DatasetMetadata,
     DATASET_REGISTRY
 )
 
 # =========================================================================== #
-#                                Logging & System
+#                                Environment Orchestration                    #
+# =========================================================================== #
+from .orchestrator import RootOrchestrator
+
+# =========================================================================== #
+#                                Logging                                      #
 # =========================================================================== #
 from .logger import Logger
 
+# =========================================================================== #
+#                                System Management                            #
+# =========================================================================== #
 from .system import (
     set_seed, 
     detect_best_device, 

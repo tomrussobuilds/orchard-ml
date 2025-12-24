@@ -23,9 +23,9 @@ import pandas as pd
 # =========================================================================== #
 #                                Internal Imports
 # =========================================================================== #
-from scripts.core import Config
+from src.core import Config
 if TYPE_CHECKING:
-    from scripts.core import RunPaths
+    from src.core import RunPaths
 
 # =========================================================================== #
 #                               EXCEL REPORTS
@@ -104,7 +104,7 @@ def create_structured_report(
     # Use provided aug_info or fallback to a dynamic check if needed
     if aug_info is None:
         try:
-            from scripts.data_handler import get_augmentations_transforms
+            from src.data_handler import get_augmentations_transforms
             aug_info = get_augmentations_transforms(cfg)
         except ImportError:
             aug_info = "N/A"

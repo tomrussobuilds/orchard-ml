@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from scripts.core import Config
+from src.core import Config
 from .factory import DataLoader
 
 # ========================================================================== #

@@ -22,7 +22,7 @@ import numpy as np
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from scripts.core import (
+from src.core import (
     md5_checksum, validate_npz_keys, 
     DatasetMetadata
 )

@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from scripts.core import Config
+from src.core import Config
 from .fetcher import MedMNISTData
 from .dataset import MedMNISTDataset
 from .transforms import get_pipeline_transforms, worker_init_fn

@@ -2,8 +2,8 @@
 Health Check and Integrity Module
 
 This script iterates through all registered MedMNIST datasets to:
-1. Initialize the environment and security locks.
-2. Download and verify MD5 checksums for each .npz file.
+1. Initialize the environment and security locks via RootOrchestrator.
+2. Download and verify MD5 checksums for each .npz file (where applicable).
 3. Validate internal keys and data consistency.
 4. Generate visual samples to confirm correct mapping of labels/classes.
 """
@@ -11,8 +11,11 @@ This script iterates through all registered MedMNIST datasets to:
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
-import logging
 from pathlib import Path
+
+# =========================================================================== #
+#                                Third-Party Imports                          #
+# =========================================================================== #
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
@@ -20,36 +23,37 @@ from torch.utils.data import DataLoader, TensorDataset
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from scripts.core import (
-    Config, Logger, set_seed, detect_best_device, 
-    DATASET_REGISTRY, setup_static_directories, ensure_single_instance,
-    kill_duplicate_processes, DatasetConfig, TrainingConfig, AugmentationConfig
+from src.core import (
+    Config, DatasetConfig, TrainingConfig, AugmentationConfig,
+    DATASET_REGISTRY, RootOrchestrator
 )
-
-from scripts.data_handler.data_explorer import show_sample_images
+from src.data_handler.data_explorer import show_sample_images
 
 # =========================================================================== #
 #                               HEALTH CHECK LOGIC                            #
 # =========================================================================== #
 
 def health_check() -> None:
-
-    set_seed(42)
-    setup_static_directories()
-
-    log_dir = Path("outputs/health_checks")
-    log_dir.mkdir(parents=True, exist_ok=True)
-    Logger.setup(name="health_check", log_dir=log_dir)
-    logger = logging.getLogger("health_check")
-
-    lock_path = Path("/tmp/medmnist_health.lock")
+    """
+    Performs a global integrity scan across all datasets defined in the registry.
+    """
     
-    ensure_single_instance(lock_file=lock_path, logger=logger)
-    kill_duplicate_processes(logger=logger)
-    
-    device = detect_best_device()
-    logger.info(f"Computing on: {device}")
+    # 1. Minimal Config for Orchestration
+    # We create a base config to satisfy the Orchestrator's requirements
+    base_cfg = Config(
+        model_name="HealthCheck-Probe",
+        system={"output_dir": Path("outputs/health_checks")},
+        training={"seed": 42}
+    )
 
+    # 2. Root Orchestration
+    # Handles seeding, static dirs, and safety locks
+    orchestrator = RootOrchestrator(base_cfg)
+    
+    # Note: We manually point the lock and log for health check specifically
+    orchestrator.initialize_core_services()
+    logger = orchestrator.run_logger
+    
     # Professional header with dynamic divider width
     divider = "=" * 60
     header = "STARTING GLOBAL MEDMNIST HEALTH CHECK"
@@ -80,7 +84,7 @@ def health_check() -> None:
             logger.info(f"Channels: {ds_meta.in_channels} | Classes: {num_classes_val}")
 
             # 2. Prepare Tensors for the temporary DataLoader
-            # Convert to float and scale to [0, 1] as expected by your visualization logic
+            # Convert to float and scale to [0, 1] as expected by visualization logic
             images_t = torch.from_numpy(train_images).float() / 255.0
             
             # Reorder dimensions from NHWC (MedMNIST) to NCHW (PyTorch)
@@ -95,7 +99,7 @@ def health_check() -> None:
             temp_ds = TensorDataset(images_t, labels_t)
             temp_loader = DataLoader(temp_ds, batch_size=16, shuffle=True)
 
-            # 4. Properly nested Config initialization for Pydantic
+            # 4. Properly nested Config initialization for Pydantic validation
             temp_cfg = Config(
                 model_name="HealthCheck-Probe",
                 dataset=DatasetConfig(
@@ -107,13 +111,7 @@ def health_check() -> None:
                 training=TrainingConfig(
                     seed=42,
                     batch_size=16,
-                    learning_rate=0.001,
-                    momentum=0.9,
-                    weight_decay=0.0,
-                    epochs=1,
-                    patience=1,
-                    mixup_alpha=0.0,
-                    use_tta=False
+                    epochs=1
                 ),
                 augmentation=AugmentationConfig(
                     hflip=0.5,
@@ -123,7 +121,8 @@ def health_check() -> None:
             )
 
             # 5. Generate sample images using the temporary loader
-            sample_output_path = log_dir / f"samples_{ds_meta.name}.png"
+            # Samples are saved in the health_checks directory
+            sample_output_path = base_cfg.system.output_dir / f"samples_{ds_meta.name}.png"
             show_sample_images(
                 loader=temp_loader,
                 classes=ds_meta.classes,

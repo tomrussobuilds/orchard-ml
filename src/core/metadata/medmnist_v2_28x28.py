@@ -1,42 +1,25 @@
 """
-Dataset Registry and Metadata Module
+MedMNIST v2 Registry Definitions
 
-This module centralizes the metadata for all supported datasets (e.g., BloodMNIST, 
-DermaMNIST). It uses a NamedTuple-based registry to ensure immutability, 
-type safety, and easy scalability when adding new MedMNIST datasets.
+This module contains the actual instances of DatasetMetadata for the 
+MedMNIST v2 collection (28x28 resolution).
 """
 
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
-from typing import NamedTuple, List, Dict, Final
-from pathlib import Path
+from typing import Dict, Final
 
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from .constants import DATASET_DIR
-
-# =========================================================================== #
-#                                DATASET METADATA                             #
-# =========================================================================== #
-
-
-class DatasetMetadata(NamedTuple):
-    """Metadata container for a MedMNIST dataset."""
-    name: str
-    display_name: str
-    md5_checksum: str
-    url: str
-    path: Path
-    classes: List[str]
-    mean: tuple
-    std: tuple
-    in_channels: int
+from .base import DatasetMetadata
+from ..constants import DATASET_DIR
 
 # =========================================================================== #
 #                                DATASET REGISTRY                             #
 # =========================================================================== #
+
 DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
     "pathmnist": DatasetMetadata(
         name="pathmnist",
@@ -110,7 +93,7 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
             "drusen",
             "normal"
         ],
-        mean=(0.5, 0.5, 0.5), # Uniformato a 3 per Pydantic
+        mean=(0.5, 0.5, 0.5),
         std=(0.5, 0.5, 0.5),
         in_channels=1,
     ),
@@ -131,7 +114,7 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
     "retinamnist": DatasetMetadata(
         name="retinamnist",
         display_name="RetinaMNIST",
-        md5_checksum="bd4c0672f1bba3e3a89f0e4e876791e4", # MD5 AGGIORNATO
+        md5_checksum="bd4c0672f1bba3e3a89f0e4e876791e4",
         url="https://zenodo.org/records/5208230/files/retinamnist.npz",
         path=DATASET_DIR / "retinamnist.npz",
         classes=[
@@ -165,18 +148,19 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         md5_checksum="866b832ed4eeba67bfb9edee1d5544e6",
         url="https://zenodo.org/records/5208230/files/organamnist.npz",
         path=DATASET_DIR / "organamnist.npz",
-        classes=["bladder",
-                 "femur-left",
-                 "femur-right",
-                 "heart",
-                 "kidney-left",
-                 "kidney-right",
-                 "liver",
-                 "lung-left",
-                 "lung-right",
-                 "pancreas",
-                 "spleen"
-                ],
+        classes=[
+            "bladder",
+            "femur-left",
+            "femur-right",
+            "heart",
+            "kidney-left",
+            "kidney-right",
+            "liver",
+            "lung-left",
+            "lung-right",
+            "pancreas",
+            "spleen"
+        ],
         mean=(0.5, 0.5, 0.5),
         std=(0.5, 0.5, 0.5),
         in_channels=1,

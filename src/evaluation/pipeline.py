@@ -22,7 +22,7 @@ import numpy as np
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from scripts.core import Config, RunPaths
+from src.core import Config, RunPaths
 from .engine import evaluate_model
 from .visualization import (
     plot_confusion_matrix, 

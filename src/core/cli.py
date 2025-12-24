@@ -31,8 +31,7 @@ def parse_args() -> argparse.Namespace:
     Returns:
         argparse.Namespace: An object containing all parsed command line arguments.
     """
-    # Local import to prevent circular dependency during initialization
-    from .dataset_metadata import DATASET_REGISTRY
+    from .metadata import DATASET_REGISTRY
 
     parser = argparse.ArgumentParser(
         description="MedMNIST training pipeline based on adapted ResNet-18.",

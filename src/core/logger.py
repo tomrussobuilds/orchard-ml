@@ -18,7 +18,7 @@ from typing import Dict, Optional, Final
 from logging.handlers import RotatingFileHandler
 
 # =========================================================================== #
-#                               LOGGER CLASS                                  #
+#                                LOGGER CLASS                                  #
 # =========================================================================== #
 
 class Logger:
@@ -48,6 +48,7 @@ class Logger:
         self.logger = logging.getLogger(name)
         
         # Configure if it's the first time or if a new log directory is provided
+        # This allows the "re-configuration" once RootOrchestrator creates the run folder
         if name not in Logger._configured_names or log_dir is not None:
             self._setup_logger()
             Logger._configured_names[name] = True
@@ -63,7 +64,7 @@ class Logger:
         self.logger.setLevel(self.level)
         self.logger.propagate = False
 
-        # Clean up existing handlers to prevent duplicates or resource leaks
+        # Clean up existing handlers to prevent duplicates (Crucial for reconfiguration)
         if self.logger.hasHandlers():
             for handler in self.logger.handlers[:]:
                 handler.close()
@@ -91,7 +92,7 @@ class Logger:
             file_h.setFormatter(formatter)
             self.logger.addHandler(file_h)
             
-            # Update class-level reference
+            # Update class-level reference for global tracking
             Logger._active_log_file = filename
 
     def get_logger(self) -> logging.Logger:
@@ -106,9 +107,14 @@ class Logger:
     @classmethod
     def setup(cls, name: str, **kwargs) -> logging.Logger:
         """
-        Main entry point for configuring the logger, typically called from main.py.
+        Main entry point for configuring the logger, typically called from RootOrchestrator.
         """
         return cls(name=name, **kwargs).get_logger()
 
-# Initial safe instance for immediate imports (writes only to console initially)
+# =========================================================================== #
+#                                GLOBAL INSTANCE                              #
+# =========================================================================== #
+
+# Initial safe instance for immediate imports (writes only to console initially).
+# Later, the Orchestrator will call Logger.setup() with a real path to enable file logging.
 logger: Final[logging.Logger] = Logger().get_logger()

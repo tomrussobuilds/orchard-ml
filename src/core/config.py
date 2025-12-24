@@ -172,7 +172,7 @@ class Config(BaseModel):
     @classmethod
     def from_args(cls, args: argparse.Namespace):
         """Factory method to create a Config instance from CLI arguments."""
-        from .dataset_metadata import DATASET_REGISTRY
+        from .metadata import DATASET_REGISTRY
 
         dataset_key = args.dataset.lower()
         if dataset_key not in DATASET_REGISTRY:

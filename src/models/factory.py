@@ -20,7 +20,7 @@ import torch.nn as nn
 # =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from scripts.core import Config, DATASET_REGISTRY
+from src.core import Config, DATASET_REGISTRY
 from .resnet_18_adapted import build_resnet18_adapted
 
 # =========================================================================== #
