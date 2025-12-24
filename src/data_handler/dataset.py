@@ -53,6 +53,8 @@ class MedMNISTDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
             max_samples (int | None): Limits the dataset size if it exceeds this value.
             cfg (Config): Global configuration for seeding.
         """
+        if not path.exists():
+            raise FileNotFoundError(f"Dataset file not found in: {path}")
         self.path = path
         self.transform = transform
         self.split = split

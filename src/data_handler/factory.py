@@ -33,7 +33,10 @@ from .transforms import get_pipeline_transforms, worker_init_fn
 # Global logger instance
 logger = logging.getLogger("medmnist_pipeline")
 
-def create_temp_loader(raw_data: np.lib.npyio.NpzFile, batch_size: int = 16) -> DataLoader:
+def create_temp_loader(
+        raw_data: np.lib.npyio.NpzFile,
+        batch_size: int = 16
+    ) -> DataLoader:
     """
     Utility for Health Check: Converts raw NPZ arrays into a PyTorch DataLoader.
     Handles NHWC to NCHW conversion and normalization to [0, 1].
@@ -94,11 +97,7 @@ def get_dataloaders(
     )
 
     # Calculate proportional samples for validation and test
-    # If max_samples is set, we take a fraction (e.g., 10%) for val/test
-    # If None, val_samples remains None to use the full original splits
     if cfg.dataset.max_samples is not None:
-        # Using a 10% ratio of the training samples
-        # Example: 20,000 train -> 2,000 val and 2,000 test
         val_samples = max(1, int(cfg.dataset.max_samples * 0.10))
     else:
         val_samples = None
@@ -158,7 +157,8 @@ def get_dataloaders(
         num_workers=cfg.num_workers,
         pin_memory=pin_memory,
         worker_init_fn=init_fn,
-        persistent_workers=False
+        persistent_workers=False,
+        drop_last=True
     )
 
     common_params = {
