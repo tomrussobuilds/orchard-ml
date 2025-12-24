@@ -2,15 +2,17 @@
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-orange)
-![TorchVision](https://img.shields.io/badge/TorchVision-0.15%2B-red)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-
+![Status](https://img.shields.io/badge/status-WIP-orange)
+![Issues](https://img.shields.io/github/issues/tomrussobuilds/medmnist)
+![Stars](https://img.shields.io/github/stars/tomrussobuilds/medmnist?style=social)
 
 **97.78% Test Accuracy • 0.9752 Macro F1 • Single pretrained ResNet-18 • 28×28 images**
 
 ## 📌 Table of Contents
 * [🚀 Getting Started](#-getting-started)
-* [🚀 Key Features](#-key-features)
+* [✨ Key Features](#-key-features)
 * [🏗 Architecture Details](#-architecture-details)
 * [🔬 Training Regularization](#-training-regularization)
 * [📁 Project Structure](#-project-structure)
@@ -48,7 +50,7 @@ This repository provides a highly reproducible, robust training framework for th
 Ensure you have the project structure correctly set up with `src/` as a package:
 ```bash
 # Clone the repository
-git clone <your-repo-link>
+git clone <github.com/tomrussobuilds/medmnist.git>
 cd med_mnist
 
 # (Optional) Add src to PYTHONPATH to enable absolute imports
@@ -57,7 +59,7 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 ---
 
-### 🚀 Key Features & Defensive Engineering
+### ✨ Key Features & Defensive Engineering
 
 This pipeline is engineered for unattended, robust execution in research environments and containerized clusters. It moves beyond simple classification by implementing low-level system safeguards:
 
