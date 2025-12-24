@@ -18,7 +18,7 @@ from typing import Tuple, Final
 # =========================================================================== #
 import numpy as np
 import torch
-from torchvision import transforms
+from torchvision.transforms import v2
 
 # =========================================================================== #
 #                                Internal Imports                             #
@@ -72,11 +72,10 @@ def worker_init_fn(worker_id: int):
     random.seed(worker_seed) 
     torch.manual_seed(worker_seed)
 
-
 def get_pipeline_transforms(
         cfg: Config,
         is_rgb: bool = True
-    ) -> Tuple[transforms.Compose, transforms.Compose]:
+    ) -> Tuple[v2.Compose, v2.Compose]:
     """
     Defines the transformation pipelines for training and evaluation.
     
@@ -91,26 +90,27 @@ def get_pipeline_transforms(
     std = RGB_STD if is_rgb else GRAY_STD
 
     # Training pipeline: Focus on robust generalization
-    train_transform = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.RandomHorizontalFlip(p=cfg.augmentation.hflip),
-        transforms.RandomRotation(cfg.augmentation.rotation_angle),
-        transforms.ColorJitter(
+    train_transform = v2.Compose([
+        # Sostituiamo ToPILImage/ToTensor con v2.ToImage e v2.ToDtype
+        v2.ToImage(),
+        v2.ToDtype(torch.float32, scale=True),
+        v2.RandomHorizontalFlip(p=cfg.augmentation.hflip),
+        v2.RandomRotation(cfg.augmentation.rotation_angle),
+        v2.ColorJitter(
             brightness=cfg.augmentation.jitter_val,
             contrast=cfg.augmentation.jitter_val,
             saturation=cfg.augmentation.jitter_val if is_rgb else 0.0,
         ),
         # Using a subtle scale range to preserve medical feature proportions
-        transforms.RandomResizedCrop(IMG_SIZE, scale=(0.9, 1.0)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=mean, std=std),
+        v2.RandomResizedCrop(IMG_SIZE, scale=(0.9, 1.0), antialias=True),
+        v2.Normalize(mean=mean, std=std),
     ])
     
     # Validation/Inference pipeline: Strict consistency
-    val_transform = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=mean, std=std),
+    val_transform = v2.Compose([
+        v2.ToImage(),
+        v2.ToDtype(torch.float32, scale=True),
+        v2.Normalize(mean=mean, std=std),
     ])
     
     return train_transform, val_transform

@@ -79,6 +79,27 @@ def get_cuda_name() -> str:
     """
     return torch.cuda.get_device_name(0) if torch.cuda.is_available() else ""
 
+def load_model_weights(
+        model: torch.nn.Module,
+        path: Path,
+        device: torch.device
+):
+    """
+    Low-level utility to load weights
+    """
+    model.load_state_dict(
+        torch.load(
+            path,
+            map_location=device,
+            weights_only=True
+        )
+    )
+
+def to_device_obj(device_str: str) -> torch.device:
+    """
+    Converts a string into a device torch object.
+    """
+    return torch.device(device_str)
 
 def md5_checksum(path: Path) -> str:
     """

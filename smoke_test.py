@@ -14,7 +14,6 @@ to verify:
 #                                Standard Imports                             #
 # =========================================================================== #
 import logging
-import torch
 import argparse
 
 # =========================================================================== #
@@ -56,7 +55,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     })
 
     # 2. Root Orchestration
-    # The RootOrchestrator handles directory creation, logging, and safety
+    # The RootOrchestrator handles directory creation, logging, and hardware abstraction
     orchestrator = RootOrchestrator(cfg)
     paths = orchestrator.initialize_core_services()
     run_logger = orchestrator.run_logger
@@ -67,9 +66,9 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     run_logger.info(divider)
     run_logger.info(header_text.center(len(divider), " "))
     run_logger.info(divider)
-    
-    # Force CPU for smoke testing to ensure portability
-    device = torch.device("cpu")
+
+    # Note: Smoke test remains on the configured device unless forced to CPU
+    device = orchestrator.get_device()
     run_logger.info(f"Smoke test execution started on {device}.")
 
     # 3. Data Loading (Lazy Metadata)
@@ -102,11 +101,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
         run_logger.error(f"Checkpoint missing! Expected at: {best_path}")
         raise FileNotFoundError(f"Checkpoint not found in: {best_path}")
     
-    # Load weights to verify checkpoint integrity
-    model.load_state_dict(
-        torch.load(best_path, map_location=device, weights_only=True)
-    )
-    run_logger.info(f"Successfully loaded checkpoint from {best_path.name}")
+    orchestrator.load_weights(model, best_path)
     
     aug_info = get_augmentations_description(cfg)
 

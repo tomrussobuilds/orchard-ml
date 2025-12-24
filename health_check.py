@@ -14,20 +14,16 @@ This script iterates through all registered MedMNIST datasets to:
 from pathlib import Path
 
 # =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
-import numpy as np
-import torch
-from torch.utils.data import DataLoader, TensorDataset
-
-# =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
 from src.core import (
     Config, DatasetConfig, TrainingConfig, AugmentationConfig,
     DATASET_REGISTRY, RootOrchestrator
 )
-from src.data_handler.data_explorer import show_sample_images
+from src.data_handler import (
+    show_sample_images, create_temp_loader
+)
+
 
 # =========================================================================== #
 #                               HEALTH CHECK LOGIC                            #
@@ -47,12 +43,15 @@ def health_check() -> None:
     )
 
     # 2. Root Orchestration
-    # Handles seeding, static dirs, and safety locks
+    # Handles seeding, static dirs, safety locks, and hardware abstraction
     orchestrator = RootOrchestrator(base_cfg)
     
     # Note: We manually point the lock and log for health check specifically
     orchestrator.initialize_core_services()
     logger = orchestrator.run_logger
+    
+    # NEW: Retrieve hardware device object via orchestrator abstraction
+    device = orchestrator.get_device()
     
     # Professional header with dynamic divider width
     divider = "=" * 60
@@ -69,11 +68,11 @@ def health_check() -> None:
             if not ds_meta.path.exists():
                 raise FileNotFoundError(f"Dataset file not found at {ds_meta.path}")
                 
-            raw_data = np.load(ds_meta.path)
+            # Use utility for key validation (abstracting numpy/torch specifics)
+            raw_data = orchestrator.load_raw_dataset(ds_meta.path)
             
             # Extract arrays for validation
             train_images = raw_data['train_images']
-            train_labels = raw_data['train_labels']
             val_images = raw_data['val_images']
             test_images = raw_data['test_images']
 
@@ -83,21 +82,8 @@ def health_check() -> None:
                         f"Val={val_images.shape}, Test={test_images.shape}")
             logger.info(f"Channels: {ds_meta.in_channels} | Classes: {num_classes_val}")
 
-            # 2. Prepare Tensors for the temporary DataLoader
-            # Convert to float and scale to [0, 1] as expected by visualization logic
-            images_t = torch.from_numpy(train_images).float() / 255.0
-            
-            # Reorder dimensions from NHWC (MedMNIST) to NCHW (PyTorch)
-            if images_t.ndim == 3:  # Grayscale (N, H, W) -> (N, 1, H, W)
-                images_t = images_t.unsqueeze(1)
-            else:  # RGB (N, H, W, C) -> (N, C, H, W)
-                images_t = images_t.permute(0, 3, 1, 2)
-                
-            labels_t = torch.from_numpy(train_labels).long().squeeze()
-
             # 3. Create a temporary DataLoader to satisfy show_sample_images signature
-            temp_ds = TensorDataset(images_t, labels_t)
-            temp_loader = DataLoader(temp_ds, batch_size=16, shuffle=True)
+            temp_loader = create_temp_loader(raw_data, batch_size=16)
 
             # 4. Properly nested Config initialization for Pydantic validation
             temp_cfg = Config(

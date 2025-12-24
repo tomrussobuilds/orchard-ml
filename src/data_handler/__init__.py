@@ -15,6 +15,7 @@ from .fetcher import (
 )
 
 from .factory import (
+    create_temp_loader,
     get_dataloaders
 )
 

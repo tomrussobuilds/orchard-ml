@@ -33,6 +33,37 @@ from .transforms import get_pipeline_transforms, worker_init_fn
 # Global logger instance
 logger = logging.getLogger("medmnist_pipeline")
 
+def create_temp_loader(raw_data: np.lib.npyio.NpzFile, batch_size: int = 16) -> DataLoader:
+    """
+    Utility for Health Check: Converts raw NPZ arrays into a PyTorch DataLoader.
+    Handles NHWC to NCHW conversion and normalization to [0, 1].
+    
+    This function bypasses the MedMNISTDataset class for direct integrity 
+    verification of the raw arrays.
+    """
+    # 1. Extract raw arrays
+    images = raw_data['train_images']
+    labels = raw_data['train_labels']
+    
+    # 2. Convert to Float Tensor and scale
+    images_t = torch.from_numpy(images).float() / 255.0
+    
+    # 3. Dimensional Adaptation (MedMNIST NHWC -> PyTorch NCHW)
+    if images_t.ndim == 3:  # Grayscale (N, H, W) -> (N, 1, H, W)
+        images_t = images_t.unsqueeze(1)
+    else:  # RGB (N, H, W, C) -> (N, C, H, W)
+        images_t = images_t.permute(0, 3, 1, 2)
+        
+    labels_t = torch.from_numpy(labels).long().squeeze()
+
+    # 4. Create minimalistic DataLoader
+    dataset = torch.utils.data.TensorDataset(images_t, labels_t)
+    
+    return DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=True
+    )
 
 def get_dataloaders(
         metadata: MedMNISTData,

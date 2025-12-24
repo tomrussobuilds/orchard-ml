@@ -12,10 +12,16 @@ import logging
 from pathlib import Path
 
 # =========================================================================== #
+#                             Third-Party Imports                             #
+# =========================================================================== #
+import numpy as np
+
+# =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
 from .system import (
-    set_seed, ensure_single_instance, kill_duplicate_processes, get_cuda_name
+    set_seed, ensure_single_instance, kill_duplicate_processes, get_cuda_name,
+    to_device_obj, load_model_weights, validate_npz_keys
 )
 from .logger import Logger
 from .constants import RunPaths, setup_static_directories
@@ -84,6 +90,24 @@ class RootOrchestrator:
         self._log_initial_status()
         
         return self.paths
+    
+    def get_device(self):
+        """Hides string conversion -> torch.device"""
+        return to_device_obj(self.cfg.system.device)
+    
+    def load_weights(self, model, path):
+        """Coordinates weights load using session logger."""
+        device = self.get_device()
+        load_model_weights(model, path, device)
+        self.run_logger.info(
+            f"Checkpoint weights loaded: {path.name}"
+        )
+    
+    def load_raw_dataset(self, path: Path) -> np.lib.npyio.NpzFile:
+        """Load a NPZ file and validate keys."""
+        data = np.load(path)
+        validate_npz_keys(data)
+        return data
 
     def _log_initial_status(self) -> None:
         """Logs the baseline environment configuration."""

@@ -19,9 +19,9 @@ Key Pipeline Features:
    exports structured performance reports in Excel format.
 """
 # =========================================================================== #
-#                                Standard Imports
+#                                Standard Imports                             #
 # =========================================================================== #
-import torch
+# torch import removed: hardware abstraction handled by RootOrchestrator
 
 # =========================================================================== #
 #                                Internal Imports                             #
@@ -57,6 +57,9 @@ def main() -> None:
     # Access the logger initialized by the orchestrator
     run_logger = orchestrator.run_logger
 
+    # NEW: Retrieve hardware device object via orchestrator abstraction
+    device = orchestrator.get_device()
+
     # Retrieve dataset metadata from registry
     ds_meta = DATASET_REGISTRY[cfg.dataset.dataset_name.lower()]
     run_logger.info(f"Dataset selected: {cfg.dataset.dataset_name} with {cfg.dataset.num_classes} classes.")
@@ -77,7 +80,7 @@ def main() -> None:
     )
 
     # 3. Model Initialization (Factory Pattern)
-    device = torch.device(cfg.system.device)
+    # The device object is passed directly, maintaining framework independence in main
     model = get_model(device=device, cfg=cfg)
 
     # 4. Training Execution
@@ -93,17 +96,10 @@ def main() -> None:
     )
     best_path, train_losses, val_accuracies = trainer.train()
 
-    # Load the best weights found during training
-    model.load_state_dict(
-        torch.load(
-            best_path,
-            map_location=device,
-            weights_only=True
-        )
-    )
-    run_logger.info(f"Loaded best checkpoint weights from: {best_path}")
+    # 5. Model Recovery & Weight Loading
+    orchestrator.load_weights(model, best_path)
 
-    # 5. Final Evaluation (Metrics & Plots)
+    # 6. Final Evaluation (Metrics & Plots)
     aug_info = get_augmentations_description(cfg)
 
     # test_images and test_labels set to None to trigger Lazy extraction from loader
