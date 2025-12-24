@@ -38,89 +38,93 @@ from src.evaluation import run_final_evaluation
 
 def main() -> None:
     """
-    The main function that controls the entire training and evaluation flow.
+    Main orchestrator that controls the end-to-end training and evaluation flow.
     """
     
     # 1. Configuration & Root Orchestration
-    args = parse_args()
-    cfg = Config.from_args(args)
+    args         = parse_args()
+    cfg          = Config.from_args(args)
+    orchestrator = RootOrchestrator(cfg)
     
     # Initialize Core Services (Seed, Paths, Logs, Locks)
-    # This encapsulates the system-level boilerplate previously in main
-    orchestrator = RootOrchestrator(cfg)
-    paths = orchestrator.initialize_core_services()
+    paths        = orchestrator.initialize_core_services()
+    run_logger   = orchestrator.run_logger
+    device       = orchestrator.get_device()
     
-    # Access the logger initialized by the orchestrator
-    run_logger = orchestrator.run_logger
+    # Retrieve dataset metadata
+    ds_meta      = DATASET_REGISTRY[cfg.dataset.dataset_name.lower()]
 
-    # NEW: Retrieve hardware device object via orchestrator abstraction
-    device = orchestrator.get_device()
+    try:
+        # --- 2. Data Preparation ---
+        run_logger.info(f" Preparing Dataset: {cfg.dataset.dataset_name} ".center(60, "-"))
+        
+        data    = load_medmnist(ds_meta)
+        loaders = get_dataloaders(data, cfg)
+        train_loader, val_loader, test_loader = loaders
+        
+        show_sample_images(
+            loader    = train_loader,
+            classes   = ds_meta.classes,
+            save_path = paths.figures / "dataset_samples.png",
+            cfg       = cfg
+        )
 
-    # Retrieve dataset metadata from registry
-    ds_meta = DATASET_REGISTRY[cfg.dataset.dataset_name.lower()]
-    run_logger.info(f"Dataset selected: {cfg.dataset.dataset_name} with {cfg.dataset.num_classes} classes.")
+        # --- 3. Model & Training Execution ---
+        run_logger.info(f" Starting Pipeline: {cfg.model.model_type} ".center(60, "#"))
 
-    # 2. Data Loading and Preparation
-    # 'data' is now a metadata container for Lazy Loading
-    data = load_medmnist(ds_meta)
+        model   = get_model(device=device, cfg=cfg)
+        trainer = ModelTrainer(
+            model        = model,
+            train_loader = train_loader,
+            val_loader   = val_loader,
+            device       = device,
+            cfg          = cfg,
+            output_dir   = paths.models
+        )
+        
+        # Start training and capture history
+        best_path, train_losses, val_accuracies = trainer.train()
 
-    # Create DataLoaders
-    train_loader, val_loader, test_loader = get_dataloaders(data, cfg)
-    
-    # Optional: Visual check of samples (saved to run-specific figures directory)
-    show_sample_images(
-        loader=train_loader,
-        classes=ds_meta.classes,
-        save_path=paths.figures / "dataset_samples.png",
-        cfg=cfg
-    )
+        # --- 4. Model Recovery & Evaluation ---
+        run_logger.info(" Final Evaluation Phase ".center(60, "-"))
+        
+        orchestrator.load_weights(model, best_path)
+        
+        macro_f1, test_acc = run_final_evaluation(
+            model          = model,
+            test_loader    = test_loader,
+            test_images    = None,
+            test_labels    = None,
+            class_names    = ds_meta.classes,
+            train_losses   = train_losses,
+            val_accuracies = val_accuracies,
+            device         = device,
+            paths          = paths,
+            cfg            = cfg,
+            use_tta        = cfg.training.use_tta,
+            aug_info       = get_augmentations_description(cfg)
+        )
 
-    # 3. Model Initialization (Factory Pattern)
-    # The device object is passed directly, maintaining framework independence in main
-    model = get_model(device=device, cfg=cfg)
+        # --- 5. Structured Summary Logging ---
+        summary = (
+            f"\n{'#'*60}\n"
+            f"{' PIPELINE EXECUTION SUMMARY ':^60}\n"
+            f"{'-'*60}\n"
+            f"  » Dataset:      {cfg.dataset.dataset_name}\n"
+            f"  » Architecture: {cfg.model.model_type}\n"
+            f"  » Test Acc:     {test_acc:>8.2%}\n"
+            f"  » Macro F1:     {macro_f1:>8.4f}\n"
+            f"  » Artifacts:    {paths.root}\n"
+            f"{'#'*60}"
+        )
+        run_logger.info(summary)
 
-    # 4. Training Execution
-    run_logger.info("Starting training pipeline".center(60, "="))
-
-    trainer = ModelTrainer(
-        model=model,
-        train_loader=train_loader,
-        val_loader=val_loader,
-        device=device,
-        cfg=cfg,
-        output_dir=paths.models
-    )
-    best_path, train_losses, val_accuracies = trainer.train()
-
-    # 5. Model Recovery & Weight Loading
-    orchestrator.load_weights(model, best_path)
-
-    # 6. Final Evaluation (Metrics & Plots)
-    aug_info = get_augmentations_description(cfg)
-
-    # test_images and test_labels set to None to trigger Lazy extraction from loader
-    macro_f1, test_acc = run_final_evaluation(
-        model=model,
-        test_loader=test_loader,
-        test_images=None,
-        test_labels=None,
-        class_names=ds_meta.classes,
-        train_losses=train_losses,
-        val_accuracies=val_accuracies,
-        device=device,
-        paths=paths,
-        cfg=cfg,
-        use_tta=cfg.training.use_tta,
-        aug_info=aug_info
-    )
-
-    # Final Summary Logging
-    run_logger.info(
-        f"PIPELINE COMPLETED → "
-        f"Test Acc: {test_acc:.4f} | "
-        f"Macro F1: {macro_f1:.4f} | "
-        f"Results saved in: {paths.root}"
-    )
+    except Exception as e:
+        run_logger.error(f"Pipeline crashed during execution: {e}", exc_info=True)
+        raise e
+        
+    finally:
+        run_logger.info(f"Cleanup finished. Run directory: {paths.root}")
 
 
 # =========================================================================== #
