@@ -105,6 +105,11 @@ class AugmentationConfig(BaseModel):
     rotation_angle: int = Field(default=10, ge=0, le=180)
     jitter_val: float = Field(default=0.2, ge=0.0)
 
+    # TTA
+    tta_translate: float = Field(default=2.0, description="Pixel shift for TTA")
+    tta_scale: float = Field(default=1.1, description="Scale factor for TTA")
+    tta_blur_sigma: float = Field(default=0.4, description="Gaussian blur sigma for TTA")
+
 
 class DatasetConfig(BaseModel):
     """Sub-configuration for dataset-specific metadata and sampling."""
@@ -121,6 +126,7 @@ class DatasetConfig(BaseModel):
     mean: tuple[float, ...] = (0.5, 0.5, 0.5)
     std: tuple[float, ...] = (0.5, 0.5, 0.5)
     normalization_info: str = "N/A"
+    is_anatomical: bool = True
 
 class EvaluationConfig(BaseModel):
     """Sub-configuration for model evaluation and reporting."""
@@ -232,7 +238,10 @@ class Config(BaseModel):
             augmentation=AugmentationConfig(
                 hflip=args.hflip,
                 rotation_angle=args.rotation_angle,
-                jitter_val=args.jitter_val
+                jitter_val=args.jitter_val,
+                tta_translate=getattr(args, 'tta_translate', 2.0),
+                tta_scale=getattr(args, 'tta_scale', 1.1),
+                tta_blur_sigma=getattr(args, 'tta_blur_sigma', 0.4)
             ),
             dataset=DatasetConfig(
                 dataset_name=ds_meta.name,
@@ -242,7 +251,8 @@ class Config(BaseModel):
                 num_classes=len(ds_meta.classes),
                 mean=ds_meta.mean,
                 std=ds_meta.std,
-                normalization_info=f"Mean={ds_meta.mean}, Std={ds_meta.std}"
+                normalization_info=f"Mean={ds_meta.mean}, Std={ds_meta.std}",
+                is_anatomical=ds_meta.is_anatomical
             ),
             evaluation=EvaluationConfig(
                 n_samples=getattr(args, 'n_samples', 12),

@@ -41,6 +41,7 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.485, 0.456, 0.406),
         std=(0.229, 0.224, 0.225),
         in_channels=3,
+        is_anatomical=False
     ),
     "bloodmnist": DatasetMetadata(
         name="bloodmnist",
@@ -61,6 +62,7 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.4914, 0.4822, 0.4465),
         std=(0.2023, 0.1994, 0.2010),
         in_channels=3,
+        is_anatomical=False
     ),
     "dermamnist": DatasetMetadata(
         name="dermamnist",
@@ -80,6 +82,7 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.485, 0.456, 0.406),
         std=(0.229, 0.224, 0.225),
         in_channels=3,
+        is_anatomical=False
     ),
     "octmnist": DatasetMetadata(
         name="octmnist",
@@ -96,6 +99,7 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.5, 0.5, 0.5),
         std=(0.5, 0.5, 0.5),
         in_channels=1,
+        is_anatomical=True
     ),
     "pneumoniamnist": DatasetMetadata(
         name="pneumoniamnist",
@@ -110,6 +114,7 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.5, 0.5, 0.5),
         std=(0.5, 0.5, 0.5),
         in_channels=1,
+        is_anatomical=True
     ),
     "retinamnist": DatasetMetadata(
         name="retinamnist",
@@ -127,6 +132,7 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.485, 0.456, 0.406),
         std=(0.229, 0.224, 0.225),
         in_channels=3,
+        is_anatomical=False
     ),
     "breastmnist": DatasetMetadata(
         name="breastmnist",
@@ -141,9 +147,10 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.5, 0.5, 0.5),
         std=(0.5, 0.5, 0.5),
         in_channels=1,
+        is_anatomical=True
     ),
     "organmnist": DatasetMetadata(
-        name="organamnist",
+        name="organmnist",
         display_name="OrganAMNIST",
         md5_checksum="866b832ed4eeba67bfb9edee1d5544e6",
         url="https://zenodo.org/records/5208230/files/organamnist.npz",
@@ -164,6 +171,7 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.5, 0.5, 0.5),
         std=(0.5, 0.5, 0.5),
         in_channels=1,
+        is_anatomical=True
     ),
     "tissuemnist": DatasetMetadata(
         name="tissuemnist",
@@ -184,6 +192,7 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.5, 0.5, 0.5),
         std=(0.5, 0.5, 0.5),
         in_channels=1,
+        is_anatomical=False
     ),
     "organcmnist": DatasetMetadata(
         name="organcmnist",
@@ -207,5 +216,6 @@ DATASET_REGISTRY: Final[Dict[str, DatasetMetadata]] = {
         mean=(0.5, 0.5, 0.5),
         std=(0.5, 0.5, 0.5),
         in_channels=1,
+        is_anatomical=True
     ),
 }
