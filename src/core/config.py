@@ -122,7 +122,6 @@ class AugmentationConfig(BaseModel):
     rotation_angle: int = Field(default=10, ge=0, le=180)
     jitter_val: float = Field(default=0.2, ge=0.0)
 
-    # TTA
     tta_translate: float = Field(default=2.0, description="Pixel shift for TTA")
     tta_scale: float = Field(default=1.1, description="Scale factor for TTA")
     tta_blur_sigma: float = Field(default=0.4, description="Gaussian blur sigma for TTA")

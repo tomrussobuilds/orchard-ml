@@ -46,99 +46,100 @@ def main() -> None:
     # 1. Configuration & Root Orchestration
     args         = parse_args()
     cfg          = Config.from_args(args)
-    orchestrator = RootOrchestrator(cfg)
     
-    # Initialize Core Services (Seed, Paths, Logs, Locks)
-    paths        = orchestrator.initialize_core_services()
-    run_logger   = orchestrator.run_logger
-    device       = orchestrator.get_device()
-    
-    # Retrieve dataset metadata from registry
-    ds_meta      = DATASET_REGISTRY[cfg.dataset.dataset_name.lower()]
-
-    try:
-        # --- 2. Data Preparation ---
-        run_logger.info(f" Preparing Dataset: {cfg.dataset.dataset_name} ".center(60, "-"))
+    # Using RootOrchestrator as a Context Manager to handle lifecycle and cleanup
+    with RootOrchestrator(cfg) as orchestrator:
         
-        data    = load_medmnist(ds_meta)
-        loaders = get_dataloaders(data, cfg)
-        train_loader, val_loader, test_loader = loaders
+        # Initialize Core Services (Seed, Paths, Logs, Locks)
+        paths        = orchestrator.paths
+        run_logger   = orchestrator.run_logger
+        device       = orchestrator.get_device()
         
-        show_sample_images(
-            loader    = train_loader,
-            classes   = ds_meta.classes,
-            save_path = paths.figures / "dataset_samples.png",
-            cfg       = cfg
-        )
+        # Retrieve dataset metadata from registry
+        ds_meta      = DATASET_REGISTRY[cfg.dataset.dataset_name.lower()]
 
-        # --- 3. Model & Training Execution ---
-        run_logger.info(f" Starting Pipeline: {cfg.model_name} ".center(60, "#"))
+        try:
+            # --- 2. Data Preparation ---
+            run_logger.info(f" Preparing Dataset: {cfg.dataset.dataset_name} ".center(60, "-"))
+            
+            data    = load_medmnist(ds_meta)
+            loaders = get_dataloaders(data, cfg)
+            train_loader, val_loader, test_loader = loaders
+            
+            show_sample_images(
+                loader    = train_loader,
+                classes   = ds_meta.classes,
+                save_path = paths.figures / "dataset_samples.png",
+                cfg       = cfg
+            )
 
-        model   = get_model(device=device, cfg=cfg)
+            # --- 3. Model & Training Execution ---
+            run_logger.info(f" Starting Pipeline: {cfg.model_name} ".center(60, "#"))
 
-        criterion = get_criterion(cfg)
-        optimizer = get_optimizer(model, cfg)
-        scheduler = get_scheduler(optimizer, cfg)
+            model   = get_model(device=device, cfg=cfg)
 
-        trainer = ModelTrainer(
-            model        = model,
-            train_loader = train_loader,
-            val_loader   = val_loader,
-            optimizer    = optimizer,
-            scheduler    = scheduler,
-            criterion    = criterion,
-            device       = device,
-            cfg          = cfg,
-            output_dir   = paths.models
-        )
+            criterion = get_criterion(cfg)
+            optimizer = get_optimizer(model, cfg)
+            scheduler = get_scheduler(optimizer, cfg)
+
+            trainer = ModelTrainer(
+                model        = model,
+                train_loader = train_loader,
+                val_loader   = val_loader,
+                optimizer    = optimizer,
+                scheduler    = scheduler,
+                criterion    = criterion,
+                device       = device,
+                cfg          = cfg,
+                output_dir   = paths.models
+            )
+            
+            # Start training and return explicit history lists
+            best_path, train_losses, val_accuracies = trainer.train()
+
+            # --- 4. Model Recovery & Evaluation ---
+            run_logger.info(" Final Evaluation Phase ".center(60, "-"))
+            
+            # Recover best weights found during validation
+            orchestrator.load_weights(model, best_path)
+            
+            # Final test and reporting with explicit parameters
+            macro_f1, test_acc = run_final_evaluation(
+                model          = model,
+                test_loader    = test_loader,
+                train_losses   = train_losses,
+                val_accuracies = val_accuracies,
+                class_names    = ds_meta.classes,
+                paths          = paths,
+                cfg            = cfg,
+                aug_info       = get_augmentations_description(cfg)
+            )
+
+            # --- 5. Structured Summary Logging ---
+            summary = (
+                f"\n{'#'*60}\n"
+                f"{' PIPELINE EXECUTION SUMMARY ':^60}\n"
+                f"{'-'*60}\n"
+                f"  » Dataset:      {cfg.dataset.dataset_name}\n"
+                f"  » Architecture: {cfg.model_name}\n"
+                f"  » Test Acc:     {test_acc:>8.2%}\n"
+                f"  » Macro F1:     {macro_f1:>8.4f}\n"
+                f"  » Artifacts:    {paths.root}\n"
+                f"{'#'*60}"
+            )
+            run_logger.info(summary)
         
-        # Start training and return explicit history lists
-        best_path, train_losses, val_accuracies = trainer.train()
-
-        # --- 4. Model Recovery & Evaluation ---
-        run_logger.info(" Final Evaluation Phase ".center(60, "-"))
-        
-        # Recover best weights found during validation
-        orchestrator.load_weights(model, best_path)
-        
-        # Final test and reporting with explicit parameters
-        macro_f1, test_acc = run_final_evaluation(
-            model          = model,
-            test_loader    = test_loader,
-            train_losses   = train_losses,    # Passed as explicit list
-            val_accuracies = val_accuracies,  # Passed as explicit list
-            class_names    = ds_meta.classes,
-            paths          = paths,
-            cfg            = cfg,
-            aug_info       = get_augmentations_description(cfg)
-        )
-
-        # --- 5. Structured Summary Logging ---
-        summary = (
-            f"\n{'#'*60}\n"
-            f"{' PIPELINE EXECUTION SUMMARY ':^60}\n"
-            f"{'-'*60}\n"
-            f"  » Dataset:      {cfg.dataset.dataset_name}\n"
-            f"  » Architecture: {cfg.model_name}\n"
-            f"  » Test Acc:     {test_acc:>8.2%}\n"
-            f"  » Macro F1:     {macro_f1:>8.4f}\n"
-            f"  » Artifacts:    {paths.root}\n"
-            f"{'#'*60}"
-        )
-        run_logger.info(summary)
-    
-    except KeyboardInterrupt:
-        run_logger.warning("Interrupted by user. Cleaning up and exiting...")
-    except Exception as e:
-        run_logger.error(f"Pipeline crashed during execution: {e}", exc_info=True)
-        raise e
-        
-    finally:
-        if 'orchestrator' in locals() and orchestrator:
-            orchestrator.cleanup()
-        if 'run_logger' in locals() and run_logger:
-            msg = f"Run directory: {paths.root}" if 'paths' in locals() and paths else "Cleanup finished."
-            run_logger.info(f"Pipeline Shutdown completed. {msg} ")
+        except KeyboardInterrupt:
+            run_logger.warning("Interrupted by user. Cleaning up and exiting...")
+        except Exception as e:
+            run_logger.error(f"Pipeline crashed during execution: {e}", exc_info=True)
+            raise e
+            
+        finally:
+            # The context manager (__exit__) handles orchestrator.cleanup() automatically.
+            # We only keep the final run directory log for user visibility.
+            if 'paths' in locals() and paths:
+                run_logger.info(f"Pipeline Shutdown completed. Run directory: {paths.root}")
 
 
 # =========================================================================== #

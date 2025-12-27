@@ -59,6 +59,34 @@ class RootOrchestrator:
         self.cfg = cfg
         self.paths = None
         self.run_logger = None
+    
+    def __enter__(self) -> "RootOrchestrator":
+        """
+        Context Manager entry point. 
+        Automatically triggers the core service initialization sequence.
+
+        Returns:
+            RootOrchestrator: The initialized instance ready for pipeline execution.
+        """
+        self.initialize_core_services()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+        """
+        Context Manager exit point.
+        Ensures that system resources are released and lock files are unlinked
+        regardless of whether the pipeline succeeded or raised an exception.
+
+        Args:
+            exc_type: The type of the exception raised (if any).
+            exc_val: The instance of the exception raised (if any).
+            exc_tb: The traceback of the exception raised (if any).
+
+        Returns:
+            bool: Always False to allow exception propagation to the caller.
+        """
+        self.cleanup()
+        return False
 
     def initialize_core_services(self) -> RunPaths:
         """
