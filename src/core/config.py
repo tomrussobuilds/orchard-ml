@@ -56,7 +56,7 @@ class SystemConfig(BaseModel):
 
     @property
     def lock_file_path(self) -> Path:
-        """Dinamically generates a cross-platform lock file path."""
+        """Dynamically generates a cross-platform lock file path."""
         return Path(tempfile.gettempdir()) / f"{self.project_name}.lock"
 
     @field_validator("data_dir", "output_dir", mode="after")
@@ -151,7 +151,7 @@ class DatasetConfig(BaseModel):
     num_classes: int = 8
     img_size: int = Field(
         default=28,
-        description="Target square resoulution for the model input"
+        description="Target square resolution for the model input"
         )
     force_rgb: bool = Field(
         default=True,
@@ -187,7 +187,7 @@ class EvaluationConfig(BaseModel):
     def validate_format(cls, v: str) -> str:
         supported = ["xlsx", "csv", "json"]
         if v.lower() not in supported:
-            raise ValueError(f"Format {v} not supoprted. Use {supported}")
+            raise ValueError(f"Format {v} not supported. Use {supported}")
         return v.lower()
     
     save_confusion_matrix: bool = True
