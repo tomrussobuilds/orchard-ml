@@ -57,7 +57,9 @@ def save_config_as_yaml(config: "Config", yaml_path: Path) -> Path:
                 cleaned_data, 
                 f, 
                 default_flow_style=False, 
-                sort_keys=False
+                sort_keys=False,
+                indent=4,
+                allow_unicode=True
             )
 
         logger.info(f"Configuration frozen successfully at → {yaml_path.name}")
@@ -105,7 +107,11 @@ def validate_npz_keys(data: np.lib.npyio.NpzFile) -> None:
 
     missing = required_keys - set(data.files)
     if missing:
-        raise ValueError(f"NPZ archive is corrupted or invalid. Missing keys: {missing}")
+        found = list(data.files)
+        raise ValueError(
+            f"NPZ archive is corrupted or invalid. Missing keys: {missing}"
+            f" | Found keys: {found}"
+        )
 
 
 def md5_checksum(path: Path) -> str:

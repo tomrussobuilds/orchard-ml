@@ -154,9 +154,15 @@ class RootOrchestrator:
         To be called in the 'finally' block of main.py.
         """
         # Release the system lock to allow future instances
-        release_single_instance(self.cfg.system.lock_file_path)
-        if self.run_logger:
-            self.run_logger.info("System lock released cleanly.")
+        try:
+            release_single_instance(self.cfg.system.lock_file_path)
+            if self.run_logger:
+                self.run_logger.info("System lock released cleanly.")
+            else:
+                logging.info("System lock released cleanly.")
+        except Exception as e:
+            logging.error(f"Error releasing system lock: {e}")
+
 
     def get_device(self) -> torch.device:
         """

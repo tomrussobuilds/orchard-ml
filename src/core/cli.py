@@ -85,7 +85,19 @@ def parse_args() -> argparse.Namespace:
         default=default_cfg.system.save_model,
         help="Disable saving the best model checkpoint."
     )
-
+    path_group.add_argument(
+        '--resume',
+        type=str,
+        default=None,
+        help="Path to a .pth checkpoint to resume training or run evaluation."
+    )
+    path_group.add_argument(
+        '--project_name',
+        type=str,
+        default=default_cfg.system.project_name,
+        help="Logical name for the experiment suite."
+    )
+    
     # Group: Training Hyperparameters
     train_group = parser.add_argument_group("Training Hyperparameters")
     
@@ -229,7 +241,7 @@ def parse_args() -> argparse.Namespace:
         dest='force_rgb',
         help="Disable grayscale to RGB conversion."
     )
-    
+
     # Group: Model Selection
     model_group = parser.add_argument_group("Model Configuration")
 

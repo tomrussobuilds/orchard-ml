@@ -22,6 +22,7 @@ import os
 import argparse
 import torch
 from pathlib import Path
+import tempfile
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
@@ -56,7 +57,6 @@ class SystemConfig(BaseModel):
     @property
     def lock_file_path(self) -> Path:
         """Dinamically generates a cross-platform lock file path."""
-        import tempfile
         return Path(tempfile.gettempdir()) / f"{self.project_name}.lock"
 
     @field_validator("data_dir", "output_dir", mode="after")
@@ -68,11 +68,14 @@ class SystemConfig(BaseModel):
 
     @field_validator("device")
     @classmethod
-    def validate_hardware_availability(cls, v: str) -> str:
+    def resolve_device(cls, v: str) -> str:
         """
         SSOT Validation: Ensures the requested device actually exists on this system.
         If the requested accelerator (cuda/mps) is unavailable, it self-corrects to 'cpu'.
         """
+        if v == "auto":
+            return detect_best_device()
+        
         requested = v.lower()
         if "cuda" in requested and not torch.cuda.is_available():
             return "cpu"
@@ -110,6 +113,13 @@ class TrainingConfig(BaseModel):
     use_amp: bool = False
     grad_clip: float | None = Field(default=1.0, gt=0)
 
+    @model_validator(mode="after")
+    def validate_amp_support(self) -> "TrainingConfig":
+        """Ensures AMP is only enabled on compatible devices."""
+        if self.use_amp:
+            if not torch.cuda.is_available():
+                object.__setattr__(self, "use_amp", False)
+        return self
 
 class AugmentationConfig(BaseModel):
     """Sub-configuration for data augmentation parameters."""
@@ -147,16 +157,16 @@ class DatasetConfig(BaseModel):
         default=True,
         description="Convert grayscale to 3-channel to enable ImageNet weights"
     )
+    mean: tuple[float, ...] = (0.5, 0.5, 0.5)
+    std: tuple[float, ...] = (0.5, 0.5, 0.5)
+    normalization_info: str = "N/A"
+    is_anatomical: bool = True
 
     @property
     def effective_in_channels(self) -> int:
         """Returns the actual number of channels the model will see"""
         return 3 if self.force_rgb else self.in_channels
     
-    mean: tuple[float, ...] = (0.5, 0.5, 0.5)
-    std: tuple[float, ...] = (0.5, 0.5, 0.5)
-    normalization_info: str = "N/A"
-    is_anatomical: bool = True
 
 class EvaluationConfig(BaseModel):
     """Sub-configuration for model evaluation and reporting."""
@@ -170,7 +180,6 @@ class EvaluationConfig(BaseModel):
     img_size: tuple[int, int] = (10, 10)
     cmap_confusion: str = "Blues"
     plot_style: str = "seaborn-v0_8-muted"
-
     report_format: str = "xlsx"
 
     @field_validator("report_format")
@@ -215,59 +224,81 @@ class Config(BaseModel):
     num_workers: int = Field(default_factory=get_num_workers)
     model_name: str = "ResNet-18 Adapted"
     pretrained: bool = True
-    
+
+
+    @model_validator(mode="after")
+    def validate_logic(self):
+        """Cross-field logic validation after instantiation."""
+        if self.training.mixup_epochs > self.training.epochs:
+            raise ValueError(
+                f"mixup_epochs ({self.training.mixup_epochs}) cannot exceed "
+                f"epochs ({self.training.epochs})."
+            )
+        is_cpu = self.system.device == "cpu"
+        if is_cpu and self.training.use_amp:
+            raise ValueError("AMP cannot be enabled when using CPU device.")
+        if self.pretrained and self.dataset.in_channels == 1 and not self.dataset.force_rgb:
+            raise ValueError(
+                "Pretrained models require 3-channel input. "
+                "Set force_rgb=True in dataset config."
+            )
+        
+        return self
 
     @field_validator("num_workers")
     @classmethod
     def check_cpu_count(cls, v: int) -> int:
         cpu_count = os.cpu_count() or 1
         return min(v, cpu_count)
-
-
-    @model_validator(mode="after")
-    def validate_config_coherence(self) -> "Config":
-        """Ensures logic consistency across different sub-configurations."""
-        if self.pretrained and self.dataset.in_channels == 1 and not self.dataset.force_rgb:
-            object.__setattr__(self.dataset, "force_rgb", True)
             
-        if self.training.mixup_epochs > self.training.epochs:
-            object.__setattr__(self.training, "mixup_epochs", self.training.epochs)       
-        
-        return self
-    
-
     @classmethod
     def from_args(cls, args: argparse.Namespace):
-        """Factory method to create a Config instance from CLI arguments."""
+        """
+        Factory method to create a validated Config instance from a CLI namespace.
+        
+        This method acts as the bridge between raw string/numeric input from the 
+        command line and the structured, hierarchical Pydantic schema. It performs 
+        early-stage logic checks (e.g., RGB promotion for grayscale datasets) 
+        before instantiating the immutable configuration object.
+        """
         from .metadata import DATASET_REGISTRY
 
-        detected_device = detect_best_device()
-        final_device = args.device if args.device != "auto" else detected_device
-
-        actual_use_amp = args.use_amp and ("cuda" in final_device)
-
+        # 1. Dataset metadata lookup
         dataset_key = args.dataset.lower()
         if dataset_key not in DATASET_REGISTRY:
             raise ValueError(f"Dataset '{args.dataset}' not found in DATASET_REGISTRY.")
-        
         ds_meta = DATASET_REGISTRY[dataset_key]
-        final_max = args.max_samples if args.max_samples > 0 else None
 
-        if getattr(args, 'force_rgb', None) is not None:
+        # 2. Early logic: Decide whether to force RGB based on model and dataset needs
+        if hasattr(args, 'force_rgb') and args.force_rgb is not None:
             should_force_rgb = args.force_rgb
         else:
+            # Auto-promote to RGB if dataset is grayscale but model is pretrained (ImageNet expects 3ch)
             should_force_rgb = (ds_meta.in_channels == 1) and args.pretrained
+
+        # 3. Hardware-aware logic: Resolve device and validate AMP support
+        # Device resolution 'auto' -> 'cuda'/'mps'/'cpu' is handled by SystemConfig validator
+        final_device_str = args.device if hasattr(args, 'device') else "auto"
         
+        # Only enable AMP if CUDA is requested/available (AMP is primarily for NVIDIA GPUs)
+        # Note: True hardware availability is re-checked inside SystemConfig.resolve_device
+        actual_use_amp = args.use_amp and ("cuda" in final_device_str.lower() or final_device_str == "auto")
+
+        # 4. Dataset limits
+        final_max_samples = args.max_samples if (hasattr(args, 'max_samples') and args.max_samples > 0) else None
+
+        # 5. Atomic construction of the Config object
         return cls(
             model_name=args.model_name,
             pretrained=args.pretrained,
             num_workers=args.num_workers,
             system=SystemConfig(
-                device=final_device,
+                device=final_device_str,
                 data_dir=Path(args.data_dir),
                 output_dir=Path(args.output_dir),
                 save_model=args.save_model,
-                log_interval=args.log_interval
+                log_interval=args.log_interval,
+                project_name=getattr(args, 'project_name', "medmnist_experiment")
             ),
             training=TrainingConfig(
                 seed=args.seed,
@@ -278,12 +309,14 @@ class Config(BaseModel):
                 epochs=args.epochs,
                 patience=args.patience,
                 mixup_alpha=args.mixup_alpha,
+                # Mixup epochs cannot exceed total training epochs
+                mixup_epochs=min(getattr(args, 'mixup_epochs', args.epochs // 2), args.epochs),
                 use_tta=args.use_tta,
                 cosine_fraction=args.cosine_fraction,
-                mixup_epochs=getattr(args, 'mixup_epochs', args.epochs // 2),
                 use_amp=actual_use_amp,
                 grad_clip=args.grad_clip,
-                label_smoothing=getattr(args, 'label_smoothing', 0.0)
+                label_smoothing=getattr(args, 'label_smoothing', 0.0),
+                min_lr=getattr(args, 'min_lr', 1e-6)
             ),
             augmentation=AugmentationConfig(
                 hflip=args.hflip,
@@ -295,7 +328,7 @@ class Config(BaseModel):
             ),
             dataset=DatasetConfig(
                 dataset_name=ds_meta.name,
-                max_samples=final_max,
+                max_samples=final_max_samples,
                 use_weighted_sampler=getattr(args, 'use_weighted_sampler', True),
                 in_channels=ds_meta.in_channels,
                 num_classes=len(ds_meta.classes),
@@ -304,7 +337,7 @@ class Config(BaseModel):
                 normalization_info=f"Mean={ds_meta.mean}, Std={ds_meta.std}",
                 is_anatomical=ds_meta.is_anatomical,
                 force_rgb=should_force_rgb,
-                img_size=getattr(args, 'img_size', 28),
+                img_size=getattr(args, 'img_size', 28)
             ),
             evaluation=EvaluationConfig(
                 n_samples=getattr(args, 'n_samples', 12),

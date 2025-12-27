@@ -60,9 +60,11 @@ from .system import (
     get_cuda_name,
     to_device_obj,
     load_model_weights,
-    get_optimal_threads,
     configure_system_libraries,
     release_single_instance,
+    apply_cpu_threads,
+    determine_tta_mode,
+    apply_cpu_threads,
 )
 
 # =========================================================================== #
