@@ -22,6 +22,7 @@ import os
 import argparse
 from pathlib import Path
 import tempfile
+from typing import Annotated, Optional
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
@@ -39,6 +40,16 @@ from .paths import DATASET_DIR, OUTPUTS_ROOT
 from .io import load_config_from_yaml
 
 # =========================================================================== #
+#                                TYPE ALIASES                                 #
+# =========================================================================== #
+
+PositiveInt = Annotated[int, Field(gt=0)]
+NonNegativeInt = Annotated[int, Field(ge=0)]
+PositiveFloat = Annotated[float, Field(gt=0)]
+NonNegativeFloat = Annotated[float, Field(ge=0.0)]
+Probability = Annotated[float, Field(ge=0.0, le=1.0)]
+
+# =========================================================================== #
 #                                SUB-CONFIGURATIONS                           #
 # =========================================================================== #
 
@@ -52,7 +63,7 @@ class SystemConfig(BaseModel):
     data_dir: Path = Field(default=DATASET_DIR)
     output_dir: Path = Field(default=OUTPUTS_ROOT)
     save_model: bool = True
-    log_interval: int = Field(default=10, gt=0)
+    log_interval: PositiveInt = Field(default=10)
     project_name: str = "medmnist_experiment"
 
     @property
@@ -92,35 +103,29 @@ class TrainingConfig(BaseModel):
     )
     
     seed: int = 42
-    batch_size: int = Field(default=128, gt=0)
-    epochs: int = Field(default=60, gt=0)
-    patience: int = Field(default=15, ge=0)
-    learning_rate: float = Field(default=0.008, gt=0)
-    min_lr: float = Field(default=1e-6)
-    momentum: float = Field(default=0.9, ge=0.0, le=1.0)
-    weight_decay: float = Field(default=5e-4, ge=0.0,)
-    label_smoothing: float = Field(default=0.0, ge=0.0, le=0.2)
-    mixup_alpha: float = Field(
+    batch_size: PositiveInt = Field(default=128)
+    epochs: PositiveInt = Field(default=60)
+    patience: NonNegativeInt = Field(default=15)
+    learning_rate: PositiveFloat = Field(default=0.008)
+    min_lr: PositiveFloat = Field(default=1e-6)
+    momentum: Probability = Field(default=0.9)
+    weight_decay: NonNegativeFloat = Field(default=5e-4)
+    label_smoothing: Annotated[float, Field(default=0.0, ge=0.0, le=0.2)]
+    mixup_alpha: NonNegativeFloat = Field(
         default=0.002,
-        ge=0.0,
         description="Mixup interpolation coefficient"
         )
-    mixup_epochs: int = Field(
+    mixup_epochs: NonNegativeInt = Field(
         default=30,
-        ge=0,
         description="Number of epochs to apply mixup")
     use_tta: bool = True
-    cosine_fraction: float = Field(default=0.5, ge=0.0, le=1.0)
+    cosine_fraction: Probability = Field(default=0.5)
     use_amp: bool = False
-    grad_clip: float | None = Field(default=1.0, gt=0)
-
-    @model_validator(mode="after")
-    def validate_amp_support(self) -> "TrainingConfig":
-        """Ensures AMP is only enabled on compatible devices."""
-        if self.use_amp:
-            if not torch.cuda.is_available():
-                object.__setattr__(self, "use_amp", False)
-        return self
+    grad_clip: Optional[PositiveFloat] = Field(
+        default=1.0,
+        description="Max norm for gradient clipping; None to disable"
+    )
+    
 
 class AugmentationConfig(BaseModel):
     """Sub-configuration for data augmentation parameters."""
@@ -129,14 +134,23 @@ class AugmentationConfig(BaseModel):
         extra="forbid"
     )
     
-    hflip: float = Field(default=0.5, ge=0.0, le=1.0)
-    rotation_angle: int = Field(default=10, ge=0, le=180)
-    jitter_val: float = Field(default=0.2, ge=0.0)
-    min_scale: float = Field(default=0.9, ge=0.0, le=1.0)
+    hflip: Probability = Field(default=0.5)
+    rotation_angle: Annotated[int, Field(default=10, ge=0, le=180)]
+    jitter_val: NonNegativeFloat = Field(default=0.2)
+    min_scale: Probability = Field(default=0.9)
 
-    tta_translate: float = Field(default=2.0, description="Pixel shift for TTA")
-    tta_scale: float = Field(default=1.1, description="Scale factor for TTA")
-    tta_blur_sigma: float = Field(default=0.4, description="Gaussian blur sigma for TTA")
+    tta_translate: float = Field(
+        default=2.0,
+        description="Pixel shift for TTA"
+    )
+    tta_scale: float = Field(
+        default=1.1,
+        description="Scale factor for TTA"
+    )
+    tta_blur_sigma: float = Field(
+        default=0.4,
+        description="Gaussian blur sigma for TTA"
+    )
 
 
 class DatasetConfig(BaseModel):
@@ -147,11 +161,11 @@ class DatasetConfig(BaseModel):
     )
     
     dataset_name: str = "BloodMNIST"
-    max_samples: int | None = Field(default=20000, gt=0)
+    max_samples: Optional[PositiveInt] = Field(default=20000)
     use_weighted_sampler: bool = True
-    in_channels: int = 3
-    num_classes: int = 8
-    img_size: int = Field(
+    in_channels: PositiveInt = Field(default=3)
+    num_classes: PositiveInt = Field(default=8)
+    img_size: PositiveInt = Field(
         default=28,
         description="Target square resolution for the model input"
         )
@@ -178,8 +192,8 @@ class EvaluationConfig(BaseModel):
         extra="forbid"
     )
     
-    n_samples: int = Field(default=12, gt=0)
-    fig_dpi: int = Field(default=200, gt=0)
+    n_samples: PositiveInt = Field(default=12)
+    fig_dpi: PositiveInt = Field(default=200)
     img_size: tuple[int, int] = (10, 10)
     cmap_confusion: str = "Blues"
     plot_style: str = "seaborn-v0_8-muted"
@@ -195,7 +209,7 @@ class EvaluationConfig(BaseModel):
     
     save_confusion_matrix: bool = True
     save_predictions_grid: bool = True
-    grid_cols: int = 4
+    grid_cols: PositiveInt = Field(default=4)
     fig_size_predictions: tuple[int, int] = (12, 8)
 
 
@@ -224,13 +238,13 @@ class Config(BaseModel):
     dataset: DatasetConfig = Field(default_factory=DatasetConfig)
     evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
     
-    num_workers: int = Field(default_factory=get_num_workers)
+    num_workers: NonNegativeInt = Field(default_factory=get_num_workers)
     model_name: str = "ResNet-18 Adapted"
     pretrained: bool = True
 
 
     @model_validator(mode="after")
-    def validate_logic(self):
+    def validate_logic(self) -> "Config":
         """Cross-field logic validation after instantiation."""
         if self.training.mixup_epochs > self.training.epochs:
             raise ValueError(
@@ -258,29 +272,14 @@ class Config(BaseModel):
     def from_yaml(cls, yaml_path: Path) -> "Config":
         """
         Factory method to create a validated Config instance from a YAML file.
-        
-        This method loads the YAML file, parses it into a dictionary, and then 
-        constructs the Config object, ensuring all validations and defaults 
-        are applied.
-
-        Args:
-            yaml_path (Path): Path to the YAML configuration file.
-
-        Returns:
-            Config: The validated configuration object.
         """
         raw_data = load_config_from_yaml(yaml_path)
         return cls(**raw_data)        
             
     @classmethod
-    def from_args(cls, args: argparse.Namespace):
+    def from_args(cls, args: argparse.Namespace) -> "Config":
         """
         Factory method to create a validated Config instance from a CLI namespace.
-        
-        This method acts as the bridge between raw string/numeric input from the 
-        command line and the structured, hierarchical Pydantic schema. It performs 
-        early-stage logic checks (e.g., RGB promotion for grayscale datasets) 
-        before instantiating the immutable configuration object.
         """
         if hasattr(args, 'config') and args.config:
             return cls.from_yaml(Path(args.config))
@@ -301,8 +300,6 @@ class Config(BaseModel):
 
         # 3. Hardware-aware logic: Resolve device and validate AMP support
         final_device_str = args.device if hasattr(args, 'device') else "auto"
-        
-        actual_use_amp = args.use_amp and ("cuda" in final_device_str.lower() or final_device_str == "auto")
 
         # 4. Dataset limits
         final_max_samples = args.max_samples if (hasattr(args, 'max_samples') and args.max_samples > 0) else None
@@ -329,11 +326,10 @@ class Config(BaseModel):
                 epochs=args.epochs,
                 patience=args.patience,
                 mixup_alpha=args.mixup_alpha,
-                # Mixup epochs cannot exceed total training epochs
-                mixup_epochs=min(getattr(args, 'mixup_epochs', args.epochs // 2), args.epochs),
+                mixup_epochs=args.mixup_epochs,
                 use_tta=args.use_tta,
                 cosine_fraction=args.cosine_fraction,
-                use_amp=actual_use_amp,
+                use_amp=args.use_amp,
                 grad_clip=args.grad_clip,
                 label_smoothing=getattr(args, 'label_smoothing', 0.0),
                 min_lr=getattr(args, 'min_lr', 1e-6)

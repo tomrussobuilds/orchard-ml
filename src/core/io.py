@@ -29,19 +29,25 @@ logger = logging.getLogger("medmnist_pipeline")
 def save_config_as_yaml(data: Dict[str, Any], yaml_path: Path) -> Path:
     """
     Serializes a configuration dictionary to a YAML file.
-    Args:
-        data (Dict[str, Any]): The configuration data to serialize.
-        yaml_path (Path): Destination path for the YAML file.
-
-    Returns:
-        Path: The path where the configuration was saved.
+    Converts complex types (like Path) to strings for YAML compatibility.
     """
     try:
         yaml_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
+        def stringify_paths(obj: Any) -> Any:
+            if isinstance(obj, dict):
+                return {k: stringify_paths(v) for k, v in obj.items()}
+            if isinstance(obj, list):
+                return [stringify_paths(i) for i in obj]
+            if isinstance(obj, Path):
+                return str(obj)
+            return obj
+
+        cleaned_data = stringify_paths(data)
+
         with open(yaml_path, 'w', encoding='utf-8') as f:
             yaml.dump(
-                data,
+                cleaned_data,
                 f, 
                 default_flow_style=False, 
                 sort_keys=False,
