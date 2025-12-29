@@ -269,6 +269,8 @@ def load_model_weights(
         path (Path): Filesystem path to the checkpoint file.
         device (torch.device): Target device for mapping the tensors.
     """
+    if not path.exists():
+        raise FileNotFoundError(f"Model checkpoint not found at: {path}")
     state_dict = torch.load(path, map_location=device, weights_only=True)
     model.load_state_dict(state_dict)
 

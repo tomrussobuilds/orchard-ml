@@ -26,6 +26,7 @@ validated and logged state.
 # =========================================================================== #
 import logging
 from pathlib import Path
+from typing import Optional
 
 # =========================================================================== #
 #                             Third-Party Imports                             #
@@ -83,9 +84,9 @@ class RootOrchestrator:
             cfg (Config): The validated global configuration manifest.
         """
         self.cfg = cfg
-        self.paths = None
-        self.run_logger = None
-        self._device_cache = None
+        self.paths: Optional[RunPaths] = None
+        self.run_logger: Optional[logging.Logger] = None
+        self._device_cache: Optional[torch.device] = None
     
     def __enter__(self) -> "RootOrchestrator":
         """
@@ -128,34 +129,35 @@ class RootOrchestrator:
             5. Telemetry: Hot-swaps logger to file-persistent handlers.
             6. Guarding: Acquires system locks and purges zombie processes.
             7. Persistence: Saves the validated configuration for reference.
+            8. Reporting: Logs the verified environment baseline.
 
         Returns:
             RunPaths: The verified path orchestrator for the current session.
         """
-        # 1. Configure system libraries for the current environment
+        # 1. Configure System Libraries for the current environment
         configure_system_libraries()
 
-        # 2. Reproducibility setup: Lock global random state
+        # 2. Reproducibility Setup: Lock global random state
         set_seed(self.cfg.training.seed)
 
-        # 3. Static environment setup: Prepare global folder structure
+        # 3. Static Environment Setup: Prepare global folder structure
         setup_static_directories()
 
-        # 4. Dynamic path initialization: Create run-specific folder
+        # 4. Dynamic Path Initialization: Create run-specific folder
         self.paths = RunPaths(
             dataset_slug=self.cfg.dataset.dataset_name,
             model_name=self.cfg.model_name,
             base_dir=self.cfg.system.output_dir
         )
 
-        # 5. Logger initialization: Start file and console logging
+        # 5. Logger Initialization: Start file and console logging
         Logger.setup(
             name=LOGGER_NAME,
             log_dir=self.paths.logs
         )
         self.run_logger = logging.getLogger(LOGGER_NAME)
 
-        # 6. Environment initialization and safety: Lock instance and clean zombies
+        # 6. Environment Initialization & Safety: Lock instance and clean zombies
         self.cfg.system.manage_environment()
 
         ensure_single_instance(
@@ -163,12 +165,13 @@ class RootOrchestrator:
             logger=self.run_logger
         )
         
-        # 7. Metadata preservation: Save validated config as SSOT reference
+        # 7. Metadata Preservation: Save validated config as SSOT reference
         save_config_as_yaml(
             data=self.cfg.model_dump(mode='json'),
             yaml_path=self.paths.get_config_path()
         )
         
+        # 8. Environment Reporting: Log the verified baseline status
         self._log_initial_status()
         
         return self.paths
@@ -176,18 +179,17 @@ class RootOrchestrator:
     def cleanup(self) -> None:
         """
         Releases system resources and removes the lock file.
-        To be called in the 'finally' block of main.py.
+        To be called in the 'finally' block of main.py or via __exit__.
         """
-        # Release the system lock to allow future instances
         try:
             release_single_instance(self.cfg.system.lock_file_path)
+            message = "System lock released cleanly."
             if self.run_logger:
-                self.run_logger.info("System lock released cleanly.")
+                self.run_logger.info(message)
             else:
-                logging.info("System lock released cleanly.")
+                logging.info(message)
         except Exception as e:
             logging.error(f"Error releasing system lock: {e}")
-
 
     def get_device(self) -> torch.device:
         """
@@ -204,7 +206,9 @@ class RootOrchestrator:
 
     def load_weights(self, model: torch.nn.Module, path: Path) -> None:
         """
-        Coordinates atomic weight loading and logs the event.
+        Coordinates weight restoration by bridging the model with system utilities.
+        Delegates the low-level weight loading to system utilities while
+        providing telemetry.
 
         Args:
             model (torch.nn.Module): The model instance to populate.
@@ -212,9 +216,11 @@ class RootOrchestrator:
         """
         device = self.get_device()
         load_model_weights(model, path, device)
-        self.run_logger.info(
-            f"Checkpoint weights successfully restored from: {path.name}"
-        )
+        
+        if self.run_logger:
+            self.run_logger.info(
+                f"Checkpoint weights successfully restored from: {path.name}"
+            )
 
     def _log_initial_status(self) -> None:
         """
