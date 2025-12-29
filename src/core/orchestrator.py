@@ -146,10 +146,16 @@ class RootOrchestrator:
 
         # 6. Environment Initialization & Safety
         self.cfg.system.manage_environment()
-        ensure_single_instance(lock_file=self.cfg.system.lock_file_path, logger=self.run_logger)
+        ensure_single_instance(
+            lock_file=self.cfg.system.lock_file_path, 
+            logger=self.run_logger
+        )
         
         # 7. Metadata Preservation
-        save_config_as_yaml(data=self.cfg.model_dump(mode='json'), yaml_path=self.paths.get_config_path())
+        save_config_as_yaml(
+            data=self.cfg.model_dump(mode='json'), 
+            yaml_path=self.paths.get_config_path()
+        )
         
         # 8. Environment Reporting
         self._log_initial_status()
@@ -164,12 +170,18 @@ class RootOrchestrator:
         try:
             release_single_instance(self.cfg.system.lock_file_path)
             msg = "System resource lock released successfully."
-            if self.run_logger: self.run_logger.info(f" » {msg}")
-            else: logging.info(msg)
+            
+            if self.run_logger:
+                self.run_logger.info(f" » {msg}")
+            else:
+                logging.info(msg)
+                
         except Exception as e:
             err_msg = f"Failed to release system lock: {e}"
-            if self.run_logger: self.run_logger.error(f" [!] {err_msg}")
-            else: logging.error(err_msg)
+            if self.run_logger:
+                self.run_logger.error(f" [!] {err_msg}")
+            else:
+                logging.error(err_msg)
 
     def get_device(self) -> torch.device:
         """
@@ -192,6 +204,7 @@ class RootOrchestrator:
         """
         device = self.get_device()
         load_model_weights(model, path, device)
+        
         if self.run_logger:
             self.run_logger.info(f" » Checkpoint weights restored from: {path.name}")
 
@@ -200,14 +213,18 @@ class RootOrchestrator:
         Logs the verified baseline environment configuration upon initialization.
         Uses formatted headers for visual consistency with the main pipeline.
         """
-        self.run_logger.info(f"\n{'━' * 80}\n{' ENVIRONMENT INITIALIZATION ':^80}\n{'━' * 80}")
+        self.run_logger.info(f"{'━' * 80}\n{' ENVIRONMENT INITIALIZATION ':^80}\n{'━' * 80}")
         
         self._log_hardware_section()
+        self.run_logger.info("")
+        
         self._log_dataset_section()
+        self.run_logger.info("")
+        
         self._log_strategy_section()
         
-        self.run_logger.info(f" » Run Directory: {self.paths.root}")
-        self.run_logger.info(f"{'━' * 80}\n")
+        self.run_logger.info(f"[FILESYSTEM]")
+        self.run_logger.info(f"  » Run Root:     {self.paths.root}")
 
     def _log_hardware_section(self):
         """Logs hardware-specific configuration and fallback warnings."""
@@ -215,27 +232,32 @@ class RootOrchestrator:
         req_dev = self.cfg.system.device
         
         self.run_logger.info(f"[HARDWARE]")
-        self.run_logger.info(f"  » Device:      {str(device_obj).upper()}")
+        self.run_logger.info(f"  » Device:       {str(device_obj).upper()}")
         
         if req_dev != "cpu" and device_obj.type == "cpu":
             self.run_logger.warning(f"  [!] FALLBACK: Requested {req_dev} is unavailable.")
         
         if device_obj.type == 'cuda':
             gpu_name = get_cuda_name()
-            if gpu_name: self.run_logger.info(f"  » GPU:         {gpu_name}")
+            if gpu_name: 
+                self.run_logger.info(f"  » GPU:          {gpu_name}")
+        
+
         elif device_obj.type == 'cpu':
             opt_threads = apply_cpu_threads(self.cfg.num_workers)
-            self.run_logger.info(f"  » Threads:     {opt_threads} (Workers: {self.cfg.num_workers})")
+            self.run_logger.info(f"  » Workers:      {self.cfg.num_workers}")
+            self.run_logger.info(f"  » CPU Threads:  {opt_threads}")
 
     def _log_dataset_section(self):
         """Logs dataset metadata and channel processing modes."""
         ds = self.cfg.dataset
 
-
         self.run_logger.info(f"[DATASET]")
-        self.run_logger.info(f"  » Name:        {ds.dataset_name} ({ds.img_size}px)")
-        self.run_logger.info(f"  » Mode:        {ds.processing_mode}")
-        self.run_logger.info(f"  » Features:    Anatomical={ds.is_anatomical}, Texture={ds.is_texture_based}")
+        self.run_logger.info(f"  » Name:         {ds.dataset_name}")
+        self.run_logger.info(f"  » Resolution:   {ds.img_size}px")
+        self.run_logger.info(f"  » Mode:         {ds.processing_mode}")
+        self.run_logger.info(f"  » Anatomical:   {ds.is_anatomical}")
+        self.run_logger.info(f"  » Texture:      {ds.is_texture_based}")
 
     def _log_strategy_section(self):
         """Logs high-level training and augmentation strategies."""
@@ -243,6 +265,11 @@ class RootOrchestrator:
         tta_status = determine_tta_mode(train.use_tta, self.get_device().type)
         
         self.run_logger.info(f"[STRATEGY]")
-        self.run_logger.info(f"  » Model:       {self.cfg.model.name} (Pretrained: {self.cfg.model.pretrained})")
-        self.run_logger.info(f"  » TTA:         {tta_status}")
-        self.run_logger.info(f"  » Hyperparams: Epochs={train.epochs}, Batch={train.batch_size}, LR={train.learning_rate:.4f}")
+        self.run_logger.info(f"  » Model:        {self.cfg.model.name}")
+        self.run_logger.info(f"  » Pretrained:   {self.cfg.model.pretrained}")
+        self.run_logger.info(f"  » TTA Mode:     {tta_status}")
+        
+        self.run_logger.info(f"[HYPERPARAMETERS]")
+        self.run_logger.info(f"  » Epochs:       {train.epochs}")
+        self.run_logger.info(f"  » Batch Size:   {train.batch_size}")
+        self.run_logger.info(f"  » Learn Rate:   {train.learning_rate:.2e}")
