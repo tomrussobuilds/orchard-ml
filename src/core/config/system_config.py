@@ -38,9 +38,8 @@ from pydantic import (
 #                               Internal Imports                              #
 # =========================================================================== #
 from .types import ValidatedPath, PositiveInt
-from ..system import (
-    detect_best_device, kill_duplicate_processes
-)
+from ..processes import kill_duplicate_processes
+from ..environment import detect_best_device
 from ..paths import DATASET_DIR, OUTPUTS_ROOT
 
 # =========================================================================== #

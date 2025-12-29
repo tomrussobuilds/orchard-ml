@@ -1,8 +1,9 @@
 """
-Input/Output Utilities Module
+Input/Output & Persistence Utilities.
 
-This module provides low-level file handling utilities, including YAML 
-serialization for configurations and validation for dataset archives.
+This module manages the pipeline's interaction with the filesystem, handling 
+configuration serialization (YAML), model checkpoint restoration, and dataset 
+integrity verification via MD5 checksums and schema validation.
 """
 
 # =========================================================================== #
@@ -18,10 +19,10 @@ from typing import Any, Dict
 #                                Third-Party Imports                          #
 # =========================================================================== #
 import numpy as np
-
+import torch
 
 # =========================================================================== #
-#                                  I/O UTILITIES                              #
+#                                  I/O Utilities                              #
 # =========================================================================== #
 
 logger = logging.getLogger("medmnist_pipeline")
@@ -90,7 +91,7 @@ def validate_npz_keys(data: np.lib.npyio.NpzFile) -> None:
         data (np.lib.npyio.NpzFile): The loaded NPZ file object.
 
     Raises:
-        ValueError: If any required key (ima                cleaned_data, ges/labels) is missing.
+        ValueError: If any required key (images/labels) is missing.
     """
     required_keys = {
         "train_images", "train_labels",
@@ -122,3 +123,22 @@ def md5_checksum(path: Path) -> str:
         for chunk in iter(lambda: f.read(8192), b""):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
+
+
+def load_model_weights(
+        model: torch.nn.Module, 
+        path: Path, 
+        device: torch.device
+) -> None:
+    """
+    Restores model state from a checkpoint using secure weight-only loading.
+    
+    Args:
+        model (torch.nn.Module): The model instance to populate.
+        path (Path): Filesystem path to the checkpoint file.
+        device (torch.device): Target device for mapping the tensors.
+    """
+    if not path.exists():
+        raise FileNotFoundError(f"Model checkpoint not found at: {path}")
+    state_dict = torch.load(path, map_location=device, weights_only=True)
+    model.load_state_dict(state_dict)

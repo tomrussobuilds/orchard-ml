@@ -40,7 +40,7 @@ from .dataset_config import DatasetConfig
 from .evaluation_config import EvaluationConfig
 from .models_config import ModelConfig
 
-from ..system import get_num_workers
+from ..environment import get_num_workers
 from ..io import load_config_from_yaml
 
 # =========================================================================== #

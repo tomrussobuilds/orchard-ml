@@ -20,6 +20,7 @@ from .training_config import TrainingConfig
 from .augmentation_config import AugmentationConfig
 from .dataset_config import DatasetConfig
 from .evaluation_config import EvaluationConfig
+from .models_config import ModelConfig
 
 # =========================================================================== #
 #                                    Types                                    #
@@ -36,5 +37,6 @@ __all__ = [
     "AugmentationConfig",
     "DatasetConfig",
     "EvaluationConfig",
-    "ValidatedPath"
+    "ValidatedPath",
+    "ModelConfig"
 ]

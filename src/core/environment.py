@@ -1,39 +1,29 @@
 """
-System and Hardware Utilities Module
+Hardware Acceleration & Reproducibility Environment.
 
-This module provides low-level abstractions for hardware acceleration (CUDA/MPS),
-environment-aware reproducibility (seeding, worker allocation), and OS-level 
-process management (exclusive locking, duplicate termination).
+This module provides high-level abstractions for hardware discovery (CUDA/MPS),
+deterministic seeding across libraries, and compute resource optimization. 
+It ensures that the execution context is synchronized between PyTorch, NumPy, 
+and the underlying system libraries.
 """
 
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
 import os
-import sys
-import platform
 import random
-import time
+import platform
 import logging
-from pathlib import Path
-from typing import Optional, IO
-
-try:
-    import fcntl  # Unix-only
-    HAS_FCNTL = True
-except ImportError:
-    HAS_FCNTL = False
 
 # =========================================================================== #
-#                                Third-Party Imports                           #
+#                                Third-Party Imports                          #
 # =========================================================================== #
 import numpy as np
 import torch
-import psutil
 import matplotlib
 
 # =========================================================================== #
-#                               SYSTEM UTILITIES                              #
+#                               System Utilities                              #
 # =========================================================================== #
 
 def configure_system_libraries() -> None:
@@ -54,86 +44,14 @@ def configure_system_libraries() -> None:
         matplotlib.rcParams['ps.fonttype'] = 42
         logging.getLogger("matplotlib").setLevel(logging.WARNING)
         
-    if not HAS_FCNTL and platform.system() != "Windows":
-        logging.warning("fcntl module not available; exclusive locking disabled.")
-
-
-# Global lock FD to prevent GC cleanup
-_lock_fd: Optional[IO] = None
-
-def ensure_single_instance(
-        lock_file: Path,
-        logger: logging.Logger
-) -> None:
-    """
-    Uses flock (Unix) to ensure only one instance of the script runs.
-    Aborts execution if another instance is detected.
-    """
-    global _lock_fd
-    if platform.system() in ("Linux", "Darwin") and HAS_FCNTL:
-        try:
-            lock_file.parent.mkdir(parents=True, exist_ok=True)
-            f = open(lock_file, 'a')
-            fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            _lock_fd = f 
-            logger.info("Exclusive system lock acquired.")
-        except (IOError, BlockingIOError):
-            logger.error("CRITICAL: Another instance is already running. Aborting.")
-            sys.exit(1)
-
-
-def release_single_instance(
-        lock_file: Path
-) -> None:
-    """
-    Releases the exclusive system lock and performs cleanup of the lock file.
-    """
-    global _lock_fd
-    if _lock_fd:
-        try:
-            if HAS_FCNTL:
-                fcntl.flock(_lock_fd, fcntl.LOCK_UN)
-            _lock_fd.close()
-        finally:
-            _lock_fd = None
-    if lock_file.exists():
-        try:
-            lock_file.unlink()
-        except OSError:
-            pass
-
-
-def kill_duplicate_processes(
-        logger: Optional[logging.Logger] = None,
-        script_name: Optional[str] = None
-) -> None:
-    """
-    Terminates other instances of the same script to prevent resource contention.
-    Includes a cooldown period to allow OS to release resources.
-    """
-    if script_name is None:
-        script_name = os.path.basename(sys.argv[0])
-    
-    current_pid = os.getpid()
-    killed = 0
-    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-        try:
-            p = proc.info
-            if not p['cmdline'] or p['pid'] == current_pid:
-                continue
-            if any(script_name in arg for arg in p['cmdline']) and 'python' in p['name'].lower():
-                proc.terminate()
-                killed += 1
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-            continue
-    
-    if killed:
-        logger.info(f"Cleaned {killed} duplicate(s). Cooling down...")
-        time.sleep(1.5)
+    # Note: The fcntl check is now partially handled by the 'processes' module,
+    # but we keep the system-level warning here for environment awareness.
+    if platform.system() == "Windows":
+        logging.debug("Windows environment detected: fcntl locking is unavailable.")
 
 
 # =========================================================================== #
-#                                HARDWARE UTILITIES                           #
+#                              Hardware Utilities                             #
 # =========================================================================== #
 
 def set_seed(
@@ -183,7 +101,6 @@ def worker_init_fn(worker_id: int) -> None:
         return
 
     # 2. Combine base seed with worker ID for a unique sub-seed
-    # We use a large prime or bitwise operations to ensure spread
     base_seed = worker_info.seed 
     seed = (base_seed + worker_id) % 2**32
 
@@ -254,25 +171,6 @@ def to_device_obj(
         torch.device: The active computing device object.
     """
     return torch.device(device_str)
-
-
-def load_model_weights(
-        model: torch.nn.Module, 
-        path: Path, 
-        device: torch.device
-) -> None:
-    """
-    Restores model state from a checkpoint using secure weight-only loading.
-    
-    Args:
-        model (torch.nn.Module): The model instance to populate.
-        path (Path): Filesystem path to the checkpoint file.
-        device (torch.device): Target device for mapping the tensors.
-    """
-    if not path.exists():
-        raise FileNotFoundError(f"Model checkpoint not found at: {path}")
-    state_dict = torch.load(path, map_location=device, weights_only=True)
-    model.load_state_dict(state_dict)
 
 
 def determine_tta_mode(

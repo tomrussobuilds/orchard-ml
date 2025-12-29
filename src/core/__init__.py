@@ -7,31 +7,33 @@ It also includes the RootOrchestrator to manage experiment lifecycle initializat
 """
 
 # =========================================================================== #
-#                                Configuration
+#                                Configuration                                #
 # =========================================================================== #
 from .config import (
     Config,
     SystemConfig,
     DatasetConfig,
+    ModelConfig,
     TrainingConfig,
     AugmentationConfig,
     EvaluationConfig,
 )
 
 # =========================================================================== #
-#                                Constants & Paths
+#                                Constants & Paths                            #
 # =========================================================================== #
 from .paths import (
     PROJECT_ROOT, 
     DATASET_DIR,
     OUTPUTS_ROOT,
     STATIC_DIRS,
+    LOGGER_NAME,
     RunPaths,
     setup_static_directories
 )
 
 # =========================================================================== #
-#                                Dataset Registry
+#                                Dataset Registry                             #
 # =========================================================================== #
 from .metadata import (
     DatasetMetadata,
@@ -49,23 +51,27 @@ from .orchestrator import RootOrchestrator
 from .logger import Logger
 
 # =========================================================================== #
-#                                System Management                            #
+#                                Environment & Hardware                       #
 # =========================================================================== #
-from .system import (
+from .environment import (
     set_seed, 
     detect_best_device, 
     get_num_workers,
-    kill_duplicate_processes,
-    ensure_single_instance,
     get_cuda_name,
     to_device_obj,
-    load_model_weights,
     configure_system_libraries,
-    release_single_instance,
     apply_cpu_threads,
     determine_tta_mode,
-    apply_cpu_threads,
     worker_init_fn
+)
+
+# =========================================================================== #
+#                                Process Management                           #
+# =========================================================================== #
+from .processes import (
+    ensure_single_instance,
+    release_single_instance,
+    kill_duplicate_processes
 )
 
 # =========================================================================== #
@@ -74,24 +80,12 @@ from .system import (
 from .io import (
     save_config_as_yaml,
     load_config_from_yaml,
+    load_model_weights,
     validate_npz_keys,
     md5_checksum
 )
 
 # =========================================================================== #
-#                                Command Line Interface
+#                                Command Line Interface                       #
 # =========================================================================== #
 from .cli import parse_args
-
-# =========================================================================== #
-#                                Paths                                        #
-# =========================================================================== #
-from .paths import (
-    PROJECT_ROOT,
-    DATASET_DIR,
-    OUTPUTS_ROOT,
-    STATIC_DIRS,
-    LOGGER_NAME,
-    RunPaths,
-    setup_static_directories
-)
