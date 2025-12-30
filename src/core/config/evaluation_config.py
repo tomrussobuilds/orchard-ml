@@ -24,7 +24,9 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 # =========================================================================== #
 #                               Internal Imports                              #
 # =========================================================================== #
-from .types import PositiveInt
+from .types import (
+    PositiveInt, BatchSize
+)
 
 # =========================================================================== #
 #                           EVALUATION CONFIGURATION                          #
@@ -42,6 +44,10 @@ class EvaluationConfig(BaseModel):
         extra="forbid"
     )
     
+    batch_size: BatchSize = Field(
+        default=64,
+        description="Batch size used during inference/evaluation"
+    )
     n_samples: PositiveInt = Field(default=12)
     fig_dpi: PositiveInt = Field(default=200)
     img_size: tuple[int, int] = (10, 10)
@@ -68,6 +74,7 @@ class EvaluationConfig(BaseModel):
     def from_args(cls, args: argparse.Namespace) -> "EvaluationConfig":
         """Map evaluation and reporting preferences."""
         return cls(
+            batch_size=getattr(args, 'eval_batch_size', 64),
             n_samples=getattr(args, 'n_samples', 12),
             fig_dpi=getattr(args, 'fig_dpi', 200),
             plot_style=getattr(args, 'plot_style', "seaborn-v0_8-muted"),

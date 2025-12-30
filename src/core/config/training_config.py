@@ -26,8 +26,8 @@ from pydantic import BaseModel, Field, ConfigDict
 #                               Internal Imports                              #
 # =========================================================================== #
 from .types import (
-    PositiveInt, NonNegativeInt, PositiveFloat, NonNegativeFloat,
-    Probability, SmoothingValue, LearningRate
+    PositiveInt, NonNegativeInt, NonNegativeFloat,
+    Probability, SmoothingValue, LearningRate, GradNorm
 )
 
 # =========================================================================== #
@@ -37,10 +37,6 @@ from .types import (
 class TrainingConfig(BaseModel):
     """
     Defines the optimization landscape and regularization strategies.
-    
-    Encapsulates hyperparameters for the optimizer, learning rate schedules, 
-    and advanced training techniques like Mixed Precision (AMP) and Mixup 
-    augmentation duration.
     """
     model_config = ConfigDict(
         frozen=True,
@@ -54,23 +50,26 @@ class TrainingConfig(BaseModel):
     batch_size: PositiveInt = Field(default=128)
     epochs: PositiveInt = Field(default=60)
     patience: NonNegativeInt = Field(default=15)
-    learning_rate: PositiveFloat = Field(default=0.008)
+    learning_rate: LearningRate = Field(default=0.008)
     min_lr: LearningRate = Field(default=1e-6)
     momentum: Probability = Field(default=0.9)
     weight_decay: NonNegativeFloat = Field(default=5e-4)
     label_smoothing: SmoothingValue = 0.0
+    
     mixup_alpha: NonNegativeFloat = Field(
-        default=0.002,
+        default=0.2,
         description="Mixup interpolation coefficient"
     )
     mixup_epochs: NonNegativeInt = Field(
-        default=30,
+        default=20,
         description="Number of epochs to apply mixup"
     )
+    
     use_tta: bool = True
     cosine_fraction: Probability = Field(default=0.5)
     use_amp: bool = False
-    grad_clip: Optional[PositiveFloat] = Field(
+    
+    grad_clip: Optional[GradNorm] = Field(
         default=1.0,
         description="Max norm for gradient clipping; None to disable"
     )

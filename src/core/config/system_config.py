@@ -37,7 +37,9 @@ from pydantic import (
 # =========================================================================== #
 #                               Internal Imports                              #
 # =========================================================================== #
-from .types import ValidatedPath, PositiveInt
+from .types import (
+    ValidatedPath, ProjectSlug, LogFrequency, LogLevel
+)
 from ..processes import kill_duplicate_processes
 from ..environment import detect_best_device
 from ..paths import DATASET_DIR, OUTPUTS_ROOT
@@ -58,15 +60,21 @@ class SystemConfig(BaseModel):
         frozen=True,
         extra="forbid"
     )
+    # Hardware
     device: str = Field(
         default_factory=detect_best_device,
         description="Computing device (cpu, cuda, mps or auto)."
     )
+    log_level: LogLevel = "INFO"
+
+    # Filesystem
     data_dir: ValidatedPath = Field(default=DATASET_DIR)
     output_dir: ValidatedPath = Field(default=OUTPUTS_ROOT)
+
+    # Environment Management
     save_model: bool = True
-    log_interval: PositiveInt = Field(default=10)
-    project_name: str = "medmnist_experiment"
+    log_interval: LogFrequency = Field(default=10)
+    project_name: ProjectSlug = "vision_experiment"
     allow_process_kill: bool = Field(
         default=True,
         description="Enable automatic termination of duplicate processes."
@@ -75,8 +83,15 @@ class SystemConfig(BaseModel):
     @property
     def lock_file_path(self) -> Path:
         """Dynamically generates a cross-platform lock file path."""
-        return Path(tempfile.gettempdir()) / f"{self.project_name}.lock"
-
+        safe_name = self.project_name.replace("/", "_") 
+        return Path(tempfile.gettempdir()) / f"{safe_name}.lock"
+    
+    @property
+    def support_amp(self) -> bool:
+        """True if the selected device supports Automatic Mixed Precision."""
+        return self.device.lower().startswith("cuda") or \
+                self.device.lower().startswith("mps")
+    
     @field_validator("device")
     @classmethod
     def resolve_device(cls, v: str) -> str:
@@ -116,5 +131,5 @@ class SystemConfig(BaseModel):
             output_dir=Path(getattr(args, 'output_dir', OUTPUTS_ROOT)),
             save_model=getattr(args, 'save_model', True),
             log_interval=getattr(args, 'log_interval', 10),
-            project_name=getattr(args, 'project_name', "medmnist_experiment")
+            project_name=getattr(args, 'project_name', "vision_experiment")
         )

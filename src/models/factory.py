@@ -54,19 +54,7 @@ def get_model(
     # Normalize model name for robust matching
     model_name_lower = cfg.model.name.lower()
     
-    dataset_key = cfg.dataset.dataset_name.lower()
-    
-    if dataset_key not in DATASET_REGISTRY:
-        available_datasets = ", ".join(DATASET_REGISTRY.keys())
-        error_msg = (
-            f"Dataset '{cfg.dataset.dataset_name}' not found in registry. "
-            f"Available options are: {available_datasets}"
-        )
-        logger.error(error_msg)
-        raise ValueError(error_msg)
-
-    metadata = DATASET_REGISTRY[dataset_key] 
-    num_classes = len(metadata.classes)
+    num_classes = cfg.dataset.num_classes
     in_channels = cfg.dataset.effective_in_channels
 
     logger.info(f"Instantiating model '{cfg.model.name}' | "

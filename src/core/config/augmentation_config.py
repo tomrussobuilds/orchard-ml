@@ -17,7 +17,6 @@ Key Architectural Components:
 #                                Standard Imports                             #
 # =========================================================================== #
 import argparse
-from typing import Annotated
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
@@ -27,7 +26,9 @@ from pydantic import BaseModel, Field, ConfigDict
 # =========================================================================== #
 #                               Internal Imports                              #
 # =========================================================================== #
-from .types import Probability, NonNegativeFloat
+from .types import (
+    Probability, RotationDegrees, NonNegativeFloat
+)
 
 # =========================================================================== #
 #                          AUGMENTATION CONFIGURATION                         #
@@ -47,7 +48,7 @@ class AugmentationConfig(BaseModel):
     )
     
     hflip: Probability = Field(default=0.5)
-    rotation_angle: Annotated[int, Field(default=10, ge=0, le=180)]
+    rotation_angle: RotationDegrees = Field(default=10)
     jitter_val: NonNegativeFloat = Field(default=0.2)
     min_scale: Probability = Field(default=0.9)
 
@@ -63,7 +64,6 @@ class AugmentationConfig(BaseModel):
         default=0.4,
         description="Gaussian blur sigma for TTA"
     )
-
 
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "AugmentationConfig":

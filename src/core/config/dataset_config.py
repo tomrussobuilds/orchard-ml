@@ -19,7 +19,7 @@ Key Architectural Features:
 #                                Standard Imports                             #
 # =========================================================================== #
 import argparse
-from typing import Annotated, Optional
+from typing import Optional
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
@@ -29,8 +29,11 @@ from pydantic import BaseModel, Field, ConfigDict
 # =========================================================================== #
 #                               Internal Imports                              #
 # =========================================================================== #
-from .types import PositiveInt
+from .types import (
+    ImageSize, Channels, ValidatedPath, PositiveInt
+)
 from ..metadata import DATASET_REGISTRY
+from ..paths import DATASET_DIR
 
 # =========================================================================== #
 #                             DATASET CONFIGURATION                           #
@@ -49,15 +52,16 @@ class DatasetConfig(BaseModel):
         extra="forbid"
     )
     
+    data_root: ValidatedPath = DATASET_DIR
     dataset_name: str = "BloodMNIST"
-    max_samples: Optional[PositiveInt] = Field(default=20000)
     use_weighted_sampler: bool = True
-    in_channels: Annotated[PositiveInt, Field(ge=1, le=3)] = 3
+    in_channels: Channels = 3
     num_classes: PositiveInt = Field(
         default=8,
         description="Number of target classes in the dataset"
     )
-    img_size: PositiveInt = Field(
+    max_samples: Optional[PositiveInt] = Field(default=20000)
+    img_size: ImageSize = Field(
         default=28,
         description="Target square resolution for the model input"
     )
@@ -81,6 +85,10 @@ class DatasetConfig(BaseModel):
     is_anatomical: bool = True
     is_texture_based: bool = True
     
+    @property
+    def is_grayscale(self) -> bool:
+        """Indicates if the original dataset images are single-channel."""
+        return self.in_channels == 1
 
     @property
     def effective_in_channels(self) -> int:

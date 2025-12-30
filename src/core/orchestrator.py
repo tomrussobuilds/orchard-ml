@@ -75,7 +75,7 @@ class RootOrchestrator:
         _device_cache (Optional[torch.device]): Memoized compute device.
     """
     
-    def __init__(self, cfg):
+    def __init__(self, cfg, log_initializer=Logger.setup):
         """
         Initializes the orchestrator with the experiment configuration.
 
@@ -83,6 +83,7 @@ class RootOrchestrator:
             cfg (Config): The validated global configuration manifest.
         """
         self.cfg = cfg
+        self._log_initializer = log_initializer
         self.paths: Optional[RunPaths] = None
         self.run_logger: Optional[logging.Logger] = None
         self._device_cache: Optional[torch.device] = None
@@ -141,8 +142,11 @@ class RootOrchestrator:
         )
 
         # 5. Logger Initialization
-        Logger.setup(name=LOGGER_NAME, log_dir=self.paths.logs)
-        self.run_logger = logging.getLogger(LOGGER_NAME)
+        self.run_logger = self._log_initializer(
+            name=LOGGER_NAME,
+            log_dir=self.paths.logs,
+            level=self.cfg.system.log_level
+        )
 
         # 6. Environment Initialization & Safety
         self.cfg.system.manage_environment()
@@ -213,7 +217,12 @@ class RootOrchestrator:
         Logs the verified baseline environment configuration upon initialization.
         Uses formatted headers for visual consistency with the main pipeline.
         """
-        self.run_logger.info(f"{'━' * 80}\n{' ENVIRONMENT INITIALIZATION ':^80}\n{'━' * 80}")
+        header = (
+            f"\n{'━' * 80}\n"
+            f"{' ENVIRONMENT INITIALIZATION ':^80}\n"
+            f"{'━' * 80}"
+        )
+        self.run_logger.info(header)
         
         self._log_hardware_section()
         self.run_logger.info("")

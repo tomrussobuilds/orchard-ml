@@ -19,39 +19,98 @@ caught at the 'edge' of the application (CLI/YAML parsing) rather than
 during active training execution.
 """
 
+"""
+Semantic Type Definitions & Validation Primitives.
+
+Foundational type-system for the configuration engine. Enforces domain-specific 
+constraints (e.g., hyperparameter intervals, path integrity) at the parsing edge.
+"""
+
+"""
+Semantic Type Definitions & Validation Primitives.
+
+This module acts as the foundational type-system for the configuration engine. 
+It leverages Pydantic's Annotated types and Functional Validators to enforce 
+domain-specific constraints (e.g., physical probability ranges, learning rate 
+boundaries, and path integrity) before they reach the orchestration logic.
+"""
+
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
+import os
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
 # =========================================================================== #
-from pydantic import (
-    Field, AfterValidator
-)
+from pydantic import Field, AfterValidator
 
 # =========================================================================== #
 #                                VALIDATORS                                   #
 # =========================================================================== #
 
 def _ensure_dir(v: Path) -> Path:
-    "Ensure paths are absolute and create folders if missing."
+    """Ensure paths are absolute and create folders if missing."""
     v.mkdir(parents=True, exist_ok=True)
     return v.resolve()
 
 # =========================================================================== #
-#                                TYPE ALIASES                                 #
+#                                1. GENERIC PRIMITIVES                        #
+# =========================================================================== #
+
+PositiveInt      = Annotated[int, Field(gt=0)]
+NonNegativeInt   = Annotated[int, Field(ge=0)]
+PositiveFloat    = Annotated[float, Field(gt=0)]
+NonNegativeFloat = Annotated[float, Field(ge=0.0)]
+Percentage       = Annotated[float, Field(gt=0.0, le=1.0)]
+Probability      = Annotated[float, Field(ge=0.0, le=1.0)]
+
+# =========================================================================== #
+#                                2. FILESYSTEM                                #
 # =========================================================================== #
 
 ValidatedPath = Annotated[Path, AfterValidator(_ensure_dir)]
-PositiveInt = Annotated[int, Field(gt=0)]
-NonNegativeInt = Annotated[int, Field(ge=0)]
-PositiveFloat = Annotated[float, Field(gt=0)]
-NonNegativeFloat = Annotated[float, Field(ge=0.0)]
-Probability = Annotated[float, Field(ge=0.0, le=1.0)]
+
+# =========================================================================== #
+#                                3. HARDWARE & PERFORMANCE                    #
+# =========================================================================== #
+
+WorkerCount = Annotated[int, Field(ge=0, le=os.cpu_count() or 1)]
+BatchSize   = Annotated[int, Field(ge=1, le=2048)]
+
+# =========================================================================== #
+#                                4. MODEL GEOMETRY                            #
+# =========================================================================== #
+
+ImageSize   = Annotated[int, Field(ge=28, le=1024)]
+Channels    = Annotated[int, Field(ge=1, le=4)]
+DropoutRate = Annotated[float, Field(ge=0.0, le=0.9)]
+
+# =========================================================================== #
+#                                5. OPTIMIZATION                              #
+# =========================================================================== #
+
+LearningRate   = Annotated[float, Field(gt=1e-8, lt=1.0)]
+WeightDecay    = Annotated[float, Field(ge=0.0, le=0.2)]
+Momentum       = Annotated[float, Field(ge=0.0, lt=1.0)]
 SmoothingValue = Annotated[float, Field(ge=0.0, le=0.3)]
-LearningRate = Annotated[float, Field(gt=1e-7, lt=1.0)]
-Percentage = Annotated[float, Field(gt=0.0, le=1.0)]
-Degrees = Annotated[int, Field(ge=0, le=180)]
+GradNorm       = Annotated[float, Field(ge=0.0, le=100.0)]
+
+# =========================================================================== #
+#                                6. AUGMENTATIONS & TTA                       #
+# =========================================================================== #
+
+RotationDegrees = Annotated[int, Field(ge=0, le=360)]
+ZoomScale       = Annotated[float, Field(gt=0.0, le=2.0)]
+PixelShift      = Annotated[float, Field(ge=0.0, le=50.0)]
+BlurSigma       = Annotated[float, Field(ge=0.0, le=5.0)]
+
+# =========================================================================== #
+#                                7. SYSTEM & METADATA                         #
+# =========================================================================== #
+
+ProjectSlug  = Annotated[str, Field(pattern=r"^[a-z0-9_-]+$", min_length=3, max_length=50)]
+LogFrequency = Annotated[int, Field(ge=1, le=1000)]
+LogLevel     = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
