@@ -1,0 +1,234 @@
+2026-01-02 18:03:52 - INFO - Exclusive system lock acquired.
+2026-01-02 18:03:52 - INFO - 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                           ENVIRONMENT INITIALIZATION                           
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-01-02 18:03:52 - INFO - [HARDWARE]
+2026-01-02 18:03:52 - INFO -   » Active Device:  CPU
+2026-01-02 18:03:52 - INFO -   » DataLoader:     7 workers
+2026-01-02 18:03:52 - INFO -   » Compute Fabric: 7 threads
+2026-01-02 18:03:52 - INFO - 
+2026-01-02 18:03:52 - INFO - [DATASET]
+2026-01-02 18:03:52 - INFO -   » Name:         bloodmnist
+2026-01-02 18:03:52 - INFO -   » Resolution:   28px
+2026-01-02 18:03:52 - INFO -   » Mode:         NATIVE-RGB
+2026-01-02 18:03:52 - INFO -   » Anatomical:   False
+2026-01-02 18:03:52 - INFO -   » Texture:      False
+2026-01-02 18:03:52 - INFO - 
+2026-01-02 18:03:52 - INFO - [STRATEGY]
+2026-01-02 18:03:52 - INFO -   » Model:        resnet_18_adapted
+2026-01-02 18:03:52 - INFO -   » Pretrained:   True
+2026-01-02 18:03:52 - INFO -   » TTA Mode:     LIGHT (CPU Optimized)
+2026-01-02 18:03:52 - INFO -   » Reproduce:    DISABLED (Standard)
+2026-01-02 18:03:52 - INFO - [HYPERPARAMETERS]
+2026-01-02 18:03:52 - INFO -   » Epochs:       60
+2026-01-02 18:03:52 - INFO -   » Batch Size:   128
+2026-01-02 18:03:52 - INFO -   » Learn Rate:   8.00e-03
+2026-01-02 18:03:52 - INFO - 
+2026-01-02 18:03:52 - INFO - [FILESYSTEM]
+2026-01-02 18:03:52 - INFO -   » Run Root:     /home/tommaso-russo/med_mnist/outputs/20260102_180352_bloodmnist_resnet_18_adapted
+2026-01-02 18:03:52 - INFO - ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2026-01-02 18:03:52 - INFO - 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                                DATA PREPARATION                                
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-01-02 18:03:52 - INFO - Valid dataset 'bloodmnist' found at: /home/tommaso-russo/med_mnist/dataset/bloodmnist.npz
+2026-01-02 18:03:52 - INFO - Class balancing: WeightedRandomSampler generated.
+2026-01-02 18:03:52 - INFO - DataLoaders synchronized (RGB) → Train:[11959] Val:[1712] Test:[2000]
+2026-01-02 18:03:53 - INFO - Sample images saved to → /home/tommaso-russo/med_mnist/outputs/20260102_180352_bloodmnist_resnet_18_adapted/figures/dataset_samples.png
+2026-01-02 18:03:53 - INFO - 
+################################################################################
+                      STARTING PIPELINE: RESNET_18_ADAPTED                      
+################################################################################
+2026-01-02 18:03:53 - INFO - Instantiating model 'resnet_18_adapted' | Num Classes: 8, | In Channels: 3
+2026-01-02 18:03:53 - INFO - Model initialized on CPU | Total Parameters: 11,172,936
+2026-01-02 18:03:53 - INFO - Trainer initialized. Best model checkpoint: best_model.pth
+2026-01-02 18:03:53 - INFO - ----------------------- Epoch 01/60 ------------------------
+2026-01-02 18:06:48 - INFO - Epoch 1 Validation AUC: 0.9879 Previous Best AUC: -1.0000
+2026-01-02 18:06:48 - INFO - Loss: [T: 1.1529 | V: 0.3675] | Acc: 0.8768 (Best: 0.8768) | LR: 7.99e-03 | Patience: 15
+2026-01-02 18:06:48 - INFO - New best model! Val AUC: 0.9879 ↑ Checkpoint saved.
+2026-01-02 18:06:48 - INFO - ----------------------- Epoch 02/60 ------------------------
+2026-01-02 18:09:41 - INFO - Epoch 2 Validation AUC: 0.9930 Previous Best AUC: 0.9879
+2026-01-02 18:09:41 - INFO - Loss: [T: 0.7753 | V: 0.3143] | Acc: 0.8937 (Best: 0.8937) | LR: 7.98e-03 | Patience: 15
+2026-01-02 18:09:41 - INFO - New best model! Val AUC: 0.9930 ↑ Checkpoint saved.
+2026-01-02 18:09:41 - INFO - ----------------------- Epoch 03/60 ------------------------
+2026-01-02 18:12:44 - INFO - Epoch 3 Validation AUC: 0.9957 Previous Best AUC: 0.9930
+2026-01-02 18:12:44 - INFO - Loss: [T: 0.5978 | V: 0.2278] | Acc: 0.9317 (Best: 0.9317) | LR: 7.95e-03 | Patience: 15
+2026-01-02 18:12:44 - INFO - New best model! Val AUC: 0.9957 ↑ Checkpoint saved.
+2026-01-02 18:12:44 - INFO - ----------------------- Epoch 04/60 ------------------------
+2026-01-02 18:15:47 - INFO - Epoch 4 Validation AUC: 0.9952 Previous Best AUC: 0.9957
+2026-01-02 18:15:47 - INFO - Loss: [T: 0.6249 | V: 0.3151] | Acc: 0.8995 (Best: 0.9317) | LR: 7.91e-03 | Patience: 15
+2026-01-02 18:15:47 - INFO - ----------------------- Epoch 05/60 ------------------------
+2026-01-02 18:18:46 - INFO - Epoch 5 Validation AUC: 0.9954 Previous Best AUC: 0.9957
+2026-01-02 18:18:46 - INFO - Loss: [T: 0.5878 | V: 0.2797] | Acc: 0.9118 (Best: 0.9317) | LR: 7.86e-03 | Patience: 14
+2026-01-02 18:18:46 - INFO - ----------------------- Epoch 06/60 ------------------------
+2026-01-02 18:21:39 - INFO - Epoch 6 Validation AUC: 0.9957 Previous Best AUC: 0.9957
+2026-01-02 18:21:39 - INFO - Loss: [T: 0.5737 | V: 0.2972] | Acc: 0.9048 (Best: 0.9317) | LR: 7.80e-03 | Patience: 13
+2026-01-02 18:21:39 - INFO - ----------------------- Epoch 07/60 ------------------------
+2026-01-02 18:24:32 - INFO - Epoch 7 Validation AUC: 0.9972 Previous Best AUC: 0.9957
+2026-01-02 18:24:32 - INFO - Loss: [T: 0.5374 | V: 0.2087] | Acc: 0.9457 (Best: 0.9457) | LR: 7.73e-03 | Patience: 12
+2026-01-02 18:24:32 - INFO - New best model! Val AUC: 0.9972 ↑ Checkpoint saved.
+2026-01-02 18:24:32 - INFO - ----------------------- Epoch 08/60 ------------------------
+2026-01-02 18:27:25 - INFO - Epoch 8 Validation AUC: 0.9963 Previous Best AUC: 0.9972
+2026-01-02 18:27:25 - INFO - Loss: [T: 0.5917 | V: 0.2379] | Acc: 0.9322 (Best: 0.9457) | LR: 7.65e-03 | Patience: 15
+2026-01-02 18:27:25 - INFO - ----------------------- Epoch 09/60 ------------------------
+2026-01-02 18:30:19 - INFO - Epoch 9 Validation AUC: 0.9969 Previous Best AUC: 0.9972
+2026-01-02 18:30:19 - INFO - Loss: [T: 0.5034 | V: 0.2227] | Acc: 0.9352 (Best: 0.9457) | LR: 7.56e-03 | Patience: 14
+2026-01-02 18:30:19 - INFO - ----------------------- Epoch 10/60 ------------------------
+2026-01-02 18:33:12 - INFO - Epoch 10 Validation AUC: 0.9975 Previous Best AUC: 0.9972
+2026-01-02 18:33:12 - INFO - Loss: [T: 0.5486 | V: 0.2161] | Acc: 0.9433 (Best: 0.9457) | LR: 7.46e-03 | Patience: 13
+2026-01-02 18:33:12 - INFO - New best model! Val AUC: 0.9975 ↑ Checkpoint saved.
+2026-01-02 18:33:12 - INFO - ----------------------- Epoch 11/60 ------------------------
+2026-01-02 18:36:04 - INFO - Epoch 11 Validation AUC: 0.9974 Previous Best AUC: 0.9975
+2026-01-02 18:36:04 - INFO - Loss: [T: 0.4918 | V: 0.2066] | Acc: 0.9398 (Best: 0.9457) | LR: 7.35e-03 | Patience: 15
+2026-01-02 18:36:04 - INFO - ----------------------- Epoch 12/60 ------------------------
+2026-01-02 18:38:58 - INFO - Epoch 12 Validation AUC: 0.9968 Previous Best AUC: 0.9975
+2026-01-02 18:38:58 - INFO - Loss: [T: 0.4717 | V: 0.2209] | Acc: 0.9352 (Best: 0.9457) | LR: 7.24e-03 | Patience: 14
+2026-01-02 18:38:58 - INFO - ----------------------- Epoch 13/60 ------------------------
+2026-01-02 18:41:51 - INFO - Epoch 13 Validation AUC: 0.9977 Previous Best AUC: 0.9975
+2026-01-02 18:41:51 - INFO - Loss: [T: 0.4825 | V: 0.1797] | Acc: 0.9463 (Best: 0.9463) | LR: 7.11e-03 | Patience: 13
+2026-01-02 18:41:51 - INFO - New best model! Val AUC: 0.9977 ↑ Checkpoint saved.
+2026-01-02 18:41:51 - INFO - ----------------------- Epoch 14/60 ------------------------
+2026-01-02 18:44:44 - INFO - Epoch 14 Validation AUC: 0.9984 Previous Best AUC: 0.9977
+2026-01-02 18:44:44 - INFO - Loss: [T: 0.4817 | V: 0.1872] | Acc: 0.9463 (Best: 0.9463) | LR: 6.97e-03 | Patience: 15
+2026-01-02 18:44:44 - INFO - New best model! Val AUC: 0.9984 ↑ Checkpoint saved.
+2026-01-02 18:44:44 - INFO - ----------------------- Epoch 15/60 ------------------------
+2026-01-02 18:47:37 - INFO - Epoch 15 Validation AUC: 0.9983 Previous Best AUC: 0.9984
+2026-01-02 18:47:37 - INFO - Loss: [T: 0.3834 | V: 0.1558] | Acc: 0.9533 (Best: 0.9533) | LR: 6.83e-03 | Patience: 15
+2026-01-02 18:47:37 - INFO - ----------------------- Epoch 16/60 ------------------------
+2026-01-02 18:50:29 - INFO - Epoch 16 Validation AUC: 0.9984 Previous Best AUC: 0.9984
+2026-01-02 18:50:29 - INFO - Loss: [T: 0.4832 | V: 0.1929] | Acc: 0.9410 (Best: 0.9533) | LR: 6.68e-03 | Patience: 14
+2026-01-02 18:50:29 - INFO - ----------------------- Epoch 17/60 ------------------------
+2026-01-02 18:53:22 - INFO - Epoch 17 Validation AUC: 0.9982 Previous Best AUC: 0.9984
+2026-01-02 18:53:22 - INFO - Loss: [T: 0.5135 | V: 0.1569] | Acc: 0.9597 (Best: 0.9597) | LR: 6.52e-03 | Patience: 13
+2026-01-02 18:53:22 - INFO - ----------------------- Epoch 18/60 ------------------------
+2026-01-02 18:56:14 - INFO - Epoch 18 Validation AUC: 0.9979 Previous Best AUC: 0.9984
+2026-01-02 18:56:14 - INFO - Loss: [T: 0.4967 | V: 0.1868] | Acc: 0.9387 (Best: 0.9597) | LR: 6.35e-03 | Patience: 12
+2026-01-02 18:56:14 - INFO - ----------------------- Epoch 19/60 ------------------------
+2026-01-02 18:59:07 - INFO - Epoch 19 Validation AUC: 0.9981 Previous Best AUC: 0.9984
+2026-01-02 18:59:07 - INFO - Loss: [T: 0.4223 | V: 0.1684] | Acc: 0.9451 (Best: 0.9597) | LR: 6.18e-03 | Patience: 11
+2026-01-02 18:59:07 - INFO - ----------------------- Epoch 20/60 ------------------------
+2026-01-02 19:01:59 - INFO - Epoch 20 Validation AUC: 0.9979 Previous Best AUC: 0.9984
+2026-01-02 19:01:59 - INFO - Loss: [T: 0.4366 | V: 0.2203] | Acc: 0.9398 (Best: 0.9597) | LR: 6.00e-03 | Patience: 10
+2026-01-02 19:01:59 - INFO - ----------------------- Epoch 21/60 ------------------------
+2026-01-02 19:04:52 - INFO - Epoch 21 Validation AUC: 0.9976 Previous Best AUC: 0.9984
+2026-01-02 19:04:52 - INFO - Loss: [T: 0.4163 | V: 0.1779] | Acc: 0.9457 (Best: 0.9597) | LR: 5.82e-03 | Patience: 9
+2026-01-02 19:04:52 - INFO - ----------------------- Epoch 22/60 ------------------------
+2026-01-02 19:07:44 - INFO - Epoch 22 Validation AUC: 0.9986 Previous Best AUC: 0.9984
+2026-01-02 19:07:44 - INFO - Loss: [T: 0.4635 | V: 0.1425] | Acc: 0.9597 (Best: 0.9597) | LR: 5.63e-03 | Patience: 8
+2026-01-02 19:07:44 - INFO - New best model! Val AUC: 0.9986 ↑ Checkpoint saved.
+2026-01-02 19:07:44 - INFO - ----------------------- Epoch 23/60 ------------------------
+2026-01-02 19:10:38 - INFO - Epoch 23 Validation AUC: 0.9976 Previous Best AUC: 0.9986
+2026-01-02 19:10:38 - INFO - Loss: [T: 0.4902 | V: 0.2091] | Acc: 0.9451 (Best: 0.9597) | LR: 5.43e-03 | Patience: 15
+2026-01-02 19:10:38 - INFO - ----------------------- Epoch 24/60 ------------------------
+2026-01-02 19:13:30 - INFO - Epoch 24 Validation AUC: 0.9984 Previous Best AUC: 0.9986
+2026-01-02 19:13:30 - INFO - Loss: [T: 0.4819 | V: 0.1733] | Acc: 0.9515 (Best: 0.9597) | LR: 5.24e-03 | Patience: 14
+2026-01-02 19:13:30 - INFO - ----------------------- Epoch 25/60 ------------------------
+2026-01-02 19:16:22 - INFO - Epoch 25 Validation AUC: 0.9984 Previous Best AUC: 0.9986
+2026-01-02 19:16:22 - INFO - Loss: [T: 0.4064 | V: 0.1474] | Acc: 0.9556 (Best: 0.9597) | LR: 5.04e-03 | Patience: 13
+2026-01-02 19:16:22 - INFO - ----------------------- Epoch 26/60 ------------------------
+2026-01-02 19:19:15 - INFO - Epoch 26 Validation AUC: 0.9979 Previous Best AUC: 0.9986
+2026-01-02 19:19:15 - INFO - Loss: [T: 0.4358 | V: 0.2134] | Acc: 0.9439 (Best: 0.9597) | LR: 4.83e-03 | Patience: 12
+2026-01-02 19:19:15 - INFO - ----------------------- Epoch 27/60 ------------------------
+2026-01-02 19:22:08 - INFO - Epoch 27 Validation AUC: 0.9982 Previous Best AUC: 0.9986
+2026-01-02 19:22:08 - INFO - Loss: [T: 0.3648 | V: 0.1610] | Acc: 0.9550 (Best: 0.9597) | LR: 4.63e-03 | Patience: 11
+2026-01-02 19:22:08 - INFO - ----------------------- Epoch 28/60 ------------------------
+2026-01-02 19:25:01 - INFO - Epoch 28 Validation AUC: 0.9980 Previous Best AUC: 0.9986
+2026-01-02 19:25:01 - INFO - Loss: [T: 0.3741 | V: 0.1735] | Acc: 0.9504 (Best: 0.9597) | LR: 4.42e-03 | Patience: 10
+2026-01-02 19:25:01 - INFO - ----------------------- Epoch 29/60 ------------------------
+2026-01-02 19:27:54 - INFO - Epoch 29 Validation AUC: 0.9979 Previous Best AUC: 0.9986
+2026-01-02 19:27:54 - INFO - Loss: [T: 0.4613 | V: 0.1890] | Acc: 0.9498 (Best: 0.9597) | LR: 4.21e-03 | Patience: 9
+2026-01-02 19:27:54 - INFO - ----------------------- Epoch 30/60 ------------------------
+2026-01-02 19:30:47 - INFO - Epoch 30 Validation AUC: 0.9978 Previous Best AUC: 0.9986
+2026-01-02 19:30:47 - INFO - Loss: [T: 0.3347 | V: 0.1673] | Acc: 0.9521 (Best: 0.9597) | LR: 4.00e-03 | Patience: 8
+2026-01-02 19:30:47 - INFO - ----------------------- Epoch 31/60 ------------------------
+2026-01-02 19:33:45 - INFO - Epoch 31 Validation AUC: 0.9986 Previous Best AUC: 0.9986
+2026-01-02 19:33:45 - INFO - Loss: [T: 0.0542 | V: 0.1476] | Acc: 0.9550 (Best: 0.9597) | LR: 3.79e-03 | Patience: 7
+2026-01-02 19:33:45 - INFO - ----------------------- Epoch 32/60 ------------------------
+2026-01-02 19:36:41 - INFO - Epoch 32 Validation AUC: 0.9985 Previous Best AUC: 0.9986
+2026-01-02 19:36:41 - INFO - Loss: [T: 0.0476 | V: 0.1284] | Acc: 0.9620 (Best: 0.9620) | LR: 3.58e-03 | Patience: 6
+2026-01-02 19:36:41 - INFO - ----------------------- Epoch 33/60 ------------------------
+2026-01-02 19:39:37 - INFO - Epoch 33 Validation AUC: 0.9987 Previous Best AUC: 0.9986
+2026-01-02 19:39:37 - INFO - Loss: [T: 0.0500 | V: 0.1001] | Acc: 0.9667 (Best: 0.9667) | LR: 3.37e-03 | Patience: 5
+2026-01-02 19:39:37 - INFO - New best model! Val AUC: 0.9987 ↑ Checkpoint saved.
+2026-01-02 19:39:37 - INFO - ----------------------- Epoch 34/60 ------------------------
+2026-01-02 19:42:32 - INFO - Epoch 34 Validation AUC: 0.9982 Previous Best AUC: 0.9987
+2026-01-02 19:42:32 - INFO - Loss: [T: 0.0384 | V: 0.1409] | Acc: 0.9591 (Best: 0.9667) | LR: 3.17e-03 | Patience: 15
+2026-01-02 19:42:32 - INFO - ----------------------- Epoch 35/60 ------------------------
+2026-01-02 19:45:25 - INFO - Epoch 35 Validation AUC: 0.9987 Previous Best AUC: 0.9987
+2026-01-02 19:45:25 - INFO - Loss: [T: 0.0382 | V: 0.1192] | Acc: 0.9614 (Best: 0.9667) | LR: 2.97e-03 | Patience: 14
+2026-01-02 19:45:25 - INFO - ----------------------- Epoch 36/60 ------------------------
+2026-01-02 19:48:18 - INFO - Epoch 36 Validation AUC: 0.9990 Previous Best AUC: 0.9987
+2026-01-02 19:48:18 - INFO - Loss: [T: 0.0422 | V: 0.0975] | Acc: 0.9685 (Best: 0.9685) | LR: 2.76e-03 | Patience: 13
+2026-01-02 19:48:18 - INFO - New best model! Val AUC: 0.9990 ↑ Checkpoint saved.
+2026-01-02 19:48:18 - INFO - ----------------------- Epoch 37/60 ------------------------
+2026-01-02 19:51:11 - INFO - Epoch 37 Validation AUC: 0.9987 Previous Best AUC: 0.9990
+2026-01-02 19:51:11 - INFO - Loss: [T: 0.0398 | V: 0.1245] | Acc: 0.9603 (Best: 0.9685) | LR: 2.57e-03 | Patience: 15
+2026-01-02 19:51:11 - INFO - ----------------------- Epoch 38/60 ------------------------
+2026-01-02 19:54:04 - INFO - Epoch 38 Validation AUC: 0.9986 Previous Best AUC: 0.9990
+2026-01-02 19:54:04 - INFO - Loss: [T: 0.0347 | V: 0.1239] | Acc: 0.9632 (Best: 0.9685) | LR: 2.37e-03 | Patience: 14
+2026-01-02 19:54:04 - INFO - ----------------------- Epoch 39/60 ------------------------
+2026-01-02 19:56:57 - INFO - Epoch 39 Validation AUC: 0.9987 Previous Best AUC: 0.9990
+2026-01-02 19:56:57 - INFO - Loss: [T: 0.0339 | V: 0.1273] | Acc: 0.9591 (Best: 0.9685) | LR: 2.18e-03 | Patience: 13
+2026-01-02 19:56:57 - INFO - ----------------------- Epoch 40/60 ------------------------
+2026-01-02 19:59:50 - INFO - Epoch 40 Validation AUC: 0.9985 Previous Best AUC: 0.9990
+2026-01-02 19:59:50 - INFO - Loss: [T: 0.0299 | V: 0.1260] | Acc: 0.9632 (Best: 0.9685) | LR: 2.00e-03 | Patience: 12
+2026-01-02 19:59:50 - INFO - ----------------------- Epoch 41/60 ------------------------
+2026-01-02 20:02:43 - INFO - Epoch 41 Validation AUC: 0.9988 Previous Best AUC: 0.9990
+2026-01-02 20:02:43 - INFO - Loss: [T: 0.0311 | V: 0.1119] | Acc: 0.9673 (Best: 0.9685) | LR: 1.82e-03 | Patience: 11
+2026-01-02 20:02:43 - INFO - ----------------------- Epoch 42/60 ------------------------
+2026-01-02 20:05:36 - INFO - Epoch 42 Validation AUC: 0.9990 Previous Best AUC: 0.9990
+2026-01-02 20:05:36 - INFO - Loss: [T: 0.0279 | V: 0.1162] | Acc: 0.9655 (Best: 0.9685) | LR: 1.65e-03 | Patience: 10
+2026-01-02 20:05:36 - INFO - ----------------------- Epoch 43/60 ------------------------
+2026-01-02 20:08:29 - INFO - Epoch 43 Validation AUC: 0.9986 Previous Best AUC: 0.9990
+2026-01-02 20:08:29 - INFO - Loss: [T: 0.0263 | V: 0.1153] | Acc: 0.9638 (Best: 0.9685) | LR: 1.48e-03 | Patience: 9
+2026-01-02 20:08:29 - INFO - ----------------------- Epoch 44/60 ------------------------
+2026-01-02 20:11:22 - INFO - Epoch 44 Validation AUC: 0.9989 Previous Best AUC: 0.9990
+2026-01-02 20:11:22 - INFO - Loss: [T: 0.0261 | V: 0.1160] | Acc: 0.9638 (Best: 0.9685) | LR: 1.32e-03 | Patience: 8
+2026-01-02 20:11:22 - INFO - ----------------------- Epoch 45/60 ------------------------
+2026-01-02 20:14:15 - INFO - Epoch 45 Validation AUC: 0.9988 Previous Best AUC: 0.9990
+2026-01-02 20:14:15 - INFO - Loss: [T: 0.0258 | V: 0.1128] | Acc: 0.9655 (Best: 0.9685) | LR: 1.17e-03 | Patience: 7
+2026-01-02 20:14:15 - INFO - ----------------------- Epoch 46/60 ------------------------
+2026-01-02 20:17:09 - INFO - Epoch 46 Validation AUC: 0.9988 Previous Best AUC: 0.9990
+2026-01-02 20:17:09 - INFO - Loss: [T: 0.0268 | V: 0.1010] | Acc: 0.9690 (Best: 0.9690) | LR: 1.03e-03 | Patience: 6
+2026-01-02 20:17:09 - INFO - ----------------------- Epoch 47/60 ------------------------
+2026-01-02 20:20:02 - INFO - Epoch 47 Validation AUC: 0.9988 Previous Best AUC: 0.9990
+2026-01-02 20:20:02 - INFO - Loss: [T: 0.0204 | V: 0.1114] | Acc: 0.9632 (Best: 0.9690) | LR: 8.92e-04 | Patience: 5
+2026-01-02 20:20:02 - INFO - ----------------------- Epoch 48/60 ------------------------
+2026-01-02 20:22:56 - INFO - Epoch 48 Validation AUC: 0.9989 Previous Best AUC: 0.9990
+2026-01-02 20:22:56 - INFO - Loss: [T: 0.0213 | V: 0.1063] | Acc: 0.9644 (Best: 0.9690) | LR: 7.65e-04 | Patience: 4
+2026-01-02 20:22:56 - INFO - ----------------------- Epoch 49/60 ------------------------
+2026-01-02 20:25:49 - INFO - Epoch 49 Validation AUC: 0.9989 Previous Best AUC: 0.9990
+2026-01-02 20:25:49 - INFO - Loss: [T: 0.0220 | V: 0.1092] | Acc: 0.9655 (Best: 0.9690) | LR: 6.46e-04 | Patience: 3
+2026-01-02 20:25:49 - INFO - ----------------------- Epoch 50/60 ------------------------
+2026-01-02 20:28:42 - INFO - Epoch 50 Validation AUC: 0.9989 Previous Best AUC: 0.9990
+2026-01-02 20:28:42 - INFO - Loss: [T: 0.0207 | V: 0.1025] | Acc: 0.9638 (Best: 0.9690) | LR: 5.37e-04 | Patience: 2
+2026-01-02 20:28:42 - INFO - ----------------------- Epoch 51/60 ------------------------
+2026-01-02 20:31:36 - INFO - Epoch 51 Validation AUC: 0.9988 Previous Best AUC: 0.9990
+2026-01-02 20:31:36 - INFO - Loss: [T: 0.0222 | V: 0.1077] | Acc: 0.9655 (Best: 0.9690) | LR: 4.37e-04 | Patience: 1
+2026-01-02 20:31:36 - WARNING - Early stopping triggered at epoch 51.
+2026-01-02 20:31:36 - INFO - Training finished. Peak Validation Accuracy: 0.9690
+2026-01-02 20:31:36 - INFO - 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                             FINAL EVALUATION PHASE                             
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026-01-02 20:31:36 - INFO -  » Checkpoint weights restored from: best_model.pth
+2026-01-02 20:32:34 - INFO - Test Accuracy: 0.9720 (97.20%) | Macro F1: 0.9704 | TTA ENABLED (Mode: Light/CPU)
+2026-01-02 20:32:34 - INFO - Confusion matrix saved → confusion_matrix.png
+2026-01-02 20:32:34 - INFO - Training curves saved → training_curves.png
+2026-01-02 20:32:35 - INFO - Predictions grid saved → sample_predictions.png
+2026-01-02 20:32:35 - INFO - Summary Excel report saved to → training_summary.xlsx
+2026-01-02 20:32:35 - INFO - Final Evaluation Phase Complete. Test Acc: 0.9720
+2026-01-02 20:32:35 - INFO - 
+################################################################################
+                           PIPELINE EXECUTION SUMMARY                           
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  » Dataset:      bloodmnist
+  » Architecture: resnet_18_adapted
+  » Test Acc:       97.20%
+  » Macro F1:       0.9704
+  » Artifacts:    /home/tommaso-russo/med_mnist/outputs/20260102_180352_bloodmnist_resnet_18_adapted
+################################################################################
+2026-01-02 20:32:35 - INFO - Pipeline Shutdown completed. Run directory: /home/tommaso-russo/med_mnist/outputs/20260102_180352_bloodmnist_resnet_18_adapted
+2026-01-02 20:32:35 - INFO -  » System resource lock released successfully.

@@ -41,7 +41,7 @@ Every run is fully documented through a suite of automatically generated artifac
 * **Traceability**: Every run mirrors its exact Pydantic configuration state.
 
 > [!IMPORTANT]
-> ### 📂 [Explore All Experiment Artifacts & Samples](./docs/media)
+> ### 📂 [Explore All Experiment Artifacts & Samples](./docs/artifacts)
 > Click the link above to view sample Excel reports, YAML configs, and full-resolution diagnostic plots.
 
 ---
@@ -52,11 +52,11 @@ Every run is fully documented through a suite of automatically generated artifac
   <tr>
     <td style="width: 50%; text-align: center; border: none; vertical-align: top;">
       <b>Confusion Matrix</b><br>
-      <img src="docs/media/confusion_matrix.png" style="width: 100%; max-width: 300px;">
+      <img src="docs/artifacts/confusion_matrix.png" style="width: 100%; max-width: 300px;">
     </td>
     <td style="width: 40%; text-align: center; border: none; vertical-align: top;">
       <b>Training Dynamics</b><br>
-      <img src="docs/media/training_curves.png" style="width: 100%;">
+      <img src="docs/artifacts/training_curves.png" style="width: 100%;">
     </td>
   </tr>
 </table>
@@ -114,7 +114,7 @@ This pipeline is engineered for unattended, robust execution in research environ
 The framework is designed with strict **Separation of Concerns (SoC)**. Below is the architectural graph showing the decoupling between the core engine, the data handlers, and the reporting silos.
 
 <p align="center">
-  <img src="docs/media/framework_map.svg" width="850" alt="Framework Map">
+  <img src="docs/artifacts/framework_map.svg" width="850" alt="Framework Map">
 </p>
 
 > *Generated via pydeps. Highlighting the centralized Config hub and the linear flow from Orchestrator to Trainer.*

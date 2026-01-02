@@ -101,11 +101,7 @@ class TrainingReport(BaseModel):
             pd.DataFrame: A two-column DataFrame (Parameter, Value) for Excel export.
         """
         data = self.model_dump()
-        # Formatting floats for better spreadsheet display
-        formatted_data = {
-            k: (f"{v:.4f}" if isinstance(v, float) else v) for k, v in data.items()
-        }
-        return pd.DataFrame(list(formatted_data.items()), columns=["Parameter", "Value"]) 
+        return pd.DataFrame(list(data.items()), columns=["Parameter", "Value"]) 
 
     def save(self, path: Path) -> None:
         """
@@ -129,18 +125,36 @@ class TrainingReport(BaseModel):
 
                 # Formatting Definitions
                 header_format = workbook.add_format({
-                    'bold': True, 'bg_color': '#D7E4BC', 'border': 1, 'align': 'center'
+                    'bold': True, 
+                    'bg_color': '#D7E4BC', 
+                    'border': 1, 
+                    'align': 'center'
                 })
-                base_format = workbook.add_format({
-                    'border': 1, 'align': 'left', 'valign': 'vcenter'
+                
+                # Base format for column B: includes 4-decimal precision for numbers
+                # but stays flexible for strings with wrapping.
+                value_format = workbook.add_format({
+                    'border': 1, 
+                    'align': 'left', 
+                    'valign': 'top', 
+                    'text_wrap': True, 
+                    'font_size': 10,
+                    'num_format': '0.0000'  # Critical: Forces 4 decimal places for floats
                 })
-                wrap_format = workbook.add_format({
-                    'border': 1, 'text_wrap': True, 'valign': 'top', 'font_size': 10
+                
+                # Parameter column format (Column A)
+                param_format = workbook.add_format({
+                    'border': 1, 
+                    'align': 'left', 
+                    'valign': 'vcenter', 
+                    'bold': False
                 })
 
-                # Column Setup
-                worksheet.set_column('A:A', 25, base_format)
-                worksheet.set_column('B:B', 70, wrap_format)
+                # Column Setup: 
+                # Column A (Parameters) is narrow and clean.
+                # Column B (Values) is wide to accommodate paths and augmentations.
+                worksheet.set_column('A:A', 25, param_format)
+                worksheet.set_column('B:B', 70, value_format)
 
                 # Overwrite headers with style
                 for col_num, value in enumerate(df.columns.values):

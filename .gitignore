@@ -60,3 +60,5 @@ legacy/
 #                       DOCUMENTATION & RESULTS
 # =========================================================================== #
 # !results/
+*.log
+!docs/artifacts/**/*.log
