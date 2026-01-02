@@ -13,10 +13,6 @@
 
 ---
 
-**97.78% Test Accuracy • 0.9752 Macro F1 • Single pretrained ResNet-18 • 28×28 images**
-
----
-
 ## 📌 Table of Contents
 
 * [📊 Experiment Artifacts & Reporting](#-experiment-artifacts--reporting)
@@ -34,18 +30,9 @@
 
 This repository provides a highly reproducible, robust training framework for the **MedMNIST v2** suite (supporting BloodMNIST, DermaMNIST, etc.) using an adapted pretrained ResNet-18 architecture. The goal is to demonstrate solid performance using a minimal configuration that adheres to modern PyTorch best practices.
 
-
-### Final Results (60 epochs, seed 42)
-
-| Metric                  | Value     |
-|-------------------------|-----------|
-| Best Validation Accuracy| **96.96%** |
-| Test Accuracy (with TTA)| **97.78%** |
-| Test Macro F1 (with TTA)| **0.9752** |
-
 ---
 
-# 📊 Experiment Artifacts & Reporting
+### 📊 Experiment Artifacts & Reporting
 
 Every run is fully documented through a suite of automatically generated artifacts. This ensures total traceability and rapid qualitative assessment.
 
@@ -107,7 +94,7 @@ This pipeline is engineered for unattended, robust execution in research environ
 
 **Data Integrity & Validation**: Implements MD5 Checksum verification for dataset downloads and a strict validate_npz_keys check to ensure the structural integrity of the MedMNIST .npz files before memory allocation.
 
-**Deterministic Pipeline**: Guaranteed bit-per-bit reproducibility (Seed 42) via torch.backends.cudnn.deterministic and custom worker_init_fn to handle RNG seeding across multi-process DataLoaders.
+**Deterministic Pipeline**: Implements a dual-layer reproducibility strategy. Beyond global seeding (Seed 42), it features a Strict Mode that enforces bit-per-bit reproducibility by activating deterministic GPU kernels (`torch.use_deterministic_algorithms`) and synchronizing multi-process RNG via `worker_init_fn`, automatically scaling to zero workers when total determinism is required.
 
 **System Utilities**: The system.py module serves as a low-level abstraction layer that manages hardware device selection, ensures process-level atomicity through kernel-level file locking, and enforces strict environment-wide reproducibility.
 
@@ -189,7 +176,6 @@ Where $\lambda \in [0, 1]$ is drawn from a $\text{Beta}(\alpha, \alpha)$ distrib
 
 ### 📁 Project Structure
 
-```bash
 med_mnist/
 ├── main.py                      # Global entry point: CLI parsing and RootOrchestrator lifecycle.
 ├── Dockerfile                   # Image definition: Multi-stage build for reproducibility.
@@ -203,9 +189,12 @@ med_mnist/
 │   │   ├── config/              # Granular Pydantic Modules (9-module schema).
 │   │   ├── logger/              # Telemetry: Logger init & Reporter engine.
 │   │   ├── metadata/            # Dataset Registry: Schema & Class mappings.
+│   │   ├── environment/         # Infrastructure Layer:
+│   │   │   ├── __init__.py      # Facade for clean hardware/reproducibility access.
+│   │   │   ├── device.py        # Hardware discovery (CUDA/MPS) & threading sync.
+│   │   │   └── reproducibility.py # Global seeding & strict determinism protocols.
 │   │   ├── orchestrator.py      # Lifecycle Master: Context Manager & Coordination.
-│   │   ├── environment.py       # Hardware abstraction: CUDA/CPU/Seeding.
-│   │   └── processes.py
+│   │   └── processes.py         # Resource Guard: Kernel-level locking (fcntl) & process safety.
 │   ├── data_handler/            # Loading & Augmentation:
 │   │   ├── dataset.py           # MedMNIST logic: RAM caching and index management.
 │   │   └── transforms.py        # V2 Augmentations: Optimized RGB/Gray pipelines.
@@ -218,8 +207,8 @@ med_mnist/
 │       ├── engine.py            # Performance scoring (Macro F1, Accuracy).
 │       └── reporting.py         # Automated Excel and visualization generation.
 └── outputs/                     # Results (ignored): Isolated workspace for each run.
-    └── YYYYMMDD_HHMMSS/         # Unique run directory: Logs, models, and figures.
-```
+
+---
 
 ### ⚙️ Requirements & Installation
 
@@ -274,20 +263,33 @@ This will run a 1-epoch training on a tiny subset of a MedMNIST dataset and veri
 
 The pipeline is containerized using the included `Dockerfile`.
 
-| Mode | Command | `num_workers` | Guarantees |
-| :--- | :--- | :---: | :--- |
-| **Fast Mode (Default)** | `docker run bloodmnist_image` | 4 | Best performance on CPU, **Not fully deterministic** |
-| **Strict Reproducibility** | `-e DOCKER_REPRODUCIBILITY_MODE=TRUE` | 0 | **100% Deterministic** (bit-per-bit), but slower |
-
----
-
 Build the image locally using the provided Dockerfile. This ensures all dependencies and environment are correctly configured.
 
 ```bash
 sudo docker build -t bloodmnist_image .
 ```
 
-Run in Strict Reproducibility Mode (Recommended for testing):
+**Run Experiments**
+
+You can choose between Strict Reproducibility (for testing/validation) and Standard Mode (for performance).
+
+Option A: Strict Reproducibility Mode (Deterministic) Enforces bit-perfect results by disabling multi-processing and forcing deterministic GPU kernels.
+
+```bash
+sudo docker run -it --rm \
+  -u $(id -u):$(id -g) \
+  -e IN_DOCKER=TRUE \
+  -e DOCKER_REPRODUCIBILITY_MODE=TRUE \
+  -e TORCH_HOME=/tmp/torch_cache \
+  -e MPLCONFIGDIR=/tmp/matplotlib_cache \
+  -e PYTHONHASHSEED=42 \
+  -e CUBLAS_WORKSPACE_CONFIG=:4096:8 \
+  -v $(pwd)/dataset:/app/dataset \
+  -v $(pwd)/outputs:/app/outputs \
+  bloodmnist_image --dataset bloodmnist
+```
+
+Option B: Standard Mode (High Performance) Optimized for training speed using multi-core data loading and standard algorithms.
 
 ```bash
 sudo docker run -it --rm \
@@ -295,12 +297,13 @@ sudo docker run -it --rm \
   -e IN_DOCKER=TRUE \
   -e TORCH_HOME=/tmp/torch_cache \
   -e MPLCONFIGDIR=/tmp/matplotlib_cache \
-  -e PYTHONHASHSEED=0 \
-  -e CUBLAS_WORKSPACE_CONFIG=:4096:8 \
   -v $(pwd)/dataset:/app/dataset \
   -v $(pwd)/outputs:/app/outputs \
-  bloodmnist_image
+  bloodmnist_image --dataset pathmnist --batch_size 256
 ```
+
+[!IMPORTANT] The flags `-e TORCH_HOME=/tmp/torch_cache` and `-e MPLCONFIGDIR=/tmp/matplotlib_cache` are mandatory when running with a specific user ID (`-u`) to avoid `Permission Denied` errors in the container's root filesystem.
+---
 
 ### 📊 Command Line Arguments
 
@@ -322,7 +325,7 @@ You can fully configure training from the command line (via `main.py`).
 | --jitter_val | float | 0.2 | Strength of Color Jitter (brightness/contrast). |
 | --dataset | str | "bloodmnist" | MedMNIST dataset identifier (e.g., bloodmnist, dermamnist). |
 | --model_name | str | "ResNet-18 Adapted" | Identifier for logging and folder naming. |
-
+| --reproducible | bool | False | Enables strict deterministic algorithms and forces num_workers=0. |
 
 Examples:
 

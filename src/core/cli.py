@@ -56,6 +56,13 @@ def parse_args() -> argparse.Namespace:
         default=default_cfg.system.project_name,
         help="Logical name for the experiment suite (used for logging and locks)."
     )
+    strat_group.add_argument(
+        '--reproducible',
+        action='store_true',
+        dest='reproducible',
+        default=default_cfg.training.reproducible,
+        help="Enforces strict determinism: deterministic algorithms and num_workers=0."
+    )
 
     # Group: System & Hardware
     sys_group = parser.add_argument_group("System & Hardware")
@@ -152,7 +159,6 @@ def parse_args() -> argparse.Namespace:
         default=default_cfg.training.cosine_fraction,
         help="Fraction of total epochs to apply cosine annealing before switching to ReduceLROnPlateau."
     )
-    # Coerenza con cfg.training.use_amp
     train_group.add_argument(
         '--use_amp',
         action='store_true',

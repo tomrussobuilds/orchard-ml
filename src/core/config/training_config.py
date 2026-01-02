@@ -47,6 +47,10 @@ class TrainingConfig(BaseModel):
         default=42,
         description="Random seed for reproducibility"
     )
+    reproducible: bool = Field(
+        default=False,
+        description="If True, enables strict reproducibility mode"
+    )
     batch_size: PositiveInt = Field(default=128)
     epochs: PositiveInt = Field(default=60)
     patience: NonNegativeInt = Field(default=15)
@@ -79,6 +83,7 @@ class TrainingConfig(BaseModel):
         """Map training parameters ensuring defaults are present."""
         return cls(
             seed=getattr(args, 'seed', 42),
+            reproducible=getattr(args, 'reproducible', False),
             batch_size=getattr(args, 'batch_size', 128),
             learning_rate=getattr(args, 'lr', 0.008),
             momentum=getattr(args, 'momentum', 0.9),
