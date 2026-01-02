@@ -304,6 +304,7 @@ sudo docker run -it --rm \
 ```
 
 [!IMPORTANT] The flags `-e TORCH_HOME=/tmp/torch_cache` and `-e MPLCONFIGDIR=/tmp/matplotlib_cache` are mandatory when running with a specific user ID (`-u`) to avoid `Permission Denied` errors in the container's root filesystem.
+
 ---
 
 ### 📊 Command Line Arguments
