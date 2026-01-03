@@ -64,7 +64,7 @@ Every run is fully documented through a suite of automatically generated artifac
 ### Sample Predictions
 
 <p>
-<img src="docs/media/sample_predictions.png" width="500">
+<img src="docs/artifacts/sample_predictions.png" width="500">
 </p>
 
 ## 🚀 Getting Started
