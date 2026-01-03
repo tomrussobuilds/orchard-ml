@@ -96,7 +96,8 @@ def test_mixup_epochs_logic_validation(mock_args):
     """Ensures cross-field validation: mixup_epochs cannot exceed total epochs."""
     mock_args.epochs = 10
     mock_args.mixup_epochs = 15
-    with pytest.raises(ValueError, match="mixup_epochs .* cannot exceed epochs"):
+    
+    with pytest.raises((ValueError, ValidationError), match="mixup_epochs .* cannot exceed total epochs"):
         Config.from_args(mock_args)
 
 
