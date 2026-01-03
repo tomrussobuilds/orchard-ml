@@ -80,7 +80,7 @@ def main() -> None:
             show_sample_images(
                 loader    = train_loader,
                 classes   = ds_meta.classes,
-                save_path = paths.figures / "dataset_samples.png",
+                save_path = paths.get_fig_path("dataset_samples.png"),
                 cfg       = cfg
             )
 
@@ -108,7 +108,7 @@ def main() -> None:
                 criterion    = criterion,
                 device       = device,
                 cfg          = cfg,
-                output_path  = paths.models / "best_model.pth"
+                output_path  = paths.best_model_path
             )
             
             # Start training and capture history for final plotting
@@ -120,7 +120,7 @@ def main() -> None:
             )
             
             # Recover the best weights (determined by validation) for final testing
-            orchestrator.load_weights(model, best_path)
+            orchestrator.load_weights(model, paths.best_model_path)
             
             # Execute comprehensive testing (including TTA if enabled)
             macro_f1, test_acc = run_final_evaluation(
@@ -132,7 +132,7 @@ def main() -> None:
                 paths          = paths,
                 cfg            = cfg,
                 aug_info       = get_augmentations_description(cfg),
-                log_path       = paths.logs / f"{paths.project_id}.log"
+                log_path       = paths.logs / "session.log"
             )
 
             # --- 5. Structured Summary Logging ---
