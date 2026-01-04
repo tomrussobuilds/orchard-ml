@@ -99,9 +99,6 @@ def show_sample_images(
     # Adjust layout to prevent title overlap
     plt.tight_layout(rect=[0, 0.03, 1, 0.95]) 
     
-    # Ensure the parent directory exists (safety for RunPaths)
-    save_path.parent.mkdir(parents=True, exist_ok=True)
-    
     plt.savefig(save_path, dpi=200, bbox_inches="tight")
     plt.close()
-    logger.info(f"Sample images saved to → {save_path}")
+    logger.info(f"Sample images saved → {save_path}")

@@ -19,22 +19,6 @@ caught at the 'edge' of the application (CLI/YAML parsing) rather than
 during active training execution.
 """
 
-"""
-Semantic Type Definitions & Validation Primitives.
-
-Foundational type-system for the configuration engine. Enforces domain-specific 
-constraints (e.g., hyperparameter intervals, path integrity) at the parsing edge.
-"""
-
-"""
-Semantic Type Definitions & Validation Primitives.
-
-This module acts as the foundational type-system for the configuration engine. 
-It leverages Pydantic's Annotated types and Functional Validators to enforce 
-domain-specific constraints (e.g., physical probability ranges, learning rate 
-boundaries, and path integrity) before they reach the orchestration logic.
-"""
-
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
