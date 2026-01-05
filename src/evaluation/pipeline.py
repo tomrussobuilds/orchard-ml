@@ -42,7 +42,7 @@ def run_final_evaluation(
     model: nn.Module,
     test_loader: DataLoader,
     train_losses: List[float],
-    val_accuracies: List[float],
+    val_metrics_history: List[dict],
     class_names: List[str],
     paths: RunPaths,
     cfg: Config,
@@ -61,7 +61,7 @@ def run_final_evaluation(
 
     # --- 1) Inference & Metrics ---
     # Performance on the full test set
-    all_preds, all_labels, test_acc, macro_f1 = evaluate_model(
+    all_preds, all_labels, test_metrics, macro_f1 = evaluate_model(
         model,
         test_loader,
         device=device,
@@ -82,9 +82,10 @@ def run_final_evaluation(
     )
 
     # Historical Training Curves
+    val_acc_list = [m['accuracy'] for m in val_metrics_history]
     plot_training_curves(
         train_losses=train_losses,
-        val_accuracies=val_accuracies,
+        val_accuracies=val_acc_list,
         out_path=paths.get_fig_path("training_curves.png"), 
         cfg=cfg
     )
@@ -104,9 +105,9 @@ def run_final_evaluation(
     final_log = log_path if log_path is not None else (paths.logs / "run.log")
 
     report = create_structured_report(
-        val_accuracies=val_accuracies,
+        val_metrics=val_metrics_history,
+        test_metrics=test_metrics,
         macro_f1=macro_f1,
-        test_acc=test_acc,
         train_losses=train_losses,
         best_path=paths.best_model_path,
         log_path=final_log,
@@ -115,6 +116,7 @@ def run_final_evaluation(
     )
     report.save(paths.final_report_path)
 
+    test_acc = test_metrics['accuracy']
     logger.info(f"Final Evaluation Phase Complete. Test Acc: {test_acc:.4f}")
     
     return macro_f1, test_acc

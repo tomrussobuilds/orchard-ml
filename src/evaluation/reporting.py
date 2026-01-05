@@ -72,7 +72,9 @@ class TrainingReport(BaseModel):
     
     # Core Metrics
     best_val_accuracy: float
+    best_val_auc: float
     test_accuracy: float
+    test_auc: float
     test_macro_f1: float
     
     # Domain Logic Flags
@@ -117,58 +119,81 @@ class TrainingReport(BaseModel):
         df = self.to_vertical_df()
 
         try:
-            with pd.ExcelWriter(path, engine='xlsxwriter') as writer:
+            with pd.ExcelWriter(path, engine='xlsxwriter', engine_kwargs={
+                'options': {'nan_inf_to_errors': True}
+            }) as writer:
                 df.to_excel(writer, sheet_name='Detailed Report', index=False)
 
-                workbook = writer.book
-                worksheet = writer.sheets['Detailed Report']
-
-                # Formatting Definitions
-                header_format = workbook.add_format({
-                    'bold': True, 
-                    'bg_color': '#D7E4BC', 
-                    'border': 1, 
-                    'align': 'center'
-                })
-                
-                # Base format for column B: includes 4-decimal precision for numbers
-                # but stays flexible for strings with wrapping.
-                value_format = workbook.add_format({
-                    'border': 1, 
-                    'align': 'left', 
-                    'valign': 'top', 
-                    'text_wrap': True, 
-                    'font_size': 10,
-                    'num_format': '0.0000'  # Critical: Forces 4 decimal places for floats
-                })
-                
-                # Parameter column format (Column A)
-                param_format = workbook.add_format({
-                    'border': 1, 
-                    'align': 'left', 
-                    'valign': 'vcenter', 
-                    'bold': False
-                })
-
-                # Column Setup: 
-                # Column A (Parameters) is narrow and clean.
-                # Column B (Values) is wide to accommodate paths and augmentations.
-                worksheet.set_column('A:A', 25, param_format)
-                worksheet.set_column('B:B', 70, value_format)
-
-                # Overwrite headers with style
-                for col_num, value in enumerate(df.columns.values):
-                    worksheet.write(0, col_num, value, header_format)         
+                self._apply_excel_formatting(writer, df)
 
             logger.info(f"Summary Excel report saved to → {path.name}")
         except Exception as e:
             logger.error(f"Failed to generate Excel report: {e}")
 
+    def _apply_excel_formatting(self, writer: pd.ExcelWriter, df: pd.DataFrame) -> None:
+        """
+        Internal helper to apply styles, formats and column widths to the worksheet.
+        """
+        workbook = writer.book
+        worksheet = writer.sheets['Detailed Report']
+
+        # Formatting Definitions
+        header_format = workbook.add_format({
+            'bold': True, 
+            'bg_color': '#D7E4BC', 
+            'border': 1, 
+            'align': 'center'
+        })
+                
+        # Base format for Floats.
+        float_format = workbook.add_format({
+            'border': 1, 
+            'align': 'left', 
+            'valign': 'top', 
+            'text_wrap': True, 
+            'font_size': 10,
+            'num_format': '0.0000'
+        })
+
+        # Base format for Integers.
+        int_format = workbook.add_format({
+            'border': 1,
+            'num_format': '0',
+            'align': 'left'
+        })
+                
+        # String format
+        string_format = workbook.add_format({
+            'border': 1,
+            'align': 'left',
+            'valign': 'vcenter',
+            'text_wrap': True
+        })
+
+        # Column Setup
+        for row_idx, (_, value) in enumerate(df.values):
+            if isinstance(value, float):
+                fmt = float_format
+            elif isinstance(value, int) and not isinstance(value, bool):
+                fmt = int_format
+            else:
+                fmt = string_format
+            worksheet.write(row_idx + 1, 1, value, fmt)
+
+        worksheet.set_column('A:A', 25, workbook.add_format({
+            'border': 1,
+            'bold': True
+        }))
+        worksheet.set_column('B:B', 70)
+
+        for col_num, value in enumerate(df.columns.values):
+            worksheet.write(0, col_num, value, header_format)   
+
 
 def create_structured_report(
-    val_accuracies: Sequence[float],
+    val_metrics: Sequence[dict],
+    test_metrics: dict,
     macro_f1: float,
-    test_acc: float,
     train_losses: Sequence[float],
     best_path: Path,
     log_path: Path,
@@ -195,15 +220,18 @@ def create_structured_report(
         TrainingReport: A validated Pydantic model ready for export.
     """
     # Auto-generate augmentation info if not provided
-    if aug_info is None:
-        aug_dict = cfg.augmentation.model_dump()
-        aug_info = ", ".join([f"{k.replace('_', ' ').capitalize()}: {v}" for k, v in aug_dict.items()])
+    aug_info = aug_info or _format_augmentation_string(cfg)
+
+    best_val_acc = max((m['accuracy'] for m in val_metrics), default=0.0)
+    best_val_auc = max((m['auc'] for m in val_metrics), default=0.0)
 
     return TrainingReport(
         model=cfg.model.name,
         dataset=cfg.dataset.dataset_name,
-        best_val_accuracy=max(val_accuracies) if val_accuracies else 0.0,
-        test_accuracy=test_acc,
+        best_val_accuracy=best_val_acc,
+        best_val_auc=best_val_auc,
+        test_accuracy=test_metrics['accuracy'],
+        test_auc=test_metrics['auc'],
         test_macro_f1=macro_f1,
         is_texture_based=cfg.dataset.metadata.is_texture_based,
         is_anatomical=cfg.dataset.metadata.is_anatomical,
@@ -217,3 +245,11 @@ def create_structured_report(
         log_path=str(log_path.resolve()),
         seed=cfg.training.seed,
     )
+
+def _format_augmentation_string(cfg: Config) -> str:
+    """Internal helper to transform the aug dictionary into a readable string."""
+    aug_dict = cfg.augmentation.model_dump()
+    return ", ".join([
+        f"{k.replace('_', ' ').capitalize()}: {v}" 
+        for k, v in aug_dict.items()
+    ])

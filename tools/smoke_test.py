@@ -2,14 +2,12 @@
 Smoke Test Module for MedMNIST Pipeline
 
 This script performs a rapid, end-to-end execution of the training and 
-evaluation pipeline. It uses a minimal subset of data and a single epoch 
-to verify the 6 core pillars of the system:
-1. Model initialization and forward/backward passes (ResNet-18 Adaptation).
-2. Checkpoint saving and loading (Atomic Weight Persistence).
-3. Visualization utility compatibility (Training curves and Confusion Matrices).
-4. Reporting and directory structure integrity (Excel & Path Orchestration).
-5. Data Flow integrity (Torchvision V2 Transforms & RGB/Gray handling).
-6. System Safeguards (Kernel-level locking and Hardware abstraction).
+evaluation pipeline. It verifies the 5-stage orchestration logic:
+1. Environment Initialization: Setup via RootOrchestrator and hardware abstraction.
+2. Data Preparation: Metadata loading and lightweight DataLoader creation.
+3. Training Execution: Verification of Factory-based optimization and training loops.
+4. Model Recovery & Testing: Weights restoration and TTA-enabled inference.
+5. Reporting & Summary: Diagnostic visualization and Excel report generation.
 """
 
 # =========================================================================== #
@@ -18,25 +16,19 @@ to verify the 6 core pillars of the system:
 import argparse
 
 # =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
-import torch.nn as nn
-import torch.optim as optim
-from torch.optim.lr_scheduler import CosineAnnealingLR
-
-# =========================================================================== #
 #                                Internal Imports                             #
 # =========================================================================== #
-from src.core.config import Config
-from src.core.cli import parse_args
-from src.core.metadata import DATASET_REGISTRY
-from src.core.orchestrator import RootOrchestrator
-from src.data_handler.fetcher import load_medmnist
-from src.data_handler.factory import get_dataloaders
-from src.data_handler.transforms import get_augmentations_description
-from src.models.factory import get_model
-from src.trainer.trainer import ModelTrainer
-from src.evaluation.pipeline import run_final_evaluation
+from src.core import (
+    Config, parse_args, DATASET_REGISTRY, RootOrchestrator
+)
+from src.data_handler import (
+    load_medmnist, get_dataloaders, get_augmentations_description
+)
+from src.models import get_model
+from src.trainer import (
+    ModelTrainer, get_criterion, get_optimizer, get_scheduler
+)
+from src.evaluation import run_final_evaluation
 
 # =========================================================================== #
 #                               SMOKE TEST EXECUTION                          #
@@ -48,57 +40,47 @@ def run_smoke_test(args: argparse.Namespace) -> None:
     code stability and prevent regression bugs.
     """
     # 1. Configuration Setup & Override
-    # Create Config from CLI args and force minimal parameters for rapid testing
+    # Create Config and force minimal parameters for rapid execution
     base_cfg = Config.from_args(args)
     
     cfg = base_cfg.model_copy(update={
         "num_workers": 0,
         "training": base_cfg.training.model_copy(update={
-            "epochs": 1,
-            "batch_size": 4,
-            "use_amp": False,
-            "grad_clip": 1.0
+            "epochs": 1,           # Minimal epochs
+            "batch_size": 4,       # Small batch
+            "use_amp": False,      # Disable AMP for stability in test
         }),
         "dataset": base_cfg.dataset.model_copy(update={
-            "max_samples": 64,
-            "use_weighted_sampler": False
+            "max_samples": 32,     # Minimal data subset
         })
     })
 
-    # 2. Root Orchestration via Context Manager
-    # The RootOrchestrator handles directory creation, logging, and hardware abstraction.
-    # The context manager ensures that the system lock is released even if the test fails.
+    # --- Stage 1: Environment Initialization ---
     with RootOrchestrator(cfg) as orchestrator:
         paths = orchestrator.paths
         run_logger = orchestrator.run_logger
         device = orchestrator.get_device()
-
-        header_text = f" INITIALIZING SMOKE TEST: {cfg.dataset.dataset_name.upper()} "
-        divider = "=" * max(60, len(header_text))
         
-        run_logger.info(divider)
-        run_logger.info(header_text.center(len(divider), " "))
-        run_logger.info(divider)
+        # Resolve dataset metadata
+        ds_meta = DATASET_REGISTRY[cfg.dataset.metadata.name.lower()]
 
-        run_logger.info(f"Smoke test execution started on {device}.")
+        run_logger.info(f"\n{'━'*60}\n{' RUNNING SMOKE TEST: ' + ds_meta.name.upper():^60}\n{'━'*60}")
 
         try:
-            # 3. Data Loading (Lazy Metadata)
-            ds_meta = DATASET_REGISTRY[cfg.dataset.dataset_name.lower()]
+            # --- Stage 2: Data Preparation ---
+            run_logger.info("Stage 2: Initializing DataHolders...")
             data = load_medmnist(ds_meta)
-            run_logger.info(f"Generating DataLoaders with max_samples={cfg.dataset.max_samples}...")
             train_loader, val_loader, test_loader = get_dataloaders(data, cfg)
 
-            # 4. Model Factory Check
+            # --- Stage 3: Training Execution ---
+            run_logger.info("Stage 3: Testing Model & Optimizer Factories...")
             model = get_model(device=device, cfg=cfg)
-            run_logger.info(f"Model {cfg.model.name} instantiated.")
 
-            criterion = nn.CrossEntropyLoss()
-            optimizer = optim.Adam(model.parameters(), lr=cfg.training.learning_rate)
-            scheduler = CosineAnnealingLR(optimizer, T_max=cfg.training.epochs)
+            # Using official project factories instead of manual instantiation
+            criterion = get_criterion(cfg)
+            optimizer = get_optimizer(model, cfg)
+            scheduler = get_scheduler(optimizer, cfg)
 
-            # 5. Training Loop Execution
-            run_logger.info("Executing training epoch...")
             trainer = ModelTrainer(
                 model=model,
                 train_loader=train_loader,
@@ -111,35 +93,39 @@ def run_smoke_test(args: argparse.Namespace) -> None:
                 output_path=paths.best_model_path
             )
             
-            best_path, train_losses, val_accuracies = trainer.train()
+            # Capture history (List[dict] for val_metrics)
+            _, train_losses, val_metrics_history = trainer.train()
 
-            # 6. Final Evaluation & Visualization Verification
-            run_logger.info("Running final evaluation and reporting...")
-
-            if not best_path.exists():
-                run_logger.error(f"Checkpoint missing! Expected at: {best_path}")
-                raise FileNotFoundError(f"Checkpoint not found in: {best_path}")
+            # --- Stage 4: Model Recovery & Evaluation ---
+            run_logger.info("Stage 4: Recovering weights and running inference...")
             
-            orchestrator.load_weights(model, best_path)
+            if not paths.best_model_path.exists():
+                raise FileNotFoundError(f"Checkpoint not found at: {paths.best_model_path}")
             
-            aug_info = get_augmentations_description(cfg)
-
-            macro_f1, test_acc = run_final_evaluation(
+            orchestrator.load_weights(model, paths.best_model_path)
+            
+            # --- Stage 5: Reporting & Summary ---
+            run_logger.info("Stage 5: Verifying Reporting & Visualization utilities...")
+            
+            _, test_acc = run_final_evaluation(
                 model=model,
                 test_loader=test_loader,
-                class_names=ds_meta.classes,
                 train_losses=train_losses,
-                val_accuracies=val_accuracies,
+                val_metrics_history=val_metrics_history,
+                class_names=ds_meta.classes,
                 paths=paths,
                 cfg=cfg,
-                aug_info=aug_info
+                aug_info=get_augmentations_description(cfg),
+                log_path=paths.logs / "smoke_test.log"
             )
 
-            run_logger.info(f"SMOKE TEST PASSED: Acc {test_acc:.4f} | F1 {macro_f1:.4f}")
-            run_logger.info(f"\nSmoke test completed. Check outputs in: {paths.root}\n")
+            # Final Summary Block
+            run_logger.info(f"\n{'#'*60}\n{' SMOKE TEST PASSED SUCCESSFULLY ':^60}\n{'#'*60}")
+            run_logger.info(f"Final Test Accuracy: {test_acc:.4f}")
+            run_logger.info(f"Artifacts preserved in: {paths.root}")
 
         except Exception as e:
-            run_logger.error(f"Smoke test pipeline failed: {str(e)}", exc_info=True)
+            run_logger.error(f"SMOKE TEST CRITICAL FAILURE: {str(e)}", exc_info=True)
             raise e
 
 # =========================================================================== #

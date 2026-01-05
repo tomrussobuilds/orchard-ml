@@ -83,7 +83,7 @@ class ModelTrainer:
 
         # History tracking
         self.train_losses: List[float] = []
-        self.val_accuracies: List[float] = []
+        self.val_metrics_history: List[dict] = []
 
         # Metrics
         self.best_acc = -1.0
@@ -91,14 +91,13 @@ class ModelTrainer:
 
         logger.info(f"Trainer initialized. Best model checkpoint: {self.best_path.name}")
         
-    def train(self) -> Tuple[Path, List[float], List[float]]:
+    def train(self) -> Tuple[Path, List[float], List[dict]]:
         """
         Executes the main training loop with checkpointing and early stopping.
         """
         for epoch in range(1, self.epochs + 1):
             logger.info(f" Epoch {epoch:02d}/{self.epochs} ".center(60, "-"))
 
-            # Logic: Apply MixUp only during the first portion of training if configured
             mixup_cutoff = int(self.cfg.training.cosine_fraction * self.epochs)
             current_mixup = self.mixup_fn if epoch <= mixup_cutoff else None
                 
@@ -122,10 +121,12 @@ class ModelTrainer:
                 criterion=self.criterion,
                 device=self.device
             )
+            self.val_metrics_history.append(val_metrics)
+
             val_acc = val_metrics["accuracy"]
             val_loss = val_metrics["loss"]
-            self.val_accuracies.append(val_acc)
             val_auc = val_metrics.get("auc", 0.0)
+
             logger.info(f"Epoch {epoch} Validation AUC: {val_auc:.4f} "
                         f"Previous Best AUC: {self.best_auc:.4f}"
             )
@@ -136,19 +137,20 @@ class ModelTrainer:
 
             if val_acc > self.best_acc:
                 self.best_acc = val_acc
+
+            # --- 4. Checkpoint & Early Stopping Logic ---
+            if self._handle_checkpointing(val_metrics):
+                logger.warning(f"Early stopping triggered at epoch {epoch}.")
+                break
             
-            # Logging progress
+            # --- 5. Unified Logging ---
             current_lr = self.optimizer.param_groups[0]['lr']
             logger.info(
                 f"Loss: [T: {epoch_loss:.4f} | V: {val_loss:.4f}] | "
-                f"Acc: {val_acc:.4f} (Best: {self.best_acc:.4f}) | "
+                f"Acc: {val_acc:.4f} (Best Acc: {self.best_acc:.4f}) | "
+                f"AUC: {val_auc:.4f} (Best AUC: {self.best_auc:.4f}) | "
                 f"LR: {current_lr:.2e} | Patience: {self.patience - self.epochs_no_improve}"
             )
-
-            # --- 4. Checkpoint & Early Stopping Logic ---
-            if self._handle_checkpointing(val_auc, val_acc):
-                logger.warning(f"Early stopping triggered at epoch {epoch}.")
-                break
             
         logger.info(f"Training finished. Peak Validation Accuracy: {self.best_acc:.4f}")
 
@@ -156,7 +158,7 @@ class ModelTrainer:
             logger.warning("Forcing checkpoint save for smoke test integrity.")
             torch.save(self.model.state_dict(), self.best_path)
 
-        return self.best_path, self.train_losses, self.val_accuracies
+        return self.best_path, self.train_losses, self.val_metrics_history
     
     def _smart_step_scheduler(self, val_loss: float) -> None:
         """
@@ -176,8 +178,7 @@ class ModelTrainer:
 
     def _handle_checkpointing(
             self,
-            val_auc: float,
-            val_acc: float
+            val_metrics: dict
         ) -> bool:
         """
         Manages model checkpointing and tracks early stopping progress.
@@ -191,6 +192,8 @@ class ModelTrainer:
         Returns:
             bool: True if early stopping criteria are met, False otherwise.
         """
+        val_acc = val_metrics["accuracy"]
+        val_auc = val_metrics.get("auc", 0.0)
     
         if val_acc > self.best_acc:
             self.best_acc = val_acc
@@ -200,9 +203,8 @@ class ModelTrainer:
             self.best_auc = val_auc
             self.epochs_no_improve = 0
             torch.save(self.model.state_dict(), self.best_path)
-            return False
-
-        self.epochs_no_improve += 1
+        else:
+            self.epochs_no_improve += 1
         
         return self.epochs_no_improve >= self.patience
     

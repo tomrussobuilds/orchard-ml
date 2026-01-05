@@ -21,7 +21,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import torchvision.transforms.functional as TF
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, roc_auc_score
 
 # =========================================================================== #
 #                                Internal Imports                             #
@@ -139,29 +139,42 @@ def adaptive_tta_predict(
     return ensemble_probs / len(transforms)
 
 def evaluate_model(
-        model: nn.Module,
-        test_loader: DataLoader,
-        device: torch.device,
-        use_tta: bool = False,
-        is_anatomical: bool = False,
-        is_texture_based: bool = False,
-        cfg: Config = None
-) -> Tuple[np.ndarray, np.ndarray, float, float]:
+    model: nn.Module,
+    test_loader: DataLoader,
+    device: torch.device,
+    use_tta: bool = False,
+    is_anatomical: bool = False,
+    is_texture_based: bool = False,
+    cfg: Config = None
+) -> Tuple[np.ndarray, np.ndarray, dict, float]:
     """
     Evaluates the model on the test set, optionally using Test-Time Augmentation (TTA).
+
+    This function executes full-set inference and calculates classification 
+    accuracy, macro-averaged F1-score, and macro-averaged ROC-AUC. If TTA is 
+    active, the metrics are computed based on the averaged probability 
+    distribution across multiple augmented versions of the input.
 
     Args:
         model (nn.Module): The trained PyTorch model.
         test_loader (DataLoader): DataLoader for the test set.
-        device (torch.device): The device (CPU/CUDA/MPS) to run the evaluation on.
-        use_tta (bool, optional): Whether to enable TTA prediction. Defaults to False.
-        is_anatomical (bool): Whether the dataset has fixed anatomical orientation.
-        is_texture_based (bool): Whether the dataset relies on high-frequency textures.
-        cfg (Config, optional): The global configuration for TTA hyperparams.
+        device (torch.device): Hardware target (CUDA, MPS, or CPU).
+        use_tta (bool): Whether to enable Test-Time Augmentation prediction.
+        is_anatomical (bool): True if dataset has fixed anatomical orientation.
+        is_texture_based (bool): True if dataset requires fine texture preservation.
+        cfg (Config, optional): Configuration object containing TTA hyperparameters.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray, dict, float]:
+            - all_preds: Array of class predictions (indices).
+            - all_labels: Array of ground truth labels.
+            - test_metrics: Dictionary with {'accuracy': float, 'auc': float}.
+            - macro_f1: Macro-averaged F1 score.
     """
     model.eval()
     all_preds_list: List[np.ndarray] = []
     all_labels_list: List[np.ndarray] = []
+    all_probs_list: List[np.ndarray] = []
 
     actual_tta = use_tta and (cfg is not None)
 
@@ -170,31 +183,56 @@ def evaluate_model(
             targets_np = targets.cpu().numpy()
 
             if actual_tta:
-                outputs = adaptive_tta_predict(
+                # adaptive_tta_predict returns averaged softmax probabilities
+                probs = adaptive_tta_predict(
                     model, inputs, device, 
                     is_anatomical, is_texture_based, cfg
                 )
-                batch_preds = outputs.argmax(dim=1).cpu().numpy()
             else:
                 inputs = inputs.to(device)
-                outputs = model(inputs)
-                batch_preds = outputs.argmax(dim=1).cpu().numpy()
+                logits = model(inputs)
+                probs = torch.softmax(logits, dim=1)
+
+            # Move results to CPU and store for global metric calculation
+            probs_np = probs.cpu().numpy()
+            batch_preds = probs_np.argmax(axis=1)
 
             all_preds_list.append(batch_preds)
             all_labels_list.append(targets_np)
+            all_probs_list.append(probs_np)
 
-    # Consolidate results across all batches
+    # --- Data Consolidation ---
     all_preds = np.concatenate(all_preds_list)
     all_labels = np.concatenate(all_labels_list)
+    all_probs = np.concatenate(all_probs_list)
     
-    # Compute final metrics
+    # --- Final Metric Computation ---
     accuracy = np.mean(all_preds == all_labels)
     macro_f1 = f1_score(all_labels, all_preds, average="macro")
+    
+    # Compute ROC-AUC (One-vs-Rest, Macro)
+    try:
+        # Handles binary and multiclass cases automatically via OvR
+        auc = roc_auc_score(
+            all_labels, 
+            all_probs, 
+            multi_class="ovr", 
+            average="macro"
+        )
+    except Exception as e:
+        logger.warning(f"ROC-AUC calculation failed: {e}. Defaulting to 0.0")
+        auc = 0.0
 
-    # Logging with hardware-aware context
+    # Bundle metrics for the Reporting module
+    test_metrics = {
+        "accuracy": float(accuracy),
+        "auc": float(auc)
+    }
+
+    # --- Logging ---
     log_message = (
-        f"Test Accuracy: {accuracy:.4f} ({accuracy*100:.2f}%) | "
-        f"Macro F1: {macro_f1:.4f}"
+        f"Test Metrics -> Acc: {accuracy:.4f} | "
+        f"AUC: {auc:.4f} | F1: {macro_f1:.4f}"
     )
     if actual_tta:
         tta_mode = 'Full' if device.type != 'cpu' else 'Light/CPU'
@@ -202,4 +240,4 @@ def evaluate_model(
     
     logger.info(log_message)
 
-    return all_preds, all_labels, accuracy, macro_f1
+    return all_preds, all_labels, test_metrics, macro_f1

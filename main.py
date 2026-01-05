@@ -2,21 +2,19 @@
 Main Execution Script for MedMNIST Classification Pipeline
 
 This orchestrator manages the lifecycle of a deep learning experiment, applying 
-an adapted ResNet-18 architecture to various MedMNIST datasets (e.g., BloodMNIST). 
+an adapted ResNet-18 architecture to various MedMNIST datasets.
 
-Key Pipeline Features:
-1. Dynamic Configuration: Metadata-driven setup (mean/std, classes, channels) 
-   leveraging a centralized Dataset Registry.
-2. Root Orchestration: Centralized environment setup via RootOrchestrator 
-   (seeding, locking, directory management, and logging).
-3. Data Management: Handles automated loading, subset mocking for testing, 
-   and robust PyTorch DataLoader creation with configurable augmentations.
-4. Model Orchestration: Factory-based initialization of specialized architectures.
-5. Training & Recovery: Executes standardized training loops with automated 
-   checkpointing of the best model based on validation performance.
-6. Comprehensive Evaluation: Performs final testing with Test-Time Augmentation (TTA), 
-   generates diagnostic visualizations (Confusion Matrices, Loss Curves), and 
-   exports structured performance reports.
+The pipeline follows a 5-stage orchestration logic:
+1. Environment Initialization: Centralized setup via RootOrchestrator, 
+   handling seeding, resource locking, and directory management.
+2. Data Preparation: Metadata-driven loading, creation of robust DataLoaders, 
+   and visual diagnostic sampling of augmented images.
+3. Training Execution: Standardized training loops with AMP, MixUp, and 
+   automated checkpointing of the best model based on validation metrics.
+4. Model Recovery & Testing: Restoration of optimal weights and comprehensive 
+   evaluation including Test-Time Augmentation (TTA).
+5. Reporting & Summary: Generation of diagnostic visualizations, structured 
+   Excel performance reports, and finalized session logging.
 """
 
 # =========================================================================== #
@@ -112,7 +110,7 @@ def main() -> None:
             )
             
             # Start training and capture history for final plotting
-            _, train_losses, val_accuracies = trainer.train()
+            _, train_losses, val_metrics_history = trainer.train()
 
             # --- 4. Model Recovery & Evaluation ---
             run_logger.info(
@@ -123,16 +121,16 @@ def main() -> None:
             orchestrator.load_weights(model, paths.best_model_path)
             
             # Execute comprehensive testing (including TTA if enabled)
-            macro_f1, test_acc = run_final_evaluation(
-                model          = model,
-                test_loader    = test_loader,
-                train_losses   = train_losses,
-                val_accuracies = val_accuracies,
-                class_names    = ds_meta.classes,
-                paths          = paths,
-                cfg            = cfg,
-                aug_info       = get_augmentations_description(cfg),
-                log_path       = paths.logs / "session.log"
+            macro_f1, test_acc      = run_final_evaluation(
+                model               = model,
+                test_loader         = test_loader,
+                train_losses        = train_losses,
+                val_metrics_history = val_metrics_history,
+                class_names         = ds_meta.classes,
+                paths               = paths,
+                cfg                 = cfg,
+                aug_info            = get_augmentations_description(cfg),
+                log_path            = paths.logs / "session.log"
             )
 
             # --- 5. Structured Summary Logging ---
