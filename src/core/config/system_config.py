@@ -48,7 +48,7 @@ from .types import (
 from ..environment import (
     detect_best_device, get_num_workers
 )
-from ..paths import DATASET_DIR, OUTPUTS_ROOT
+from ..paths import DATASET_DIR, OUTPUTS_ROOT, PROJECT_ROOT
 
 # =========================================================================== #
 #                             SYSTEM CONFIGURATION                            #
@@ -80,8 +80,8 @@ class SystemConfig(BaseModel):
     log_level: LogLevel = "INFO"
 
     # Filesystem Strategy
-    data_dir: ValidatedPath = Field(default=DATASET_DIR)
-    output_dir: ValidatedPath = Field(default=OUTPUTS_ROOT)
+    data_dir: ValidatedPath = Field(default="./dataset")
+    output_dir: ValidatedPath = Field(default="./outputs")
 
     # Execution Policy
     save_model: bool = True
@@ -95,6 +95,32 @@ class SystemConfig(BaseModel):
     # Internal state for policy resolution
     _reproducible_mode: bool = False
 
+    def to_portable_dict(self) -> dict:
+        """
+        Converts the configuration instance into a portable dictionary.
+        
+        This method reconciles absolute system paths back to project-relative 
+        paths (e.g., converting '/home/user/project/dataset' to './dataset'). 
+        It ensures that exported YAML/JSON manifests are environment-agnostic 
+        and do not leak local filesystem structures into logs or repositories.
+        
+        Returns:
+            dict: A sanitized dictionary representation of the system config.
+        """
+        data = self.model_dump()
+        
+        path_fields = ["data_dir", "output_dir"]
+        
+        for field in path_fields:
+            full_path = Path(data[field])
+            if full_path.is_relative_to(PROJECT_ROOT):
+                relative_path = full_path.relative_to(PROJECT_ROOT)
+                data[field] = f"./{relative_path}"
+            else:
+                data[field] = str(full_path)
+                       
+        return data
+    
     @property
     def lock_file_path(self) -> Path:
         """
@@ -125,6 +151,14 @@ class SystemConfig(BaseModel):
     def use_deterministic_algorithms(self) -> bool:
         """Flag indicating whether PyTorch should enforce bit-perfect deterministic algorithms."""
         return self._reproducible_mode
+    
+    @field_validator("data_dir", "output_dir", mode="before")
+    @classmethod
+    def resolve_relative_paths(cls, v):
+        path = Path(v)
+        if not path.is_absolute():
+            return (PROJECT_ROOT / path).resolve()
+        return path
         
     @field_validator("device")
     @classmethod
@@ -151,10 +185,13 @@ class SystemConfig(BaseModel):
         Initializes environmental policies such as reproducibility based on 
         the provided namespace.
         """
+        data_dir_arg = getattr(args, 'data_dir', None)
+        output_dir_arg = getattr(args, 'output_dir', None)
+
         instance = cls(
             device=getattr(args, 'device', "auto"),
-            data_dir=Path(getattr(args, 'data_dir', DATASET_DIR)),
-            output_dir=Path(getattr(args, 'output_dir', OUTPUTS_ROOT)),
+            data_dir=data_dir_arg if data_dir_arg else "./dataset",
+            output_dir=output_dir_arg if output_dir_arg else "./outputs",
             save_model=getattr(args, 'save_model', True),
             log_interval=getattr(args, 'log_interval', 10),
             project_name=getattr(args, 'project_name', "vision_experiment")

@@ -46,6 +46,7 @@ from .models_config import ModelConfig
 
 from ..metadata import DATASET_REGISTRY
 from ..io import load_config_from_yaml
+from ..paths import PROJECT_ROOT
 
 # =========================================================================== #
 #                                MAIN CONFIGURATION                          #
@@ -70,6 +71,24 @@ class Config(BaseModel):
     dataset: DatasetConfig = Field(default_factory=DatasetConfig)
     evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
     model: ModelConfig = Field(default_factory=ModelConfig)
+
+    def dump_portable(self) -> dict:
+        """
+        Serializes the entire configuration while ensuring all filesystem 
+        paths (system and dataset) are anchored to PROJECT_ROOT.
+        """
+        full_data = self.model_dump()
+
+        full_data["system"] = self.system.to_portable_dict()    
+
+        if "dataset" in full_data and "data_root" in full_data["dataset"]:
+            dr_path = Path(full_data["dataset"]["data_root"])
+            if dr_path.is_relative_to(PROJECT_ROOT):
+                relative_dr = dr_path.relative_to(PROJECT_ROOT)
+                full_data["dataset"]["data_root"] = f"./{relative_dr}"
+            
+        return full_data    
+    
 
     @model_validator(mode="after")
     def validate_logic(self) -> "Config":

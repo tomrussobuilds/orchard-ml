@@ -172,7 +172,7 @@ class RootOrchestrator:
         
         # Mirror the active configuration to the run directory
         save_config_as_yaml(
-            self.cfg,
+            self.cfg.dump_portable(),
             self.paths.get_config_path()
         )
 
