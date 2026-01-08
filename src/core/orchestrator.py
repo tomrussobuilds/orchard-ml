@@ -134,11 +134,13 @@ class RootOrchestrator:
         """
         self.cleanup()
         return False
-
+     
     # --- PRIVATE LIFECYCLE PHASES ---
 
     def _phase_1_determinism(self) -> None:
-        """Enforces global `RNG` seeding and algorithmic determinism policies via `set_seed`."""
+        """
+        Enforces global `RNG` seeding and algorithmic determinism policies via `set_seed`.
+        """
         set_seed(self.cfg.training.seed, strict=self.repro_mode)
 
     def _phase_2_hardware_optimization(self) -> int:
@@ -165,36 +167,42 @@ class RootOrchestrator:
             base_dir=self.cfg.system.output_dir
         )
 
-    def _phase_4_telemetry_activation(self, applied_threads: int) -> None:
+    def _phase_4_logging_initialization(self) -> None:
         """
-        Activates logging, persists configuration, and emits the baseline report.
-        
-        This phase mirrors the `Config` to a `YAML` file for auditability and 
-        secures system-level guards via `InfrastructureManager`.
-
-        Args:
-            applied_threads (int): The thread count resolved in `_phase_2`.
+        Bridges the static Logger to the session-specific filesystem.
+        Reconfigures handlers to enable file-based persistence in the run directory.
         """
-        # Initialize logging first to capture hardware lock events
         self.run_logger = self._log_initializer(
             name=LOGGER_NAME,
             log_dir=self.paths.logs,
             level=self.cfg.system.log_level
         )
 
-        # Persistence: Mirror the configuration for auditability
+    def _phase_5_config_persistence(self) -> None:
+        """
+        Mirrors the hydrated configuration state to the experiment root.
+        Ensures auditability by saving a portable YAML manifest of the session.
+        """
         save_config_as_yaml(
             self.cfg.dump_portable(),
             self.paths.get_config_path()
         )
 
-        # Secure system-level guards
+    def _phase_6_infrastructure_guarding(self) -> None:
+        """
+        Secures system-level resource locks via InfrastructureManager.
+        Prevents concurrent execution conflicts and manages environment cleanup.
+        """
         self.infra.prepare_environment(
             self.cfg,
             logger=self.run_logger
         )
 
-        # Log initial environment state
+    def _phase_7_environment_reporting(self, applied_threads: int) -> None:
+        """
+        Emits the baseline environment report to the active logging streams.
+        Summarizes hardware, dataset metadata, and resolved execution policies.
+        """
         self.reporter.log_initial_status(
             logger=self.run_logger,
             cfg=self.cfg,
@@ -210,8 +218,8 @@ class RootOrchestrator:
         """
         Executes the linear sequence of environment initialization phases.
 
-        This method synchronizes the global state, moving from determinism 
-        seeding to telemetry activation.
+        Synchronizes the global state through 7 distinct phases, progressing 
+        from deterministic seeding to full environment reporting.
 
         Returns:
             RunPaths: The verified and provisioned directory structure.
@@ -219,7 +227,12 @@ class RootOrchestrator:
         self._phase_1_determinism()
         applied_threads = self._phase_2_hardware_optimization()
         self._phase_3_filesystem_provisioning()
-        self._phase_4_telemetry_activation(applied_threads)
+        
+        # New segmented Telemetry & Guarding sequence
+        self._phase_4_logging_initialization()
+        self._phase_5_config_persistence()
+        self._phase_6_infrastructure_guarding()
+        self._phase_7_environment_reporting(applied_threads)
         
         return self.paths
 
