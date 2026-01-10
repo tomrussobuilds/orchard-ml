@@ -117,9 +117,6 @@ def main() -> None:
                 f"\n{'━' * 80}\n{' FINAL EVALUATION PHASE ':^80}\n{'━' * 80}"
             )
             
-            # Recover the best weights (determined by validation) for final testing
-            trainer.load_best_weights()
-            
             # Execute comprehensive testing (including TTA if enabled)
             macro_f1, test_acc      = run_final_evaluation(
                 model               = model,

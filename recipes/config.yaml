@@ -1,5 +1,5 @@
 system:
-    device: cpu
+    device: cuda
     log_level: INFO
     data_dir: ./dataset
     output_dir: ./outputs
