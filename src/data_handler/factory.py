@@ -236,7 +236,7 @@ class LazyNPZDataset(Dataset):
             raise ValueError(f"Unexpected image shape: {img.shape}")
         
         img = torch.from_numpy(img).float() / 255.0
-        label = int(self.labels[idx])
+        label = int(self.labels[idx][0])
         return img, label
 
 
