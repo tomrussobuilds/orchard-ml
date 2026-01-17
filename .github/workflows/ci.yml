@@ -5,7 +5,7 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
-  workflow_dispatch:  # Allow manual triggering
+  workflow_dispatch:
 
 jobs:
   # Job 1: Lint and Code Quality
@@ -22,25 +22,28 @@ jobs:
           python-version: '3.10'
           cache: 'pip'
 
-      - name: Install dependencies
+      - name: Install package
         run: |
-          pip install -e .
           python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Install linting tools
+        run: |
           pip install black flake8 isort
 
-      - name: Run Black (code formatting)
+      - name: Run Black
         run: black --check --diff .
         continue-on-error: true
 
-      - name: Run isort (import sorting)
+      - name: Run isort
         run: isort --check-only --diff .
         continue-on-error: true
 
-      - name: Run Flake8 (linting)
+      - name: Run Flake8
         run: flake8 --max-line-length=100 --ignore=E203,W503,E501 orchard/ tests/
         continue-on-error: true
 
-  # Job 2: Pytest Suite (All tests in tests/)
+  # Job 2: Pytest Suite
   test-pytest:
     name: Pytest Suite (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -59,11 +62,18 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
-      - name: Install dependencies
+      - name: Install package first
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install torch pytest pytest-cov pytest-xdist
+          pip install -e .
+
+      - name: Install test dependencies
+        run: |
+          pip install pytest pytest-cov pytest-xdist
+
+      - name: Verify orchard is importable
+        run: |
+          python -c "from orchard.core.metadata import DatasetMetadata; print('✅ orchard imported successfully')"
 
       - name: Run pytest suite
         run: |
@@ -84,7 +94,7 @@ jobs:
           name: codecov-${{ matrix.python-version }}
           fail_ci_if_error: false
 
-  # Job 3: Smoke Test (E2E Sanity Check)
+  # Job 3: Smoke Test
   test-smoke:
     name: Smoke Test (1-Epoch Validation)
     runs-on: ubuntu-latest
@@ -100,10 +110,10 @@ jobs:
           python-version: '3.10'
           cache: 'pip'
 
-      - name: Install dependencies
+      - name: Install package
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -e .
 
       - name: Run smoke test
         run: |
@@ -118,7 +128,7 @@ jobs:
           path: outputs/
           retention-days: 7
 
-  # Job 4: Build Documentation
+  # Job 4: Documentation Check
   docs:
     name: Documentation Check
     runs-on: ubuntu-latest

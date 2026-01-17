@@ -1,7 +1,6 @@
 LICENSE
 README.md
 pyproject.toml
-setup.py
 orchard/__init__.py
 orchard/core/__init__.py
 orchard/core/cli.py
@@ -73,4 +72,5 @@ tests/test_training.py
 visionforge.egg-info/PKG-INFO
 visionforge.egg-info/SOURCES.txt
 visionforge.egg-info/dependency_links.txt
+visionforge.egg-info/requires.txt
 visionforge.egg-info/top_level.txt

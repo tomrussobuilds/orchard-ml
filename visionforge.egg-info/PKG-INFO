@@ -14,8 +14,33 @@ Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
 Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 License-File: LICENSE
+Requires-Dist: torch>=2.0.0
+Requires-Dist: torchvision>=0.15.0
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: scikit-learn>=1.3.0
+Requires-Dist: Pillow>=10.0.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: optuna>=3.5.0
+Requires-Dist: plotly>=5.18.0
+Requires-Dist: kaleido>=0.2.1
+Requires-Dist: pytest>=7.4.0
+Requires-Dist: pytest-cov>=4.1.0
+Requires-Dist: pytest-xdist>=3.5.0
+Requires-Dist: matplotlib>=3.8.0
+Requires-Dist: seaborn>=0.13.0
+Requires-Dist: xlsxwriter>=3.1.0
+Requires-Dist: openpyxl>=3.1.0
+Requires-Dist: tqdm>=4.66.0
+Requires-Dist: requests>=2.31.0
+Requires-Dist: psutil>=5.9.0
+Provides-Extra: dev
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: isort>=5.12.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
 Dynamic: license-file
-Dynamic: requires-python
 
 # 🔮 VisionForge: Type-Safe Deep Learning Framework
 
