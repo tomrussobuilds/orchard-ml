@@ -104,7 +104,7 @@ pip install -r requirements.txt
 # 2. Run a quick verification (1-epoch sanity check, ~30 seconds)
 python -m tests.smoke_test
 
-# 3. Train with optimized recipe (ResNet-18, 28×28, ~5 min on GPU)
+# 3. Train with optimized recipe 
 python main.py --config recipes/config_resnet_18_adapted.yaml
 
 # 4. Launch hyperparameter optimization (50 trials, time varies with early stopping)
@@ -116,6 +116,12 @@ firefox outputs/*/figures/param_importances.html
 # 6. Deploy best configuration
 python main.py --config outputs/*/reports/best_config.yaml
 ```
+
+>[!Note]
+>**Timing Variance**: GPU training times depend heavily on:
+>- Early stopping criteria (can finish in 1-3h if AUC≥0.9999 reached)
+>- Dataset complexity (BloodMNIST 28×28: ~5min vs OrganCMNIST 224×224: ~30min/trial)
+>- Hardware specifications (times based on RTX 5070)
 
 ---
 
@@ -535,7 +541,7 @@ class CustomSearchSpace:
 
 **Smoke Test** (1-epoch sanity check):
 ```bash
-python -m tools.smoke_test
+python -m tests.smoke_test
 ```
 
 **Output:** Validates full pipeline in <30 seconds:

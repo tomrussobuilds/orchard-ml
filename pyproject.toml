@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
-    {name = "Tommaso Russo", email = "tommaso@example.com"}
+    {name = "Tommaso Russo", email = "tomrussobuilds@users.noreply.github.com"}
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -54,7 +54,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["orchard*", "tools*"]
+include = ["orchard*"]
 exclude = ["tests*", "docs*"]
 
 [tool.pytest.ini_options]

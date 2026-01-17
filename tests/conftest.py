@@ -1,14 +1,38 @@
-"""Pytest fixtures for VisionForge tests."""
-import pytest
+"""
+Pytest Configuration and Shared Fixtures for VisionForge Test Suite.
+
+This module provides reusable test fixtures for configuration testing, including:
+- Mock dataset metadata for different resolutions (28×28, 224×224)
+- CLI argument namespaces for training and optimization
+- Temporary YAML configuration files for integration tests
+
+Fixtures are automatically discovered by pytest across all test modules.
+"""
+
+# =========================================================================== #
+#                              STANDARD LIBRARY                               #
+# =========================================================================== #
 import argparse
 from pathlib import Path
+
+# =========================================================================== #
+#                            THIRD-PARTY IMPORTS                              #
+# =========================================================================== #
+import pytest
+
+# =========================================================================== #
+#                              LOCAL IMPORTS                                  #
+# =========================================================================== #
 from orchard.core.metadata import DatasetMetadata
 
 
+# =========================================================================== #
+#                          DATASET METADATA FIXTURES                          #
+# =========================================================================== #
 
 @pytest.fixture
 def mock_metadata_28():
-    """Mock 28x28 dataset metadata."""
+    """Mock 28×28 dataset metadata for testing low-resolution workflows."""
     return DatasetMetadata(
         name="bloodmnist",
         display_name="BloodMNIST",
@@ -27,7 +51,7 @@ def mock_metadata_28():
 
 @pytest.fixture
 def mock_metadata_224():
-    """Mock 224x224 dataset metadata."""
+    """Mock 224×224 dataset metadata for testing high-resolution workflows."""
     return DatasetMetadata(
         name="organcmnist",
         display_name="OrganCMNIST",
@@ -46,7 +70,7 @@ def mock_metadata_224():
 
 @pytest.fixture
 def mock_grayscale_metadata():
-    """Mock grayscale dataset."""
+    """Mock grayscale dataset metadata for testing channel conversion logic."""
     return DatasetMetadata(
         name="pneumoniamnist",
         display_name="PneumoniaMNIST",
@@ -63,9 +87,13 @@ def mock_grayscale_metadata():
     )
 
 
+# =========================================================================== #
+#                        CLI ARGUMENT FIXTURES                                #
+# =========================================================================== #
+
 @pytest.fixture
 def basic_args():
-    """Basic argparse namespace for testing."""
+    """Standard CLI arguments for training pipeline testing."""
     return argparse.Namespace(
         # Dataset
         dataset="bloodmnist",
@@ -75,11 +103,9 @@ def basic_args():
         use_weighted_sampler=True,
         force_rgb=True,
         img_size=None,
-        
         # Model
         model_name="resnet_18_adapted",
         pretrained=True,
-        
         # Training
         epochs=60,
         batch_size=128,
@@ -90,34 +116,31 @@ def basic_args():
         scheduler_patience=5,
         cosine_fraction=0.8,
         use_amp=False,
-        
         # Regularization
         mixup_alpha=0.0,
         mixup_epochs=None,
         label_smoothing=0.0,
         dropout=0.0,
-        
         # Augmentation
         hflip=0.5,
         rotation_angle=10,
         jitter_val=0.2,
         min_scale=0.95,
         no_tta=False,
-        
         # System
         seed=42,
         reproducible=False,
         num_workers=4,
         device=None,
-        
         # Paths
         output_root=None,
         config=None,  # Not loading from YAML
     )
 
+
 @pytest.fixture
 def optuna_args():
-    """Optuna CLI arguments."""
+    """CLI arguments for Optuna hyperparameter optimization testing."""
     return argparse.Namespace(
         dataset="bloodmnist",
         resolution=28,
@@ -129,23 +152,24 @@ def optuna_args():
     )
 
 
+# =========================================================================== #
+#                        YAML CONFIGURATION FIXTURES                          #
+# =========================================================================== #
+
 @pytest.fixture
 def temp_yaml_config(tmp_path):
-    """Temporary YAML config file."""
+    """Valid YAML configuration file for integration testing."""
     yaml_content = """
 dataset:
   name: bloodmnist
   resolution: 28
-
 model:
   name: resnet_18_adapted
   pretrained: true
-
 training:
   epochs: 60
   batch_size: 128
   learning_rate: 0.008
-
 optuna:
   study_name: yaml_test_study
   n_trials: 20
@@ -157,11 +181,11 @@ optuna:
 
 @pytest.fixture
 def temp_invalid_yaml(tmp_path):
-    """Invalid YAML config."""
+    """Invalid YAML configuration for validation error testing."""
     yaml_content = """
 training:
   epochs: 60
-  min_lr: 10.0
+  min_lr: 10.0  # Invalid: min_lr must be < learning_rate
   learning_rate: 0.001
 """
     yaml_file = tmp_path / "invalid.yaml"
