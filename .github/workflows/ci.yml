@@ -115,7 +115,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
 
-      - name: Run smoke test with CPU-safe settings
+      - name: Run smoke test (use underscores in args!)
         run: |
           python -m tests.smoke_test \
             --dataset bloodmnist \
@@ -123,7 +123,7 @@ jobs:
             --batch_size 4 \
             --max_samples 32 \
             --num_workers 0 \
-            --use_amp false
+            --no_amp
         timeout-minutes: 10
 
       - name: Upload smoke test artifacts
