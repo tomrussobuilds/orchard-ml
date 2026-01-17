@@ -1,65 +1,269 @@
 # =========================================================================== #
-#                                PYTHON & ENV
+#                           PYTHON BYTECODE & CACHE                           #
 # =========================================================================== #
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+
+# =========================================================================== #
+#                           DISTRIBUTION & PACKAGING                          #
+# =========================================================================== #
+*.egg
+*.egg-info/
+dist/
+build/
+.Python
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.manifest
+*.spec
+
+# =========================================================================== #
+#                           VIRTUAL ENVIRONMENTS                              #
+# =========================================================================== #
 .venv/
 venv/
 env/
+ENV/
+env.bak/
+venv.bak/
+.python-version
+
+# =========================================================================== #
+#                           JUPYTER NOTEBOOKS                                 #
+# =========================================================================== #
 .ipynb_checkpoints/
+*.ipynb
+*-checkpoint.ipynb
 
 # =========================================================================== #
-#                                IDE & SYSTEM
+#                           TESTING & COVERAGE                                #
 # =========================================================================== #
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+.hypothesis/
+.tox/
+.nox/
+nosetests.xml
+coverage.xml
+*.coveragerc
+
+# =========================================================================== #
+#                           IDE & EDITORS                                     #
+# =========================================================================== #
+# VSCode
 .vscode/
+*.code-workspace
+
+# PyCharm / IntelliJ
 .idea/
-.DS_Store
-Thumbs.db
-*.bak
-*~
+*.iml
+*.iws
+*.ipr
+.idea_modules/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
 *.swp
-*.egg-info/
+*.swo
+*~
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+.\#*
 
 # =========================================================================== #
-#                            PROJECT ARTIFACTS
+#                           OPERATING SYSTEMS                                 #
 # =========================================================================== #
-# Experiment outputs and datasets (Managed by RunPaths)
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# =========================================================================== #
+#                           PROJECT OUTPUTS                                   #
+# =========================================================================== #
+# Experiment outputs (managed by VisionForge RunPaths)
 outputs/
+runs/
+
+# Datasets
 dataset/
 data/
-logs/
+datasets/
 
-# Root-level temporary files
+# Logs
+logs/
 *.log
-*.npz
+
+# Temporary files
+tmp/
+temp/
+.cache/
+
+# =========================================================================== #
+#                           ML MODEL ARTIFACTS                                #
+# =========================================================================== #
+# PyTorch
 *.pth
 *.pt
 *.ckpt
-*.lock
+*.tar
+
+# TensorFlow
+*.pb
+*.h5
+*.keras
+
+# ONNX
+*.onnx
+
+# Other formats
+*.pkl
+*.pickle
+*.npz
+*.npy
+*.safetensors
 
 # =========================================================================== #
-#                          ML SPECIFIC (MONITORING)
+#                           ML EXPERIMENT TRACKING                            #
 # =========================================================================== #
+# Weights & Biases
 wandb/
-runs/
+.wandb/
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# TensorBoard
+tensorboard/
+events.out.tfevents.*
+
+# Comet.ml
 .comet_ml/
+.cometml-runs/
+
+# Neptune.ai
+.neptune/
 
 # =========================================================================== #
-#                       LEGACY & UTILITY FOLDERS
+#                           SECURITY & SECRETS                                #
 # =========================================================================== #
-# Ignore the entire legacy folder to keep the repo clean
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# API keys and credentials
+*.key
+*.pem
+*.crt
+*.p12
+secrets/
+credentials/
+
+# =========================================================================== #
+#                           DOCUMENTATION                                     #
+# =========================================================================== #
+# Sphinx
+docs/_build/
+docs/.doctrees/
+docs/_static/
+docs/_templates/
+
+# MkDocs
+site/
+
+# Keep specific documentation artifacts
+!docs/artifacts/
+!docs/artifacts/**/*
+
+# =========================================================================== #
+#                           BACKUP & LEGACY                                   #
+# =========================================================================== #
+backup_*/
 legacy/
-
-# Track the tools/ folder scripts but ignore their local outputs
-# !tools/
-# tools/
-# tools/__pycache__/
-# tools/*.log
+old/
+archive/
+*.bak
+*.backup
+*.old
+*.orig
 
 # =========================================================================== #
-#                       DOCUMENTATION & RESULTS
+#                           MISCELLANEOUS                                     #
 # =========================================================================== #
-# !results/
-*.log
-!docs/artifacts/**/*.logbackup_*/
+# Lock files
+*.lock
+.lock
+*.pid
+
+# Compiled files
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Compressed archives
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================================================================== #
+#                           GITHUB ACTIONS                                    #
+# =========================================================================== #
+.github/workflows/*.log
