@@ -1,0 +1,20 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: auto
+        threshold: 1%
+
+ignore:
+  - "**/__init__.py"
+  - "**/conftest.py"
+  - "tests/"
+
+comment:
+  require_changes: false
+  require_base: false
+  require_head: true
