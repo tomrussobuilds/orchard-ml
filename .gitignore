@@ -267,4 +267,7 @@ archive/
 # =========================================================================== #
 #                           GITHUB ACTIONS                                    #
 # =========================================================================== #
-.github/workflows/*.log
+.github/workflows/*.log# Node.js (not used in this Python project)
+node_modules/
+package-lock.json
+package.json
