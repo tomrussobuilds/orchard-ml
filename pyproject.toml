@@ -84,6 +84,7 @@ omit = [
     "*/tests/*",
     "*/conftest.py",
     "*/__pycache__/*",
+    "*/__init__.py,
 ]
 
 [tool.coverage.report]
