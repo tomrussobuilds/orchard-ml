@@ -1,32 +1,34 @@
 # ==============================================================================
-# FILE: recipes/optuna_resnet_18_adapted.yaml
-# Hyperparameter Optimization for ResNet-18 (28x28)
+# FILE: recipes/optuna_mini_cnn.yaml
+# Hyperparameter Optimization for MiniCNN (28x28)
 # ==============================================================================
-# Usage: python optimize.py --config recipes/optuna_resnet_18_adapted.yaml
-# Estimated Time: ~2 hours (25 trials × 15 epochs)
-# Memory Usage: ~2GB VRAM per trial
+# Usage: python optimize.py --config recipes/optuna_mini_cnn.yaml
+# Estimated Time: ~1-2 hours (50 trials × 10 epochs)
+# Memory Usage: ~1GB VRAM per trial
+# Search Space: Includes architecture comparison vs ResNet-18-Adapted
 
 dataset:
-  name: "pathmnist"
+  name: "tissuemnist"
   data_root: ./dataset
   resolution: 28
-  force_rgb: false
-  use_weighted_sampler: false
+  force_rgb: true
+  use_weighted_sampler: true
   max_samples: null
 
 model:
-  name: "resnet_18_adapted"
+  name: "mini_cnn"              # Will be optimized vs resnet_18_adapted
   pretrained: false
+  weight_variant: null
   dropout: 0.3                  # Will be optimized
 
 training:
   seed: 42
-  reproducible: true
+  reproducible: false
   
   # Base values (WILL BE OPTIMIZED BY OPTUNA)
-  batch_size: 16
-  learning_rate: 0.001
-  weight_decay: 0.0001
+  batch_size: 128               # Will be optimized (16/32/48/64)
+  learning_rate: 0.01
+  weight_decay: 5e-4
   momentum: 0.9
   min_lr: 1e-6
   
@@ -34,7 +36,7 @@ training:
   mixup_alpha: 0.0
   label_smoothing: 0.0
   
-  # Training loop (FIXED)
+  # Training loop
   epochs: 60                    # Final training only
   patience: 15
   grad_clip: 1.0
@@ -48,17 +50,17 @@ training:
   step_size: 20
   
   # Performance
-  use_amp: true
+  use_amp: false                # Not needed for 28x28
   use_tta: false
   criterion_type: "cross_entropy"
   weighted_loss: false
   focal_gamma: 2.0
 
 augmentation:
-  hflip: 0.3
-  rotation_angle: 5             # Will be optimized
-  jitter_val: 0.05              # Will be optimized
-  min_scale: 0.95               # Will be optimized
+  hflip: 0.5
+  rotation_angle: 10            # Will be optimized
+  jitter_val: 0.2               # Will be optimized
+  min_scale: 0.9                # Will be optimized
   tta_translate: 0.5
   tta_scale: 1.02
   tta_blur_sigma: 0.1
@@ -72,8 +74,8 @@ telemetry:
   log_interval: 50
 
 evaluation:
-  batch_size: 64
-  n_samples: 6
+  batch_size: 256
+  n_samples: 16
   fig_dpi: 200
   cmap_confusion: Blues
   plot_style: seaborn-v0_8-muted
@@ -84,9 +86,9 @@ evaluation:
   save_predictions_grid: false
 
 optuna:
-  study_name: "pathmnist_resnet18_optimized"
-  n_trials: 50
-  epochs: 15                    # Short trials for speed
+  study_name: "bloodmnist_minicnn_optimized"
+  n_trials: 50                  # More trials for fast architecture
+  epochs: 10                    # Very short for speed
   timeout: null
   
   # Optimization target
@@ -95,17 +97,17 @@ optuna:
   
   # Early stopping config
   enable_early_stopping: true
-  early_stopping_threshold: 0.9999
-  early_stopping_patience: 2 
+  early_stopping_threshold: 0.999
+  early_stopping_patience: 3
   
   # Search strategy
   sampler_type: "tpe"
-  search_space_preset: "full"
+  search_space_preset: "full"   # Includes model_space_28
   
   # Pruning
   enable_pruning: true
   pruner_type: "median"
-  pruning_warmup_epochs: 5
+  pruning_warmup_epochs: 3      # Earlier pruning for fast model
   
   # Storage
   storage_type: "sqlite"
@@ -119,4 +121,3 @@ optuna:
   # Output
   save_plots: true
   save_best_config: true
-

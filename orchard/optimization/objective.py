@@ -4,7 +4,7 @@ Optuna Objective Function for Vision Pipeline.
 Implements the objective function that Optuna optimizes, integrating
 seamlessly with the existing ModelTrainer and Config architecture.
 
-Key Fix: Preserves dataset metadata across trial config reconstruction.
+Preserves dataset metadata across trial config reconstruction.
 """
 # =========================================================================== #
 #                         Standard Imports                                    #

@@ -198,44 +198,100 @@ class SearchSpaceRegistry:
         })
         return space
 
+    @staticmethod
+    def get_model_space_224() -> Dict[str, Callable]:
+        """Search space for 224×224 architectures with weight variants."""
+        return {
+            "model_name": lambda trial: trial.suggest_categorical(
+                "model_name", 
+                ["efficientnet_b0", "vit_tiny"]
+            ),
+            "weight_variant": lambda trial: trial.suggest_categorical(
+                "weight_variant",
+                [
+                    None,  # Default variant
+                    "vit_tiny_patch16_224.augreg_in21k_ft_in1k",
+                    "vit_tiny_patch16_224.augreg_in21k",
+                ]
+            ) if trial.params.get("model_name") == "vit_tiny" else None,
+        }
+
+    @staticmethod
+    def get_model_space_28() -> Dict[str, Callable]:
+        """Search space for 28×28 architectures."""
+        return {
+            "model_name": lambda trial: trial.suggest_categorical(
+                "model_name",
+                ["resnet_18_adapted", "mini_cnn"]
+            ),
+        }
+
+    @staticmethod
+    def get_full_space_with_models(resolution: int = 28) -> Dict[str, Callable]:
+        """
+        Combined search space including model architecture selection.
+        
+        Args:
+            resolution: Input image resolution (determines model choices)
+        
+        Returns:
+            Unified dict of all parameter samplers + model selection
+        """
+        full_space = SearchSpaceRegistry.get_full_space(resolution)
+        
+        # Add model selection based on resolution
+        if resolution >= 224:
+            full_space.update(SearchSpaceRegistry.get_model_space_224())
+        else:
+            full_space.update(SearchSpaceRegistry.get_model_space_28())
+        
+        return full_space
+    
 
 # =========================================================================== #
 #                          PRESET CONFIGURATIONS                              #
 # =========================================================================== #
 
-def get_search_space(preset: str = "quick", resolution: int = 28):
+def get_search_space(
+        preset: str = "quick",
+        resolution: int = 28,
+        include_models: bool = False
+):
     """
     Factory function to retrieve a search space preset.
     
     Args:
-        preset: Name of the preset ("quick", "full", "optimization_only", etc.)
+        preset: Name of the preset ("quick", "full", etc.)
         resolution: Input image resolution (affects batch_size choices)
+        include_models: If True, includes model architecture selection
         
     Returns:
-        Dict of parameter samplers or FullSearchSpace instance
+        Dict of parameter samplers
         
     Raises:
         ValueError: If preset name not recognized
     """
-    # Non-batch-size-dependent presets
-    simple_presets = {
-        "optimization_only": SearchSpaceRegistry.get_optimization_space,
-        "regularization_only": SearchSpaceRegistry.get_regularization_space,
-    }
-    
-    if preset in simple_presets:
-        return simple_presets[preset]()
+    # ... existing code ...
     
     # Resolution-dependent presets
     if preset == "quick":
-        return SearchSpaceRegistry.get_quick_space(resolution)
+        space = SearchSpaceRegistry.get_quick_space(resolution)
     elif preset == "full":
-        return FullSearchSpace(resolution)
+        space = SearchSpaceRegistry.get_full_space(resolution)
     else:
         raise ValueError(
             f"Unknown preset '{preset}'. Available: quick, full, "
             f"optimization_only, regularization_only"
         )
+    
+    # Optionally add model selection
+    if include_models:
+        if resolution >= 224:
+            space.update(SearchSpaceRegistry.get_model_space_224())
+        else:
+            space.update(SearchSpaceRegistry.get_model_space_28())
+    
+    return space
 
 
 class FullSearchSpace:

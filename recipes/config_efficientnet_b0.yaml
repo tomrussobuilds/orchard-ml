@@ -1,5 +1,5 @@
 # ==============================================================================
-# FILE 2: recipes/config_efficientnet_b0.yaml
+# FILE: recipes/config_efficientnet_b0.yaml
 # EfficientNet-B0 for 224x224 High-Resolution Images
 # ==============================================================================
 # Usage: python main.py --config recipes/config_efficientnet_b0.yaml

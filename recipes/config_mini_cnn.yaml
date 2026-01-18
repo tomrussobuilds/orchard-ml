@@ -1,0 +1,86 @@
+# ==============================================================================
+# FILE: recipes/config_mini_cnn.yaml
+# Lightweight CNN Training Configuration (28x28)
+# ==============================================================================
+# Usage: python main.py --config recipes/config_mini_cnn.yaml
+# Estimated Time: ~2-3 minutes (60 epochs, RTX 5070)
+# Memory Usage: ~500MB VRAM
+# Architecture: MiniCNN (~50K parameters, compact baseline)
+
+dataset:
+  name: "bloodmnist"
+  data_root: ./dataset
+  resolution: 28
+  force_rgb: true
+  use_weighted_sampler: true
+  max_samples: null
+
+model:
+  name: "mini_cnn"
+  pretrained: false             # No pretrained weights available
+  weight_variant: null          # Not applicable for MiniCNN
+  dropout: 0.3                  # Higher dropout to prevent overfitting
+
+training:
+  seed: 42
+  reproducible: false
+  
+  # Optimization (aggressive for small model)
+  batch_size: 128               # Large batches for 28x28
+  learning_rate: 0.01           # Higher LR for small architecture
+  weight_decay: 5e-4
+  momentum: 0.9
+  min_lr: 1e-6
+  
+  # Regularization (essential for small models)
+  mixup_alpha: 0.2
+  label_smoothing: 0.1
+  
+  # Training loop
+  epochs: 60
+  patience: 15
+  grad_clip: 1.0
+  mixup_epochs: 0
+  
+  # Scheduler
+  scheduler_type: "cosine"
+  cosine_fraction: 0.8
+  scheduler_patience: 5
+  scheduler_factor: 0.1
+  step_size: 20
+  
+  # Performance
+  use_amp: false                # Not needed for small resolution
+  use_tta: true
+  criterion_type: "cross_entropy"
+  weighted_loss: false
+  focal_gamma: 2.0
+
+augmentation:
+  hflip: 0.5
+  rotation_angle: 15            # More aggressive for small images
+  jitter_val: 0.3
+  min_scale: 0.9
+  tta_translate: 0.5
+  tta_scale: 1.02
+  tta_blur_sigma: 0.1
+
+hardware:
+  device: "auto"
+
+telemetry:
+  output_dir: ./outputs
+  log_level: "INFO"
+  log_interval: 50
+
+evaluation:
+  batch_size: 256               # Larger batch for fast evaluation
+  n_samples: 16                 # More samples for grid visualization
+  fig_dpi: 200
+  cmap_confusion: Blues
+  plot_style: seaborn-v0_8-muted
+  grid_cols: 4
+  fig_size_predictions: [12, 8]
+  report_format: xlsx
+  save_confusion_matrix: true
+  save_predictions_grid: true

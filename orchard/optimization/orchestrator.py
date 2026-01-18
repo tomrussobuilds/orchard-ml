@@ -10,24 +10,30 @@ Key Responsibilities:
     * Progress tracking and logging
     * Visualization generation (importance plots, optimization history)
     * Best trial export to YAML config
+    * Study summary export (JSON, Excel)
 """
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
-import logging
 
 # =========================================================================== #
-#                         Third-Party Imports                                 #
+#                         STANDARD LIBRARY                                    #
+# =========================================================================== #
+import logging
+import json
+from pathlib import Path
+
+# =========================================================================== #
+#                         THIRD-PARTY IMPORTS                                 #
 # =========================================================================== #
 import optuna
+import pandas as pd
 from optuna.samplers import (
      TPESampler, CmaEsSampler, RandomSampler, GridSampler
 )
 from optuna.pruners import (
      MedianPruner, PercentilePruner, HyperbandPruner, NopPruner
 )
+
 # =========================================================================== #
-#                         Internal Imports                                    #
+#                         INTERNAL IMPORTS                                    #
 # =========================================================================== #
 from orchard.core import (
     Config, LOGGER_NAME, save_config_as_yaml, RunPaths, log_best_config_export,
@@ -37,6 +43,9 @@ from .search_spaces import get_search_space
 from .objective import OptunaObjective
 from .early_stopping import get_early_stopping_callback
 
+# =========================================================================== #
+#                         LOGGER CONFIGURATION                                #
+# =========================================================================== #
 logger = logging.getLogger(LOGGER_NAME)
 
 
@@ -165,11 +174,16 @@ class OptunaOrchestrator:
         # Post-optimization processing
         log_study_summary(study, self.cfg.optuna.metric_name)
         
+        # Generate all artifacts
         if self.cfg.optuna.save_plots:
             self._generate_visualizations(study)
         
         if self.cfg.optuna.save_best_config:
             self._export_best_config(study)
+        
+        # NEW: Export study summary and top trials
+        self._export_study_summary(study)
+        self._export_top_trials(study)
         
         return study
     
@@ -292,6 +306,10 @@ class OptunaOrchestrator:
                 config_dict["model"][param_name] = value
             elif param_name in ["rotation_angle", "jitter_val", "min_scale"]:
                 config_dict["augmentation"][param_name] = value
+            elif param_name == "model_name":
+                config_dict["model"]["name"] = value
+            elif param_name == "weight_variant":
+                config_dict["model"]["weight_variant"] = value
         
         # Restore normal epochs for final training (not Optuna short epochs)
         config_dict["training"]["epochs"] = self.cfg.training.epochs
@@ -304,6 +322,99 @@ class OptunaOrchestrator:
         save_config_as_yaml(best_config, output_path)
         
         log_best_config_export(output_path)
+    
+    def _export_study_summary(self, study: optuna.Study) -> None:
+        """
+        Export complete study metadata to JSON.
+        
+        Saves all trials with parameters, values, states, and timestamps
+        for comprehensive post-hoc analysis.
+        
+        Args:
+            study: Completed Optuna study
+        """
+        summary = {
+            "study_name": study.study_name,
+            "direction": study.direction.name,
+            "n_trials": len(study.trials),
+            "n_completed": len([t for t in study.trials \
+                                if t.state == optuna.trial.TrialState.COMPLETE]),
+            "best_trial": {
+                "number": study.best_trial.number,
+                "value": study.best_trial.value,
+                "params": study.best_trial.params,
+                "datetime_start": study.best_trial.datetime_start.isoformat() \
+                    if study.best_trial.datetime_start else None,
+                "datetime_complete": study.best_trial.datetime_complete.isoformat() \
+                    if study.best_trial.datetime_complete else None,
+            } if study.best_trial else None,
+            "trials": [
+                {
+                    "number": trial.number,
+                    "value": trial.value,
+                    "params": trial.params,
+                    "state": trial.state.name,
+                    "datetime_start": trial.datetime_start.isoformat() \
+                        if trial.datetime_start else None,
+                    "datetime_complete": trial.datetime_complete.isoformat() \
+                        if trial.datetime_complete else None,
+                    "duration_seconds": (trial.datetime_complete - trial.datetime_start).total_seconds() \
+                        if trial.datetime_complete and trial.datetime_start else None,
+                }
+                for trial in study.trials
+            ]
+        }
+        
+        output_path = self.paths.reports / "study_summary.json"
+        with open(output_path, 'w') as f:
+            json.dump(summary, f, indent=2)
+        
+        logger.info(f"Saved study summary to {output_path}")
+    
+    def _export_top_trials(self, study: optuna.Study, top_k: int = 10) -> None:
+        """
+        Export top K trials to Excel spreadsheet.
+        
+        Creates a human-readable comparison table of the best-performing
+        hyperparameter configurations.
+        
+        Args:
+            study: Completed Optuna study
+            top_k: Number of top trials to export (default: 10)
+        """
+        completed = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
+        if not completed:
+            logger.warning("No completed trials. Cannot export top trials.")
+            return
+        
+        # Sort by value (ascending for minimize, descending for maximize)
+        reverse = (study.direction == optuna.study.StudyDirection.MAXIMIZE)
+        sorted_trials = sorted(completed, key=lambda t: t.value, reverse=reverse)[:top_k]
+        
+        # Build DataFrame
+        rows = []
+        for rank, trial in enumerate(sorted_trials, 1):
+            row = {
+                "Rank": rank,
+                "Trial": trial.number,
+                f"{self.cfg.optuna.metric_name.upper()}": trial.value,
+            }
+            row.update(trial.params)
+            
+            # Add duration if available
+            if trial.datetime_complete and trial.datetime_start:
+                duration = (trial.datetime_complete - trial.datetime_start).total_seconds()
+                row["Duration (s)"] = int(duration)
+            
+            rows.append(row)
+        
+        df = pd.DataFrame(rows)
+        
+        # Save to Excel
+        output_path = self.paths.reports / "top_10_trials.xlsx"
+        df.to_excel(output_path, index=False, engine='openpyxl')
+        
+        logger.info(f"Saved top {len(sorted_trials)} trials to {output_path}")
 
 
 # =========================================================================== #

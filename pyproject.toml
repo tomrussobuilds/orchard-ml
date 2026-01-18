@@ -43,6 +43,7 @@ dependencies = [
     "tqdm>=4.66.0",
     "requests>=2.31.0",
     "psutil>=5.9.0",
+    "timm>=0.9.0",
 ]
 
 [project.optional-dependencies]

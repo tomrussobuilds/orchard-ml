@@ -2,7 +2,7 @@ Metadata-Version: 2.4
 Name: visionforge
 Version: 0.1.0
 Summary: Type-Safe Deep Learning Framework for Computer Vision
-Author-email: Tommaso Russo <tommaso@example.com>
+Author-email: Tommaso Russo <tomrussobuilds@users.noreply.github.com>
 License: MIT
 Classifier: Development Status :: 4 - Beta
 Classifier: Intended Audience :: Science/Research
@@ -148,7 +148,7 @@ pip install -r requirements.txt
 # 2. Run a quick verification (1-epoch sanity check, ~30 seconds)
 python -m tests.smoke_test
 
-# 3. Train with optimized recipe (ResNet-18, 28×28, ~5 min on GPU)
+# 3. Train with optimized recipe 
 python main.py --config recipes/config_resnet_18_adapted.yaml
 
 # 4. Launch hyperparameter optimization (50 trials, time varies with early stopping)
@@ -370,10 +370,16 @@ Standard ResNet-18 is optimized for 224×224 ImageNet inputs. Direct application
 To retain ImageNet-learned feature detectors, we apply bicubic interpolation:
 
 **Source Tensor:**
-$$W_{\text{src}} \in \mathbb{R}^{C_{\text{out}} \times C_{\text{in}} \times 7 \times 7}$$
+
+```math
+W_{\text{src}} \in \mathbb{R}^{C_{\text{out}} \times C_{\text{in}} \times 7 \times 7}
+```
 
 **Transformation:**
-$$W_{\text{dest}} = \mathcal{I}_{\text{bicubic}}(W_{\text{src}}, \text{size}=(3, 3))$$
+
+```math
+W_{\text{dest}} = \mathcal{I}_{\text{bicubic}}(W_{\text{src}}, \text{size}=(3, 3))
+```
 
 **Result:** A 3×3 kernel preserving edge-detection patterns optimized for compact receptive fields, enabling faster convergence than random initialization.
 
@@ -381,11 +387,16 @@ $$W_{\text{dest}} = \mathcal{I}_{\text{bicubic}}(W_{\text{src}}, \text{size}=(3,
 
 **MixUp Augmentation** synthesizes training samples via convex combinations:
 
-$$\tilde{x} = \lambda x_i + (1 - \lambda) x_j \quad \text{where} \quad \lambda \sim \text{Beta}(\alpha, \alpha)$$
+```math
+\tilde{x} = \lambda x_i + (1 - \lambda) x_j \quad \text{where} \quad \lambda \sim \text{Beta}(\alpha, \alpha)
+```
 
-$$\tilde{y} = \lambda y_i + (1 - \lambda) y_j$$
+```math
+\tilde{y} = \lambda y_i + (1 - \lambda) y_j
+```
 
 This prevents overfitting on small-scale textures and improves generalization.
+
 
 ---
 
@@ -568,7 +579,7 @@ class CustomSearchSpace:
 
 **Smoke Test** (1-epoch sanity check):
 ```bash
-python -m tools.smoke_test
+python -m tests.smoke_test
 ```
 
 **Output:** Validates full pipeline in <30 seconds:

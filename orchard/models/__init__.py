@@ -11,11 +11,19 @@ definitions and ensures models are correctly adapted to the dataset geometry
 #                                Internal Imports                             #
 # =========================================================================== #
 from .factory import get_model
+from .resnet_18_adapted import build_resnet18_adapted
+from .efficientnet_b0 import build_efficientnet_b0
+from .vit_tiny import build_vit_tiny
+from .mini_cnn import build_mini_cnn
 
 # =========================================================================== #
 #                                PACKAGE INTERFACE                            #
 # =========================================================================== #
 
 __all__ = [
-    "get_model"
+    "get_model",
+    "build_resnet18_adapted",
+    "build_efficientnet_b0",
+    "build_vit_tiny",
+    "build_mini_cnn",
 ]

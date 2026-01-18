@@ -1,42 +1,44 @@
 # ==============================================================================
-# FILE: recipes/optuna_resnet_18_adapted.yaml
-# Hyperparameter Optimization for ResNet-18 (28x28)
+# FILE: recipes/optuna_vit_tiny.yaml
+# Hyperparameter Optimization for Vision Transformer Tiny (224x224)
 # ==============================================================================
-# Usage: python optimize.py --config recipes/optuna_resnet_18_adapted.yaml
-# Estimated Time: ~2 hours (25 trials × 15 epochs)
-# Memory Usage: ~2GB VRAM per trial
+# Usage: python optimize.py --config recipes/optuna_vit_tiny.yaml
+# Estimated Time: ~3-5 hours (20 trials × 15 epochs)
+# Memory Usage: ~4GB VRAM per trial with AMP
+# Search Space: Includes weight variant selection
 
 dataset:
-  name: "pathmnist"
+  name: "organcmnist"
   data_root: ./dataset
-  resolution: 28
-  force_rgb: false
-  use_weighted_sampler: false
+  resolution: 224
+  force_rgb: true
+  use_weighted_sampler: true
   max_samples: null
 
 model:
-  name: "resnet_18_adapted"
-  pretrained: false
-  dropout: 0.3                  # Will be optimized
+  name: "vit_tiny"              # Will be optimized vs efficientnet_b0
+  pretrained: true
+  weight_variant: "vit_tiny_patch16_224.augreg_in21k_ft_in1k"  # Will be optimized
+  dropout: 0.1                  # Will be optimized
 
 training:
   seed: 42
-  reproducible: true
+  reproducible: false
   
   # Base values (WILL BE OPTIMIZED BY OPTUNA)
-  batch_size: 16
-  learning_rate: 0.001
+  batch_size: 16                # Conservative for optimization
+  learning_rate: 0.0003         # ViT baseline
   weight_decay: 0.0001
   momentum: 0.9
-  min_lr: 1e-6
+  min_lr: 1e-7
   
   # Regularization (WILL BE OPTIMIZED)
   mixup_alpha: 0.0
   label_smoothing: 0.0
   
-  # Training loop (FIXED)
+  # Training loop
   epochs: 60                    # Final training only
-  patience: 15
+  patience: 12
   grad_clip: 1.0
   mixup_epochs: 0
   
@@ -47,18 +49,18 @@ training:
   scheduler_factor: 0.1
   step_size: 20
   
-  # Performance
-  use_amp: true
+  # Performance (CRITICAL FOR MEMORY)
+  use_amp: true                 # MUST be true for 224x224
   use_tta: false
   criterion_type: "cross_entropy"
   weighted_loss: false
   focal_gamma: 2.0
 
 augmentation:
-  hflip: 0.3
+  hflip: 0.5
   rotation_angle: 5             # Will be optimized
-  jitter_val: 0.05              # Will be optimized
-  min_scale: 0.95               # Will be optimized
+  jitter_val: 0.1               # Will be optimized
+  min_scale: 0.97               # Will be optimized
   tta_translate: 0.5
   tta_scale: 1.02
   tta_blur_sigma: 0.1
@@ -72,8 +74,8 @@ telemetry:
   log_interval: 50
 
 evaluation:
-  batch_size: 64
-  n_samples: 6
+  batch_size: 32
+  n_samples: 12
   fig_dpi: 200
   cmap_confusion: Blues
   plot_style: seaborn-v0_8-muted
@@ -84,9 +86,9 @@ evaluation:
   save_predictions_grid: false
 
 optuna:
-  study_name: "pathmnist_resnet18_optimized"
-  n_trials: 50
-  epochs: 15                    # Short trials for speed
+  study_name: "organcmnist_vit_optimized"
+  n_trials: 20                  # Balanced exploration
+  epochs: 15                    # Shorter for speed
   timeout: null
   
   # Optimization target
@@ -96,11 +98,11 @@ optuna:
   # Early stopping config
   enable_early_stopping: true
   early_stopping_threshold: 0.9999
-  early_stopping_patience: 2 
+  early_stopping_patience: 2
   
   # Search strategy
   sampler_type: "tpe"
-  search_space_preset: "full"
+  search_space_preset: "full"   # Includes model_space_224
   
   # Pruning
   enable_pruning: true
@@ -119,4 +121,3 @@ optuna:
   # Output
   save_plots: true
   save_best_config: true
-

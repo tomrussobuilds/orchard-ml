@@ -88,15 +88,6 @@ def main():
                 f"  Results: {paths.root}\n"
                 f"{'#' * 80}"
             )
-            
-            # --- Next Steps Instructions ---
-            best_config_path = paths.reports / "best_config.yaml"
-            logger.info(
-                f"\nTo train with optimized hyperparameters:\n"
-                f"   python main.py --config {best_config_path}\n"
-                f"\nView optimization visualizations:\n"
-                f"   firefox {paths.figures}/param_importances.html\n"
-            )
         
         except KeyboardInterrupt:
             logger.warning("\n[!] Interrupted by user. Cleaning up and exiting...")

@@ -1,5 +1,5 @@
 # ==============================================================================
-# FILE 4: recipes/optuna_efficientnet_b0.yaml
+# FILE: recipes/optuna_efficientnet_b0.yaml
 # Hyperparameter Optimization for EfficientNet-B0 (224x224)
 # ==============================================================================
 # Usage: python optimize.py --config recipes/optuna_efficientnet_b0.yaml

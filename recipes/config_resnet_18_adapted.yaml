@@ -1,5 +1,5 @@
 # ==============================================================================
-# FILE 1: recipes/config_resnet_18_adapted.yaml
+# FILE: recipes/config_resnet_18_adapted.yaml
 # ResNet-18 Adapted for 28x28 Histopathology Images
 # ==============================================================================
 # Usage: python main.py --config recipes/config_resnet_18_adapted.yaml

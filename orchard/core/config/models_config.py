@@ -11,6 +11,7 @@ architectural mismatches during model instantiation.
 #                                Standard Imports                             #
 # =========================================================================== #
 import argparse
+from typing import Optional
 
 # =========================================================================== #
 #                                Third-Party Imports                          #
@@ -55,6 +56,18 @@ class ModelConfig(BaseModel):
     dropout: DropoutRate = Field(
         default=0.2,
         description="Dropout probability for the classification head."
+    )
+
+    weight_variant: Optional[str] = Field(
+        default=None,
+        description=(
+            "Pretrained weight variant for architectures with multiple options. "
+            "Examples for ViT-Tiny: "
+            "'vit_tiny_patch16_224.augreg_in21k_ft_in1k' (ImageNet-21k → 1k), "
+            "'vit_tiny_patch16_224.augreg_in21k' (ImageNet-21k only), "
+            "'vit_tiny_patch16_224' (ImageNet-1k baseline). "
+            "If None, uses default variant for the selected architecture."
+        )
     )
 
     @classmethod
