@@ -15,8 +15,8 @@ Available Components:
 # =========================================================================== #
 from .logger import Logger
 from .reporter import (
-    Reporter,
     LogStyle,
+    Reporter,
     log_best_config_export,
     log_optimization_header,
     log_optimization_summary,
@@ -25,7 +25,6 @@ from .reporter import (
     log_trial_params_compact,
     log_trial_start,
 )
-
 
 # =========================================================================== #
 #                                __all__ Definition                           #

@@ -14,7 +14,6 @@ from .factory import DataLoaderFactory, get_dataloaders
 from .fetcher import MedMNISTData, ensure_dataset_npz, load_medmnist
 from .transforms import get_augmentations_description, get_pipeline_transforms
 
-
 # =========================================================================== #
 #                                PUBLIC API                                   #
 # =========================================================================== #

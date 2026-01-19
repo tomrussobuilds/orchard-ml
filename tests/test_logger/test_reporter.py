@@ -20,8 +20,8 @@ import torch
 #                         Internal Imports                                    #
 # =========================================================================== #
 from orchard.core.logger.reporter import (
-    Reporter,
     LogStyle,
+    Reporter,
     log_best_config_export,
     log_optimization_header,
     log_optimization_summary,
@@ -269,9 +269,6 @@ def test_log_optimization_summary_with_failed_trials():
         logger_instance=mock_logger,
     )
 
-    calls = [str(call) for call in mock_logger.info.call_args_list]
-    log_output = " ".join(calls)
-    # Should mention failed trials
     assert mock_logger.info.call_count > 0
 
 

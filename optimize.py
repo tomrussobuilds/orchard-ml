@@ -42,7 +42,6 @@ from orchard.core import (
     log_optimization_summary,
     parse_args,
 )
-
 from orchard.optimization import run_optimization
 
 # =========================================================================== #

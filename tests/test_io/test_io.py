@@ -180,9 +180,7 @@ def test_load_model_weights_success(mock_torch_load, tmp_path):
     load_model_weights(model, checkpoint_path, device)
 
     # Verify torch.load was called with correct arguments
-    mock_torch_load.assert_called_once_with(
-        checkpoint_path, map_location=device, weights_only=True
-    )
+    mock_torch_load.assert_called_once_with(checkpoint_path, map_location=device, weights_only=True)
 
 
 @pytest.mark.unit

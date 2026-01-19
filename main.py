@@ -42,7 +42,6 @@ from orchard.core import (
     log_training_summary,
     parse_args,
 )
-
 from orchard.data_handler import (
     get_augmentations_description,
     get_dataloaders,
@@ -52,7 +51,6 @@ from orchard.data_handler import (
 from orchard.evaluation import run_final_evaluation
 from orchard.models import get_model
 from orchard.trainer import ModelTrainer, get_criterion, get_optimizer, get_scheduler
-
 
 # =========================================================================== #
 #                           MAIN EXECUTION                                    #

@@ -105,7 +105,7 @@ def test_save_config_as_yaml_with_dict(tmp_path):
 @pytest.mark.unit
 def test_save_config_as_yaml_with_model_dump():
     """Test save_config_as_yaml handles Pydantic model_dump."""
-    mock_config = MagicMock(spec=['model_dump'])  # Only has model_dump, not dump_portable
+    mock_config = MagicMock(spec=["model_dump"])  # Only has model_dump, not dump_portable
     mock_config.model_dump.return_value = {"key": "value"}
 
     with patch("orchard.core.io.serialization._persist_yaml_atomic") as mock_persist:
@@ -130,9 +130,10 @@ def test_save_config_as_yaml_with_dump_portable():
 
         save_config_as_yaml(mock_config, yaml_path)
 
-        # Should call dump_portable, not model_dump
         mock_config.dump_portable.assert_called_once()
         mock_config.model_dump.assert_not_called()
+
+        mock_persist.assert_called_once_with(yaml_path, {"portable": True})
 
 
 @pytest.mark.unit
@@ -165,7 +166,7 @@ def test_save_config_as_yaml_creates_directory(tmp_path):
 @pytest.mark.unit
 def test_save_config_as_yaml_invalid_data():
     """Test save_config_as_yaml raises ValueError for unserializable data."""
-    mock_config = MagicMock(spec=['model_dump'])  # Only has model_dump
+    mock_config = MagicMock(spec=["model_dump"])  # Only has model_dump
     mock_config.model_dump.side_effect = Exception("Cannot serialize")
 
     yaml_path = Path("/tmp/test.yaml")

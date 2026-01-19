@@ -59,9 +59,7 @@ def show_predictions(
 
     # 1. Parameter Resolution & Batch Inference
     num_samples = n or (cfg.evaluation.n_samples if cfg else 12)
-    images, labels, preds = _get_predictions_batch(
-        model, loader, device, num_samples
-    )
+    images, labels, preds = _get_predictions_batch(model, loader, device, num_samples)
 
     # 2. Grid & Figure Setup
     grid_cols = cfg.evaluation.grid_cols if cfg else 4
@@ -87,11 +85,7 @@ def show_predictions(
 
         ax.axis("off")
 
-    tta_info = (
-        f" | TTA: {'ON' if cfg.training.use_tta else 'OFF'}"
-        if cfg
-        else ""
-    )
+    tta_info = f" | TTA: {'ON' if cfg.training.use_tta else 'OFF'}" if cfg else ""
 
     domain_info = ""
     if cfg:
@@ -111,7 +105,6 @@ def show_predictions(
 
     # 4. Export and Cleanup
     _finalize_figure(plt, save_path, cfg)
-
 
 
 def plot_training_curves(

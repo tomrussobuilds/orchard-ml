@@ -321,7 +321,7 @@ def log_trial_start(
 
 
 def log_study_summary(
-        study: "optuna.Study", metric_name: str, logger_instance: logging.getLogger = None
+    study: "optuna.Study", metric_name: str, logger_instance: logging.getLogger = None
 ) -> None:
     """
     Log optimization study completion summary.

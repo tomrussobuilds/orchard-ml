@@ -17,10 +17,12 @@ from .cli import parse_args
 from .config import (
     AugmentationConfig,
     Config,
+    DatasetConfig,
     EvaluationConfig,
     HardwareConfig,
     ModelConfig,
     OptunaConfig,
+    TelemetryConfig,
     TrainingConfig,
 )
 
@@ -61,11 +63,11 @@ from .logger import (
     Reporter,
     log_best_config_export,
     log_optimization_header,
-    log_study_summary,
-    log_trial_start,
-    log_trial_params_compact,
     log_optimization_summary,
+    log_study_summary,
     log_training_summary,
+    log_trial_params_compact,
+    log_trial_start,
 )
 
 # =========================================================================== #
@@ -99,7 +101,8 @@ __all__ = [
     # Configuration
     "Config",
     "HardwareConfig",
-    "TelemetryConfig" "DatasetConfig",
+    "TelemetryConfig",
+    "DatasetConfig",
     "ModelConfig",
     "TrainingConfig",
     "AugmentationConfig",
