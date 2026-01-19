@@ -103,7 +103,7 @@ class DataLoaderFactory:
         """
         Determines hardware and process-level parameters for DataLoaders.
 
-        CRITICAL FIX: Adjust workers and persistence for Optuna compatibility.
+        Adjust workers and persistence for Optuna compatibility.
 
         Args:
             is_optuna: If True, optimize for trial stability over performance
@@ -209,8 +209,6 @@ class DataLoaderFactory:
 def get_dataloaders(metadata, cfg, is_optuna: bool = False):
     """
     Convenience method for direct DataLoader retrieval.
-
-    MODIFIED: Added is_optuna parameter.
     """
     factory = DataLoaderFactory(cfg, metadata)
     return factory.build(is_optuna=is_optuna)
