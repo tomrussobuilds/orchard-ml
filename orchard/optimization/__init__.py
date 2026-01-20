@@ -12,7 +12,7 @@ Provides components for automated hyperparameter search:
 #                             Internal Imports                                #
 # =========================================================================== #
 from .early_stopping import StudyEarlyStoppingCallback, get_early_stopping_callback
-from .objective import OptunaObjective, TrialTrainingExecutor, MetricExtractor, TrialConfigBuilder
+from .objective import MetricExtractor, OptunaObjective, TrialConfigBuilder, TrialTrainingExecutor
 from .orchestrator import OptunaOrchestrator, run_optimization
 from .search_spaces import SearchSpaceRegistry, get_search_space
 

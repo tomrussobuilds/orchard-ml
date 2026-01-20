@@ -26,15 +26,15 @@ import optuna
 import torch
 
 # =========================================================================== #
-#                             Relative Imports                                #
-# =========================================================================== #
-from .metric_extractor import MetricExtractor
-
-# =========================================================================== #
 #                             Internal Imports                                #
 # =========================================================================== #
 from orchard.core import LOGGER_NAME, Config, LogStyle
 from orchard.trainer import train_one_epoch, validate_epoch
+
+# =========================================================================== #
+#                             Relative Imports                                #
+# =========================================================================== #
+from .metric_extractor import MetricExtractor
 
 logger = logging.getLogger(LOGGER_NAME)
 

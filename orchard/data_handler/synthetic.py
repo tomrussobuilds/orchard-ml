@@ -19,7 +19,7 @@ import numpy as np
 # =========================================================================== #
 #                              Internal Imports                               #
 # =========================================================================== #
-from .fetcher import MedMNISTData
+from orchard.data_handler.fetcher import MedMNISTData
 
 # =========================================================================== #
 #                                FACTORY FUNCTIONS                            #
@@ -31,6 +31,7 @@ def create_synthetic_dataset(
     samples: int = 100,
     resolution: int = 28,
     channels: int = 3,
+    name: str = "syntheticmnist",
 ) -> MedMNISTData:
     """Create a synthetic MedMNIST-compatible dataset for testing.
 
@@ -43,6 +44,7 @@ def create_synthetic_dataset(
         samples: Number of training samples (default: 100)
         resolution: Image resolution (HxW) (default: 28)
         channels: Number of color channels (default: 3 for RGB)
+        name: Dataset name for identification (default: "syntheticmnist")
 
     Returns:
         MedMNISTData: A data object compatible with the existing pipeline
@@ -88,8 +90,15 @@ def create_synthetic_dataset(
         test_labels=test_labels,
     )
 
-    # The MedMNISTDataset class will load the arrays from the .npz file
-    return MedMNISTData(path=temp_path)
+    # Return a MedMNISTData object with all required parameters
+    is_rgb = channels == 3
+
+    return MedMNISTData(
+        path=temp_path,
+        name=name,
+        is_rgb=is_rgb,
+        num_classes=num_classes,
+    )
 
 
 # =========================================================================== #
@@ -119,4 +128,5 @@ def create_synthetic_grayscale_dataset(
         samples=samples,
         resolution=resolution,
         channels=1,
+        name="syntheticmnist_gray",
     )

@@ -30,19 +30,19 @@ import optuna
 import torch
 
 # =========================================================================== #
-#                         Relative Imports                                    #
-# =========================================================================== #
-from .config_builder import TrialConfigBuilder
-from .metric_extractor import MetricExtractor
-from .training_executor import TrialTrainingExecutor
-
-# =========================================================================== #
 #                         Internal Imports                                    #
 # =========================================================================== #
 from orchard.core import LOGGER_NAME, Config, log_trial_start
 from orchard.data_handler import MedMNISTData, get_dataloaders, load_medmnist
 from orchard.models import get_model
 from orchard.trainer import get_criterion, get_optimizer, get_scheduler
+
+# =========================================================================== #
+#                         Relative Imports                                    #
+# =========================================================================== #
+from .config_builder import TrialConfigBuilder
+from .metric_extractor import MetricExtractor
+from .training_executor import TrialTrainingExecutor
 
 logger = logging.getLogger(LOGGER_NAME)
 
