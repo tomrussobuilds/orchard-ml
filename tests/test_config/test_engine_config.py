@@ -14,12 +14,13 @@ import argparse
 #                         Third-Party Imports                                 #
 # =========================================================================== #
 import pytest
+import yaml
 from pydantic import ValidationError
 
 # =========================================================================== #
 #                         Internal Imports                                    #
 # =========================================================================== #
-from orchard.core.config import Config
+from orchard.core import Config, DatasetConfig, HardwareConfig, ModelConfig, TrainingConfig
 
 # =========================================================================== #
 #                    CONFIG: BASIC CONSTRUCTION                               #
@@ -54,17 +55,68 @@ def test_config_from_args_basic(basic_args):
 
 
 @pytest.mark.unit
-def test_resnet_18_requires_resolution_28():
-    """Test resnet_18_adapted validation enforces resolution=28."""
-    args = argparse.Namespace(
-        dataset="bloodmnist",
-        model_name="resnet_18_adapted",
-        resolution=224,  # Wrong
-        pretrained=True,
-    )
+@pytest.mark.parametrize("device", ["cpu", "cuda"])
+def test_resnet_18_adapted_requires_resolution_28_direct(device):
+    """
+    resnet_18_adapted uses a modified stem and is only compatible with 28x28 inputs,
+    regardless of the execution device.
+    """
+    with pytest.raises(
+        ValidationError,
+        match="resnet_18_adapted requires resolution=28",
+    ):
+        Config(
+            dataset=DatasetConfig(
+                name="bloodmnist",
+                resolution=224,  # ❌ invalid for this architecture
+            ),
+            model=ModelConfig(
+                name="resnet_18_adapted",
+                pretrained=True,
+            ),
+            training=TrainingConfig(),
+            hardware=HardwareConfig(device=device),
+        )
 
-    with pytest.raises(ValidationError, match="resnet_18_adapted requires resolution=28"):
-        Config.from_args(args)
+
+@pytest.mark.unit
+def test_mixup_epochs_cannot_exceed_total_epochs_direct():
+    """
+    MixUp scheduling cannot exceed total training epochs.
+    """
+    with pytest.raises(
+        ValidationError,
+        match="mixup_epochs .* exceeds total epochs",
+    ):
+        Config(
+            training=TrainingConfig(
+                epochs=5,
+                mixup_epochs=10,  # ❌ invalid
+            ),
+            dataset=DatasetConfig(),
+            model=ModelConfig(),
+            hardware=HardwareConfig(device="cpu"),
+        )
+
+
+@pytest.mark.unit
+def test_resolve_dataset_metadata_requires_name():
+    """_resolve_dataset_metadata should raise ValueError if dataset name is missing."""
+    args = argparse.Namespace(dataset=None)
+
+    with pytest.raises(ValueError, match="Dataset name required via --dataset or config file"):
+        Config._resolve_dataset_metadata(args)
+
+
+@pytest.mark.unit
+def test_resolve_dataset_metadata_not_in_registry():
+    """_resolve_dataset_metadata should raise ValueError if dataset not in registry."""
+    args = argparse.Namespace(dataset="nonexistent_dataset", resolution=28)
+
+    with pytest.raises(
+        ValueError, match="Dataset 'nonexistent_dataset' not found in registry for resolution 28"
+    ):
+        Config._resolve_dataset_metadata(args)
 
 
 @pytest.mark.unit
@@ -97,7 +149,7 @@ def test_pretrained_requires_rgb():
 def test_min_lr_less_than_lr_validation():
     """Test min_lr < learning_rate validation."""
     args = argparse.Namespace(
-        dataset="bloodmnist", learning_rate=0.001, min_lr=0.01, pretrained=True  # Greater than LR!
+        dataset="bloodmnist", learning_rate=0.001, min_lr=0.01, pretrained=True
     )
 
     with pytest.raises(ValidationError, match="min_lr.*must be"):
@@ -132,7 +184,7 @@ def test_yaml_optuna_section_loaded(temp_yaml_config, mock_metadata_28):
 
 
 @pytest.mark.integration
-def test_yaml_precedence_over_args(temp_yaml_config, mock_metadata_28):
+def test_yaml_precedence_over_args(temp_yaml_config):
     """Test YAML values override CLI arguments."""
     args = argparse.Namespace(
         config=str(temp_yaml_config),
@@ -147,6 +199,44 @@ def test_yaml_precedence_over_args(temp_yaml_config, mock_metadata_28):
     # YAML values should take precedence
     assert config.training.epochs == 60  # From YAML
     assert config.training.batch_size == 128  # From YAML
+
+
+@pytest.mark.integration
+def test_build_from_yaml_or_args_resolves_dataset(tmp_path, mock_metadata_28):
+    """
+    _build_from_yaml_or_args should trigger the 'if yaml_dataset_name' branch
+    and re-resolve dataset from the registry.
+    """
+    yaml_content = {
+        "dataset": {"name": "dermamnist", "resolution": 28},
+        "model": {"name": "mini_cnn"},
+        "training": {"epochs": 60},
+        "optuna": {"study_name": "yaml_test_study", "n_trials": 20},
+    }
+    yaml_path = tmp_path / "config.yaml"
+    with open(yaml_path, "w") as f:
+        yaml.dump(yaml_content, f)
+
+    args = argparse.Namespace(config=str(yaml_path))
+    cfg = Config._build_from_yaml_or_args(args, ds_meta=mock_metadata_28)
+
+    assert cfg.dataset.dataset_name == "dermamnist"
+    assert cfg.model.name == "mini_cnn"
+    assert cfg.training.epochs == 60
+    assert cfg.optuna.study_name == "yaml_test_study"
+
+
+@pytest.mark.integration
+def test_build_from_yaml_or_args_yaml_dataset_not_found(tmp_path):
+    """_build_from_yaml_or_args should raise KeyError if YAML dataset not in registry."""
+    yaml_content = {"dataset": {"name": "nonexistent_dataset", "resolution": 28}}
+    yaml_path = tmp_path / "bad_config.yaml"
+    with open(yaml_path, "w") as f:
+        yaml.dump(yaml_content, f)
+
+    args = argparse.Namespace(config=str(yaml_path))
+    with pytest.raises(KeyError, match="nonexistent_dataset"):
+        Config._build_from_yaml_or_args(args, ds_meta={})
 
 
 # =========================================================================== #

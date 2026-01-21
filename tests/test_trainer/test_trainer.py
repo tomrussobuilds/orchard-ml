@@ -160,6 +160,7 @@ def test_trainer_creates_output_dir(
         assert output_path.parent.exists()
 
 
+@pytest.mark.filterwarnings("ignore:.*GradScaler is enabled, but CUDA is not available.*")
 @pytest.mark.unit
 def test_trainer_amp_scaler_enabled(simple_model, mock_loaders, optimizer, scheduler, criterion):
     """Test AMP scaler is created when enabled."""
