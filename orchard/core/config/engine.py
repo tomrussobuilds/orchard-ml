@@ -103,10 +103,11 @@ class Config(BaseModel):
 
         # 5. Optimizer bounds
         if self.training.min_lr >= self.training.learning_rate:
-            raise ValueError(
+            msg = (
                 f"min_lr ({self.training.min_lr}) must be less than "
                 f"learning_rate ({self.training.learning_rate})"
             )
+            raise ValueError(msg)
 
         return self
 
@@ -261,14 +262,14 @@ class Config(BaseModel):
                 resolution = yaml_resolution if yaml_resolution is not None else 28
                 wrapper = DatasetRegistryWrapper(resolution=resolution)
 
-                try:
-                    ds_meta = wrapper.get_dataset(yaml_dataset_name)
-                except KeyError:
+                if yaml_dataset_name not in wrapper.registry:
                     available = list(wrapper.registry.keys())
                     raise KeyError(
                         f"Dataset '{yaml_dataset_name}' not found at resolution {resolution}. "
                         f"Available at {resolution}px: {available}"
                     )
+
+                ds_meta = wrapper.get_dataset(yaml_dataset_name)
 
             # STEP 4: Use YAML hydration path with correct metadata
             return cls.from_yaml(yaml_path, metadata=ds_meta)

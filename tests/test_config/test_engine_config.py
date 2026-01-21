@@ -147,13 +147,48 @@ def test_pretrained_requires_rgb():
 
 @pytest.mark.unit
 def test_min_lr_less_than_lr_validation():
-    """Test min_lr < learning_rate validation."""
+    """Test min_lr < learning_rate validation (covers line 106)."""
     args = argparse.Namespace(
-        dataset="bloodmnist", learning_rate=0.001, min_lr=0.01, pretrained=True
+        dataset="bloodmnist",
+        learning_rate=0.001,
+        min_lr=0.01,  # ❌ min_lr > learning_rate
+        pretrained=True,
     )
 
-    with pytest.raises(ValidationError, match="min_lr.*must be"):
+    with pytest.raises(ValidationError, match="min_lr"):
         Config.from_args(args)
+
+
+@pytest.mark.unit
+def test_min_lr_equals_lr_direct_instantiation(mock_metadata_28):
+    """Test min_lr == learning_rate validation via direct instantiation."""
+    # This approach ensures the validator runs and line 106 is covered
+    with pytest.raises(ValidationError):
+        Config(
+            dataset=DatasetConfig(
+                name="bloodmnist",
+                resolution=28,
+                metadata=mock_metadata_28,
+            ),
+            model=ModelConfig(name="mini_cnn", pretrained=False),
+            training=TrainingConfig(
+                learning_rate=0.001,
+                min_lr=0.001,  # ❌ Equal - triggers line 106
+            ),
+            hardware=HardwareConfig(device="cpu"),
+        )
+
+
+@pytest.mark.unit
+def test_resolve_dataset_metadata_success():
+    """Test successful dataset metadata resolution."""
+    args = argparse.Namespace(dataset="bloodmnist", resolution=28)
+
+    metadata = Config._resolve_dataset_metadata(args)
+
+    assert metadata is not None
+    assert metadata.num_classes > 0
+    assert metadata.in_channels in [1, 3]
 
 
 # =========================================================================== #
@@ -205,7 +240,7 @@ def test_yaml_precedence_over_args(temp_yaml_config):
 def test_build_from_yaml_or_args_resolves_dataset(tmp_path, mock_metadata_28):
     """
     _build_from_yaml_or_args should trigger the 'if yaml_dataset_name' branch
-    and re-resolve dataset from the registry.
+    and re-resolve dataset from the registry (covers line 255).
     """
     yaml_content = {
         "dataset": {"name": "dermamnist", "resolution": 28},
@@ -217,13 +252,44 @@ def test_build_from_yaml_or_args_resolves_dataset(tmp_path, mock_metadata_28):
     with open(yaml_path, "w") as f:
         yaml.dump(yaml_content, f)
 
-    args = argparse.Namespace(config=str(yaml_path))
+    args = argparse.Namespace(
+        config=str(yaml_path),
+        dataset="bloodmnist",  # Different from YAML - will trigger re-resolution
+    )
+
+    # This will call wrapper.get_dataset() on line 255
     cfg = Config._build_from_yaml_or_args(args, ds_meta=mock_metadata_28)
 
     assert cfg.dataset.dataset_name == "dermamnist"
     assert cfg.model.name == "mini_cnn"
     assert cfg.training.epochs == 60
     assert cfg.optuna.study_name == "yaml_test_study"
+
+
+@pytest.mark.integration
+def test_yaml_different_dataset_triggers_wrapper_call(tmp_path):
+    """
+    Line 256: ds_meta = wrapper.get_dataset(yaml_dataset_name)
+    Using bloodmnist which definitely exists in registry.
+    """
+    yaml_content = {
+        "dataset": {"name": "bloodmnist", "resolution": 28},  # Use known dataset
+        "model": {"name": "mini_cnn", "pretrained": False},
+        "training": {"epochs": 100, "mixup_epochs": 0, "use_amp": False},
+        "hardware": {"device": "cpu"},
+    }
+    yaml_path = tmp_path / "config.yaml"
+    with open(yaml_path, "w") as f:
+        yaml.dump(yaml_content, f)
+
+    args = argparse.Namespace(
+        config=str(yaml_path),
+        dataset="dermamnist",  # Different from YAML to force re-resolution
+        resolution=28,
+    )
+
+    config = Config.from_args(args)
+    assert config.dataset.dataset_name == "bloodmnist"
 
 
 @pytest.mark.integration
@@ -234,7 +300,10 @@ def test_build_from_yaml_or_args_yaml_dataset_not_found(tmp_path):
     with open(yaml_path, "w") as f:
         yaml.dump(yaml_content, f)
 
-    args = argparse.Namespace(config=str(yaml_path))
+    args = argparse.Namespace(
+        config=str(yaml_path),
+        dataset="bloodmnist",
+    )
     with pytest.raises(KeyError, match="nonexistent_dataset"):
         Config._build_from_yaml_or_args(args, ds_meta={})
 
@@ -308,6 +377,34 @@ def test_frozen_immutability():
 
     with pytest.raises(ValidationError):
         config.training = None
+
+
+@pytest.mark.unit
+def test_min_lr_boundary_condition_line_106(mock_metadata_28):
+    """
+    Lines 106-110: msg creation and raise ValueError(msg) for min_lr >= learning_rate
+    """
+    # Test 1: min_lr == learning_rate
+    with pytest.raises(ValidationError):
+        Config(
+            dataset=DatasetConfig(name="bloodmnist", resolution=28, metadata=mock_metadata_28),
+            model=ModelConfig(name="mini_cnn", pretrained=False),
+            training=TrainingConfig(
+                epochs=100, mixup_epochs=0, use_amp=False, learning_rate=0.001, min_lr=0.001
+            ),
+            hardware=HardwareConfig(device="cpu"),
+        )
+
+    # Test 2: min_lr > learning_rate
+    with pytest.raises(ValidationError):
+        Config(
+            dataset=DatasetConfig(name="bloodmnist", resolution=28, metadata=mock_metadata_28),
+            model=ModelConfig(name="mini_cnn", pretrained=False),
+            training=TrainingConfig(
+                epochs=100, mixup_epochs=0, use_amp=False, learning_rate=0.001, min_lr=0.002
+            ),
+            hardware=HardwareConfig(device="cpu"),
+        )
 
 
 @pytest.mark.integration

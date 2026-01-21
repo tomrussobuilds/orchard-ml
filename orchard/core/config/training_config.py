@@ -115,8 +115,6 @@ class TrainingConfig(BaseModel):
     def validate_lr(self) -> "TrainingConfig":
         if not (0 < self.learning_rate <= 1):
             raise ValueError(f"learning_rate={self.learning_rate} is out of bounds (0,1).")
-        if not (0 <= self.min_lr < self.learning_rate):
-            raise ValueError(f"min_lr={self.min_lr} must be <= learning_rate={self.learning_rate}.")
         return self
 
     # ==================== Factory Method ====================

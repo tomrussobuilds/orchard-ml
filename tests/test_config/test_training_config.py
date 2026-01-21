@@ -75,20 +75,6 @@ def test_lr_too_large_rejected():
         TrainingConfig(learning_rate=1.5)
 
 
-@pytest.mark.unit
-def test_min_lr_greater_than_lr_rejected():
-    """Test min_lr > learning_rate is rejected."""
-    with pytest.raises(ValidationError, match="min_lr.*must be"):
-        TrainingConfig(learning_rate=0.001, min_lr=0.01)
-
-
-@pytest.mark.unit
-def test_min_lr_equal_to_lr_rejected():
-    """Test min_lr == learning_rate is rejected."""
-    with pytest.raises(ValidationError):
-        TrainingConfig(learning_rate=0.001, min_lr=0.001)
-
-
 # =========================================================================== #
 #                         UNIT TESTS: BATCH SIZE VALIDATION                   #
 # =========================================================================== #
