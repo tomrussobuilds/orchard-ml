@@ -14,7 +14,6 @@ from .factory import (
     LazyNPZDataset,
     create_temp_loader,
     get_dataloaders,
-    get_pipeline_transforms,
 )
 from .fetcher import MedMNISTData, ensure_dataset_npz, load_medmnist
 from .synthetic import create_synthetic_dataset
