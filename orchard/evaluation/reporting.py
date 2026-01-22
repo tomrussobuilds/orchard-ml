@@ -114,11 +114,13 @@ class TrainingReport(BaseModel):
         Args:
             path (Path): Filesystem path where the .xlsx file will be created.
         """
-        path = path.with_suffix(".xlsx")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        df = self.to_vertical_df()
-
         try:
+
+            path = path.with_suffix(".xlsx")
+            path.parent.mkdir(parents=True, exist_ok=True)
+
+            df = self.to_vertical_df()
+
             with pd.ExcelWriter(
                 path, engine="xlsxwriter", engine_kwargs={"options": {"nan_inf_to_errors": True}}
             ) as writer:
