@@ -266,6 +266,9 @@ class TrialTrainingExecutor:
         Args:
             val_loss: Validation loss for current epoch
         """
+        if self.scheduler is None:
+            return
+
         if self.cfg.training.scheduler_type == "plateau":
             self.scheduler.step(val_loss)
         else:

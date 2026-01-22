@@ -98,10 +98,7 @@ def test_should_prune_respects_warmup(executor, mock_trial):
     executor.warmup_epochs = 3
     mock_trial.should_prune.return_value = True
 
-    # Epoch 1: Below warmup, should NOT prune (Optuna usa base 1 o 0 a seconda dell'implementazione,
-    # assumiamo 1-based come da test precedente)
     assert executor._should_prune(mock_trial, epoch=1) is False
-
     # Epoch 3: At/Above warmup, SHOULD prune
     assert executor._should_prune(mock_trial, epoch=3) is True
 
@@ -147,7 +144,6 @@ def test_step_scheduler_standard(executor):
 
 
 @pytest.mark.integration
-@pytest.mark.filterwarnings("ignore: Detected call of 'lr_scheduler.step()'")
 @patch("orchard.optimization.objective.TrialTrainingExecutor._train_epoch")
 @patch("orchard.optimization.objective.TrialTrainingExecutor._validate_epoch")
 def test_execute_full_loop(mock_val, mock_train, executor, mock_trial):
@@ -155,14 +151,16 @@ def test_execute_full_loop(mock_val, mock_train, executor, mock_trial):
     mock_train.return_value = 0.4
     mock_val.return_value = {"loss": 0.3, "accuracy": 0.8, "auc": 0.85}
 
-    # Run 2 epochs
-    executor.epochs = 2
-
-    best_metric = executor.execute(mock_trial)
+    if hasattr(executor, "scheduler") and executor.scheduler is not None:
+        with patch.object(executor.scheduler, "step"):
+            executor.epochs = 2
+            best_metric = executor.execute(mock_trial)
+    else:
+        executor.epochs = 2
+        best_metric = executor.execute(mock_trial)
 
     assert best_metric == 0.85
     assert mock_trial.report.call_count == 2
-
     mock_trial.report.assert_any_call(0.85, 1)
 
 
