@@ -57,7 +57,7 @@ class TrialTrainingExecutor:
         device: Training device (CPU/CUDA/MPS)
         metric_extractor: Handles metric extraction and best-value tracking
         enable_pruning: Whether to enable trial pruning (from cfg.optuna.enable_pruning)
-        warmup_epochs: Minimum epochs before pruning activates (from cfg.optuna.pruning_warmup_epochs)
+        warmup_epochs: Epochs before pruning activates (from cfg.optuna.pruning_warmup_epochs)
         scaler: AMP gradient scaler (if enabled)
         epochs: Total training epochs
 

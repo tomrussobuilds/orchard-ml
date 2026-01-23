@@ -144,7 +144,8 @@ class Reporter(BaseModel):
 
         if requested_device != "cpu" and active_type == "cpu":
             logger_instance.warning(
-                f"{LogStyle.INDENT}{LogStyle.WARNING} FALLBACK: Requested '{requested_device}' unavailable, using CPU"
+                f"{LogStyle.INDENT}{LogStyle.WARNING} "
+                f"FALLBACK: Requested '{requested_device}' unavailable, using CPU"
             )
 
         if active_type == "cuda":
@@ -152,7 +153,8 @@ class Reporter(BaseModel):
                 f"{LogStyle.INDENT}{LogStyle.ARROW} {'GPU Model':<18}: {get_cuda_name()}"
             )
             logger_instance.info(
-                f"{LogStyle.INDENT}{LogStyle.ARROW} {'VRAM Available':<18}: {get_vram_info(device.index or 0)}"
+                f"{LogStyle.INDENT}{LogStyle.ARROW} "
+                f"{'VRAM Available':<18}: {get_vram_info(device.index or 0)}"
             )
 
         logger_instance.info(
@@ -173,7 +175,8 @@ class Reporter(BaseModel):
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Classes':<18}: {meta.num_classes} categories"
         )
         logger_instance.info(
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Resolution':<18}: {ds.img_size}px (Native: {meta.resolution_str})"
+            f"{LogStyle.INDENT}{LogStyle.ARROW} "
+            f"{'Resolution':<18}: {ds.img_size}px (Native: {meta.resolution_str})"
         )
         logger_instance.info(
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Channels':<18}: {meta.in_channels}"
@@ -200,17 +203,20 @@ class Reporter(BaseModel):
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Architecture':<18}: {cfg.model.name}"
         )
         logger_instance.info(
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Weights':<18}: {'Pretrained' if cfg.model.pretrained else 'Random'}"
+            f"{LogStyle.INDENT}{LogStyle.ARROW} "
+            f"{'Weights':<18}: {'Pretrained' if cfg.model.pretrained else 'Random'}"
         )
 
         # Add weight variant if present (for ViT)
         if cfg.model.weight_variant:
             logger_instance.info(
-                f"{LogStyle.INDENT}{LogStyle.ARROW} {'Weight Variant':<18}: {cfg.model.weight_variant}"
+                f"{LogStyle.INDENT}{LogStyle.ARROW} "
+                f"{'Weight Variant':<18}: {cfg.model.weight_variant}"
             )
 
         logger_instance.info(
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Precision':<18}: {'AMP (Mixed)' if train.use_amp else 'FP32'}"
+            f"{LogStyle.INDENT}{LogStyle.ARROW} "
+            f"{'Precision':<18}: {'AMP (Mixed)' if train.use_amp else 'FP32'}"
         )
         logger_instance.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'TTA Mode':<18}: {tta_status}")
         logger_instance.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Repro. Mode':<18}: {repro_mode}")
@@ -244,13 +250,15 @@ def log_optimization_header(cfg: "Config", logger_instance: logging.Logger = Non
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Metric       : {cfg.optuna.metric_name}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Device       : {cfg.hardware.device}")
     log.info(
-        f"{LogStyle.INDENT}{LogStyle.ARROW} Pruning      : {'Enabled' if cfg.optuna.enable_pruning else 'Disabled'}"
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Pruning      : "
+        f"{'Enabled' if cfg.optuna.enable_pruning else 'Disabled'}"
     )
 
     if cfg.optuna.enable_early_stopping:
         threshold = cfg.optuna.early_stopping_threshold or "auto"
         log.info(
-            f"{LogStyle.INDENT}{LogStyle.ARROW} Early Stop   : Enabled (threshold={threshold}, patience={cfg.optuna.early_stopping_patience})"
+            f"{LogStyle.INDENT}{LogStyle.ARROW} Early Stop   : Enabled "
+            f"(threshold={threshold}, patience={cfg.optuna.early_stopping_patience})"
         )
 
     log.info(LogStyle.DOUBLE)
@@ -331,7 +339,8 @@ def log_study_summary(
     if completed:
         try:
             log.info(
-                f"{LogStyle.INDENT}{LogStyle.SUCCESS} Best {metric_name.upper()} : {study.best_value:.6f}"
+                f"{LogStyle.INDENT}{LogStyle.SUCCESS} "
+                f"Best {metric_name.upper()} : {study.best_value:.6f}"
             )
             log.info(
                 f"{LogStyle.INDENT}{LogStyle.SUCCESS} Best Trial     : {study.best_trial.number}"
@@ -408,7 +417,8 @@ def log_best_config_export(config_path: Any, logger_instance: logging.getLogger 
     log.info("")
     log.info(f"{LogStyle.INDENT}To visualize optimization results:")
     log.info(
-        f"{LogStyle.DOUBLE_INDENT}firefox {config_path.parent.parent}/figures/param_importances.html"
+        f"{LogStyle.DOUBLE_INDENT}firefox "
+        f"{config_path.parent.parent}/figures/param_importances.html"
     )
     log.info(f"{LogStyle.DOUBLE}")
     log.info("")
@@ -490,14 +500,16 @@ def log_optimization_summary(
     if completed:
         try:
             log.info(
-                f"{LogStyle.INDENT}{LogStyle.SUCCESS} Best {cfg.optuna.metric_name.upper():<9} : {study.best_value:.6f}"
+                f"{LogStyle.INDENT}{LogStyle.SUCCESS} "
+                f"Best {cfg.optuna.metric_name.upper():<9} : {study.best_value:.6f}"
             )
             log.info(
                 f"{LogStyle.INDENT}{LogStyle.SUCCESS} Best Trial     : {study.best_trial.number}"
             )
         except ValueError:
             log.warning(
-                f"{LogStyle.INDENT}{LogStyle.WARNING} Best trial lookup failed (check study integrity)"
+                f"{LogStyle.INDENT}{LogStyle.WARNING} "
+                "Best trial lookup failed (check study integrity)"
             )
     else:
         log.warning(f"{LogStyle.INDENT}{LogStyle.WARNING} No trials completed")

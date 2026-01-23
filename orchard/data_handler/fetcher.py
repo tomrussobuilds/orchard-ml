@@ -135,7 +135,7 @@ def load_medmnist_health_check(metadata: DatasetMetadata, chunk_size: int = 100)
     for an initial health check, while retaining the download and verification logic.
 
     Args:
-        metadata (DatasetMetadata): Metadata containing URL, MD5, name, and target path for the dataset.
+        metadata (DatasetMetadata): Metadata containing URL, MD5, name, and path for the dataset.
         chunk_size (int): Number of samples to load for the health check.
 
     Returns:

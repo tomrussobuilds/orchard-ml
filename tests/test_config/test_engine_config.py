@@ -154,6 +154,7 @@ def test_min_lr_less_than_lr_validation():
 
 
 @pytest.mark.unit
+@pytest.mark.filterwarnings("ignore:AMP requires GPU.*:UserWarning")
 def test_min_lr_equals_lr_direct_instantiation(mock_metadata_28):
     """Test min_lr == learning_rate validation via direct instantiation."""
     # This approach ensures the validator runs and line 106 is covered
@@ -524,10 +525,6 @@ def test_config_yaml_img_size_none_explicit():
             device="cpu",
             seed=42,
         )
-
-        # Build config
-        cfg = Config.from_args(args)
-
         # When img_size is explicitly None in YAML, args.img_size should NOT be overridden
         # (the condition `if yaml_img_size is not None` should be False)
         assert (

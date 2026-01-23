@@ -127,7 +127,8 @@ class OptunaConfig(BaseModel):
         """Validates pruning configuration."""
         if self.enable_pruning and self.pruning_warmup_epochs >= self.epochs:
             raise ValueError(
-                f"pruning_warmup_epochs ({self.pruning_warmup_epochs}) must be < epochs ({self.epochs})"
+                f"pruning_warmup_epochs ({self.pruning_warmup_epochs}) "
+                f"must be < epochs ({self.epochs})"
             )
         return self
 

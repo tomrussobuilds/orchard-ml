@@ -99,7 +99,8 @@ def build_mini_cnn(
         MiniCNN model deployed to device
     """
     logger.info(
-        f"Building MiniCNN for {in_channels}-channel {cfg.dataset.img_size}×{cfg.dataset.img_size} input"
+        f"Building MiniCNN for {in_channels}-channel "
+        f"{cfg.dataset.img_size}×{cfg.dataset.img_size} input"
     )
 
     model = MiniCNN(in_channels=in_channels, num_classes=num_classes, dropout=cfg.model.dropout)

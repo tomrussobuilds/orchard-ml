@@ -47,7 +47,7 @@ def base_cfg():
     return cfg
 
 
-#                    TESTS: Criterion                                         #
+# TESTS: CRITERION
 @pytest.mark.unit
 @pytest.mark.parametrize("crit_type", ["cross_entropy", "bce_logit", "focal"])
 def test_get_criterion_types(base_cfg, crit_type):
@@ -66,7 +66,7 @@ def test_get_criterion_invalid_type(base_cfg):
         setup.get_criterion(base_cfg)
 
 
-#                    TESTS: Optimizer                                         #
+# TESTS: OPTIMIZER
 @pytest.mark.unit
 def test_get_optimizer_resnet(base_cfg, simple_model):
     """Test SGD optimizer for ResNet variants."""
@@ -83,7 +83,7 @@ def test_get_optimizer_other_model(base_cfg, simple_model):
     assert isinstance(optimizer, optim.AdamW)
 
 
-#                    TESTS: Scheduler                                         #
+# TESTS: SCHEDULER
 @pytest.mark.unit
 @pytest.mark.parametrize("sched_type", ["cosine", "plateau", "step", "none"])
 def test_get_scheduler_types(base_cfg, simple_model, sched_type):

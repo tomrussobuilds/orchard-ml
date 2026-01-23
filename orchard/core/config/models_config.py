@@ -32,7 +32,7 @@ class ModelConfig(BaseModel):
 
     name: str = Field(
         default="resnet_18_adapted",
-        description="The unique identifier for the model architecture. E.g., 'resnet_18_adapted', 'efficientnet_b0'.",
+        description="The unique identifier for the model architecture. E.g., 'efficientnet_b0'.",
     )
 
     pretrained: bool = Field(

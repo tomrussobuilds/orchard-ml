@@ -155,7 +155,8 @@ class ModelTrainer:
             )
 
         logger.info(
-            f"Training finished. Peak Performance -> AUC: {self.best_auc:.4f} | Acc: {self.best_acc:.4f}"
+            f"Training finished. Peak Performance -> AUC: {self.best_auc:.4f} "
+            f"| Acc: {self.best_acc:.4f}"
         )
 
         if self.best_path.exists():
@@ -228,7 +229,8 @@ class ModelTrainer:
         try:
             load_model_weights(model=self.model, path=self.best_path, device=self.device)
             logger.info(
-                f" » [LIFECYCLE] Success: Model state restored to best checkpoint ({self.best_path.name})"
+                f" » [LIFECYCLE] Success: Model state restored to best checkpoint "
+                f"({self.best_path.name})"
             )
         except Exception as e:
             logger.error(f" » [LIFECYCLE] Critical failure during weight restoration: {e}")

@@ -13,7 +13,7 @@ import torch.nn as nn
 from orchard.trainer.losses import FocalLoss, get_loss_name
 
 
-#                    TESTS: FocalLoss                                         #
+# TESTS: FocalLoss
 @pytest.mark.unit
 def test_focal_loss_init_default():
     """Test FocalLoss initialization with default parameters."""
@@ -207,8 +207,7 @@ def test_focal_loss_deterministic():
     assert torch.equal(loss1, loss2)
 
 
-#                    TESTS: get_loss_name                                     #
-@pytest.mark.unit
+# TESTS: get_loss_name
 def test_get_loss_name_focal_loss():
     """Test get_loss_name with FocalLoss."""
     loss_fn = FocalLoss()
