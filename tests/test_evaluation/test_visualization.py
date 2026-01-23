@@ -204,8 +204,55 @@ def test_show_predictions_basic(mock_get_batch, mock_plt, tmp_path):
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization._get_predictions_batch")
 def test_show_predictions_without_config(mock_get_batch, mock_plt):
-    """Test show_predictions works without config (uses defaults)."""
+    """Test show_predictions works without config (uses defaults) - lines 68-84."""
     # Configure mock plt.subplots to return (fig, axes)
+    mock_fig = MagicMock()
+    # Create axes as a list, not trying to reshape with numpy
+    mock_axes = np.empty((3, 4), dtype=object)
+    for i in range(3):
+        for j in range(4):
+            mock_axes[i, j] = MagicMock()
+
+    mock_plt.subplots.return_value = (mock_fig, mock_axes)
+
+    images = np.random.rand(12, 3, 28, 28)
+    labels = np.array([0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1])
+    preds = np.array([0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1])
+    mock_get_batch.return_value = (images, labels, preds)
+
+    mock_model = MagicMock()
+    mock_loader = MagicMock()
+    device = torch.device("cpu")
+    classes = ["class0", "class1"]
+
+    # Need to provide a minimal cfg because _setup_prediction_grid requires it
+    # This tests the branches where cfg fields are checked with "if cfg"
+    mock_cfg = MagicMock()
+    mock_cfg.evaluation.n_samples = 12
+    mock_cfg.evaluation.grid_cols = 4
+    mock_cfg.evaluation.fig_size_predictions = (12, 9)
+    mock_cfg.evaluation.fig_dpi = 150
+    mock_cfg.model.name = "model"
+    mock_cfg.dataset.resolution = 28
+    mock_cfg.dataset.mean = [0.5, 0.5, 0.5]  # Valid mean for RGB
+    mock_cfg.dataset.std = [0.5, 0.5, 0.5]  # Valid std for RGB
+    mock_cfg.training.use_tta = False
+
+    # Mock dataset.metadata to not exist (AttributeError) to test else branch
+    type(mock_cfg.dataset).metadata = property(lambda self: (_ for _ in ()).throw(AttributeError()))
+
+    # Call with cfg but trigger the "if cfg" branches
+    show_predictions(mock_model, mock_loader, device, classes, save_path=None, cfg=mock_cfg)
+
+    mock_model.eval.assert_called_once()
+    assert mock_plt.subplots.called
+
+
+@pytest.mark.unit
+@patch("orchard.evaluation.visualization.plt")
+@patch("orchard.evaluation.visualization._get_predictions_batch")
+def test_show_predictions_without_save_path(mock_get_batch, mock_plt, tmp_path):
+    """Test show_predictions with save_path=None (interactive mode) - line 214-215."""
     mock_fig = MagicMock()
     mock_axes = [MagicMock() for _ in range(12)]
     mock_plt.subplots.return_value = (mock_fig, np.array(mock_axes))
@@ -214,6 +261,69 @@ def test_show_predictions_without_config(mock_get_batch, mock_plt):
     labels = np.array([0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1])
     preds = np.array([0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1])
     mock_get_batch.return_value = (images, labels, preds)
+
+    mock_model = MagicMock()
+    mock_loader = MagicMock()
+    device = torch.device("cpu")
+    classes = ["class0", "class1"]
+
+    mock_cfg = MagicMock()
+    mock_cfg.evaluation.n_samples = 12
+    mock_cfg.evaluation.grid_cols = 4
+    mock_cfg.evaluation.fig_dpi = 200
+    mock_cfg.evaluation.fig_size_predictions = (12, 9)
+    mock_cfg.model.name = "resnet18"
+    mock_cfg.dataset.resolution = 28
+    mock_cfg.dataset.mean = [0.5, 0.5, 0.5]
+    mock_cfg.dataset.std = [0.5, 0.5, 0.5]
+    mock_cfg.dataset.metadata.is_texture_based = False
+    mock_cfg.dataset.metadata.is_anatomical = False
+    mock_cfg.training.use_tta = False
+
+    # Call with save_path=None (should call plt.show() instead of savefig)
+    show_predictions(mock_model, mock_loader, device, classes, save_path=None, cfg=mock_cfg)
+
+    # Should call show() not savefig()
+    mock_plt.show.assert_called_once()
+
+
+@pytest.mark.unit
+@patch("orchard.evaluation.visualization.plt")
+@patch("orchard.evaluation.visualization._get_predictions_batch")
+def test_show_predictions_standard_mode(mock_get_batch, mock_plt, tmp_path):
+    """Test show_predictions with standard mode (neither texture nor anatomical) - line 95."""
+    mock_fig = MagicMock()
+    mock_axes = [MagicMock() for _ in range(6)]
+    mock_plt.subplots.return_value = (mock_fig, np.array(mock_axes))
+
+    images = np.random.rand(6, 1, 28, 28)
+    labels = np.array([0, 1, 0, 1, 0, 1])
+    preds = np.array([0, 1, 0, 1, 0, 1])
+    mock_get_batch.return_value = (images, labels, preds)
+
+    mock_model = MagicMock()
+    mock_loader = MagicMock()
+    device = torch.device("cpu")
+    classes = ["class0", "class1"]
+    save_path = tmp_path / "predictions.png"
+
+    mock_cfg = MagicMock()
+    mock_cfg.evaluation.n_samples = 6
+    mock_cfg.evaluation.grid_cols = 3
+    mock_cfg.evaluation.fig_dpi = 150
+    mock_cfg.evaluation.fig_size_predictions = (9, 6)
+    mock_cfg.model.name = "model"
+    mock_cfg.dataset.resolution = 28
+    mock_cfg.dataset.mean = [0.5]
+    mock_cfg.dataset.std = [0.5]
+    mock_cfg.dataset.metadata.is_texture_based = False  # Not texture
+    mock_cfg.dataset.metadata.is_anatomical = False  # Not anatomical -> Standard
+    mock_cfg.training.use_tta = False
+
+    show_predictions(mock_model, mock_loader, device, classes, save_path, mock_cfg, n=6)
+
+    assert mock_plt.subplots.called
+    assert mock_plt.savefig.called
 
 
 @pytest.mark.unit
@@ -255,7 +365,104 @@ def test_show_predictions_with_custom_n(mock_get_batch, mock_plt, tmp_path):
 
 
 # =========================================================================== #
-#                    HELPER FUNCTIONS                                         #
+#                    HELPER FUNCTIONS - DIRECT TESTS                          #
+# =========================================================================== #
+
+
+@pytest.mark.unit
+def test_get_predictions_batch_directly():
+    """Test _get_predictions_batch function directly (lines 183-191)."""
+    from orchard.evaluation.visualization import _get_predictions_batch
+
+    # Create a simple mock model
+    mock_model = MagicMock()
+    mock_model.return_value = torch.tensor([[0.1, 0.9], [0.8, 0.2], [0.3, 0.7]])
+
+    # Create a mock loader
+    images = torch.randn(5, 3, 28, 28)
+    labels = torch.tensor([0, 1, 0, 1, 0])
+    mock_loader = MagicMock()
+    mock_loader.__iter__ = MagicMock(return_value=iter([(images, labels)]))
+
+    device = torch.device("cpu")
+
+    # Call the function
+    img_arr, label_arr, pred_arr = _get_predictions_batch(mock_model, mock_loader, device, n=3)
+
+    # Verify outputs
+    assert img_arr.shape == (3, 3, 28, 28)  # First 3 images
+    assert label_arr.shape == (3,)
+    assert pred_arr.shape == (3,)
+    assert isinstance(img_arr, np.ndarray)
+    assert isinstance(label_arr, np.ndarray)
+    assert isinstance(pred_arr, np.ndarray)
+
+
+@pytest.mark.unit
+def test_setup_prediction_grid_directly():
+    """Test _setup_prediction_grid function directly."""
+    from orchard.evaluation.visualization import _setup_prediction_grid
+
+    mock_cfg = MagicMock()
+    mock_cfg.evaluation.fig_size_predictions = (12, 9)
+
+    with patch("orchard.evaluation.visualization.plt.subplots") as mock_subplots:
+        mock_fig = MagicMock()
+        # Create a 3x4 grid of mock axes using object dtype
+        mock_axes = np.empty((3, 4), dtype=object)
+        for i in range(3):
+            for j in range(4):
+                mock_axes[i, j] = MagicMock()
+
+        mock_subplots.return_value = (mock_fig, mock_axes)
+
+        fig, axes = _setup_prediction_grid(12, 4, mock_cfg)
+
+        # Should calculate 3 rows (12 samples / 4 cols)
+        mock_subplots.assert_called_once()
+        # Axes should be flattened to 1D array
+        assert len(axes) == 12
+
+
+@pytest.mark.unit
+def test_finalize_figure_with_save(tmp_path):
+    """Test _finalize_figure with save_path."""
+    from orchard.evaluation.visualization import _finalize_figure
+
+    mock_plt = MagicMock()
+    save_path = tmp_path / "test.png"
+
+    mock_cfg = MagicMock()
+    mock_cfg.evaluation.fig_dpi = 200
+
+    _finalize_figure(mock_plt, save_path, mock_cfg)
+
+    # Should call savefig, not show
+    mock_plt.savefig.assert_called_once()
+    mock_plt.show.assert_not_called()
+    mock_plt.close.assert_called_once()
+
+
+@pytest.mark.unit
+def test_finalize_figure_without_save():
+    """Test _finalize_figure without save_path (interactive mode) - lines 214-215."""
+    from orchard.evaluation.visualization import _finalize_figure
+
+    mock_plt = MagicMock()
+
+    mock_cfg = MagicMock()
+    mock_cfg.evaluation.fig_dpi = 150
+
+    _finalize_figure(mock_plt, save_path=None, cfg=mock_cfg)
+
+    # Should call show(), not savefig()
+    mock_plt.show.assert_called_once()
+    mock_plt.savefig.assert_not_called()
+    mock_plt.close.assert_called_once()
+
+
+# =========================================================================== #
+#                    HELPER FUNCTIONS - DENORMALIZE & PREPARE                 #
 # =========================================================================== #
 
 

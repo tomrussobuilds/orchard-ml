@@ -8,7 +8,7 @@
 # Search Space: Includes weight variant selection
 
 dataset:
-  name: "pathmnist"
+  name: "tissuemnist"
   data_root: ./dataset
   resolution: 224
   force_rgb: true
@@ -16,9 +16,9 @@ dataset:
   max_samples: null
 
 model:
-  name: "vit_tiny"              # Will be optimized vs efficientnet_b0
+  name: "vit_tiny"
   pretrained: true
-  weight_variant: "vit_tiny_patch16_224.augreg_in21k_ft_in1k"  # Will be optimized
+  weight_variant: "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
   dropout: 0.1                  # Will be optimized
 
 training:
@@ -86,7 +86,7 @@ evaluation:
   save_predictions_grid: false
 
 optuna:
-  study_name: "pathmnist_vit_optimized"
+  study_name: "tissue_vit_tiny_optimized"
   n_trials: 20                  # Balanced exploration
   epochs: 15                    # Shorter for speed
   timeout: null
