@@ -147,13 +147,175 @@ def test_return_if_scheduler_is_none(executor):
 
 
 # =========================================================================== #
+#                    TESTS: Validation Error Handling                         #
+# =========================================================================== #
+
+
+@pytest.mark.unit
+def test_validate_epoch_returns_fallback_on_exception():
+    """Test _validate_epoch returns fallback metrics when exception occurs."""
+    executor = TrialTrainingExecutor(
+        model=nn.Linear(10, 2),
+        train_loader=MagicMock(),
+        val_loader=MagicMock(),
+        optimizer=torch.optim.SGD(nn.Linear(10, 2).parameters(), lr=0.01),
+        scheduler=MagicMock(),
+        criterion=nn.CrossEntropyLoss(),
+        cfg=MagicMock(
+            training=MagicMock(use_amp=False, epochs=5),
+            optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        ),
+        device=torch.device("cpu"),
+        metric_extractor=MetricExtractor("auc"),
+    )
+
+    with patch("orchard.optimization.objective.training_executor.validate_epoch") as mock_validate:
+        # Simulate validation exception
+        mock_validate.side_effect = RuntimeError("Validation error")
+
+        result = executor._validate_epoch()
+
+        # Should return fallback metrics
+        assert result == {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
+
+
+@pytest.mark.unit
+def test_validate_epoch_returns_fallback_on_invalid_type():
+    """Test _validate_epoch returns fallback when validate_epoch returns invalid type."""
+    executor = TrialTrainingExecutor(
+        model=nn.Linear(10, 2),
+        train_loader=MagicMock(),
+        val_loader=MagicMock(),
+        optimizer=torch.optim.SGD(nn.Linear(10, 2).parameters(), lr=0.01),
+        scheduler=MagicMock(),
+        criterion=nn.CrossEntropyLoss(),
+        cfg=MagicMock(
+            training=MagicMock(use_amp=False, epochs=5),
+            optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        ),
+        device=torch.device("cpu"),
+        metric_extractor=MetricExtractor("auc"),
+    )
+
+    with patch("orchard.optimization.objective.training_executor.validate_epoch") as mock_validate:
+        # Simulate invalid return type
+        mock_validate.return_value = "not_a_dict"
+
+        result = executor._validate_epoch()
+
+        # Should return fallback metrics
+        assert result == {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
+
+
+@pytest.mark.unit
+def test_validate_epoch_returns_fallback_on_none():
+    """Test _validate_epoch returns fallback when validate_epoch returns None."""
+    executor = TrialTrainingExecutor(
+        model=nn.Linear(10, 2),
+        train_loader=MagicMock(),
+        val_loader=MagicMock(),
+        optimizer=torch.optim.SGD(nn.Linear(10, 2).parameters(), lr=0.01),
+        scheduler=MagicMock(),
+        criterion=nn.CrossEntropyLoss(),
+        cfg=MagicMock(
+            training=MagicMock(use_amp=False, epochs=5),
+            optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        ),
+        device=torch.device("cpu"),
+        metric_extractor=MetricExtractor("auc"),
+    )
+
+    with patch("orchard.optimization.objective.training_executor.validate_epoch") as mock_validate:
+        # Simulate None return
+        mock_validate.return_value = None
+
+        result = executor._validate_epoch()
+
+        # Should return fallback metrics
+        assert result == {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
+
+
+# =========================================================================== #
+#                    TESTS: Execute Method Error Handling                     #
+# =========================================================================== #
+
+
+@pytest.mark.unit
+def test_execute_handles_none_validation_result():
+    """Test execute returns 0.0 when validation returns None."""
+    mock_cfg = MagicMock()
+    mock_cfg.training.epochs = 1
+    mock_cfg.training.use_amp = False
+    mock_cfg.training.grad_clip = 0.0
+    mock_cfg.training.scheduler_type = "step"
+    mock_cfg.optuna.enable_pruning = False
+    mock_cfg.optuna.pruning_warmup_epochs = 0
+
+    executor = TrialTrainingExecutor(
+        model=nn.Linear(10, 2),
+        train_loader=MagicMock(),
+        val_loader=MagicMock(),
+        optimizer=torch.optim.SGD(nn.Linear(10, 2).parameters(), lr=0.01),
+        scheduler=MagicMock(),
+        criterion=nn.CrossEntropyLoss(),
+        cfg=mock_cfg,
+        device=torch.device("cpu"),
+        metric_extractor=MetricExtractor("auc"),
+    )
+
+    mock_trial = MagicMock()
+    mock_trial.number = 1
+
+    with patch.object(executor, "_train_epoch", return_value=0.5):
+        with patch.object(executor, "_validate_epoch", return_value=None):
+            result = executor.execute(mock_trial)
+
+            # Should return 0.0 when validation is None
+            assert result == 0.0
+
+
+@pytest.mark.unit
+def test_execute_handles_invalid_validation_type():
+    """Test execute returns 0.0 when validation returns non-dict."""
+    mock_cfg = MagicMock()
+    mock_cfg.training.epochs = 1
+    mock_cfg.training.use_amp = False
+    mock_cfg.training.grad_clip = 0.0
+    mock_cfg.training.scheduler_type = "step"
+    mock_cfg.optuna.enable_pruning = False
+    mock_cfg.optuna.pruning_warmup_epochs = 0
+
+    executor = TrialTrainingExecutor(
+        model=nn.Linear(10, 2),
+        train_loader=MagicMock(),
+        val_loader=MagicMock(),
+        optimizer=torch.optim.SGD(nn.Linear(10, 2).parameters(), lr=0.01),
+        scheduler=MagicMock(),
+        criterion=nn.CrossEntropyLoss(),
+        cfg=mock_cfg,
+        device=torch.device("cpu"),
+        metric_extractor=MetricExtractor("auc"),
+    )
+
+    mock_trial = MagicMock()
+    mock_trial.number = 1
+
+    with patch.object(executor, "_train_epoch", return_value=0.5):
+        with patch.object(executor, "_validate_epoch", return_value="invalid"):
+            result = executor.execute(mock_trial)
+
+            # Should return 0.0 when validation is invalid type
+            assert result == 0.0
+
+
+# =========================================================================== #
 #                    TESTS: Full Execution Loop                               #
 # =========================================================================== #
 
 
 @pytest.mark.integration
-@patch("orchard.optimization.objective.TrialTrainingExecutor._train_epoch")
-@patch("orchard.optimization.objective.TrialTrainingExecutor._validate_epoch")
+@patch("orchard.optimization.objective.training_executor.train_one_epoch")
+@patch("orchard.optimization.objective.training_executor.validate_epoch")
 def test_execute_full_loop(mock_val, mock_train, executor, mock_trial):
     """Test a complete successful execution of the trial."""
     mock_train.return_value = 0.4
@@ -169,8 +331,8 @@ def test_execute_full_loop(mock_val, mock_train, executor, mock_trial):
 
 
 @pytest.mark.integration
-@patch("orchard.optimization.objective.TrialTrainingExecutor._train_epoch")
-@patch("orchard.optimization.objective.TrialTrainingExecutor._validate_epoch")
+@patch("orchard.optimization.objective.training_executor.train_one_epoch")
+@patch("orchard.optimization.objective.training_executor.validate_epoch")
 def test_execute_pruning_raises(mock_val, mock_train, executor, mock_trial):
     """Test that TrialPruned is raised and execution stops."""
     mock_train.return_value = 0.4
@@ -186,29 +348,22 @@ def test_execute_pruning_raises(mock_val, mock_train, executor, mock_trial):
     assert mock_train.call_count == 1
 
 
-# =========================================================================== #
-#                    TESTS: Error Handling                                    #
-# =========================================================================== #
+@pytest.mark.integration
+@patch("orchard.optimization.objective.training_executor.train_one_epoch")
+@patch("orchard.optimization.objective.training_executor.validate_epoch")
+def test_execute_logs_completion(mock_val, mock_train, executor, mock_trial):
+    """Test that trial completion is logged correctly."""
+    mock_train.return_value = 0.35
+    mock_val.return_value = {"loss": 0.25, "accuracy": 0.9, "auc": 0.92}
 
-
-@pytest.mark.unit
-@patch("orchard.optimization.objective.TrialTrainingExecutor._train_epoch")
-@patch("orchard.optimization.objective.TrialTrainingExecutor._validate_epoch")
-@patch("orchard.core.logger")
-def test_execute_invalid_validation_handling(
-    mock_logger, mock_val, mock_train, executor, mock_trial
-):
-    """Test that the executor catches None/non-dict validation results."""
-    # Case 1: Validation returns None
-    mock_train.return_value = 0.5
-    mock_val.return_value = None
     executor.epochs = 1
 
-    assert executor.execute(mock_trial) == 0.0
+    with patch.object(executor, "_log_trial_complete") as mock_log:
+        best_metric = executor.execute(mock_trial)
 
-    # Case 2: Validation returns wrong type
-    mock_val.return_value = "not_a_dict"
-    assert executor.execute(mock_trial) == 0.0
+        # Verify completion logging was called
+        mock_log.assert_called_once_with(mock_trial, 0.92, 0.35)
+        assert best_metric == 0.92
 
 
 if __name__ == "__main__":

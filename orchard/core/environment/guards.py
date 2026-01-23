@@ -14,11 +14,10 @@ These utilities ensure each run is isolated, reproducible, and safe
 even on clusters or shared systems.
 """
 
-import logging
-
 # =========================================================================== #
 #                                Standard Imports                             #
 # =========================================================================== #
+import logging
 import os
 import platform
 import sys
@@ -100,8 +99,17 @@ def release_single_instance(lock_file: Path) -> None:
     if _lock_fd:
         try:
             if HAS_FCNTL:
-                fcntl.flock(_lock_fd, fcntl.LOCK_UN)
-            _lock_fd.close()
+                try:
+                    fcntl.flock(_lock_fd, fcntl.LOCK_UN)
+                except (OSError, IOError):
+                    # Unlock may fail if process is already terminated
+                    pass
+
+            try:
+                _lock_fd.close()
+            except (OSError, IOError):
+                # Close may fail if fd is already closed
+                pass
         finally:
             _lock_fd = None
 

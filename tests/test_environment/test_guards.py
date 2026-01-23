@@ -453,5 +453,44 @@ def test_full_guard_workflow(mock_platform, tmp_path):
             release_single_instance(lock_file)
 
 
+@pytest.mark.unit
+@patch("orchard.core.environment.guards.HAS_FCNTL", True)
+def test_release_single_instance_unlock_error_handled(tmp_path):
+    """Test release_single_instance handles unlock errors gracefully."""
+    lock_file = tmp_path / "test.lock"
+    lock_file.touch()
+
+    mock_fd = MagicMock()
+    with patch("orchard.core.environment.guards._lock_fd", mock_fd):
+        with patch("fcntl.flock", side_effect=OSError("Unlock failed")):
+            # Should handle error gracefully and not raise
+            release_single_instance(lock_file)
+
+            # fd.close should still be called
+            mock_fd.close.assert_called_once()
+
+    # File should still be removed
+    assert not lock_file.exists()
+
+
+@pytest.mark.unit
+@patch("orchard.core.environment.guards.HAS_FCNTL", True)
+def test_release_single_instance_close_error_handled(tmp_path):
+    """Test release_single_instance handles close errors gracefully."""
+    lock_file = tmp_path / "test.lock"
+    lock_file.touch()
+
+    mock_fd = MagicMock()
+    mock_fd.close.side_effect = OSError("Close failed")
+
+    with patch("orchard.core.environment.guards._lock_fd", mock_fd):
+        with patch("fcntl.flock"):
+            # Should handle close error gracefully and not raise
+            release_single_instance(lock_file)
+
+    # File should still be removed despite close error
+    assert not lock_file.exists()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
