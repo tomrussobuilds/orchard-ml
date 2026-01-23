@@ -109,14 +109,19 @@ def test_resolve_dataset_metadata_not_in_registry():
 
 
 @pytest.mark.unit
-def test_amp_requires_gpu():
-    """Test AMP validation rejects CPU + AMP."""
+def test_amp_auto_disabled_on_cpu():
+    """Test AMP is automatically disabled on CPU with warning."""
     args = argparse.Namespace(
-        dataset="bloodmnist", device="cpu", use_amp=True, pretrained=True  # Invalid with CPU
+        dataset="bloodmnist",
+        device="cpu",
+        use_amp=True,
+        pretrained=True,
     )
 
-    with pytest.raises(ValidationError, match="AMP requires GPU"):
-        Config.from_args(args)
+    with pytest.warns(UserWarning, match="AMP.*CPU"):
+        cfg = Config.from_args(args)
+
+    assert cfg.training.use_amp is False
 
 
 @pytest.mark.unit

@@ -79,9 +79,16 @@ class Config(BaseModel):
                 f"total epochs ({self.training.epochs})"
             )
 
-        # 3. Hardware-feature alignment
+        # 3. Hardware-feature alignment (auto-disable AMP on CPU)
         if self.hardware.device == "cpu" and self.training.use_amp:
-            raise ValueError("AMP requires GPU (CUDA/MPS), cannot use with CPU")
+            import warnings
+
+            warnings.warn(
+                "AMP requires GPU (CUDA/MPS) but CPU detected. Disabling AMP automatically.",
+                UserWarning,
+                stacklevel=2,
+            )
+            object.__setattr__(self.training, "use_amp", False)
 
         # 4. Model-dataset consistency
         if self.model.pretrained and self.dataset.effective_in_channels != 3:
