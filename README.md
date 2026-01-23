@@ -148,61 +148,120 @@
 
 ### Step 1: Environment Setup
 ```bash
-# Clone and setup environment
+# Clone and install dependencies
 git clone https://github.com/tomrussobuilds/visionforge.git
 cd visionforge
 pip install -r requirements.txt
 ```
 
-### Step 2: Smoke Test (30 seconds - GPU/CPU)
+### Step 2: Verify Installation (Optional)
 ```bash
-# Verify installation with 1-epoch sanity check
-# Downloads BloodMNIST 28×28 by default (or specify --dataset/--resolution)
+# Run 1-epoch sanity check (~30 seconds, CPU/GPU)
+# Downloads BloodMNIST 28×28 by default
 python -m tests.smoke_test
+
+# Note: You can skip this step - main.py will auto-download datasets as needed
 ```
 
-### Step 3: Choose Your Workflow
+### Step 3: Training Workflow
 
-#### 🔬 **Workflow A: Fast Prototyping** (28×28, CPU-friendly)
+VisionForge supports a **three-phase workflow** optimized for different hardware configurations:
+
+#### **Phase 1: Baseline Training** (Learn the framework)
+
+Start with a quick training run to familiarize yourself with the pipeline:
 ```bash
-# Quick baseline (~2-3 min GPU, ~30 min CPU)
-python main.py --config recipes/config_mini_cnn.yaml
+# 28×28 resolution (CPU-compatible)
+python main.py --config recipes/config_mini_cnn.yaml              # ~2-3 min GPU, ~30 min CPU
 
-# Transfer learning baseline (~5 min GPU, ~2.5h CPU)
-python main.py --config recipes/config_resnet_18_adapted.yaml
+# or with transfer learning
+python main.py --config recipes/config_resnet_18_adapted.yaml     # ~5 min GPU, ~2.5h CPU
+
+# 224×224 resolution (GPU required)
+python main.py --config recipes/config_efficientnet_b0.yaml       # ~30 min GPU
+python main.py --config recipes/config_vit_tiny.yaml              # ~25-35 min GPU
 ```
 
-#### 🎯 **Workflow B: Hyperparameter Optimization → Best Config** (Recommended)
+**What happens:**
+- Dataset is auto-downloaded to `./dataset/` (cached for future runs)
+- Training runs for 60 epochs with early stopping
+- Results saved to timestamped directory in `outputs/`
+
+---
+
+#### **Phase 2: Hyperparameter Optimization** (Find best configuration)
+
+Use Optuna to automatically search for optimal hyperparameters:
 ```bash
-# 1. Run optimization study (GPU recommended)
-python optimize.py --config recipes/optuna_mini_cnn.yaml              # 28×28 (~1-2h)
-python optimize.py --config recipes/optuna_efficientnet_b0.yaml       # 224×224 (~1.5-5h)
+# 28×28 resolution - fast iteration
+python optimize.py --config recipes/optuna_mini_cnn.yaml              # ~50 min, 50 trials, GPU
+python optimize.py --config recipes/optuna_resnet_18_adapted.yaml     # ~3-5h, 50 trials, GPU
 
-# 2. View optimization results (interactive HTML plots)
-firefox outputs/*/figures/param_importances.html
+# 224×224 resolution - requires GPU
+python optimize.py --config recipes/optuna_efficientnet_b0.yaml       # ~1.5-5h*, 20 trials, GPU
+python optimize.py --config recipes/optuna_vit_tiny.yaml              # ~3-5h*, 20 trials, GPU
 
-# 3. Train with optimized hyperparameters (60 epochs, full validation)
-python main.py --config outputs/*/reports/best_config.yaml
+# *Time varies significantly due to early stopping (may finish in 1-3h if target AUC reached)
 ```
 
-#### 🏆 **Workflow C: State-of-the-Art** (224×224, GPU required)
+**What happens:**
+- Explores hyperparameter combinations (learning rate, regularization, augmentation, etc.)
+- Each trial trains for 15 epochs with pruning
+- Stops early if performance threshold met (e.g., AUC ≥ 0.9999)
+- Generates interactive visualization plots and best configuration YAML
+
+**View optimization results:**
 ```bash
-# EfficientNet-B0 (~30 min per trial, GPU)
-python main.py --config recipes/config_efficientnet_b0.yaml
-
-# Vision Transformer (~25-35 min per trial, GPU)
-python main.py --config recipes/config_vit_tiny.yaml
+firefox outputs/*/figures/param_importances.html       # See which hyperparameters matter most
+firefox outputs/*/figures/optimization_history.html    # Track trial progression
 ```
+
+---
+
+#### **Phase 3: Production Training** (Train with optimized settings)
+
+Use the best hyperparameters found during optimization for full training:
+```bash
+# Train with optimized configuration (60 epochs, full validation)
+python main.py --config outputs/YYYYMMDD_dataset_model_hash/reports/best_config.yaml
+```
+
+**What happens:**
+- Full 60-epoch training with best hyperparameters
+- Complete evaluation with test-time augmentation
+- Final artifacts: model weights, metrics spreadsheet, visualizations
+
+---
 
 ### Step 4: Explore Results
+
+All outputs are isolated in timestamped directories:
 ```bash
-# All artifacts in timestamped directories
 ls outputs/YYYYMMDD_dataset_model_hash/
 ├── figures/          # Confusion matrices, training curves, sample predictions
-├── reports/          # Excel summaries, study reports, best configs
-├── checkpoints/      # Model weights (.pth)
-└── database/         # Optuna SQLite studies (optimization only)
+├── reports/          # Excel summaries, best_config.yaml (optimization only)
+├── models/           # Trained model weights (.pth)
+└── database/         # Optuna study database (optimization only)
 ```
+
+**Key files:**
+- `reports/training_summary.xlsx` - Complete metrics and hyperparameters
+- `checkpoints/best_*.pth` - Best model weights (by validation AUC)
+- `reports/best_config.yaml` - Optimized configuration (optimization runs only)
+
+---
+
+### Hardware Recommendations
+
+**28×28 Resolution:**
+- ✅ CPU: Functional but slow (~30 min - 2.5h per training run)
+- ✅ GPU: Recommended (~2-5 min per training run)
+- 💡 Best for: Rapid prototyping, learning the framework, limited hardware
+
+**224×224 Resolution:**
+- ❌ CPU: Not recommended (10+ hours per trial)
+- ✅ GPU: Required (~25-35 min per trial)
+- 💡 Best for: Production training, modern architectures (EfficientNet, ViT)
 
 ---
 
@@ -357,7 +416,7 @@ outputs/20260123_organcmnist_efficientnetb0_a3f7c2/
 │   ├── best_config.yaml                # Optimized configuration (optimization)
 │   ├── study_summary.json              # All trials metadata (optimization)
 │   └── top_10_trials.xlsx              # Best configurations (optimization)
-├── checkpoints/
+├── models/
 │   └── best_efficientnetb0.pth         # Trained model weights
 └── database/
     └── study.db                        # SQLite storage for resumption (optimization)
