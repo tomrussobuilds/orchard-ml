@@ -5,21 +5,15 @@ Tests to validate YAML serialization and deserialization.
 
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import yaml
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.io.serialization import (
     _persist_yaml_atomic,
     _sanitize_for_yaml,
@@ -27,11 +21,8 @@ from orchard.core.io.serialization import (
     save_config_as_yaml,
 )
 
-# =========================================================================== #
-#                    SANITIZE FOR YAML                                        #
-# =========================================================================== #
 
-
+# SANITIZE FOR YAML
 @pytest.mark.unit
 def test_sanitize_for_yaml_path_objects():
     """Test _sanitize_for_yaml converts Path objects to strings."""
@@ -80,11 +71,7 @@ def test_sanitize_for_yaml_tuples():
     assert isinstance(result["tuple"], list)
 
 
-# =========================================================================== #
-#                    SAVE CONFIG AS YAML                                      #
-# =========================================================================== #
-
-
+# SAVE CONFIG AS YAML
 @pytest.mark.unit
 def test_save_config_as_yaml_with_dict(tmp_path):
     """Test save_config_as_yaml saves dictionary to YAML."""
@@ -197,11 +184,7 @@ def test_save_config_as_yaml_io_error(tmp_path):
         mock_logger.return_value.error.assert_called_once()
 
 
-# =========================================================================== #
-#                    LOAD CONFIG FROM YAML                                    #
-# =========================================================================== #
-
-
+# LOAD CONFIG FROM YAML
 @pytest.mark.unit
 def test_load_config_from_yaml_success(tmp_path):
     """Test load_config_from_yaml loads valid YAML file."""
@@ -244,11 +227,7 @@ def test_load_config_from_yaml_complex_structure(tmp_path):
     assert loaded["model"]["name"] == "vit"
 
 
-# =========================================================================== #
-#                    PERSIST YAML ATOMIC                                      #
-# =========================================================================== #
-
-
+# PERSIST YAML ATOMIC
 @pytest.mark.unit
 def test_persist_yaml_atomic_creates_file(tmp_path):
     """Test _persist_yaml_atomic creates file and writes data."""

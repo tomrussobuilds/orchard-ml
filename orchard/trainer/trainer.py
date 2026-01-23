@@ -17,31 +17,23 @@ Key Features:
       evolution, and resource utilization.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import logging
 from functools import partial
 from pathlib import Path
 from typing import List, Tuple
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import LOGGER_NAME, Config, load_model_weights
 
 from .engine import mixup_data, train_one_epoch, validate_epoch
 
-# =========================================================================== #
-#                                TRAINING LOGIC                               #
-# =========================================================================== #
+# TRAINING LOGIC
 # Global logger instance
 logger = logging.getLogger(LOGGER_NAME)
 

@@ -5,29 +5,20 @@ Tests cover initialization, Optuna integration (reporting/pruning),
 scheduler stepping, and error handling during validation.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import optuna
 import pytest
 import torch
 import torch.nn as nn
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.optimization import MetricExtractor, TrialTrainingExecutor
 
-# =========================================================================== #
-#                    FIXTURES                                                 #
-# =========================================================================== #
 
-
+# FIXTURES
 @pytest.fixture
 def mock_cfg():
     """Mock Config specific for Optuna trials."""
@@ -72,11 +63,7 @@ def executor(mock_cfg):
     )
 
 
-# =========================================================================== #
 #                    TESTS: Initialization                                    #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_executor_init(executor):
     """Test correctly mapping config to executor attributes."""
@@ -86,11 +73,7 @@ def test_executor_init(executor):
     assert executor.scaler is None
 
 
-# =========================================================================== #
 #                    TESTS: Optuna Integration                                #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_should_prune_respects_warmup(executor, mock_trial):
     """Ensure pruning is never triggered before warmup_epochs."""
@@ -112,11 +95,7 @@ def test_should_prune_respects_flag(executor, mock_trial):
     assert executor._should_prune(mock_trial, epoch=1) is False
 
 
-# =========================================================================== #
 #                    TESTS: Scheduler Logic                                   #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_step_scheduler_plateau(executor):
     """Test plateau scheduler receives val_loss."""
@@ -146,11 +125,7 @@ def test_return_if_scheduler_is_none(executor):
     assert result is None
 
 
-# =========================================================================== #
 #                    TESTS: Validation Error Handling                         #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_validate_epoch_returns_fallback_on_exception():
     """Test _validate_epoch returns fallback metrics when exception occurs."""
@@ -235,11 +210,7 @@ def test_validate_epoch_returns_fallback_on_none():
         assert result == {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
 
 
-# =========================================================================== #
 #                    TESTS: Execute Method Error Handling                     #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_execute_handles_none_validation_result():
     """Test execute returns 0.0 when validation returns None."""
@@ -308,11 +279,7 @@ def test_execute_handles_invalid_validation_type():
             assert result == 0.0
 
 
-# =========================================================================== #
 #                    TESTS: Full Execution Loop                               #
-# =========================================================================== #
-
-
 @pytest.mark.integration
 @patch("orchard.optimization.objective.training_executor.train_one_epoch")
 @patch("orchard.optimization.objective.training_executor.validate_epoch")

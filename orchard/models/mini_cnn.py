@@ -16,32 +16,21 @@ Architecture:
                    → AdaptiveAvgPool [1×1×128] → Dropout → FC [num_classes]
 """
 
-# =========================================================================== #
-#                           STANDARD LIBRARY                                  #
-# =========================================================================== #
+# Standard Imports
 import logging
 
-# =========================================================================== #
-#                           THIRD-PARTY IMPORTS                               #
-# =========================================================================== #
+# Third-Party Imports
 import torch
 import torch.nn as nn
 
-# =========================================================================== #
-#                           INTERNAL IMPORTS                                  #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import LOGGER_NAME, Config
 
-# =========================================================================== #
-#                           LOGGER CONFIGURATION                              #
-# =========================================================================== #
+# LOGGER CONFIGURATION
 logger = logging.getLogger(LOGGER_NAME)
 
-# =========================================================================== #
-#                           MODEL DEFINITION                                  #
-# =========================================================================== #
 
-
+# MODEL DEFINITION
 class MiniCNN(nn.Module):
     """Compact CNN optimized for 28×28 resolution datasets."""
 

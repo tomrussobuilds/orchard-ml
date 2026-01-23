@@ -9,27 +9,18 @@ This module provides reusable test fixtures for configuration testing, including
 Fixtures are automatically discovered by pytest across all test modules.
 """
 
-# =========================================================================== #
-#                              STANDARD LIBRARY                               #
-# =========================================================================== #
+# Standard Imports
 import argparse
 from pathlib import Path
 
-# =========================================================================== #
-#                            THIRD-PARTY IMPORTS                              #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 
-# =========================================================================== #
-#                              LOCAL IMPORTS                                  #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.metadata import DatasetMetadata
 
-# =========================================================================== #
-#                          DATASET METADATA FIXTURES                          #
-# =========================================================================== #
 
-
+# DATASET METADATA FIXTURES
 @pytest.fixture
 def mock_metadata_28():
     """Mock 28×28 dataset metadata for testing low-resolution workflows."""
@@ -87,11 +78,7 @@ def mock_grayscale_metadata():
     )
 
 
-# =========================================================================== #
-#                        CLI ARGUMENT FIXTURES                                #
-# =========================================================================== #
-
-
+# CLI ARGUMENT FIXTURES
 @pytest.fixture
 def basic_args():
     """Standard CLI arguments for training pipeline testing."""
@@ -153,11 +140,7 @@ def optuna_args():
     )
 
 
-# =========================================================================== #
-#                        YAML CONFIGURATION FIXTURES                          #
-# =========================================================================== #
-
-
+# YAML CONFIGURATION FIXTURES
 @pytest.fixture
 def temp_yaml_config(tmp_path):
     """Valid YAML configuration file for integration testing."""
@@ -195,11 +178,7 @@ training:
     return yaml_file
 
 
-# =========================================================================== #
-#                        MINIMAL CONFIG                                       #
-# =========================================================================== #
-
-
+# MINIMAL CONFIG
 @pytest.fixture
 def minimal_config():
     """Minimal valid Config for testing."""

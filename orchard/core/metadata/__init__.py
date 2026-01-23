@@ -7,16 +7,11 @@ data dimensions, labels, and normalization constants are consistent
 across the entire pipeline.
 """
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from .base import DatasetMetadata
 from .wrapper import DEFAULT_WRAPPER, DatasetRegistryWrapper
 
-# =========================================================================== #
-#                                PUBLIC REGISTRY                              #
-# =========================================================================== #
-
+# PUBLIC REGISTRY
 # Expose at package level
 __all__ = [
     "DatasetMetadata",

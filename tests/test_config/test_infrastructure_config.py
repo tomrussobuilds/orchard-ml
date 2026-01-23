@@ -5,28 +5,19 @@ Tests infrastructure resource management, lock file handling,
 and compute cache flushing.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 import os
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 from pydantic import ValidationError
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.config import HardwareConfig, InfrastructureManager
 
-# =========================================================================== #
-#                INFRASTRUCTURE MANAGER: CREATION                             #
-# =========================================================================== #
 
-
+# INFRASTRUCTURE MANAGER: CREATION
 @pytest.mark.unit
 def test_infrastructure_manager_creation():
     """Test InfrastructureManager can be instantiated."""
@@ -45,11 +36,7 @@ def test_infrastructure_manager_is_singleton_like():
     assert manager1 is not manager2
 
 
-# =========================================================================== #
-#                INFRASTRUCTURE MANAGER: LOCK FILE MANAGEMENT                 #
-# =========================================================================== #
-
-
+# INFRASTRUCTURE MANAGER: LOCK FILE MANAGEMENT
 @pytest.mark.integration
 def test_prepare_environment_creates_lock(tmp_path):
     """Test prepare_environment() creates lock file."""
@@ -144,11 +131,7 @@ def test_release_resources_idempotent(tmp_path):
     assert not config.hardware.lock_file_path.exists()
 
 
-# =========================================================================== #
-#                INFRASTRUCTURE MANAGER: COMPUTE CACHE                        #
-# =========================================================================== #
-
-
+# INFRASTRUCTURE MANAGER: COMPUTE CACHE
 @pytest.mark.unit
 def test_flush_compute_cache_no_error():
     """Test _flush_compute_cache() runs without error."""
@@ -167,11 +150,7 @@ def test_flush_compute_cache_callable():
     assert callable(manager._flush_compute_cache)
 
 
-# =========================================================================== #
-#                INFRASTRUCTURE MANAGER: INTEGRATION WITH CONFIG              #
-# =========================================================================== #
-
-
+# INFRASTRUCTURE MANAGER: INTEGRATION WITH CONFIG
 @pytest.mark.integration
 def test_integration_with_hardware_config(tmp_path):
     """Test InfrastructureManager works with real HardwareConfig."""
@@ -189,11 +168,7 @@ def test_integration_with_hardware_config(tmp_path):
     assert manager is not None
 
 
-# =========================================================================== #
-#                INFRASTRUCTURE MANAGER: ERROR HANDLING                       #
-# =========================================================================== #
-
-
+# INFRASTRUCTURE MANAGER: ERROR HANDLING
 @pytest.mark.integration
 def test_prepare_environment_with_logger(tmp_path):
     """Test prepare_environment() accepts optional logger."""
@@ -246,11 +221,7 @@ def test_release_resources_with_logger(tmp_path):
     manager.release_resources(config, logger=MockLogger())
 
 
-# =========================================================================== #
-#                INFRASTRUCTURE MANAGER: IMMUTABILITY                         #
-# =========================================================================== #
-
-
+# INFRASTRUCTURE MANAGER: IMMUTABILITY
 @pytest.mark.unit
 def test_infrastructure_manager_frozen():
     """Test InfrastructureManager is frozen."""
@@ -260,11 +231,7 @@ def test_infrastructure_manager_frozen():
         manager.new_field = "should_fail"
 
 
-# =========================================================================== #
-#                INTEGRATION: WITH OPTUNA CONFIG                              #
-# =========================================================================== #
-
-
+# INTEGRATION: WITH OPTUNA CONFIG
 @pytest.mark.integration
 def test_optuna_hardware_integration():
     """Test InfrastructureManager works with Optuna-optimized HardwareConfig."""
@@ -285,11 +252,7 @@ def test_optuna_hardware_integration():
     assert manager is not None
 
 
-# =========================================================================== #
-#                INFRASTRUCTURE MANAGER: PROCESS CLEANUP                      #
-# =========================================================================== #
-
-
+# INFRASTRUCTURE MANAGER: PROCESS CLEANUP
 @pytest.mark.integration
 def test_prepare_environment_with_process_kill_enabled(tmp_path, monkeypatch):
     """Test prepare_environment() with process kill enabled on non-shared environment."""
@@ -413,11 +376,7 @@ def test_prepare_environment_with_pbs_environment(tmp_path, monkeypatch):
     manager.release_resources(MockConfig())
 
 
-# =========================================================================== #
-#                INFRASTRUCTURE MANAGER: CACHE FLUSHING                       #
-# =========================================================================== #
-
-
+# INFRASTRUCTURE MANAGER: CACHE FLUSHING
 @pytest.mark.unit
 def test_flush_compute_cache_with_cuda(monkeypatch):
     """Test _flush_compute_cache() with CUDA available."""

@@ -11,36 +11,24 @@ All functions handle missing dependencies (plotly) and plot generation
 failures gracefully with informative logging.
 """
 
-# =========================================================================== #
-#                         STANDARD IMPORTS                                    #
-# =========================================================================== #
+# Standard Imports
 import logging
 from pathlib import Path
 from typing import Callable
 
-# =========================================================================== #
-#                         THIRD-PARTY IMPORTS                                 #
-# =========================================================================== #
+# Third-Party Imports
 import optuna
 
-# =========================================================================== #
-#                         INTERNAL IMPORTS                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import LOGGER_NAME
 
-# =========================================================================== #
-#                         RELATIVE IMPORTS                                    #
-# =========================================================================== #
+# Relative Imports
 from .utils import has_completed_trials
 
 logger = logging.getLogger(LOGGER_NAME)
 
 
-# =========================================================================== #
-#                         VISUALIZATION GENERATION                            #
-# =========================================================================== #
-
-
+# VISUALIZATION GENERATION
 def generate_visualizations(study: optuna.Study, output_dir: Path) -> None:
     """
     Generate and save all Optuna visualization plots.

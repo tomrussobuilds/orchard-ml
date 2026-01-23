@@ -5,31 +5,22 @@ Quick coverage tests to validate visualization utilities.
 These are minimal tests to boost coverage from 0% to ~15%.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.data_handler.data_explorer import (
     show_sample_images,
     show_samples_for_dataset,
 )
 
-# =========================================================================== #
-#                    SHOW SAMPLE IMAGES: SMOKE TESTS                          #
-# =========================================================================== #
 
-
+# SHOW SAMPLE IMAGES: SMOKE TESTS
 @pytest.mark.unit
 @patch("orchard.data_handler.data_explorer.plt")
 def test_show_sample_images_basic(mock_plt, tmp_path):
@@ -193,11 +184,7 @@ def test_show_sample_images_grayscale_line80(mock_plt, tmp_path):
     assert mock_plt.close.called
 
 
-# =========================================================================== #
-#                    SHOW SAMPLES FOR DATASET: SMOKE TESTS                    #
-# =========================================================================== #
-
-
+# SHOW SAMPLES FOR DATASET: SMOKE TESTS
 @pytest.mark.unit
 @patch("orchard.data_handler.data_explorer.show_sample_images")
 def test_show_samples_for_dataset_basic(mock_show_images, tmp_path):

@@ -5,30 +5,21 @@ Covers creation of RGB and grayscale synthetic datasets,
 NPZ file structure, metadata correctness, and data integrity.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 from pathlib import Path
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import numpy as np
 
-# =========================================================================== #
 #                                Module Under Test                            #
-# =========================================================================== #
 from orchard.data_handler import (
     MedMNISTData,
     create_synthetic_dataset,
     create_synthetic_grayscale_dataset,
 )
 
-# =========================================================================== #
-#                                   TESTS                                     #
-# =========================================================================== #
 
-
+# TESTS
 def test_create_synthetic_dataset_returns_metadata():
     """Factory should return a valid MedMNISTData object."""
     data = create_synthetic_dataset()

@@ -18,26 +18,17 @@ Centralizes reporting parameters to ensure standardized, publication-quality
 diagnostic output for every experiment.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import argparse
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-# =========================================================================== #
-#                               Internal Imports                              #
-# =========================================================================== #
+# Internal Imports
 from .types import BatchSize, PositiveInt
 
-# =========================================================================== #
-#                           Evaluation Configuration                          #
-# =========================================================================== #
 
-
+# EVALUATION CONFIGURATION
 class EvaluationConfig(BaseModel):
     """
     Visual reporting and performance metric persistence configuration.

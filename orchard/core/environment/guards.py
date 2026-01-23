@@ -14,9 +14,7 @@ These utilities ensure each run is isolated, reproducible, and safe
 even on clusters or shared systems.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import logging
 import os
 import platform
@@ -33,22 +31,15 @@ try:
 except ImportError:
     HAS_FCNTL = False
 
-# =========================================================================== #
-#                                Third-Party Imports                             #
-# =========================================================================== #
+# Third-Party Imports
 import psutil
 
-# =========================================================================== #
-#                               Global State                                  #
-# =========================================================================== #
+# Global State
 # Persistent file descriptor to prevent garbage collection from releasing locks
 _lock_fd: Optional[IO] = None
 
-# =========================================================================== #
-#                              Process Management                             #
-# =========================================================================== #
 
-
+# PROCESS MANAGEMENT
 def ensure_single_instance(lock_file: Path, logger: logging.Logger) -> None:
     """
     Implements a cooperative advisory lock to guarantee singleton execution.

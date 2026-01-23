@@ -4,28 +4,19 @@ This module validates model initialization, forward pass consistency,
 and output tensor shapes across various configurations.
 """
 
-# =========================================================================== #
-#                           STANDARD LIBRARY                                  #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                           THIRD-PARTY IMPORTS                               #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 import torch.nn as nn
 
-# =========================================================================== #
-#                           INTERNAL IMPORTS                                  #
-# =========================================================================== #
+# Internal Imports
 from orchard.models.vit_tiny import build_vit_tiny
 
-# =========================================================================== #
-#                               FIXUTRES                                      #
-# =========================================================================== #
 
-
+# FIXUTRES
 @pytest.fixture
 def mock_cfg():
     """Provides a standardized configuration mock for model building."""
@@ -41,11 +32,7 @@ def device():
     return torch.device("cpu")
 
 
-# =========================================================================== #
-#                               UNIT TESTS                                    #
-# =========================================================================== #
-
-
+# UNIT TESTS
 @pytest.mark.unit
 class TestBuildViTTiny:
     """

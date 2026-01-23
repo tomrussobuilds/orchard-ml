@@ -6,34 +6,25 @@ class balancing via WeightedRandomSampler, and hardware-aware infrastructure
 setup (seeding, workers, memory pinning).
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import logging
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import DATASET_REGISTRY, Config, worker_init_fn
 
 from .dataset import MedMNISTDataset
 from .fetcher import MedMNISTData
 from .transforms import get_pipeline_transforms
 
-# =========================================================================== #
-#                               DATALOADER FACTORY                            #
-# =========================================================================== #
 
-
+# DATALOADER FACTORY
 class DataLoaderFactory:
     """Orchestrates the creation of optimized PyTorch DataLoaders.
 
@@ -214,11 +205,7 @@ def get_dataloaders(metadata, cfg, is_optuna: bool = False):
     return factory.build(is_optuna=is_optuna)
 
 
-# =========================================================================== #
-#                               HEALTH UTILITIES                              #
-# =========================================================================== #
-
-
+# HEALTH UTILITIES
 class LazyNPZDataset(Dataset):
     """Torch Dataset that lazily loads images from a .npz file using memmap."""
 

@@ -6,27 +6,18 @@ Supports both RGB and Grayscale datasets with automatic channel promotion.
 Optimized for both CPU and GPU execution (torchvision v2).
 """
 
-# =========================================================================== #
-#                           STANDARD IMPORTS                                  #
-# =========================================================================== #
+# Standard Imports
 from typing import Tuple
 
-# =========================================================================== #
-#                           THIRD-PARTY IMPORTS                               #
-# =========================================================================== #
+# Third-Party Imports
 import torch
 from torchvision.transforms import v2
 
-# =========================================================================== #
-#                           INTERNAL IMPORTS                                  #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import Config, DatasetMetadata
 
-# =========================================================================== #
-#                         TRANSFORMATION UTILITIES                            #
-# =========================================================================== #
 
-
+# TRANSFORMATION UTILITIES
 def get_augmentations_description(cfg: Config) -> str:
     """
     Generates descriptive string of augmentations for logging.

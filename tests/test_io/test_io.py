@@ -4,30 +4,21 @@ Smoke Tests for Data I/O and Checkpoints Modules.
 Tests to validate NPZ validation, checksums, and model loading.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 import torch.nn as nn
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.io.checkpoints import load_model_weights
 from orchard.core.io.data_io import md5_checksum, validate_npz_keys
 
-# =========================================================================== #
-#                    VALIDATE NPZ KEYS                                        #
-# =========================================================================== #
 
-
+# VALIDATE NPZ KEYS
 @pytest.mark.unit
 def test_validate_npz_keys_valid_data():
     """Test validate_npz_keys passes with all required keys."""
@@ -83,11 +74,7 @@ def test_validate_npz_keys_empty_file():
         validate_npz_keys(mock_npz)
 
 
-# =========================================================================== #
-#                    MD5 CHECKSUM                                             #
-# =========================================================================== #
-
-
+# MD5 CHECKSUM
 @pytest.mark.unit
 def test_md5_checksum_basic(tmp_path):
     """Test md5_checksum calculates correct hash."""
@@ -146,11 +133,7 @@ def test_md5_checksum_binary_content(tmp_path):
     assert len(result) == 32
 
 
-# =========================================================================== #
-#                    LOAD MODEL WEIGHTS                                       #
-# =========================================================================== #
-
-
+# LOAD MODEL WEIGHTS
 @pytest.mark.unit
 def test_load_model_weights_file_not_found():
     """Test load_model_weights raises FileNotFoundError for missing checkpoint."""

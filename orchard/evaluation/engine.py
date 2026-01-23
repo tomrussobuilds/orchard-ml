@@ -5,33 +5,23 @@ Orchestrates the model inference lifecycle on test datasets.
 Handles batch processing, TTA integration, and results consolidation.
 """
 
+# Standard Imports
 import logging
-
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
 from typing import List, Tuple
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import LOGGER_NAME, Config
 
 from .metrics import compute_classification_metrics
 from .tta import adaptive_tta_predict
 
-# =========================================================================== #
-#                               EVALUATION ENGINE                             #
-# =========================================================================== #
-
+# EVALUATION ENGINE
 logger = logging.getLogger(LOGGER_NAME)
 
 
@@ -73,7 +63,7 @@ def evaluate_model(
                     model, inputs, device, is_anatomical, is_texture_based, cfg
                 )
             else:
-                # Standard single-pass inference
+                # Standard Imports
                 inputs = inputs.to(device)
                 logits = model(inputs)
                 probs = torch.softmax(logits, dim=1)

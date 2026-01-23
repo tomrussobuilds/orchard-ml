@@ -7,30 +7,21 @@ early stopping, and scheduler interaction.
 
 import tempfile
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import torch
 import torch.nn as nn
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.trainer import ModelTrainer
 
-# =========================================================================== #
-#                    FIXTURES                                                 #
-# =========================================================================== #
 
-
+# FIXTURES
 @pytest.fixture
 def mock_cfg():
     """Mock Config with training parameters."""
@@ -114,11 +105,7 @@ def trainer(simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cf
         yield trainer
 
 
-# =========================================================================== #
 #                    TESTS: Initialization                                    #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_trainer_init(trainer):
     """Test ModelTrainer initializes correctly."""
@@ -187,11 +174,7 @@ def test_trainer_amp_scaler_enabled(simple_model, mock_loaders, optimizer, sched
     assert trainer.scaler is not None
 
 
-# =========================================================================== #
 #                    TESTS: Checkpointing                                     #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_handle_checkpointing_improves(trainer):
     """Test checkpointing saves when AUC improves."""
@@ -233,11 +216,7 @@ def test_handle_checkpointing_early_stop(trainer):
     assert should_stop is True
 
 
-# =========================================================================== #
 #                    TESTS: Scheduler                                         #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_smart_step_scheduler_reduce_on_plateau(
     simple_model, mock_loaders, optimizer, criterion, mock_cfg
@@ -270,11 +249,7 @@ def test_smart_step_scheduler_step_lr(trainer):
     trainer._smart_step_scheduler(0.5)
 
 
-# =========================================================================== #
 #                    TESTS: Load Best Weights                                 #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_load_best_weights_success(trainer):
     """Test loading best weights from checkpoint."""
@@ -305,11 +280,7 @@ def test_load_best_weights_file_not_found(trainer):
         trainer.load_best_weights()
 
 
-# =========================================================================== #
 #                    TESTS: Training Loop                                     #
-# =========================================================================== #
-
-
 @pytest.mark.integration
 @patch("orchard.trainer.trainer.train_one_epoch")
 @patch("orchard.trainer.trainer.validate_epoch")
@@ -406,6 +377,45 @@ def test_train_mixup_cutoff(
 
         # Epoch 6-10: mixup_fn should be None
         assert calls[6].kwargs.get("mixup_fn") is None
+
+
+@pytest.mark.unit
+def test_smart_step_scheduler_with_non_gradscaler(
+    simple_model, mock_loaders, optimizer, criterion, mock_cfg
+):
+    """Test scheduler.step() is called when scaler is not GradScaler."""
+    train_loader, val_loader = mock_loaders
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2)
+
+    trainer = ModelTrainer(
+        model=simple_model,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        optimizer=optimizer,
+        scheduler=scheduler,
+        criterion=criterion,
+        device=torch.device("cpu"),
+        cfg=mock_cfg,
+    )
+
+    # Replace scaler with a non-GradScaler object to trigger the branch
+    trainer.scaler = MagicMock()  # Not a torch.amp.GradScaler
+
+    # Mock scheduler.step to track if it's called
+    original_step = trainer.scheduler.step
+    call_count = [0]
+
+    def mock_step(*args, **kwargs):
+        call_count[0] += 1
+        return original_step(*args, **kwargs)
+
+    trainer.scheduler.step = mock_step
+
+    # Call the method - should trigger scheduler.step() since scaler is not GradScaler
+    trainer._smart_step_scheduler(0.5)
+
+    # Verify scheduler.step was called
+    assert call_count[0] == 1, "scheduler.step() should be called when scaler is not GradScaler"
 
 
 if __name__ == "__main__":

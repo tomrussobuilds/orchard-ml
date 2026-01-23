@@ -32,9 +32,7 @@ Key Features:
     - Interactive HTML visualizations
 """
 
-# =========================================================================== #
-#                            INTERNAL IMPORTS                                 #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import (
     Config,
     LogStyle,
@@ -44,11 +42,8 @@ from orchard.core import (
 )
 from orchard.optimization import run_optimization
 
-# =========================================================================== #
-#                           MAIN EXECUTION                                    #
-# =========================================================================== #
 
-
+# MAIN EXECUTION
 def main() -> None:
     """
     Main orchestrator for hyperparameter optimization execution.
@@ -113,9 +108,6 @@ def main() -> None:
                 logger.info(f"Pipeline shutdown complete. Run directory: {paths.root}")
 
 
-# =========================================================================== #
-#                           ENTRY POINT                                       #
-# =========================================================================== #
-
+# ENTRY POINT
 if __name__ == "__main__":
     main()

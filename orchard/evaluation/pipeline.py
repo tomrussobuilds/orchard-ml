@@ -5,32 +5,24 @@ This package coordinates model inference, performance visualization,
 and structured experiment reporting using a memory-efficient Lazy approach.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import logging
 from pathlib import Path
 from typing import List, Tuple
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import LOGGER_NAME, Config, RunPaths
 
 from .engine import evaluate_model
 from .reporting import create_structured_report
 from .visualization import plot_confusion_matrix, plot_training_curves, show_predictions
 
-# =========================================================================== #
-#                               EVALUATION PIPELINE                           #
-# =========================================================================== #
+# EVALUATION PIPELINE
 # Global logger instance
 logger = logging.getLogger(LOGGER_NAME)
 

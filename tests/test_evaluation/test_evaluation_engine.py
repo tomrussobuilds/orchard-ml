@@ -4,30 +4,21 @@ This module verifies model inference, Test-Time Augmentation (TTA) logic,
 and logging behavior during the evaluation process.
 """
 
-# =========================================================================== #
-#                                 Standard Imports                            #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import Config
 from orchard.evaluation.engine import evaluate_model
 
-# =========================================================================== #
-#                                 MOCK CLASSES                                #
-# =========================================================================== #
 
-
+# MOCK CLASSES
 class SimpleModel(nn.Module):
     def __init__(self):
         super().__init__()
@@ -37,11 +28,7 @@ class SimpleModel(nn.Module):
         return self.fc(x)
 
 
-# =========================================================================== #
-#                                   FIXTURES                                  #
-# =========================================================================== #
-
-
+# FIXTURES
 @pytest.fixture
 def mock_dataloader():
     """Create a dummy DataLoader with 2 batches of data."""
@@ -58,11 +45,7 @@ def mock_config():
     return cfg
 
 
-# =========================================================================== #
-#                                  TEST CASES                                 #
-# =========================================================================== #
-
-
+# TEST CASES
 @pytest.mark.unit
 @patch("orchard.evaluation.engine.compute_classification_metrics")
 def test_evaluate_model_standard(mock_compute, mock_dataloader):

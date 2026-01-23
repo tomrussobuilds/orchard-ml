@@ -6,16 +6,11 @@ and tracking metrics from validation results during training
 or evaluation workflows.
 """
 
-# =========================================================================== #
-#                              Standard Imports                               #
-# =========================================================================== #
+# Standard Imports
 from typing import Dict
 
-# =========================================================================== #
-#                          METRIC EXTRACTOR                                   #
-# =========================================================================== #
 
-
+# METRIC EXTRACTOR
 class MetricExtractor:
     """
     Extracts and tracks metrics from validation results.

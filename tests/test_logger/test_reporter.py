@@ -5,20 +5,14 @@ Tests LogStyle constants, Reporter logging methods,
 and summary logging functions.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import MagicMock, PropertyMock, patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.logger.reporter import (
     LogStyle,
     Reporter,
@@ -30,11 +24,8 @@ from orchard.core.logger.reporter import (
     log_trial_start,
 )
 
-# =========================================================================== #
-#                    LOGSTYLE: CONSTANTS                                      #
-# =========================================================================== #
 
-
+# LOGSTYLE: CONSTANTS
 @pytest.mark.unit
 def test_logstyle_heavy_separator():
     """Test LogStyle HEAVY separator is 80 characters."""
@@ -73,11 +64,7 @@ def test_logstyle_indentation():
     assert len(LogStyle.DOUBLE_INDENT) == 2 * len(LogStyle.INDENT)
 
 
-# =========================================================================== #
-#                    REPORTER: INITIALIZATION                                 #
-# =========================================================================== #
-
-
+# REPORTER: INITIALIZATION
 @pytest.mark.unit
 def test_reporter_init():
     """Test Reporter can be instantiated."""
@@ -85,11 +72,7 @@ def test_reporter_init():
     assert isinstance(reporter, Reporter)
 
 
-# =========================================================================== #
-#                    LOG TRAINING SUMMARY                                     #
-# =========================================================================== #
-
-
+# LOG TRAINING SUMMARY
 @pytest.mark.unit
 def test_log_training_summary_basic():
     """Test log_training_summary logs basic training results."""
@@ -173,11 +156,7 @@ def test_log_training_summary_formats_accuracy():
     assert "87.65%" in log_output or "0.8765" in log_output
 
 
-# =========================================================================== #
-#                    LOG OPTIMIZATION SUMMARY                                 #
-# =========================================================================== #
-
-
+# LOG OPTIMIZATION SUMMARY
 @pytest.mark.unit
 def test_log_optimization_summary_completed_trials():
     """Test log_optimization_summary with completed trials."""
@@ -273,11 +252,7 @@ def test_log_optimization_summary_with_failed_trials():
     assert mock_logger.info.call_count > 0
 
 
-# =========================================================================== #
-#                    LOG OPTIMIZATION HEADER                                  #
-# =========================================================================== #
-
-
+# LOG OPTIMIZATION HEADER
 @pytest.mark.unit
 def test_log_optimization_header_basic():
     """Test log_optimization_header logs study configuration."""
@@ -378,11 +353,7 @@ def test_log_optimization_header_early_stop_auto_threshold():
     assert "auto" in log_output
 
 
-# =========================================================================== #
-#                    LOG TRIAL START                                          #
-# =========================================================================== #
-
-
+# LOG TRIAL START
 @pytest.mark.unit
 def test_log_trial_start_basic():
     """Test log_trial_start logs trial parameters."""
@@ -477,11 +448,7 @@ def test_log_trial_start_with_regular_floats():
     assert "e-" not in log_output
 
 
-# =========================================================================== #
-#                    LOG STUDY SUMMARY                                        #
-# =========================================================================== #
-
-
+# LOG STUDY SUMMARY
 @pytest.mark.unit
 def test_log_study_summary_value_error_on_best_trial():
     """Test log_study_summary handles ValueError from best_trial lookup."""
@@ -510,11 +477,7 @@ def test_log_study_summary_value_error_on_best_trial():
         assert warning_called, "Warning should be called when ValueError is raised"
 
 
-# =========================================================================== #
-#                    LOG BEST CONFIG EXPORT                                   #
-# =========================================================================== #
-
-
+# LOG BEST CONFIG EXPORT
 @pytest.mark.unit
 def test_log_best_config_export():
     """Test log_best_config_export logs config path."""
@@ -532,11 +495,7 @@ def test_log_best_config_export():
         assert "best_config.yaml" in log_output or "Configuration" in log_output
 
 
-# =========================================================================== #
-#                    REPORTER: LOG INITIAL STATUS                             #
-# =========================================================================== #
-
-
+# REPORTER: LOG INITIAL STATUS
 @pytest.mark.unit
 def test_reporter_log_initial_status():
     """Test Reporter.log_initial_status logs environment info."""
@@ -674,11 +633,7 @@ def test_reporter_log_initial_status_with_weight_variant():
     assert "IMAGENET1K_V1" in log_output
 
 
-# =========================================================================== #
-#                    INTEGRATION: LOGGER FALLBACK                             #
-# =========================================================================== #
-
-
+# INTEGRATION: LOGGER FALLBACK
 @pytest.mark.unit
 def test_functions_use_module_logger_when_no_instance():
     """Test logging functions use module logger when no instance provided."""

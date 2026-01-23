@@ -12,24 +12,17 @@ Key Modifications:
     - Grayscale → RGB channel compression
 """
 
-# =========================================================================== #
-#                           THIRD-PARTY IMPORTS                               #
-# =========================================================================== #
+# Third-Party Imports
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
 
-# =========================================================================== #
-#                           INTERNAL IMPORTS                                  #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import Config
 
-# =========================================================================== #
-#                           MODEL BUILDER                                     #
-# =========================================================================== #
 
-
+# MODEL BUILDER
 def build_resnet18_adapted(
     device: torch.device, num_classes: int, in_channels: int, cfg: Config
 ) -> nn.Module:
@@ -97,7 +90,7 @@ def build_resnet18_adapted(
     model.conv1 = new_conv
 
     # --- Step 4: Remove MaxPool (Prevent Additional Downsampling) ---
-    # Standard ResNet: 28x28 → 14x14 via MaxPool
+    # Standard Imports
     # Adapted: 28x28 → 28x28 via Identity (no downsampling)
     model.maxpool = nn.Identity()
 

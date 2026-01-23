@@ -6,9 +6,7 @@ to switch from console-only logging to file-based logging once experiment
 directories are initialized.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import logging
 import os
 import sys
@@ -17,16 +15,11 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Dict, Final, Optional
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from ..paths import LOGGER_NAME
 
-# =========================================================================== #
-#                                LOGGER CLASS                                 #
-# =========================================================================== #
 
-
+# LOGGER CLASS
 class Logger:
     """
     Manages centralized logging configuration with singleton-like behavior.
@@ -119,10 +112,7 @@ class Logger:
         return cls(name=name, log_dir=log_dir, level=numeric_level, **kwargs).get_logger()
 
 
-# =========================================================================== #
-#                                GLOBAL INSTANCE                              #
-# =========================================================================== #
-
+# GLOBAL INSTANCE
 # Initial bootstrap instance (Console-only).
 # Level is set to INFO by default, overridden by setup() during orchestration.
 logger: Final[logging.Logger] = Logger().get_logger()

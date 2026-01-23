@@ -5,27 +5,19 @@ Handles command-line interface (CLI) for the training pipeline.
 Bridges terminal inputs with hierarchical Pydantic configuration.
 """
 
-# =========================================================================== #
-#                               Standard Imports                              #
-# =========================================================================== #
+# Standard Imports
 import argparse
 from pathlib import Path
 
+# Internal Imports
 from .config.augmentation_config import AugmentationConfig
 from .config.evaluation_config import EvaluationConfig
-
-# =========================================================================== #
-#                               Internal Imports                              #
-# =========================================================================== #
 from .config.hardware_config import HardwareConfig
 from .config.telemetry_config import TelemetryConfig
 from .config.training_config import TrainingConfig
 
-# =========================================================================== #
-#                              Argument Parsing                               #
-# =========================================================================== #
 
-
+# ARGUMENT PARSING
 def parse_args() -> argparse.Namespace:
     """
     Configure and parse command-line arguments for the training script.

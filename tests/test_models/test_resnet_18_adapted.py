@@ -4,27 +4,18 @@ This module verifies the architectural modifications for 28x28 low-resolution
 medical imaging and validates output tensor shapes.
 """
 
-# =========================================================================== #
-#                           STANDARD LIBRARY                                  #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 
-# =========================================================================== #
-#                           INTERNAL IMPORTS                                  #
-# =========================================================================== #
+# Internal Imports
 from orchard.models import build_resnet18_adapted
 
-# =========================================================================== #
-#                                FIXTURES                                     #
-# =========================================================================== #
 
-
+# FIXTURES
 @pytest.fixture
 def mock_cfg():
     """Provides a standardized configuration mock for model building."""
@@ -40,11 +31,7 @@ def device():
     return torch.device("cpu")
 
 
-# =========================================================================== #
-#                               UNIT TESTS                                    #
-# =========================================================================== #
-
-
+# UNIT TESTS
 @pytest.mark.unit
 class TestResNet18Adapted:
     """

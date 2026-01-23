@@ -7,19 +7,13 @@ avoiding eager imports of heavy or optional dependencies (e.g. torch).
 All heavy modules are imported lazily via __getattr__ (PEP 562).
 """
 
-# =========================================================================== #
-#                                   Standard Imports                          #
-# =========================================================================== #
-
+# Standard Imports
 from __future__ import annotations
 
 from importlib import import_module
 from typing import Any
 
-# =========================================================================== #
-#                                   PUBLIC API                                #
-# =========================================================================== #
-
+# PUBLIC API
 __all__ = [
     "Config",
     "HardwareConfig",
@@ -34,10 +28,7 @@ __all__ = [
     "OptunaConfig",
 ]
 
-# =========================================================================== #
-#                               LAZY IMPORTS MAPPING                          #
-# =========================================================================== #
-
+# LAZY IMPORTS MAPPING
 _LAZY_IMPORTS: dict[str, str] = {
     "Config": "orchard.core.config.engine",
     "HardwareConfig": "orchard.core.config.hardware_config",
@@ -52,11 +43,8 @@ _LAZY_IMPORTS: dict[str, str] = {
     "OptunaConfig": "orchard.core.config.optuna_config",
 }
 
-# =========================================================================== #
-#                               LAZY LOADER FUNCTION                          #
-# =========================================================================== #
 
-
+# LAZY LOADER FUNCTION
 def __getattr__(name: str) -> Any:
     """
     Lazily import configuration components on first access.
@@ -75,10 +63,6 @@ def __getattr__(name: str) -> Any:
     return attr
 
 
-# =========================================================================== #
-#                                DIR SUPPORT                                  #
-# =========================================================================== #
-
-
+# DIR SUPPORT
 def __dir__() -> list[str]:
     return sorted(__all__)

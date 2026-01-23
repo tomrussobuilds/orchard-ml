@@ -5,30 +5,21 @@ Tests logger configuration, file rotation, reconfiguration,
 and singleton-like behavior.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 import logging
 import os
 from pathlib import Path
 from unittest.mock import patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.logger import Logger
 from orchard.core.paths import LOGGER_NAME
 
-# =========================================================================== #
-#                    LOGGER: INITIALIZATION                                   #
-# =========================================================================== #
 
-
+# LOGGER: INITIALIZATION
 @pytest.mark.unit
 def test_logger_init_console_only():
     """Test Logger initializes with console handler only when no log_dir."""
@@ -68,11 +59,7 @@ def test_logger_default_level():
     assert logger.logger.level == logging.INFO
 
 
-# =========================================================================== #
-#                    LOGGER: CONFIGURATION                                    #
-# =========================================================================== #
-
-
+# LOGGER: CONFIGURATION
 @pytest.mark.unit
 def test_logger_custom_level():
     """Test Logger accepts custom log level."""
@@ -103,11 +90,7 @@ def test_logger_propagate_false():
     assert logger.logger.propagate is False
 
 
-# =========================================================================== #
-#                    LOGGER: FILE HANDLING                                    #
-# =========================================================================== #
-
-
+# LOGGER: FILE HANDLING
 @pytest.mark.unit
 def test_logger_creates_log_directory(tmp_path):
     """Test Logger creates log directory if it doesn't exist."""
@@ -161,11 +144,7 @@ def test_logger_rotating_file_handler(tmp_path):
     assert file_handler.backupCount == backup_count
 
 
-# =========================================================================== #
-#                    LOGGER: RECONFIGURATION                                  #
-# =========================================================================== #
-
-
+# LOGGER: RECONFIGURATION
 @pytest.mark.unit
 def test_logger_reconfiguration_removes_old_handlers(tmp_path):
     """Test Logger removes old handlers when reconfigured."""
@@ -193,11 +172,7 @@ def test_logger_singleton_behavior():
     assert logger1.logger is logger2.logger
 
 
-# =========================================================================== #
-#                    LOGGER: CLASS METHODS                                    #
-# =========================================================================== #
-
-
+# LOGGER: CLASS METHODS
 @pytest.mark.unit
 def test_get_logger_returns_logger_instance():
     """Test get_logger() returns logging.Logger instance."""
@@ -281,11 +256,7 @@ def test_setup_debug_env_var():
     assert logger.level == logging.DEBUG
 
 
-# =========================================================================== #
-#                    LOGGER: LOGGING FUNCTIONALITY                            #
-# =========================================================================== #
-
-
+# LOGGER: LOGGING FUNCTIONALITY
 @pytest.mark.unit
 def test_logger_can_log_messages(tmp_path):
     """Test Logger can successfully log messages."""
@@ -320,11 +291,7 @@ def test_logger_handles_unicode(tmp_path):
     assert "🚀" in log_content
 
 
-# =========================================================================== #
-#                    LOGGER: EDGE CASES                                       #
-# =========================================================================== #
-
-
+# LOGGER: EDGE CASES
 @pytest.mark.unit
 def test_logger_handles_permission_error(tmp_path):
     """Test Logger handles permission errors gracefully."""

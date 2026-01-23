@@ -5,26 +5,17 @@ Tests DatasetMetadata base model and DatasetRegistryWrapper
 for validation, property methods, and error handling.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from pathlib import Path
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.metadata import DatasetMetadata, DatasetRegistryWrapper
 
-# =========================================================================== #
-#                    DATASET METADATA TESTS                                   #
-# =========================================================================== #
 
-
+# DATASET METADATA TESTS
 @pytest.mark.unit
 def test_dataset_metadata_repr_all_components():
     """Test DatasetMetadata __repr__ includes all components."""
@@ -54,11 +45,7 @@ def test_dataset_metadata_repr_all_components():
     assert result.endswith(">")
 
 
-# =========================================================================== #
-#                    DATASET REGISTRY WRAPPER TESTS                           #
-# =========================================================================== #
-
-
+# DATASET REGISTRY WRAPPER TESTS
 @pytest.mark.unit
 def test_registry_wrapper_get_dataset_not_found():
     """Test DatasetRegistryWrapper.get_dataset raises KeyError for unknown dataset."""

@@ -5,27 +5,18 @@ Tests inference settings, visualization parameters,
 and report export format validation.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from argparse import Namespace
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 from pydantic import ValidationError
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.config import EvaluationConfig
 
-# =========================================================================== #
-#                    EVALUATION CONFIG: DEFAULTS                              #
-# =========================================================================== #
 
-
+# EVALUATION CONFIG: DEFAULTS
 @pytest.mark.unit
 def test_evaluation_config_defaults():
     """Test EvaluationConfig with default values."""
@@ -62,11 +53,7 @@ def test_evaluation_config_custom_values():
     assert config.report_format == "csv"
 
 
-# =========================================================================== #
-#                    EVALUATION CONFIG: VALIDATION                            #
-# =========================================================================== #
-
-
+# EVALUATION CONFIG: VALIDATION
 @pytest.mark.unit
 def test_batch_size_bounds():
     """Test batch_size must be in [1, 2048]."""
@@ -127,11 +114,7 @@ def test_grid_cols_positive():
         EvaluationConfig(grid_cols=0)
 
 
-# =========================================================================== #
-#                    EVALUATION CONFIG: FORMAT VALIDATION                     #
-# =========================================================================== #
-
-
+# EVALUATION CONFIG: FORMAT VALIDATION
 @pytest.mark.unit
 def test_report_format_validation_valid():
     """Test report_format accepts valid formats."""
@@ -160,11 +143,7 @@ def test_report_format_case_insensitive():
     assert config.report_format == "xlsx"
 
 
-# =========================================================================== #
-#                    EVALUATION CONFIG: VISUALIZATION                         #
-# =========================================================================== #
-
-
+# EVALUATION CONFIG: VISUALIZATION
 @pytest.mark.unit
 def test_colormap_string():
     """Test cmap_confusion accepts string values."""
@@ -199,11 +178,7 @@ def test_fig_size_tuple():
         EvaluationConfig(fig_size_predictions=(12, -5))
 
 
-# =========================================================================== #
-#                    EVALUATION CONFIG: EXPORT FLAGS                          #
-# =========================================================================== #
-
-
+# EVALUATION CONFIG: EXPORT FLAGS
 @pytest.mark.unit
 def test_save_flags_boolean():
     """Test save flags accept boolean values."""
@@ -222,11 +197,7 @@ def test_save_flags_default_true():
     assert config.save_predictions_grid is True
 
 
-# =========================================================================== #
-#                    EVALUATION CONFIG: FROM ARGS                             #
-# =========================================================================== #
-
-
+# EVALUATION CONFIG: FROM ARGS
 @pytest.mark.unit
 def test_from_args():
     """Test EvaluationConfig.from_args() factory."""
@@ -252,11 +223,7 @@ def test_from_args_partial():
     assert config.report_format == "xlsx"  # Default
 
 
-# =========================================================================== #
-#                    EVALUATION CONFIG: IMMUTABILITY                          #
-# =========================================================================== #
-
-
+# EVALUATION CONFIG: IMMUTABILITY
 @pytest.mark.unit
 def test_config_is_frozen():
     """Test EvaluationConfig is immutable after creation."""

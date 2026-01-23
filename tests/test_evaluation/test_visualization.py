@@ -6,21 +6,15 @@ confusion matrices, and prediction grids.
 These are essential smoke tests to boost coverage from 0% to ~30%.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import numpy as np
 import pytest
 import torch
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.evaluation.visualization import (
     _denormalize_image,
     _prepare_for_plt,
@@ -29,11 +23,8 @@ from orchard.evaluation.visualization import (
     show_predictions,
 )
 
-# =========================================================================== #
-#                    PLOT TRAINING CURVES                                     #
-# =========================================================================== #
 
-
+# PLOT TRAINING CURVES
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.np.savez")
@@ -86,11 +77,7 @@ def test_plot_training_curves_empty_lists(mock_savez, mock_plt, tmp_path):
     plot_training_curves(train_losses, val_accuracies, out_path, mock_cfg)
 
 
-# =========================================================================== #
-#                    PLOT CONFUSION MATRIX                                    #
-# =========================================================================== #
-
-
+# PLOT CONFUSION MATRIX
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.confusion_matrix")
@@ -151,11 +138,7 @@ def test_plot_confusion_matrix_with_nan(mock_cm, mock_plt, tmp_path):
     plot_confusion_matrix(all_labels, all_preds, classes, out_path, mock_cfg)
 
 
-# =========================================================================== #
-#                    SHOW PREDICTIONS                                         #
-# =========================================================================== #
-
-
+# SHOW PREDICTIONS
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization._get_predictions_batch")
@@ -364,11 +347,7 @@ def test_show_predictions_with_custom_n(mock_get_batch, mock_plt, tmp_path):
     assert mock_get_batch.call_args[0][3] == 6
 
 
-# =========================================================================== #
-#                    HELPER FUNCTIONS - DIRECT TESTS                          #
-# =========================================================================== #
-
-
+# HELPER FUNCTIONS - DIRECT TESTS
 @pytest.mark.unit
 def test_get_predictions_batch_directly():
     """Test _get_predictions_batch function directly (lines 183-191)."""
@@ -461,11 +440,7 @@ def test_finalize_figure_without_save():
     mock_plt.close.assert_called_once()
 
 
-# =========================================================================== #
 #                    HELPER FUNCTIONS - DENORMALIZE & PREPARE                 #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_denormalize_image():
     """Test _denormalize_image reverses normalization."""

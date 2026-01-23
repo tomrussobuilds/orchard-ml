@@ -5,20 +5,14 @@ Tests Pydantic annotated types and validators for domain-specific
 constraints (paths, hyperparameters, probabilities).
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from pathlib import Path
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 from pydantic import BaseModel, ValidationError
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.config.types import (  # Generic primitives; Filesystem; Hardware; Model geometry; Optimization; Augmentation; System
     BatchSize,
     BlurSigma,
@@ -46,11 +40,8 @@ from orchard.core.config.types import (  # Generic primitives; Filesystem; Hardw
     ZoomScale,
 )
 
-# =========================================================================== #
-#                    GENERIC PRIMITIVES: POSITIVE INT                         #
-# =========================================================================== #
 
-
+# GENERIC PRIMITIVES: POSITIVE INT
 @pytest.mark.unit
 def test_positive_int_valid():
     """Test PositiveInt accepts values > 0."""
@@ -76,11 +67,7 @@ def test_positive_int_invalid():
         Model(value=-5)
 
 
-# =========================================================================== #
-#                    GENERIC PRIMITIVES: NON-NEGATIVE                         #
-# =========================================================================== #
-
-
+# GENERIC PRIMITIVES: NON-NEGATIVE
 @pytest.mark.unit
 def test_non_negative_int_valid():
     """Test NonNegativeInt accepts values >= 0."""
@@ -114,11 +101,7 @@ def test_non_negative_float_valid():
     assert Model(value=1.5).value == 1.5
 
 
-# =========================================================================== #
-#                    PROBABILITIES AND PERCENTAGES                            #
-# =========================================================================== #
-
-
+# PROBABILITIES AND PERCENTAGES
 @pytest.mark.unit
 def test_probability_bounds():
     """Test Probability accepts [0.0, 1.0]."""
@@ -154,11 +137,7 @@ def test_percentage_bounds():
         Model(pct=1.5)
 
 
-# =========================================================================== #
-#                    FILESYSTEM: VALIDATED PATH                               #
-# =========================================================================== #
-
-
+# FILESYSTEM: VALIDATED PATH
 @pytest.mark.unit
 def test_validated_path_expansion():
     """Test ValidatedPath expands ~ and resolves to absolute."""
@@ -198,11 +177,7 @@ def test_validated_path_json_serialization():
     assert json_data["path"] == str(model.path)
 
 
-# =========================================================================== #
-#                    HARDWARE: WORKER COUNT AND BATCH SIZE                    #
-# =========================================================================== #
-
-
+# HARDWARE: WORKER COUNT AND BATCH SIZE
 @pytest.mark.unit
 def test_worker_count_bounds():
     """Test WorkerCount accepts non-negative integers."""
@@ -234,11 +209,7 @@ def test_batch_size_bounds():
         Model(batch=3000)
 
 
-# =========================================================================== #
-#                    MODEL GEOMETRY                                           #
-# =========================================================================== #
-
-
+# MODEL GEOMETRY
 @pytest.mark.unit
 def test_image_size_bounds():
     """Test ImageSize must be in [28, 1024]."""
@@ -293,11 +264,7 @@ def test_dropout_rate_bounds():
         Model(dropout=1.0)
 
 
-# =========================================================================== #
-#                    OPTIMIZATION HYPERPARAMETERS                             #
-# =========================================================================== #
-
-
+# OPTIMIZATION HYPERPARAMETERS
 @pytest.mark.unit
 def test_learning_rate_bounds():
     """Test LearningRate must be in (1e-8, 1.0)."""
@@ -377,11 +344,7 @@ def test_grad_norm_bounds():
         Model(grad=200.0)
 
 
-# =========================================================================== #
-#                    AUGMENTATION TYPES                                       #
-# =========================================================================== #
-
-
+# AUGMENTATION TYPES
 @pytest.mark.unit
 def test_rotation_degrees_bounds():
     """Test RotationDegrees must be in [0, 360]."""
@@ -447,11 +410,7 @@ def test_blur_sigma_bounds():
         Model(blur=10.0)
 
 
-# =========================================================================== #
-#                    SYSTEM METADATA TYPES                                    #
-# =========================================================================== #
-
-
+# SYSTEM METADATA TYPES
 @pytest.mark.unit
 def test_project_slug_pattern():
     """Test ProjectSlug enforces lowercase alphanumeric + underscore/dash."""

@@ -5,28 +5,19 @@ Tests Optuna study configuration, early stopping parameters,
 sampler/pruner selection, and storage backend configuration.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 import warnings
 from pathlib import Path
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 from pydantic import ValidationError
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.config import OptunaConfig
 
-# =========================================================================== #
-#                    OPTUNA CONFIG: DEFAULTS                                  #
-# =========================================================================== #
 
-
+# OPTUNA CONFIG: DEFAULTS
 @pytest.mark.unit
 def test_optuna_config_defaults():
     """Test OptunaConfig with default values."""
@@ -59,11 +50,7 @@ def test_optuna_config_custom_values():
     assert config.metric_name == "accuracy"
 
 
-# =========================================================================== #
-#                    OPTUNA CONFIG: VALIDATION                                #
-# =========================================================================== #
-
-
+# OPTUNA CONFIG: VALIDATION
 @pytest.mark.unit
 def test_invalid_metric_name_rejected():
     """Test invalid metric_name is rejected."""
@@ -125,11 +112,7 @@ def test_show_progress_bar_warning():
         assert any("may corrupt tqdm output" in str(warning.message) for warning in w)
 
 
-# =========================================================================== #
-#                    OPTUNA CONFIG: EARLY STOPPING                            #
-# =========================================================================== #
-
-
+# OPTUNA CONFIG: EARLY STOPPING
 @pytest.mark.unit
 def test_early_stopping_configuration():
     """Test early stopping parameter configuration."""
@@ -166,11 +149,7 @@ def test_early_stopping_patience_positive():
         OptunaConfig(early_stopping_patience=0)
 
 
-# =========================================================================== #
-#                    OPTUNA CONFIG: SAMPLER AND PRUNER                        #
-# =========================================================================== #
-
-
+# OPTUNA CONFIG: SAMPLER AND PRUNER
 @pytest.mark.unit
 def test_sampler_types():
     """Test valid sampler types are accepted."""
@@ -195,11 +174,7 @@ def test_pruning_can_be_disabled():
     assert config.enable_pruning is False
 
 
-# =========================================================================== #
-#                    OPTUNA CONFIG: STORAGE BACKEND                           #
-# =========================================================================== #
-
-
+# OPTUNA CONFIG: STORAGE BACKEND
 @pytest.mark.unit
 def test_storage_type_options():
     """Test valid storage types are accepted."""
@@ -270,11 +245,7 @@ def test_get_storage_url_postgresql():
     assert "optuna" in str(url)
 
 
-# =========================================================================== #
-#                    OPTUNA CONFIG: DIRECTION                                 #
-# =========================================================================== #
-
-
+# OPTUNA CONFIG: DIRECTION
 @pytest.mark.unit
 def test_direction_maximize():
     """Test direction='maximize' is accepted."""
@@ -289,11 +260,7 @@ def test_direction_minimize():
     assert config.direction == "minimize"
 
 
-# =========================================================================== #
-#                    OPTUNA CONFIG: FROM ARGS                                 #
-# =========================================================================== #
-
-
+# OPTUNA CONFIG: FROM ARGS
 @pytest.mark.unit
 def test_from_args(optuna_args):
     """Test OptunaConfig.from_args() factory."""
@@ -317,11 +284,7 @@ def test_from_args_partial():
     assert config.study_name == "vision_optimization"  # Default
 
 
-# =========================================================================== #
-#                    OPTUNA CONFIG: IMMUTABILITY                              #
-# =========================================================================== #
-
-
+# OPTUNA CONFIG: IMMUTABILITY
 @pytest.mark.unit
 def test_config_is_frozen():
     """Test OptunaConfig is immutable after creation."""

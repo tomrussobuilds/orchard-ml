@@ -5,27 +5,18 @@ Tests hyperparameter validation, LR bounds, batch size limits,
 and cross-field validation logic.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 import argparse
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 from pydantic import ValidationError
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.config import TrainingConfig
 
-# =========================================================================== #
-#                         UNIT TESTS: DEFAULTS                                #
-# =========================================================================== #
 
-
+# UNIT TESTS: DEFAULTS
 @pytest.mark.unit
 def test_training_config_defaults():
     """Test TrainingConfig with default values."""
@@ -40,11 +31,7 @@ def test_training_config_defaults():
     assert config.weight_decay == 5e-4
 
 
-# =========================================================================== #
-#                         UNIT TESTS: LEARNING RATE VALIDATION                #
-# =========================================================================== #
-
-
+# UNIT TESTS: LEARNING RATE VALIDATION
 @pytest.mark.unit
 def test_lr_within_bounds():
     """Test valid learning rate values."""
@@ -75,11 +62,7 @@ def test_lr_too_large_rejected():
         TrainingConfig(learning_rate=1.5)
 
 
-# =========================================================================== #
-#                         UNIT TESTS: BATCH SIZE VALIDATION                   #
-# =========================================================================== #
-
-
+# UNIT TESTS: BATCH SIZE VALIDATION
 @pytest.mark.unit
 def test_batch_size_valid_range():
     """Test batch size within valid range."""
@@ -108,11 +91,7 @@ def test_batch_size_negative_rejected():
         TrainingConfig(batch_size=-1)
 
 
-# =========================================================================== #
-#                         UNIT TESTS: AMP VALIDATION                          #
-# =========================================================================== #
-
-
+# UNIT TESTS: AMP VALIDATION
 @pytest.mark.unit
 def test_amp_with_small_batch_rejected():
     """Test AMP + batch_size < 4 is rejected."""
@@ -129,11 +108,7 @@ def test_amp_with_sufficient_batch_allowed():
     assert config.batch_size == 16
 
 
-# =========================================================================== #
-#                         UNIT TESTS: REGULARIZATION                          #
-# =========================================================================== #
-
-
+# UNIT TESTS: REGULARIZATION
 @pytest.mark.unit
 def test_label_smoothing_bounds():
     """Test label_smoothing within valid range."""
@@ -188,11 +163,7 @@ def test_weight_decay_too_large_rejected():
         TrainingConfig(weight_decay=0.5)
 
 
-# =========================================================================== #
-#                         UNIT TESTS: MOMENTUM                                #
-# =========================================================================== #
-
-
+# UNIT TESTS: MOMENTUM
 @pytest.mark.unit
 def test_momentum_bounds():
     """Test momentum within valid range [0, 1)."""
@@ -218,11 +189,7 @@ def test_momentum_negative_rejected():
         TrainingConfig(momentum=-0.1)
 
 
-# =========================================================================== #
-#                         UNIT TESTS: GRADIENT CLIPPING                       #
-# =========================================================================== #
-
-
+# UNIT TESTS: GRADIENT CLIPPING
 @pytest.mark.unit
 def test_grad_clip_valid():
     """Test gradient clipping within valid range."""
@@ -244,11 +211,7 @@ def test_grad_clip_too_large_rejected():
         TrainingConfig(grad_clip=150.0)
 
 
-# =========================================================================== #
-#                         UNIT TESTS: FROM_ARGS FACTORY                       #
-# =========================================================================== #
-
-
+# UNIT TESTS: FROM_ARGS FACTORY
 @pytest.mark.unit
 def test_from_args_basic():
     """Test TrainingConfig.from_args() with basic arguments."""
@@ -286,11 +249,7 @@ def test_from_args_only_valid_fields():
     assert not hasattr(config, "invalid_field")
 
 
-# =========================================================================== #
 #                         EDGE CASES & REGRESSION TESTS                       #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_frozen_immutability():
     """Test TrainingConfig is frozen (immutable)."""

@@ -5,22 +5,16 @@ Tests hardware detection, device configuration, CUDA utilities,
 and CPU thread management.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 import os
 from unittest.mock import patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import matplotlib
 import pytest
 import torch
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.environment import (
     apply_cpu_threads,
     configure_system_libraries,
@@ -31,11 +25,8 @@ from orchard.core.environment import (
     to_device_obj,
 )
 
-# =========================================================================== #
-#                    SYSTEM CONFIGURATION                                     #
-# =========================================================================== #
 
-
+# SYSTEM CONFIGURATION
 @pytest.mark.unit
 @patch("platform.system", return_value="Linux")
 def test_configure_system_libraries_linux(mock_platform):
@@ -84,11 +75,7 @@ def test_configure_system_libraries_windows(mock_platform):
         assert matplotlib.get_backend() == original_backend
 
 
-# =========================================================================== #
-#                    DEVICE DETECTION                                         #
-# =========================================================================== #
-
-
+# DEVICE DETECTION
 @pytest.mark.unit
 @patch("torch.cuda.is_available", return_value=True)
 def test_detect_best_device_cuda(mock_cuda):
@@ -123,11 +110,7 @@ def test_detect_best_device_cpu(mock_cuda):
         assert device == "cpu"
 
 
-# =========================================================================== #
-#                    DEVICE OBJECT CONVERSION                                 #
-# =========================================================================== #
-
-
+# DEVICE OBJECT CONVERSION
 @pytest.mark.unit
 def test_to_device_obj_cpu():
     """Test to_device_obj converts 'cpu' string to torch.device."""
@@ -202,11 +185,7 @@ def test_to_device_obj_case_sensitivity():
         to_device_obj("CPU")
 
 
-# =========================================================================== #
-#                    CUDA UTILITIES                                           #
-# =========================================================================== #
-
-
+# CUDA UTILITIES
 @pytest.mark.unit
 @patch("torch.cuda.is_available", return_value=False)
 def test_get_cuda_name_unavailable(mock_cuda):
@@ -266,11 +245,7 @@ def test_get_vram_info_query_failed(mock_mem_info, mock_device_count, mock_cuda)
     assert info == "Query Failed"
 
 
-# =========================================================================== #
-#                    CPU THREAD MANAGEMENT                                    #
-# =========================================================================== #
-
-
+# CPU THREAD MANAGEMENT
 @pytest.mark.unit
 @patch("os.cpu_count", return_value=8)
 def test_get_num_workers_standard(mock_cpu_count):
@@ -359,11 +334,7 @@ def test_apply_cpu_threads_high_core_system(mock_cpu_count):
     assert torch.get_num_threads() == 12
 
 
-# =========================================================================== #
-#                    INTEGRATION TESTS                                        #
-# =========================================================================== #
-
-
+# INTEGRATION TESTS
 @pytest.mark.integration
 @patch("os.cpu_count", return_value=8)
 def test_full_hardware_workflow(mock_cpu_count):

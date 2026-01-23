@@ -19,21 +19,15 @@ Strict validation during initialization guarantees logically sound and
 reproducible execution context for the RootOrchestrator.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import argparse
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-# =========================================================================== #
-#                               Relative Imports                              #
-# =========================================================================== #
+# Relative Imports
 from ..io import load_config_from_yaml
 from ..metadata.wrapper import DatasetRegistryWrapper
 from ..paths import PROJECT_ROOT
@@ -46,11 +40,8 @@ from .optuna_config import OptunaConfig
 from .telemetry_config import TelemetryConfig
 from .training_config import TrainingConfig
 
-# =========================================================================== #
-#                            Main Configuration                               #
-# =========================================================================== #
 
-
+# MAIN CONFIGURATION
 class Config(BaseModel):
     """
     Main experiment manifest aggregating specialized sub-configurations.

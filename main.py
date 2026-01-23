@@ -31,9 +31,7 @@ Key Features:
     - Comprehensive artifact suite (models, plots, reports)
 """
 
-# =========================================================================== #
-#                            INTERNAL IMPORTS                                 #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import (
     DATASET_REGISTRY,
     Config,
@@ -52,11 +50,8 @@ from orchard.evaluation import run_final_evaluation
 from orchard.models import get_model
 from orchard.trainer import ModelTrainer, get_criterion, get_optimizer, get_scheduler
 
-# =========================================================================== #
-#                           MAIN EXECUTION                                    #
-# =========================================================================== #
 
-
+# MAIN EXECUTION
 def main() -> None:
     """
     Main orchestrator for training pipeline execution.
@@ -97,9 +92,7 @@ def main() -> None:
         ds_meta = DATASET_REGISTRY[cfg.dataset.metadata.name.lower()]
 
         try:
-            # ================================================================ #
-            #                       DATA PREPARATION                           #
-            # ================================================================ #
+            # DATA PREPARATION
             run_logger.info("")
             run_logger.info(LogStyle.HEAVY)
             run_logger.info(f"{'DATA PREPARATION':^80}")
@@ -121,9 +114,7 @@ def main() -> None:
                 cfg=cfg,
             )
 
-            # ================================================================ #
-            #                     MODEL TRAINING                               #
-            # ================================================================ #
+            # MODEL TRAINING
             run_logger.info("")
             run_logger.info(LogStyle.DOUBLE)
             run_logger.info(f"{'TRAINING PIPELINE: ' + cfg.model.name.upper():^80}")
@@ -150,9 +141,7 @@ def main() -> None:
 
             _, train_losses, val_metrics_history = trainer.train()
 
-            # ================================================================ #
-            #                     FINAL EVALUATION                             #
-            # ================================================================ #
+            # FINAL EVALUATION
             run_logger.info("")
             run_logger.info(LogStyle.HEAVY)
             run_logger.info(f"{'FINAL EVALUATION PHASE':^80}")
@@ -171,9 +160,7 @@ def main() -> None:
                 log_path=paths.logs / "session.log",
             )
 
-            # ================================================================ #
-            #                     PIPELINE SUMMARY                             #
-            # ================================================================ #
+            # PIPELINE SUMMARY
             log_training_summary(
                 cfg=cfg,
                 test_acc=test_acc,
@@ -198,9 +185,6 @@ def main() -> None:
                 run_logger.info(f"Pipeline shutdown complete. Run directory: {paths.root}")
 
 
-# =========================================================================== #
-#                           ENTRY POINT                                       #
-# =========================================================================== #
-
+# ENTRY POINT
 if __name__ == "__main__":
     main()

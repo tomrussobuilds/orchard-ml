@@ -8,9 +8,7 @@ Focus:
 - LazyNPZDataset and create_temp_loader
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -18,22 +16,15 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import torch
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import DATASET_REGISTRY
 from orchard.data_handler import DataLoaderFactory, LazyNPZDataset, create_temp_loader
 
-# =========================================================================== #
-#                          MOCK CONFIG AND METADATA                            #
-# =========================================================================== #
 
-
+# MOCK CONFIG AND METADATA
 @pytest.fixture
 def mock_cfg():
     cfg = MagicMock()
@@ -79,11 +70,7 @@ def mock_metadata():
     return metadata
 
 
-# =========================================================================== #
-#                          DATA LOADER FACTORY TESTS                           #
-# =========================================================================== #
-
-
+# DATA LOADER FACTORY TESTS
 @pytest.mark.unit
 def test_build_loaders_with_weighted_sampler(mock_cfg, mock_metadata):
     """Test DataLoaderFactory.build() with sampler and transforms."""
@@ -193,11 +180,7 @@ def test_infra_kwargs_no_pin_memory(monkeypatch, mock_cfg, mock_metadata):
         assert infra["pin_memory"] is False
 
 
-# =========================================================================== #
-#                             LAZY NPZ DATASET TESTS                           #
-# =========================================================================== #
-
-
+# LAZY NPZ DATASET TESTS
 @pytest.mark.unit
 def test_lazy_npz_dataset():
     """Test LazyNPZDataset loads and returns tensors correctly."""
@@ -318,9 +301,6 @@ def test_create_temp_loader_rgb():
         assert batch_imgs.shape[3] == 32
 
 
-# =========================================================================== #
-#                            MAIN TEST RUNNER                                   #
-# =========================================================================== #
-
+# MAIN TEST RUNNER
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

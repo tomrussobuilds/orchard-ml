@@ -6,27 +6,18 @@ They ensure that early stopping occurs under appropriate conditions and that all
 states, such as patience and threshold checks, are correctly handled.
 """
 
-# =========================================================================== #
-#                         STANDARD LIBRARY                                    #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import MagicMock
 
-# =========================================================================== #
-#                         THIRD-PARTY LIBRARY                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 from optuna.trial import Trial, TrialState
 
-# =========================================================================== #
-#                         INTERNAL IMPORTS                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.optimization import StudyEarlyStoppingCallback, get_early_stopping_callback
 
-# =========================================================================== #
-#                         TEST CASES                                          #
-# =========================================================================== #
 
-
+# TEST CASES
 @pytest.mark.unit
 def test_initialization_invalid_direction():
     """Test initialization with an invalid direction."""

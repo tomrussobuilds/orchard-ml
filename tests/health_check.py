@@ -4,14 +4,10 @@ Health Check and Integrity Module (Multi-Resolution with Visualization)
 Performs integrity checks across MedMNIST datasets, supports 28x28 and 224x224 resolutions.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import logging
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import RootOrchestrator
 from orchard.core.cli import parse_args
 from orchard.core.config import Config
@@ -20,9 +16,7 @@ from orchard.data_handler.data_explorer import show_samples_for_dataset
 from orchard.data_handler.factory import create_temp_loader
 from orchard.data_handler.fetcher import load_medmnist_health_check
 
-# =========================================================================== #
 #                                Logging Setup                                #
-# =========================================================================== #
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
@@ -99,8 +93,6 @@ def fetch_all_datasets_health_check() -> None:
         run_logger.info("Health check completed for all datasets.")
 
 
-# =========================================================================== #
-#                               ENTRY POINT                                    #
-# =========================================================================== #
+# ENTRY POINT
 if __name__ == "__main__":
     fetch_all_datasets_health_check()

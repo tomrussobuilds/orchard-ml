@@ -15,26 +15,19 @@ Usage:
 Expected Runtime: ~30 seconds on GPU, ~2 minutes on CPU
 """
 
-# =========================================================================== #
-#                              STANDARD LIBRARY                               #
-# =========================================================================== #
+# Standard Imports
 import argparse
 import os
 
-# =========================================================================== #
-#                            INTERNAL IMPORTS                                 #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import DATASET_REGISTRY, Config, LogStyle, RootOrchestrator, parse_args
 from orchard.data_handler import get_augmentations_description, get_dataloaders, load_medmnist
 from orchard.evaluation import run_final_evaluation
 from orchard.models import get_model
 from orchard.trainer import ModelTrainer, get_criterion, get_optimizer, get_scheduler
 
-# =========================================================================== #
-#                           SMOKE TEST EXECUTION                              #
-# =========================================================================== #
 
-
+# SMOKE TEST EXECUTION
 def run_smoke_test(args: argparse.Namespace) -> None:
     """
     Orchestrates lightweight pipeline validation for regression testing.
@@ -182,10 +175,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
             raise
 
 
-# =========================================================================== #
-#                           ENTRY POINT                                       #
-# =========================================================================== #
-
+# ENTRY POINT
 if __name__ == "__main__":
     cli_args = parse_args()
     run_smoke_test(args=cli_args)

@@ -6,9 +6,7 @@ models and Path objects) into YAML format, ensuring thread-safe and
 environment-agnostic persistence to the filesystem.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import logging
 import os
 from pathlib import Path
@@ -16,16 +14,11 @@ from typing import Any, Dict
 
 import yaml
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from ..paths import LOGGER_NAME
 
-# =========================================================================== #
-#                               YAML Orchestration                            #
-# =========================================================================== #
 
-
+# YAML ORCHESTRATION
 def save_config_as_yaml(data: Any, yaml_path: Path) -> Path:
     """
     Serializes and persists configuration data to a YAML file.
@@ -101,11 +94,6 @@ def load_config_from_yaml(yaml_path: Path) -> Dict[str, Any]:
 
     with open(yaml_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
-
-
-# =========================================================================== #
-#                               Internal Helpers                              #
-# =========================================================================== #
 
 
 def _sanitize_for_yaml(obj: Any) -> Any:

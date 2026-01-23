@@ -10,38 +10,26 @@ All export functions handle edge cases (no completed trials, missing
 timestamps) and provide informative logging.
 """
 
-# =========================================================================== #
-#                         STANDARD IMPORTS                                    #
-# =========================================================================== #
+# Standard Imports
 import json
 import logging
 from typing import Dict, List, Optional
 
-# =========================================================================== #
-#                         THIRD-PARTY IMPORTS                                 #
-# =========================================================================== #
+# Third-Party Imports
 import optuna
 import pandas as pd
 
-# =========================================================================== #
-#                         INTERNAL IMPORTS                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import LOGGER_NAME, Config, RunPaths, log_best_config_export, save_config_as_yaml
 
-# =========================================================================== #
-#                         RELATIVE IMPORTS                                    #
-# =========================================================================== #
+# Relative Imports
 from .config import map_param_to_config_path
 from .utils import get_completed_trials, has_completed_trials
 
 logger = logging.getLogger(LOGGER_NAME)
 
 
-# =========================================================================== #
-#                         CONFIG EXPORT                                       #
-# =========================================================================== #
-
-
+# CONFIG EXPORT
 def export_best_config(study: optuna.Study, cfg: Config, paths: RunPaths) -> None:
     """
     Export best trial configuration as YAML file.

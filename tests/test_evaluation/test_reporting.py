@@ -5,28 +5,19 @@ This suite validates the integrity of the TrainingReport Pydantic model,
 the Excel export logic, and the factory function for report generation.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 from pathlib import Path
 from unittest.mock import ANY, MagicMock, patch
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import pandas as pd
 import pytest
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from orchard.evaluation import TrainingReport, create_structured_report
 
-# =========================================================================== #
-#                                    MOCKS                                    #
-# =========================================================================== #
 
-
+# MOCKS
 @pytest.fixture
 def mock_config():
     """Provides a mocked Config object with necessary nested attributes."""
@@ -69,11 +60,7 @@ def sample_report_data():
     }
 
 
-# =========================================================================== #
-#                                 UNIT TESTS                                  #
-# =========================================================================== #
-
-
+# UNIT TESTS
 @pytest.mark.unit
 def test_training_report_instantiation(sample_report_data):
     """Test if TrainingReport correctly validates and stores input data."""
@@ -170,9 +157,6 @@ def test_excel_formatting_logic(sample_report_data):
     mock_worksheet.set_column.assert_any_call("B:B", 70)
 
 
-# =========================================================================== #
-#                                 ENTRY POINT                                 #
-# =========================================================================== #
-
+# ENTRY POINT
 if __name__ == "__main__":
     pytest.main([__file__, "-vv", "-m", "unit"])

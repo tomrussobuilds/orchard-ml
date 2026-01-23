@@ -5,28 +5,19 @@ Quick coverage tests to validate factory pattern and model instantiation.
 These are minimal tests to boost coverage from 0% to ~20%.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import MagicMock
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 import torch.nn as nn
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.models.factory import get_model
 
-# =========================================================================== #
-#                    FACTORY: BASIC INSTANTIATION                             #
-# =========================================================================== #
 
-
+# FACTORY: BASIC INSTANTIATION
 @pytest.mark.unit
 def test_get_model_returns_nn_module():
     """Test get_model returns a torch.nn.Module instance."""
@@ -90,11 +81,7 @@ def test_get_model_case_insensitive():
     assert isinstance(model, nn.Module)
 
 
-# =========================================================================== #
-#                    FACTORY: REGISTRY VALIDATION                             #
-# =========================================================================== #
-
-
+# FACTORY: REGISTRY VALIDATION
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "model_name",

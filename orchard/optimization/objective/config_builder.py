@@ -6,21 +6,14 @@ Config instances for Optuna experiments, handling parameter mapping,
 metadata preservation, and validation.
 """
 
-# =========================================================================== #
-#                              Standard Imports                               #
-# =========================================================================== #
+# Standard Imports
 from typing import Any, Dict
 
-# =========================================================================== #
-#                             Internal Imports                                #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import Config
 
-# =========================================================================== #
-#                          CONFIG BUILDER                                     #
-# =========================================================================== #
 
-
+# CONFIG BUILDER
 class TrialConfigBuilder:
     """
     Builds trial-specific Config instances for Optuna trials.

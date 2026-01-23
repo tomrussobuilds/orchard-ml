@@ -5,27 +5,18 @@ Tests dataset configuration validation, metadata injection,
 force_rgb logic, and resolution handling.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 import argparse
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 from pydantic import ValidationError
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.config import DatasetConfig
 
-# =========================================================================== #
-#                         UNIT TESTS: CONSTRUCTION                            #
-# =========================================================================== #
 
-
+# UNIT TESTS: CONSTRUCTION
 @pytest.mark.unit
 def test_dataset_config_defaults():
     """Test DatasetConfig with default values."""
@@ -67,11 +58,7 @@ def test_img_size_explicit_override():
     assert config.resolution == 28
 
 
-# =========================================================================== #
-#                         UNIT TESTS: FORCE_RGB LOGIC                         #
-# =========================================================================== #
-
-
+# UNIT TESTS: FORCE_RGB LOGIC
 def test_force_rgb_disabled_keeps_grayscale(mock_grayscale_metadata):
     """Test force_rgb=False preserves grayscale channels."""
     config = DatasetConfig(metadata=mock_grayscale_metadata, force_rgb=False)
@@ -125,11 +112,7 @@ def test_force_rgb_native_rgb_noeffect(mock_metadata_28):
     assert config.processing_mode == "NATIVE-RGB"
 
 
-# =========================================================================== #
-#                         UNIT TESTS: PROPERTIES                              #
-# =========================================================================== #
-
-
+# UNIT TESTS: PROPERTIES
 @pytest.mark.unit
 def test_ensure_metadata_lazy_loading():
     """Test metadata lazy loading via _ensure_metadata."""
@@ -163,11 +146,7 @@ def test_processing_mode_classification(mock_grayscale_metadata, mock_metadata_2
     assert config_rgb.processing_mode == "NATIVE-RGB"
 
 
-# =========================================================================== #
-#                         UNIT TESTS: FROM_ARGS FACTORY                       #
-# =========================================================================== #
-
-
+# UNIT TESTS: FROM_ARGS FACTORY
 @pytest.mark.unit
 def test_from_args_basic(basic_args):
     """Test DatasetConfig.from_args() with basic arguments."""
@@ -227,11 +206,7 @@ def test_from_args_max_samples_positive():
     assert config.max_samples == 1000
 
 
-# =========================================================================== #
-#                         INTEGRATION TESTS: VALIDATION                       #
-# =========================================================================== #
-
-
+# INTEGRATION TESTS: VALIDATION
 @pytest.mark.integration
 def test_dataset_not_found_raises_error():
     """Test error raised for non-existent dataset."""
@@ -252,11 +227,7 @@ def test_resolution_224_loads_correct_metadata():
     assert config.metadata.native_resolution == 224
 
 
-# =========================================================================== #
 #                         EDGE CASES & REGRESSION TESTS                       #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_frozen_immutability():
     """Test DatasetConfig is frozen (immutable)."""

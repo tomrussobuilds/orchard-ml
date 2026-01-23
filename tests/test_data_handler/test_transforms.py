@@ -5,31 +5,22 @@ Tests augmentation description generation and torchvision v2
 training/validation pipelines for both RGB and Grayscale datasets.
 """
 
-# =========================================================================== #
-#                           STANDARD IMPORTS                                  #
-# =========================================================================== #
+# Standard Imports
 from types import SimpleNamespace
 
-# =========================================================================== #
-#                           THIRD-PARTY IMPORTS                               #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 from torchvision.transforms import v2
 
-# =========================================================================== #
-#                           MODULE UNDER TEST                                 #
-# =========================================================================== #
+# MODULE UNDER TEST
 from orchard.data_handler import (
     get_augmentations_description,
     get_pipeline_transforms,
 )
 
-# =========================================================================== #
-#                              FIXTURES                                       #
-# =========================================================================== #
 
-
+# FIXTURES
 @pytest.fixture
 def base_cfg():
     """Minimal configuration stub matching the required Config interface."""
@@ -81,11 +72,7 @@ def dummy_image_gray():
     return torch.randint(0, 255, (256, 256), dtype=torch.uint8)
 
 
-# =========================================================================== #
-#                     TEST: AUGMENTATION DESCRIPTION                           #
-# =========================================================================== #
-
-
+# TEST: AUGMENTATION DESCRIPTION
 def test_get_augmentations_description_contains_all_fields(base_cfg):
     """Augmentation description should include all configured operations."""
     descr = get_augmentations_description(base_cfg)
@@ -107,11 +94,7 @@ def test_get_augmentations_description_without_mixup(base_cfg):
     assert "MixUp" not in descr
 
 
-# =========================================================================== #
-#                     TEST: PIPELINE CONSTRUCTION                              #
-# =========================================================================== #
-
-
+# TEST: PIPELINE CONSTRUCTION
 def test_pipeline_returns_compose_objects(base_cfg, rgb_metadata):
     """Pipeline factory should return torchvision v2 Compose objects."""
     train_tf, val_tf = get_pipeline_transforms(base_cfg, rgb_metadata)
@@ -152,11 +135,7 @@ def test_normalization_stats_replicated_for_grayscale(base_cfg, grayscale_metada
     assert normalize.std == [0.25, 0.25, 0.25]
 
 
-# =========================================================================== #
 #                  TEST: PIPELINE EXECUTION (SMOKE TEST)                       #
-# =========================================================================== #
-
-
 def test_train_pipeline_executes_on_rgb_image(base_cfg, rgb_metadata, dummy_image_rgb):
     """Training pipeline should run end-to-end on RGB input."""
     train_tf, _ = get_pipeline_transforms(base_cfg, rgb_metadata)

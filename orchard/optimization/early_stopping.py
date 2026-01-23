@@ -5,31 +5,21 @@ Terminates optimization when a satisfactory metric threshold is reached,
 preventing wasteful computation when near-perfect performance is achieved.
 """
 
-# =========================================================================== #
-#                         STANDARD LIBRARY                                    #
-# =========================================================================== #
+# Standard Imports
 import logging
 from typing import Optional
 
-# =========================================================================== #
-#                         THIRD-PARTY IMPORTS                                 #
-# =========================================================================== #
+# Third-Party Imports
 from optuna.study import Study
 from optuna.trial import FrozenTrial, TrialState
 
-# =========================================================================== #
-#                         INTERNAL IMPORTS                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import LOGGER_NAME, LogStyle
 
 logger = logging.getLogger(LOGGER_NAME)
 
 
-# =========================================================================== #
-#                         EARLY STOPPING CALLBACK                             #
-# =========================================================================== #
-
-
+# EARLY STOPPING CALLBACK
 class StudyEarlyStoppingCallback:
     """
     Callback to stop Optuna study when target metric is achieved.
@@ -135,11 +125,7 @@ class StudyEarlyStoppingCallback:
         study.stop()
 
 
-# =========================================================================== #
-#                         CONFIGURATION HELPER                                #
-# =========================================================================== #
-
-
+# CONFIGURATION HELPER
 def get_early_stopping_callback(
     metric_name: str,
     direction: str,

@@ -5,23 +5,15 @@ Defines dataset metadata schema using Pydantic for immutability, type safety,
 and seamless integration with the global configuration engine.
 """
 
+# Standard Imports
 from pathlib import Path
-
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
 from typing import List, Tuple
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 from pydantic import BaseModel, ConfigDict, Field
 
-# =========================================================================== #
-#                              Metadata Schema                                #
-# =========================================================================== #
 
-
+# METADATA SCHEMA
 class DatasetMetadata(BaseModel):
     """
     Metadata container for a MedMNIST dataset.

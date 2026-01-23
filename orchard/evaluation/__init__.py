@@ -8,9 +8,7 @@ Augmentation (TTA), while automating the generation of artifacts
 (plots, reports) for experimental tracking.
 """
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from .engine import evaluate_model
 from .metrics import compute_classification_metrics
 from .pipeline import run_final_evaluation
@@ -18,10 +16,7 @@ from .reporting import TrainingReport, create_structured_report
 from .tta import _get_tta_transforms, adaptive_tta_predict
 from .visualization import plot_confusion_matrix, plot_training_curves, show_predictions
 
-# =========================================================================== #
-#                                PACKAGE INTERFACE                            #
-# =========================================================================== #
-
+# PACKAGE INTERFACE
 __all__ = [
     # Inference & Evaluation
     "evaluate_model",

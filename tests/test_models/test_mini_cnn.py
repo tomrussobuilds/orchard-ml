@@ -4,27 +4,18 @@ This module verifies the forward pass logic using mocking and validates
 output tensor shapes for the orchard model suite.
 """
 
-# =========================================================================== #
-#                           STANDARD LIBRARY                                  #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 
-# =========================================================================== #
-#                           INTERNAL IMPORTS                                  #
-# =========================================================================== #
+# Internal Imports
 from orchard.models import build_mini_cnn
 
-# =========================================================================== #
-#                                FIXTURES                                     #
-# =========================================================================== #
 
-
+# FIXTURES
 @pytest.fixture
 def mock_cfg():
     """Provides a standardized configuration mock for model building."""
@@ -42,11 +33,7 @@ def device():
     return torch.device("cpu")
 
 
-# =========================================================================== #
-#                               UNIT TESTS                                    #
-# =========================================================================== #
-
-
+# UNIT TESTS
 @pytest.mark.unit
 class TestMiniCNN:
     """

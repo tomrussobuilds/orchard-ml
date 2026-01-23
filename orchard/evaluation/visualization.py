@@ -7,16 +7,12 @@ matrices, and sample prediction grids. It is fully integrated with the
 Pydantic Configuration Engine for aesthetic and technical consistency.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import logging
 from pathlib import Path
 from typing import List, Sequence
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -24,19 +20,14 @@ import torch.nn as nn
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 from torch.utils.data import DataLoader
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import LOGGER_NAME, Config
 
 # Global logger instance
 logger = logging.getLogger(LOGGER_NAME)
 
-# =========================================================================== #
-#                               PUBLIC INTERFACE                              #
-# =========================================================================== #
 
-
+# PUBLIC INTERFACE
 def show_predictions(
     model: nn.Module,
     loader: DataLoader,
@@ -168,14 +159,6 @@ def plot_confusion_matrix(
     fig.savefig(out_path, dpi=cfg.evaluation.fig_dpi, bbox_inches="tight")
     plt.close()
     logger.info(f"Confusion matrix saved → {out_path.name}")
-
-
-# =========================================================================== #
-#                               INTERNAL HELPERS                              #
-# =========================================================================== #
-# The following functions are module-private and handle low-level numerical   #
-# transformations, model inference batches, and formatting for Matplotlib.    #
-# =========================================================================== #
 
 
 def _get_predictions_batch(model: nn.Module, loader: DataLoader, device: torch.device, n: int):

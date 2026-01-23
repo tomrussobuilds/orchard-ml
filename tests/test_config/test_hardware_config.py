@@ -5,29 +5,20 @@ Tests device resolution, reproducibility mode, num_workers logic,
 and lock file path generation.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 import tempfile
 from argparse import Namespace
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 from pydantic import ValidationError
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.config import HardwareConfig
 
-# =========================================================================== #
-#                    HARDWARE CONFIG: DEVICE RESOLUTION                       #
-# =========================================================================== #
 
-
+# HARDWARE CONFIG: DEVICE RESOLUTION
 @pytest.mark.unit
 def test_device_auto_resolves():
     """Test device='auto' resolves to best available."""
@@ -74,11 +65,7 @@ def test_invalid_device_fallback():
     assert config.device in ("mps", "cpu")
 
 
-# =========================================================================== #
-#                    HARDWARE CONFIG: REPRODUCIBILITY                         #
-# =========================================================================== #
-
-
+# HARDWARE CONFIG: REPRODUCIBILITY
 @pytest.mark.unit
 def test_reproducible_mode_disabled_by_default():
     """Test reproducible mode is False by default."""
@@ -115,11 +102,7 @@ def test_for_optuna_factory_enables_reproducibility():
     assert config.effective_num_workers == 0
 
 
-# =========================================================================== #
-#                    HARDWARE CONFIG: NUM_WORKERS                             #
-# =========================================================================== #
-
-
+# HARDWARE CONFIG: NUM_WORKERS
 @pytest.mark.unit
 def test_effective_num_workers_zero_when_reproducible():
     """Test effective_num_workers is 0 in reproducible mode."""
@@ -136,11 +119,7 @@ def test_effective_num_workers_respects_explicit_value():
     assert config.effective_num_workers >= 0
 
 
-# =========================================================================== #
-#                    HARDWARE CONFIG: AMP SUPPORT                             #
-# =========================================================================== #
-
-
+# HARDWARE CONFIG: AMP SUPPORT
 @pytest.mark.unit
 def test_supports_amp_cpu_false():
     """Test CPU does not support AMP."""
@@ -158,11 +137,7 @@ def test_supports_amp_cuda_true():
     assert config.supports_amp is True
 
 
-# =========================================================================== #
-#                    HARDWARE CONFIG: LOCK FILE PATH                          #
-# =========================================================================== #
-
-
+# HARDWARE CONFIG: LOCK FILE PATH
 @pytest.mark.unit
 def test_lock_file_path_in_temp_dir():
     """Test lock file is created in system temp directory."""
@@ -198,11 +173,7 @@ def test_lock_file_path_sanitizes_slashes():
     assert "org_project.lock" in lock_path.name
 
 
-# =========================================================================== #
-#                    HARDWARE CONFIG: PROJECT NAME VALIDATION                 #
-# =========================================================================== #
-
-
+# HARDWARE CONFIG: PROJECT NAME VALIDATION
 @pytest.mark.unit
 def test_project_name_validation_valid():
     """Test project_name follows slug pattern."""
@@ -223,11 +194,7 @@ def test_project_name_validation_invalid():
         HardwareConfig(project_name="UPPERCASE")
 
 
-# =========================================================================== #
-#                    HARDWARE CONFIG: FROM ARGS                               #
-# =========================================================================== #
-
-
+# HARDWARE CONFIG: FROM ARGS
 @pytest.mark.unit
 def test_from_args_basic():
     """Test HardwareConfig.from_args() with basic arguments."""
@@ -262,11 +229,7 @@ def test_from_args_partial():
     assert config.project_name == "vision_experiment"  # Default
 
 
-# =========================================================================== #
-#                    HARDWARE CONFIG: DEFAULTS                                #
-# =========================================================================== #
-
-
+# HARDWARE CONFIG: DEFAULTS
 @pytest.mark.unit
 def test_hardware_config_defaults():
     """Test HardwareConfig with default values."""
@@ -277,11 +240,7 @@ def test_hardware_config_defaults():
     assert config.allow_process_kill is True
 
 
-# =========================================================================== #
-#                    HARDWARE CONFIG: MUTABILITY                              #
-# =========================================================================== #
-
-
+# HARDWARE CONFIG: MUTABILITY
 @pytest.mark.unit
 def test_config_not_frozen():
     """Test HardwareConfig is NOT frozen (allows reproducible mutation)."""

@@ -13,31 +13,22 @@ Key Responsibilities:
     * Multi-resolution support: Resolves metadata by selected resolution
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import argparse
 from pathlib import Path
 from typing import Optional
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..metadata import DatasetMetadata, DatasetRegistryWrapper
 from ..paths import DATASET_DIR
 
-# =========================================================================== #
-#                               Internal Imports                              #
-# =========================================================================== #
+# Internal Imports
 from .types import ImageSize, PositiveInt, ValidatedPath
 
-# =========================================================================== #
-#                          Dataset Configuration                              #
-# =========================================================================== #
 
-
+# DATASET CONFIGURATION
 class DatasetConfig(BaseModel):
     """
     Validated manifest for dataset execution context.

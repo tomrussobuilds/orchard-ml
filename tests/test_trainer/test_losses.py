@@ -4,23 +4,16 @@ Test Suite for Custom Loss Functions Module.
 Tests FocalLoss implementation and helper functions.
 """
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 import torch.nn as nn
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.trainer.losses import FocalLoss, get_loss_name
 
-# =========================================================================== #
+
 #                    TESTS: FocalLoss                                         #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_focal_loss_init_default():
     """Test FocalLoss initialization with default parameters."""
@@ -214,11 +207,7 @@ def test_focal_loss_deterministic():
     assert torch.equal(loss1, loss2)
 
 
-# =========================================================================== #
 #                    TESTS: get_loss_name                                     #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_get_loss_name_focal_loss():
     """Test get_loss_name with FocalLoss."""
@@ -270,11 +259,7 @@ def test_get_loss_name_returns_string():
     assert len(name) > 0
 
 
-# =========================================================================== #
-#                    INTEGRATION TESTS                                        #
-# =========================================================================== #
-
-
+# INTEGRATION TESTS
 @pytest.mark.unit
 def test_focal_loss_comparable_to_ce_when_gamma_zero():
     """Test that FocalLoss with gamma=0 behaves like CrossEntropy."""
@@ -285,7 +270,7 @@ def test_focal_loss_comparable_to_ce_when_gamma_zero():
     focal_loss_fn = FocalLoss(gamma=0.0, alpha=1.0)
     focal_loss = focal_loss_fn(inputs, targets)
 
-    # Standard CrossEntropy
+    # Standard Imports
     ce_loss_fn = nn.CrossEntropyLoss()
     ce_loss = ce_loss_fn(inputs, targets)
 

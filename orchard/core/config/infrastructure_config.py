@@ -15,28 +15,19 @@ Key Tasks:
 
 import logging
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import os
 from typing import Any, Optional, Protocol
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import torch
 from pydantic import BaseModel, ConfigDict
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from ..environment import DuplicateProcessCleaner, ensure_single_instance, release_single_instance
 
-# =========================================================================== #
-#                          Infrastructure Manager                             #
-# =========================================================================== #
 
-
+# INFRASTRUCTURE MANAGER
 class HardwareAwareConfig(Protocol):
     """
     Structural contract for configurations exposing hardware manifest.

@@ -15,29 +15,19 @@ Centralizes telemetry and filesystem concerns to ensure traceable,
 reproducible artifacts free from host-specific filesystem leakage.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import argparse
 from pathlib import Path
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+# Internal Imports
 from ..paths import PROJECT_ROOT
-
-# =========================================================================== #
-#                               Internal Imports                              #
-# =========================================================================== #
 from .types import LogFrequency, LogLevel, ValidatedPath
 
-# =========================================================================== #
-#                           Telemetry Configuration                           #
-# =========================================================================== #
 
-
+# TELEMETRY CONFIGURATION
 class TelemetryConfig(BaseModel):
     """
     Declarative manifest for telemetry, logging, and filesystem strategy.

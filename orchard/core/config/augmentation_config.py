@@ -15,26 +15,17 @@ Key Features:
       ranges for medical imaging
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import argparse
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 from pydantic import BaseModel, ConfigDict, Field
 
-# =========================================================================== #
-#                               Internal Imports                              #
-# =========================================================================== #
+# Internal Imports
 from .types import BlurSigma, NonNegativeFloat, PixelShift, Probability, RotationDegrees, ZoomScale
 
-# =========================================================================== #
-#                        Augmentation Configuration                           #
-# =========================================================================== #
 
-
+# AUGMENTATION CONFIGURATION
 class AugmentationConfig(BaseModel):
     """
     Stochastic transformations for training and test-time augmentation (TTA).

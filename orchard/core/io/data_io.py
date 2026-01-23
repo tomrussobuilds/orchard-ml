@@ -5,22 +5,15 @@ Provides tools for verifying file integrity via checksums and validating
 the structure of NPZ dataset archives.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import hashlib
 from pathlib import Path
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import numpy as np
 
-# =========================================================================== #
-#                               Data Verification                             #
-# =========================================================================== #
 
-
+# DATA VERIFICATION
 def validate_npz_keys(data: np.lib.npyio.NpzFile) -> None:
     """
     Validates that the loaded NPZ dataset contains all required MedMNIST keys.

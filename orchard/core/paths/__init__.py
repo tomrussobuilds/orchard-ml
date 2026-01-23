@@ -7,9 +7,7 @@ It provides a dual-layer approach:
 2. Dynamic: Experiment-specific directory management via 'RunPaths'.
 """
 
-# =========================================================================== #
 #                                Public Interface                             #
-# =========================================================================== #
 from .constants import (
     DATASET_DIR,
     LOGGER_NAME,
@@ -21,9 +19,7 @@ from .constants import (
 )
 from .run_paths import RunPaths
 
-# =========================================================================== #
 #                                Export Schema                                #
-# =========================================================================== #
 __all__ = [
     "PROJECT_ROOT",
     "DATASET_DIR",

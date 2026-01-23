@@ -6,31 +6,20 @@ while avoiding global metadata overwrites. Integrates with YAML configs and
 supports runtime resolution selection.
 """
 
+# Standard Imports
 import copy
-
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
 from typing import Dict
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+# Internal Imports
 from .base import DatasetMetadata
-
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
 from .medmnist_v2_28x28 import DATASET_REGISTRY as REG_28
 from .medmnist_v2_224x224 import DATASET_REGISTRY as REG_224
 
-# =========================================================================== #
-#                               Wrapper Definition                            #
-# =========================================================================== #
 
-
+# WRAPPER DEFINITION
 class DatasetRegistryWrapper(BaseModel):
     """
     Pydantic wrapper for dynamic dataset registries.
@@ -89,10 +78,6 @@ class DatasetRegistryWrapper(BaseModel):
 
         return copy.deepcopy(self.registry[name])
 
-
-# =========================================================================== #
-#                                 Module API                                  #
-# =========================================================================== #
 
 # Default wrapper for backward compatibility (28x28 resolution)
 DEFAULT_WRAPPER = DatasetRegistryWrapper(resolution=28)

@@ -5,29 +5,20 @@ Tests filesystem resolution, logging configuration,
 and portable path serialization.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from argparse import Namespace
 from pathlib import Path
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 from pydantic import ValidationError
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.config import TelemetryConfig
 from orchard.core.paths import PROJECT_ROOT
 
-# =========================================================================== #
-#                    TELEMETRY CONFIG: DEFAULTS                               #
-# =========================================================================== #
 
-
+# TELEMETRY CONFIG: DEFAULTS
 @pytest.mark.unit
 def test_telemetry_config_defaults():
     """Test TelemetryConfig with default values."""
@@ -57,11 +48,7 @@ def test_telemetry_config_custom_values():
     assert config.log_interval == 5
 
 
-# =========================================================================== #
-#                    TELEMETRY CONFIG: VALIDATION                             #
-# =========================================================================== #
-
-
+# TELEMETRY CONFIG: VALIDATION
 @pytest.mark.unit
 def test_log_interval_bounds():
     """Test log_interval must be in [1, 1000]."""
@@ -98,11 +85,7 @@ def test_log_level_invalid_value():
         TelemetryConfig(log_level="TRACE")
 
 
-# =========================================================================== #
-#                    TELEMETRY CONFIG: PATH RESOLUTION                        #
-# =========================================================================== #
-
-
+# TELEMETRY CONFIG: PATH RESOLUTION
 @pytest.mark.unit
 def test_path_sanitization():
     """Test paths are resolved to absolute forms."""
@@ -139,11 +122,7 @@ def test_resolved_data_dir_absolute():
     assert resolved.is_absolute()
 
 
-# =========================================================================== #
-#                    TELEMETRY CONFIG: PORTABILITY                            #
-# =========================================================================== #
-
-
+# TELEMETRY CONFIG: PORTABILITY
 @pytest.mark.unit
 def test_to_portable_dict():
     """Test to_portable_dict() converts to relative paths."""
@@ -180,11 +159,7 @@ def test_to_portable_dict_preserves_other_fields():
     assert portable["save_model"] is False
 
 
-# =========================================================================== #
-#                    TELEMETRY CONFIG: EMPTY YAML HANDLING                    #
-# =========================================================================== #
-
-
+# TELEMETRY CONFIG: EMPTY YAML HANDLING
 @pytest.mark.unit
 def test_handle_empty_config():
     """Test empty YAML section (None) is handled correctly."""
@@ -203,11 +178,7 @@ def test_handle_empty_config_with_values():
     assert result == data
 
 
-# =========================================================================== #
-#                    TELEMETRY CONFIG: FROM ARGS                              #
-# =========================================================================== #
-
-
+# TELEMETRY CONFIG: FROM ARGS
 @pytest.mark.unit
 def test_from_args():
     """Test TelemetryConfig.from_args() factory."""
@@ -251,11 +222,7 @@ def test_from_args_filters_none():
     assert config.log_interval == 10  # Default, not None
 
 
-# =========================================================================== #
-#                    TELEMETRY CONFIG: IMMUTABILITY                           #
-# =========================================================================== #
-
-
+# TELEMETRY CONFIG: IMMUTABILITY
 @pytest.mark.unit
 def test_config_is_frozen():
     """Test TelemetryConfig is immutable after creation."""

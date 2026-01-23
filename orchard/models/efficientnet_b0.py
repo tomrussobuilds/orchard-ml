@@ -12,23 +12,16 @@ Key Features:
     - Channel Compression: Weight morphing for 1→3 channel promotion
 """
 
-# =========================================================================== #
-#                           THIRD-PARTY IMPORTS                               #
-# =========================================================================== #
+# Third-Party Imports
 import torch
 import torch.nn as nn
 from torchvision import models
 
-# =========================================================================== #
-#                           INTERNAL IMPORTS                                  #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import Config
 
-# =========================================================================== #
-#                           MODEL BUILDER                                     #
-# =========================================================================== #
 
-
+# MODEL BUILDER
 def build_efficientnet_b0(
     device: torch.device, num_classes: int, in_channels: int, cfg: Config
 ) -> nn.Module:

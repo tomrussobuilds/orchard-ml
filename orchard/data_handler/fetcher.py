@@ -5,31 +5,22 @@ This module handles the physical retrieval of any MedMNIST dataset, including
 robust download logic, MD5 verification, and metadata preparation for lazy loading.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import numpy as np
 import requests
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import DatasetMetadata, md5_checksum, validate_npz_keys
 
-# =========================================================================== #
-#                                DATA CONTAINERS                              #
-# =========================================================================== #
 
-
+# DATA CONTAINERS
 @dataclass(frozen=True)
 class MedMNISTData:
     """
@@ -43,9 +34,7 @@ class MedMNISTData:
     num_classes: int
 
 
-# =========================================================================== #
-#                                FETCHING LOGIC                               #
-# =========================================================================== #
+# FETCHING LOGIC
 # Global logger instance
 logger = logging.getLogger("visionforge")
 
@@ -122,11 +111,7 @@ def ensure_dataset_npz(
     raise RuntimeError("Unexpected error in dataset download logic.")
 
 
-# =========================================================================== #
-#                                LOADING INTERFACE                            #
-# =========================================================================== #
-
-
+# LOADING INTERFACE
 def load_medmnist(metadata: DatasetMetadata) -> MedMNISTData:
     """
     Ensures the dataset is present and returns its metadata container.
@@ -171,11 +156,7 @@ def load_medmnist_health_check(metadata: DatasetMetadata, chunk_size: int = 100)
         return MedMNISTData(path=path, name=metadata.name, is_rgb=is_rgb, num_classes=num_classes)
 
 
-# =========================================================================== #
-#                                PRIVATE HELPERS                              #
-# =========================================================================== #
-
-
+# PRIVATE HELPERS
 def _is_valid_npz(path: Path, expected_md5: str) -> bool:
     """Checks file existence, header (ZIP/NPZ), and MD5 checksum."""
     if not path.exists():

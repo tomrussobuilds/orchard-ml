@@ -10,32 +10,22 @@ These registries enable the factory pattern in builders.py and
 provide a single point of maintenance for supported algorithms.
 """
 
+# Standard Imports
 import logging
-
-# =========================================================================== #
-#                         STANDARD IMPORTS                                    #
-# =========================================================================== #
 from typing import Callable, Dict, Set, Tuple
 
+# Third-Party Imports
 from optuna.pruners import HyperbandPruner, MedianPruner, NopPruner, PercentilePruner
-
-# =========================================================================== #
-#                         THIRD-PARTY IMPORTS                                 #
-# =========================================================================== #
 from optuna.samplers import CmaEsSampler, GridSampler, RandomSampler, TPESampler
 
-# =========================================================================== #
-#                         INTERNAL IMPORTS                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import LOGGER_NAME
 
 logger = logging.getLogger(LOGGER_NAME)
 
-
 # Type aliases for clarity
 SamplerFactory = Callable[[], object]
 PrunerFactory = Callable[[], object]
-
 
 # ==================== SAMPLER REGISTRY ====================
 
@@ -47,7 +37,6 @@ SAMPLER_REGISTRY: Dict[str, type] = {
 }
 """Registry mapping sampler type strings to Optuna sampler classes."""
 
-
 # ==================== PRUNER REGISTRY ====================
 
 PRUNER_REGISTRY: Dict[str, PrunerFactory] = {
@@ -57,7 +46,6 @@ PRUNER_REGISTRY: Dict[str, PrunerFactory] = {
     "none": NopPruner,
 }
 """Registry mapping pruner type strings to Optuna pruner factories."""
-
 
 # ==================== PARAMETER MAPPING ====================
 

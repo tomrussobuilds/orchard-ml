@@ -16,20 +16,14 @@ Strict boundary validation (probability ranges, LR bounds) prevents unstable
 training states before first batch processing.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import argparse
 from typing import Optional
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-# =========================================================================== #
-#                               Internal Imports                              #
-# =========================================================================== #
+# Internal Imports
 from .types import (
     GradNorm,
     LearningRate,
@@ -42,11 +36,8 @@ from .types import (
     WeightDecay,
 )
 
-# =========================================================================== #
-#                             TRAINING CONFIGURATION                          #
-# =========================================================================== #
 
-
+# TRAINING CONFIGURATION
 class TrainingConfig(BaseModel):
     """
     Optimization landscape and regularization strategies.

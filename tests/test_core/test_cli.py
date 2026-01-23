@@ -5,26 +5,17 @@ Tests command-line argument parsing and validation.
 These are essential smoke tests to boost coverage from 8.79% to ~25%.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.cli import parse_args
 
-# =========================================================================== #
-#                    PARSE ARGS: BASIC TESTS                                  #
-# =========================================================================== #
 
-
+# PARSE ARGS: BASIC TESTS
 @pytest.mark.unit
 def test_parse_args_defaults():
     """Test parse_args returns default values when no arguments provided."""
@@ -77,11 +68,7 @@ def test_parse_args_config_file():
         assert args.config == "path/to/config.yaml"
 
 
-# =========================================================================== #
-#                    PARSE ARGS: BOOLEAN FLAGS                                #
-# =========================================================================== #
-
-
+# PARSE ARGS: BOOLEAN FLAGS
 @pytest.mark.unit
 def test_parse_args_reproducible_flag():
     """Test parse_args handles reproducible flag."""
@@ -142,11 +129,7 @@ def test_parse_args_tta_flags():
         assert args.use_tta is False
 
 
-# =========================================================================== #
-#                    PARSE ARGS: RESOLUTION                                   #
-# =========================================================================== #
-
-
+# PARSE ARGS: RESOLUTION
 @pytest.mark.unit
 def test_parse_args_resolution_28():
     """Test parse_args handles resolution 28."""
@@ -165,11 +148,7 @@ def test_parse_args_resolution_224():
         assert args.resolution == 224
 
 
-# =========================================================================== #
-#                    PARSE ARGS: SCHEDULER TYPES                              #
-# =========================================================================== #
-
-
+# PARSE ARGS: SCHEDULER TYPES
 @pytest.mark.unit
 @pytest.mark.parametrize("scheduler_type", ["cosine", "plateau", "step", "none"])
 def test_parse_args_scheduler_types(scheduler_type):
@@ -180,11 +159,7 @@ def test_parse_args_scheduler_types(scheduler_type):
         assert args.scheduler_type == scheduler_type
 
 
-# =========================================================================== #
-#                    PARSE ARGS: CRITERION TYPES                              #
-# =========================================================================== #
-
-
+# PARSE ARGS: CRITERION TYPES
 @pytest.mark.unit
 @pytest.mark.parametrize("criterion_type", ["cross_entropy", "bce_logit", "focal"])
 def test_parse_args_criterion_types(criterion_type):
@@ -195,11 +170,7 @@ def test_parse_args_criterion_types(criterion_type):
         assert args.criterion_type == criterion_type
 
 
-# =========================================================================== #
-#                    PARSE ARGS: OPTUNA PARAMETERS                            #
-# =========================================================================== #
-
-
+# PARSE ARGS: OPTUNA PARAMETERS
 @pytest.mark.unit
 def test_parse_args_optuna_n_trials():
     """Test parse_args handles Optuna n_trials."""
@@ -247,11 +218,7 @@ def test_parse_args_optuna_direction():
         assert args.direction == "minimize"
 
 
-# =========================================================================== #
-#                    PARSE ARGS: AUGMENTATION                                 #
-# =========================================================================== #
-
-
+# PARSE ARGS: AUGMENTATION
 @pytest.mark.unit
 def test_parse_args_augmentation_params():
     """Test parse_args handles augmentation parameters."""
@@ -274,11 +241,7 @@ def test_parse_args_augmentation_params():
         assert args.jitter_val == 0.3
 
 
-# =========================================================================== #
-#                    PARSE ARGS: PATHS                                        #
-# =========================================================================== #
-
-
+# PARSE ARGS: PATHS
 @pytest.mark.unit
 def test_parse_args_paths():
     """Test parse_args handles path arguments."""
@@ -298,11 +261,7 @@ def test_parse_args_paths():
         assert args.output_dir == "/path/to/outputs"
 
 
-# =========================================================================== #
-#                    PARSE ARGS: EVALUATION                                   #
-# =========================================================================== #
-
-
+# PARSE ARGS: EVALUATION
 @pytest.mark.unit
 def test_parse_args_evaluation_params():
     """Test parse_args handles evaluation parameters."""
@@ -325,11 +284,7 @@ def test_parse_args_evaluation_params():
         assert args.report_format == "json"
 
 
-# =========================================================================== #
-#                    PARSE ARGS: COMPLEX COMBINATIONS                         #
-# =========================================================================== #
-
-
+# PARSE ARGS: COMPLEX COMBINATIONS
 @pytest.mark.unit
 def test_parse_args_complex_combination():
     """Test parse_args handles multiple arguments together."""

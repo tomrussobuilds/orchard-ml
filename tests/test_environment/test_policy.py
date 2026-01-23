@@ -5,21 +5,14 @@ Tests TTA mode determination logic based on hardware
 availability and configuration constraints.
 """
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.environment import determine_tta_mode
 
-# =========================================================================== #
-#                    TTA MODE: DISABLED                                       #
-# =========================================================================== #
 
-
+# TTA MODE: DISABLED
 @pytest.mark.unit
 def test_determine_tta_mode_disabled_cpu():
     """Test TTA mode returns DISABLED when use_tta is False on CPU."""
@@ -41,11 +34,7 @@ def test_determine_tta_mode_disabled_mps():
     assert result == "DISABLED"
 
 
-# =========================================================================== #
-#                    TTA MODE: CPU OPTIMIZED                                  #
-# =========================================================================== #
-
-
+# TTA MODE: CPU OPTIMIZED
 @pytest.mark.unit
 def test_determine_tta_mode_cpu_light():
     """Test TTA mode returns LIGHT for CPU to avoid performance issues."""
@@ -53,11 +42,7 @@ def test_determine_tta_mode_cpu_light():
     assert result == "LIGHT (CPU Optimized)"
 
 
-# =========================================================================== #
-#                    TTA MODE: ACCELERATED                                    #
-# =========================================================================== #
-
-
+# TTA MODE: ACCELERATED
 @pytest.mark.unit
 def test_determine_tta_mode_cuda_full():
     """Test TTA mode returns FULL for CUDA acceleration."""
@@ -72,11 +57,7 @@ def test_determine_tta_mode_mps_full():
     assert result == "FULL (MPS)"
 
 
-# =========================================================================== #
-#                    TTA MODE: EDGE CASES                                     #
-# =========================================================================== #
-
-
+# TTA MODE: EDGE CASES
 @pytest.mark.unit
 def test_determine_tta_mode_case_sensitivity():
     """Test device_type case handling (should work with any case)."""

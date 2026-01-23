@@ -5,27 +5,18 @@ Tests training augmentation parameters and TTA configuration
 with validation of probability ranges and geometric constraints.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from argparse import Namespace
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 from pydantic import ValidationError
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.config import AugmentationConfig
 
-# =========================================================================== #
-#                    AUGMENTATION CONFIG: DEFAULTS                            #
-# =========================================================================== #
 
-
+# AUGMENTATION CONFIG: DEFAULTS
 @pytest.mark.unit
 def test_augmentation_config_defaults():
     """Test AugmentationConfig with default values."""
@@ -51,11 +42,7 @@ def test_augmentation_config_custom_values():
     assert config.min_scale == 0.85
 
 
-# =========================================================================== #
-#                    AUGMENTATION CONFIG: VALIDATION                          #
-# =========================================================================== #
-
-
+# AUGMENTATION CONFIG: VALIDATION
 @pytest.mark.unit
 def test_hflip_probability_bounds():
     """Test hflip probability must be in [0, 1]."""
@@ -118,11 +105,7 @@ def test_min_scale_probability_bounds():
         AugmentationConfig(min_scale=1.5)
 
 
-# =========================================================================== #
-#                    AUGMENTATION CONFIG: TTA PARAMS                          #
-# =========================================================================== #
-
-
+# AUGMENTATION CONFIG: TTA PARAMS
 @pytest.mark.unit
 def test_tta_translate_bounds():
     """Test tta_translate must be in [0, 50]."""
@@ -177,11 +160,7 @@ def test_tta_blur_sigma_bounds():
         AugmentationConfig(tta_blur_sigma=10.0)
 
 
-# =========================================================================== #
-#                    AUGMENTATION CONFIG: FROM ARGS                           #
-# =========================================================================== #
-
-
+# AUGMENTATION CONFIG: FROM ARGS
 @pytest.mark.unit
 def test_from_args():
     """Test AugmentationConfig.from_args() factory."""
@@ -219,11 +198,7 @@ def test_from_args_empty():
     assert config.jitter_val == 0.2
 
 
-# =========================================================================== #
-#                    AUGMENTATION CONFIG: IMMUTABILITY                        #
-# =========================================================================== #
-
-
+# AUGMENTATION CONFIG: IMMUTABILITY
 @pytest.mark.unit
 def test_config_is_frozen():
     """Test AugmentationConfig is immutable after creation."""

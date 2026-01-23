@@ -7,20 +7,14 @@ It ensures that architectures are dynamically adapted to the geometric
 constraints (channels, classes) resolved at runtime.
 """
 
-# =========================================================================== #
-#                              STANDARD LIBRARY                               #
-# =========================================================================== #
+# Standard Imports
 import logging
 
-# =========================================================================== #
-#                           THIRD-PARTY IMPORTS                               #
-# =========================================================================== #
+# Third-Party Imports
 import torch
 import torch.nn as nn
 
-# =========================================================================== #
-#                           INTERNAL IMPORTS                                  #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import LOGGER_NAME, Config
 
 from .efficientnet_b0 import build_efficientnet_b0
@@ -28,16 +22,11 @@ from .mini_cnn import build_mini_cnn
 from .resnet_18_adapted import build_resnet18_adapted
 from .vit_tiny import build_vit_tiny
 
-# =========================================================================== #
-#                           LOGGER CONFIGURATION                              #
-# =========================================================================== #
+# LOGGER CONFIGURATION
 logger = logging.getLogger(LOGGER_NAME)
 
-# =========================================================================== #
-#                           MODEL FACTORY LOGIC                               #
-# =========================================================================== #
 
-
+# MODEL FACTORY LOGIC
 def get_model(device: torch.device, cfg: Config) -> nn.Module:
     """
     Factory function to resolve, instantiate, and prepare architectures.
@@ -57,7 +46,7 @@ def get_model(device: torch.device, cfg: Config) -> nn.Module:
     Raises:
         ValueError: If the requested architecture is not found in the registry.
     """
-    # Internal registry for architectural routing
+    # Internal Imports
     _MODEL_REGISTRY = {
         "resnet_18_adapted": build_resnet18_adapted,
         "efficientnet_b0": build_efficientnet_b0,

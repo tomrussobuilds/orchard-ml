@@ -4,27 +4,18 @@ Tests all 7 phases, __enter__, __exit__, and edge cases.
 Achieves high coverage through dependency injection and mocking.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import MagicMock
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import LOGGER_NAME, RootOrchestrator
 
-# =========================================================================== #
-#                    ORCHESTRATOR: INITIALIZATION                             #
-# =========================================================================== #
 
-
+# ORCHESTRATOR: INITIALIZATION
 @pytest.mark.unit
 def test_orchestrator_init_with_defaults():
     """Test RootOrchestrator initializes with default dependencies."""
@@ -73,11 +64,7 @@ def test_init_lazy_attributes_and_policy_extraction():
     assert orch.num_workers == 5
 
 
-# =========================================================================== #
-#                    CONTEXT MANAGER: __ENTER__                               #
-# =========================================================================== #
-
-
+# CONTEXT MANAGER: __ENTER__
 @pytest.mark.unit
 def test_context_manager_enter():
     """Test __enter__ calls initialize_core_services."""
@@ -111,11 +98,7 @@ def test_context_manager_enter_exception_cleanup():
     orch.cleanup.assert_called_once()
 
 
-# =========================================================================== #
-#                    CONTEXT MANAGER: __EXIT__                                #
-# =========================================================================== #
-
-
+# CONTEXT MANAGER: __EXIT__
 @pytest.mark.unit
 def test_context_manager_exit_calls_cleanup():
     """Test __exit__ calls cleanup."""
@@ -148,11 +131,7 @@ def test_context_manager_exit_propagates_exception():
     assert result is False  # Allows exception to propagate
 
 
-# =========================================================================== #
-#                    GET DEVICE                                               #
-# =========================================================================== #
-
-
+# GET DEVICE
 @pytest.mark.unit
 def test_get_device_returns_cpu():
     """Test get_device returns CPU device."""
@@ -204,11 +183,7 @@ def test_get_device_calls_resolver_when_cache_none():
     assert device.type == "cpu"
 
 
-# =========================================================================== #
-#                    CLEANUP                                                  #
-# =========================================================================== #
-
-
+# CLEANUP
 @pytest.mark.unit
 def test_cleanup_handles_infra_release_exception(monkeypatch):
     """Test cleanup handles exceptions raised by infra.release_resources."""
@@ -247,11 +222,7 @@ def test_cleanup_release_resources_fails_no_logger(caplog):
     assert any("fail" in rec.message for rec in caplog.records)
 
 
-# =========================================================================== #
-#                    ORCHESTRATOR: PHASES 1-7                                 #
-# =========================================================================== #
-
-
+# ORCHESTRATOR: PHASES 1-7
 @pytest.mark.unit
 def test_phase_1_determinism_always_calls_seed_setter():
     """Test _phase_1_determinism always calls seed setter."""
@@ -387,11 +358,7 @@ def test_phase_7_device_resolver_fails_fallback_to_cpu(caplog):
     assert any("fallback to CPU" in rec.message for rec in caplog.records)
 
 
-# =========================================================================== #
-#                    CLEANUP: EDGE CASES                                      #
-# =========================================================================== #
-
-
+# CLEANUP: EDGE CASES
 @pytest.mark.unit
 def test_cleanup_with_no_infra_manager():
     """Test cleanup when infra manager is None."""
@@ -452,11 +419,7 @@ def test_cleanup_with_empty_handlers_list():
     orch.cleanup()
 
 
-# =========================================================================== #
-#                    GET DEVICE: ADDITIONAL EDGE CASES                        #
-# =========================================================================== #
-
-
+# GET DEVICE: ADDITIONAL EDGE CASES
 @pytest.mark.unit
 def test_get_device_with_cuda_string():
     """Test get_device with 'cuda' device string."""
@@ -493,11 +456,7 @@ def test_get_device_with_mps_string():
     assert device.type == "mps"
 
 
-# =========================================================================== #
-#                    PHASE 7: DEVICE RESOLUTION EDGE CASES                    #
-# =========================================================================== #
-
-
+# PHASE 7: DEVICE RESOLUTION EDGE CASES
 @pytest.mark.unit
 def test_phase_7_device_already_cached_with_logger(caplog):
     """Test _phase_7 when device is already cached."""
@@ -572,11 +531,7 @@ def test_phase_7_device_resolution_succeeds():
     mock_logger.warning.assert_not_called()
 
 
-# =========================================================================== #
-#                    PHASE 6: INFRASTRUCTURE GUARDING EDGE CASES              #
-# =========================================================================== #
-
-
+# PHASE 6: INFRASTRUCTURE GUARDING EDGE CASES
 @pytest.mark.unit
 def test_phase_6_with_no_infra_manager():
     """Test _phase_6 when infra manager is None."""
@@ -612,11 +567,7 @@ def test_phase_6_prepare_fails_with_logger():
     assert "lock failed" in mock_logger.warning.call_args[0][0]
 
 
-# =========================================================================== #
-#                    INTEGRATION: FULL LIFECYCLE                              #
-# =========================================================================== #
-
-
+# INTEGRATION: FULL LIFECYCLE
 @pytest.mark.integration
 def test_full_lifecycle_with_all_phases(tmp_path):
     """Test complete initialization through all 7 phases."""

@@ -5,27 +5,18 @@ These tests validate the functionality of the hyperparameter search space defini
 They ensure that search spaces are correctly defined and resolved for different configurations.
 """
 
-# =========================================================================== #
-#                         STANDARD LIBRARY                                    #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import MagicMock
 
-# =========================================================================== #
-#                         THIRD-PARTY LIBRARY                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 from optuna.trial import Trial
 
-# =========================================================================== #
-#                         INTERNAL IMPORTS                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.optimization import FullSearchSpace, SearchSpaceRegistry, get_search_space
 
-# =========================================================================== #
-#                         TEST CASES                                          #
-# =========================================================================== #
 
-
+# TEST CASES
 @pytest.mark.unit
 def test_get_optimization_space():
     """Test retrieval of core optimization hyperparameters."""

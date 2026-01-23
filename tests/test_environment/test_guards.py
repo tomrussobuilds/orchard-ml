@@ -5,35 +5,26 @@ Tests filesystem locking, duplicate process detection,
 and process termination utilities.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 import logging
 import os
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import psutil
 import pytest
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.environment import (
     DuplicateProcessCleaner,
     ensure_single_instance,
     release_single_instance,
 )
 
-# =========================================================================== #
-#                    SINGLE INSTANCE LOCKING                                  #
-# =========================================================================== #
 
-
+# SINGLE INSTANCE LOCKING
 @pytest.mark.unit
 @patch("platform.system", return_value="Linux")
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
@@ -119,11 +110,7 @@ def test_ensure_single_instance_no_fcntl(mock_platform, tmp_path):
     ensure_single_instance(lock_file, logger)
 
 
-# =========================================================================== #
-#                    LOCK RELEASE                                             #
-# =========================================================================== #
-
-
+# LOCK RELEASE
 @pytest.mark.unit
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
 def test_release_single_instance_with_lock(tmp_path):
@@ -182,11 +169,7 @@ def test_release_single_instance_oserror(tmp_path):
                 release_single_instance(lock_file)
 
 
-# =========================================================================== #
-#                    DUPLICATE PROCESS CLEANER: INITIALIZATION                #
-# =========================================================================== #
-
-
+# DUPLICATE PROCESS CLEANER: INITIALIZATION
 @pytest.mark.unit
 def test_duplicate_process_cleaner_init_default():
     """Test DuplicateProcessCleaner initializes with default script name."""
@@ -207,11 +190,7 @@ def test_duplicate_process_cleaner_init_custom_script():
     assert cleaner.script_path == custom_script
 
 
-# =========================================================================== #
-#                    DUPLICATE PROCESS CLEANER: DETECTION                     #
-# =========================================================================== #
-
-
+# DUPLICATE PROCESS CLEANER: DETECTION
 @pytest.mark.unit
 def test_detect_duplicates_no_duplicates():
     """Test detect_duplicates returns empty list when no duplicates."""
@@ -326,11 +305,7 @@ def test_detect_duplicates_empty_cmdline():
     assert duplicates == []
 
 
-# =========================================================================== #
-#                    DUPLICATE PROCESS CLEANER: TERMINATION                   #
-# =========================================================================== #
-
-
+# DUPLICATE PROCESS CLEANER: TERMINATION
 @pytest.mark.unit
 def test_terminate_duplicates_no_duplicates():
     """Test terminate_duplicates returns 0 when no duplicates found."""
@@ -424,11 +399,7 @@ def test_terminate_duplicates_with_logger():
     logger.info.assert_called_once()
 
 
-# =========================================================================== #
-#                    INTEGRATION TESTS                                        #
-# =========================================================================== #
-
-
+# INTEGRATION TESTS
 @pytest.mark.integration
 @patch("platform.system", return_value="Linux")
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)

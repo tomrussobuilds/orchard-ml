@@ -10,21 +10,14 @@ Each search space is defined with:
     - Domain expertise defaults (medical imaging best practices)
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from typing import Callable, Dict
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import optuna
 
-# =========================================================================== #
-#                        SEARCH SPACE DEFINITIONS                             #
-# =========================================================================== #
 
-
+# SEARCH SPACE DEFINITIONS
 class SearchSpaceRegistry:
     """
     Centralized registry of hyperparameter search distributions.
@@ -229,11 +222,7 @@ class SearchSpaceRegistry:
         return full_space
 
 
-# =========================================================================== #
-#                          PRESET CONFIGURATIONS                              #
-# =========================================================================== #
-
-
+# PRESET CONFIGURATIONS
 def get_search_space(preset: str = "quick", resolution: int = 28, include_models: bool = False):
     """
     Factory function to retrieve a search space preset.

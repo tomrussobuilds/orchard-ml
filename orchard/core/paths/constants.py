@@ -6,25 +6,17 @@ layout. It handles dynamic project root discovery and defines the static
 infrastructure (dataset and output folders) required for the pipeline to boot.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import os
 from pathlib import Path
 from typing import Final, List
 
-# =========================================================================== #
-#                                GLOBAL CONSTANTS                             #
-# =========================================================================== #
-
+# GLOBAL CONSTANTS
 # Global logger identity used by all modules to ensure log synchronization
 LOGGER_NAME: Final[str] = "vision_experiment"
 
-# =========================================================================== #
-#                                PATH CALCULATIONS                            #
-# =========================================================================== #
 
-
+# PATH CALCULATIONS
 def get_project_root() -> Path:
     """
     Dynamically locates the project root by searching for anchor files.
@@ -58,10 +50,7 @@ def get_project_root() -> Path:
 # Central Filesystem Authority
 PROJECT_ROOT: Final[Path] = get_project_root().resolve()
 
-# =========================================================================== #
-#                                STATIC DIRECTORIES                           #
-# =========================================================================== #
-
+# STATIC DIRECTORIES
 # Input: Where raw datasets are stored
 DATASET_DIR: Final[Path] = (PROJECT_ROOT / "dataset").resolve()
 
@@ -71,11 +60,8 @@ OUTPUTS_ROOT: Final[Path] = (PROJECT_ROOT / "outputs").resolve()
 # Directories that must exist at startup
 STATIC_DIRS: Final[List[Path]] = [DATASET_DIR, OUTPUTS_ROOT]
 
-# =========================================================================== #
-#                                INITIAL SETUP                                #
-# =========================================================================== #
 
-
+# INITIAL SETUP
 def setup_static_directories() -> None:
     """
     Ensures the core project structure is present at startup.

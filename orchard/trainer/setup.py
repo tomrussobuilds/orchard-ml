@@ -6,26 +6,19 @@ components (optimizers, schedulers, and loss functions) based on the
 hierarchical configuration manifest.
 """
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import Config
 
 from .losses import FocalLoss
 
-# =========================================================================== #
-#                                  FACTORIES                                  #
-# =========================================================================== #
 
-
+# FACTORIES
 def get_criterion(cfg: Config, class_weights: torch.Tensor | None = None) -> nn.Module:
     """
     Universal Vision Criterion Factory.

@@ -5,27 +5,18 @@ requiring any external downloads or network access. It generates random image
 data and labels that match the MedMNIST format specifications.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import tempfile
 from pathlib import Path
 
-# =========================================================================== #
-#                               Third-Party Imports                           #
-# =========================================================================== #
+# Third-Party Imports
 import numpy as np
 
-# =========================================================================== #
-#                              Internal Imports                               #
-# =========================================================================== #
+# Internal Imports
 from .fetcher import MedMNISTData
 
-# =========================================================================== #
-#                                FACTORY FUNCTIONS                            #
-# =========================================================================== #
 
-
+# FACTORY FUNCTIONS
 def create_synthetic_dataset(
     num_classes: int = 8,
     samples: int = 100,
@@ -101,11 +92,7 @@ def create_synthetic_dataset(
     )
 
 
-# =========================================================================== #
-#                            GRAYSCALE VARIANT                                #
-# =========================================================================== #
-
-
+# GRAYSCALE VARIANT
 def create_synthetic_grayscale_dataset(
     num_classes: int = 8,
     samples: int = 100,

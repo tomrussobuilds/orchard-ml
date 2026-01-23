@@ -12,38 +12,26 @@ Functions:
     - build_callbacks: Construct optimization callbacks list
 """
 
-# =========================================================================== #
-#                         STANDARD IMPORTS                                    #
-# =========================================================================== #
+# Standard Imports
 import logging
 from typing import List
 
-# =========================================================================== #
-#                         THIRD-PARTY IMPORTS                                 #
-# =========================================================================== #
+# Third-Party Imports
 import optuna
 from optuna.pruners import NopPruner
 
-# =========================================================================== #
-#                         INTERNAL IMPORTS                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import LOGGER_NAME, Config
 
 from ..early_stopping import get_early_stopping_callback
 
-# =========================================================================== #
-#                         RELATIVE IMPORTS                                    #
-# =========================================================================== #
+# Relative Imports
 from .config import PRUNER_REGISTRY, SAMPLER_REGISTRY
 
 logger = logging.getLogger(LOGGER_NAME)
 
 
-# =========================================================================== #
-#                         CONFIGURATION BUILDERS                              #
-# =========================================================================== #
-
-
+# CONFIGURATION BUILDERS
 def build_sampler(sampler_type: str, cfg: Config) -> optuna.samplers.BaseSampler:
     """
     Create Optuna sampler from configuration string.

@@ -5,30 +5,21 @@ Tests atomic run isolation, unique ID generation, directory creation,
 and path resolution for experiment artifacts.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 import hashlib
 import json
 from pathlib import Path
 from unittest.mock import patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 from pydantic import ValidationError
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.paths import OUTPUTS_ROOT, RunPaths
 
-# =========================================================================== #
-#                    RUNPATHS: CLASS CONSTANTS                                #
-# =========================================================================== #
 
-
+# RUNPATHS: CLASS CONSTANTS
 @pytest.mark.unit
 def test_sub_dirs_constant():
     """Test SUB_DIRS class constant contains all required subdirectories."""
@@ -37,11 +28,7 @@ def test_sub_dirs_constant():
     assert len(RunPaths.SUB_DIRS) == 5
 
 
-# =========================================================================== #
-#                    RUNPATHS: CREATION FACTORY                               #
-# =========================================================================== #
-
-
+# RUNPATHS: CREATION FACTORY
 @pytest.mark.unit
 def test_runpaths_create_basic(tmp_path):
     """Test RunPaths.create() with minimal valid arguments."""
@@ -137,11 +124,7 @@ def test_runpaths_create_invalid_model_type():
         )
 
 
-# =========================================================================== #
-#                    RUNPATHS: UNIQUE ID GENERATION                           #
-# =========================================================================== #
-
-
+# RUNPATHS: UNIQUE ID GENERATION
 @pytest.mark.unit
 def test_generate_unique_id_format():
     """Test _generate_unique_id() produces correct format: YYYYMMDD_dataset_model_hash."""
@@ -234,11 +217,7 @@ def test_generate_unique_id_uses_blake2b():
     assert expected_hash in run_id
 
 
-# =========================================================================== #
-#                    RUNPATHS: COLLISION HANDLING                             #
-# =========================================================================== #
-
-
+# RUNPATHS: COLLISION HANDLING
 @pytest.mark.unit
 def test_runpaths_create_handles_collision(tmp_path):
     """Test RunPaths.create() appends timestamp if directory already exists."""
@@ -268,11 +247,7 @@ def test_runpaths_create_handles_collision(tmp_path):
     assert run2.run_id.startswith("123456")
 
 
-# =========================================================================== #
-#                    RUNPATHS: DIRECTORY STRUCTURE                            #
-# =========================================================================== #
-
-
+# RUNPATHS: DIRECTORY STRUCTURE
 @pytest.mark.unit
 def test_runpaths_creates_all_subdirectories(tmp_path):
     """Test RunPaths.create() physically creates all subdirectories."""
@@ -324,11 +299,7 @@ def test_runpaths_path_attributes():
     assert run_paths.database == run_paths.root / "database"
 
 
-# =========================================================================== #
-#                    RUNPATHS: DYNAMIC PROPERTIES                             #
-# =========================================================================== #
-
-
+# RUNPATHS: DYNAMIC PROPERTIES
 @pytest.mark.unit
 def test_best_model_path_property():
     """Test best_model_path property returns correct path."""
@@ -412,11 +383,7 @@ def test_get_db_path_method():
     assert db_path == run_paths.database / "study.db"
 
 
-# =========================================================================== #
-#                    RUNPATHS: IMMUTABILITY                                   #
-# =========================================================================== #
-
-
+# RUNPATHS: IMMUTABILITY
 @pytest.mark.unit
 def test_runpaths_is_frozen():
     """Test RunPaths instances are immutable after creation."""
@@ -437,11 +404,7 @@ def test_runpaths_is_frozen():
         run_paths.dataset_slug = "new_dataset"
 
 
-# =========================================================================== #
-#                    RUNPATHS: STRING REPRESENTATION                          #
-# =========================================================================== #
-
-
+# RUNPATHS: STRING REPRESENTATION
 @pytest.mark.unit
 def test_runpaths_repr():
     """Test __repr__ provides useful debug information."""
@@ -461,11 +424,7 @@ def test_runpaths_repr():
     assert "root=" in repr_str
 
 
-# =========================================================================== #
-#                    RUNPATHS: EDGE CASES                                     #
-# =========================================================================== #
-
-
+# RUNPATHS: EDGE CASES
 @pytest.mark.unit
 def test_runpaths_create_with_special_characters_in_model():
     """Test model_name with various special characters is properly sanitized."""
@@ -529,11 +488,7 @@ def test_runpaths_create_with_complex_training_config():
     assert run_paths.root.exists()
 
 
-# =========================================================================== #
-#                    RUNPATHS: INTEGRATION TESTS                              #
-# =========================================================================== #
-
-
+# RUNPATHS: INTEGRATION TESTS
 @pytest.mark.integration
 def test_runpaths_full_workflow(tmp_path):
     """Test complete RunPaths workflow from creation to artifact saving."""

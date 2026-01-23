@@ -5,21 +5,15 @@ Focused on testing the orchestrator logic with proper mocking
 to avoid triggering real downloads, file I/O, or network calls.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import optuna
 import pytest
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.optimization.orchestrator import OptunaOrchestrator
 from orchard.optimization.orchestrator.builders import (
     build_callbacks,
@@ -41,11 +35,8 @@ from orchard.optimization.orchestrator.utils import (
     has_completed_trials,
 )
 
-# =========================================================================== #
-#                         FIXTURES                                            #
-# =========================================================================== #
 
-
+# FIXTURES
 @pytest.fixture
 def mock_cfg():
     """Minimal mock Config."""
@@ -116,11 +107,7 @@ def study_with_trials(completed_trial):
     return study
 
 
-# =========================================================================== #
 #                    UNIT TESTS: config.py                                    #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 class TestConfig:
     """Test config constants and functions."""
@@ -145,11 +132,7 @@ class TestConfig:
         assert key == "learning_rate"
 
 
-# =========================================================================== #
 #                    UNIT TESTS: builders.py                                  #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 class TestBuilders:
     """Test builder functions."""
@@ -178,11 +161,7 @@ class TestBuilders:
         assert isinstance(callbacks, list)
 
 
-# =========================================================================== #
 #                    UNIT TESTS: utils.py                                     #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 class TestUtils:
     """Test utility functions."""
@@ -203,11 +182,7 @@ class TestUtils:
         assert has_completed_trials(study) is False
 
 
-# =========================================================================== #
 #                    UNIT TESTS: exporters.py                                 #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 class TestExporters:
     """Test exporter functions."""
@@ -226,11 +201,7 @@ class TestExporters:
         assert config_dict["training"]["learning_rate"] == 0.001
 
 
-# =========================================================================== #
 #                    INTEGRATION TESTS: OptunaOrchestrator                    #
-# =========================================================================== #
-
-
 @pytest.mark.integration
 class TestOptunaOrchestrator:
     """Integration tests for orchestrator."""

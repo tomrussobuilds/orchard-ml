@@ -5,21 +5,15 @@ Tests project root discovery, static directory constants,
 and filesystem initialization logic.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 import os
 from pathlib import Path
 from unittest.mock import patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.paths import (
     DATASET_DIR,
     LOGGER_NAME,
@@ -30,11 +24,8 @@ from orchard.core.paths import (
     setup_static_directories,
 )
 
-# =========================================================================== #
-#                    CONSTANTS: LOGGER NAME                                   #
-# =========================================================================== #
 
-
+# CONSTANTS: LOGGER NAME
 @pytest.mark.unit
 def test_logger_name_constant():
     """Test LOGGER_NAME is correctly defined."""
@@ -42,11 +33,7 @@ def test_logger_name_constant():
     assert isinstance(LOGGER_NAME, str)
 
 
-# =========================================================================== #
-#                    PROJECT ROOT: DOCKER ENVIRONMENT                         #
-# =========================================================================== #
-
-
+# PROJECT ROOT: DOCKER ENVIRONMENT
 @pytest.mark.unit
 def test_get_project_root_docker_env():
     """Test get_project_root() returns /app in Docker environment."""
@@ -72,11 +59,7 @@ def test_get_project_root_not_docker():
         assert root.is_absolute()
 
 
-# =========================================================================== #
-#                    PROJECT ROOT: MARKER DETECTION                           #
-# =========================================================================== #
-
-
+# PROJECT ROOT: MARKER DETECTION
 @pytest.mark.unit
 def test_get_project_root_finds_git_marker(tmp_path):
     """Test get_project_root() locates project root via .git marker."""
@@ -134,11 +117,7 @@ def test_get_project_root_finds_readme_marker(tmp_path):
         assert (project_root / "README.md").exists()
 
 
-# =========================================================================== #
-#                    PROJECT ROOT: FALLBACK LOGIC                             #
-# =========================================================================== #
-
-
+# PROJECT ROOT: FALLBACK LOGIC
 @pytest.mark.unit
 def test_get_project_root_fallback_sufficient_parents(tmp_path):
     """Test get_project_root() fallback when no markers but enough parent dirs."""
@@ -155,11 +134,7 @@ def test_get_project_root_fallback_sufficient_parents(tmp_path):
             assert len(deep_path.parents) >= 3
 
 
-# =========================================================================== #
-#                    STATIC DIRECTORIES: CONSTANTS                            #
-# =========================================================================== #
-
-
+# STATIC DIRECTORIES: CONSTANTS
 @pytest.mark.unit
 def test_project_root_is_path():
     """Test PROJECT_ROOT is a Path instance."""
@@ -199,11 +174,7 @@ def test_static_dirs_list():
         assert directory.is_absolute()
 
 
-# =========================================================================== #
-#                    SETUP: DIRECTORY INITIALIZATION                          #
-# =========================================================================== #
-
-
+# SETUP: DIRECTORY INITIALIZATION
 @pytest.mark.unit
 def test_setup_static_directories_creates_dirs(tmp_path):
     """Test setup_static_directories() creates all required directories."""
@@ -272,11 +243,7 @@ def test_setup_static_directories_empty_list():
         setup_static_directories()
 
 
-# =========================================================================== #
-#                    INTEGRATION: MODULE CONSTANTS                            #
-# =========================================================================== #
-
-
+# INTEGRATION: MODULE CONSTANTS
 @pytest.mark.unit
 def test_all_constants_are_defined():
     """Test all expected module-level constants are defined."""

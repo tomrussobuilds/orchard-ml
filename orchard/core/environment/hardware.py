@@ -8,24 +8,17 @@ accelerators and synchronizes PyTorch threading with system capabilities.
 
 import logging
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import os
 import platform
 
 import matplotlib
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import torch
 
-# =========================================================================== #
-#                               System Configuration                          #
-# =========================================================================== #
 
-
+# SYSTEM CONFIGURATION
 def configure_system_libraries() -> None:
     """
     Configures libraries for headless environments and reduces logging noise.
@@ -44,11 +37,7 @@ def configure_system_libraries() -> None:
         logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
 
-# =========================================================================== #
-#                              Hardware Detection                             #
-# =========================================================================== #
-
-
+# HARDWARE DETECTION
 def detect_best_device() -> str:
     """
     Detects the most performant accelerator (CUDA > MPS > CPU).
@@ -117,11 +106,7 @@ def get_vram_info(device_idx: int = 0) -> str:
         return "Query Failed"
 
 
-# =========================================================================== #
-#                          CPU Thread Management                              #
-# =========================================================================== #
-
-
+# CPU MANAGEMENT
 def get_num_workers() -> int:
     """
     Determines optimal DataLoader workers with RAM stability cap.

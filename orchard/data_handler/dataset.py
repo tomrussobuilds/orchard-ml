@@ -9,32 +9,22 @@ It implements selective RAM loading to balance I/O speed with memory
 efficiency and ensures deterministic subsampling for reproducible research.
 """
 
+# Standard Imports
 from pathlib import Path
-
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
 from typing import Final, Tuple
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-# =========================================================================== #
-#                              Internal Imports                               #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import Config
 
-# =========================================================================== #
-#                                DATASET CLASS                                #
-# =========================================================================== #
 
-
+# DATASET CLASS
 class MedMNISTDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
     """
     Enhanced PyTorch Dataset for MedMNIST data.
@@ -90,7 +80,7 @@ class MedMNISTDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
                 self.images = np.array(raw_images)
                 self.labels = raw_labels
 
-            # Standardize shape to (N, H, W, C)
+            # Standard Imports
             # This ensures consistent PIL conversion regardless of source format
             if self.images.ndim == 3:  # (N, H, W) -> (N, H, W, 1)
                 self.images = np.expand_dims(self.images, axis=-1)

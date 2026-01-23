@@ -5,21 +5,15 @@ Covers download logic, retry behavior, NPZ validation,
 and metadata extraction without performing real network calls.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 from types import SimpleNamespace
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import numpy as np
 import pytest
 import requests
 
-# =========================================================================== #
 #                                Module Under Test                            #
-# =========================================================================== #
 from orchard.data_handler.fetcher import (
     _is_valid_npz,
     _stream_download,
@@ -28,11 +22,8 @@ from orchard.data_handler.fetcher import (
     load_medmnist_health_check,
 )
 
-# =========================================================================== #
-#                                   FIXTURES                                  #
-# =========================================================================== #
 
-
+# FIXTURES
 @pytest.fixture
 def metadata(tmp_path):
     """Minimal DatasetMetadata stub."""
@@ -72,11 +63,7 @@ def monkeypatch_md5(monkeypatch):
     )
 
 
-# =========================================================================== #
 #                          TEST: _is_valid_npz                                 #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_is_valid_npz_true(valid_npz_file, monkeypatch_md5):
     """Valid NPZ with matching MD5 should return True."""
@@ -127,11 +114,7 @@ def test_is_valid_npz_ioerror(tmp_path, monkeypatch):
     assert _is_valid_npz(path, "any_md5") is False
 
 
-# =========================================================================== #
 #                     TEST: ensure_dataset_npz                                 #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_ensure_dataset_npz_uses_existing_valid_file(metadata, valid_npz_file, monkeypatch_md5):
     """Existing valid dataset should not trigger download."""
@@ -354,11 +337,7 @@ def test_ensure_dataset_npz_error_without_response_attribute(metadata, monkeypat
     assert sleep_calls[0] == 2.0
 
 
-# =========================================================================== #
 #                         TEST: _stream_download                               #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_stream_download_success(tmp_path, monkeypatch):
     """Successful download should write content to file."""
@@ -481,11 +460,7 @@ def test_stream_download_http_error(tmp_path, monkeypatch):
         _stream_download("https://example.com/file.npz", output_path)
 
 
-# =========================================================================== #
 #                         TEST: load_medmnist                                  #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_load_medmnist_rgb(metadata, valid_npz_file, monkeypatch_md5, monkeypatch):
     """RGB dataset metadata should be inferred correctly."""

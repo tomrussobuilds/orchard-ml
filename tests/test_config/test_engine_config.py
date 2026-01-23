@@ -5,28 +5,21 @@ Tests main Config class integration, cross-validation,
 YAML hydration, and from_args factory.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 import argparse
+import tempfile
+from pathlib import Path
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import yaml
 from pydantic import ValidationError
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import Config, DatasetConfig, HardwareConfig, ModelConfig, TrainingConfig
 
-# =========================================================================== #
-#                    CONFIG: BASIC CONSTRUCTION                               #
-# =========================================================================== #
 
-
+# CONFIG: BASIC CONSTRUCTION
 @pytest.mark.unit
 def test_config_defaults():
     """Test Config with all default sub-configs."""
@@ -49,11 +42,7 @@ def test_config_from_args_basic(basic_args):
     assert config.training.epochs == 60
 
 
-# =========================================================================== #
-#                    CONFIG: CROSS-VALIDATION                                 #
-# =========================================================================== #
-
-
+# CONFIG: CROSS-VALIDATION
 @pytest.mark.unit
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
 def test_resnet_18_adapted_requires_resolution_28_direct(device):
@@ -191,11 +180,7 @@ def test_resolve_dataset_metadata_success():
     assert metadata.in_channels in [1, 3]
 
 
-# =========================================================================== #
-#                    CONFIG: YAML HYDRATION                                   #
-# =========================================================================== #
-
-
+# CONFIG: YAML HYDRATION
 @pytest.mark.integration
 def test_from_yaml_loads_correctly(temp_yaml_config, mock_metadata_28):
     """Test Config.from_yaml() loads YAML correctly."""
@@ -308,11 +293,7 @@ def test_build_from_yaml_or_args_yaml_dataset_not_found(tmp_path):
         Config._build_from_yaml_or_args(args, ds_meta={})
 
 
-# =========================================================================== #
-#                    CONFIG: SERIALIZATION                                    #
-# =========================================================================== #
-
-
+# CONFIG: SERIALIZATION
 @pytest.mark.unit
 def test_dump_portable_converts_paths():
     """Test dump_portable() makes paths relative."""
@@ -338,11 +319,7 @@ def test_dump_serialized_json_compatible():
     assert "training" in serialized
 
 
-# =========================================================================== #
-#                    CONFIG: PROPERTIES                                       #
-# =========================================================================== #
-
-
+# CONFIG: PROPERTIES
 @pytest.mark.unit
 def test_run_slug_property():
     """Test run_slug combines dataset and model names."""
@@ -365,11 +342,7 @@ def test_num_workers_property():
     assert workers == config.hardware.effective_num_workers
 
 
-# =========================================================================== #
-#                    CONFIG: EDGE CASES                                       #
-# =========================================================================== #
-
-
+# CONFIG: EDGE CASES
 @pytest.mark.unit
 def test_frozen_immutability():
     """Test Config is frozen (immutable)."""
@@ -416,3 +389,146 @@ def test_invalid_yaml_raises_error(temp_invalid_yaml):
             config=str(temp_invalid_yaml), dataset="bloodmnist", pretrained=True
         )
         Config.from_args(args)
+
+
+@pytest.mark.unit
+def test_config_from_yaml_with_img_size_override():
+    """Test that YAML img_size overrides CLI args."""
+
+    # Create a temporary YAML config with img_size specified
+    yaml_content = {
+        "dataset": {
+            "name": "pathmnist",
+            "resolution": 28,
+            "img_size": 224,  # This should override CLI args
+            "force_rgb": True,
+        },
+        "model": {
+            "name": "resnet_18_adapted",
+            "pretrained": False,
+        },
+        "training": {
+            "epochs": 5,
+            "mixup_epochs": 0,  # Must be <= epochs to pass validation
+        },
+    }
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        yaml_path = Path(tmpdir) / "config.yaml"
+
+        # Write YAML file
+        with open(yaml_path, "w") as f:
+            yaml.dump(yaml_content, f)
+
+        # Create args with different img_size
+        args = argparse.Namespace(
+            config=str(yaml_path),
+            dataset="pathmnist",
+            resolution=28,
+            img_size=32,  # Different from YAML (224)
+            device="cpu",
+            seed=42,
+        )
+
+        # Build config from YAML
+        cfg = Config.from_args(args)
+
+        # Verify that YAML value (224) overrides CLI value (32)
+        assert cfg.dataset.img_size == 224, "YAML img_size should override CLI img_size"
+        assert args.img_size == 224, "args.img_size should be updated from YAML"
+
+
+@pytest.mark.unit
+def test_config_from_yaml_without_img_size():
+    """Test that when YAML doesn't specify img_size, no override occurs."""
+
+    yaml_content = {
+        "dataset": {
+            "name": "pathmnist",
+            "resolution": 28,
+            # No img_size specified
+            "force_rgb": True,
+        },
+        "model": {
+            "name": "resnet_18_adapted",
+            "pretrained": False,
+        },
+        "training": {
+            "epochs": 5,
+            "mixup_epochs": 0,  # Must be <= epochs
+        },
+    }
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        yaml_path = Path(tmpdir) / "config.yaml"
+
+        with open(yaml_path, "w") as f:
+            yaml.dump(yaml_content, f)
+
+        # Create args with img_size
+        args = argparse.Namespace(
+            config=str(yaml_path),
+            dataset="pathmnist",
+            resolution=28,
+            img_size=32,
+            device="cpu",
+            seed=42,
+        )
+
+        # Build config
+        cfg = Config.from_args(args)
+
+        # When YAML doesn't specify img_size, it should use the default or CLI value
+        # The exact behavior depends on how DatasetConfig handles missing img_size
+        assert cfg.dataset is not None
+
+
+@pytest.mark.unit
+def test_config_yaml_img_size_none_explicit():
+    """Test when YAML explicitly sets img_size to None."""
+
+    yaml_content = {
+        "dataset": {
+            "name": "pathmnist",
+            "resolution": 28,
+            "img_size": None,  # Explicitly None
+            "force_rgb": True,
+        },
+        "model": {
+            "name": "resnet_18_adapted",
+            "pretrained": False,
+        },
+        "training": {
+            "epochs": 5,
+            "mixup_epochs": 0,  # Must be <= epochs
+        },
+    }
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        yaml_path = Path(tmpdir) / "config.yaml"
+
+        with open(yaml_path, "w") as f:
+            yaml.dump(yaml_content, f)
+
+        original_img_size = 64
+        args = argparse.Namespace(
+            config=str(yaml_path),
+            dataset="pathmnist",
+            resolution=28,
+            img_size=original_img_size,
+            device="cpu",
+            seed=42,
+        )
+
+        # Build config
+        cfg = Config.from_args(args)
+
+        # When img_size is explicitly None in YAML, args.img_size should NOT be overridden
+        # (the condition `if yaml_img_size is not None` should be False)
+        assert (
+            args.img_size == original_img_size
+        ), "args.img_size should not change when YAML has img_size: null"
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

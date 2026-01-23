@@ -4,27 +4,18 @@ This module verifies the forward pass logic and validates output tensor shapes
 for medical imaging datasets.
 """
 
-# =========================================================================== #
-#                           STANDARD LIBRARY                                  #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 
-# =========================================================================== #
-#                           INTERNAL IMPORTS                                  #
-# =========================================================================== #
+# Internal Imports
 from orchard.models import build_efficientnet_b0
 
-# =========================================================================== #
-#                                FIXTURES                                     #
-# =========================================================================== #
 
-
+# FIXTURES
 @pytest.fixture
 def mock_cfg():
     """Provides a standardized configuration mock for model building."""
@@ -40,11 +31,7 @@ def device():
     return torch.device("cpu")
 
 
-# =========================================================================== #
-#                               UNIT TESTS                                    #
-# =========================================================================== #
-
-
+# UNIT TESTS
 @pytest.mark.unit
 class TestEfficientNetB0:
     """

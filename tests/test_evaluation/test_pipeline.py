@@ -5,27 +5,18 @@ Quick coverage tests to validate pipeline orchestration.
 These are minimal tests to boost coverage from 0% to ~20%.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.evaluation.pipeline import run_final_evaluation
 
-# =========================================================================== #
-#                    PIPELINE: SMOKE TESTS                                    #
-# =========================================================================== #
 
-
+# PIPELINE: SMOKE TESTS
 @pytest.mark.unit
 @patch("orchard.evaluation.pipeline.evaluate_model")
 @patch("orchard.evaluation.pipeline.plot_confusion_matrix")

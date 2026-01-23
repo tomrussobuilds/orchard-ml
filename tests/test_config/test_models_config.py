@@ -5,27 +5,18 @@ Tests model architecture selection, pretrained weight variants,
 and dropout regularization configuration.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from argparse import Namespace
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 from pydantic import ValidationError
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core.config import ModelConfig
 
-# =========================================================================== #
-#                    MODEL CONFIG: DEFAULTS                                   #
-# =========================================================================== #
 
-
+# MODEL CONFIG: DEFAULTS
 @pytest.mark.unit
 def test_model_config_defaults():
     """Test ModelConfig with default values."""
@@ -50,11 +41,7 @@ def test_model_config_custom_values():
     assert config.weight_variant == "imagenet"
 
 
-# =========================================================================== #
-#                    MODEL CONFIG: VALIDATION                                 #
-# =========================================================================== #
-
-
+# MODEL CONFIG: VALIDATION
 @pytest.mark.unit
 def test_dropout_bounds():
     """Test dropout must be in [0.0, 0.9]."""
@@ -94,11 +81,7 @@ def test_pretrained_boolean():
     assert config.pretrained is False
 
 
-# =========================================================================== #
-#                    MODEL CONFIG: WEIGHT VARIANTS                            #
-# =========================================================================== #
-
-
+# MODEL CONFIG: WEIGHT VARIANTS
 @pytest.mark.unit
 def test_weight_variant_optional():
     """Test weight_variant can be None."""
@@ -131,11 +114,7 @@ def test_weight_variant_with_pretrained_false():
     assert config.weight_variant == "imagenet"
 
 
-# =========================================================================== #
-#                    MODEL CONFIG: ARCHITECTURE NAMES                         #
-# =========================================================================== #
-
-
+# MODEL CONFIG: ARCHITECTURE NAMES
 @pytest.mark.unit
 def test_common_architecture_names():
     """Test ModelConfig accepts common architecture names."""
@@ -146,11 +125,7 @@ def test_common_architecture_names():
         assert config.name == arch
 
 
-# =========================================================================== #
-#                    MODEL CONFIG: FROM ARGS                                  #
-# =========================================================================== #
-
-
+# MODEL CONFIG: FROM ARGS
 @pytest.mark.unit
 def test_from_args():
     """Test ModelConfig.from_args() factory."""
@@ -188,11 +163,7 @@ def test_from_args_partial():
     assert config.dropout == 0.2  # Default
 
 
-# =========================================================================== #
-#                    MODEL CONFIG: DESCRIPTION FIELD                          #
-# =========================================================================== #
-
-
+# MODEL CONFIG: DESCRIPTION FIELD
 @pytest.mark.unit
 def test_field_descriptions_present():
     """Test all fields have descriptions."""
@@ -201,11 +172,7 @@ def test_field_descriptions_present():
         assert len(field_info.description) > 0
 
 
-# =========================================================================== #
-#                    MODEL CONFIG: IMMUTABILITY                               #
-# =========================================================================== #
-
-
+# MODEL CONFIG: IMMUTABILITY
 @pytest.mark.unit
 def test_config_is_frozen():
     """Test ModelConfig is immutable after creation."""
@@ -222,11 +189,7 @@ def test_config_forbids_extra_fields():
         ModelConfig(learning_rate=0.001)  # Wrong config section
 
 
-# =========================================================================== #
-#                    MODEL CONFIG: EDGE CASES                                 #
-# =========================================================================== #
-
-
+# MODEL CONFIG: EDGE CASES
 @pytest.mark.unit
 def test_empty_name_rejected():
     """Test empty string for name is rejected."""

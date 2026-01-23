@@ -17,33 +17,22 @@ Pretrained Weight Options:
     - 'vit_tiny_patch16_224': ImageNet-1k baseline
 """
 
-# =========================================================================== #
-#                           STANDARD LIBRARY                                  #
-# =========================================================================== #
+# Standard Imports
 import logging
 
-# =========================================================================== #
-#                           THIRD-PARTY IMPORTS                               #
-# =========================================================================== #
+# Third-Party Imports
 import timm
 import torch
 import torch.nn as nn
 
-# =========================================================================== #
-#                           INTERNAL IMPORTS                                  #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import LOGGER_NAME, Config
 
-# =========================================================================== #
-#                           LOGGER CONFIGURATION                              #
-# =========================================================================== #
+# LOGGER CONFIGURATION
 logger = logging.getLogger(LOGGER_NAME)
 
-# =========================================================================== #
-#                           MODEL BUILDER                                     #
-# =========================================================================== #
 
-
+# MODEL BUILDER
 def build_vit_tiny(
     device: torch.device, num_classes: int, in_channels: int, cfg: Config
 ) -> nn.Module:

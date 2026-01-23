@@ -5,17 +5,13 @@ Quick tests to eliminate codecov warnings for newly created modules.
 Focuses on testing the most critical functions in each module.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 import tempfile
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import optuna
 import pytest
 
@@ -25,9 +21,7 @@ from orchard.optimization.orchestrator.builders import (
     build_sampler,
 )
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.optimization.orchestrator.config import (
     PRUNER_REGISTRY,
     SAMPLER_REGISTRY,
@@ -45,11 +39,8 @@ from orchard.optimization.orchestrator.visualizers import (
     save_plot,
 )
 
-# =========================================================================== #
-#                    FIXTURES                                                 #
-# =========================================================================== #
 
-
+# FIXTURES
 @pytest.fixture
 def mock_cfg():
     """Minimal config mock."""
@@ -81,11 +72,7 @@ def completed_trial():
     return trial
 
 
-# =========================================================================== #
 #                    TESTS: config.py                                         #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_sampler_registry_has_tpe():
     """Test SAMPLER_REGISTRY contains TPE."""
@@ -114,11 +101,7 @@ def test_map_param_to_config_path_model():
     assert key == "dropout"
 
 
-# =========================================================================== #
 #                    TESTS: builders.py                                       #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_build_sampler_tpe(mock_cfg):
     """Test building TPE sampler."""
@@ -149,11 +132,7 @@ def test_build_callbacks(mock_callback_fn, mock_cfg):
     assert isinstance(callbacks, list)
 
 
-# =========================================================================== #
 #                    TESTS: utils.py                                          #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_get_completed_trials(completed_trial):
     """Test extracting completed trials."""
@@ -182,11 +161,7 @@ def test_has_completed_trials_false():
     assert has_completed_trials(study) is False
 
 
-# =========================================================================== #
 #                    TESTS: exporters.py                                      #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_build_trial_data(completed_trial):
     """Test building trial data dict."""
@@ -211,11 +186,7 @@ def test_build_best_config_dict(mock_cfg):
     assert config_dict["training"]["epochs"] == 50
 
 
-# =========================================================================== #
 #                    TESTS: visualizers.py                                    #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_save_plot_success(completed_trial):
     """Test save_plot saves HTML file."""

@@ -5,29 +5,20 @@ Covers deterministic seeding, reproducibility mode detection,
 and DataLoader worker initialization logic.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 import os
 import random
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import numpy as np
 import pytest
 import torch
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import is_repro_mode_requested, set_seed, worker_init_fn
 
-# =========================================================================== #
+
 #                         TESTS: Mode Detection                               #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_is_repro_mode_requested_cli_flag():
     """CLI flag alone enables reproducibility mode."""
@@ -48,11 +39,7 @@ def test_is_repro_mode_requested_disabled(monkeypatch):
     assert is_repro_mode_requested(cli_flag=False) is False
 
 
-# =========================================================================== #
 #                         TESTS: set_seed                                     #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_set_seed_reproducibility_cpu():
     """set_seed enforces deterministic CPU behavior."""
@@ -91,11 +78,7 @@ def test_set_seed_strict_mode_flags():
         assert True
 
 
-# =========================================================================== #
 #                         TESTS: worker_init_fn                               #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_worker_init_fn_no_worker_info(monkeypatch):
     """worker_init_fn is a no-op outside DataLoader workers."""

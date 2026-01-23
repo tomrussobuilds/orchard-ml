@@ -9,21 +9,14 @@ Provides helper functions for working with Optuna studies:
 These utilities eliminate code duplication across orchestrator modules.
 """
 
-# =========================================================================== #
-#                         STANDARD IMPORTS                                    #
-# =========================================================================== #
+# Standard Imports
 from typing import List
 
-# =========================================================================== #
-#                         THIRD-PARTY IMPORTS                                 #
-# =========================================================================== #
+# Third-Party Imports
 import optuna
 
-# =========================================================================== #
-#                         HELPER FUNCTIONS                                    #
-# =========================================================================== #
 
-
+# HELPER FUNCTIONS
 def get_completed_trials(study: optuna.Study) -> List[optuna.trial.FrozenTrial]:
     """
     Extract all successfully completed trials from study.

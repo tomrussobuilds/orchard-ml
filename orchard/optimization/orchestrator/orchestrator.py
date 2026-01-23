@@ -9,19 +9,13 @@ This module contains only high-level coordination logic. All
 implementation details are delegated to focused submodules.
 """
 
-# =========================================================================== #
-#                         STANDARD IMPORTS                                    #
-# =========================================================================== #
+# Standard Imports
 import logging
 
-# =========================================================================== #
-#                         THIRD-PARTY IMPORTS                                 #
-# =========================================================================== #
+# Third-Party Imports
 import optuna
 
-# =========================================================================== #
-#                         INTERNAL IMPORTS                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import (
     LOGGER_NAME,
     Config,
@@ -31,9 +25,7 @@ from orchard.core import (
     log_study_summary,
 )
 
-# =========================================================================== #
-#                         RELATIVE IMPORTS                                    #
-# =========================================================================== #
+# Relative Imports
 from ..objective.objective import OptunaObjective
 from ..search_spaces import get_search_space
 from .builders import build_callbacks, build_pruner, build_sampler
@@ -44,11 +36,7 @@ from .visualizers import generate_visualizations
 logger = logging.getLogger(LOGGER_NAME)
 
 
-# =========================================================================== #
-#                         STUDY ORCHESTRATOR                                  #
-# =========================================================================== #
-
-
+# STUDY ORCHESTRATOR
 class OptunaOrchestrator:
     """
     High-level manager for Optuna optimization studies.

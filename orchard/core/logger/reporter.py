@@ -12,23 +12,16 @@ The reporter handles:
     - Study completion summaries
 """
 
-# =========================================================================== #
-#                              STANDARD LIBRARY                               #
-# =========================================================================== #
+# Standard Imports
 import logging
 from typing import TYPE_CHECKING, Any, Dict
 
+# Third-Party Imports
 import optuna
 import torch
-
-# =========================================================================== #
-#                           THIRD-PARTY IMPORTS                               #
-# =========================================================================== #
 from pydantic import BaseModel, ConfigDict
 
-# =========================================================================== #
-#                            INTERNAL IMPORTS                                 #
-# =========================================================================== #
+# Internal Imports
 from ..environment import determine_tta_mode, get_cuda_name, get_vram_info
 from ..paths import LOGGER_NAME, RunPaths
 
@@ -38,11 +31,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(LOGGER_NAME)
 
 
-# =========================================================================== #
-#                          LOG STYLE CONSTANTS                                #
-# =========================================================================== #
-
-
+# LOG STYLE CONSTANTS
 class LogStyle:
     """Unified logging style constants for consistent visual hierarchy."""
 
@@ -66,11 +55,7 @@ class LogStyle:
     DOUBLE_INDENT = "    "
 
 
-# =========================================================================== #
-#                        EXPERIMENT INITIALIZATION LOGGING                    #
-# =========================================================================== #
-
-
+# EXPERIMENT INITIALIZATION LOGGING
 class Reporter(BaseModel):
     """
     Centralized logging and reporting utility for experiment lifecycle events.
@@ -232,11 +217,7 @@ class Reporter(BaseModel):
         logger_instance.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Global Seed':<18}: {train.seed}")
 
 
-# =========================================================================== #
-#                        OPTIMIZATION LOGGING                                 #
-# =========================================================================== #
-
-
+# OPTIMIZATION LOGGING
 def log_optimization_header(cfg: "Config", logger_instance: logging.Logger = None) -> None:
     """
     Log Optuna optimization session header.

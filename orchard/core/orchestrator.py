@@ -25,25 +25,17 @@ Typical Usage:
     ...     # Run training pipeline
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import logging
 from typing import TYPE_CHECKING, Callable, Optional, Protocol
 
-# =========================================================================== #
-#                             Third-Party Imports                             #
-# =========================================================================== #
+# Third-Party Imports
 import torch
 
-# =========================================================================== #
-#                                Relative Imports                             #
-# =========================================================================== #
+# Relative Imports
 from .config.infrastructure_config import InfrastructureManager
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from .environment import (
     apply_cpu_threads,
     configure_system_libraries,
@@ -58,11 +50,7 @@ if TYPE_CHECKING:
     from .config.engine import Config
 
 
-# =========================================================================== #
-#                            Protocols (for DI)                               #
-# =========================================================================== #
-
-
+# PROTOCOLS
 class InfraManagerProtocol(Protocol):
     """Protocol for infrastructure management, allowing mocking."""
 
@@ -114,11 +102,7 @@ class ReporterProtocol(Protocol):
         ...
 
 
-# =========================================================================== #
-#                            Root Orchestrator                                #
-# =========================================================================== #
-
-
+# ROOT ORCHESTRATOR
 class RootOrchestrator:
     """
     Central coordinator for ML experiment lifecycle management.

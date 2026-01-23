@@ -4,28 +4,19 @@ Minimal Test Suite for Training Engine.
 Quick tests to cover core training/validation functions and eliminate codecov warnings.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 import torch.nn as nn
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.trainer.engine import mixup_data, train_one_epoch, validate_epoch
 
-# =========================================================================== #
-#                    FIXTURES                                                 #
-# =========================================================================== #
 
-
+# FIXTURES
 @pytest.fixture
 def simple_model():
     """Simple 2-layer network for testing."""
@@ -58,11 +49,7 @@ def optimizer(simple_model):
     return torch.optim.SGD(simple_model.parameters(), lr=0.01)
 
 
-# =========================================================================== #
 #                    TESTS: train_one_epoch                                   #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_train_one_epoch_basic(simple_model, simple_loader, criterion, optimizer):
     """Test train_one_epoch completes without errors."""
@@ -203,11 +190,7 @@ def test_train_one_epoch_updates_tqdm_postfix(simple_model, simple_loader, crite
         assert mock_iterator.set_postfix.called
 
 
-# =========================================================================== #
 #                    TESTS: validate_epoch                                    #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_validate_epoch_basic(simple_model, simple_loader, criterion):
     """Test validate_epoch returns correct metrics."""
@@ -274,11 +257,7 @@ def test_validate_epoch_auc_error_handling(simple_model, criterion):
     assert metrics["auc"] >= 0.0
 
 
-# =========================================================================== #
 #                    TESTS: mixup_data                                        #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_mixup_data_basic():
     """Test mixup_data creates proper blends."""

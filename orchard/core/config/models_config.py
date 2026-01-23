@@ -7,27 +7,18 @@ to the DatasetConfig, ensuring a Single Source of Truth (SSOT) and preventing
 architectural mismatches during model instantiation.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import argparse
 from typing import Optional
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 from pydantic import BaseModel, ConfigDict, Field
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from .types import DropoutRate
 
-# =========================================================================== #
-#                                MODEL CONFIGURATION                          #
-# =========================================================================== #
 
-
+# MODELS CONFIGURATION
 class ModelConfig(BaseModel):
     """
     Configuration for Model Architecture and Weight Initialization.

@@ -7,18 +7,13 @@ Focal Loss to handle extreme class imbalances and difficult samples
 often encountered in medical imaging and fine-grained classification.
 """
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# =========================================================================== #
-#                                CUSTOM LOSSES                                #
-# =========================================================================== #
 
-
+# CUSTOM LOSSES
 class FocalLoss(nn.Module):
     """
     Implementation of Focal Loss for multi-class classification.
@@ -68,11 +63,7 @@ class FocalLoss(nn.Module):
         return focal_loss.mean()
 
 
-# =========================================================================== #
-#                                HELPER FUNCTIONS                             #
-# =========================================================================== #
-
-
+# HELPER FUNCTIONS
 def get_loss_name(criterion: nn.Module) -> str:
     """
     Utility to extract a human-readable name from a loss instance.

@@ -6,20 +6,14 @@ supporting components using dependency injection, enabling high
 coverage through isolated and deterministic unit tests.
 """
 
-# =========================================================================== #
-#                              Standard Imports                               #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import MagicMock, patch
 
-# =========================================================================== #
-#                             Third-Party Imports                             #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 
-# =========================================================================== #
-#                             Internal Imports                                #
-# =========================================================================== #
+# Internal Imports
 from orchard.optimization.objective import (
     MetricExtractor,
     OptunaObjective,
@@ -27,11 +21,8 @@ from orchard.optimization.objective import (
     TrialTrainingExecutor,
 )
 
-# =========================================================================== #
-#                    TRIAL CONFIG BUILDER TESTS                               #
-# =========================================================================== #
 
-
+# TRIAL CONFIG BUILDER TESTS
 @pytest.mark.unit
 def test_config_builder_preserves_metadata():
     """Test TrialConfigBuilder preserves dataset metadata."""
@@ -90,11 +81,7 @@ def test_config_builder_applies_param_overrides():
     assert test_dict["training"]["epochs"] == 20
 
 
-# =========================================================================== #
-#                    METRIC EXTRACTOR TESTS                                   #
-# =========================================================================== #
-
-
+# METRIC EXTRACTOR TESTS
 @pytest.mark.unit
 def test_metric_extractor_extracts_correct_metric():
     """Test MetricExtractor extracts specified metric."""
@@ -136,11 +123,7 @@ def test_metric_extractor_tracks_best():
     assert extractor.best_metric == 0.90
 
 
-# =========================================================================== #
-#                    TRAINING EXECUTOR TESTS                                  #
-# =========================================================================== #
-
-
+# TRAINING EXECUTOR TESTS
 @pytest.mark.unit
 def test_training_executor_should_prune_warmup():
     """Test TrialTrainingExecutor respects warmup period."""
@@ -241,11 +224,7 @@ def test_training_executor_validate_epoch_error_handling():
     assert result == {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
 
 
-# =========================================================================== #
-#                    OPTUNA OBJECTIVE TESTS                                   #
-# =========================================================================== #
-
-
+# OPTUNA OBJECTIVE TESTS
 @pytest.mark.unit
 def test_optuna_objective_init_with_defaults():
     """Test OptunaObjective initializes with dependency injection."""
@@ -373,11 +352,7 @@ def test_optuna_objective_sample_params_object():
     mock_dataset_loader.assert_called_once_with(mock_cfg.dataset._ensure_metadata)
 
 
-# =========================================================================== #
-#                    OPTUNA OBJECTIVE: __CALL__ METHOD                        #
-# =========================================================================== #
-
-
+# OPTUNA OBJECTIVE: __CALL__ METHOD
 @pytest.mark.unit
 def test_optuna_objective_call_with_pruning():
     """Test OptunaObjective.__call__ handles pruning correctly."""
@@ -587,11 +562,7 @@ def test_optuna_objective_call_builds_trial_config():
             )
 
 
-# =========================================================================== #
-#                    CLEANUP METHOD TESTS                                     #
-# =========================================================================== #
-
-
+# CLEANUP METHOD TESTS
 @pytest.mark.unit
 def test_cleanup_with_cuda_available(monkeypatch):
     """Test _cleanup clears CUDA cache when available."""

@@ -4,21 +4,14 @@ Model Checkpoint & Weight Management.
 Handles secure restoration of model states and device mapping for neural networks.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 from pathlib import Path
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import torch
 
-# =========================================================================== #
-#                               Weight Management                             #
-# =========================================================================== #
 
-
+#  WEIGHT MANAGEMENT
 def load_model_weights(model: torch.nn.Module, path: Path, device: torch.device) -> None:
     """
     Restores model state from a checkpoint using secure weight-only loading.

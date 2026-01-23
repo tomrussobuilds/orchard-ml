@@ -8,9 +8,7 @@ Provides components for automated hyperparameter search:
     - run_optimization: Convenience function for complete workflow
 """
 
-# =========================================================================== #
-#                             Internal Imports                                #
-# =========================================================================== #
+# Internal Imports
 from .early_stopping import StudyEarlyStoppingCallback, get_early_stopping_callback
 from .objective import MetricExtractor, OptunaObjective, TrialConfigBuilder, TrialTrainingExecutor
 from .orchestrator import (
@@ -22,9 +20,7 @@ from .orchestrator import (
 )
 from .search_spaces import FullSearchSpace, SearchSpaceRegistry, get_search_space
 
-# =========================================================================== #
 #                              Public API                                     #
-# =========================================================================== #
 __all__ = [
     "SearchSpaceRegistry",
     "get_search_space",

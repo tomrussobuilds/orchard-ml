@@ -6,25 +6,18 @@ PyTorch features: Automatic Mixed Precision (AMP), Gradient Clipping, and
 MixUp augmentation for improved numerical stability and hardware utilization.
 """
 
-# =========================================================================== #
-#                           STANDARD IMPORTS                                  #
-# =========================================================================== #
+# Standard Imports
 from typing import Tuple
 
-# =========================================================================== #
-#                           THIRD-PARTY IMPORTS                               #
-# =========================================================================== #
+# Third-Party Imports
 import numpy as np
 import torch
 import torch.nn as nn
 from sklearn.metrics import roc_auc_score
 from tqdm.auto import tqdm
 
-# =========================================================================== #
-#                           TRAINING ENGINE                                   #
-# =========================================================================== #
 
-
+# TRAINING ENGINE
 def train_one_epoch(
     model: nn.Module,
     loader: torch.utils.data.DataLoader,
@@ -107,11 +100,7 @@ def train_one_epoch(
     return running_loss / total_samples
 
 
-# =========================================================================== #
-#                         VALIDATION ENGINE                                   #
-# =========================================================================== #
-
-
+# VALIDATION ENGINE
 def validate_epoch(
     model: nn.Module,
     val_loader: torch.utils.data.DataLoader,
@@ -194,11 +183,7 @@ def validate_epoch(
     return {"loss": val_loss / total, "accuracy": correct / total, "auc": auc}
 
 
-# =========================================================================== #
-#                           MIXUP UTILITY                                     #
-# =========================================================================== #
-
-
+# MIXUP UTILITY
 def mixup_data(
     x: torch.Tensor,
     y: torch.Tensor,

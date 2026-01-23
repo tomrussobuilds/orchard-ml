@@ -5,26 +5,17 @@ Provides a standardized interface for calculating classification performance
 metrics from model outputs. Isolates statistical logic from inference loops.
 """
 
-# =========================================================================== #
-#                                Standard Imports                             #
-# =========================================================================== #
+# Standard Imports
 import logging
 
-# =========================================================================== #
-#                                Third-Party Imports                          #
-# =========================================================================== #
+# Third-Party Imports
 import numpy as np
 from sklearn.metrics import f1_score, roc_auc_score
 
-# =========================================================================== #
-#                                Internal Imports                             #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import LOGGER_NAME
 
-# =========================================================================== #
-#                                 METRIC LOGIC                                #
-# =========================================================================== #
-
+# METRIC LOGIC
 logger = logging.getLogger(LOGGER_NAME)
 
 

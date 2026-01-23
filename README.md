@@ -38,6 +38,14 @@
   <a href="https://github.com/psf/black">
     <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
   </a>
+  <a href="https://pycqa.github.io/isort/">
+    <img src="https://img.shields.io/badge/imports-isort-1674b1?logo=python&logoColor=white" alt="isort">
+  </a>
+  <a href="https://flake8.pycqa.org/">
+    <img src="https://img.shields.io/badge/linting-flake8-brightgreen?logo=python&logoColor=white" alt="Flake8">
+  </a>
+  <img src="https://img.shields.io/badge/tests-800%2B-success" alt="Tests">
+  <img src="https://img.shields.io/badge/coverage-%E2%86%92100%25-brightgreen" alt="Coverage Goal">
   <img src="https://img.shields.io/badge/Architecture-Decoupled-blueviolet" alt="Architecture">
   <img src="https://img.shields.io/badge/status-Active-success" alt="Status">
   <a href="https://github.com/tomrussobuilds/visionforge/issues">
@@ -50,6 +58,7 @@
 ## 📌 Table of Contents
 
 - [🎯 Overview](#-overview)
+- [⚡ Hardware Requirements](#-hardware-requirements)
 - [🚀 Quick Start](#-quick-start)
 - [✨ Core Features](#-core-features)
 - [🏗 System Architecture](#-system-architecture)
@@ -89,55 +98,110 @@
 | **224×224** | EfficientNet-B0 | ~5.3M | Efficient compound scaling |
 | **224×224** | ViT-Tiny | ~5.7M | Patch-based attention, multiple weight variants |
 
-**Representative Benchmarks** (RTX 5070):
+---
 
-| Task | Architecture | Resolution | Trials | Time | Notes |
+## ⚡ Hardware Requirements
+
+### CPU Training (28×28 Only)
+- **Supported Resolution**: 28×28 **only**
+- **Time**: ~2.5 hours (ResNet-18-Adapted, 60 epochs, 16 cores)
+- **Time**: ~30 minutes (MiniCNN, 60 epochs, 16 cores)
+- **Architectures**: ResNet-18-Adapted, MiniCNN
+- **Use Case**: Development, testing, limited hardware environments
+
+### GPU Training (All Resolutions)
+- **28×28 Resolution**: 
+  - MiniCNN: ~2-3 minutes (60 epochs)
+  - ResNet-18-Adapted: ~5 minutes (60 epochs)
+- **224×224 Resolution**: 
+  - EfficientNet-B0: ~30 minutes per trial (15 epochs)
+  - ViT-Tiny: ~25-35 minutes per trial (30 epochs)
+- **VRAM**: 8GB recommended for 224×224 resolution
+- **Architectures**: All (ResNet-18-Adapted, MiniCNN, EfficientNet-B0, ViT-Tiny)
+
+> [!WARNING]
+> **224×224 training on CPU is not recommended** - it would take 10+ hours per trial. High-resolution training requires GPU acceleration. Only 28×28 resolution has been tested and validated for CPU training.
+
+**Representative Benchmarks** (RTX 5070 Laptop GPU):
+
+| Task | Architecture | Resolution | Device | Time | Notes |
 |------|-------------|-----------|--------|------|-------|
-| **Training** | ResNet-18-Adapted | 28×28 | - | ~5 min (60 epochs) | BloodMNIST, GPU |
-| **Training** | MiniCNN | 28×28 | - | ~2-3 min (60 epochs) | BloodMNIST, GPU, compact baseline |
-| **Training** | ResNet-18-Adapted | 28×28 | - | ~2.5h (60 epochs) | BloodMNIST, CPU (16 cores) |
-| **Optimization** | EfficientNet-B0 | 224×224 | 20 | ~1.5-5h | OrganCMNIST, **varies with pruning/early stop** |
-| **Single Trial** | EfficientNet-B0 | 224×224 | 1 | ~30 min (15 epochs) | OrganCMNIST, batch size 16 |
-| **Single Trial** | ViT-Tiny | 224×224 | 1 | ~25-35 min (30 epochs) | OrganCMNIST, ImageNet-21k weights |
+| **Smoke Test** | MiniCNN | 28×28 | CPU/GPU | <30s | 1-epoch sanity check |
+| **Quick Training** | MiniCNN | 28×28 | GPU | ~2-3 min | 60 epochs |
+| **Quick Training** | MiniCNN | 28×28 | CPU (16 cores) | ~30 min | 60 epochs, CPU-validated |
+| **Transfer Learning** | ResNet-18-Adapted | 28×28 | GPU | ~5 min | 60 epochs |
+| **Transfer Learning** | ResNet-18-Adapted | 28×28 | CPU (16 cores) | ~2.5h | 60 epochs, CPU-validated |
+| **High-Res Training** | EfficientNet-B0 | 224×224 | GPU | ~30 min | 15 epochs, **GPU required** |
+| **High-Res Training** | ViT-Tiny | 224×224 | GPU | ~25-35 min | 30 epochs, **GPU required** |
+| **Optimization Study** | EfficientNet-B0 | 224×224 | GPU | ~2h | 4 trials (early stop at AUC≥0.9999) |
+| **Optimization Study** | Various | 224×224 | GPU | ~1.5-5h | 20 trials, highly variable |
 
 >[!Note]
->**Timing Variance**: GPU training times are highly dependent on early stopping criteria, pruning configuration, and dataset complexity:
->- **28×28 Resolution**: ~2-5 minutes on GPU (60 epochs), ~2.5 hours on CPU (recommended CPU-only resolution)
->- **224×224 Resolution**: ~25-35 minutes per trial (15-30 epochs), GPU strongly recommended
->- **Optimization Studies**: May finish in 1-3 hours if early stopping thresholds are met (e.g., AUC ≥ 0.9999), or extend to 5+ hours for comprehensive exploration
->- **CPU Training**: Only recommended for 28×28 resolution; 224×224 training is prohibitively slow without GPU acceleration
+>**Timing Variance**: Optimization times are highly dependent on early stopping criteria, pruning configuration, and dataset complexity:
+>- **Early Stopping**: Studies may finish in 1-3 hours if performance thresholds are met quickly (e.g., AUC ≥ 0.9999 after 4 trials)
+>- **Full Exploration**: Without early stopping, 20 trials can extend to 5+ hours
+>- **Pruning Impact**: Median pruning can save 30-50% of total time by terminating underperforming trials
 
 ---
 
 ## 🚀 Quick Start
 
+### Step 1: Environment Setup
 ```bash
-# 1. Clone and setup environment
+# Clone and setup environment
 git clone https://github.com/tomrussobuilds/visionforge.git
 cd visionforge
 pip install -r requirements.txt
+```
 
-# 2. Run a quick verification (1-epoch sanity check, ~30 seconds)
+### Step 2: Smoke Test (30 seconds - GPU/CPU)
+```bash
+# Verify installation with 1-epoch sanity check
+# Downloads BloodMNIST 28×28 by default (or specify --dataset/--resolution)
 python -m tests.smoke_test
+```
 
-# 3. Train with optimized recipes
-# Low-resolution (28×28) - Fast baseline
-python main.py --config recipes/config_mini_cnn.yaml              # ~2-3 min, GPU
-python main.py --config recipes/config_resnet_18_adapted.yaml     # ~5 min, GPU
+### Step 3: Choose Your Workflow
 
-# High-resolution (224×224) - Modern architectures
-python main.py --config recipes/config_efficientnet_b0.yaml       # ~30 min, GPU required
-python main.py --config recipes/config_vit_tiny.yaml              # ~25-35 min, GPU required
+#### 🔬 **Workflow A: Fast Prototyping** (28×28, CPU-friendly)
+```bash
+# Quick baseline (~2-3 min GPU, ~30 min CPU)
+python main.py --config recipes/config_mini_cnn.yaml
 
-# 4. Launch hyperparameter optimization (time varies with early stopping)
-python optimize.py --config recipes/optuna_mini_cnn.yaml          # 28×28, architecture search
-python optimize.py --config recipes/optuna_vit_tiny.yaml          # 224×224, weight variant search
+# Transfer learning baseline (~5 min GPU, ~2.5h CPU)
+python main.py --config recipes/config_resnet_18_adapted.yaml
+```
 
-# 5. View optimization results
+#### 🎯 **Workflow B: Hyperparameter Optimization → Best Config** (Recommended)
+```bash
+# 1. Run optimization study (GPU recommended)
+python optimize.py --config recipes/optuna_mini_cnn.yaml              # 28×28 (~1-2h)
+python optimize.py --config recipes/optuna_efficientnet_b0.yaml       # 224×224 (~1.5-5h)
+
+# 2. View optimization results (interactive HTML plots)
 firefox outputs/*/figures/param_importances.html
 
-# 6. Deploy best configuration
+# 3. Train with optimized hyperparameters (60 epochs, full validation)
 python main.py --config outputs/*/reports/best_config.yaml
+```
+
+#### 🏆 **Workflow C: State-of-the-Art** (224×224, GPU required)
+```bash
+# EfficientNet-B0 (~30 min per trial, GPU)
+python main.py --config recipes/config_efficientnet_b0.yaml
+
+# Vision Transformer (~25-35 min per trial, GPU)
+python main.py --config recipes/config_vit_tiny.yaml
+```
+
+### Step 4: Explore Results
+```bash
+# All artifacts in timestamped directories
+ls outputs/YYYYMMDD_dataset_model_hash/
+├── figures/          # Confusion matrices, training curves, sample predictions
+├── reports/          # Excel summaries, study reports, best configs
+├── checkpoints/      # Model weights (.pth)
+└── database/         # Optuna SQLite studies (optimization only)
 ```
 
 ---
@@ -280,17 +344,23 @@ Every run generates a complete artifact suite for total traceability:
 
 **Artifact Structure:**
 ```
-outputs/20260116_organcmnist_optuna_a3f7c2/
+outputs/20260123_organcmnist_efficientnetb0_a3f7c2/
 ├── figures/
-│   ├── param_importances.html      # Interactive importance plot
-│   ├── optimization_history.html   # Trial progression
-│   └── parallel_coordinates.html   # Hyperparameter relationships
+│   ├── confusion_matrix_efficientnet_b0_224.png
+│   ├── training_curves_efficientnet_b0_224.png
+│   ├── sample_predictions_efficientnet_b0_224.png
+│   ├── param_importances.html          # Interactive importance plot (optimization)
+│   ├── optimization_history.html       # Trial progression (optimization)
+│   └── parallel_coordinates.html       # Hyperparameter relationships (optimization)
 ├── reports/
-│   ├── best_config.yaml            # Optimized configuration
-│   ├── study_summary.json          # All trials metadata
-│   └── top_10_trials.xlsx          # Best configurations
+│   ├── training_summary.xlsx           # Comprehensive metrics spreadsheet
+│   ├── best_config.yaml                # Optimized configuration (optimization)
+│   ├── study_summary.json              # All trials metadata (optimization)
+│   └── top_10_trials.xlsx              # Best configurations (optimization)
+├── checkpoints/
+│   └── best_efficientnetb0.pth         # Trained model weights
 └── database/
-    └── study.db                    # SQLite storage for resumption
+    └── study.db                        # SQLite storage for resumption (optimization)
 ```
 
 > [!IMPORTANT]
@@ -452,21 +522,27 @@ visionforge/
 ├── Dockerfile                      # Multi-stage reproducible build
 ├── requirements.txt                # Pinned dependencies
 ├── recipes/                        # YAML configuration presets
-│   ├── config_resnet_18_adapted.yaml
-│   ├── config_mini_cnn.yaml        # NEW: Compact 28×28 baseline
-│   ├── config_efficientnet_b0.yaml
-│   ├── config_vit_tiny.yaml        # NEW: Transformer for 224×224
-│   ├── optuna_resnet_18_adapted.yaml
-│   ├── optuna_mini_cnn.yaml        # NEW: Architecture search for 28×28
-│   ├── optuna_efficientnet_b0.yaml
-│   └── optuna_vit_tiny.yaml        # NEW: Weight variant search for 224×224
-├── tests/                          # Diagnostic utilities
+│   ├── config_resnet_18_adapted.yaml       # 28×28 transfer learning
+│   ├── config_mini_cnn.yaml                # 28×28 fast baseline
+│   ├── config_efficientnet_b0.yaml         # 224×224 efficient scaling
+│   ├── config_vit_tiny.yaml                # 224×224 transformer
+│   ├── optuna_resnet_18_adapted.yaml       # Optimization for 28×28
+│   ├── optuna_mini_cnn.yaml                # Architecture search 28×28
+│   ├── optuna_efficientnet_b0.yaml         # Optimization for 224×224
+│   └── optuna_vit_tiny.yaml                # Weight variant search 224×224
+├── tests/                          # Test suite (800+ tests, →100% coverage)
 │   ├── smoke_test.py               # 1-epoch E2E verification (~30s)
 │   ├── health_check.py             # Dataset integrity validation
-│   └── test_engine.py              # Unit test suite
+│   ├── test_config/                # Config engine tests (210 tests)
+│   ├── test_core/                  # Core utilities tests (95 tests)
+│   ├── test_data_handler/          # Data loading tests (87 tests)
+│   ├── test_evaluation/            # Metrics & viz tests (63 tests)
+│   ├── test_models/                # Architecture tests (44 tests)
+│   ├── test_optimization/          # Optuna integration tests (78 tests)
+│   └── test_trainer/               # Training loop tests (142 tests)
 ├── orchard/                        # Core framework package
 │   ├── core/                       # Framework nucleus
-│   │   ├── config/                 # Pydantic schemas
+│   │   ├── config/                 # Pydantic schemas (8 modules)
 │   │   ├── environment/            # Hardware abstraction
 │   │   ├── io/                     # Serialization utilities
 │   │   ├── logger/                 # Telemetry system
@@ -477,17 +553,31 @@ visionforge/
 │   ├── data_handler/               # Loading strategies
 │   ├── models/                     # Architecture factory
 │   │   ├── resnet_18_adapted.py    # Adapted ResNet for 28×28
-│   │   ├── mini_cnn.py             # NEW: Compact CNN for 28×28
+│   │   ├── mini_cnn.py             # Compact CNN for 28×28
 │   │   ├── efficientnet_b0.py      # EfficientNet for 224×224
-│   │   ├── vit_tiny.py             # NEW: Vision Transformer for 224×224
+│   │   ├── vit_tiny.py             # Vision Transformer for 224×224
 │   │   └── factory.py              # Architecture registry
 │   ├── trainer/                    # Training loop
+│   │   ├── engine.py               # Core training/validation logic
+│   │   ├── trainer.py              # ModelTrainer orchestrator
+│   │   ├── losses.py               # Custom loss functions (FocalLoss)
+│   │   └── setup.py                # Optimizer/scheduler setup
 │   ├── evaluation/                 # Metrics and visualization
+│   │   ├── engine.py               # Evaluation orchestration
+│   │   ├── metrics.py              # AUC, F1, Accuracy
+│   │   ├── visualization.py        # Plots (confusion matrix, curves)
+│   │   └── reporting.py            # Excel report generation
 │   └── optimization/               # Optuna integration
-│       ├── objective.py            # Trial execution logic
-│       ├── orchestrator.py         # Study management
-│       └── search_spaces.py        # Hyperparameter distributions
+│       ├── objective/              # Trial execution logic
+│       ├── orchestrator/           # Study management & visualization
+│       ├── search_spaces.py        # Hyperparameter distributions
+│       └── early_stopping.py       # Convergence detection
 └── outputs/                        # Isolated run workspaces
+    └── YYYYMMDD_dataset_model_hash/
+        ├── figures/                # Visualizations (PNG, HTML)
+        ├── reports/                # Metrics (XLSX, JSON, YAML)
+        ├── models/                 # Model weights (.pth)
+        └── database/               # Optuna study (SQLite)
 ```
 
 ---
@@ -502,9 +592,9 @@ visionforge/
 # Verify environment (~30 seconds)
 python -m tests.smoke_test
 
-# Train with presets (28×28 resolution)
-python main.py --config recipes/config_resnet_18_adapted.yaml     # ~5 min, GPU
-python main.py --config recipes/config_mini_cnn.yaml              # ~2-3 min, GPU
+# Train with presets (28×28 resolution, CPU-compatible)
+python main.py --config recipes/config_resnet_18_adapted.yaml     # ~5 min GPU, ~2.5h CPU
+python main.py --config recipes/config_mini_cnn.yaml              # ~2-3 min GPU, ~30 min CPU
 
 # Train with presets (224×224 resolution, GPU required)
 python main.py --config recipes/config_efficientnet_b0.yaml       # ~30 min per trial
@@ -544,11 +634,11 @@ python main.py --mixup_alpha 0 --no_tta
 # Install Optuna (if not already present)
 pip install optuna plotly timm  # timm required for ViT support
 
-# Run optimization with presets (28×28, includes architecture search)
-python optimize.py --config recipes/optuna_resnet_18_adapted.yaml  # 50 trials, time varies
+# Run optimization with presets
+python optimize.py --config recipes/optuna_resnet_18_adapted.yaml  # 50 trials, ~3-5h
 python optimize.py --config recipes/optuna_mini_cnn.yaml           # 50 trials, ~1-2h
 
-# Run optimization with presets (224×224, includes weight variant search)
+# 224×224 resolution (includes weight variant search for ViT)
 python optimize.py --config recipes/optuna_efficientnet_b0.yaml    # 20 trials, ~1.5-5h
 python optimize.py --config recipes/optuna_vit_tiny.yaml           # 20 trials, ~3-5h
 
@@ -573,10 +663,10 @@ python optimize.py --config recipes/optuna_vit_tiny.yaml \
 - **Batch Size**: Resolution-aware categorical choices
   - 28×28: [16, 32, 48, 64]
   - 224×224: [8, 12, 16] (OOM-safe for 8GB VRAM)
-- **Architecture** (NEW):
+- **Architecture** (resolution-specific):
   - 28×28: [`resnet_18_adapted`, `mini_cnn`]
   - 224×224: [`efficientnet_b0`, `vit_tiny`]
-- **Weight Variants** (NEW, ViT only):
+- **Weight Variants** (ViT only, 224×224):
   - `vit_tiny_patch16_224.augreg_in21k_ft_in1k`
   - `vit_tiny_patch16_224.augreg_in21k`
   - Default variant
@@ -587,21 +677,26 @@ python optimize.py --config recipes/optuna_vit_tiny.yaml \
 ### Optimization Workflow
 
 ```bash
-# Phase 1: Comprehensive search (50 trials, 15 epochs with early stopping and pruning. Time varies significantly)
-python optimize.py --config recipes/optuna_vit_tiny.yaml
+# Phase 1: Comprehensive search (configurable trials, early stopping enabled)
+python optimize.py --config recipes/optuna_efficientnet_b0.yaml
 
-# Phase 3: Final training with best config (60 epochs)
+# Phase 2: Review results
+firefox outputs/*/figures/param_importances.html
+firefox outputs/*/figures/optimization_history.html
+
+# Phase 3: Train with best config (60 epochs, full evaluation)
 python main.py --config outputs/*/reports/best_config.yaml
 ```
 
 ### Artifacts Generated
 
 ```
-outputs/20250116_bloodmnist_optuna_a3f7c2/
+outputs/20260123_organcmnist_efficientnetb0_a3f7c2/
 ├── figures/
 │   ├── param_importances.html      # Interactive importance plot
 │   ├── optimization_history.html   # Trial progression
-│   └── parallel_coordinates.html   # Hyperparameter relationships
+│   ├── slice.html                  # 1D parameter effects
+│   └── parallel_coordinate.html    # Multi-dimensional view
 ├── reports/
 │   ├── best_config.yaml            # Optimized configuration
 │   ├── study_summary.json          # All trials metadata
@@ -634,7 +729,11 @@ class CustomSearchSpace:
 
 **Smoke Test** (1-epoch sanity check):
 ```bash
+# Default: BloodMNIST 28×28
 python -m tests.smoke_test
+
+# Custom dataset/resolution
+python -m tests.smoke_test --dataset pathmnist --resolution 224
 ```
 
 **Output:** Validates full pipeline in <30 seconds:
@@ -693,8 +792,7 @@ docker run -it --rm \
   -v $(pwd)/dataset:/app/dataset \
   -v $(pwd)/outputs:/app/outputs \
   visionforge:latest \
-  --config recipes/config_resnet_18_adapted.yaml \
-  --reproducible
+  --config recipes/config_resnet_18_adapted.yaml
 ```
 
 > [!NOTE]
@@ -715,7 +813,7 @@ docker run -it --rm \
 | `learning_rate` | float | 0.008 | (1e-8, 1.0) | Initial SGD learning rate |
 | `min_lr` | float | 1e-6 | (0, lr) | Minimum LR for scheduler |
 | `weight_decay` | float | 5e-4 | [0, 0.2] | L2 regularization |
-| `momentum` | float | 0.9 | [0, 1) | SGD momentum |
+| `momentum` | float | 0.9 | [0, 1] | SGD momentum |
 | `mixup_alpha` | float | 0.002 | [0, 1] | MixUp strength (0=disabled) |
 | `label_smoothing` | float | 0.0 | [0, 0.3] | Label smoothing factor |
 | `dropout` | float | 0.0 | [0, 0.9] | Dropout probability |
@@ -736,7 +834,7 @@ docker run -it --rm \
 
 | Parameter | Type | Default | Options |
 |-----------|------|---------|---------|
-| `model_name` | str | "resnet_18_adapted" | `resnet_18_adapted`, `mini_cnn`, `efficientnet_b0`, `vit_tiny` |
+| `model_name` | str | "resnet_18_adapted" | `resnet_18_adapted`, `mini_cnn` (28×28); `efficientnet_b0`, `vit_tiny` (224×224) |
 | `pretrained` | bool | True | Use ImageNet weights (N/A for MiniCNN) |
 | `weight_variant` | str | None | ViT-specific pretrained variant (e.g., `augreg_in21k_ft_in1k`) |
 | `force_rgb` | bool | True | Convert grayscale to 3-channel |
@@ -759,7 +857,7 @@ The framework is designed for zero-code dataset integration via the registry sys
 
 ### 1. Add Dataset Metadata
 
-Edit `orchard/core/metadata/medmnist_v2_28x28.py`:
+Edit `orchard/core/metadata/medmnist_v2_28x28.py` or `medmnist_v2_224x224.py`:
 
 ```python
 DATASET_REGISTRY = {
@@ -773,8 +871,8 @@ DATASET_REGISTRY = {
         class_names=["class0", "class1", ...],
         url="https://example.com/dataset.npz",
         md5="abc123...",
-        is_anatomical = False,
-        is_texture_based = True
+        is_anatomical=False,
+        is_texture_based=True
     ),
 }
 ```
@@ -793,7 +891,7 @@ No code changes required—the configuration engine automatically resolves metad
 
 ### Test Suite
 
-VisionForge includes a comprehensive test suite with >90 tests covering:
+VisionForge includes a comprehensive test suite with **800+ tests** targeting **→100% code coverage**:
 
 ```bash
 # Run full test suite
@@ -812,10 +910,11 @@ pytest tests/ -n auto
 
 ### Test Categories
 
-- **Unit Tests** (90+ tests): Config validation, metadata injection, type safety
-- **Integration Tests**: End-to-end pipeline validation, YAML hydration
+- **Unit Tests** (650+ tests): Config validation, metadata injection, type safety
+- **Integration Tests** (150+ tests): End-to-end pipeline validation, YAML hydration
 - **Smoke Tests**: 1-epoch sanity checks (~30 seconds)
 - **Health Checks**: Dataset integrity validation
+
 
 ### Continuous Integration
 
@@ -857,22 +956,31 @@ View the latest build status: [![CI/CD](https://github.com/tomrussobuilds/vision
 - YAML-driven execution model
 - Optuna hyperparameter optimization
 - Multi-resolution support (28×28, 224×224)
-- Comprehensive test suite (>90 tests)
+- Comprehensive test suite (800+ tests)
 - CI/CD pipeline with GitHub Actions
 
 ### ✅ Phase 3: Modern Architectures (Completed)
-- **Vision Transformer (ViT-Tiny)**: Patch-based attention with multi-weight support
-- **MiniCNN**: Compact baseline for rapid prototyping
+- **Vision Transformer (ViT-Tiny)**: Patch-based attention with 3 weight variants
+- **MiniCNN**: Compact baseline for rapid prototyping (~50K parameters)
 - **Architecture Search**: Optuna-driven model selection for both resolutions
 - **Weight Variant Search**: Automatic exploration of ImageNet-1k/21k pretraining strategies
+- **ONNX Export**: Model serialization for deployment (via `onnx` extra)
 
-### 🔮 Phase 4: Domain Transcendence (Planned)
-- Abstract dataset registry for non-medical domains
-- Multi-modal hooks (detection, segmentation)
-- Distributed training support (DDP, FSDP)
-- TorchScript/ONNX export pipeline
-- Benchmark suite for architecture comparison
-- EfficientNet-V2 and ConvNeXt integration
+### 🔮 Phase 4: Advanced Features (In Progress)
+- **Additional Architectures**: ConvNeXt, EfficientNet-V2, DeiT
+- **Domain Extension**: Abstract dataset registry for non-medical domains
+- **Multi-modal Support**: Detection, segmentation hooks
+- **Distributed Training**: DDP, FSDP support for multi-GPU
+- **Advanced Export**: TorchScript optimization, quantization, ONNX Runtime
+- **Benchmark Suite**: Standardized architecture comparison framework
+
+### 🎯 Current Status
+- **Test Coverage**: 98% (→100% goal, 800+ tests)
+- **Architectures**: 4 total (2 for 28×28, 2 for 224×224)
+  - 28×28: ResNet-18-Adapted, MiniCNN
+  - 224×224: EfficientNet-B0, ViT-Tiny
+- **Resolutions**: 2 (28×28, 224×224)
+- **Export Formats**: PyTorch (.pth), ONNX (.onnx with optional dependency)
 
 ---
 

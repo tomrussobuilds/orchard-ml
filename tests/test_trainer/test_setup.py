@@ -4,29 +4,20 @@ Test Suite for Optimization Setup Module.
 Covers get_criterion, get_optimizer, and get_scheduler factories.
 """
 
-# =========================================================================== #
-#                         Standard Imports                                    #
-# =========================================================================== #
+# Standard Imports
 from types import SimpleNamespace
 
-# =========================================================================== #
-#                         Third-Party Imports                                 #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 
-# =========================================================================== #
-#                         Internal Imports                                    #
-# =========================================================================== #
+# Internal Imports
 from orchard.trainer import setup
 
-# =========================================================================== #
-#                    FIXTURES                                                 #
-# =========================================================================== #
 
-
+# FIXTURES
 @pytest.fixture
 def simple_model():
     """Simple linear model for testing."""
@@ -56,11 +47,7 @@ def base_cfg():
     return cfg
 
 
-# =========================================================================== #
 #                    TESTS: Criterion                                         #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 @pytest.mark.parametrize("crit_type", ["cross_entropy", "bce_logit", "focal"])
 def test_get_criterion_types(base_cfg, crit_type):
@@ -79,11 +66,7 @@ def test_get_criterion_invalid_type(base_cfg):
         setup.get_criterion(base_cfg)
 
 
-# =========================================================================== #
 #                    TESTS: Optimizer                                         #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_get_optimizer_resnet(base_cfg, simple_model):
     """Test SGD optimizer for ResNet variants."""
@@ -100,11 +83,7 @@ def test_get_optimizer_other_model(base_cfg, simple_model):
     assert isinstance(optimizer, optim.AdamW)
 
 
-# =========================================================================== #
 #                    TESTS: Scheduler                                         #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 @pytest.mark.parametrize("sched_type", ["cosine", "plateau", "step", "none"])
 def test_get_scheduler_types(base_cfg, simple_model, sched_type):

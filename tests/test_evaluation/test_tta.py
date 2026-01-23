@@ -6,30 +6,21 @@ under anatomical, texture-based, and hardware-dependent constraints.
 Forced to CPU for consistent testing.
 """
 
-# =========================================================================== #
-#                                 Standard Imports                            #
-# =========================================================================== #
+# Standard Imports
 from unittest.mock import MagicMock
 
-# =========================================================================== #
-#                                 Third-Party Imports                         #
-# =========================================================================== #
+# Third-Party Imports
 import pytest
 import torch
 import torch.nn as nn
 from torch.testing import assert_close
 
-# =========================================================================== #
-#                                 Internal Imports                            #
-# =========================================================================== #
+# Internal Imports
 from orchard.core import Config
 from orchard.evaluation import _get_tta_transforms, adaptive_tta_predict
 
-# =========================================================================== #
+
 #                                Test Fixtures                               #
-# =========================================================================== #
-
-
 @pytest.fixture
 def device():
     """
@@ -78,11 +69,7 @@ def mock_model(mock_cfg):
     return model
 
 
-# =========================================================================== #
 #                              Test Cases                                     #
-# =========================================================================== #
-
-
 @pytest.mark.unit
 def test_get_tta_transforms_base(dummy_input, device, mock_cfg):
     """
