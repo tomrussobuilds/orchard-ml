@@ -7,6 +7,7 @@ for validation, property methods, and error handling.
 
 # Standard Imports
 from pathlib import Path
+from unittest.mock import patch
 
 # Third-Party Imports
 import pytest
@@ -34,10 +35,8 @@ def test_dataset_metadata_repr_all_components():
         is_texture_based=False,
     )
 
-    # Call repr explicitly
     result = metadata.__repr__()
 
-    # Verify all parts of the formatted string
     assert result.startswith("<DatasetMetadata:")
     assert "Test MNIST Dataset" in result
     assert "224x224" in result
@@ -45,7 +44,6 @@ def test_dataset_metadata_repr_all_components():
     assert result.endswith(">")
 
 
-# DATASET REGISTRY WRAPPER TESTS
 @pytest.mark.unit
 def test_registry_wrapper_get_dataset_not_found():
     """Test DatasetRegistryWrapper.get_dataset raises KeyError for unknown dataset."""
@@ -54,7 +52,6 @@ def test_registry_wrapper_get_dataset_not_found():
     with pytest.raises(KeyError) as exc_info:
         wrapper.get_dataset("nonexistent_dataset")
 
-    # Verify error message contains available datasets
     error_msg = str(exc_info.value)
     assert "nonexistent_dataset" in error_msg
     assert "not found" in error_msg
@@ -67,7 +64,6 @@ def test_registry_wrapper_invalid_resolution():
     with pytest.raises(ValueError) as exc_info:
         DatasetRegistryWrapper(resolution=64)
 
-    # Verify error message
     error_msg = str(exc_info.value)
     assert "Unsupported resolution 64" in error_msg
     assert "[28, 224]" in error_msg
@@ -81,7 +77,6 @@ def test_registry_wrapper_resolution_28():
     assert wrapper.resolution == 28
     assert len(wrapper.registry) > 0
 
-    # Verify all metadata have resolution 28
     for metadata in wrapper.registry.values():
         assert metadata.native_resolution == 28
 
@@ -94,7 +89,6 @@ def test_registry_wrapper_resolution_224():
     assert wrapper.resolution == 224
     assert len(wrapper.registry) > 0
 
-    # Verify all metadata have resolution 224
     for metadata in wrapper.registry.values():
         assert metadata.native_resolution == 224
 
@@ -110,13 +104,48 @@ def test_registry_wrapper_get_dataset_returns_deep_copy():
 
     dataset_name = available_datasets[0]
 
-    # Get metadata twice
     meta1 = wrapper.get_dataset(dataset_name)
     meta2 = wrapper.get_dataset(dataset_name)
 
-    # Should be equal but not the same object
     assert meta1 == meta2
     assert meta1 is not meta2
+
+
+@pytest.mark.unit
+def test_dataset_metadata_normalization_info_property():
+    """Test DatasetMetadata.normalization_info property (line 59 in base.py)."""
+    metadata = DatasetMetadata(
+        name="testmnist",
+        display_name="Test Dataset",
+        md5_checksum="abc123",
+        url="http://example.com/test.npz",
+        path=Path("/data/test.npz"),
+        classes=["A", "B"],
+        in_channels=3,
+        native_resolution=28,
+        mean=(0.485, 0.456, 0.406),
+        std=(0.229, 0.224, 0.225),
+        is_anatomical=True,
+        is_texture_based=False,
+    )
+    result = metadata.normalization_info
+
+    assert "Mean: (0.485, 0.456, 0.406)" in result
+    assert "Std: (0.229, 0.224, 0.225)" in result
+    assert "|" in result
+
+
+@pytest.mark.unit
+def test_registry_wrapper_empty_source_registry():
+    """Test DatasetRegistryWrapper raises ValueError when source registry is empty (line 55 in wrapper.py)."""
+    # Mock the registries to be empty
+    with patch("orchard.core.metadata.wrapper.REG_28", {}):
+        with patch("orchard.core.metadata.wrapper.REG_224", {}):
+            with pytest.raises(ValueError) as exc_info:
+                DatasetRegistryWrapper(resolution=28)
+
+            error_msg = str(exc_info.value)
+            assert "Dataset registry for resolution 28 is empty" in error_msg
 
 
 if __name__ == "__main__":
