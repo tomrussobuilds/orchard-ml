@@ -97,32 +97,81 @@ def test_get_tta_transforms_texture_based(dummy_input, device, mock_cfg):
 
 
 @pytest.mark.unit
-def test_get_tta_transforms_cpu_non_anatomical_adds_vflip():
-    """Test CPU + non-anatomical adds vertical flip instead of rotations."""
+def test_get_tta_transforms_gpu_rotations_mocked():
+    """Test GPU branch adds rotations for non-anatomical datasets (mocked)."""
     mock_cfg = MagicMock()
     mock_cfg.augmentation.tta_translate = 2
     mock_cfg.augmentation.tta_scale = 1.05
     mock_cfg.augmentation.tta_blur_sigma = 0.5
 
-    # CPU device, non-anatomical
-    cpu_transforms = _get_tta_transforms(
-        device=torch.device("cpu"),
+    # Create a mock GPU device
+    mock_device = MagicMock()
+    mock_device.type = "cuda"  # ← Force GPU type
+
+    # This will trigger the GPU branch even on CPU-only CI
+    gpu_transforms = _get_tta_transforms(
+        device=mock_device,
         is_anatomical=False,
         is_texture_based=False,
         cfg=mock_cfg,
     )
 
-    # GPU device, non-anatomical (for comparison)
-    gpu_device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    gpu_transforms = _get_tta_transforms(
-        device=gpu_device, is_anatomical=False, is_texture_based=False, cfg=mock_cfg
+    # GPU: base(2) + texture(4) + rotations(3) = 9
+    assert len(gpu_transforms) == 9
+
+
+@pytest.mark.unit
+def test_get_tta_transforms_cpu_fallback_vertical_flip():
+    """Test CPU fallback adds vertical flip for non-anatomical datasets."""
+    mock_cfg = MagicMock()
+    mock_cfg.augmentation.tta_translate = 2
+    mock_cfg.augmentation.tta_scale = 1.05
+    mock_cfg.augmentation.tta_blur_sigma = 0.5
+
+    # Real CPU device
+    cpu_device = torch.device("cpu")
+
+    cpu_transforms = _get_tta_transforms(
+        device=cpu_device,
+        is_anatomical=False,
+        is_texture_based=False,
+        cfg=mock_cfg,
     )
 
-    if torch.cuda.is_available():
-        assert len(cpu_transforms) == 7
-        assert len(gpu_transforms) == 9
-    else:
-        assert len(cpu_transforms) == 7
+    # CPU: base(2) + texture(4) + vflip(1) = 7
+    assert len(cpu_transforms) == 7
+
+    # Verify last transform is vertical flip
+    test_tensor = torch.ones(1, 3, 4, 4)
+    test_tensor[0, 0, 0, :] = 0
+
+    vflip_result = cpu_transforms[-1](test_tensor)
+
+    # Top row moved to bottom
+    assert torch.all(vflip_result[0, 0, -1, :] == 0)
+    assert torch.all(vflip_result[0, 0, 0, :] == 1)
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+def test_get_tta_transforms_gpu_rotations():
+    """Test GPU adds 90/180/270 rotations for non-anatomical datasets."""
+    mock_cfg = MagicMock()
+    mock_cfg.augmentation.tta_translate = 2
+    mock_cfg.augmentation.tta_scale = 1.05
+    mock_cfg.augmentation.tta_blur_sigma = 0.5
+
+    # GPU device, non-anatomical
+    gpu_transforms = _get_tta_transforms(
+        device=torch.device("cuda"),
+        is_anatomical=False,
+        is_texture_based=False,
+        cfg=mock_cfg,
+    )
+
+    # GPU should have rotations instead of just vertical flip
+    # base(2) + texture(4) + rotations(3) = 9
+    assert len(gpu_transforms) == 9
 
 
 # TEST CASES: ADAPTIVE TTA PREDICT
