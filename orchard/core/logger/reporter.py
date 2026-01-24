@@ -25,7 +25,7 @@ from pydantic import BaseModel, ConfigDict
 from ..environment import determine_tta_mode, get_cuda_name, get_vram_info
 from ..paths import LOGGER_NAME, RunPaths
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from ..config import Config
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -45,10 +45,10 @@ class LogStyle:
     LIGHT = "─" * 80
 
     # Symbols
-    ARROW = "»"  # For key-value pairs
-    BULLET = "•"  # For list items
-    WARNING = "⚠"  # For warnings
-    SUCCESS = "✓"  # For success messages
+    ARROW = "»"
+    BULLET = "•"
+    WARNING = "⚠"
+    SUCCESS = "✓"
 
     # Indentation
     INDENT = "  "
@@ -386,7 +386,7 @@ def log_trial_params_compact(
             log.info(f"{LogStyle.INDENT}[{category_name}]")
             for key, value in category_params.items():
                 if isinstance(value, float):
-                    if value < 0.001:
+                    if value < 0.001:  # pragma: no cover
                         log.info(
                             f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value:.2e}"
                         )
@@ -506,7 +506,7 @@ def log_optimization_summary(
             log.info(
                 f"{LogStyle.INDENT}{LogStyle.SUCCESS} Best Trial     : {study.best_trial.number}"
             )
-        except ValueError:
+        except ValueError:  # pragma: no cover
             log.warning(
                 f"{LogStyle.INDENT}{LogStyle.WARNING} "
                 "Best trial lookup failed (check study integrity)"

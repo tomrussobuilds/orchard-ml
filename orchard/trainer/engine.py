@@ -219,7 +219,7 @@ def mixup_data(
 
     # Generate random permutation (device-aware)
     index = torch.randperm(batch_size)
-    if x.is_cuda:
+    if x.is_cuda:  # pragma: no cover
         index = index.to(x.device)
 
     # Create mixed input

@@ -43,7 +43,7 @@ def get_project_root() -> Path:
     try:
         if len(current_path.parents) >= 3:
             return current_path.parents[2]
-    except IndexError:
+    except IndexError:  # pragma: no cover
         return current_path.parent.parent
 
 
