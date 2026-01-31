@@ -49,7 +49,7 @@ class DatasetConfig(BaseModel):
 
     img_size: ImageSize = Field(
         description="Target square resolution for model input",
-        default=None,  # Changed from 28 to None for auto-detection
+        default=None,
     )
     force_rgb: bool = Field(
         default=True, description="Convert grayscale to RGB for ImageNet weights"

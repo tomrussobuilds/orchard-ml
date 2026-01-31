@@ -1,0 +1,156 @@
+← [Back to Main README](../README.md)
+
+# Orchard Package
+
+**VisionForge core package** - Type-safe deep learning framework components.
+
+## 📦 Package Structure
+
+```
+orchard/
+├── core/                       # Framework nucleus
+│   ├── config/                 # Pydantic V2 schemas (8 modules)
+│   │   ├── manifest.py         # Main Config (SSOT)
+│   │   ├── hardware_config.py  # Device, threading, determinism
+│   │   ├── training_config.py  # Optimizer, scheduler, regularization
+│   │   ├── dataset_config.py   # Data loading, resolution, normalization
+│   │   ├── augmentation_config.py  # MixUp, TTA, transforms
+│   │   ├── evaluation_config.py    # Metrics, visualization
+│   │   ├── models_config.py    # Architecture selection
+│   │   └── optuna_config.py    # Hyperparameter optimization
+│   ├── environment/            # Hardware abstraction
+│   │   ├── hardware.py         # Device detection, CPU/GPU/MPS
+│   │   ├── reproducibility.py  # Seeding, determinism
+│   │   ├── policy.py           # TTA mode selection
+│   │   └── guards.py           # Process management, flock
+│   ├── io/                     # Serialization utilities
+│   │   ├── checkpoints.py      # Model weight loading
+│   │   ├── serialization.py    # YAML config I/O
+│   │   └── data_io.py          # Dataset validation
+│   ├── logger/                 # Telemetry system
+│   │   ├── logger.py           # Logger setup
+│   │   └── reporter.py         # Environment reporting
+│   ├── metadata/               # Dataset registry
+│   │   ├── base.py             # DatasetMetadata schema
+│   │   ├── medmnist_v2_28x28.py    # 28×28 datasets
+│   │   ├── medmnist_v2_224x224.py  # 224×224 datasets
+│   │   └── wrapper.py          # Registry wrapper
+│   ├── paths/                  # Path management
+│   │   ├── constants.py        # Static paths (PROJECT_ROOT, etc.)
+│   │   └── run_paths.py        # Dynamic workspace paths
+│   ├── cli.py                  # Argument parser
+│   └── orchestrator.py         # Lifecycle coordinator (7-phase init)
+├── data_handler/               # Data loading pipeline
+│   ├── dataset.py              # MedMNISTDataset wrapper
+│   ├── fetcher.py              # Dataset download & validation
+│   ├── loader.py               # DataLoaderFactory
+│   ├── transforms.py           # Augmentation pipelines
+│   ├── data_explorer.py        # Visualization utilities
+│   └── synthetic.py            # Synthetic data generation
+├── models/                     # Architecture factory
+│   ├── factory.py              # Model registry & builder
+│   ├── resnet_18_adapted.py    # Adapted ResNet for 28×28
+│   ├── mini_cnn.py             # Compact CNN (~94K params)
+│   ├── efficientnet_b0.py      # EfficientNet for 224×224
+│   └── vit_tiny.py             # Vision Transformer for 224×224
+├── trainer/                    # Training loop
+│   ├── engine.py               # Core train/validation logic
+│   ├── trainer.py              # ModelTrainer orchestrator
+│   ├── losses.py               # FocalLoss implementation
+│   └── setup.py                # Optimizer/scheduler factories
+├── evaluation/                 # Metrics and visualization
+│   ├── evaluator.py            # Evaluation orchestration
+│   ├── pipeline.py             # Full evaluation pipeline
+│   ├── metrics.py              # AUC, F1, Accuracy
+│   ├── tta.py                  # Test-time augmentation
+│   ├── visualization.py        # Confusion matrix, curves
+│   └── reporting.py            # Excel report generation
+└── optimization/               # Optuna integration
+    ├── objective/              # Trial execution logic
+    │   ├── objective.py        # OptunaObjective
+    │   ├── config_builder.py   # Trial config override
+    │   ├── training_executor.py    # Trial training
+    │   └── metric_extractor.py # Metric extraction
+    ├── orchestrator/           # Study management
+    │   ├── orchestrator.py     # OptunaOrchestrator
+    │   ├── builders.py         # Sampler/pruner builders
+    │   ├── exporters.py        # Results export (YAML, Excel)
+    │   └── visualizers.py      # Plotly visualizations
+    ├── search_spaces.py        # Hyperparameter distributions
+    └── early_stopping.py       # Convergence detection
+```
+
+## 🏗 Architecture Principles
+
+### 1. Dependency Injection
+All modules receive `Config` as dependency - no global state:
+```python
+model = get_model(device=device, cfg=cfg)
+loaders = get_dataloaders(data, cfg)
+trainer = ModelTrainer(model=model, cfg=cfg, ...)
+```
+
+### 2. Single Source of Truth (SSOT)
+`Config` is the immutable configuration manifest validated by Pydantic V2:
+- Cross-domain validation (AMP ↔ device, pretrained ↔ RGB)
+- Late-binding metadata injection (dataset specs from registry)
+- Path portability (relative anchoring from PROJECT_ROOT)
+
+### 3. Separation of Concerns
+- **core/**: Framework infrastructure (config, hardware, logging)
+- **data_handler/**: Data loading only
+- **models/**: Architecture definitions only
+- **trainer/**: Training loop only
+- **evaluation/**: Metrics & visualization only
+- **optimization/**: Optuna wrapper only
+
+### 4. Protocol-Based Design
+Use protocols for testability:
+```python
+class InfraManagerProtocol(Protocol):
+    def prepare_environment(self, cfg, logger) -> None: ...
+    def release_resources(self, cfg, logger) -> None: ...
+```
+
+## 🔌 Key Extension Points
+
+### Adding New Datasets
+Register in `orchard/core/metadata/medmnist_v2_28x28.py`:
+```python
+DATASET_REGISTRY["custom_dataset"] = DatasetMetadata(
+    name="custom_dataset",
+    num_classes=10,
+    in_channels=3,
+    mean=(0.5, 0.5, 0.5),
+    std=(0.25, 0.25, 0.25),
+    # ...
+)
+```
+
+### Adding New Architectures
+1. Create builder in `orchard/models/your_model.py`:
+```python
+def build_your_model(device, cfg, in_channels, num_classes):
+    # Implementation
+    return model
+```
+
+2. Register in `orchard/models/factory.py`:
+```python
+_MODEL_REGISTRY["your_model"] = build_your_model
+```
+
+### Adding New Optimizers
+Extend `orchard/trainer/setup.py`:
+```python
+def get_optimizer(model, cfg):
+    if cfg.training.optimizer_type == "adam":
+        return torch.optim.Adam(...)
+    # Add new case
+```
+
+## 📚 Further Reading
+
+- **[Architecture Guide](../docs/guide/ARCHITECTURE.md)** - System design, technical deep dive
+- **[Configuration Guide](../docs/guide/CONFIGURATION.md)** - All config parameters
+- **[Testing Guide](../docs/guide/TESTING.md)** - Test suite organization

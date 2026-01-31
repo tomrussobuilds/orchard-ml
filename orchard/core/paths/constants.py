@@ -32,7 +32,8 @@ def get_project_root() -> Path:
     current_path = Path(__file__).resolve().parent
 
     # Look for markers that define the project root
-    root_markers = {".git", "requirements.txt", "README.md"}
+    # Note: .git is most reliable; README.md alone can exist in subdirectories
+    root_markers = {".git", "requirements.txt"}
 
     for parent in [current_path] + list(current_path.parents):
         if any((parent / marker).exists() for marker in root_markers):
