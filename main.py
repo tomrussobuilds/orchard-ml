@@ -33,8 +33,8 @@ Key Features:
 
 # Internal Imports
 from orchard.core import (
-    DATASET_REGISTRY,
     Config,
+    DatasetRegistryWrapper,
     LogStyle,
     RootOrchestrator,
     log_training_summary,
@@ -43,7 +43,7 @@ from orchard.core import (
 from orchard.data_handler import (
     get_augmentations_description,
     get_dataloaders,
-    load_medmnist,
+    load_dataset,
     show_samples_for_dataset,
 )
 from orchard.evaluation import run_final_evaluation
@@ -88,8 +88,9 @@ def main() -> None:
         run_logger = orchestrator.run_logger
         device = orchestrator.get_device()
 
-        # Retrieve dataset metadata from registry
-        ds_meta = DATASET_REGISTRY[cfg.dataset.metadata.name.lower()]
+        # Retrieve dataset metadata from registry (resolution-aware)
+        wrapper = DatasetRegistryWrapper(resolution=cfg.dataset.resolution)
+        ds_meta = wrapper.get_dataset(cfg.dataset.metadata.name.lower())
 
         try:
             # DATA PREPARATION
@@ -99,7 +100,7 @@ def main() -> None:
             run_logger.info(LogStyle.HEAVY)
 
             # Load dataset and create DataLoader instances
-            data = load_medmnist(ds_meta)
+            data = load_dataset(ds_meta)
             loaders = get_dataloaders(data, cfg)
             train_loader, val_loader, test_loader = loaders
 

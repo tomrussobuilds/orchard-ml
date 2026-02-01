@@ -18,8 +18,8 @@ Expected Runtime: ~30 seconds on GPU, ~2 minutes on CPU
 import argparse
 import os
 
-from orchard.core import DATASET_REGISTRY, Config, LogStyle, RootOrchestrator, parse_args
-from orchard.data_handler import get_augmentations_description, get_dataloaders, load_medmnist
+from orchard.core import Config, DatasetRegistryWrapper, LogStyle, RootOrchestrator, parse_args
+from orchard.data_handler import get_augmentations_description, get_dataloaders, load_dataset
 from orchard.evaluation import run_final_evaluation
 from orchard.models import get_model
 from orchard.trainer import ModelTrainer, get_criterion, get_optimizer, get_scheduler
@@ -72,8 +72,9 @@ def run_smoke_test(args: argparse.Namespace) -> None:
         run_logger = orchestrator.run_logger
         device = orchestrator.get_device()
 
-        # Resolve dataset metadata
-        ds_meta = DATASET_REGISTRY[cfg.dataset.metadata.name.lower()]
+        # Resolve dataset metadata with resolution-specific registry
+        wrapper = DatasetRegistryWrapper(resolution=cfg.dataset.resolution)
+        ds_meta = wrapper.get_dataset(cfg.dataset.metadata.name.lower())
 
         run_logger.info("")
         run_logger.info(LogStyle.HEAVY)
@@ -88,7 +89,7 @@ def run_smoke_test(args: argparse.Namespace) -> None:
 
                 data = create_synthetic_dataset()
             else:
-                data = load_medmnist(ds_meta)
+                data = load_dataset(ds_meta)
 
             run_logger.info("[Stage 2/5] Initializing DataLoaders...")
             train_loader, val_loader, test_loader = get_dataloaders(data, cfg)

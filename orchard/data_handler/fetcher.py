@@ -1,8 +1,10 @@
 """
 Dataset Fetching and Loading Module
 
-This module handles the physical retrieval of any MedMNIST dataset, including
-robust download logic, MD5 verification, and metadata preparation for lazy loading.
+This module handles the physical retrieval of datasets (MedMNIST, Galaxy10),
+including robust download logic, MD5 verification, and metadata preparation
+for lazy loading. Automatically detects dataset type and applies appropriate
+conversion pipeline.
 """
 
 import logging
@@ -15,13 +17,14 @@ import numpy as np
 import requests
 
 from orchard.core import DatasetMetadata, md5_checksum, validate_npz_keys
+from orchard.core.paths import LOGGER_NAME
 
 
 # DATA CONTAINERS
 @dataclass(frozen=True)
-class MedMNISTData:
+class DatasetData:
     """
-    Metadata container for a MedMNIST dataset.
+    Metadata container for dataset (MedMNIST, Galaxy10, etc.).
     Stores path and format info instead of raw arrays to save RAM.
     """
 
@@ -31,8 +34,7 @@ class MedMNISTData:
     num_classes: int
 
 
-# Global logger instance
-logger = logging.getLogger("visionforge")
+logger = logging.getLogger(LOGGER_NAME)
 
 
 # FETCHING LOGIC
@@ -42,7 +44,10 @@ def ensure_dataset_npz(
     delay: float = 5.0,
 ) -> Path:
     """
-    Downloads a MedMNIST dataset NPZ file robustly with retries and MD5 validation.
+    Downloads dataset NPZ file robustly with retries and MD5 validation.
+
+    Automatically detects dataset type (MedMNIST vs Galaxy10) and applies
+    appropriate download/conversion pipeline.
 
     Args:
         metadata (DatasetMetadata): Metadata containing URL, MD5, name and target path.
@@ -52,6 +57,13 @@ def ensure_dataset_npz(
     Returns:
         Path: Path to the successfully validated .npz file.
     """
+    # Check if this is Galaxy10 (requires HDF5 download and conversion)
+    if metadata.name == "galaxy10":
+        from .galaxy10_converter import ensure_galaxy10_npz
+
+        return ensure_galaxy10_npz(metadata)
+
+    # Standard NPZ download for MedMNIST datasets
     target_npz = metadata.path
 
     # 1. Validation of existing file
@@ -109,9 +121,11 @@ def ensure_dataset_npz(
 
 
 # LOADING INTERFACE
-def load_medmnist(metadata: DatasetMetadata) -> MedMNISTData:
+def load_dataset(metadata: DatasetMetadata) -> DatasetData:
     """
     Ensures the dataset is present and returns its metadata container.
+
+    Handles both MedMNIST (direct NPZ download) and Galaxy10 (HDF5 conversion).
     """
     path = ensure_dataset_npz(metadata)
 
@@ -123,10 +137,10 @@ def load_medmnist(metadata: DatasetMetadata) -> MedMNISTData:
 
         num_classes = len(np.unique(data["train_labels"]))
 
-        return MedMNISTData(path=path, name=metadata.name, is_rgb=is_rgb, num_classes=num_classes)
+        return DatasetData(path=path, name=metadata.name, is_rgb=is_rgb, num_classes=num_classes)
 
 
-def load_medmnist_health_check(metadata: DatasetMetadata, chunk_size: int = 100) -> MedMNISTData:
+def load_dataset_health_check(metadata: DatasetMetadata, chunk_size: int = 100) -> DatasetData:
     """
     Loads a small "chunk" of data (e.g., the first 100 images and labels)
     for an initial health check, while retaining the download and verification logic.
@@ -136,7 +150,7 @@ def load_medmnist_health_check(metadata: DatasetMetadata, chunk_size: int = 100)
         chunk_size (int): Number of samples to load for the health check.
 
     Returns:
-        MedMNISTData: Metadata of the dataset, including info about the loaded data.
+        DatasetData: Metadata of the dataset, including info about the loaded data.
     """
     path = ensure_dataset_npz(metadata)
 
@@ -150,7 +164,7 @@ def load_medmnist_health_check(metadata: DatasetMetadata, chunk_size: int = 100)
 
         num_classes = len(np.unique(labels_chunk))
 
-        return MedMNISTData(path=path, name=metadata.name, is_rgb=is_rgb, num_classes=num_classes)
+        return DatasetData(path=path, name=metadata.name, is_rgb=is_rgb, num_classes=num_classes)
 
 
 # PRIVATE HELPERS

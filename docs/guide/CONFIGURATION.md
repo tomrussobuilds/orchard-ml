@@ -13,7 +13,7 @@
 python -m tests.smoke_test
 
 # Train with presets (28×28 resolution, CPU-compatible)
-python main.py --config recipes/config_resnet_18_adapted.yaml     # ~5 min GPU, ~2.5h CPU
+python main.py --config recipes/config_resnet_18_adapted.yaml     # ~15 min GPU, ~2.5h CPU
 python main.py --config recipes/config_mini_cnn.yaml              # ~2-3 min GPU, ~10 min CPU
 
 # Train with presets (224×224 resolution, GPU required)

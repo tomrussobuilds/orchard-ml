@@ -10,7 +10,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .fetcher import MedMNISTData
+from .fetcher import DatasetData
 
 
 # FACTORY FUNCTIONS
@@ -20,11 +20,11 @@ def create_synthetic_dataset(
     resolution: int = 28,
     channels: int = 3,
     name: str = "syntheticmnist",
-) -> MedMNISTData:
+) -> DatasetData:
     """Create a synthetic MedMNIST-compatible dataset for testing.
 
     This function generates random image data and labels, saves them to a
-    temporary .npz file, and returns a MedMNISTData object that can be used
+    temporary .npz file, and returns a DatasetData object that can be used
     with the existing data pipeline.
 
     Args:
@@ -35,7 +35,7 @@ def create_synthetic_dataset(
         name: Dataset name for identification (default: "syntheticmnist")
 
     Returns:
-        MedMNISTData: A data object compatible with the existing pipeline
+        DatasetData: A data object compatible with the existing pipeline
 
     Example:
         >>> data = create_synthetic_dataset(num_classes=8, samples=100)
@@ -78,10 +78,10 @@ def create_synthetic_dataset(
         test_labels=test_labels,
     )
 
-    # Return a MedMNISTData object with all required parameters
+    # Return a DatasetData object with all required parameters
     is_rgb = channels == 3
 
-    return MedMNISTData(
+    return DatasetData(
         path=temp_path,
         name=name,
         is_rgb=is_rgb,
@@ -94,7 +94,7 @@ def create_synthetic_grayscale_dataset(
     num_classes: int = 8,
     samples: int = 100,
     resolution: int = 28,
-) -> MedMNISTData:
+) -> DatasetData:
     """Create a synthetic grayscale MedMNIST dataset for testing.
 
     Convenience function for creating single-channel (grayscale) synthetic data.
@@ -105,7 +105,7 @@ def create_synthetic_grayscale_dataset(
         resolution: Image resolution (HxW) (default: 28)
 
     Returns:
-        MedMNISTData: A grayscale data object compatible with the pipeline
+        DatasetData: A grayscale data object compatible with the pipeline
     """
     return create_synthetic_dataset(
         num_classes=num_classes,

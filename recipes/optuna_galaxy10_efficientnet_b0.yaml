@@ -1,0 +1,122 @@
+# ==============================================================================
+# FILE: recipes/optuna_galaxy10_efficientnet_b0.yaml
+# Hyperparameter Optimization for EfficientNet-B0 on Galaxy10 (224x224)
+# ==============================================================================
+# Usage: python optimize.py --config recipes/optuna_galaxy10_efficientnet_b0.yaml
+# Estimated Time: ~3-5 hours (20 trials × 15 epochs)
+# Memory Usage: ~4.5GB VRAM per trial with AMP
+# Search Space: Learning rate, weight decay, dropout, augmentation
+
+dataset:
+  name: "galaxy10"
+  data_root: ./dataset
+  resolution: 224
+  force_rgb: true
+  use_weighted_sampler: false
+  max_samples: null
+
+model:
+  name: "efficientnet_b0"
+  pretrained: true
+  dropout: 0.3                  # Will be optimized
+
+training:
+  seed: 42
+  reproducible: false
+
+  # Base values (WILL BE OPTIMIZED BY OPTUNA)
+  batch_size: 16                # Conservative for optimization
+  learning_rate: 0.0001
+  weight_decay: 0.0005
+  momentum: 0.9
+  min_lr: 1e-7
+
+  # Regularization (WILL BE OPTIMIZED)
+  mixup_alpha: 0.0
+  label_smoothing: 0.0
+
+  # Training loop
+  epochs: 60                    # Final training only
+  patience: 15
+  grad_clip: 1.0
+  mixup_epochs: 0
+
+  # Scheduler
+  scheduler_type: "cosine"
+  cosine_fraction: 0.5
+  scheduler_patience: 5
+  scheduler_factor: 0.1
+  step_size: 20
+
+  # Performance (CRITICAL FOR MEMORY)
+  use_amp: true                 # MUST be true for 224x224
+  use_tta: false
+  criterion_type: "cross_entropy"
+  weighted_loss: false
+  focal_gamma: 2.0
+
+augmentation:
+  hflip: 0.3                    # Will be optimized
+  rotation_angle: 3             # Will be optimized
+  jitter_val: 0.05              # Will be optimized
+  min_scale: 0.97               # Will be optimized
+  tta_translate: 0.5
+  tta_scale: 1.02
+  tta_blur_sigma: 0.1
+
+hardware:
+  device: "auto"
+
+telemetry:
+  output_dir: ./outputs
+  log_level: "INFO"
+  log_interval: 50
+
+evaluation:
+  batch_size: 32
+  n_samples: 12
+  fig_dpi: 200
+  cmap_confusion: Blues
+  plot_style: seaborn-v0_8-muted
+  grid_cols: 4
+  fig_size_predictions: [12, 8]
+  report_format: xlsx
+  save_confusion_matrix: false  # Skip during optimization
+  save_predictions_grid: false
+
+optuna:
+  study_name: "galaxy10_efficientnet_b0_optimized"
+  n_trials: 20                  # Balanced exploration
+  epochs: 15                    # Shorter for speed
+  timeout: null
+
+  # Optimization target
+  metric_name: "auc"
+  direction: "maximize"
+
+  # Early stopping config
+  enable_early_stopping: true
+  early_stopping_threshold: 0.9999
+  early_stopping_patience: 2
+
+  # Search strategy
+  sampler_type: "tpe"
+  search_space_preset: "full"   # Includes model_space_224
+
+  # Pruning
+  enable_pruning: true
+  pruner_type: "median"
+  pruning_warmup_epochs: 5
+
+  # Storage
+  storage_type: "sqlite"
+  storage_path: null
+
+  # Execution
+  n_jobs: 1
+  load_if_exists: true
+  show_progress_bar: false
+
+  # Output
+  save_plots: true
+  save_best_config: true

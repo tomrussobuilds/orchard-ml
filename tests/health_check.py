@@ -10,7 +10,7 @@ from orchard.core import RootOrchestrator
 from orchard.core.config import Config
 from orchard.core.metadata import DatasetRegistryWrapper
 from orchard.data_handler.data_explorer import show_samples_for_dataset
-from orchard.data_handler.fetcher import load_medmnist_health_check
+from orchard.data_handler.fetcher import load_dataset_health_check
 from orchard.data_handler.loader import create_temp_loader
 
 # Logging Setup
@@ -49,7 +49,7 @@ def health_check_single_dataset(ds_meta, orchestrator, resolution: int = 28) -> 
         )
 
         # ---------------- Step 1: Ensure dataset exists ----------------
-        dataset_info = load_medmnist_health_check(ds_meta)
+        dataset_info = load_dataset_health_check(ds_meta)
         dataset_path = getattr(dataset_info, "path", dataset_info)
 
         if not dataset_path.exists():

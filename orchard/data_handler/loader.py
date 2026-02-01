@@ -31,10 +31,10 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
-from orchard.core import DATASET_REGISTRY, Config, worker_init_fn
+from orchard.core import Config, DatasetRegistryWrapper, worker_init_fn
 
 from .dataset import MedMNISTDataset
-from .fetcher import MedMNISTData
+from .fetcher import DatasetData
 from .transforms import get_pipeline_transforms
 
 
@@ -48,12 +48,12 @@ class DataLoaderFactory:
 
     Attributes:
         cfg (Config): Validated global configuration.
-        metadata (MedMNISTData): Data path and raw format information.
+        metadata (DatasetData): Data path and raw format information.
         ds_meta (DatasetMetadata): Official MedMNIST registry specifications.
         logger (logging.Logger): Module-specific logger.
     """
 
-    def __init__(self, cfg: Config, metadata: MedMNISTData):
+    def __init__(self, cfg: Config, metadata: DatasetData):
         """Initializes the factory with environment and dataset metadata.
 
         Args:
@@ -62,7 +62,9 @@ class DataLoaderFactory:
         """
         self.cfg = cfg
         self.metadata = metadata
-        self.ds_meta = DATASET_REGISTRY[cfg.dataset.dataset_name]
+
+        wrapper = DatasetRegistryWrapper(resolution=cfg.dataset.resolution)
+        self.ds_meta = wrapper.get_dataset(cfg.dataset.dataset_name)
         self.logger = logging.getLogger("visionforge")
 
     def _get_transformation_pipelines(self) -> Tuple[torch.nn.Module, torch.nn.Module]:

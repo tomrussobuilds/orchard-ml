@@ -6,7 +6,7 @@ using the Dataset Registry to providing fully configured PyTorch DataLoaders.
 
 from .data_explorer import show_sample_images, show_samples_for_dataset
 from .dataset import MedMNISTDataset
-from .fetcher import MedMNISTData, ensure_dataset_npz, load_medmnist
+from .fetcher import DatasetData, ensure_dataset_npz, load_dataset
 from .loader import (
     DataLoaderFactory,
     LazyNPZDataset,
@@ -17,8 +17,8 @@ from .synthetic import create_synthetic_dataset, create_synthetic_grayscale_data
 from .transforms import get_augmentations_description, get_pipeline_transforms
 
 __all__ = [
-    "load_medmnist",
-    "MedMNISTData",
+    "load_dataset",
+    "DatasetData",
     "ensure_dataset_npz",
     "get_dataloaders",
     "DataLoaderFactory",

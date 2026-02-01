@@ -1,0 +1,85 @@
+# ==============================================================================
+# FILE: recipes/config_galaxy10_efficientnet_b0.yaml
+# EfficientNet-B0 for Galaxy10 DECals Galaxy Morphology (224x224)
+# ==============================================================================
+# Usage: python main.py --config recipes/config_galaxy10_efficientnet_b0.yaml
+# Dataset: Galaxy10 DECals - 10 galaxy morphology classes from DESI Legacy Surveys
+# Estimated Time: ~50 minutes (60 epochs on RTX 5070)
+# Memory Usage: ~4.5GB VRAM with AMP
+
+dataset:
+  name: "galaxy10"
+  data_root: ./dataset
+  resolution: 224
+  force_rgb: true
+  use_weighted_sampler: false
+  max_samples: null
+
+model:
+  name: "efficientnet_b0"
+  pretrained: true
+  dropout: 0.3
+
+training:
+  seed: 42
+  reproducible: false
+
+  # Optimization (OPTIMIZED FOR RTX 5070)
+  batch_size: 16
+  learning_rate: 0.0001
+  weight_decay: 0.0005
+  momentum: 0.9
+  min_lr: 1e-7
+
+  # Regularization
+  mixup_alpha: 0.0
+  label_smoothing: 0.0
+
+  # Training loop
+  epochs: 60
+  patience: 15
+  grad_clip: 1.0
+  mixup_epochs: 0
+
+  # Scheduler
+  scheduler_type: "cosine"
+  cosine_fraction: 0.5
+  scheduler_patience: 5
+  scheduler_factor: 0.1
+  step_size: 20
+
+  # Performance (CRITICAL FOR MEMORY)
+  use_amp: true
+  use_tta: false
+  criterion_type: "cross_entropy"
+  weighted_loss: false
+  focal_gamma: 2.0
+
+augmentation:
+  hflip: 0.3
+  rotation_angle: 3
+  jitter_val: 0.05
+  min_scale: 0.97
+  tta_translate: 0.5
+  tta_scale: 1.02
+  tta_blur_sigma: 0.1
+
+hardware:
+  device: "auto"
+
+telemetry:
+  output_dir: ./outputs
+  log_level: "INFO"
+  log_interval: 50
+
+evaluation:
+  batch_size: 32
+  n_samples: 12
+  fig_dpi: 200
+  cmap_confusion: Blues
+  plot_style: seaborn-v0_8-muted
+  grid_cols: 4
+  fig_size_predictions: [12, 8]
+  report_format: xlsx
+  save_confusion_matrix: true
+  save_predictions_grid: true

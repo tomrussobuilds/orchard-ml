@@ -62,7 +62,7 @@ from .logger import (
 )
 
 # Dataset Registry
-from .metadata import DATASET_REGISTRY, DatasetMetadata
+from .metadata import DATASET_REGISTRY, DatasetMetadata, DatasetRegistryWrapper
 
 # Environment Orchestration
 from .orchestrator import InfraManagerProtocol, RootOrchestrator
@@ -101,6 +101,7 @@ __all__ = [
     "get_project_root",
     # Metadata
     "DatasetMetadata",
+    "DatasetRegistryWrapper",
     "DATASET_REGISTRY",
     # Orchestration
     "RootOrchestrator",

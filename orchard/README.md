@@ -32,9 +32,10 @@ orchard/
 │   │   └── reporter.py         # Environment reporting
 │   ├── metadata/               # Dataset registry
 │   │   ├── base.py             # DatasetMetadata schema
-│   │   ├── medmnist_v2_28x28.py    # 28×28 datasets
-│   │   ├── medmnist_v2_224x224.py  # 224×224 datasets
-│   │   └── wrapper.py          # Registry wrapper
+│   │   ├── domains/            # Domain-specific registries
+│   │   │   ├── medical.py      # Medical imaging (MedMNIST)
+│   │   │   └── space.py        # Astronomical imaging
+│   │   └── wrapper.py          # Multi-resolution registry wrapper
 │   ├── paths/                  # Path management
 │   │   ├── constants.py        # Static paths (PROJECT_ROOT, etc.)
 │   │   └── run_paths.py        # Dynamic workspace paths
@@ -43,6 +44,7 @@ orchard/
 ├── data_handler/               # Data loading pipeline
 │   ├── dataset.py              # MedMNISTDataset wrapper
 │   ├── fetcher.py              # Dataset download & validation
+│   ├── galaxy10_converter.py   # Galaxy10 HDF5 to NPZ converter
 │   ├── loader.py               # DataLoaderFactory
 │   ├── transforms.py           # Augmentation pipelines
 │   ├── data_explorer.py        # Visualization utilities
@@ -115,17 +117,22 @@ class InfraManagerProtocol(Protocol):
 ## 🔌 Key Extension Points
 
 ### Adding New Datasets
-Register in `orchard/core/metadata/medmnist_v2_28x28.py`:
+Register in the appropriate domain file (e.g., `orchard/core/metadata/domains/medical.py`):
 ```python
-DATASET_REGISTRY["custom_dataset"] = DatasetMetadata(
-    name="custom_dataset",
-    num_classes=10,
-    in_channels=3,
-    mean=(0.5, 0.5, 0.5),
-    std=(0.25, 0.25, 0.25),
-    # ...
-)
+REGISTRY_224: Final[Dict[str, DatasetMetadata]] = {
+    "custom_dataset": DatasetMetadata(
+        name="custom_dataset",
+        num_classes=10,
+        in_channels=3,
+        mean=(0.5, 0.5, 0.5),
+        std=(0.25, 0.25, 0.25),
+        native_resolution=224,
+        is_anatomical=False,
+        is_texture_based=True,
+    ),
+}
 ```
+Export from `orchard/core/metadata/domains/__init__.py` to make it available.
 
 ### Adding New Architectures
 1. Create builder in `orchard/models/your_model.py`:

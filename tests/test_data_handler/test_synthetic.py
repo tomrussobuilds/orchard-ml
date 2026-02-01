@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 
 from orchard.data_handler import (
-    MedMNISTData,
+    DatasetData,
     create_synthetic_dataset,
     create_synthetic_grayscale_dataset,
 )
@@ -18,10 +18,10 @@ from orchard.data_handler import (
 
 # TESTS
 def test_create_synthetic_dataset_returns_metadata():
-    """Factory should return a valid MedMNISTData object."""
+    """Factory should return a valid DatasetData object."""
     data = create_synthetic_dataset()
 
-    assert isinstance(data, MedMNISTData)
+    assert isinstance(data, DatasetData)
     assert isinstance(data.path, Path)
     assert data.path.exists()
     assert data.name == "syntheticmnist"
@@ -102,7 +102,7 @@ def test_create_synthetic_grayscale_dataset():
         resolution=28,
     )
 
-    assert isinstance(data, MedMNISTData)
+    assert isinstance(data, DatasetData)
     assert data.is_rgb is False
     assert data.name == "syntheticmnist_gray"
 

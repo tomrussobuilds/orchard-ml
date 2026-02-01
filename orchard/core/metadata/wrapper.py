@@ -1,9 +1,9 @@
 """
-Pydantic Wrapper for Dynamic MedMNIST Dataset Registries.
+Pydantic Wrapper for Multi-Domain Dataset Registries.
 
-Type-safe, validated access to multiple dataset resolutions (28x28 or 224x224)
-while avoiding global metadata overwrites. Integrates with YAML configs and
-supports runtime resolution selection.
+Type-safe, validated access to multiple dataset domains (medical, space)
+and resolutions (28x28, 224x224). Merges domain registries based on selected
+resolution while avoiding global metadata overwrites.
 """
 
 import copy
@@ -12,8 +12,7 @@ from typing import Dict
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .base import DatasetMetadata
-from .medmnist_v2_28x28 import DATASET_REGISTRY as REG_28
-from .medmnist_v2_224x224 import DATASET_REGISTRY as REG_224
+from .domains import MEDICAL_28, MEDICAL_224, SPACE_224
 
 
 # WRAPPER DEFINITION
@@ -38,21 +37,25 @@ class DatasetRegistryWrapper(BaseModel):
     @classmethod
     def _load_registry(cls, values):
         """
-        Loads appropriate registry based on resolution.
+        Loads and merges domain registries based on resolution.
         Validates resolution and creates deep copy to prevent mutation.
         """
-        res = values.get("resolution", 28)  # Default to 28 if not specified
+        res = values.get("resolution", 28)
 
         if res not in (28, 224):
             raise ValueError(f"Unsupported resolution {res}. Supported: [28, 224]")
 
-        source = REG_28 if res == 28 else REG_224
+        # Merge domain registries based on resolution
+        if res == 28:
+            merged = {**MEDICAL_28}
+        else:  # res == 224
+            merged = {**MEDICAL_224, **SPACE_224}
 
-        if not source:
+        if not merged:
             raise ValueError(f"Dataset registry for resolution {res} is empty")
 
         values["resolution"] = res
-        values["registry"] = copy.deepcopy(source)
+        values["registry"] = copy.deepcopy(merged)
 
         return values
 

@@ -15,8 +15,8 @@ from orchard.data_handler.fetcher import (
     _is_valid_npz,
     _stream_download,
     ensure_dataset_npz,
-    load_medmnist,
-    load_medmnist_health_check,
+    load_dataset,
+    load_dataset_health_check,
 )
 
 
@@ -466,7 +466,7 @@ def test_load_medmnist_rgb(metadata, valid_npz_file, monkeypatch_md5, monkeypatc
         lambda _: metadata.path,
     )
 
-    data = load_medmnist(metadata)
+    data = load_dataset(metadata)
 
     assert data.name == metadata.name
     assert data.is_rgb is True
@@ -496,14 +496,14 @@ def test_load_medmnist_grayscale(metadata, tmp_path, monkeypatch_md5, monkeypatc
         lambda _: path,
     )
 
-    data = load_medmnist(metadata)
+    data = load_dataset(metadata)
 
     assert data.is_rgb is False
     assert data.num_classes == 3
 
 
 @pytest.mark.unit
-def test_load_medmnist_health_check_rgb(metadata, valid_npz_file, monkeypatch_md5, monkeypatch):
+def test_load_dataset_health_check_rgb(metadata, valid_npz_file, monkeypatch_md5, monkeypatch):
     """Health check should work on RGB datasets."""
     metadata.path.write_bytes(valid_npz_file.read_bytes())
 
@@ -512,7 +512,7 @@ def test_load_medmnist_health_check_rgb(metadata, valid_npz_file, monkeypatch_md
         lambda _: metadata.path,
     )
 
-    data = load_medmnist_health_check(metadata, chunk_size=5)
+    data = load_dataset_health_check(metadata, chunk_size=5)
 
     assert data.is_rgb is True
     assert data.num_classes == 2
@@ -520,7 +520,7 @@ def test_load_medmnist_health_check_rgb(metadata, valid_npz_file, monkeypatch_md
 
 
 @pytest.mark.unit
-def test_load_medmnist_health_check_grayscale(metadata, tmp_path, monkeypatch_md5, monkeypatch):
+def test_load_dataset_health_check_grayscale(metadata, tmp_path, monkeypatch_md5, monkeypatch):
     """Health check should work on grayscale datasets."""
     path = tmp_path / "gray.npz"
 
@@ -541,14 +541,14 @@ def test_load_medmnist_health_check_grayscale(metadata, tmp_path, monkeypatch_md
         lambda _: path,
     )
 
-    data = load_medmnist_health_check(metadata, chunk_size=10)
+    data = load_dataset_health_check(metadata, chunk_size=10)
 
     assert data.is_rgb is False
     assert data.num_classes == 10
 
 
 @pytest.mark.unit
-def test_load_medmnist_health_check_small_chunk(metadata, tmp_path, monkeypatch_md5, monkeypatch):
+def test_load_dataset_health_check_small_chunk(metadata, tmp_path, monkeypatch_md5, monkeypatch):
     """Health check with small chunk should count classes correctly."""
     path = tmp_path / "test.npz"
 
@@ -571,6 +571,42 @@ def test_load_medmnist_health_check_small_chunk(metadata, tmp_path, monkeypatch_
         lambda _: path,
     )
 
-    data = load_medmnist_health_check(metadata, chunk_size=3)
+    data = load_dataset_health_check(metadata, chunk_size=3)
 
     assert data.num_classes == 2
+
+
+@pytest.mark.unit
+def test_ensure_dataset_npz_galaxy10_converter_path(tmp_path, monkeypatch):
+    """Galaxy10 dataset should trigger converter import and return path."""
+    target_npz = tmp_path / "galaxy10.npz"
+
+    dummy_data = {
+        "train_images": np.zeros((5, 10, 10, 3), dtype=np.uint8),
+        "train_labels": np.zeros((5, 1), dtype=np.int64),
+        "val_images": np.zeros((2, 10, 10, 3), dtype=np.uint8),
+        "val_labels": np.zeros((2, 1), dtype=np.int64),
+        "test_images": np.zeros((3, 10, 10, 3), dtype=np.uint8),
+        "test_labels": np.zeros((3, 1), dtype=np.int64),
+    }
+    np.savez_compressed(target_npz, **dummy_data)
+
+    galaxy10_metadata = SimpleNamespace(
+        name="galaxy10",
+        url="https://example.com/galaxy10.h5",
+        md5_checksum="test_md5",
+        path=target_npz,
+        native_resolution=224,
+    )
+
+    def mock_ensure_galaxy10_npz(metadata):
+        return metadata.path
+
+    monkeypatch.setattr(
+        "orchard.data_handler.galaxy10_converter.ensure_galaxy10_npz",
+        mock_ensure_galaxy10_npz,
+    )
+
+    result = ensure_dataset_npz(galaxy10_metadata)
+
+    assert result == target_npz

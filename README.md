@@ -44,7 +44,7 @@
   <a href="https://flake8.pycqa.org/">
     <img src="https://img.shields.io/badge/linting-flake8-brightgreen?logo=python&logoColor=white" alt="Flake8">
   </a>
-  <img src="https://img.shields.io/badge/tests-800%2B-success" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-890%2B-success" alt="Tests">
   <img src="https://img.shields.io/badge/Architecture-Decoupled-blueviolet" alt="Architecture">
   <img src="https://img.shields.io/badge/status-Active-success" alt="Status">
   <a href="https://github.com/tomrussobuilds/visionforge/issues">
@@ -69,7 +69,7 @@
 
 ## 🎯 Overview
 
-**VisionForge** is a research-grade PyTorch training framework engineered for reproducible, scalable computer vision experiments. Originally designed for medical imaging (MedMNIST v2), it has evolved into a domain-agnostic platform supporting multi-resolution architectures (28×28 to 224×224+), automated hyperparameter optimization, and cluster-safe execution.
+**VisionForge** is a research-grade PyTorch training framework engineered for reproducible, scalable computer vision experiments across diverse domains. Built on [MedMNIST v2](https://zenodo.org/records/6496656) medical imaging datasets and expanded to astronomical imaging ([Galaxy10 DECals](https://zenodo.org/records/10845026)), it provides a domain-agnostic platform supporting multi-resolution architectures (28×28 to 224×224+), automated hyperparameter optimization, and cluster-safe execution.
 
 **Key Differentiators:**
 - **Type-Safe Configuration Engine**: Pydantic V2-based declarative manifests eliminate runtime errors
@@ -164,7 +164,7 @@ Start with a quick training run to familiarize yourself with the pipeline:
 python main.py --config recipes/config_mini_cnn.yaml              # ~2-3 min GPU, ~5-10 min CPU (faster with best_config)
 
 # or with transfer learning
-python main.py --config recipes/config_resnet_18_adapted.yaml     # ~5 min GPU, ~2.5h CPU
+python main.py --config recipes/config_resnet_18_adapted.yaml     # ~15 min GPU, ~2.5h CPU
 
 # 224×224 resolution (GPU required)
 python main.py --config recipes/config_efficientnet_b0.yaml       # ~30 min GPU per trial
@@ -286,7 +286,7 @@ Comprehensive guides for advanced usage and system internals:
 
 ### 🧪 Testing & Quality
 **[Testing Guide](docs/guide/TESTING.md)**
-- Test suite organization (800+ tests)
+- Test suite organization (890+ tests)
 - Quality check automation (`check_quality.sh`)
 - Smoke tests and health checks
 - CI/CD pipeline details
@@ -306,9 +306,11 @@ Comprehensive guides for advanced usage and system internals:
 
 ## 📊 Experiment Management
 
-Every run generates a complete artifact suite for total traceability:
+Every run generates a complete artifact suite for total traceability. Both training-only and optimization workflows share the same `RunPath` orchestrator, producing BLAKE2b-hashed timestamped directories with consistent structure.
 
-**Artifact Structure:**
+> **Note:** The artifact structure below shows a complete optimization + training workflow. Training-only runs produce a simplified subset (without optimization-specific files like `study.db`, `best_config.yaml`, HTML plots). See [Testing Guide](docs/guide/TESTING.md) and [Optimization Guide](docs/guide/OPTIMIZATION.md) for workflow-specific details.
+
+**Artifact Structure (Optimization + Training):**
 ```
 outputs/20260123_organcmnist_efficientnetb0_a3f7c2/
 ├── figures/
@@ -358,7 +360,7 @@ outputs/20260123_organcmnist_efficientnetb0_a3f7c2/
 - YAML-driven execution model
 - Optuna hyperparameter optimization
 - Multi-resolution support (28×28, 224×224)
-- Comprehensive test suite (800+ tests)
+- Comprehensive test suite (890+ tests, 100% coverage)
 - CI/CD pipeline with GitHub Actions
 
 ### ✅ Phase 3: Modern Architectures (Completed)
@@ -366,23 +368,26 @@ outputs/20260123_organcmnist_efficientnetb0_a3f7c2/
 - **MiniCNN**: Compact baseline for rapid prototyping (~50K parameters)
 - **Weight Variant Search**: Automatic exploration of ImageNet-1k/21k pretraining strategies
 
-### ✅ Phase 4: Quality Assurance (Completed)
-- **Test Coverage**: 99%+ across 800+ tests (unit, integration, smoke)
+### ✅ Phase 4: Quality Assurance & Multi-Domain Support (Completed)
+- **Test Coverage**: 100% across 890+ tests (unit, integration, smoke)
 - **Artifact Export**: HTML visualizations (parameter importance, optimization history, slices, parallel coordinates)
 - **Comprehensive Reporting**: Excel summaries, JSON metadata, YAML snapshots
+- **Multi-Domain Architecture**: Medical imaging (MedMNIST v2) + Astronomical imaging (Galaxy10 DECals)
+- **Domain-Specific Converters**: HDF5 to NPZ pipeline for non-standard formats
 
 ### 🎯 Current Status
-- **Test Coverage**: 99% (near-complete coverage with pragma for defensive guards)
+- **Test Coverage**: 100% across 890+ tests (minimal pragma for defensive guards)
 - **Architectures**: 4 total (2 for 28×28, 2 for 224×224)
   - 28×28: ResNet-18-Adapted, MiniCNN
   - 224×224: EfficientNet-B0, ViT-Tiny
 - **Resolutions**: 2 (28×28, 224×224)
+- **Domains**: Medical imaging (MedMNIST v2), Astronomical imaging (Galaxy10 DECals)
 - **Export Formats**: PyTorch (.pth), HTML visualizations, Excel reports
 
 ### 🔮 Future Enhancements (Roadmap)
 - **ONNX Export**: Model serialization for deployment
 - **Additional Architectures**: ConvNeXt, EfficientNet-V2, DeiT
-- **Domain Extension**: Abstract dataset registry for non-medical domains
+- **Expanded Dataset Domains**: Climate, remote sensing, microscopy
 - **Multi-modal Support**: Detection, segmentation hooks
 - **Distributed Training**: DDP, FSDP support for multi-GPU
 

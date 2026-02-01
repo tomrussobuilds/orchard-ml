@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import torch
 
-from orchard.core import DATASET_REGISTRY
+from orchard.core import DatasetRegistryWrapper
 from orchard.data_handler import DataLoaderFactory, LazyNPZDataset, create_temp_loader
 
 
@@ -70,7 +70,9 @@ def mock_metadata():
 @pytest.mark.unit
 def test_build_loaders_with_weighted_sampler(mock_cfg, mock_metadata):
     """Test DataLoaderFactory.build() with sampler and transforms."""
-    with patch.dict(DATASET_REGISTRY, {"mock_dataset": MagicMock(in_channels=1)}):
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         with patch(
             "orchard.data_handler.loader.get_pipeline_transforms",
             lambda cfg, meta: (lambda x: x, lambda x: x),
@@ -105,7 +107,9 @@ def test_build_loaders_with_weighted_sampler(mock_cfg, mock_metadata):
 @pytest.mark.unit
 def test_build_loaders_without_weighted_sampler(mock_cfg_no_sampler, mock_metadata):
     """Test DataLoaderFactory.build() WITHOUT weighted sampler."""
-    with patch.dict(DATASET_REGISTRY, {"mock_dataset": MagicMock(in_channels=1)}):
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         with patch(
             "orchard.data_handler.loader.get_pipeline_transforms",
             lambda cfg, meta: (lambda x: x, lambda x: x),
@@ -131,7 +135,9 @@ def test_build_loaders_without_weighted_sampler(mock_cfg_no_sampler, mock_metada
 @pytest.mark.unit
 def test_infra_kwargs_optuna(mock_cfg, mock_metadata):
     """Test _get_infrastructure_kwargs behavior in Optuna mode."""
-    with patch.dict(DATASET_REGISTRY, {"mock_dataset": MagicMock(in_channels=1)}):
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         factory = DataLoaderFactory(mock_cfg, mock_metadata)
         infra = factory._get_infrastructure_kwargs(is_optuna=True)
         assert infra["num_workers"] <= 6
@@ -141,7 +147,9 @@ def test_infra_kwargs_optuna(mock_cfg, mock_metadata):
 @pytest.mark.unit
 def test_infra_kwargs_optuna_high_res(mock_cfg_high_res, mock_metadata):
     """Test _get_infrastructure_kwargs with high resolution in Optuna mode."""
-    with patch.dict(DATASET_REGISTRY, {"mock_dataset": MagicMock(in_channels=1)}):
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         factory = DataLoaderFactory(mock_cfg_high_res, mock_metadata)
         infra = factory._get_infrastructure_kwargs(is_optuna=True)
 
@@ -152,7 +160,9 @@ def test_infra_kwargs_optuna_high_res(mock_cfg_high_res, mock_metadata):
 @pytest.mark.unit
 def test_infra_kwargs_pin_memory(monkeypatch, mock_cfg, mock_metadata):
     """Test that pin_memory is True if CUDA or MPS available."""
-    with patch.dict(DATASET_REGISTRY, {"mock_dataset": MagicMock(in_channels=1)}):
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         factory = DataLoaderFactory(mock_cfg, mock_metadata)
         monkeypatch.setattr(torch, "cuda", MagicMock(is_available=lambda: True))
         monkeypatch.setattr(torch.backends, "mps", MagicMock(is_available=lambda: False))
@@ -164,7 +174,9 @@ def test_infra_kwargs_pin_memory(monkeypatch, mock_cfg, mock_metadata):
 @pytest.mark.unit
 def test_infra_kwargs_no_pin_memory(monkeypatch, mock_cfg, mock_metadata):
     """Test that pin_memory is False when neither CUDA nor MPS available."""
-    with patch.dict(DATASET_REGISTRY, {"mock_dataset": MagicMock(in_channels=1)}):
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         factory = DataLoaderFactory(mock_cfg, mock_metadata)
         monkeypatch.setattr(torch, "cuda", MagicMock(is_available=lambda: False))
         monkeypatch.setattr(torch.backends, "mps", MagicMock(is_available=lambda: False))

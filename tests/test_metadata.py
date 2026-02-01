@@ -134,13 +134,14 @@ def test_dataset_metadata_normalization_info_property():
 @pytest.mark.unit
 def test_registry_wrapper_empty_source_registry():
     """Test DatasetRegistryWrapper raises ValueError when source registry is empty (line 55 in wrapper.py)."""
-    with patch("orchard.core.metadata.wrapper.REG_28", {}):
-        with patch("orchard.core.metadata.wrapper.REG_224", {}):
-            with pytest.raises(ValueError) as exc_info:
-                DatasetRegistryWrapper(resolution=28)
+    with patch("orchard.core.metadata.wrapper.MEDICAL_28", {}):
+        with patch("orchard.core.metadata.wrapper.MEDICAL_224", {}):
+            with patch("orchard.core.metadata.wrapper.SPACE_224", {}):
+                with pytest.raises(ValueError) as exc_info:
+                    DatasetRegistryWrapper(resolution=28)
 
-            error_msg = str(exc_info.value)
-            assert "Dataset registry for resolution 28 is empty" in error_msg
+                error_msg = str(exc_info.value)
+                assert "Dataset registry for resolution 28 is empty" in error_msg
 
 
 if __name__ == "__main__":

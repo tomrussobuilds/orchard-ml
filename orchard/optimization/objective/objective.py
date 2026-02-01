@@ -24,7 +24,7 @@ import optuna
 import torch
 
 from orchard.core import LOGGER_NAME, Config, log_trial_start
-from orchard.data_handler import MedMNISTData, get_dataloaders, load_medmnist
+from orchard.data_handler import DatasetData, get_dataloaders, load_dataset
 from orchard.models import get_model
 from orchard.trainer import get_criterion, get_optimizer, get_scheduler
 
@@ -40,7 +40,7 @@ logger = logging.getLogger(LOGGER_NAME)
 class DatasetLoaderProtocol(Protocol):
     """Protocol for dataset loading (enables dependency injection)."""
 
-    def __call__(self, metadata) -> MedMNISTData:
+    def __call__(self, metadata) -> DatasetData:
         """Load dataset from metadata."""
         ...  # pragma: no cover
 
@@ -48,7 +48,7 @@ class DatasetLoaderProtocol(Protocol):
 class DataloaderFactoryProtocol(Protocol):
     """Protocol for dataloader creation (enables dependency injection)."""
 
-    def __call__(self, medmnist_data: MedMNISTData, cfg: Config, is_optuna: bool = False) -> tuple:
+    def __call__(self, medmnist_data: DatasetData, cfg: Config, is_optuna: bool = False) -> tuple:
         """Create train/val/test dataloaders."""
         ...  # pragma: no cover
 
@@ -111,7 +111,7 @@ class OptunaObjective:
             cfg: Base configuration (reads optuna.* settings)
             search_space: Hyperparameter search space
             device: Training device
-            dataset_loader: Dataset loading function (default: load_medmnist)
+            dataset_loader: Dataset loading function (default: load_dataset)
             dataloader_factory: DataLoader factory (default: get_dataloaders)
             model_factory: Model factory (default: get_model)
         """
@@ -120,7 +120,7 @@ class OptunaObjective:
         self.device = device
 
         # Dependency injection with defaults
-        self._dataset_loader = dataset_loader or load_medmnist
+        self._dataset_loader = dataset_loader or load_dataset
         self._dataloader_factory = dataloader_factory or get_dataloaders
         self._model_factory = model_factory or get_model
 
