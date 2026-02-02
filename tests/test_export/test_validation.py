@@ -5,12 +5,21 @@ Tests numerical validation comparing PyTorch models against
 exported ONNX models for output consistency.
 """
 
+import warnings
+
 import pytest
 import torch
 import torch.nn as nn
 
 # Skip entire module if onnxscript not available (required by torch.onnx.export)
 pytest.importorskip("onnxscript")
+
+# Suppress FutureWarning from PyTorch's internal treespec usage in Python 3.11
+warnings.filterwarnings(
+    "ignore",
+    message=r"`isinstance\(treespec, LeafSpec\)` is deprecated.*",
+    category=FutureWarning,
+)
 
 from orchard.export.validation import validate_export  # noqa: E402
 
