@@ -206,24 +206,22 @@ firefox outputs/*/figures/optimization_history.html    # Trial progression
 
 ---
 
-#### **With Model Export** (Production deployment)
+#### **Model Export** (Production deployment)
 
-Add an `export:` section to your config YAML:
+All training configs (`config_*.yaml`) include ONNX export by default:
+```bash
+python forge.py --config recipes/config_efficientnet_b0.yaml
+# → Training + ONNX export to outputs/*/exports/model.onnx
+```
+
+To disable export, remove the `export:` section from your config. To customize:
 ```yaml
 export:
-  format: onnx
-  opset_version: 18
+  format: onnx           # or "torchscript", "both"
+  opset_version: 18      # ONNX opset (18 = latest, no warnings)
+  quantize: true         # Optional: INT8 quantization
+  validate_export: true  # Verify PyTorch ↔ ONNX consistency
 ```
-
-Then run normally:
-```bash
-python forge.py --config recipes/my_config_with_export.yaml
-```
-
-**What happens:**
-- After training, model is exported to ONNX format
-- Numerical validation ensures PyTorch ↔ ONNX consistency
-- Export saved to `outputs/*/exports/model.onnx`
 
 ---
 
@@ -309,25 +307,27 @@ Every run generates a complete artifact suite for total traceability. Both train
 
 > **Note:** The artifact structure below shows a complete optimization + training workflow. Training-only runs produce a simplified subset (without optimization-specific files like `study.db`, `best_config.yaml`, HTML plots). See [Testing Guide](docs/guide/TESTING.md) and [Optimization Guide](docs/guide/OPTIMIZATION.md) for workflow-specific details.
 
-**Artifact Structure (Optimization + Training):**
+**Artifact Structure (Full Pipeline):**
 ```
 outputs/20260123_organcmnist_efficientnetb0_a3f7c2/
 ├── figures/
 │   ├── confusion_matrix_efficientnet_b0_224.png
 │   ├── training_curves_efficientnet_b0_224.png
 │   ├── sample_predictions_efficientnet_b0_224.png
-│   ├── param_importances.html          # Interactive importance plot (optimization)
-│   ├── optimization_history.html       # Trial progression (optimization)
-│   └── parallel_coordinates.html       # Hyperparameter relationships (optimization)
+│   ├── param_importances.html          # (optimization only)
+│   ├── optimization_history.html       # (optimization only)
+│   └── parallel_coordinates.html       # (optimization only)
 ├── reports/
 │   ├── training_summary.xlsx           # Comprehensive metrics spreadsheet
-│   ├── best_config.yaml                # Optimized configuration (optimization)
-│   ├── study_summary.json              # All trials metadata (optimization)
-│   └── top_10_trials.xlsx              # Best configurations (optimization)
+│   ├── best_config.yaml                # (optimization only)
+│   ├── study_summary.json              # (optimization only)
+│   └── top_10_trials.xlsx              # (optimization only)
 ├── models/
 │   └── best_efficientnetb0.pth         # Trained model weights
+├── exports/
+│   └── model.onnx                      # Production-ready export
 └── database/
-    └── study.db                        # SQLite storage for resumption (optimization)
+    └── study.db                        # (optimization only)
 ```
 
 > [!IMPORTANT]

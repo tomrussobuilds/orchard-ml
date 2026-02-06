@@ -84,3 +84,8 @@ evaluation:
   report_format: xlsx
   save_confusion_matrix: true
   save_predictions_grid: true
+
+export:
+  format: onnx
+  opset_version: 18
+  validate_export: true
