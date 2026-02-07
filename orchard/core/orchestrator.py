@@ -234,6 +234,7 @@ class RootOrchestrator:
         Bridges static Logger to session-specific filesystem.
         Reconfigures handlers for file-based persistence in run directory.
         """
+        assert self.paths is not None, "Paths must be initialized before logging"
         self.run_logger = self._log_initializer(
             name=LOGGER_NAME, log_dir=self.paths.logs, level=self.cfg.telemetry.log_level
         )
@@ -243,6 +244,7 @@ class RootOrchestrator:
         Mirrors hydrated configuration to experiment root.
         Saves portable YAML manifest for session auditability.
         """
+        assert self.paths is not None, "Paths must be initialized before config persistence"
         self._config_saver(data=self.cfg, yaml_path=self.paths.get_config_path())
 
     def _phase_6_infrastructure_guarding(self) -> None:
@@ -250,32 +252,30 @@ class RootOrchestrator:
         Secures system-level resource locks via InfrastructureManager.
         Prevents concurrent execution conflicts and manages cleanup.
         """
+        phase_logger = self.run_logger or logging.getLogger(LOGGER_NAME)
         if self.infra is not None:
             try:
-                self.infra.prepare_environment(self.cfg, logger=self.run_logger)
+                self.infra.prepare_environment(self.cfg, logger=phase_logger)
             except Exception as e:
-                if self.run_logger:
-                    self.run_logger.warning(f"Infra guard failed: {e}")
-                else:
-                    logging.warning(f"Infra guard failed: {e}")
+                phase_logger.warning(f"Infra guard failed: {e}")
 
     def _phase_7_environment_reporting(self, applied_threads: int) -> None:
         """
         Emits baseline environment report to active logging streams.
         Summarizes hardware, dataset metadata, and execution policies.
         """
+        assert self.paths is not None, "Paths must be initialized before reporting"
+        phase_logger = self.run_logger or logging.getLogger(LOGGER_NAME)
+
         if self._device_cache is None:
             try:
                 self._device_cache = self.get_device()
             except Exception as e:
                 self._device_cache = torch.device("cpu")
-                if self.run_logger:
-                    self.run_logger.warning(f"Device detection failed, fallback to CPU: {e}")
-                else:
-                    logging.warning(f"Device detection failed, fallback to CPU: {e}")
+                phase_logger.warning(f"Device detection failed, fallback to CPU: {e}")
 
         self.reporter.log_initial_status(
-            logger_instance=self.run_logger,
+            logger_instance=phase_logger,
             cfg=self.cfg,
             paths=self.paths,
             device=self._device_cache,
@@ -299,6 +299,11 @@ class RootOrchestrator:
         applied_threads = self._phase_2_hardware_optimization()
         self._phase_3_filesystem_provisioning()
         self._phase_4_logging_initialization()
+
+        # Type guards: paths and logger are guaranteed after phases 3-4
+        assert self.paths is not None, "Paths not initialized after phase 3"
+        assert self.run_logger is not None, "Logger not initialized after phase 4"
+
         self._phase_5_config_persistence()
         self._phase_6_infrastructure_guarding()
         self._phase_7_environment_reporting(applied_threads)
@@ -313,14 +318,13 @@ class RootOrchestrator:
         InfrastructureManager guards and closing logging handlers.
         """
         # Release infrastructure resources (locks, caches)
+        # Use run_logger if available, otherwise fallback to module logger
+        cleanup_logger = self.run_logger or logging.getLogger(LOGGER_NAME)
         try:
             if self.infra:
-                self.infra.release_resources(self.cfg, logger=self.run_logger)
+                self.infra.release_resources(self.cfg, logger=cleanup_logger)
         except Exception as e:
-            if self.run_logger:
-                self.run_logger.error(f"Failed to release system lock: {e}")
-            else:
-                logging.error(f"Failed to release system lock: {e}")
+            cleanup_logger.error(f"Failed to release system lock: {e}")
 
         # Always close logging handlers to flush buffers
         if self.run_logger:

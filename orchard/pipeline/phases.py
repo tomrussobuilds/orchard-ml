@@ -74,6 +74,10 @@ def run_optimization_phase(
     device = orchestrator.get_device()
     run_logger = orchestrator.run_logger
 
+    # Type guards for MyPy
+    assert run_logger is not None, "Logger not initialized"
+    assert paths is not None, "Paths not initialized"
+
     run_logger.info("")
     run_logger.info(LogStyle.DOUBLE)
     run_logger.info(f"{'PHASE 1: HYPERPARAMETER OPTIMIZATION':^80}")
@@ -125,9 +129,13 @@ def run_training_phase(
     device = orchestrator.get_device()
     run_logger = orchestrator.run_logger
 
+    # Type guards for MyPy
+    assert run_logger is not None, "Logger not initialized"
+    assert paths is not None, "Paths not initialized"
+
     # Dataset metadata
     wrapper = DatasetRegistryWrapper(resolution=cfg.dataset.resolution)
-    ds_meta = wrapper.get_dataset(cfg.dataset.metadata.name.lower())
+    ds_meta = wrapper.get_dataset(cfg.dataset.dataset_name.lower())
 
     # DATA PREPARATION
     run_logger.info("")
@@ -229,6 +237,10 @@ def run_export_phase(
     cfg = cfg or orchestrator.cfg
     paths = orchestrator.paths
     run_logger = orchestrator.run_logger
+
+    # Type guards for MyPy
+    assert run_logger is not None, "Logger not initialized"
+    assert paths is not None, "Paths not initialized"
 
     run_logger.info("")
     run_logger.info(LogStyle.HEAVY)

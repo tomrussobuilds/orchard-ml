@@ -11,7 +11,6 @@ import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import requests
@@ -39,7 +38,7 @@ logger = logging.getLogger(LOGGER_NAME)
 
 # FETCHING LOGIC
 def ensure_dataset_npz(
-    metadata: Optional[DatasetMetadata],
+    metadata: DatasetMetadata,
     retries: int = 5,
     delay: float = 5.0,
 ) -> Path:

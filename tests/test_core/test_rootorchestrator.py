@@ -303,7 +303,11 @@ def test_cleanup_release_resources_fails_no_logger(caplog):
     orch.infra = mock_infra
     orch.run_logger = None
 
-    with caplog.at_level(logging.ERROR):
+    # Enable propagate for caplog to capture fallback logger
+    fallback_logger = logging.getLogger("VisionForge")
+    fallback_logger.propagate = True
+
+    with caplog.at_level(logging.ERROR, logger="VisionForge"):
         orch.cleanup()
 
     assert any("fail" in rec.message for rec in caplog.records)
@@ -415,7 +419,11 @@ def test_phase_6_infra_prepare_raises_warning_no_logger(caplog):
     orch.infra = mock_infra
     orch.run_logger = None
 
-    with caplog.at_level(logging.WARNING):
+    # Enable propagate for caplog to capture fallback logger
+    fallback_logger = logging.getLogger("VisionForge")
+    fallback_logger.propagate = True
+
+    with caplog.at_level(logging.WARNING, logger="VisionForge"):
         orch._phase_6_infrastructure_guarding()
 
     assert any("fail" in rec.message for rec in caplog.records)
@@ -438,7 +446,11 @@ def test_phase_7_device_resolver_fails_fallback_to_cpu(caplog):
     orch.run_logger = None
     orch.paths = MagicMock()
 
-    with caplog.at_level(logging.WARNING):
+    # Enable propagate for caplog to capture fallback logger
+    fallback_logger = logging.getLogger("VisionForge")
+    fallback_logger.propagate = True
+
+    with caplog.at_level(logging.WARNING, logger="VisionForge"):
         orch._phase_7_environment_reporting(applied_threads=1)
 
     assert orch._device_cache.type == "cpu"
