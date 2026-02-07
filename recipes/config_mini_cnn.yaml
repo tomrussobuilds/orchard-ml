@@ -51,7 +51,7 @@ training:
   
   # Performance
   use_amp: false                # Not needed for small resolution
-  use_tta: true
+  use_tta: false
   criterion_type: "cross_entropy"
   weighted_loss: false
   focal_gamma: 2.0              # Only used if criterion_type: "focal"

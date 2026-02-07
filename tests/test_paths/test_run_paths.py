@@ -8,7 +8,6 @@ and path resolution for experiment artifacts.
 import hashlib
 import json
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 from pydantic import ValidationError
@@ -141,10 +140,11 @@ def test_generate_unique_id_format():
 
 @pytest.mark.unit
 def test_generate_unique_id_deterministic():
-    """Test _generate_unique_id() produces same hash for identical configs."""
+    """Test _generate_unique_id() produces same hash for identical configs + timestamp."""
     ds_slug = "test"
     m_slug = "model"
-    cfg = {"batch_size": 32, "learning_rate": 0.001, "epochs": 10}
+    fixed_ts = 1707400000.0  # Fixed timestamp for determinism
+    cfg = {"batch_size": 32, "learning_rate": 0.001, "epochs": 10, "run_timestamp": fixed_ts}
 
     id1 = RunPaths._generate_unique_id(ds_slug, m_slug, cfg)
     id2 = RunPaths._generate_unique_id(ds_slug, m_slug, cfg)
@@ -200,9 +200,12 @@ def test_generate_unique_id_uses_blake2b():
     """Test _generate_unique_id() uses blake2b with digest_size=3."""
     ds_slug = "test"
     m_slug = "model"
-    cfg = {"key": "value"}
+    fixed_ts = 1707400000.0
+    cfg = {"key": "value", "run_timestamp": fixed_ts}
 
+    # Replicate the internal hashing logic
     hashable = {k: v for k, v in cfg.items() if isinstance(v, (int, float, str, bool, list))}
+    hashable["_run_ts"] = fixed_ts
     params_json = json.dumps(hashable, sort_keys=True)
     expected_hash = hashlib.blake2b(params_json.encode(), digest_size=3).hexdigest()
 
@@ -211,31 +214,29 @@ def test_generate_unique_id_uses_blake2b():
     assert expected_hash in run_id
 
 
-# RUNPATHS: COLLISION HANDLING
+# RUNPATHS: UNIQUENESS VIA TIMESTAMP
 @pytest.mark.unit
-def test_runpaths_create_handles_collision(tmp_path):
-    """Test RunPaths.create() appends timestamp if directory already exists."""
-    training_cfg = {"batch_size": 32}
+def test_runpaths_unique_via_timestamp(tmp_path):
+    """Test that different timestamps produce unique run IDs."""
+    cfg1 = {"batch_size": 32, "run_timestamp": 1707400000.0}
+    cfg2 = {"batch_size": 32, "run_timestamp": 1707400001.0}
 
     run1 = RunPaths.create(
         dataset_slug="test",
         model_name="model",
-        training_cfg=training_cfg,
+        training_cfg=cfg1,
         base_dir=tmp_path,
     )
 
-    run1.root.mkdir(parents=True, exist_ok=True)
+    run2 = RunPaths.create(
+        dataset_slug="test",
+        model_name="model",
+        training_cfg=cfg2,
+        base_dir=tmp_path,
+    )
 
-    with patch("time.strftime", return_value="123456"):
-        run2 = RunPaths.create(
-            dataset_slug="test",
-            model_name="model",
-            training_cfg=training_cfg,
-            base_dir=tmp_path,
-        )
-
+    # Same config, different timestamps = different run IDs
     assert run1.run_id != run2.run_id
-    assert run2.run_id.startswith("123456")
 
 
 # RUNPATHS: DIRECTORY STRUCTURE

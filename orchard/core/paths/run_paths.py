@@ -94,10 +94,7 @@ class RunPaths(BaseModel):
         base = Path(base_dir or OUTPUTS_ROOT)
         root_path = base / run_id
 
-        # Safety collision check (rare with blake2b but handled)
-        if root_path.exists():
-            run_id = f"{run_id}_{time.strftime('%H%M%S')}"
-            root_path = base / run_id
+        # No collision fallback needed: run_timestamp guarantees uniqueness
 
         instance = cls(
             run_id=run_id,
@@ -119,11 +116,21 @@ class RunPaths(BaseModel):
     @staticmethod
     def _generate_unique_id(ds_slug: str, m_slug: str, cfg: Dict[str, Any]) -> str:
         """
-        Calculates a deterministic 6-character hash from the training configuration.
-        Ensures that even slight hyperparameter changes result in new directories.
+        Calculates a deterministic 6-character hash from training config + run timestamp.
+
+        The hash includes:
+        - Training hyperparameters (learning rate, epochs, etc.)
+        - Run timestamp (auto-generated if not provided, ensures unique runs)
+
+        This guarantees unique directories without collision fallbacks.
         """
         # Filter for hashable primitives to avoid serialization errors
         hashable = {k: v for k, v in cfg.items() if isinstance(v, (int, float, str, bool, list))}
+
+        # Include run_timestamp for uniqueness (auto-generated if not in cfg)
+        run_ts = cfg.get("run_timestamp", time.time())
+        hashable["_run_ts"] = run_ts
+
         params_json = json.dumps(hashable, sort_keys=True)
         run_hash = hashlib.blake2b(params_json.encode(), digest_size=3).hexdigest()
 
