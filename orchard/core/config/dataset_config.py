@@ -47,7 +47,7 @@ class DatasetConfig(BaseModel):
     use_weighted_sampler: bool = True
     max_samples: Optional[PositiveInt] = Field(default=None)
 
-    img_size: ImageSize = Field(
+    img_size: Optional[ImageSize] = Field(
         description="Target square resolution for model input",
         default=None,
     )
@@ -105,6 +105,7 @@ class DatasetConfig(BaseModel):
             ds_name = self.name if self.name else list(wrapper.registry.keys())[0]
             metadata = wrapper.get_dataset(ds_name)
             object.__setattr__(self, "metadata", metadata)
+        assert self.metadata is not None  # Guaranteed by the above
         return self.metadata
 
     @property

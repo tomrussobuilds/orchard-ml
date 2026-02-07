@@ -152,7 +152,7 @@ class OptunaConfig(BaseModel):
         params = {k: v for k, v in args_dict.items() if k in valid_fields and v is not None}
         return cls(**params)
 
-    def get_storage_url(self, paths) -> str:
+    def get_storage_url(self, paths) -> Optional[str]:
         """
         Constructs storage URL for Optuna study.
 

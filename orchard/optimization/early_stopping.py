@@ -79,6 +79,9 @@ class StudyEarlyStoppingCallback:
             return
 
         value = trial.value
+        if value is None:
+            self._count = 0
+            return
         threshold_met = (
             value >= self.threshold if self.direction == "maximize" else value <= self.threshold
         )

@@ -190,3 +190,21 @@ def test_get_early_stopping_callback_invalid_metric():
         metric_name="invalid_metric", direction="maximize", threshold=None, patience=3, enabled=True
     )
     assert callback is None
+
+
+@pytest.mark.unit
+def test_callback_trial_value_none():
+    """Test callback when trial.value is None (edge case for type safety)."""
+    callback = StudyEarlyStoppingCallback(threshold=0.9999, direction="maximize", patience=3)
+    callback._count = 2  # Simulate some previous successes
+
+    trial = MagicMock(spec=Trial)
+    trial.state = TrialState.COMPLETE
+    trial.value = None  # Edge case: completed but no value
+
+    study_mock = MagicMock()
+    callback(study=study_mock, trial=trial)
+
+    # Should reset count and not stop
+    assert callback._count == 0
+    study_mock.stop.assert_not_called()

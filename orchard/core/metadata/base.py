@@ -6,7 +6,7 @@ and seamless integration with the global configuration engine.
 """
 
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -37,7 +37,9 @@ class DatasetMetadata(BaseModel):
 
     # Image properties
     in_channels: int = Field(..., description="1 for grayscale, 3 for RGB")
-    native_resolution: int = Field(default=None, description="Native pixel resolution (28 or 224)")
+    native_resolution: Optional[int] = Field(
+        default=None, description="Native pixel resolution (28 or 224)"
+    )
 
     # Normalization
     mean: Tuple[float, ...] = Field(..., description="Channel-wise mean")

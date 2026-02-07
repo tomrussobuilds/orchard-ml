@@ -113,7 +113,7 @@ def build_vit_tiny(
 
                 new_proj.weight.copy_(w)
 
-                if old_proj.bias is not None:
+                if old_proj.bias is not None and new_proj.bias is not None:
                     new_proj.bias.copy_(old_proj.bias)
 
         # Replace patch embedding projection

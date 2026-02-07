@@ -82,12 +82,13 @@ def show_predictions(
         else:
             domain_info = " | Mode: Standard"
 
-    plt.suptitle(
-        f"Sample Predictions — {cfg.model.name} | "
-        f"Resolution: {cfg.dataset.resolution}"
-        f"{domain_info}{tta_info}",
-        fontsize=14,
-    )
+    if cfg:
+        plt.suptitle(
+            f"Sample Predictions — {cfg.model.name} | "
+            f"Resolution: {cfg.dataset.resolution}"
+            f"{domain_info}{tta_info}",
+            fontsize=14,
+        )
 
     # 4. Export and Cleanup
     _finalize_figure(plt, save_path, cfg)
@@ -174,7 +175,7 @@ def _get_predictions_batch(model: nn.Module, loader: DataLoader, device: torch.d
 def _setup_prediction_grid(num_samples: int, cols: int, cfg: Config | None):
     """Calculates grid dimensions and initializes matplotlib subplots."""
     rows = int(np.ceil(num_samples / cols))
-    base_w, base_h = cfg.evaluation.fig_size_predictions
+    base_w, base_h = cfg.evaluation.fig_size_predictions if cfg else (12, 8)
 
     fig, axes = plt.subplots(
         rows, cols, figsize=(base_w, (base_h / 3) * rows), constrained_layout=True
@@ -187,7 +188,7 @@ def _finalize_figure(plt_obj, save_path: Path | None, cfg: Config | None):
     """Handles saving to disk and cleaning up memory."""
     if save_path:
         save_path.parent.mkdir(parents=True, exist_ok=True)
-        dpi = cfg.evaluation.fig_dpi
+        dpi = cfg.evaluation.fig_dpi if cfg else 200
         plt_obj.savefig(save_path, dpi=dpi, bbox_inches="tight", facecolor="white")
         logger.info(f"Predictions grid saved → {save_path.name}")
     else:
