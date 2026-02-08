@@ -80,7 +80,7 @@ def run_optimization_phase(
 
     run_logger.info("")
     run_logger.info(LogStyle.DOUBLE)
-    run_logger.info(f"{'PHASE 1: HYPERPARAMETER OPTIMIZATION':^80}")
+    run_logger.info(f"{'HYPERPARAMETER OPTIMIZATION':^80}")
     run_logger.info(LogStyle.DOUBLE)
 
     # Execute Optuna study
@@ -140,7 +140,7 @@ def run_training_phase(
     # DATA PREPARATION
     run_logger.info("")
     run_logger.info(LogStyle.HEAVY)
-    run_logger.info(f"{'PHASE 2: DATA PREPARATION':^80}")
+    run_logger.info(f"{'DATA PREPARATION':^80}")
     run_logger.info(LogStyle.HEAVY)
 
     data = load_dataset(ds_meta)
@@ -160,7 +160,7 @@ def run_training_phase(
     # MODEL TRAINING
     run_logger.info("")
     run_logger.info(LogStyle.DOUBLE)
-    run_logger.info(f"{'PHASE 2: TRAINING PIPELINE - ' + cfg.model.name.upper():^80}")
+    run_logger.info(f"{'TRAINING PIPELINE - ' + cfg.model.name.upper():^80}")
     run_logger.info(LogStyle.DOUBLE)
 
     model = get_model(device=device, cfg=cfg)
@@ -185,7 +185,7 @@ def run_training_phase(
     # FINAL EVALUATION
     run_logger.info("")
     run_logger.info(LogStyle.HEAVY)
-    run_logger.info(f"{'PHASE 2: FINAL EVALUATION':^80}")
+    run_logger.info(f"{'FINAL EVALUATION':^80}")
     run_logger.info(LogStyle.HEAVY)
 
     macro_f1, test_acc = run_final_evaluation(
@@ -244,7 +244,7 @@ def run_export_phase(
 
     run_logger.info("")
     run_logger.info(LogStyle.HEAVY)
-    run_logger.info(f"{'PHASE 3: MODEL EXPORT':^80}")
+    run_logger.info(f"{'MODEL EXPORT':^80}")
     run_logger.info(LogStyle.HEAVY)
 
     # Determine input shape from config

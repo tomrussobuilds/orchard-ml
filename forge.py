@@ -48,10 +48,6 @@ def main() -> None:
         run_logger = orchestrator.run_logger
         paths = orchestrator.paths
 
-        run_logger.info(LogStyle.DOUBLE)
-        run_logger.info(f"{'VISIONFORGE: UNIFIED ML PIPELINE':^80}")
-        run_logger.info(LogStyle.DOUBLE)
-
         training_cfg = cfg
         best_config_path = None
 

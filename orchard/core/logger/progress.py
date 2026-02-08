@@ -24,7 +24,9 @@ logger = logging.getLogger(LOGGER_NAME)
 
 def log_optimization_header(cfg: "Config", logger_instance: logging.Logger | None = None) -> None:
     """
-    Log Optuna optimization session header.
+    Log Optuna optimization configuration details.
+
+    Logs search-specific parameters only (dataset/model already shown in environment).
 
     Args:
         cfg: Configuration with optuna settings
@@ -32,21 +34,11 @@ def log_optimization_header(cfg: "Config", logger_instance: logging.Logger | Non
     """
     log = logger_instance or logger
 
-    log.info("")
-    log.info(LogStyle.DOUBLE)
-    log.info(f"{'OPTUNA HYPERPARAMETER OPTIMIZATION':^80}")
-    log.info(LogStyle.DOUBLE)
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset      : {cfg.dataset.dataset_name}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Model        : {cfg.model.name}")
-
-    if cfg.model.weight_variant:
-        log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Weight Var.  : {cfg.model.weight_variant}")
-
+    # Search configuration (no duplicate header - phase header already shown)
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Search Space : {cfg.optuna.search_space_preset}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Trials       : {cfg.optuna.n_trials}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Epochs/Trial : {cfg.optuna.epochs}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Metric       : {cfg.optuna.metric_name}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Device       : {cfg.hardware.device}")
     log.info(
         f"{LogStyle.INDENT}{LogStyle.ARROW} Pruning      : "
         f"{'Enabled' if cfg.optuna.enable_pruning else 'Disabled'}"
@@ -59,7 +51,6 @@ def log_optimization_header(cfg: "Config", logger_instance: logging.Logger | Non
             f"(threshold={threshold}, patience={cfg.optuna.early_stopping_patience})"
         )
 
-    log.info(LogStyle.DOUBLE)
     log.info("")
 
 

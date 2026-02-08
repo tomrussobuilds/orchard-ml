@@ -242,26 +242,23 @@ def test_log_optimization_summary_with_failed_trials():
 # LOG OPTIMIZATION HEADER
 @pytest.mark.unit
 def test_log_optimization_header_basic():
-    """Test log_optimization_header logs study configuration."""
+    """Test log_optimization_header logs search configuration (no duplicate header)."""
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
-    mock_cfg.dataset.dataset_name = "pathmnist"
-    mock_cfg.model.name = "efficientnet_b0"
-    mock_cfg.model.weight_variant = None
     mock_cfg.optuna.search_space_preset = "architecture_search"
     mock_cfg.optuna.n_trials = 50
     mock_cfg.optuna.epochs = 10
     mock_cfg.optuna.metric_name = "auc"
-    mock_cfg.hardware.device = "cuda"
     mock_cfg.optuna.enable_pruning = True
     mock_cfg.optuna.enable_early_stopping = False
 
     log_optimization_header(cfg=mock_cfg, logger_instance=mock_logger)
 
-    assert mock_logger.info.call_count > 8
+    # 6 lines: search_space, trials, epochs/trial, metric, pruning, empty line
+    assert mock_logger.info.call_count == 6
     calls = [str(call) for call in mock_logger.info.call_args_list]
     log_output = " ".join(calls)
-    assert "pathmnist" in log_output
+    assert "architecture_search" in log_output
     assert "50" in log_output
 
 
@@ -270,14 +267,10 @@ def test_log_optimization_header_with_early_stopping():
     """Test log_optimization_header includes early stopping info."""
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
-    mock_cfg.dataset.dataset_name = "test"
-    mock_cfg.model.name = "model"
-    mock_cfg.model.weight_variant = None
     mock_cfg.optuna.search_space_preset = "default"
     mock_cfg.optuna.n_trials = 10
     mock_cfg.optuna.epochs = 5
     mock_cfg.optuna.metric_name = "auc"
-    mock_cfg.hardware.device = "cpu"
     mock_cfg.optuna.enable_pruning = False
     mock_cfg.optuna.enable_early_stopping = True
     mock_cfg.optuna.early_stopping_threshold = 0.95
@@ -285,24 +278,22 @@ def test_log_optimization_header_with_early_stopping():
 
     log_optimization_header(cfg=mock_cfg, logger_instance=mock_logger)
 
+    # 7 lines: 5 base + early_stop + empty line
+    assert mock_logger.info.call_count == 7
     calls = [str(call) for call in mock_logger.info.call_args_list]
     log_output = " ".join(calls)
     assert "Early Stop" in log_output or "0.95" in log_output
 
 
 @pytest.mark.unit
-def test_log_optimization_header_without_weight_variant():
-    """Test log_optimization_header when weight_variant is None."""
+def test_log_optimization_header_logs_only_search_params():
+    """Test log_optimization_header logs only search-specific params (no dataset/model)."""
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
-    mock_cfg.dataset.dataset_name = "test"
-    mock_cfg.model.name = "resnet18"
-    mock_cfg.model.weight_variant = None
     mock_cfg.optuna.search_space_preset = "default"
     mock_cfg.optuna.n_trials = 10
     mock_cfg.optuna.epochs = 5
     mock_cfg.optuna.metric_name = "auc"
-    mock_cfg.hardware.device = "cpu"
     mock_cfg.optuna.enable_pruning = False
     mock_cfg.optuna.enable_early_stopping = False
 
@@ -310,22 +301,23 @@ def test_log_optimization_header_without_weight_variant():
 
     calls = [str(call) for call in mock_logger.info.call_args_list]
     log_output = " ".join(calls)
-    assert "Weight Var" not in log_output
+    # Should NOT contain dataset/model (shown in environment header)
+    assert "Dataset" not in log_output
+    assert "Model" not in log_output
+    # Should contain search params
+    assert "Search Space" in log_output
+    assert "Trials" in log_output
 
 
 @pytest.mark.unit
 def test_log_optimization_header_early_stop_auto_threshold():
-    """Test log_optimization_header with auto early stopping threshold (lines 363-365)."""
+    """Test log_optimization_header with auto early stopping threshold."""
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
-    mock_cfg.dataset.dataset_name = "test"
-    mock_cfg.model.name = "model"
-    mock_cfg.model.weight_variant = None
     mock_cfg.optuna.search_space_preset = "default"
     mock_cfg.optuna.n_trials = 10
     mock_cfg.optuna.epochs = 5
     mock_cfg.optuna.metric_name = "auc"
-    mock_cfg.hardware.device = "cpu"
     mock_cfg.optuna.enable_pruning = False
     mock_cfg.optuna.enable_early_stopping = True
     mock_cfg.optuna.early_stopping_threshold = None
