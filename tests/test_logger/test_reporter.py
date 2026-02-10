@@ -255,8 +255,8 @@ def test_log_optimization_header_basic():
 
     log_optimization_header(cfg=mock_cfg, logger_instance=mock_logger)
 
-    # 6 lines: search_space, trials, epochs/trial, metric, pruning, empty line
-    assert mock_logger.info.call_count == 6
+    # 9 lines: empty, dataset, model_search, search_space, trials, epochs/trial, metric, pruning, empty
+    assert mock_logger.info.call_count == 9
     calls = [str(call) for call in mock_logger.info.call_args_list]
     log_output = " ".join(calls)
     assert "architecture_search" in log_output
@@ -279,8 +279,8 @@ def test_log_optimization_header_with_early_stopping():
 
     log_optimization_header(cfg=mock_cfg, logger_instance=mock_logger)
 
-    # 7 lines: 5 base + early_stop + empty line
-    assert mock_logger.info.call_count == 7
+    # 10 lines: 8 base + early_stop + empty line
+    assert mock_logger.info.call_count == 10
     calls = [str(call) for call in mock_logger.info.call_args_list]
     log_output = " ".join(calls)
     assert "Early Stop" in log_output or "0.95" in log_output
@@ -288,7 +288,7 @@ def test_log_optimization_header_with_early_stopping():
 
 @pytest.mark.unit
 def test_log_optimization_header_logs_only_search_params():
-    """Test log_optimization_header logs only search-specific params (no dataset/model)."""
+    """Test log_optimization_header logs dataset, model search, and search params."""
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
     mock_cfg.optuna.search_space_preset = "default"
@@ -302,10 +302,9 @@ def test_log_optimization_header_logs_only_search_params():
 
     calls = [str(call) for call in mock_logger.info.call_args_list]
     log_output = " ".join(calls)
-    # Should NOT contain dataset/model (shown in environment header)
-    assert "Dataset" not in log_output
-    assert "Model" not in log_output
-    # Should contain search params
+    # Should contain dataset, model search, and search params
+    assert "Dataset" in log_output
+    assert "Model Search" in log_output
     assert "Search Space" in log_output
     assert "Trials" in log_output
 

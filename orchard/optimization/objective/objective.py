@@ -131,9 +131,6 @@ class OptunaObjective:
         # Load dataset once (reused across all trials)
         self.medmnist_data = self._dataset_loader(self.config_builder.base_metadata)
 
-        logger.info(f"Objective initialized with metric: {cfg.optuna.metric_name}")
-        logger.info(f"Dataset: {self.config_builder.base_metadata.name}")
-
     def __call__(self, trial: optuna.Trial) -> float:
         """
         Execute single Optuna trial.

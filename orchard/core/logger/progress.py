@@ -51,6 +51,12 @@ def log_optimization_header(cfg: "Config", logger_instance: logging.Logger | Non
     log = logger_instance or logger
 
     # Search configuration (no duplicate header - phase header already shown)
+    log.info("")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset      : {cfg.dataset.dataset_name}")
+    log.info(
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Model Search : "
+        f"{'Enabled' if cfg.optuna.enable_model_search else 'Disabled'}"
+    )
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Search Space : {cfg.optuna.search_space_preset}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Trials       : {cfg.optuna.n_trials}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Epochs/Trial : {cfg.optuna.epochs}")

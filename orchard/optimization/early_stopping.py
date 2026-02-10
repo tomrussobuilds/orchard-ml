@@ -176,12 +176,6 @@ def get_early_stopping_callback(
             )
             return None
 
-    logger.info(
-        f"Early stopping enabled: "
-        f"{metric_name} {'≥' if direction == 'maximize' else '≤'} {threshold:.6f} "
-        f"(patience={patience})"
-    )
-
     return StudyEarlyStoppingCallback(
         threshold=threshold, direction=direction, patience=patience, enabled=enabled
     )
