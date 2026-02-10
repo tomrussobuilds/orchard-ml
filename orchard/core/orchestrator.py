@@ -127,7 +127,8 @@ class RootOrchestrator:
 
     Notes:
         - Thread-safe: Single-instance locking via InfrastructureManager
-        - Idempotent: Multiple initialization attempts are safe
+        - Idempotent: initialize_core_services() is safe to call multiple times
+          (subsequent calls return cached RunPaths without re-executing phases)
         - Auditable: All configuration saved to YAML in workspace
         - Deterministic: Reproducible experiments via strict seeding
     """
@@ -357,9 +358,17 @@ class RootOrchestrator:
         Synchronizes global state through 7 phases, progressing from
         deterministic seeding to full environment reporting.
 
+        Idempotent: if already initialized, returns the existing RunPaths
+        without re-executing any phase. This prevents orphaned directories
+        (Phase 3 creates unique paths per call) and resource leaks
+        (Phase 6 acquires filesystem locks).
+
         Returns:
             Verified and provisioned directory structure
         """
+        if self.paths is not None:
+            return self.paths
+
         self._phase_1_determinism()
         applied_threads = self._phase_2_hardware_optimization()
         self._phase_3_filesystem_provisioning()

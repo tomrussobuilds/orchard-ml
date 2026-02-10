@@ -739,5 +739,92 @@ def test_context_manager_full_lifecycle():
     mock_infra.release_resources.assert_called_once()
 
 
+# IDEMPOTENCY
+@pytest.mark.unit
+def test_initialize_core_services_idempotent_returns_cached_paths(tmp_path):
+    """Test that calling initialize_core_services twice returns same paths without re-executing phases."""
+    mock_cfg = MagicMock()
+    mock_cfg.training.seed = 42
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.effective_num_workers = 2
+    mock_cfg.hardware.device = "cpu"
+    mock_cfg.dataset.dataset_name = "ds"
+    mock_cfg.architecture.name = "arch"
+    mock_cfg.telemetry.output_dir = str(tmp_path)
+    mock_cfg.telemetry.log_level = "INFO"
+    mock_cfg.dump_serialized = MagicMock(return_value={"k": "v"})
+
+    mock_paths = MagicMock()
+    mock_paths.logs = str(tmp_path / "logs")
+    mock_paths.get_config_path = MagicMock(return_value=str(tmp_path / "config.yaml"))
+
+    mock_seed_setter = MagicMock()
+    mock_thread_applier = MagicMock(return_value=2)
+    mock_infra = MagicMock()
+    mock_reporter = MagicMock()
+    mock_log_initializer = MagicMock(return_value=MagicMock())
+    mock_config_saver = MagicMock()
+
+    with pytest.MonkeyPatch.context() as m:
+        m.setattr("orchard.core.orchestrator.RunPaths.create", lambda **kwargs: mock_paths)
+
+        orch = RootOrchestrator(
+            cfg=mock_cfg,
+            infra_manager=mock_infra,
+            reporter=mock_reporter,
+            log_initializer=mock_log_initializer,
+            seed_setter=mock_seed_setter,
+            thread_applier=mock_thread_applier,
+            system_configurator=MagicMock(),
+            static_dir_setup=MagicMock(),
+            config_saver=mock_config_saver,
+            device_resolver=MagicMock(return_value=torch.device("cpu")),
+        )
+
+        # First call: full initialization
+        paths1 = orch.initialize_core_services()
+
+        # Reset mocks to verify second call does NOT re-invoke phases
+        mock_seed_setter.reset_mock()
+        mock_thread_applier.reset_mock()
+        mock_infra.reset_mock()
+        mock_reporter.reset_mock()
+        mock_log_initializer.reset_mock()
+        mock_config_saver.reset_mock()
+
+        # Second call: should return cached paths
+        paths2 = orch.initialize_core_services()
+
+        assert paths1 is paths2
+        assert paths2 is mock_paths
+
+        # No phases re-executed
+        mock_seed_setter.assert_not_called()
+        mock_thread_applier.assert_not_called()
+        mock_infra.prepare_environment.assert_not_called()
+        mock_reporter.log_initial_status.assert_not_called()
+        mock_log_initializer.assert_not_called()
+        mock_config_saver.assert_not_called()
+
+
+@pytest.mark.unit
+def test_initialize_core_services_skips_when_paths_already_set():
+    """Test that initialize_core_services returns immediately when self.paths is already set."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.effective_num_workers = 2
+
+    existing_paths = MagicMock()
+    mock_seed_setter = MagicMock()
+
+    orch = RootOrchestrator(cfg=mock_cfg, seed_setter=mock_seed_setter)
+    orch.paths = existing_paths
+
+    result = orch.initialize_core_services()
+
+    assert result is existing_paths
+    mock_seed_setter.assert_not_called()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
