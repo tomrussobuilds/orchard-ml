@@ -21,9 +21,12 @@ from sklearn.metrics import roc_auc_score
 from tqdm.auto import tqdm
 
 from orchard.core import LOGGER_NAME
+from orchard.core.config import TrainingConfig
 
 # Module-level logger (avoid dynamic imports in exception handlers)
 logger = logging.getLogger(LOGGER_NAME)
+
+cfg = TrainingConfig()
 
 
 # TRAINING ENGINE
@@ -222,7 +225,7 @@ def validate_epoch(
 
 
 # MIXUP UTILITY
-_mixup_rng = np.random.default_rng()
+_mixup_rng = np.random.default_rng(cfg.seed)
 
 
 def mixup_data(

@@ -70,8 +70,8 @@ def test_config_builder_applies_param_overrides():
     test_dict["training"]["epochs"] = builder.optuna_epochs
     builder._apply_param_overrides(test_dict, trial_params)
 
-    assert test_dict["training"]["learning_rate"] == 0.0001
-    assert test_dict["architecture"]["dropout"] == 0.3
+    assert test_dict["training"]["learning_rate"] == pytest.approx(0.0001)
+    assert test_dict["architecture"]["dropout"] == pytest.approx(0.3)
     assert test_dict["augmentation"]["rotation_angle"] == 15
     assert test_dict["training"]["epochs"] == 20
 
@@ -171,7 +171,7 @@ def test_metric_extractor_extracts_correct_metric():
 
     result = extractor.extract(val_metrics)
 
-    assert result == 0.92
+    assert result == pytest.approx(0.92)
 
 
 @pytest.mark.unit
@@ -191,16 +191,16 @@ def test_metric_extractor_tracks_best():
     extractor = MetricExtractor(metric_name="auc")
 
     best1 = extractor.update_best(0.80)
-    assert best1 == 0.80
-    assert extractor.best_metric == 0.80
+    assert best1 == pytest.approx(0.80)
+    assert extractor.best_metric == pytest.approx(0.80)
 
     best2 = extractor.update_best(0.90)
-    assert best2 == 0.90
-    assert extractor.best_metric == 0.90
+    assert best2 == pytest.approx(0.90)
+    assert extractor.best_metric == pytest.approx(0.90)
 
     best3 = extractor.update_best(0.85)
-    assert best3 == 0.90
-    assert extractor.best_metric == 0.90
+    assert best3 == pytest.approx(0.90)
+    assert extractor.best_metric == pytest.approx(0.90)
 
 
 # TRAINING EXECUTOR TESTS
@@ -508,7 +508,7 @@ def test_optuna_objective_call_cleanup_on_success():
             result = objective(mock_trial)
 
             objective._cleanup.assert_called_once()
-            assert result == 0.88
+            assert result == pytest.approx(0.88)
 
 
 @pytest.mark.unit

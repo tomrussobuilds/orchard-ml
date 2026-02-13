@@ -446,7 +446,7 @@ def test_denormalize_image_clips_values():
 
     result = _denormalize_image(img, mock_cfg)
 
-    assert result.max() == 1.0
+    assert result.max() == pytest.approx(1.0)
 
 
 @pytest.mark.unit

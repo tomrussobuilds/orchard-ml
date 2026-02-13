@@ -164,7 +164,7 @@ def test_build_trial_data(completed_trial):
     data = build_trial_data(completed_trial)
 
     assert data["number"] == 1
-    assert data["value"] == 0.95
+    assert data["value"] == pytest.approx(0.95)
     assert data["state"] == "COMPLETE"
     assert "datetime_start" in data
     assert "duration_seconds" in data
@@ -177,8 +177,8 @@ def test_build_best_config_dict(mock_cfg):
 
     config_dict = build_best_config_dict(params, mock_cfg)
 
-    assert config_dict["training"]["learning_rate"] == 0.001
-    assert config_dict["architecture"]["dropout"] == 0.5
+    assert config_dict["training"]["learning_rate"] == pytest.approx(0.001)
+    assert config_dict["architecture"]["dropout"] == pytest.approx(0.5)
     assert config_dict["training"]["epochs"] == 50
 
 

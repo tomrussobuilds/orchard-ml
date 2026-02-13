@@ -27,9 +27,9 @@ class TestClassificationMetrics:
 
         results = compute_classification_metrics(labels, preds, probs)
 
-        assert results["accuracy"] == 1.0
-        assert results["f1"] == 1.0
-        assert results["auc"] == 1.0
+        assert results["accuracy"] == pytest.approx(1.0)
+        assert results["f1"] == pytest.approx(1.0)
+        assert results["auc"] == pytest.approx(1.0)
 
     def test_compute_metrics_half_wrong(self):
         """Test accuracy and F1 with partially incorrect predictions."""
@@ -39,7 +39,7 @@ class TestClassificationMetrics:
 
         results = compute_classification_metrics(labels, preds, probs)
 
-        assert results["accuracy"] == 0.5
+        assert results["accuracy"] == pytest.approx(0.5)
         assert 0.0 < results["f1"] < 1.0
         assert isinstance(results["auc"], float)
 

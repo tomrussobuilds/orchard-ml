@@ -32,7 +32,7 @@ def mock_dataloader():
     x = torch.randn(4, 10)
     y = torch.tensor([0, 1, 0, 1])
     dataset = TensorDataset(x, y)
-    return DataLoader(dataset, batch_size=2)
+    return DataLoader(dataset, batch_size=2, num_workers=0)
 
 
 @pytest.fixture
@@ -57,8 +57,8 @@ def test_evaluate_model_standard(mock_compute, mock_dataloader):
 
     assert len(preds) == 4
     assert len(labels) == 4
-    assert metrics["accuracy"] == 0.9
-    assert f1 == 0.88
+    assert metrics["accuracy"] == pytest.approx(0.9)
+    assert f1 == pytest.approx(0.88)
 
     assert not model.training
     mock_compute.assert_called_once()

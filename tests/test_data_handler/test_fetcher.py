@@ -277,8 +277,8 @@ def test_ensure_dataset_npz_rate_limit_429(metadata, monkeypatch):
     assert call_count["count"] == 3
 
     assert len(sleep_calls) == 2
-    assert sleep_calls[0] == 1.0
-    assert sleep_calls[1] == 4.0
+    assert sleep_calls[0] == pytest.approx(1.0)
+    assert sleep_calls[1] == pytest.approx(4.0)
 
 
 @pytest.mark.unit
@@ -328,7 +328,7 @@ def test_ensure_dataset_npz_error_without_response_attribute(metadata, monkeypat
     with pytest.raises(RuntimeError):
         ensure_dataset_npz(metadata, retries=2, delay=2.0)
 
-    assert sleep_calls[0] == 2.0
+    assert sleep_calls[0] == pytest.approx(2.0)
 
 
 # TEST: _stream_download

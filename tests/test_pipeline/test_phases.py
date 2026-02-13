@@ -170,8 +170,8 @@ def test_run_training_phase_returns_expected_tuple(
     best_path, losses, _metrics, _model, f1, acc = result
     assert best_path == Path("/tmp/best.pth")
     assert losses == [0.5, 0.4]
-    assert f1 == 0.85
-    assert acc == 0.90
+    assert f1 == pytest.approx(0.85)
+    assert acc == pytest.approx(0.90)
 
 
 @pytest.mark.unit

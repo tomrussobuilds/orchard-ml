@@ -30,7 +30,7 @@ def test_export_config_defaults():
     assert config.quantization_backend == "qnnpack"
     assert config.validate_export is True
     assert config.validation_samples == 10
-    assert config.max_deviation == 1e-5
+    assert config.max_deviation == pytest.approx(1e-5)
 
 
 @pytest.mark.unit
@@ -181,7 +181,7 @@ def test_validation_samples_positive():
 def test_max_deviation_accepts_float():
     """Test max_deviation accepts float values."""
     config = ExportConfig(max_deviation=1e-3)
-    assert config.max_deviation == 1e-3
+    assert config.max_deviation == pytest.approx(1e-3)
 
     config2 = ExportConfig(max_deviation=0.001)
     assert config2.max_deviation == pytest.approx(0.001)
@@ -319,7 +319,7 @@ def test_quantized_export_config():
 
     assert config.quantize is True
     assert config.quantization_backend == "fbgemm"
-    assert config.max_deviation == 1e-3
+    assert config.max_deviation == pytest.approx(1e-3)
 
 
 if __name__ == "__main__":

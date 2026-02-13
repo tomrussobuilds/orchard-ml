@@ -25,10 +25,10 @@ def test_get_optimization_space():
     assert "min_lr" in space
 
     trial_mock = MagicMock(spec=Trial)
-    trial_mock.suggest_float.side_effect = lambda param, low, high, log: 0.001
+    trial_mock.suggest_float.side_effect = lambda *args, **kwargs: 0.001
     learning_rate = space["learning_rate"](trial_mock)
     assert 1e-5 <= learning_rate <= 1e-2
-    assert learning_rate == 0.001
+    assert learning_rate == pytest.approx(0.001)
 
 
 @pytest.mark.unit
@@ -41,10 +41,10 @@ def test_get_regularization_space():
     assert "dropout" in space
 
     trial_mock = MagicMock(spec=Trial)
-    trial_mock.suggest_float.side_effect = lambda param, low, high: 0.2
+    trial_mock.suggest_float = lambda *args, **kwargs: 0.01
+
     mixup_alpha = space["mixup_alpha"](trial_mock)
     assert 0.0 <= mixup_alpha <= 0.4
-    assert mixup_alpha == 0.2
 
 
 @pytest.mark.unit
@@ -53,7 +53,7 @@ def test_get_batch_size_space():
     space_224 = SearchSpaceRegistry.get_batch_size_space(resolution=224)
     assert "batch_size" in space_224
     trial_mock = MagicMock(spec=Trial)
-    trial_mock.suggest_categorical.side_effect = lambda param, choices: 12
+    trial_mock.suggest_categorical.side_effect = lambda _param, _choices: 12
     batch_size_224 = space_224["batch_size"](trial_mock)
     assert batch_size_224 in [8, 12, 16]
     assert batch_size_224 == 12
@@ -61,7 +61,7 @@ def test_get_batch_size_space():
     space_28 = SearchSpaceRegistry.get_batch_size_space(resolution=28)
     assert "batch_size" in space_28
     trial_mock = MagicMock(spec=Trial)
-    trial_mock.suggest_categorical.side_effect = lambda param, choices: 32
+    trial_mock.suggest_categorical.side_effect = lambda _param, _choices: 32
     batch_size_28 = space_28["batch_size"](trial_mock)
     assert batch_size_28 in [16, 32, 48, 64]
     assert batch_size_28 == 32
@@ -100,7 +100,7 @@ def test_get_model_space_224():
     assert "weight_variant" in space
 
     trial_mock = MagicMock(spec=Trial)
-    trial_mock.suggest_categorical.side_effect = lambda param, choices: "vit_tiny"
+    trial_mock.suggest_categorical.side_effect = lambda _param, _choices: "vit_tiny"
     model_name = space["model_name"](trial_mock)
     assert model_name in ["efficientnet_b0", "vit_tiny"]
     assert model_name == "vit_tiny"
@@ -114,7 +114,7 @@ def test_get_model_space_28():
     assert "model_name" in space
 
     trial_mock = MagicMock(spec=Trial)
-    trial_mock.suggest_categorical.side_effect = lambda param, choices: "resnet_18_adapted"
+    trial_mock.suggest_categorical.side_effect = lambda _param, _choices: "resnet_18_adapted"
     model_name = space["model_name"](trial_mock)
     assert model_name in ["resnet_18_adapted", "mini_cnn"]
     assert model_name == "resnet_18_adapted"

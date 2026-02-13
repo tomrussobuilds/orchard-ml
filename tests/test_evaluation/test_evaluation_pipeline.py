@@ -22,9 +22,9 @@ from orchard.evaluation.evaluation_pipeline import run_final_evaluation
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_run_final_evaluation_returns_tuple(
     mock_report,
-    mock_show_pred,
-    mock_curves,
-    mock_confusion,
+    _mock_show_pred,
+    _mock_curves,
+    _mock_confusion,
     mock_evaluate,
 ):
     """Test run_final_evaluation returns (macro_f1, test_acc) tuple."""
@@ -69,8 +69,8 @@ def test_run_final_evaluation_returns_tuple(
     assert isinstance(result, tuple)
     assert len(result) == 2
     macro_f1, test_acc = result
-    assert macro_f1 == 0.94
-    assert test_acc == 0.95
+    assert macro_f1 == pytest.approx(0.94)
+    assert test_acc == pytest.approx(0.95)
 
 
 @pytest.mark.unit
@@ -81,9 +81,9 @@ def test_run_final_evaluation_returns_tuple(
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_run_final_evaluation_calls_evaluate_model(
     mock_report,
-    mock_show_pred,
-    mock_curves,
-    mock_confusion,
+    _mock_show_pred,
+    _mock_curves,
+    _mock_confusion,
     mock_evaluate,
 ):
     """Test run_final_evaluation calls evaluate_model with correct params."""
@@ -179,9 +179,9 @@ def test_run_final_evaluation_calls_visualizations(
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_run_final_evaluation_creates_report(
     mock_report,
-    mock_show_pred,
-    mock_curves,
-    mock_confusion,
+    _mock_show_pred,
+    _mock_curves,
+    _mock_confusion,
     mock_evaluate,
 ):
     """Test run_final_evaluation creates and saves report."""

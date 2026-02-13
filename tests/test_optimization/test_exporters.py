@@ -378,7 +378,7 @@ def test_export_top_trials_all_type_branches(paths, tmp_path):
 
     assert df.loc[0, "Rank"] == 1
     assert df.loc[0, "Trial"] == 1
-    assert df.loc[0, "AUC"] == 0.9567
+    assert df.loc[0, "AUC"] == pytest.approx(0.9567)
     assert df.loc[0, "learning_rate"] == pytest.approx(0.001234)
     assert df.loc[0, "batch_size"] == 32
     assert df.loc[0, "Duration (s)"] == 330

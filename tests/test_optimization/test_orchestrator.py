@@ -187,14 +187,14 @@ class TestExporters:
         """Test building trial data dict."""
         data = build_trial_data(completed_trial)
         assert data["number"] == 1
-        assert data["value"] == 0.95
+        assert data["value"] == pytest.approx(0.95)
         assert data["state"] == "COMPLETE"
 
     def test_build_best_config_dict(self, mock_cfg):
         """Test building config dict from params."""
         params = {"learning_rate": 0.001}
         config_dict = build_best_config_dict(params, mock_cfg)
-        assert config_dict["training"]["learning_rate"] == 0.001
+        assert config_dict["training"]["learning_rate"] == pytest.approx(0.001)
 
 
 # INTEGRATION TESTS: OptunaOrchestrator

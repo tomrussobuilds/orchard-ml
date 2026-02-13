@@ -23,9 +23,9 @@ def test_training_config_defaults():
     assert config.batch_size == 16
     assert config.epochs == 60
     assert config.learning_rate == pytest.approx(0.008)
-    assert config.min_lr == 1e-6
+    assert config.min_lr == pytest.approx(1e-6)
     assert config.momentum == pytest.approx(0.9)
-    assert config.weight_decay == 5e-4
+    assert config.weight_decay == pytest.approx(5e-4)
 
 
 # UNIT TESTS: LEARNING RATE VALIDATION
@@ -35,7 +35,7 @@ def test_lr_within_bounds():
     config = TrainingConfig(learning_rate=0.001, min_lr=1e-7)
 
     assert config.learning_rate == pytest.approx(0.001)
-    assert config.min_lr == 1e-7
+    assert config.min_lr == pytest.approx(1e-7)
 
 
 @pytest.mark.unit
@@ -132,7 +132,7 @@ def test_mixup_alpha_non_negative():
 def test_weight_decay_bounds():
     """Test weight_decay within valid range."""
     config = TrainingConfig(weight_decay=1e-4)
-    assert config.weight_decay == 1e-4
+    assert config.weight_decay == pytest.approx(1e-4)
 
     # Maximum
     config = TrainingConfig(weight_decay=0.2)

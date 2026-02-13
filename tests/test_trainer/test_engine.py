@@ -131,7 +131,7 @@ def test_train_one_epoch_scaler_grad_clip_coverage(
 def test_train_one_epoch_scaler_grad_clip_minimal():
     """Test scaler + grad_clip branch with minimal setup."""
     model = nn.Linear(10, 2)
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0)
     criterion = nn.CrossEntropyLoss()
     device = torch.device("cpu")
 
@@ -335,7 +335,7 @@ def test_mixup_data_disabled():
 
     assert torch.equal(mixed_x, x)
     assert torch.equal(y_a, y)
-    assert lam == 1.0
+    assert lam == pytest.approx(1.0)
 
 
 @pytest.mark.unit
@@ -374,7 +374,7 @@ def test_train_one_epoch_empty_loader(simple_model, criterion, optimizer):
         use_tqdm=False,
     )
 
-    assert loss == 0.0
+    assert loss == pytest.approx(0.0)
 
 
 @pytest.mark.unit

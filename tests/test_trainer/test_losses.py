@@ -17,8 +17,8 @@ def test_focal_loss_init_default():
     """Test FocalLoss initialization with default parameters."""
     loss_fn = FocalLoss()
 
-    assert loss_fn.gamma == 2.0
-    assert loss_fn.alpha == 1.0
+    assert loss_fn.gamma == pytest.approx(2.0)
+    assert loss_fn.alpha == pytest.approx(1.0)
     assert loss_fn.weight is None
 
 
@@ -27,9 +27,9 @@ def test_focal_loss_init_custom():
     """Test FocalLoss initialization with custom parameters."""
     weights = torch.tensor([1.0, 2.0, 3.0])
     loss_fn = FocalLoss(gamma=3.0, alpha=0.5, weight=weights)
+    assert loss_fn.gamma == pytest.approx(3.0)
 
-    assert loss_fn.gamma == 3.0
-    assert loss_fn.alpha == 0.5
+    assert loss_fn.alpha == pytest.approx(0.5)
     assert torch.equal(loss_fn.weight, weights)
 
 

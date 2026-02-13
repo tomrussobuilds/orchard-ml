@@ -44,7 +44,7 @@ def mock_trial():
 def executor(mock_cfg):
     """TrialTrainingExecutor instance with mocked components."""
     model = nn.Linear(10, 2)
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
     metric_extractor = MetricExtractor(metric_name="auc")
 
@@ -130,7 +130,9 @@ def test_validate_epoch_returns_fallback_on_exception():
         model=nn.Linear(10, 2),
         train_loader=MagicMock(),
         val_loader=MagicMock(),
-        optimizer=torch.optim.SGD(nn.Linear(10, 2).parameters(), lr=0.01),
+        optimizer=torch.optim.SGD(
+            nn.Linear(10, 2).parameters(), lr=0.01, momentum=0.0, weight_decay=0.0
+        ),
         scheduler=MagicMock(),
         criterion=nn.CrossEntropyLoss(),
         cfg=MagicMock(
@@ -180,7 +182,9 @@ def test_validate_epoch_returns_fallback_on_none():
         model=nn.Linear(10, 2),
         train_loader=MagicMock(),
         val_loader=MagicMock(),
-        optimizer=torch.optim.SGD(nn.Linear(10, 2).parameters(), lr=0.01),
+        optimizer=torch.optim.SGD(
+            nn.Linear(10, 2).parameters(), lr=0.01, momentum=0.0, weight_decay=0.0
+        ),
         scheduler=MagicMock(),
         criterion=nn.CrossEntropyLoss(),
         cfg=MagicMock(
@@ -214,7 +218,9 @@ def test_execute_handles_none_validation_result():
         model=nn.Linear(10, 2),
         train_loader=MagicMock(),
         val_loader=MagicMock(),
-        optimizer=torch.optim.SGD(nn.Linear(10, 2).parameters(), lr=0.01),
+        optimizer=torch.optim.SGD(
+            nn.Linear(10, 2).parameters(), lr=0.01, momentum=0.0, weight_decay=0.0
+        ),
         scheduler=MagicMock(),
         criterion=nn.CrossEntropyLoss(),
         cfg=mock_cfg,
@@ -228,7 +234,7 @@ def test_execute_handles_none_validation_result():
     with patch.object(executor, "_train_epoch", return_value=0.5):
         with patch.object(executor, "_validate_epoch", return_value=None):
             result = executor.execute(mock_trial)
-            assert result == 0.0
+            assert result == pytest.approx(0.0)
 
 
 @pytest.mark.unit
@@ -246,7 +252,12 @@ def test_execute_handles_invalid_validation_type():
         model=nn.Linear(10, 2),
         train_loader=MagicMock(),
         val_loader=MagicMock(),
-        optimizer=torch.optim.SGD(nn.Linear(10, 2).parameters(), lr=0.01),
+        optimizer=torch.optim.SGD(
+            nn.Linear(10, 2).parameters(),
+            lr=0.01,
+            momentum=0.0,
+            weight_decay=0.0,
+        ),
         scheduler=MagicMock(),
         criterion=nn.CrossEntropyLoss(),
         cfg=mock_cfg,
@@ -276,7 +287,7 @@ def test_execute_full_loop(mock_val, mock_train, executor, mock_trial):
         executor.epochs = 2
         best_metric = executor.execute(mock_trial)
 
-    assert best_metric == 0.85
+    assert best_metric == pytest.approx(0.85)
     assert mock_trial.report.call_count == 2
     mock_trial.report.assert_any_call(0.85, 1)
 
@@ -318,7 +329,7 @@ def test_execute_logs_completion(mock_val, mock_train, executor, mock_trial):
         best_metric = executor.execute(mock_trial)
 
     mock_log.assert_called_once_with(mock_trial, 0.92, 0.35)
-    assert best_metric == 0.92
+    assert best_metric == pytest.approx(0.92)
 
 
 if __name__ == "__main__":

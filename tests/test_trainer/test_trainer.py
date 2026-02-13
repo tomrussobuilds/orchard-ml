@@ -182,7 +182,7 @@ def test_handle_checkpointing_improves(trainer):
 
     should_stop = trainer._handle_checkpointing(val_metrics)
 
-    assert trainer.best_auc == 0.85
+    assert trainer.best_auc == pytest.approx(0.85)
     assert trainer.epochs_no_improve == 0
     assert should_stop is False
     assert trainer.best_path.exists()
@@ -197,7 +197,7 @@ def test_handle_checkpointing_no_improve(trainer):
 
     should_stop = trainer._handle_checkpointing(val_metrics)
 
-    assert trainer.best_auc == 0.9
+    assert trainer.best_auc == pytest.approx(0.9)
     assert trainer.epochs_no_improve == 1
     assert should_stop is False
 
@@ -259,7 +259,8 @@ def test_load_best_weights_success(trainer):
     trainer.load_best_weights()
 
     first_param = next(trainer.model.parameters())
-    assert not torch.all(first_param == 999.0)
+    target_tensor = torch.full_like(first_param, 999.0)
+    assert not torch.all(torch.isclose(first_param.detach(), target_tensor))
 
 
 @pytest.mark.unit

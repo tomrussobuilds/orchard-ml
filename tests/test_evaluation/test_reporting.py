@@ -63,7 +63,7 @@ def test_training_report_instantiation(sample_report_data):
     """Test if TrainingReport correctly validates and stores input data."""
     report = TrainingReport(**sample_report_data)
     assert report.architecture == "mini_cnn"
-    assert report.best_val_accuracy == 0.95
+    assert report.best_val_accuracy == pytest.approx(0.95)
     assert isinstance(report.timestamp, str)
 
 
@@ -123,9 +123,9 @@ def test_create_structured_report(mock_config):
     )
 
     assert isinstance(report, TrainingReport)
-    assert report.best_val_accuracy == 0.9
+    assert report.best_val_accuracy == pytest.approx(0.9)
     assert report.epochs_trained == 3
-    assert report.test_accuracy == 0.88
+    assert report.test_accuracy == pytest.approx(0.88)
     assert "Horizontal flip" in report.augmentations
 
 

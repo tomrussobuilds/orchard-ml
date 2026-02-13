@@ -18,7 +18,7 @@ from orchard.core import LOGGER_NAME, RootOrchestrator, TimeTracker
 def test_timetracker_elapsed_seconds_before_start():
     """Test elapsed_seconds returns 0 before start() is called."""
     tracker = TimeTracker()
-    assert tracker.elapsed_seconds == 0.0
+    assert tracker.elapsed_seconds == pytest.approx(0.0)
 
 
 @pytest.mark.unit
