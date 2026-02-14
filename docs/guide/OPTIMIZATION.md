@@ -39,9 +39,9 @@ python forge.py --config recipes/optuna_vit_tiny.yaml \
 - **Batch Size**: Resolution-aware categorical choices
   - 28×28: [16, 32, 48, 64]
   - 224×224: [8, 12, 16] (OOM-safe for 8GB VRAM)
-- **Architecture** (resolution-specific):
+- **Architecture** (resolution-specific, requires `enable_model_search: true`):
   - 28×28: [`resnet_18`, `mini_cnn`]
-  - 224×224: [`efficientnet_b0`, `vit_tiny`]
+  - 224×224: [`resnet_18`, `efficientnet_b0`, `convnext_tiny`, `vit_tiny`]
 - **Weight Variants** (ViT only, 224×224):
   - `vit_tiny_patch16_224.augreg_in21k_ft_in1k`
   - `vit_tiny_patch16_224.augreg_in21k`
@@ -49,6 +49,18 @@ python forge.py --config recipes/optuna_vit_tiny.yaml \
 
 **Quick Space** (4 parameters):
 - `learning_rate`, `weight_decay`, `batch_size`, `dropout`
+
+### Model Search
+
+Enable `enable_model_search` to let Optuna automatically explore all registered architectures for the target resolution alongside hyperparameters:
+
+```yaml
+optuna:
+  n_trials: 20
+  enable_model_search: true   # Explore architectures automatically
+```
+
+When enabled, the optimizer treats the model architecture as an additional categorical hyperparameter, selecting from all models compatible with the configured resolution. This is the recommended approach for finding the best architecture–hyperparameter combination without manual experimentation.
 
 ### Optimization Workflow
 

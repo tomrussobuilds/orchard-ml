@@ -199,7 +199,7 @@ GitHub Actions automatically run on every push:
 
 | Job | Description | Status |
 |-----|-------------|--------|
-| **Code Quality** | Black, isort, Flake8 | Continue-on-error (advisory) |
+| **Code Quality** | Black, isort, Flake8, mypy | Continue-on-error (advisory) |
 | **Pytest Suite** | 1,000+ tests, 5 Python versions | ✅ Required to pass |
 | **Smoke Test** | 1-epoch E2E validation | ✅ Required to pass |
 | **Documentation** | README verification | ✅ Required to pass |

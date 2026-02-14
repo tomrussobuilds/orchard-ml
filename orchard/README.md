@@ -51,9 +51,10 @@ orchard/
 │   └── synthetic.py            # Synthetic data generation
 ├── models/                     # Architecture factory
 │   ├── factory.py              # Model registry & builder
-│   ├── resnet_18.py    # Adapted ResNet for 28×28
+│   ├── resnet_18.py            # ResNet-18 multi-resolution (28×28/224×224)
 │   ├── mini_cnn.py             # Compact CNN (~94K params)
 │   ├── efficientnet_b0.py      # EfficientNet for 224×224
+│   ├── convnext_tiny.py        # ConvNeXt-Tiny for 224×224
 │   └── vit_tiny.py             # Vision Transformer for 224×224
 ├── trainer/                    # Training loop
 │   ├── engine.py               # Core train/validation logic
@@ -109,6 +110,8 @@ trainer = ModelTrainer(model=model, cfg=cfg, ...)
 - **models/**: Architecture definitions only
 - **trainer/**: Training loop only
 - **evaluation/**: Metrics & visualization only
+- **pipeline/**: Phase orchestration (training, optimization, export)
+- **export/**: ONNX/TorchScript export and validation
 - **optimization/**: Optuna wrapper only
 
 ### 4. Protocol-Based Design
