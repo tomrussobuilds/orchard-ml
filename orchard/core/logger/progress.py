@@ -22,6 +22,13 @@ if TYPE_CHECKING:  # pragma: no cover
 logger = logging.getLogger(LOGGER_NAME)
 
 
+def _format_param_value(value: Any) -> str:
+    """Format a hyperparameter value for log display."""
+    if isinstance(value, float):
+        return f"{value:.2e}" if value < 0.001 else f"{value:.4f}"
+    return str(value)
+
+
 def _count_trial_states(study: "optuna.Study") -> tuple[list, list, list]:
     """
     Count trials by state.
@@ -100,19 +107,14 @@ def log_trial_start(
         "Architecture": ["model_name", "weight_variant"],
     }
 
-    def _format_value(value: Any) -> str:
-        """Return nicely formatted string for logging."""
-        if isinstance(value, float):
-            return f"{value:.2e}" if value < 0.001 else f"{value:.4f}"
-        return str(value)
-
     for category_name, keys in categories.items():
         category_params = {k: params[k] for k in keys if k in params}
         if category_params:
             log.info(f"{LogStyle.INDENT}[{category_name}]")
             for key, value in category_params.items():
                 log.info(
-                    f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {_format_value(value)}"
+                    f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} "
+                    f"{key:<20} : {_format_param_value(value)}"
                 )
 
     log.info(LogStyle.LIGHT)
@@ -191,17 +193,8 @@ def log_trial_params_compact(
         if category_params:
             log.info(f"{LogStyle.INDENT}[{category_name}]")
             for key, value in category_params.items():
-                if isinstance(value, float):
-                    if value < 0.001:  # pragma: no cover
-                        log.info(
-                            f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value:.2e}"
-                        )
-                    else:
-                        log.info(
-                            f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value:.4f}"
-                        )
-                else:
-                    log.info(f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {value}")
+                formatted = _format_param_value(value)
+                log.info(f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} {key:<20} : {formatted}")
 
 
 def log_best_config_export(config_path: Any, logger_instance: logging.Logger | None = None) -> None:

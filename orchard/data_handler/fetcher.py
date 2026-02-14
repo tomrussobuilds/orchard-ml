@@ -36,6 +36,15 @@ class DatasetData:
 logger = logging.getLogger(LOGGER_NAME)
 
 
+def _retry_delay(exc: Exception, base_delay: float, attempt: int) -> float:
+    """Compute retry delay with quadratic backoff for 429 responses."""
+    if hasattr(exc, "response") and exc.response is not None and exc.response.status_code == 429:
+        delay = base_delay * (attempt**2)
+        logger.warning(f"Rate limited (429). Waiting {delay}s before retrying...")
+        return delay
+    return base_delay
+
+
 # FETCHING LOGIC
 def ensure_dataset_npz(
     metadata: DatasetMetadata,
@@ -98,17 +107,11 @@ def ensure_dataset_npz(
             if tmp_path.exists():
                 tmp_path.unlink()
 
-            # Backoff calculation
-            if hasattr(e, "response") and e.response is not None and e.response.status_code == 429:
-                actual_delay = delay * (attempt**2)
-                logger.warning(f"Rate limited (429). Waiting {actual_delay}s before retrying...")
-            else:
-                actual_delay = delay
-
             if attempt == retries:
                 logger.error(f"Download failed after {retries} attempts")
                 raise RuntimeError(f"Could not download {metadata.name}") from e
 
+            actual_delay = _retry_delay(e, delay, attempt)
             logger.warning(
                 f"Attempt {attempt}/{retries} failed: {e}. Retrying in {actual_delay}s..."
             )
