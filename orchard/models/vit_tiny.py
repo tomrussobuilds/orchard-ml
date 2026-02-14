@@ -26,9 +26,6 @@ import torch.nn as nn
 
 from orchard.core import LOGGER_NAME, Config
 
-# Suppress HF Hub unauthenticated request warnings (rate limit advisory, not an error)
-logging.getLogger("huggingface_hub.utils._http").setLevel(logging.ERROR)
-
 # LOGGER CONFIGURATION
 logger = logging.getLogger(LOGGER_NAME)
 

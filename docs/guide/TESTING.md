@@ -159,7 +159,7 @@ pip install -e ".[dev]"
 
 ### Test Suite
 
-VisionForge includes a comprehensive test suite with **800+ tests** targeting **→100% code coverage**:
+VisionForge includes a comprehensive test suite with **1,000+ tests** targeting **→100% code coverage**:
 
 ```bash
 # Run full test suite
@@ -178,7 +178,7 @@ pytest tests/ -n auto
 
 ### Test Categories
 
-- **Unit Tests** (650+ tests): Config validation, metadata injection, type safety
+- **Unit Tests** (850+ tests): Config validation, metadata injection, type safety
 - **Integration Tests** (150+ tests): End-to-end pipeline validation, YAML hydration
 - **Smoke Tests**: 1-epoch sanity checks (~30 seconds)
 - **Health Checks**: Dataset integrity
@@ -187,26 +187,29 @@ pytest tests/ -n auto
 
 GitHub Actions automatically run on every push:
 
-- ✅ **Code Quality**: Black, isort, Flake8 formatting and linting checks
-- ✅ **Multi-Python Testing**: Unit tests across Python 3.10, 3.11, 3.12 (800+ tests)
+- ✅ **Code Quality**: Black, isort, Flake8, mypy formatting, linting, and type checks
+- ✅ **Multi-Python Testing**: Unit tests across Python 3.10–3.14 (1,000+ tests)
 - ✅ **Smoke Test**: 1-epoch end-to-end validation (~30s, CPU-only)
 - ✅ **Documentation**: README.md presence verification
-- ✅ **Security Scanning**: Bandit (code analysis) and Safety (dependency vulnerabilities)
+- ✅ **Security Scanning**: Bandit (code analysis) and pip-audit (dependency vulnerabilities)
 - ✅ **Code Coverage**: Automated reporting to Codecov (99%+ coverage)
+- ✅ **SonarCloud**: Continuous code quality inspection (reliability, security, maintainability)
 
 **Pipeline Status:**
 
 | Job | Description | Status |
 |-----|-------------|--------|
 | **Code Quality** | Black, isort, Flake8 | Continue-on-error (advisory) |
-| **Pytest Suite** | 800+ tests, 3 Python versions | ✅ Required to pass |
+| **Pytest Suite** | 1,000+ tests, 5 Python versions | ✅ Required to pass |
 | **Smoke Test** | 1-epoch E2E validation | ✅ Required to pass |
 | **Documentation** | README verification | ✅ Required to pass |
-| **Security Scan** | Bandit + Safety | Continue-on-error (advisory) |
+| **Security Scan** | Bandit + pip-audit | Continue-on-error (advisory) |
 | **Build Status** | Aggregate summary | ✅ Fails if pytest or smoke test fails |
 
 View the latest build: [![CI/CD](https://github.com/tomrussobuilds/visionforge/actions/workflows/ci.yml/badge.svg)](https://github.com/tomrussobuilds/visionforge/actions/workflows/ci.yml)
 
 > **Note**: Health checks are not run in CI to avoid excessive dataset downloads. Run locally with `python -m tests.health_check` for dataset integrity validation.
+
+> **Note**: Python 3.14 (dev) is tested for core functionality only. ONNX export is not supported on 3.14-dev as `onnxruntime` does not yet provide compatible wheels.
 
 ---

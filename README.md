@@ -89,7 +89,7 @@
 | **28×28 / 224×224** | ResNet-18 | ~11M | Multi-resolution baseline, transfer learning |
 | **28×28** | MiniCNN | ~94K | Fast prototyping, ablation studies |
 | **224×224** | EfficientNet-B0 | ~4.0M | Efficient compound scaling |
-| **224×224** | ConvNeXt-Tiny | ~28.6M | Modern ConvNet design |
+| **224×224** | ConvNeXt-Tiny | ~27.8M | Modern ConvNet design |
 | **224×224** | ViT-Tiny | ~5.5M | Patch-based attention, multiple weight variants |
 
 ---
@@ -111,7 +111,7 @@
   - EfficientNet-B0: ~30 minutes per trial (15 epochs)
   - ViT-Tiny: ~25-35 minutes per trial (30 epochs)
 - **VRAM**: 8GB recommended for 224×224 resolution
-- **Architectures**: All (ResNet-18, MiniCNN, EfficientNet-B0, ViT-Tiny)
+- **Architectures**: All (ResNet-18, MiniCNN, EfficientNet-B0, ConvNeXt-Tiny, ViT-Tiny)
 
 > [!WARNING]
 > **224×224 training on CPU is not recommended** - it would take 10+ hours per trial. High-resolution training requires GPU acceleration. Only 28×28 resolution has been tested and validated for CPU training.
@@ -265,7 +265,7 @@ Comprehensive guides for advanced usage and system internals:
 
 ### 🧠 Model Architecture
 **[Architecture Guide](docs/guide/ARCHITECTURE.md)**
-- Supported models (ResNet-18 Adapted, MiniCNN, EfficientNet-B0, ViT-Tiny)
+- Supported models (ResNet-18, MiniCNN, EfficientNet-B0, ConvNeXt-Tiny, ViT-Tiny)
 - Weight transfer and grayscale adaptation
 - Training regularization (MixUp)
 
@@ -302,7 +302,7 @@ Comprehensive guides for advanced usage and system internals:
 
 ### 🧪 Testing & Quality
 **[Testing Guide](docs/guide/TESTING.md)**
-- Test suite organization (nearly 1,000 tests)
+- Test suite organization (1,000+ tests)
 - Quality check automation (`check_quality.sh`)
 - Smoke tests and health checks
 - CI/CD pipeline details
@@ -334,7 +334,7 @@ Comprehensive guides for advanced usage and system internals:
 
 ## 🗺 Roadmap
 
-- **Additional Architectures**: ConvNeXt, EfficientNet-V2, DeiT
+- **Additional Architectures**: EfficientNet-V2, DeiT
 - **Expanded Dataset Domains**: Climate, remote sensing, microscopy
 - **Multi-modal Support**: Detection, segmentation hooks
 - **Distributed Training**: DDP, FSDP support for multi-GPU

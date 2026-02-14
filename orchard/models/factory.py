@@ -21,6 +21,9 @@ Example:
 """
 
 import logging
+import os
+from contextlib import contextmanager
+from typing import Iterator
 
 import torch
 import torch.nn as nn
@@ -35,6 +38,29 @@ from .vit_tiny import build_vit_tiny
 
 # LOGGER CONFIGURATION
 logger = logging.getLogger(LOGGER_NAME)
+
+
+@contextmanager
+def _suppress_download_noise() -> Iterator[None]:
+    """Suppress tqdm progress bars and download logging from torch.hub and huggingface_hub."""
+    prev = os.environ.get("TQDM_DISABLE")
+    os.environ["TQDM_DISABLE"] = "1"
+    noisy_loggers = [
+        logging.getLogger("torch.hub"),
+        logging.getLogger("huggingface_hub.utils._http"),
+    ]
+    old_levels = [lg.level for lg in noisy_loggers]
+    for lg in noisy_loggers:
+        lg.setLevel(logging.ERROR)
+    try:
+        yield
+    finally:
+        if prev is None:
+            os.environ.pop("TQDM_DISABLE", None)
+        else:
+            os.environ["TQDM_DISABLE"] = prev
+        for lg, level in zip(noisy_loggers, old_levels):
+            lg.setLevel(level)
 
 
 # MODEL FACTORY LOGIC
@@ -98,7 +124,14 @@ def get_model(device: torch.device, cfg: Config, verbose: bool = True) -> nn.Mod
     if not verbose:
         logger.disabled = True
     try:
-        model = builder(device=device, cfg=cfg, in_channels=in_channels, num_classes=num_classes)
+        with _suppress_download_noise():
+            logger.debug(
+                f"Loading weights for {cfg.architecture.name} "
+                f"(pretrained={cfg.architecture.pretrained})"
+            )
+            model = builder(
+                device=device, cfg=cfg, in_channels=in_channels, num_classes=num_classes
+            )
     finally:
         logger.disabled = False
 
