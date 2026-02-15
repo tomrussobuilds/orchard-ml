@@ -109,7 +109,7 @@
   - ResNet-18: ~5-10 minutes (60 epochs)
 - **224×224 Resolution**: 
   - EfficientNet-B0: ~30 minutes per trial (15 epochs)
-  - ViT-Tiny: ~25-35 minutes per trial (30 epochs)
+  - ViT-Tiny: ~25-35 minutes per trial (15 epochs)
 - **VRAM**: 8GB recommended for 224×224 resolution
 - **Architectures**: All (ResNet-18, MiniCNN, EfficientNet-B0, ConvNeXt-Tiny, ViT-Tiny)
 
@@ -125,8 +125,8 @@
 | **Quick Training** | MiniCNN | 28×28 | CPU (16 cores) | ~30 min | 60 epochs, CPU-validated |
 | **Transfer Learning** | ResNet-18 | 28×28 | GPU | ~5 min | 60 epochs |
 | **Transfer Learning** | ResNet-18 | 28×28 | CPU (16 cores) | ~2.5h | 60 epochs, CPU-validated |
-| **High-Res Training** | EfficientNet-B0 | 224×224 | GPU | ~30 min | 15 epochs, **GPU required** |
-| **High-Res Training** | ViT-Tiny | 224×224 | GPU | ~25-35 min | 30 epochs, **GPU required** |
+| **High-Res Training** | EfficientNet-B0 | 224×224 | GPU | ~30 min/trial | 15 epochs per trial, **GPU required** |
+| **High-Res Training** | ViT-Tiny | 224×224 | GPU | ~25-35 min/trial | 15 epochs per trial, **GPU required** |
 | **Optimization Study** | EfficientNet-B0 | 224×224 | GPU | ~2h | 4 trials (early stop at AUC≥0.9999) |
 | **Optimization Study** | Various | 224×224 | GPU | ~1.5-5h | 20 trials, highly variable |
 

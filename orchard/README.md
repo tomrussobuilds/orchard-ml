@@ -17,7 +17,8 @@ orchard/
 │   │   ├── augmentation_config.py  # MixUp, TTA, transforms
 │   │   ├── evaluation_config.py    # Metrics, visualization
 │   │   ├── architecture_config.py  # Architecture selection
-│   │   └── optuna_config.py    # Hyperparameter optimization
+│   │   ├── optuna_config.py    # Hyperparameter optimization
+│   │   └── tracking_config.py  # MLflow tracking settings
 │   ├── environment/            # Hardware abstraction
 │   │   ├── hardware.py         # Device detection, CPU/GPU/MPS
 │   │   ├── reproducibility.py  # Seeding, determinism
@@ -73,6 +74,9 @@ orchard/
 ├── export/                     # Model export for production
 │   ├── onnx_exporter.py        # ONNX export with quantization
 │   └── validation.py           # PyTorch vs ONNX validation
+├── tracking/                   # Experiment tracking
+│   ├── __init__.py
+│   └── tracker.py              # MLflow integration (optional, local SQLite)
 └── optimization/               # Optuna integration
     ├── objective/              # Trial execution logic
     │   ├── objective.py        # OptunaObjective
@@ -112,6 +116,7 @@ trainer = ModelTrainer(model=model, cfg=cfg, ...)
 - **evaluation/**: Metrics & visualization only
 - **pipeline/**: Phase orchestration (training, optimization, export)
 - **export/**: ONNX/TorchScript export and validation
+- **tracking/**: MLflow experiment tracking (optional)
 - **optimization/**: Optuna wrapper only
 
 ### 4. Protocol-Based Design

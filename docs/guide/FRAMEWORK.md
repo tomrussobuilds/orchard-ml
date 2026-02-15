@@ -67,7 +67,7 @@ Where `HASH6` is a BLAKE2b cryptographic digest (3-byte, deterministic) computed
 
 ## System Architecture
 
-The framework implements **Separation of Concerns (SoC)** with five core layers:
+The framework implements **Separation of Concerns (SoC)** with six core layers:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -109,21 +109,20 @@ The framework implements **Separation of Concerns (SoC)** with five core layers:
     │                             │  Pipeline  │             │
     │                             └────────────┘             │
     │                                                        │
-    └────────────────────────────┬───────────────────────────┘
-                                 │
-                    ┌────────────┴────────────┐
-                    │                         │
-                    │ alternative paths       │
-                    │                         │
-         ┌──────────▼──────────┐    ┌─────────▼──────────┐
-         │ Optimization Engine │    │   Export Engine    │
-         │      (Optuna)       │    │  (ONNX/TorchScript)│
-         │                     │    │                    │
-         │ • Study management  │    │ • Checkpoint load  │
-         │ • Trial execution   │    │ • ONNX conversion  │
-         │ • Pruning logic     │    │ • Validation       │
-         │ • Visualization     │    │ • Benchmarking     │
-         └─────────────────────┘    └────────────────────┘
+    └──────────────────────────┬─────────────────────────────┘
+                               │
+            ┌──────────────────┼──────────────────┐
+            │                  │                  │
+            ▼ optional         ▼ alternative      ▼ alternative
+    ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+    │ Tracking Engine  │  │  Optimization    │  │  Export Engine   │
+    │    (MLflow)      │  │  Engine (Optuna) │  │ (ONNX/TScript)   │
+    │                  │  │                  │  │                  │
+    │ • Metric logging │  │ • Study mgmt     │  │ • Checkpoint load│
+    │ • Param capture  │  │ • Trial exec     │  │ • ONNX convert   │
+    │ • Run comparison │  │ • Pruning        │  │ • Validation     │
+    │ • Local SQLite   │  │ • Visualization  │  │ • Benchmarking   │
+    └──────────────────┘  └──────────────────┘  └──────────────────┘
 ```
 
 **Key Design Principles:**
@@ -134,6 +133,7 @@ The framework implements **Separation of Concerns (SoC)** with five core layers:
 4. Execution pipeline is linear: Data → Model → Training → Eval
 5. Optimization wraps the entire pipeline for each trial
 6. Export consumes saved checkpoints for production deployment
+7. Tracking is opt-in and side-effect-free - disabled by default, logs to local SQLite via MLflow
 
 ---
 
@@ -150,7 +150,7 @@ The framework implements **Separation of Concerns (SoC)** with five core layers:
 pydeps orchard \
     --cluster \
     --max-bacon=0 \
-    --max-module-depth=4 \
+    --max-module-depth=5 \
     --only orchard \
     --noshow \
     -T svg \

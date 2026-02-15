@@ -150,7 +150,7 @@ Modern ConvNet architecture incorporating design principles from Vision Transfor
 | Feature | Specification | Benefit |
 |---------|--------------|---------|
 | **Architecture** | Inverted bottlenecks + depthwise convolutions | Improved efficiency and accuracy |
-| **Parameters** | ~28.6M | Competitive with transformers |
+| **Parameters** | ~27.8M | Competitive with transformers |
 | **Pretrained Weights** | ImageNet-1k | Strong initialization for transfer learning |
 | **Stem** | 4x4 conv, stride 4 (patchification) | Efficient spatial downsampling |
 

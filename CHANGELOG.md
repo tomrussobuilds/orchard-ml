@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- replace --prepend with custom script to prevent duplicate Unreleased sections
+
 ### Miscellaneous
 
 - add automated changelog with git-cliff and pre-commit hook
