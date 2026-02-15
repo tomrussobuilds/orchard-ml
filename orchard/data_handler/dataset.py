@@ -89,7 +89,7 @@ class VisionDataset(Dataset[Tuple[torch.Tensor, torch.Tensor]]):
         Retrieves a standardized sample-label pair.
 
         The image is converted to a PIL object to ensure compatibility with
-        Torchvision V1 transforms before being returned as a PyTorch Tensor.
+        Torchvision V2 transforms before being returned as a PyTorch Tensor.
         """
         img = self.images[idx]
         label = self.labels[idx]

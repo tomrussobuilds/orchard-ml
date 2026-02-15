@@ -12,11 +12,13 @@ import pytest
 import requests
 
 from orchard.data_handler.fetcher import (
-    _is_valid_npz,
-    _stream_download,
     ensure_dataset_npz,
     load_dataset,
     load_dataset_health_check,
+)
+from orchard.data_handler.fetchers.medmnist_fetcher import (
+    _is_valid_npz,
+    _stream_download,
 )
 
 
@@ -55,7 +57,7 @@ def monkeypatch_md5(monkeypatch):
         return "correct_md5"
 
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher.md5_checksum",
+        "orchard.data_handler.fetchers.medmnist_fetcher.md5_checksum",
         fake_md5,
     )
 
@@ -90,7 +92,7 @@ def test_is_valid_npz_false_on_md5_mismatch(valid_npz_file, monkeypatch):
         return "wrong_md5"
 
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher.md5_checksum",
+        "orchard.data_handler.fetchers.medmnist_fetcher.md5_checksum",
         wrong_md5,
     )
 
@@ -143,7 +145,7 @@ def test_ensure_dataset_npz_downloads_when_missing(
         tmp_path.write_bytes(real_npz.read_bytes())
 
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher._stream_download",
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
         fake_stream_download,
     )
 
@@ -175,7 +177,7 @@ def test_ensure_dataset_npz_removes_corrupted_file(
         tmp_path.write_bytes(real_npz.read_bytes())
 
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher._stream_download",
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
         fake_stream_download,
     )
 
@@ -208,15 +210,15 @@ def test_ensure_dataset_npz_md5_mismatch_raises_error(metadata, monkeypatch):
         return "wrong_md5"
 
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher._stream_download",
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
         fake_stream_download,
     )
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher.md5_checksum",
+        "orchard.data_handler.fetchers.medmnist_fetcher.md5_checksum",
         fake_md5,
     )
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher.time.sleep",
+        "orchard.data_handler.fetchers.medmnist_fetcher.time.sleep",
         lambda _: None,
     )
 
@@ -234,12 +236,12 @@ def test_ensure_dataset_npz_retries_and_fails(metadata, monkeypatch):
         raise requests.ConnectionError("network down")
 
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher._stream_download",
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
         always_fail,
     )
 
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher.time.sleep",
+        "orchard.data_handler.fetchers.medmnist_fetcher.time.sleep",
         lambda _: None,
     )
 
@@ -263,11 +265,11 @@ def test_ensure_dataset_npz_rate_limit_429(metadata, monkeypatch):
         sleep_calls.append(delay)
 
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher._stream_download",
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
         fake_stream_download,
     )
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher.time.sleep",
+        "orchard.data_handler.fetchers.medmnist_fetcher.time.sleep",
         fake_sleep,
     )
 
@@ -291,11 +293,11 @@ def test_ensure_dataset_npz_cleans_up_tmp_on_error(metadata, tmp_path, monkeypat
         raise requests.ConnectionError("network error")
 
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher._stream_download",
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
         fake_stream_download,
     )
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher.time.sleep",
+        "orchard.data_handler.fetchers.medmnist_fetcher.time.sleep",
         lambda _: None,
     )
 
@@ -317,11 +319,11 @@ def test_ensure_dataset_npz_error_without_response_attribute(metadata, monkeypat
         sleep_calls.append(delay)
 
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher._stream_download",
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
         fake_stream_download,
     )
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher.time.sleep",
+        "orchard.data_handler.fetchers.medmnist_fetcher.time.sleep",
         fake_sleep,
     )
 
@@ -454,7 +456,7 @@ def test_stream_download_http_error(tmp_path, monkeypatch):
         _stream_download("https://example.com/file.npz", output_path)
 
 
-# TEST: load_medmnist
+# TEST: load_dataset
 @pytest.mark.unit
 def test_load_medmnist_rgb(metadata, valid_npz_file, monkeypatch_md5, monkeypatch):
     """RGB dataset metadata should be inferred correctly."""
@@ -603,7 +605,7 @@ def test_ensure_dataset_npz_galaxy10_converter_path(tmp_path, monkeypatch):
         return metadata.path
 
     monkeypatch.setattr(
-        "orchard.data_handler.galaxy10_converter.ensure_galaxy10_npz",
+        "orchard.data_handler.fetchers.ensure_galaxy10_npz",
         mock_ensure_galaxy10_npz,
     )
 

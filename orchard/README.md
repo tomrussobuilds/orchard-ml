@@ -43,11 +43,13 @@ orchard/
 │   ├── cli.py                  # Argument parser
 │   └── orchestrator.py         # Lifecycle coordinator (7-phase init)
 ├── data_handler/               # Data loading pipeline
-│   ├── dataset.py              # MedMNISTDataset wrapper
-│   ├── fetcher.py              # Dataset download & validation
-│   ├── galaxy10_converter.py   # Galaxy10 HDF5 to NPZ converter
+│   ├── fetcher.py              # Fetch dispatcher + loading interface
+│   ├── fetchers/               # Domain-specific download modules
+│   │   ├── medmnist_fetcher.py # MedMNIST NPZ download with retries & MD5
+│   │   └── galaxy10_converter.py # Galaxy10 HDF5 download & NPZ conversion
+│   ├── dataset.py              # VisionDataset & LazyNPZDataset wrappers
 │   ├── loader.py               # DataLoaderFactory
-│   ├── transforms.py           # Augmentation pipelines
+│   ├── transforms.py           # Augmentation pipelines (torchvision V2)
 │   ├── data_explorer.py        # Visualization utilities
 │   └── synthetic.py            # Synthetic data generation
 ├── models/                     # Architecture factory

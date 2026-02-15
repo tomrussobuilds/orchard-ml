@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 import requests
 
-from orchard.data_handler.galaxy10_converter import (
+from orchard.data_handler.fetchers.galaxy10_converter import (
     _create_splits,
     convert_galaxy10_to_npz,
     download_galaxy10_h5,
@@ -25,8 +25,8 @@ def test_download_galaxy10_h5_file_already_exists(tmp_path):
     target_h5 = tmp_path / "Galaxy10.h5"
     target_h5.touch()
 
-    with patch("orchard.data_handler.galaxy10_converter.requests") as mock_requests:
-        with patch("orchard.data_handler.galaxy10_converter.logger") as mock_logger:
+    with patch("orchard.data_handler.fetchers.galaxy10_converter.requests") as mock_requests:
+        with patch("orchard.data_handler.fetchers.galaxy10_converter.logger") as mock_logger:
             download_galaxy10_h5("http://example.com/data.h5", target_h5)
             mock_requests.get.assert_not_called()
             mock_logger.info.assert_called_once()
@@ -42,8 +42,8 @@ def test_download_galaxy10_h5_success(tmp_path):
     mock_response.iter_content.return_value = [b"chunk1", b"chunk2", b"", b"chunk3"]
     mock_response.raise_for_status = Mock()
 
-    with patch("orchard.data_handler.galaxy10_converter.requests.get") as mock_get:
-        with patch("orchard.data_handler.galaxy10_converter.logger") as mock_logger:
+    with patch("orchard.data_handler.fetchers.galaxy10_converter.requests.get") as mock_get:
+        with patch("orchard.data_handler.fetchers.galaxy10_converter.logger") as mock_logger:
             mock_get.return_value.__enter__.return_value = mock_response
 
             download_galaxy10_h5(url, target_h5, retries=3, timeout=60)
@@ -59,8 +59,8 @@ def test_download_galaxy10_h5_retry_on_error(tmp_path):
     target_h5 = tmp_path / "Galaxy10.h5"
     url = "http://example.com/galaxy10.h5"
 
-    with patch("orchard.data_handler.galaxy10_converter.requests.get") as mock_get:
-        with patch("orchard.data_handler.galaxy10_converter.logger") as mock_logger:
+    with patch("orchard.data_handler.fetchers.galaxy10_converter.requests.get") as mock_get:
+        with patch("orchard.data_handler.fetchers.galaxy10_converter.logger") as mock_logger:
             mock_get.side_effect = [
                 Exception("Network error"),
                 Exception("Network error"),
@@ -88,7 +88,7 @@ def test_download_galaxy10_h5_cleans_tmp_on_failure(tmp_path):
     mock_response.iter_content = iter_with_failure
     mock_response.raise_for_status = Mock()
 
-    with patch("orchard.data_handler.galaxy10_converter.requests.get") as mock_get:
+    with patch("orchard.data_handler.fetchers.galaxy10_converter.requests.get") as mock_get:
         mock_get.return_value.__enter__.return_value = mock_response
 
         with pytest.raises(RuntimeError):
@@ -114,8 +114,10 @@ def test_convert_galaxy10_to_npz_no_resize(tmp_path):
         "ans": mock_labels,
     }
 
-    with patch("orchard.data_handler.galaxy10_converter.h5py.File", return_value=mock_h5_file):
-        with patch("orchard.data_handler.galaxy10_converter.logger") as mock_logger:
+    with patch(
+        "orchard.data_handler.fetchers.galaxy10_converter.h5py.File", return_value=mock_h5_file
+    ):
+        with patch("orchard.data_handler.fetchers.galaxy10_converter.logger") as mock_logger:
             convert_galaxy10_to_npz(h5_path, output_npz, target_size=224, seed=42)
 
             assert output_npz.exists()
@@ -145,8 +147,10 @@ def test_convert_galaxy10_to_npz_with_resize(tmp_path):
         "ans": real_labels,
     }
 
-    with patch("orchard.data_handler.galaxy10_converter.h5py.File", return_value=mock_h5_file):
-        with patch("orchard.data_handler.galaxy10_converter.logger") as mock_logger:
+    with patch(
+        "orchard.data_handler.fetchers.galaxy10_converter.h5py.File", return_value=mock_h5_file
+    ):
+        with patch("orchard.data_handler.fetchers.galaxy10_converter.logger") as mock_logger:
             convert_galaxy10_to_npz(h5_path, output_npz, target_size=8, seed=42)
 
             assert output_npz.exists()
@@ -238,7 +242,7 @@ def test_ensure_galaxy10_npz_file_exists_valid_md5(tmp_path):
     mock_metadata.native_resolution = 224
 
     with patch("orchard.core.md5_checksum", return_value="abc123"):
-        with patch("orchard.data_handler.galaxy10_converter.logger") as mock_logger:
+        with patch("orchard.data_handler.fetchers.galaxy10_converter.logger") as mock_logger:
             result = ensure_galaxy10_npz(mock_metadata)
 
             assert result == target_npz
@@ -263,7 +267,7 @@ def test_ensure_galaxy10_npz_file_exists_placeholder_md5(tmp_path):
     mock_metadata.native_resolution = 224
 
     with patch("orchard.core.md5_checksum", return_value="real_md5"):
-        with patch("orchard.data_handler.galaxy10_converter.logger") as mock_logger:
+        with patch("orchard.data_handler.fetchers.galaxy10_converter.logger") as mock_logger:
             result = ensure_galaxy10_npz(mock_metadata)
 
             assert result == target_npz
@@ -290,9 +294,11 @@ def test_ensure_galaxy10_npz_md5_mismatch(tmp_path):
     with patch("orchard.core.md5_checksum") as mock_md5:
         mock_md5.side_effect = ["wrong_md5", "new_md5"]
 
-        with patch("orchard.data_handler.galaxy10_converter.download_galaxy10_h5"):
-            with patch("orchard.data_handler.galaxy10_converter.convert_galaxy10_to_npz"):
-                with patch("orchard.data_handler.galaxy10_converter.logger") as mock_logger:
+        with patch("orchard.data_handler.fetchers.galaxy10_converter.download_galaxy10_h5"):
+            with patch("orchard.data_handler.fetchers.galaxy10_converter.convert_galaxy10_to_npz"):
+                with patch(
+                    "orchard.data_handler.fetchers.galaxy10_converter.logger"
+                ) as mock_logger:
                     result = ensure_galaxy10_npz(mock_metadata)
 
                     assert mock_md5.call_count == 2
@@ -325,15 +331,17 @@ def test_ensure_galaxy10_npz_download_and_convert(tmp_path):
         np.savez_compressed(output_npz, **dummy_data)
 
     with patch(
-        "orchard.data_handler.galaxy10_converter.download_galaxy10_h5",
+        "orchard.data_handler.fetchers.galaxy10_converter.download_galaxy10_h5",
         side_effect=lambda url, path: None,
     ) as mock_download:
         with patch(
-            "orchard.data_handler.galaxy10_converter.convert_galaxy10_to_npz",
+            "orchard.data_handler.fetchers.galaxy10_converter.convert_galaxy10_to_npz",
             side_effect=mock_convert_impl,
         ):
             with patch("orchard.core.md5_checksum", return_value="new_md5"):
-                with patch("orchard.data_handler.galaxy10_converter.logger") as mock_logger:
+                with patch(
+                    "orchard.data_handler.fetchers.galaxy10_converter.logger"
+                ) as mock_logger:
                     result = ensure_galaxy10_npz(mock_metadata)
 
                     mock_download.assert_called_once_with(mock_metadata.url, h5_path)
