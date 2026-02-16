@@ -1,0 +1,158 @@
+name: Code Quality Badges
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'orchard/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - '.github/workflows/badges.yml'
+  workflow_dispatch:
+
+jobs:
+  badges:
+    name: Update Quality Badges
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install package and tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install black isort flake8 mypy radon types-PyYAML types-requests
+
+      # --- Black ---
+      - name: Run Black
+        id: black
+        run: |
+          if black --check --quiet . 2>/dev/null; then
+            echo "status=passing" >> "$GITHUB_OUTPUT"
+            echo "color=000000" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=failing" >> "$GITHUB_OUTPUT"
+            echo "color=e74c3c" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update Black badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: "7835190af6011e9051b673c8be974f8a"
+          filename: black.json
+          label: black
+          message: ${{ steps.black.outputs.status }}
+          color: ${{ steps.black.outputs.color }}
+          namedLogo: python
+          logoColor: white
+
+      # --- isort ---
+      - name: Run isort
+        id: isort
+        run: |
+          if isort --check-only --quiet . 2>/dev/null; then
+            echo "status=passing" >> "$GITHUB_OUTPUT"
+            echo "color=1674b1" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=failing" >> "$GITHUB_OUTPUT"
+            echo "color=e74c3c" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update isort badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: "7835190af6011e9051b673c8be974f8a"
+          filename: isort.json
+          label: isort
+          message: ${{ steps.isort.outputs.status }}
+          color: ${{ steps.isort.outputs.color }}
+          namedLogo: python
+          logoColor: white
+
+      # --- Flake8 ---
+      - name: Run Flake8
+        id: flake8
+        run: |
+          if flake8 orchard/ tests/ 2>/dev/null; then
+            echo "status=passing" >> "$GITHUB_OUTPUT"
+            echo "color=brightgreen" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=failing" >> "$GITHUB_OUTPUT"
+            echo "color=e74c3c" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update Flake8 badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: "7835190af6011e9051b673c8be974f8a"
+          filename: flake8.json
+          label: flake8
+          message: ${{ steps.flake8.outputs.status }}
+          color: ${{ steps.flake8.outputs.color }}
+          namedLogo: python
+          logoColor: white
+
+      # --- mypy ---
+      - name: Run mypy
+        id: mypy
+        run: |
+          if mypy orchard/ 2>/dev/null; then
+            echo "status=passing" >> "$GITHUB_OUTPUT"
+            echo "color=2a6db2" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=failing" >> "$GITHUB_OUTPUT"
+            echo "color=e74c3c" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update mypy badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: "7835190af6011e9051b673c8be974f8a"
+          filename: mypy.json
+          label: mypy
+          message: ${{ steps.mypy.outputs.status }}
+          color: ${{ steps.mypy.outputs.color }}
+          namedLogo: python
+          logoColor: white
+
+      # --- Radon (cyclomatic complexity average) ---
+      - name: Run Radon
+        id: radon
+        run: |
+          # Extract average complexity from radon output
+          AVG=$(radon cc orchard/ --total-average 2>/dev/null | tail -1 | grep -oP '[\d.]+' | tail -1)
+          if [ -z "$AVG" ]; then
+            echo "status=error" >> "$GITHUB_OUTPUT"
+            echo "color=lightgrey" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=A ($AVG)" >> "$GITHUB_OUTPUT"
+            # Color based on grade: A (<= 5) green, B (<= 10) yellow, C+ red
+            if awk "BEGIN {exit !($AVG <= 5)}"; then
+              echo "color=brightgreen" >> "$GITHUB_OUTPUT"
+            elif awk "BEGIN {exit !($AVG <= 10)}"; then
+              echo "color=e5ae38" >> "$GITHUB_OUTPUT"
+            else
+              echo "color=e74c3c" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Update Radon badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: "7835190af6011e9051b673c8be974f8a"
+          filename: radon.json
+          label: radon
+          message: ${{ steps.radon.outputs.status }}
+          color: ${{ steps.radon.outputs.color }}

@@ -26,21 +26,25 @@
 <tr>
 <td align="right"><strong>Tech Stack</strong></td>
 <td>
-  <img src="https://img.shields.io/badge/python-3.10--3.14-blue?logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12%20|%203.13%20|%203.14--dev-blue?logo=python&logoColor=white" alt="Python">
+  <a href="docs/guide/DOCKER.md"><img src="https://img.shields.io/badge/Docker-CUDA%2012.1-2496ED?logo=docker&logoColor=white" alt="Docker"></a>
+  <br>
   <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-2.0%2B-orange?logo=pytorch&logoColor=white" alt="PyTorch"></a>
   <a href="https://docs.pydantic.dev/"><img src="https://img.shields.io/badge/Pydantic-v2-e92063?logo=pydantic&logoColor=white" alt="Pydantic"></a>
   <a href="https://optuna.org/"><img src="https://img.shields.io/badge/Optuna-3.0%2B-00ADD8?logo=optuna&logoColor=white" alt="Optuna"></a>
-  <a href="docs/guide/DOCKER.md"><img src="https://img.shields.io/badge/Docker-CUDA%2012.1-2496ED?logo=docker&logoColor=white" alt="Docker"></a>
+  <a href="https://onnx.ai/"><img src="https://img.shields.io/badge/ONNX-export-005CED?logo=onnx&logoColor=white" alt="ONNX"></a>
+  <a href="https://mlflow.org/"><img src="https://img.shields.io/badge/MLflow-tracking-0194E2?logo=mlflow&logoColor=white" alt="MLflow"></a>
 </td>
 </tr>
 <tr>
 <td align="right"><strong>Code Style</strong></td>
 <td>
-  <a href="https://github.com/psf/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black"></a>
-  <a href="https://pycqa.github.io/isort/"><img src="https://img.shields.io/badge/imports-isort-1674b1?logo=python&logoColor=white" alt="isort"></a>
-  <a href="https://flake8.pycqa.org/"><img src="https://img.shields.io/badge/linting-flake8-brightgreen?logo=python&logoColor=white" alt="Flake8"></a>
-  <a href="https://mypy-lang.org/"><img src="https://img.shields.io/badge/type%20check-mypy-blue?logo=python&logoColor=white" alt="mypy"></a>
-  <a href="https://radon.readthedocs.io/"><img src="https://img.shields.io/badge/complexity-radon-yellow" alt="Radon"></a>
+  <!-- Dynamic badges — updated by .github/workflows/badges.yml via Gist -->
+  <a href="https://github.com/psf/black"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tomrussobuilds/7835190af6011e9051b673c8be974f8a/raw/black.json" alt="Black"></a>
+  <a href="https://pycqa.github.io/isort/"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tomrussobuilds/7835190af6011e9051b673c8be974f8a/raw/isort.json" alt="isort"></a>
+  <a href="https://flake8.pycqa.org/"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tomrussobuilds/7835190af6011e9051b673c8be974f8a/raw/flake8.json" alt="Flake8"></a>
+  <a href="https://mypy-lang.org/"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tomrussobuilds/7835190af6011e9051b673c8be974f8a/raw/mypy.json" alt="mypy"></a>
+  <a href="https://radon.readthedocs.io/"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tomrussobuilds/7835190af6011e9051b673c8be974f8a/raw/radon.json" alt="Radon"></a>
 </td>
 </tr>
 <tr>

@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Miscellaneous
 
 - add automated changelog with git-cliff and pre-commit hook
+- add pre-commit linting hooks, centralize flake8 config
 
 ## [0.1.0] - 2026-02-15
 
