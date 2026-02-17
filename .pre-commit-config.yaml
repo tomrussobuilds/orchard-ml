@@ -19,6 +19,12 @@ repos:
         entry: flake8
         types: [python]
 
+      - id: nbstripout
+        name: strip notebook outputs
+        language: system
+        entry: python scripts/strip_notebook_outputs.py
+        types: [jupyter]
+
       - id: git-cliff
         name: generate changelog
         language: system
