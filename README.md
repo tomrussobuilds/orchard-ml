@@ -28,7 +28,7 @@
 <td align="right"><strong>Platform</strong></td>
 <td>
   <img src="https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12%20|%203.13%20|%203.14--dev-blue?logo=python&logoColor=white" alt="Python">
-  <a href="https://pypi.org/project/orchard-ml/"><img src="https://img.shields.io/pypi/v/orchard-ml?color=blue&logo=pypi&logoColor=white" alt="PyPI"></a>
+  <a href="https://pypi.org/project/orchard-ml/"><img src="https://img.shields.io/pypi/v/orchard-ml?color=blue&logo=pypi&logoColor=white&v=1" alt="PyPI"></a>
   <a href="docs/guide/DOCKER.md"><img src="https://img.shields.io/badge/Docker-CUDA%2012.1-2496ED?logo=docker&logoColor=white" alt="Docker"></a>
 </td>
 </tr>
