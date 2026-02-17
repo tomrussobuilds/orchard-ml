@@ -31,15 +31,23 @@ python forge.py --config recipes/optuna_vit_tiny.yaml \
 
 ### Search Space Coverage
 
-**Full Space** (13+ parameters):
+Select a preset via `search_space_preset`:
+
+| Preset | Parameters | Use case |
+|---|---|---|
+| **`full`** (default) | 13+ parameters | Comprehensive search |
+| **`quick`** | 4 parameters | Rapid exploration |
+| **`architectures`** | Full + model search | Best model-hyperparameter combo |
+
+**Full Space** parameters:
 - **Optimization**: `learning_rate`, `weight_decay`, `momentum`, `min_lr`
 - **Regularization**: `mixup_alpha`, `label_smoothing`, `dropout`
 - **Scheduling**: `cosine_fraction`, `scheduler_patience`
 - **Augmentation**: `rotation_angle`, `jitter_val`, `min_scale`
 - **Batch Size**: Resolution-aware categorical choices
-  - 28×28: [16, 32, 48, 64]
-  - 224×224: [8, 12, 16] (OOM-safe for 8GB VRAM)
-- **Architecture** (resolution-specific, requires `enable_model_search: true`):
+  - 28×28: `batch_size_low_res` — [16, 32, 48, 64]
+  - 224×224: `batch_size_high_res` — [8, 12, 16] (OOM-safe for 8GB VRAM)
+- **Architecture** (requires `enable_model_search: true`):
   - 28×28: [`resnet_18`, `mini_cnn`]
   - 224×224: [`resnet_18`, `efficientnet_b0`, `convnext_tiny`, `vit_tiny`]
 - **Weight Variants** (ViT only, 224×224):
@@ -47,8 +55,7 @@ python forge.py --config recipes/optuna_vit_tiny.yaml \
   - `vit_tiny_patch16_224.augreg_in21k`
   - Default variant
 
-**Quick Space** (4 parameters):
-- `learning_rate`, `weight_decay`, `batch_size`, `dropout`
+**Quick Space**: `learning_rate`, `weight_decay`, `batch_size`, `dropout`
 
 ### Model Search
 
@@ -84,95 +91,28 @@ See the **[Artifact Reference Guide](ARTIFACTS.md)** for complete documentation 
 
 #### Search Space Overrides (YAML-based)
 
-Configure custom hyperparameter ranges directly in your recipe YAML via `optuna.search_space_overrides`. This allows dataset/approach-specific tuning without code changes.
+Override any parameter from the [search space](#search-space-coverage) directly in your recipe YAML, without code changes:
 
-**Structure:**
 ```yaml
 optuna:
-  search_space_overrides:
-    learning_rate:
-      low: 1.0e-05
-      high: 0.01
-      log: true           # Logarithmic scale (recommended for LR)
-    weight_decay:
-      low: 1.0e-06
-      high: 0.001
-      log: true
-    dropout:
-      low: 0.1
-      high: 0.5
-      log: false          # Linear scale
-    batch_size_low_res:   # Resolution-aware batches (28×28)
-      - 16
-      - 32
-      - 48
-      - 64
-    batch_size_high_res:  # Resolution-aware batches (224×224)
-      - 8
-      - 12
-      - 16
-```
-
-**Supported Override Parameters:**
-- **Optimization**: `learning_rate`, `weight_decay`, `momentum`, `min_lr`
-- **Regularization**: `mixup_alpha`, `label_smoothing`, `dropout`
-- **Scheduling**: `cosine_fraction`, `scheduler_patience`
-- **Augmentation**: `rotation_angle`, `jitter_val`, `min_scale`
-- **Batch Sizes**: `batch_size_low_res` (28×28), `batch_size_high_res` (224×224)
-
-**Float Parameters** (continuous ranges):
-- Provide `low`, `high`, `log` (boolean, default `false`)
-- Set `log: true` for exponential distributions (learning rates, weight decay)
-
-**Categorical Parameters** (discrete lists):
-- Provide as a list: `[value1, value2, ...]`
-- Used for batch sizes and architecture choices
-
-**Example: Dataset-Specific Tuning**
-
-Create a custom recipe for your dataset:
-```yaml
-# recipes/optuna_custom_dataset.yaml
-dataset:
-  name: "your_dataset"
-  resolution: 28
-
-optuna:
-  n_trials: 30
   search_space_preset: full
-  
   search_space_overrides:
     learning_rate:
-      low: 1.0e-04      # Narrower range for stable convergence
+      low: 1.0e-04           # Narrower range for stable convergence
       high: 5.0e-03
       log: true
     dropout:
-      low: 0.15         # Higher dropout for this dataset
+      low: 0.15
       high: 0.4
-      log: false
-    batch_size_low_res:
-      - 32              # Skip small batches
+    batch_size_low_res:       # Categorical: provide a list
+      - 32
       - 48
       - 64
 ```
 
-Run with:
-```bash
-python forge.py --config recipes/optuna_custom_dataset.yaml
-```
+**Float parameters** require `low`, `high`, and optionally `log: true` (default `false`) for log-scale sampling. **Categorical parameters** are plain lists.
 
-#### Preset Search Spaces
-
-Quickly select predefined search strategies via `search_space_preset`:
-
-- **`full`** (default): All 13+ hyperparameters (comprehensive, slower)
-- **`quick`**: 4-parameter subset (`learning_rate`, `weight_decay`, `batch_size`, `dropout`) — for rapid testing
-- **`architectures`**: Model architecture search (with `enable_model_search: true`)
-
-```yaml
-optuna:
-  search_space_preset: "quick"   # Fast preset for initial exploration
-```
+All parameters listed in [Search Space Coverage](#search-space-coverage) can be overridden.
 
 ---
 

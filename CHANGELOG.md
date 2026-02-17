@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add ANSI color formatting, fix early-stop trials-saved count
 - add dynamic code quality badges via GitHub Gist
 - feat(tests): use tmp_path and standardize test paths
+- add YAML-configurable search space overrides
 
 ### Changed
 
