@@ -19,8 +19,8 @@ def test_architecture_config_defaults():
     """Test ArchitectureConfig with default values."""
     config = ArchitectureConfig()
 
-    assert config.name == "resnet_18"
-    assert config.pretrained is True
+    assert config.name == "mini_cnn"
+    assert config.pretrained is False
     assert config.dropout == pytest.approx(0.2)
     assert config.weight_variant is None
 
@@ -140,8 +140,8 @@ def test_from_args_with_defaults():
 
     config = ArchitectureConfig.from_args(args)
 
-    assert config.name == "resnet18"
-    assert config.pretrained is True
+    assert config.name == "mini_cnn"
+    assert config.pretrained is False
     assert config.dropout == pytest.approx(0.2)
 
 
@@ -153,7 +153,7 @@ def test_from_args_partial():
     config = ArchitectureConfig.from_args(args)
 
     assert config.name == "efficientnet_b0"
-    assert config.pretrained is True
+    assert config.pretrained is False
     assert config.dropout == pytest.approx(0.2)
 
 

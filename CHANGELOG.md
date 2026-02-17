@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - replace --prepend with custom script to prevent duplicate Unreleased sections
+- resolve mypy type errors and pin version to 1.19.1
 
 ### Miscellaneous
 

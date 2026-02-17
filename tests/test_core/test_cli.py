@@ -24,7 +24,7 @@ def test_parse_args_defaults():
         assert args.epochs == 60
         assert args.batch_size == 16
         assert args.resolution == 28
-        assert args.model_name == "resnet_18"
+        assert args.model_name == "mini_cnn"
 
 
 @pytest.mark.unit
@@ -98,7 +98,7 @@ def test_parse_args_pretrained_flags():
     """Test parse_args handles pretrained flags."""
     with patch("sys.argv", ["prog"]):
         args = parse_args()
-        assert args.pretrained is True
+        assert args.pretrained is False
 
     with patch("sys.argv", ["prog", "--pretrained"]):
         args = parse_args()

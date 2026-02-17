@@ -42,8 +42,8 @@ def parse_args() -> argparse.Namespace:
     strat_group.add_argument(
         "--config",
         type=str,
-        default="recipes/config_resnet_18.yaml",
-        help="Path to YAML config file (default: ResNet-18 on PathMNIST 28x28)",
+        default="recipes/config_mini_cnn.yaml",
+        help="Path to YAML config file (default: MiniCNN on BloodMNIST 28x28)",
     )
     strat_group.add_argument(
         "--project_name",
@@ -261,10 +261,10 @@ def parse_args() -> argparse.Namespace:
     model_group = parser.add_argument_group("Model Configuration")
 
     model_group.add_argument(
-        "--model_name", type=str, default="resnet_18", help="Architecture identifier"
+        "--model_name", type=str, default="mini_cnn", help="Architecture identifier"
     )
     model_group.add_argument(
-        "--pretrained", action="store_true", default=True, help="Load ImageNet weights"
+        "--pretrained", action="store_true", default=False, help="Load ImageNet weights"
     )
     model_group.add_argument(
         "--no_pretrained",

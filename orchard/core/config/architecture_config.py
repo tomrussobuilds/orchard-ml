@@ -35,12 +35,12 @@ class ArchitectureConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, arbitrary_types_allowed=True)
 
     name: str = Field(
-        default="resnet_18",
+        default="mini_cnn",
         description="The unique identifier for the model architecture. E.g., 'efficientnet_b0'.",
     )
 
     pretrained: bool = Field(
-        default=True, description="Whether to initialize the model with pre-trained weights."
+        default=False, description="Whether to initialize the model with pre-trained weights."
     )
 
     dropout: DropoutRate = Field(
@@ -74,7 +74,7 @@ class ArchitectureConfig(BaseModel):
             Configured ArchitectureConfig instance.
         """
         return cls(
-            name=getattr(args, "model_name", "resnet18"),
-            pretrained=getattr(args, "pretrained", True),
+            name=getattr(args, "model_name", "mini_cnn"),
+            pretrained=getattr(args, "pretrained", False),
             dropout=getattr(args, "dropout", 0.2),
         )

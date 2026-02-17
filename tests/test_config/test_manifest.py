@@ -243,7 +243,7 @@ def test_from_yaml_loads_correctly(temp_yaml_config, mock_metadata_28):
     config = Config.from_yaml(temp_yaml_config, metadata=mock_metadata_28)
 
     assert config.dataset.dataset_name == "bloodmnist"
-    assert config.architecture.name == "resnet_18"
+    assert config.architecture.name == "mini_cnn"
     assert config.training.epochs == 60
     assert config.training.batch_size == 128
 
