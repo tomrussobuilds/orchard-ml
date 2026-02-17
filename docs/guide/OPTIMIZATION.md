@@ -2,8 +2,6 @@
 
 # Hyperparameter Optimization Guide
 
-## 🎯 Hyperparameter Optimization
-
 ### Quick Start
 
 ```bash

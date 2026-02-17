@@ -2,7 +2,7 @@
 
 # Testing & Quality Assurance
 
-## ✅ Environment Verification
+## Environment Verification
 
 **Smoke Test** (1-epoch sanity check):
 ```bash
@@ -32,7 +32,7 @@ python -m tests.health_check --dataset organcmnist --resolution 224
 
 ---
 
-## 🔧 Code Quality Checks
+## Code Quality Checks
 
 Orchard ML includes automated quality check scripts that run all code quality tools in sequence.
 
@@ -69,7 +69,7 @@ bash scripts/check_quality_full.sh
 
 ### Tool Descriptions
 
-#### 🎨 Formatting Tools
+#### Formatting Tools
 
 - **Black**: Opinionated code formatter (line length: 100)
   ```bash
@@ -81,7 +81,7 @@ bash scripts/check_quality_full.sh
   isort orchard/ tests/ forge.py  # Auto-fix
   ```
 
-#### 🔍 Linting Tools
+#### Linting Tools
 
 - **Flake8**: PEP 8 style guide enforcement
   - Checks: unused variables, imports, style violations
@@ -91,7 +91,7 @@ bash scripts/check_quality_full.sh
   flake8 orchard/ tests/ --max-line-length=100 --extend-ignore=E203,W503
   ```
 
-#### 🔒 Security Tools
+#### Security Tools
 
 - **Bandit**: Detects common security issues
   - Checks: hardcoded passwords, SQL injection, insecure temp files
@@ -100,7 +100,7 @@ bash scripts/check_quality_full.sh
   bandit -r orchard/ -ll -q
   ```
 
-#### 📊 Complexity Analysis
+#### Complexity Analysis
 
 - **Radon**: Code metrics analyzer
   - **Cyclomatic Complexity (CC)**: Measures code complexity (max: B = 6-10)
@@ -111,7 +111,7 @@ bash scripts/check_quality_full.sh
   radon mi orchard/ -n B                   # Maintainability
   ```
 
-#### 🔍 Type Checking
+#### Type Checking
 
 - **MyPy**: Static type checker for Python
   - Verifies type hints and catches type errors at compile time
@@ -155,7 +155,7 @@ pip install -e ".[dev]"
 
 ---
 
-## 🧪 Testing & Quality Assurance
+## Testing & Quality Assurance
 
 ### Test Suite
 

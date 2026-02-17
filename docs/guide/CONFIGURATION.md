@@ -95,7 +95,7 @@ python forge.py --mixup_alpha 0 --no_tta
 
 ---
 
-## 🔄 Extending to New Datasets
+## Extending to New Datasets
 
 The framework is designed for zero-code dataset integration via the registry system:
 

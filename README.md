@@ -1,4 +1,5 @@
-# 🔮 Orchard ML: Type-Safe Deep Learning Framework
+<h1 align="center">Orchard ML</h1>
+<p align="center"><strong>Type-safe deep learning framework for reproducible computer vision research</strong></p>
 
 ---
 
@@ -67,21 +68,21 @@
 
 ---
 
-## 📌 Table of Contents
+## Table of Contents
 
-- [🎯 Overview](#-overview)
-- [⚡ Hardware Requirements](#-hardware-requirements)
-- [🚀 Quick Start](#-quick-start)
-- [🧪 Colab Notebooks](#-colab-notebooks)
-- [📊 Experiment Management](#-experiment-management)
-- [📚 Documentation Hub](#-documentation-hub)
-- [📖 Citation](#-citation)
-- [🗺 Roadmap](#-roadmap)
-- [📄 License](#-license)
+- [Overview](#overview)
+- [Hardware Requirements](#hardware-requirements)
+- [Quick Start](#quick-start)
+- [Colab Notebooks](#colab-notebooks)
+- [Experiment Management](#experiment-management)
+- [Documentation](#documentation)
+- [Citation](#citation)
+- [Roadmap](#roadmap)
+- [License](#license)
 
 ---
 
-## 🎯 Overview
+## Overview
 
 **Orchard ML** is a research-grade PyTorch training framework engineered for reproducible, scalable computer vision experiments across diverse domains. Built on [MedMNIST v2](https://zenodo.org/records/6496656) medical imaging datasets and expanded to astronomical imaging ([Galaxy10 DECals](https://zenodo.org/records/10845026)), it provides a domain-agnostic platform supporting multi-resolution architectures (28×28 to 224×224+), automated hyperparameter optimization, and cluster-safe execution.
 
@@ -104,7 +105,7 @@
 
 ---
 
-## ⚡ Hardware Requirements
+## Hardware Requirements
 
 ### CPU Training (28×28 Only)
 - **Supported Resolution**: 28×28 **only**
@@ -151,7 +152,7 @@
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Step 1: Environment Setup
 ```bash
@@ -245,7 +246,7 @@ See the [Export Guide](docs/guide/EXPORT.md) for configuration options (format, 
 
 ---
 
-## 🧪 Colab Notebooks
+## Colab Notebooks
 
 Try Orchard ML directly in Google Colab — no local setup required:
 
@@ -256,14 +257,14 @@ Try Orchard ML directly in Google Colab — no local setup required:
 
 ---
 
-## 📊 Experiment Management
+## Experiment Management
 
 Every run generates a complete artifact suite for total traceability. Both training-only and optimization workflows share the same `RunPath` orchestrator, producing BLAKE2b-hashed timestamped directories.
 
-**📂 [Browse Sample Artifacts](./docs/artifacts)** — Excel reports, YAML configs, and diagnostic plots from real training runs.
+**[Browse Sample Artifacts](./docs/artifacts)** — Excel reports, YAML configs, and diagnostic plots from real training runs.
 See the [full artifact tree](docs/artifacts/artifacts_structure.png) for the complete directory layout — logs, model weights, and HTML plots are generated locally and not tracked in the repo.
 
-**🧪 [Browse Recipe Configs](./recipes)** — Ready-to-use YAML configurations for every architecture and workflow.
+**[Browse Recipe Configs](./recipes)** — Ready-to-use YAML configurations for every architecture and workflow.
 Copy the closest recipe, tweak the parameters, and run:
 ```bash
 cp recipes/config_efficientnet_b0.yaml my_run.yaml
@@ -273,79 +274,22 @@ python forge.py --config my_run.yaml
 
 ---
 
-## 📚 Documentation Hub
+## Documentation
 
-Comprehensive guides for advanced usage and system internals:
+| Guide | Covers |
+|-------|--------|
+| [Framework Guide](docs/guide/FRAMEWORK.md) | System architecture diagrams, design principles, component deep-dives |
+| [Architecture Guide](docs/guide/ARCHITECTURE.md) | Supported model architectures, weight transfer, grayscale adaptation, MixUp |
+| [Configuration Guide](docs/guide/CONFIGURATION.md) | Full parameter reference, usage patterns, adding new datasets |
+| [Optimization Guide](docs/guide/OPTIMIZATION.md) | Optuna integration, search space config, pruning strategies, visualization |
+| [Docker Guide](docs/guide/DOCKER.md) | Container build instructions, GPU-accelerated execution, reproducibility mode |
+| [Export Guide](docs/guide/EXPORT.md) | ONNX export pipeline, quantization options, validation and benchmarking |
+| [Tracking Guide](docs/guide/TRACKING.md) | MLflow local setup, dashboard and run comparison, programmatic querying |
+| [Artifact Guide](docs/guide/ARTIFACTS.md) | Output directory structure, training vs optimization artifact differences |
+| [Testing Guide](docs/guide/TESTING.md) | 1,000+ test suite, quality automation scripts, CI/CD pipeline details |
+| [`orchard/`](orchard/README.md) / [`tests/`](tests/README.md) | Internal package structure, module responsibilities, extension points |
 
-### 🏗️ Framework Design
-**[Framework Guide](docs/guide/FRAMEWORK.md)**
-- Core features and technical design principles
-- System architecture diagrams
-- Dependency relationships
-- Component deep-dives (Config engine, Infrastructure safety, Reproducibility)
-
-### 🧠 Model Architecture
-**[Architecture Guide](docs/guide/ARCHITECTURE.md)**
-- Supported models (ResNet-18, MiniCNN, EfficientNet-B0, ConvNeXt-Tiny, ViT-Tiny)
-- Weight transfer and grayscale adaptation
-- Training regularization (MixUp)
-
-### ⚙️ Configuration & Customization
-**[Configuration Guide](docs/guide/CONFIGURATION.md)**
-- Complete parameter reference
-- Usage patterns and best practices
-- Extending to new datasets (zero-code integration)
-
-### 🎯 Hyperparameter Optimization
-**[Optimization Guide](docs/guide/OPTIMIZATION.md)**
-- Optuna integration details
-- Search space configuration
-- Pruning strategies
-- Visualization and result analysis
-
-### 🐳 Containerization
-**[Docker Training Guide](docs/guide/DOCKER.md)**
-- Container build instructions
-- GPU-accelerated execution
-- Strict reproducibility mode
-
-### 📤 Model Export
-**[Export Guide](docs/guide/EXPORT.md)**
-- ONNX export for production deployment
-- Quantization for mobile/server
-- Validation and benchmarking
-
-### 📈 Experiment Tracking
-**[Tracking Guide](docs/guide/TRACKING.md)**
-- MLflow integration (optional, local SQLite)
-- Dashboard setup and run comparison
-- Programmatic querying of metrics and runs
-
-### 🗂️ Artifact Reference
-**[Artifact Guide](docs/guide/ARTIFACTS.md)**
-- Complete file documentation
-- Directory structure examples
-- Training vs optimization outputs
-
-### 🧪 Testing & Quality
-**[Testing Guide](docs/guide/TESTING.md)**
-- Test suite organization (1,000+ tests)
-- Quality check automation (`check_quality.sh`)
-- Smoke tests and health checks
-- CI/CD pipeline details
-
-### 📦 Package Internals
-**[orchard/ Package Documentation](orchard/README.md)**
-- Internal architecture principles
-- Package structure and module responsibilities
-- Extension points for developers
-
-**[tests/ Package Documentation](tests/README.md)**
-- Test organization and categories
-- Running specific test suites
-- Coverage reporting
-
-## 📖 Citation
+## Citation
 
 ```bibtex
 @software{orchardml2026,
@@ -359,7 +303,7 @@ Comprehensive guides for advanced usage and system internals:
 
 ---
 
-## 🗺 Roadmap
+## Roadmap
 
 - **Additional Architectures**: EfficientNet-V2, DeiT
 - **Expanded Dataset Domains**: Climate, remote sensing, microscopy
@@ -369,11 +313,11 @@ Comprehensive guides for advanced usage and system internals:
 
 ---
 
-## 📄 License
+## License
 
 MIT License - See [LICENSE](LICENSE) for details.
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Please:
 1. Fork the repository
@@ -384,6 +328,6 @@ Contributions welcome! Please:
 
 For detailed guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## 📧 Contact
+## Contact
 
 For questions or collaboration: [GitHub Issues](https://github.com/tomrussobuilds/orchard-ml/issues)

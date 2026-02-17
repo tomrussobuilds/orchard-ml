@@ -22,7 +22,7 @@ tests/                          # Test suite (~1,000 tests, 100% coverage)
 └── test_logger/                # Logging tests
 ```
 
-## 🧪 Testing & Quality Assurance
+## Testing & Quality Assurance
 
 ### Test Suite
 
