@@ -97,6 +97,8 @@ def get_model(device: torch.device, cfg: Config, verbose: bool = True) -> nn.Mod
         "convnext_tiny": build_convnext_tiny,
         "vit_tiny": build_vit_tiny,
         "mini_cnn": build_mini_cnn,
+        # Extension point: register your custom architecture here
+        # "your_model": build_your_model,
     }
 
     # Resolve structural dimensions from Single Source of Truth (Config)

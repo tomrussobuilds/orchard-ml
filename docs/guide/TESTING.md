@@ -159,7 +159,7 @@ pip install -e ".[dev]"
 
 ### Test Suite
 
-Orchard ML includes a comprehensive test suite with **1,000+ tests** targeting **→100% code coverage**:
+Orchard ML includes a comprehensive test suite with **1,100+ tests** targeting **→100% code coverage**:
 
 ```bash
 # Run full test suite
@@ -188,7 +188,7 @@ pytest tests/ -n auto
 GitHub Actions automatically run on every push:
 
 - ✅ **Code Quality**: Black, isort, Flake8, mypy formatting, linting, and type checks
-- ✅ **Multi-Python Testing**: Unit tests across Python 3.10–3.14 (1,000+ tests)
+- ✅ **Multi-Python Testing**: Unit tests across Python 3.10–3.14 (1,100+ tests)
 - ✅ **Smoke Test**: 1-epoch end-to-end validation (~30s, CPU-only)
 - ✅ **Documentation**: README.md presence verification
 - ✅ **Security Scanning**: Bandit (code analysis) and pip-audit (dependency vulnerabilities)
@@ -200,7 +200,7 @@ GitHub Actions automatically run on every push:
 | Job | Description | Status |
 |-----|-------------|--------|
 | **Code Quality** | Black, isort, Flake8, mypy | Continue-on-error (advisory) |
-| **Pytest Suite** | 1,000+ tests, 5 Python versions | ✅ Required to pass |
+| **Pytest Suite** | 1,100+ tests, 5 Python versions | ✅ Required to pass |
 | **Smoke Test** | 1-epoch E2E validation | ✅ Required to pass |
 | **Documentation** | README verification | ✅ Required to pass |
 | **Security Scan** | Bandit + pip-audit | Continue-on-error (advisory) |

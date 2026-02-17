@@ -53,6 +53,8 @@ venv.bak/
 #                           TESTING & COVERAGE                                #
 # =========================================================================== #
 .pytest_cache/
+.mypy_cache/
+**/.mypy_cache/
 .coverage
 .coverage.*
 htmlcov/

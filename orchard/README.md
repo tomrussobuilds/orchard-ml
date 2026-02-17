@@ -4,12 +4,12 @@
 
 **Orchard ML core package** - Type-safe deep learning framework components.
 
-## 📦 Package Structure
+## Package Structure
 
 ```
 orchard/
 ├── core/                       # Framework nucleus
-│   ├── config/                 # Pydantic V2 schemas (13 modules)
+│   ├── config/                 # Pydantic V2 schemas (14 modules)
 │   │   ├── manifest.py         # Main Config (SSOT)
 │   │   ├── hardware_config.py  # Device, threading, determinism
 │   │   ├── training_config.py  # Optimizer, scheduler, regularization
@@ -18,7 +18,11 @@ orchard/
 │   │   ├── evaluation_config.py    # Metrics, visualization
 │   │   ├── architecture_config.py  # Architecture selection
 │   │   ├── optuna_config.py    # Hyperparameter optimization
-│   │   └── tracking_config.py  # MLflow tracking settings
+│   │   ├── tracking_config.py  # MLflow tracking settings
+│   │   ├── telemetry_config.py # Filesystem, logging policy, experiment ID
+│   │   ├── export_config.py    # ONNX/TorchScript export parameters
+│   │   ├── infrastructure_config.py # Resource lifecycle, flock, process mgmt
+│   │   └── types.py            # Semantic types & validation primitives
 │   ├── environment/            # Hardware abstraction
 │   │   ├── hardware.py         # Device detection, CPU/GPU/MPS
 │   │   ├── reproducibility.py  # Seeding, determinism
@@ -30,7 +34,9 @@ orchard/
 │   │   └── data_io.py          # Dataset validation
 │   ├── logger/                 # Telemetry system
 │   │   ├── logger.py           # Logger setup
-│   │   └── reporter.py         # Environment reporting
+│   │   ├── reporter.py         # Environment reporting
+│   │   ├── styles.py           # Log formatting & styling
+│   │   └── progress.py         # Progress tracking utilities
 │   ├── metadata/               # Dataset registry
 │   │   ├── base.py             # DatasetMetadata schema
 │   │   ├── domains/            # Domain-specific registries
@@ -41,7 +47,7 @@ orchard/
 │   │   ├── constants.py        # Static paths (PROJECT_ROOT, etc.)
 │   │   └── run_paths.py        # Dynamic workspace paths
 │   ├── cli.py                  # Argument parser
-│   └── orchestrator.py         # Lifecycle coordinator (7-phase init)
+│   └── orchestrator.py         # RootOrchestrator (7-phase lifecycle)
 ├── data_handler/               # Data loading pipeline
 │   ├── fetcher.py              # Fetch dispatcher + loading interface
 │   ├── fetchers/               # Domain-specific download modules
@@ -58,17 +64,18 @@ orchard/
 │   ├── mini_cnn.py             # Compact CNN (~94K params)
 │   ├── efficientnet_b0.py      # EfficientNet for 224×224
 │   ├── convnext_tiny.py        # ConvNeXt-Tiny for 224×224
-│   └── vit_tiny.py             # Vision Transformer for 224×224
+│   ├── vit_tiny.py             # Vision Transformer for 224×224
+│   └── timm_backbone.py        # Timm pass-through support
 ├── trainer/                    # Training loop
-│   ├── engine.py               # Core train/validation logic
+│   ├── engine.py               # Core train/validation logic + mixup
 │   ├── trainer.py              # ModelTrainer orchestrator
 │   ├── losses.py               # FocalLoss implementation
-│   └── setup.py                # Optimizer/scheduler factories
+│   └── setup.py                # Optimizer/scheduler/criterion factories
 ├── evaluation/                 # Metrics and visualization
 │   ├── evaluator.py            # Evaluation orchestration
 │   ├── evaluation_pipeline.py  # Full evaluation pipeline
-│   ├── metrics.py              # AUC, F1, Accuracy
-│   ├── tta.py                  # Test-time augmentation
+│   ├── metrics.py              # AUC, F1, Accuracy, Macro-F1
+│   ├── tta.py                  # Test-time augmentation (adaptive)
 │   ├── visualization.py        # Confusion matrix, curves
 │   └── reporting.py            # Excel report generation
 ├── pipeline/                   # Pipeline phase orchestration
@@ -77,7 +84,6 @@ orchard/
 │   ├── onnx_exporter.py        # ONNX export with quantization
 │   └── validation.py           # PyTorch vs ONNX validation
 ├── tracking/                   # Experiment tracking
-│   ├── __init__.py
 │   └── tracker.py              # MLflow integration (optional, local SQLite)
 └── optimization/               # Optuna integration
     ├── objective/              # Trial execution logic
@@ -129,7 +135,7 @@ class InfraManagerProtocol(Protocol):
     def release_resources(self, cfg, logger) -> None: ...
 ```
 
-## 🔌 Key Extension Points
+## Key Extension Points
 
 ### Adding New Datasets
 Register in the appropriate domain file (e.g., `orchard/core/metadata/domains/medical.py`):
@@ -171,9 +177,14 @@ def get_optimizer(model, cfg):
     # Add new case
 ```
 
-## 📚 Further Reading
+## Further Reading
 
 - **[Framework Guide](../docs/guide/FRAMEWORK.md)** - System design, technical deep dive
 - **[Architecture Guide](../docs/guide/ARCHITECTURE.md)** - Supported models and weight transfer
 - **[Configuration Guide](../docs/guide/CONFIGURATION.md)** - All config parameters
+- **[Optimization Guide](../docs/guide/OPTIMIZATION.md)** - Optuna integration, search spaces, pruning
+- **[Export Guide](../docs/guide/EXPORT.md)** - ONNX export, quantization, validation
+- **[Tracking Guide](../docs/guide/TRACKING.md)** - MLflow local setup, run comparison
+- **[Docker Guide](../docs/guide/DOCKER.md)** - Container build, GPU-accelerated execution
+- **[Artifact Guide](../docs/guide/ARTIFACTS.md)** - Output directory structure, artifact differences
 - **[Testing Guide](../docs/guide/TESTING.md)** - Test suite organization

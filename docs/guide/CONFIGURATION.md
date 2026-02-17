@@ -2,7 +2,7 @@
 
 # Configuration Guide
 
-## 💻 Usage Patterns
+## Usage Patterns
 
 ### Configuration-Driven Execution
 
@@ -46,7 +46,7 @@ python forge.py --mixup_alpha 0 --no_tta
 
 ---
 
-## 📊 Configuration Reference
+## Configuration Reference
 
 ### Core Parameters
 

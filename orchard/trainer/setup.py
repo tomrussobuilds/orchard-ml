@@ -60,6 +60,14 @@ def get_optimizer(model: nn.Module, cfg: Config) -> optim.Optimizer:
             weight_decay=cfg.training.weight_decay,
         )
 
+    # Extension point: add your custom optimizer here
+    # if "your_model" in bare_name:
+    #     return optim.Adam(
+    #         model.parameters(),
+    #         lr=cfg.training.learning_rate,
+    #         weight_decay=cfg.training.weight_decay,
+    #     )
+
     # Robust default for modern attention-based or hybrid architectures
     return optim.AdamW(
         model.parameters(), lr=cfg.training.learning_rate, weight_decay=cfg.training.weight_decay

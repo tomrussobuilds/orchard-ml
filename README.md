@@ -57,7 +57,7 @@
 <td align="right"><strong>Project</strong></td>
 <td>
   <a href="https://docs.pytest.org/"><img src="https://img.shields.io/badge/tested%20with-pytest-blue?logo=pytest&logoColor=white" alt="Tested with pytest"></a>
-  <img src="https://img.shields.io/badge/tests-1050+-success" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-1100+-success" alt="Tests">
   <img src="https://img.shields.io/badge/Architecture-Decoupled-blueviolet" alt="Architecture">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
   <img src="https://img.shields.io/badge/status-Active-success" alt="Status">
@@ -68,80 +68,81 @@
 
 ---
 
-## Table of Contents
+<h2>Table of Contents</h2>
 
-- [Overview](#overview)
-- [Hardware Requirements](#hardware-requirements)
-- [Quick Start](#quick-start)
-- [Colab Notebooks](#colab-notebooks)
-- [Experiment Management](#experiment-management)
-- [Documentation](#documentation)
-- [Citation](#citation)
-- [Roadmap](#roadmap)
-- [License](#license)
+- [**Overview**](#overview)
+- [**Hardware Requirements**](#hardware-requirements)
+- [**Quick Start**](#quick-start)
+- [**Colab Notebooks**](#colab-notebooks)
+- [**Experiment Management**](#experiment-management)
+- [**Documentation**](#documentation)
+- [**Citation**](#citation)
+- [**Roadmap**](#roadmap)
+- [**License**](#license)
 
 ---
 
-## Overview
+<h2>Overview</h2>
 
-**Orchard ML** is a research-grade PyTorch training framework engineered for reproducible, scalable computer vision experiments across diverse domains. Built on [MedMNIST v2](https://zenodo.org/records/6496656) medical imaging datasets and expanded to astronomical imaging ([Galaxy10 DECals](https://zenodo.org/records/10845026)), it provides a domain-agnostic platform supporting multi-resolution architectures (28×28 to 224×224+), automated hyperparameter optimization, and cluster-safe execution.
+**Orchard ML** is a research-grade `PyTorch` training framework engineered for reproducible, scalable computer vision experiments across diverse domains. Built on [MedMNIST v2](https://zenodo.org/records/6496656) medical imaging datasets and expanded to astronomical imaging ([Galaxy10 DECals](https://zenodo.org/records/10845026)), it provides a domain-agnostic platform supporting multi-resolution architectures (28×28 to 224×224+), automated hyperparameter optimization, and cluster-safe execution.
 
 **Key Differentiators:**
-- **Type-Safe Configuration Engine**: Pydantic V2-based declarative manifests eliminate runtime errors
+- **Type-Safe Configuration Engine**: `Pydantic V2`-based declarative manifests eliminate runtime errors
+- **Idempotent Lifecycle Orchestration**: `RootOrchestrator` coordinates a 7-phase initialization sequence (seeding, filesystem, logging, infrastructure locks, telemetry) via Context Manager with full dependency injection
 - **Zero-Conflict Execution**: Kernel-level file locking (`fcntl`) prevents concurrent runs from corrupting shared resources
-- **Intelligent Hyperparameter Search**: Optuna integration with TPE sampling and Median Pruning
-- **Hardware-Agnostic**: Auto-detection and optimization for CPU/CUDA/MPS backends
-- **Audit-Grade Traceability**: BLAKE2b-hashed run directories with full YAML snapshots
+- **Intelligent Hyperparameter Search**: `Optuna` integration with TPE sampling and Median Pruning
+- **Hardware-Agnostic**: Auto-detection and optimization for `CPU`/`CUDA`/`MPS` backends
+- **Audit-Grade Traceability**: `BLAKE2b`-hashed run directories with full `YAML` snapshots
 
 **Supported Architectures:**
 
 | Resolution | Architectures | Parameters | Use Case |
 |-----------|--------------|-----------|----------|
-| **28×28 / 224×224** | ResNet-18 | ~11M | Multi-resolution baseline, transfer learning |
-| **28×28** | MiniCNN | ~94K | Fast prototyping, ablation studies |
-| **224×224** | EfficientNet-B0 | ~4.0M | Efficient compound scaling |
-| **224×224** | ConvNeXt-Tiny | ~27.8M | Modern ConvNet design |
-| **224×224** | ViT-Tiny | ~5.5M | Patch-based attention, multiple weight variants |
+| **28×28 / 224×224** | `ResNet-18` | ~11M | Multi-resolution baseline, transfer learning |
+| **28×28** | `MiniCNN` | ~95K | Fast prototyping, ablation studies |
+| **224×224** | `EfficientNet-B0` | ~4.0M | Efficient compound scaling |
+| **224×224** | `ConvNeXt-Tiny` | ~27.8M | Modern ConvNet design |
+| **224×224** | `ViT-Tiny` | ~5.5M | Patch-based attention, multiple weight variants |
 
 ---
 
-## Hardware Requirements
+<h2>Hardware Requirements</h2>
 
 ### CPU Training (28×28 Only)
 - **Supported Resolution**: 28×28 **only**
-- **Time**: ~2.5 hours (ResNet-18, 60 epochs, 16 cores)
-- **Time**: ~5-10 minutes (MiniCNN, 60 epochs, 16 cores)
-- **Architectures**: ResNet-18, MiniCNN
+- **Time**: ~2.5 hours (`ResNet-18`, 60 epochs, 16 cores)
+- **Time**: ~5-10 minutes (`MiniCNN`, 60 epochs, 16 cores)
+- **Architectures**: `ResNet-18`, `MiniCNN`
 - **Use Case**: Development, testing, limited hardware environments
 
 ### GPU Training (All Resolutions)
 - **28×28 Resolution**: 
-  - MiniCNN: ~2-3 minutes (60 epochs)
-  - ResNet-18: ~10-15 minutes (60 epochs)
-- **224×224 Resolution**: 
-  - EfficientNet-B0: ~30 minutes per trial (15 epochs)
-  - ViT-Tiny: ~25-35 minutes per trial (15 epochs)
+  - `MiniCNN`: ~2-3 minutes (60 epochs)
+  - `ResNet-18`: ~10-15 minutes (60 epochs)
+- **224×224 Resolution**:
+  - `EfficientNet-B0`: ~30 minutes per trial (15 epochs)
+  - `ViT-Tiny`: ~25-35 minutes per trial (15 epochs)
 - **VRAM**: 8GB recommended for 224×224 resolution
-- **Architectures**: ResNet-18, EfficientNet-B0, ConvNeXt-Tiny, ViT-Tiny
+- **Architectures**: `ResNet-18`, `EfficientNet-B0`, `ConvNeXt-Tiny`, `ViT-Tiny`
 
 > [!WARNING]
 > **224×224 training on CPU is not recommended** - it would take 10+ hours per trial. High-resolution training requires GPU acceleration. Only 28×28 resolution has been tested and validated for CPU training.
 
 > [!NOTE]
-> **Apple Silicon (MPS)**: The codebase includes MPS backend support (device detection, seeding, memory management), but it has not been tested on real hardware. If you encounter issues, please open an issue.
+> **Apple Silicon (`MPS`)**: The codebase includes `MPS` backend support (device detection, seeding, memory management), but it has not been tested on real hardware. If you encounter issues, please open an issue.
 
 **Representative Benchmarks** (RTX 5070 Laptop GPU):
 
 | Task | Architecture | Resolution | Device | Time | Notes |
 |------|-------------|-----------|--------|------|-------|
-| **Smoke Test** | MiniCNN | 28×28 | CPU/GPU | <30s | 1-epoch sanity check |
-| **Quick Training** | MiniCNN | 28×28 | GPU | ~2-3 min | 60 epochs |
-| **Quick Training** | MiniCNN | 28×28 | CPU (16 cores) | ~30 min | 60 epochs, CPU-validated |
-| **Transfer Learning** | ResNet-18 | 28×28 | GPU | ~5 min | 60 epochs |
-| **Transfer Learning** | ResNet-18 | 28×28 | CPU (16 cores) | ~2.5h | 60 epochs, CPU-validated |
-| **High-Res Training** | EfficientNet-B0 | 224×224 | GPU | ~30 min/trial | 15 epochs per trial, **GPU required** |
-| **High-Res Training** | ViT-Tiny | 224×224 | GPU | ~25-35 min/trial | 15 epochs per trial, **GPU required** |
-| **Optimization Study** | EfficientNet-B0 | 224×224 | GPU | ~2h | 4 trials (early stop at AUC≥0.9999) |
+| **Smoke Test** | `MiniCNN` | 28×28 | CPU/GPU | <30s | 1-epoch sanity check |
+| **Quick Training** | `MiniCNN` | 28×28 | GPU | ~2-3 min | 60 epochs |
+| **Quick Training** | `MiniCNN` | 28×28 | CPU (16 cores) | ~30 min | 60 epochs, CPU-validated |
+| **Transfer Learning** | `ResNet-18` | 28×28 | GPU | ~5 min | 60 epochs |
+| **Transfer Learning** | `ResNet-18` | 28×28 | CPU (16 cores) | ~2.5h | 60 epochs, CPU-validated |
+| **High-Res Training** | `EfficientNet-B0` | 224×224 | GPU | ~30 min/trial | 15 epochs per trial, **GPU required** |
+| **High-Res Training** | `ViT-Tiny` | 224×224 | GPU | ~25-35 min/trial | 15 epochs per trial, **GPU required** |
+| **Optimization Study** | `EfficientNet-B0` | 224×224 | GPU | ~2h | 4 trials (early stop at AUC≥0.9999) |
 | **Optimization Study** | Various | 224×224 | GPU | ~1.5-5h | 20 trials, highly variable |
 
 >[!Note]
@@ -152,7 +153,7 @@
 
 ---
 
-## Quick Start
+<h2>Quick Start</h2>
 
 ### Step 1: Environment Setup
 ```bash
@@ -179,7 +180,7 @@ python -m tests.smoke_test
 
 ### Step 3: Training Workflow
 
-Orchard ML uses `forge.py` as the **single entry point** for all workflows. The pipeline behavior is controlled entirely by the YAML configuration:
+Orchard ML uses `forge.py` as the **single entry point** for all workflows. The pipeline behavior is controlled entirely by the `YAML` configuration:
 
 - **Training only**: Use a `config_*.yaml` file (no `optuna:` section)
 - **Optimization + Training**: Use an `optuna_*.yaml` file (has `optuna:` section)
@@ -219,12 +220,12 @@ python forge.py --config recipes/optuna_vit_tiny.yaml              # ~3-5h*, GPU
 ```
 
 **What happens:**
-1. **Optimization**: Explores hyperparameter combinations with Optuna
+1. **Optimization**: Explores hyperparameter combinations with `Optuna`
 2. **Training**: Full 60-epoch training with best hyperparameters found
 3. **Artifacts**: Interactive plots, best_config.yaml, model weights
 
 > [!TIP]
-> **Model Search**: Enable `optuna.enable_model_search: true` in your YAML config to let Optuna automatically explore all registered architectures for the target resolution. The optimizer will select the best model alongside the best hyperparameters.
+> **Model Search**: Enable `optuna.enable_model_search: true` in your `YAML` config to let `Optuna` automatically explore all registered architectures for the target resolution. The optimizer will select the best model alongside the best hyperparameters.
 
 **View optimization results:**
 ```bash
@@ -236,7 +237,7 @@ firefox outputs/*/figures/optimization_history.html    # Trial progression
 
 #### **Model Export** (Production deployment)
 
-All training configs (`config_*.yaml`) include ONNX export by default:
+All training configs (`config_*.yaml`) include `ONNX` export by default:
 ```bash
 python forge.py --config recipes/config_efficientnet_b0.yaml
 # → Training + ONNX export to outputs/*/exports/model.onnx
@@ -246,26 +247,26 @@ See the [Export Guide](docs/guide/EXPORT.md) for configuration options (format, 
 
 ---
 
-## Colab Notebooks
+<h2>Colab Notebooks</h2>
 
 Try Orchard ML directly in Google Colab — no local setup required:
 
 | Notebook | Description | Runtime | Time |
 |----------|-------------|---------|------|
-| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomrussobuilds/orchard-ml/blob/main/notebooks/01_quickstart_bloodmnist_cpu.ipynb) **[Quick Start: BloodMNIST CPU](notebooks/01_quickstart_bloodmnist_cpu.ipynb)** | MiniCNN training on BloodMNIST 28×28 — end-to-end training, evaluation, and ONNX export | CPU | ~15 min |
-| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomrussobuilds/orchard-ml/blob/main/notebooks/02_galaxy10_optuna_model_search.ipynb) **[Optuna Model Search: Galaxy10 GPU](notebooks/02_galaxy10_optuna_model_search.ipynb)** | Automatic architecture search (EfficientNet-B0, ViT-Tiny, ConvNeXt-Tiny, ResNet-18) on Galaxy10 224×224 with Optuna | T4 GPU | ~30-45 min |
+| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomrussobuilds/orchard-ml/blob/main/notebooks/01_quickstart_bloodmnist_cpu.ipynb) **[Quick Start: BloodMNIST CPU](notebooks/01_quickstart_bloodmnist_cpu.ipynb)** | `MiniCNN` training on `BloodMNIST` 28×28 — end-to-end training, evaluation, and `ONNX` export | CPU | ~15 min |
+| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomrussobuilds/orchard-ml/blob/main/notebooks/02_galaxy10_optuna_model_search.ipynb) **[Optuna Model Search: Galaxy10 GPU](notebooks/02_galaxy10_optuna_model_search.ipynb)** | Automatic architecture search (`EfficientNet-B0`, `ViT-Tiny`, `ConvNeXt-Tiny`, `ResNet-18`) on Galaxy10 224×224 with `Optuna` | T4 GPU | ~30-45 min |
 
 ---
 
-## Experiment Management
+<h2>Experiment Management</h2>
 
-Every run generates a complete artifact suite for total traceability. Both training-only and optimization workflows share the same `RunPath` orchestrator, producing BLAKE2b-hashed timestamped directories.
+Every run generates a complete artifact suite for total traceability. Both training-only and optimization workflows share the same `RunPath` orchestrator, producing `BLAKE2b`-hashed timestamped directories.
 
-**[Browse Sample Artifacts](./docs/artifacts)** — Excel reports, YAML configs, and diagnostic plots from real training runs.
+**[Browse Sample Artifacts](./docs/artifacts)** — Excel reports, `YAML` configs, and diagnostic plots from real training runs.
 See the [full artifact tree](docs/artifacts/artifacts_structure.png) for the complete directory layout — logs, model weights, and HTML plots are generated locally and not tracked in the repo.
 
-**[Browse Recipe Configs](./recipes)** — Ready-to-use YAML configurations for every architecture and workflow.
-Copy the closest recipe, tweak the parameters, and run:
+**[Browse Recipe Configs](./recipes)** — Ready-to-use `YAML` configurations for every architecture and workflow.
+Copy the closest recipe, tweak the parameters, and run with `forge.py`:
 ```bash
 cp recipes/config_efficientnet_b0.yaml my_run.yaml
 # edit hyperparameters, swap dataset/model, add or remove sections (optuna, export, tracking)
@@ -274,22 +275,22 @@ python forge.py --config my_run.yaml
 
 ---
 
-## Documentation
+<h2>Documentation</h2>
 
 | Guide | Covers |
 |-------|--------|
 | [Framework Guide](docs/guide/FRAMEWORK.md) | System architecture diagrams, design principles, component deep-dives |
-| [Architecture Guide](docs/guide/ARCHITECTURE.md) | Supported model architectures, weight transfer, grayscale adaptation, MixUp |
+| [Architecture Guide](docs/guide/ARCHITECTURE.md) | Supported model architectures, weight transfer, grayscale adaptation, `MixUp` |
 | [Configuration Guide](docs/guide/CONFIGURATION.md) | Full parameter reference, usage patterns, adding new datasets |
-| [Optimization Guide](docs/guide/OPTIMIZATION.md) | Optuna integration, search space config, pruning strategies, visualization |
+| [Optimization Guide](docs/guide/OPTIMIZATION.md) | `Optuna` integration, search space config, pruning strategies, visualization |
 | [Docker Guide](docs/guide/DOCKER.md) | Container build instructions, GPU-accelerated execution, reproducibility mode |
-| [Export Guide](docs/guide/EXPORT.md) | ONNX export pipeline, quantization options, validation and benchmarking |
-| [Tracking Guide](docs/guide/TRACKING.md) | MLflow local setup, dashboard and run comparison, programmatic querying |
+| [Export Guide](docs/guide/EXPORT.md) | `ONNX` export pipeline, quantization options, validation and benchmarking |
+| [Tracking Guide](docs/guide/TRACKING.md) | `MLflow` local setup, dashboard and run comparison, programmatic querying |
 | [Artifact Guide](docs/guide/ARTIFACTS.md) | Output directory structure, training vs optimization artifact differences |
 | [Testing Guide](docs/guide/TESTING.md) | 1,000+ test suite, quality automation scripts, CI/CD pipeline details |
 | [`orchard/`](orchard/README.md) / [`tests/`](tests/README.md) | Internal package structure, module responsibilities, extension points |
 
-## Citation
+<h2>Citation</h2>
 
 ```bibtex
 @software{orchardml2026,
@@ -297,27 +298,27 @@ python forge.py --config my_run.yaml
   title  = {Orchard ML: Type-Safe Deep Learning Framework},
   year   = {2026},
   url    = {https://github.com/tomrussobuilds/orchard-ml},
-  note   = {PyTorch framework with Pydantic configuration and Optuna optimization}
+  note   = {PyTorch framework with Pydantic V2 configuration and Optuna optimization}
 }
 ```
 
 ---
 
-## Roadmap
+<h2>Roadmap</h2>
 
-- **Additional Architectures**: EfficientNet-V2, DeiT
+- **Additional Architectures**: `EfficientNet-V2`, `DeiT`
 - **Expanded Dataset Domains**: Climate, remote sensing, microscopy
 - **Multi-modal Support**: Detection, segmentation hooks
-- **Distributed Training**: DDP, FSDP support for multi-GPU
+- **Distributed Training**: `DDP`, `FSDP` support for multi-GPU
 
 
 ---
 
-## License
+<h2>License</h2>
 
 MIT License - See [LICENSE](LICENSE) for details.
 
-## Contributing
+<h2>Contributing</h2>
 
 Contributions welcome! Please:
 1. Fork the repository
@@ -328,6 +329,6 @@ Contributions welcome! Please:
 
 For detailed guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Contact
+<h2>Contact</h2>
 
 For questions or collaboration: [GitHub Issues](https://github.com/tomrussobuilds/orchard-ml/issues)

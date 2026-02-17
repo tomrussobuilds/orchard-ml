@@ -87,7 +87,7 @@ A compact, custom architecture designed specifically for low-resolution medical 
 | Component | Specification | Purpose |
 |-----------|--------------|---------|
 | **Architecture** | 3 conv blocks + global pooling | Fast convergence with minimal parameters |
-| **Parameters** | ~94K | 220x fewer than ResNet-18 |
+| **Parameters** | ~95K | 220x fewer than ResNet-18 |
 | **Input Processing** | 28x28 → 14x14 → 7x7 → 1x1 | Progressive spatial compression |
 | **Regularization** | Configurable dropout before FC | Overfitting prevention |
 

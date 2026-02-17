@@ -64,6 +64,11 @@ def ensure_dataset_npz(
 
         return ensure_galaxy10_npz(metadata)
 
+    # Extension point: add your custom dataset fetcher here
+    # if metadata.name == "your_dataset":
+    #     from .fetchers.your_fetcher import ensure_your_dataset_npz
+    #     return ensure_your_dataset_npz(metadata)
+
     # Default: standard MedMNIST NPZ download with retries and MD5 check
     from .fetchers import ensure_medmnist_npz
 

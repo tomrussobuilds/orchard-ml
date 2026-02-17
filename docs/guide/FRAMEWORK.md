@@ -4,32 +4,56 @@
 
 ## Core Features
 
-### Execution Safety
+### RootOrchestrator -- Lifecycle Management
 
-**Tiered Configuration Engine (SSOT)**
+The `RootOrchestrator` (`orchard/core/orchestrator.py`) is the central coordinator for every ML experiment. It implements a **7-phase initialization protocol** inside a Context Manager, guaranteeing deterministic setup and automatic resource cleanup:
+
+| Phase | Responsibility | Key Detail |
+|-------|---------------|------------|
+| **1. Determinism** | Global RNG seeding | Python, NumPy, PyTorch (strict mode optional) |
+| **2. Runtime Configuration** | CPU thread affinity, system libraries | matplotlib backend, library silencing |
+| **3. Filesystem Provisioning** | Dynamic workspace via `RunPaths` | BLAKE2b-hashed directories |
+| **4. Logging Initialization** | File-based persistent logging | Hot-swap from STDOUT to RotatingFileHandler |
+| **5. Config Persistence** | YAML manifest export | Full audit trail in workspace |
+| **6. Infrastructure Guarding** | OS-level resource locks (`flock`) | Prevents concurrent run collisions |
+| **7. Environment Reporting** | Comprehensive telemetry | Hardware, dataset metadata, policies |
+
+**Design qualities:**
+- **Context Manager pattern**: `with RootOrchestrator(cfg) as orch:` guarantees cleanup even on failure -- lock release, handler flush, resource teardown
+- **Full Dependency Injection**: Every external dependency (infra manager, reporter, seed setter, device resolver, ...) is injectable, enabling complete testability without side effects
+- **Protocol-Based Abstractions**: `InfraManagerProtocol`, `ReporterProtocol`, `TimeTrackerProtocol` provide type-safe interfaces for mocking
+- **Idempotent Initialization**: Guarded by `_initialized` flag -- safe to call multiple times without orphaned directories or lock leaks
+- **Device Caching**: `get_device()` resolves and caches the optimal compute device (CUDA/CPU/MPS) once, avoiding repeated detection overhead
+
+```python
+args = parse_args()
+cfg = Config.from_args(args)
+with RootOrchestrator(cfg) as orch:
+    device = orch.get_device()
+    paths = orch.paths
+    logger = orch.run_logger
+    # Pipeline execution with guaranteed cleanup
+```
+
+### Configuration Engine (SSOT)
+
 Built on Pydantic V2, the configuration system acts as a **Single Source of Truth**, transforming raw inputs (CLI/YAML) into an immutable, type-safe execution blueprint:
 
 - **Late-Binding Metadata Injection**: Dataset specifications (normalization constants, class mappings) are resolved from a centralized registry at instantiation time
 - **Cross-Domain Validation**: Post-construction logic guards prevent unstable states (e.g., enforcing RGB input for pretrained weights, validating AMP compatibility)
 - **Path Portability**: Automatic serialization converts absolute paths to environment-agnostic anchors for cross-platform reproducibility
 
-**Infrastructure Guard Layer**
-An independent `InfrastructureManager` bridges declarative configs with physical hardware:
+### Infrastructure Guard Layer
+
+The `InfrastructureManager` bridges declarative configs with physical hardware (used by RootOrchestrator in Phase 6):
 
 - **Mutual Exclusion via `flock`**: Kernel-level advisory locking ensures only one training instance per workspace (prevents VRAM race conditions)
 - **Process Sanitization**: `psutil` wrapper identifies and terminates ghost Python processes
 - **HPC-Aware Safety**: Auto-detects cluster schedulers (SLURM/PBS/LSF) and suspends aggressive process cleanup to preserve multi-user stability
 
-**Deterministic Run Isolation**
-Every execution generates a unique workspace using:
-```
-outputs/YYYYMMDD_DS_MODEL_HASH6/
-```
-Where `HASH6` is a BLAKE2b cryptographic digest (3-byte, deterministic) computed from the training configuration. Even minor hyperparameter variations produce isolated directories, preventing resource overlap and ensuring auditability.
-
 ### Reproducibility Architecture
 
-**Dual-Layer Reproducibility Strategy:**
+**Dual-Layer Strategy** (enforced by RootOrchestrator Phase 1):
 1. **Standard Mode**: Global seeding (Seed 42) with performance-optimized algorithms
 2. **Strict Mode**: Bit-perfect reproducibility via:
    - `torch.use_deterministic_algorithms(True)`
@@ -43,16 +67,12 @@ Where `HASH6` is a BLAKE2b cryptographic digest (3-byte, deterministic) computed
 ### Performance Optimization
 
 **Hybrid RAM Management:**
-- **Small Datasets** : Full RAM caching for maximum throughput
-- **Large Datasets** : Indexed slicing to prevent OOM errors
+- **Small Datasets**: Full RAM caching for maximum throughput
+- **Large Datasets**: Indexed slicing to prevent OOM errors
 
 **Dynamic Path Anchoring:**
 - "Search-up" logic locates project root via markers (`.git`, `README.md`)
 - Ensures absolute path stability regardless of invocation directory
-
-**Graceful Logger Reconfiguration:**
-- Initial logs route to `STDOUT` for immediate feedback
-- Hot-swap to timestamped file handler post-initialization without trace loss
 
 ### Intelligent Hyperparameter Search
 
