@@ -94,7 +94,14 @@ class DataLoaderFactory:
         classes, counts = np.unique(labels, return_counts=True)
 
         # Inverse frequency balancing: weight = 1 / frequency
-        class_weights = 1.0 / counts
+        # Guard against zero-count classes (possible with aggressive max_samples)
+        safe_counts = np.maximum(counts, 1)
+        if np.any(counts == 0):
+            self.logger.warning(
+                "Some classes have 0 samples in the training set. "
+                "Their sampling weight has been set to 1.0."
+            )
+        class_weights = 1.0 / safe_counts
         weight_map: Dict[int, float] = dict(zip(classes, class_weights))
 
         sample_weights = torch.tensor(

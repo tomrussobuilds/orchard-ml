@@ -60,10 +60,12 @@ def set_seed(seed: int, strict: bool = False) -> None:
 
     Note:
         ``PYTHONHASHSEED`` is set here for completeness, but CPython reads it
-        only at interpreter startup. For true hash determinism, set it before
-        launching the process (e.g. ``-e PYTHONHASHSEED=42`` in Docker, or
-        export in the shell). The runtime assignment has no effect on hashes
-        of built-in types already computed.
+        only at interpreter startup — the runtime assignment has no effect on
+        the running process. The project Dockerfile handles this correctly
+        (``ENV PYTHONHASHSEED=0``). For bare-metal runs, prefix the command:
+        ``PYTHONHASHSEED=42 python forge.py``. Full bit-exact determinism
+        additionally requires ``strict=True`` and ``num_workers=0`` (both
+        enforced automatically in Docker via ``DOCKER_REPRODUCIBILITY_MODE``).
 
     Args:
         seed: The seed value to set across all PRNGs.
@@ -73,6 +75,17 @@ def set_seed(seed: int, strict: bool = False) -> None:
 
     # Best-effort: effective only if set before interpreter startup (see Note)
     os.environ["PYTHONHASHSEED"] = str(seed)
+    if strict:
+        logging.warning(
+            "PYTHONHASHSEED=%s set at runtime, but CPython reads it only at "
+            "interpreter startup — this assignment has no effect on the "
+            "running process. Full determinism requires the variable to be "
+            "set *before* the interpreter starts (the project Dockerfile "
+            "does this via ENV PYTHONHASHSEED=0). For bare-metal runs use: "
+            "PYTHONHASHSEED=%s python forge.py",
+            seed,
+            seed,
+        )
 
     np.random.seed(seed)
     torch.manual_seed(seed)

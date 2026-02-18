@@ -4,6 +4,10 @@ Test-Time Augmentation (TTA) Module
 This module implements adaptive TTA strategies for robust inference.
 It provides an ensemble-based prediction mechanism that respects
 anatomical constraints and texture preservation requirements of medical imaging.
+
+Transform selection is deterministic and hardware-independent: the same
+``tta_mode`` config always produces the same ensemble regardless of whether
+inference runs on CPU, CUDA, or MPS, guaranteeing cross-platform reproducibility.
 """
 
 from typing import List
@@ -17,27 +21,29 @@ from orchard.core import Config
 
 
 # TTA HELPERS
-def _get_tta_transforms(
-    device: torch.device, is_anatomical: bool, is_texture_based: bool, cfg: Config
-) -> List:
+def _get_tta_transforms(is_anatomical: bool, is_texture_based: bool, cfg: Config) -> List:
     """
     Internal factory to resolve the augmentation suite based on
-    dataset constraints and hardware capabilities.
+    dataset constraints and configuration policy.
+
+    Transform selection is deterministic and hardware-independent to ensure
+    reproducible predictions across CPU, CUDA, and MPS devices.
 
     Transform selection logic:
         - Anatomical datasets: NO flips or rotations (orientation is diagnostic)
         - Texture-based datasets: Minimal transforms (texture patterns are fragile)
-        - Non-anatomical + Non-texture: Full augmentation suite
+        - Non-anatomical + Non-texture: Full or light suite based on tta_mode config
 
     Args:
-        device: Hardware target for optimized transform selection
         is_anatomical: If True, preserves spatial orientation (no flips/rotations)
         is_texture_based: If True, avoids destructive pixel operations
-        cfg: Configuration with TTA parameters
+        cfg: Configuration with TTA parameters and tta_mode policy
 
     Returns:
         List of transform functions to apply during TTA inference
     """
+    tta_mode = cfg.augmentation.tta_mode
+
     # 1. BASE TRANSFORMS: Always include identity
     t_list = [
         (lambda x: x),  # Original (always first)
@@ -77,14 +83,13 @@ def _get_tta_transforms(
                         x, kernel_size=3, sigma=cfg.augmentation.tta_blur_sigma
                     )
                 ),
-                # Removed: Gaussian noise (non-deterministic, breaks reproducibility)
             ]
         )
 
-    # 4. ADVANCED TRANSFORMS: Rotations for non-anatomical data on GPU
+    # 4. ADVANCED TRANSFORMS: Config-driven, hardware-independent
     # Rotations are valid only when spatial orientation is not diagnostic
     if not is_anatomical and not is_texture_based:
-        if device.type != "cpu":
+        if tta_mode == "full":
             t_list.extend(
                 [
                     (lambda x: torch.rot90(x, k=1, dims=[2, 3])),  # 90°
@@ -93,7 +98,7 @@ def _get_tta_transforms(
                 ]
             )
         else:
-            # CPU fallback: vertical flip instead of rotations (lighter)
+            # Light mode: vertical flip instead of rotations (faster on CPU)
             t_list.append(lambda x: torch.flip(x, dims=[2]))
 
     return t_list
@@ -115,8 +120,8 @@ def adaptive_tta_predict(
     Predictions from all augmented versions are averaged in the probability space.
     If is_anatomical is True, it restricts augmentations to orientation-preserving
     transforms. If is_texture_based is True, it disables destructive pixel-level
-    noise/blur to preserve local patterns. Hardware-awareness is implemented
-    to toggle between Full and Light TTA modes.
+    noise/blur to preserve local patterns. The ``tta_mode`` config field controls
+    ensemble complexity (full vs light) independently of hardware.
 
     Args:
         model (nn.Module): The trained PyTorch model.
@@ -133,7 +138,7 @@ def adaptive_tta_predict(
     inputs = inputs.to(device)
 
     # Generate the suite of transforms via module-level factory
-    transforms = _get_tta_transforms(device, is_anatomical, is_texture_based, cfg)
+    transforms = _get_tta_transforms(is_anatomical, is_texture_based, cfg)
 
     # ENSEMBLE EXECUTION: Iterative probability accumulation to save VRAM
     ensemble_probs = None

@@ -28,7 +28,7 @@ dependencies = [
     "torch>=2.0.0",
     "torchvision>=0.15.0",
     "numpy>=2.0.0",
-    "pandas>=2.0.0",
+    "pandas>=2.0.0",  # floor kept low: pandas 3.x has issues on Python 3.14
     "scikit-learn>=1.5.0",
     "Pillow>=12.1.1",
     "h5py>=3.12.0",
@@ -58,7 +58,7 @@ Documentation = "https://github.com/tomrussobuilds/orchard-ml/tree/main/docs/gui
 
 [project.optional-dependencies]
 tracking = [
-    "mlflow>=2.9.0",
+    "mlflow>=3.9.0",
 ]
 notebooks = [
     "ipython>=9.0.0",
@@ -70,9 +70,9 @@ test = [
 ]
 dev = [
     "orchard-ml[test]",
-    "black>=25.0.0",
+    "black>=26.1.0",
     "flake8>=7.0.0",
-    "isort>=6.0.0",
+    "isort>=7.0.0",
     "mypy==1.19.1",
     "bandit>=1.8.0",
     "radon>=6.0.0",
@@ -162,7 +162,7 @@ python_version = "3.10"
 warn_return_any = false
 warn_unused_configs = true
 ignore_missing_imports = true
-check_untyped_defs = false
+check_untyped_defs = true
 exclude = ["tests/", "docs/", "build/", "dist/"]
 
 [tool.flake8]

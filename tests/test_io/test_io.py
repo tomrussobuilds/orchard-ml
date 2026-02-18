@@ -144,7 +144,8 @@ def test_load_model_weights_success(mock_torch_load, tmp_path):
     checkpoint_path = tmp_path / "model.pth"
     checkpoint_path.touch()
 
-    mock_state_dict = {"weight": torch.randn(5, 10), "bias": torch.randn(5)}
+    # Return keys that exactly match the model's state_dict for architecture validation
+    mock_state_dict = model.state_dict()
     mock_torch_load.return_value = mock_state_dict
 
     device = torch.device("cpu")
@@ -189,6 +190,27 @@ def test_load_model_weights_uses_weights_only(mock_torch_load, tmp_path):
 
     call_kwargs = mock_torch_load.call_args.kwargs
     assert call_kwargs["weights_only"] is True
+
+
+@pytest.mark.unit
+@patch("torch.load")
+def test_load_model_weights_architecture_mismatch(mock_torch_load, tmp_path):
+    """Test load_model_weights raises RuntimeError for mismatched checkpoint keys."""
+    model = nn.Linear(10, 5)
+    checkpoint_path = tmp_path / "model.pth"
+    checkpoint_path.touch()
+
+    # Return checkpoint with keys that do NOT match the model's state_dict
+    mismatched_state_dict = {
+        "encoder.weight": torch.randn(5, 10),
+        "encoder.bias": torch.randn(5),
+    }
+    mock_torch_load.return_value = mismatched_state_dict
+
+    device = torch.device("cpu")
+
+    with pytest.raises(RuntimeError, match="architecture mismatch"):
+        load_model_weights(model, checkpoint_path, device)
 
 
 if __name__ == "__main__":

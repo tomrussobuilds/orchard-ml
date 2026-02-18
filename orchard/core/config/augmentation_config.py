@@ -51,6 +51,10 @@ class AugmentationConfig(BaseModel):
     min_scale: Probability = Field(default=0.9, description="Minimum random resize scale")
 
     # TTA parameters
+    tta_mode: str = Field(
+        default="full",
+        description="TTA ensemble complexity: 'full' (with rotations) or 'light' (no rotations)",
+    )
     tta_translate: PixelShift = Field(default=2.0, description="TTA pixel shift")
     tta_scale: ZoomScale = Field(default=1.1, description="TTA scaling factor")
     tta_blur_sigma: BlurSigma = Field(default=0.4, description="TTA Gaussian blur sigma")

@@ -39,6 +39,8 @@ def mock_dataloader():
 def mock_config():
     """Create a minimal Config object."""
     cfg = MagicMock(spec=Config)
+    cfg.augmentation = MagicMock()
+    cfg.augmentation.tta_mode = "full"
     return cfg
 
 

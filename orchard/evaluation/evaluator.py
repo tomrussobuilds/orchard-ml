@@ -91,7 +91,7 @@ def evaluate_model(
         f"AUC: {metrics['auc']:.4f} | F1: {metrics['f1']:.4f}"
     )
     if actual_tta:
-        mode = "Full" if device.type != "cpu" else "Light"
+        mode = cfg.augmentation.tta_mode.upper()
         log_msg += f" | TTA ENABLED (Mode: {mode})"
 
     logger.info(log_msg)

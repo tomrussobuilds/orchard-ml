@@ -179,11 +179,11 @@ class OptunaOrchestrator:
         if self.cfg.optuna.save_plots:
             generate_visualizations(study, self.paths.figures)
 
-        if self.cfg.optuna.save_best_config:
-            export_best_config(study, self.cfg, self.paths)
-
         export_study_summary(study, self.paths)
         export_top_trials(study, self.paths, self.cfg.optuna.metric_name)
+
+        if self.cfg.optuna.save_best_config:
+            export_best_config(study, self.cfg, self.paths)
 
 
 def run_optimization(

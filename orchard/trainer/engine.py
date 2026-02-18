@@ -119,6 +119,13 @@ def train_one_epoch(
             outputs = model(inputs)
             loss = criterion(outputs, targets)
 
+        # Guard: halt on diverged loss to prevent saving corrupted weights
+        if torch.isnan(loss) or torch.isinf(loss):
+            raise RuntimeError(
+                f"Training diverged: loss={loss.item()} at epoch {epoch}. "
+                "Check learning rate, data preprocessing, or enable gradient clipping."
+            )
+
         # Backward pass with optional AMP and gradient clipping
         _backward_step(loss, optimizer, model, scaler, grad_clip)
 
@@ -222,13 +229,11 @@ def validate_epoch(
 
 
 # MIXUP UTILITY
-_mixup_rng = np.random.default_rng(42)
-
-
 def mixup_data(
     x: torch.Tensor,
     y: torch.Tensor,
     alpha: float = 1.0,
+    rng: Optional[np.random.Generator] = None,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, float]:
     """
     Applies MixUp augmentation by blending two random samples.
@@ -241,6 +246,7 @@ def mixup_data(
         x: Input data batch (images)
         y: Target labels batch
         alpha: Beta distribution parameter (0 disables MixUp)
+        rng: NumPy random generator for reproducibility (seeded from config)
 
     Returns:
         Tuple containing:
@@ -252,8 +258,11 @@ def mixup_data(
     if alpha <= 0:
         return x, y, y, 1.0
 
+    if rng is None:
+        rng = np.random.default_rng(seed=42)
+
     # Draw mixing coefficient from Beta distribution
-    lam: float = float(_mixup_rng.beta(alpha, alpha))
+    lam: float = float(rng.beta(alpha, alpha))
     batch_size: int = x.size(0)
 
     # Generate random permutation (device-aware: CUDA and MPS)

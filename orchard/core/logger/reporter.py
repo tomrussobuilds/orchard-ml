@@ -197,7 +197,7 @@ class Reporter(BaseModel):
         """Logs high-level training strategies and models."""
         train = cfg.training
         sys = cfg.hardware
-        tta_status = determine_tta_mode(train.use_tta, device.type)
+        tta_status = determine_tta_mode(train.use_tta, device.type, cfg.augmentation.tta_mode)
 
         repro_mode = "Strict" if sys.use_deterministic_algorithms else "Standard"
 

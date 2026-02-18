@@ -345,6 +345,7 @@ def test_train_mixup_cutoff(
     cfg.training.mixup_alpha = 1.0
     cfg.training.cosine_fraction = 0.5
     cfg.training.grad_clip = 0.0
+    cfg.training.seed = 42
 
     with tempfile.TemporaryDirectory() as tmpdir:
         trainer = ModelTrainer(

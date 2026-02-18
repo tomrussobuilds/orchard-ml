@@ -21,7 +21,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
 
-from orchard.core import LOGGER_NAME, Config, RunPaths, log_best_config_export, save_config_as_yaml
+from orchard.core import LOGGER_NAME, Config, RunPaths, save_config_as_yaml
 
 from .config import map_param_to_config_path
 from .utils import get_completed_trials, has_completed_trials
@@ -65,7 +65,6 @@ def export_best_config(study: optuna.Study, cfg: Config, paths: RunPaths) -> Pat
     # Save to YAML
     output_path = paths.reports / "best_config.yaml"
     save_config_as_yaml(best_config, output_path)
-    log_best_config_export(output_path)
 
     return output_path
 

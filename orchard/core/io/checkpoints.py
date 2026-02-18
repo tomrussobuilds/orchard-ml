@@ -42,4 +42,21 @@ def load_model_weights(model: torch.nn.Module, path: Path, device: torch.device)
 
     # weights_only=True is used for security (avoids arbitrary code execution)
     state_dict = torch.load(path, map_location=device, weights_only=True)
+
+    # Validate architecture compatibility before loading
+    model_keys = set(model.state_dict().keys())
+    checkpoint_keys = set(state_dict.keys())
+    if model_keys != checkpoint_keys:
+        missing = model_keys - checkpoint_keys
+        unexpected = checkpoint_keys - model_keys
+        parts = []
+        if missing:
+            parts.append(f"missing keys: {sorted(missing)[:5]}")
+        if unexpected:
+            parts.append(f"unexpected keys: {sorted(unexpected)[:5]}")
+        raise RuntimeError(
+            f"Checkpoint architecture mismatch ({', '.join(parts)}). "
+            "Ensure the config matches the architecture used during training."
+        )
+
     model.load_state_dict(state_dict)

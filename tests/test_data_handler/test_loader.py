@@ -352,6 +352,25 @@ def test_get_dataloaders_with_optuna_mode(mock_cfg, mock_metadata):
         assert result == mock_loaders
 
 
+@pytest.mark.unit
+def test_balancing_sampler_zero_count_guard(mock_cfg, mock_metadata):
+    """Test _get_balancing_sampler warns when a class has 0 samples."""
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
+        factory = DataLoaderFactory(mock_cfg, mock_metadata)
+
+        dataset = MagicMock()
+        dataset.labels = np.array([0, 1, 0, 1])
+
+        # Patch np.unique to return a zero count for class 2
+        with patch("orchard.data_handler.loader.np.unique") as mock_unique:
+            mock_unique.return_value = (np.array([0, 1, 2]), np.array([2, 2, 0]))
+            sampler = factory._get_balancing_sampler(dataset)
+
+            assert sampler is not None
+
+
 # MAIN TEST RUNNER
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

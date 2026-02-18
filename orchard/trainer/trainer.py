@@ -24,6 +24,7 @@ from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Tuple
 
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import LRScheduler
@@ -144,10 +145,11 @@ class ModelTrainer:
         # Modern AMP Support (PyTorch 2.x+)
         self.scaler = torch.amp.GradScaler(enabled=cfg.training.use_amp)
 
-        # Mixup configuration
+        # Mixup configuration (RNG seeded from training seed for reproducibility)
         self.mixup_fn = None
         if cfg.training.mixup_alpha > 0:
-            self.mixup_fn = partial(mixup_data, alpha=cfg.training.mixup_alpha)
+            mixup_rng = np.random.default_rng(cfg.training.seed)
+            self.mixup_fn = partial(mixup_data, alpha=cfg.training.mixup_alpha, rng=mixup_rng)
 
         # Output Management
         self.best_path = output_path or Path("./best_model.pth")

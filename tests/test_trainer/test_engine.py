@@ -247,6 +247,32 @@ def test_train_one_epoch_updates_tqdm_postfix(simple_model, simple_loader, crite
         assert mock_iterator.set_postfix.called
 
 
+@pytest.mark.unit
+def test_train_one_epoch_nan_loss_raises(simple_model, criterion, optimizer):
+    """Test train_one_epoch raises RuntimeError when loss is NaN."""
+    device = torch.device("cpu")
+
+    # Create a model that produces NaN output by injecting NaN weights
+    with torch.no_grad():
+        for param in simple_model.parameters():
+            param.fill_(float("nan"))
+
+    batch = (torch.randn(4, 1, 28, 28), torch.randint(0, 10, (4,)))
+    loader = MagicMock()
+    loader.__iter__ = MagicMock(return_value=iter([batch]))
+    loader.__len__ = MagicMock(return_value=1)
+
+    with pytest.raises(RuntimeError, match="Training diverged"):
+        train_one_epoch(
+            model=simple_model,
+            loader=loader,
+            criterion=criterion,
+            optimizer=optimizer,
+            device=device,
+            use_tqdm=False,
+        )
+
+
 # TESTS: VALIDATE EPOCH
 @pytest.mark.unit
 def test_validate_epoch_basic(simple_model, simple_loader, criterion):

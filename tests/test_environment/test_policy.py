@@ -32,12 +32,20 @@ def test_determine_tta_mode_disabled_mps():
     assert result == "DISABLED"
 
 
-# TTA MODE: CPU OPTIMIZED
+# TTA MODE: DEFAULT (FULL)
+@pytest.mark.unit
+def test_determine_tta_mode_cpu_default():
+    """Test TTA mode returns FULL for CPU when using default tta_mode."""
+    result = determine_tta_mode(use_tta=True, device_type="cpu")
+    assert result == "FULL (CPU)"
+
+
+# TTA MODE: EXPLICIT LIGHT
 @pytest.mark.unit
 def test_determine_tta_mode_cpu_light():
-    """Test TTA mode returns LIGHT for CPU to avoid performance issues."""
-    result = determine_tta_mode(use_tta=True, device_type="cpu")
-    assert result == "LIGHT (CPU Optimized)"
+    """Test TTA mode returns LIGHT for CPU when tta_mode is explicitly 'light'."""
+    result = determine_tta_mode(use_tta=True, device_type="cpu", tta_mode="light")
+    assert result == "LIGHT (CPU)"
 
 
 # TTA MODE: ACCELERATED
@@ -75,10 +83,10 @@ def test_determine_tta_mode_unknown_device():
 
 @pytest.mark.unit
 def test_determine_tta_mode_all_devices():
-    """Test all known device types with TTA enabled."""
+    """Test all known device types with TTA enabled (default tta_mode='full')."""
     devices = ["cpu", "cuda", "mps"]
     expected = [
-        "LIGHT (CPU Optimized)",
+        "FULL (CPU)",
         "FULL (CUDA)",
         "FULL (MPS)",
     ]

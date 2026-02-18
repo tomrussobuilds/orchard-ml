@@ -328,19 +328,18 @@ def test_export_best_config_success_path(minimal_config, paths, tmp_path):
 
     with patch("orchard.optimization.orchestrator.exporters.build_best_config_dict") as mock_build:
         with patch("orchard.optimization.orchestrator.exporters.save_config_as_yaml") as mock_save:
-            with patch("orchard.optimization.orchestrator.exporters.log_best_config_export"):
-                mock_build.return_value = {
-                    "training": {"learning_rate": 0.001, "batch_size": 32},
-                    "dataset": {"name": "test"},
-                    "architecture": {"name": "resnet"},
-                }
+            mock_build.return_value = {
+                "training": {"learning_rate": 0.001, "batch_size": 32},
+                "dataset": {"name": "test"},
+                "architecture": {"name": "resnet"},
+            }
 
-                result = export_best_config(study, minimal_config, paths)
+            result = export_best_config(study, minimal_config, paths)
 
-                assert result == paths.reports / "best_config.yaml"
+            assert result == paths.reports / "best_config.yaml"
 
-                mock_build.assert_called_once_with(study.best_params, minimal_config)
-                mock_save.assert_called_once()
+            mock_build.assert_called_once_with(study.best_params, minimal_config)
+            mock_save.assert_called_once()
 
 
 @pytest.mark.unit

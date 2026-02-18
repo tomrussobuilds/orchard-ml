@@ -15,23 +15,24 @@ Key Policies:
 """
 
 
-def determine_tta_mode(use_tta: bool, device_type: str) -> str:
+def determine_tta_mode(use_tta: bool, device_type: str, tta_mode: str = "full") -> str:
     """
-    Defines TTA complexity based on hardware acceleration availability.
+    Reports the active TTA ensemble policy.
+
+    The ensemble complexity is driven by the ``tta_mode`` config field,
+    not by hardware.  This guarantees identical predictions on CPU, CUDA
+    and MPS for the same config, preserving cross-platform determinism.
 
     Args:
-        use_tta (bool): Whether Test-Time Augmentation is enabled.
-        device_type (str): The type of active device ('cpu', 'cuda', 'mps').
+        use_tta: Whether Test-Time Augmentation is enabled.
+        device_type: The type of active device ('cpu', 'cuda', 'mps').
+        tta_mode: Config-driven ensemble complexity ('full' or 'light').
 
     Returns:
-        str: Descriptive string of the TTA operation mode.
+        Descriptive string of the TTA operation mode.
     """
     if not use_tta:
         return "DISABLED"
 
-    # CPU-based TTA can be extremely slow for large ensembles;
-    # we enforce a LIGHT policy unless acceleration is present.
-    if device_type == "cpu":
-        return "LIGHT (CPU Optimized)"
-
-    return f"FULL ({device_type.upper()})"
+    mode_label = tta_mode.upper()
+    return f"{mode_label} ({device_type.upper()})"
