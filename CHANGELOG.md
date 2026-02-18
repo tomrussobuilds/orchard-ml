@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - add rank-aware orchestration and normalize relative imports
+- add Typer CLI entry point and modernize project tooling
 
 ## [0.1.1] - 2026-02-18
 

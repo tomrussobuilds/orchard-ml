@@ -5,12 +5,18 @@ Tests the Typer-based CLI utilities: override parsing, auto-casting,
 and basic command invocation.
 """
 
+import re
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from orchard.cli_app import _auto_cast, _parse_overrides
+
+
+def _strip_ansi(text: str) -> str:
+    """Remove ANSI escape sequences from Rich/Typer help output."""
+    return re.sub(r"\x1b\[[0-9;]*m", "", text)
 
 
 # AUTO-CAST
@@ -142,8 +148,9 @@ class TestCLIHelp:
         runner = CliRunner()
         result = runner.invoke(app, ["run", "--help"])
         assert result.exit_code == 0
-        assert "--set" in result.output
-        assert "RECIPE" in result.output
+        clean = _strip_ansi(result.output)
+        assert "--set" in clean
+        assert "RECIPE" in clean
 
     def test_run_missing_recipe(self):
         from typer.testing import CliRunner
