@@ -4,7 +4,33 @@ Convert trained Orchard ML models to ONNX format for production deployment.
 
 <h2>Quick Start</h2>
 
-Export a trained model by specifying the checkpoint and architecture parameters:
+<h3>Integrated Export (Recommended)</h3>
+
+Add an `export:` section to your YAML recipe to export automatically after training:
+
+```yaml
+# recipes/config_efficientnet_b0.yaml
+dataset:
+  name: galaxy10
+  resolution: 224
+model:
+  name: efficientnet_b0
+training:
+  epochs: 60
+export:
+  format: onnx
+  opset_version: 18
+```
+
+```bash
+orchard run recipes/config_efficientnet_b0.yaml
+```
+
+The pipeline will train, evaluate, and export to ONNX in a single run.
+
+<h3>Standalone Export (via forge.py)</h3>
+
+To export a previously trained checkpoint without re-training, use `forge.py` directly:
 
 ```bash
 python forge.py \
@@ -51,6 +77,10 @@ Use `--dataset` to specify architecture metadata for your trained model.
 For datasets **not** in the registry, use any dataset name with matching resolution and class count - only the metadata is used.
 
 <h2>Common Options</h2>
+
+> [!NOTE]
+> The options below use `forge.py` for standalone export of existing checkpoints.
+> For integrated export during training, configure the `export:` section in your YAML recipe.
 
 <h3>Quantization (Reduce model size)</h3>
 
@@ -115,7 +145,7 @@ python forge.py \
     --validate_export False
 ```
 
-<h2>CLI Reference</h2>
+<h2>CLI Reference (forge.py standalone export)</h2>
 
 <h3>Required Arguments</h3>
 
@@ -158,27 +188,34 @@ python forge.py \
 <h2>Troubleshooting</h2>
 
 <h3>Checkpoint not found</h3>
+
 Checkpoints are in the `models/` subdirectory:
 ```bash
 --checkpoint outputs/run_xyz/models/best_model.pth
 ```
 
 <h3>Class count mismatch</h3>
+
 Match `--dataset` to your trained model:
 - Galaxy10 → `--dataset galaxy10` (10 classes)
 - PathMNIST → `--dataset pathmnist` (9 classes)
 - BloodMNIST → `--dataset bloodmnist` (8 classes)
 
 <h3>Validation failed</h3>
+
 Relax tolerance with `--max_deviation 1e-4` or skip with `--validate_export False`
 
 <h3>Missing onnxscript</h3>
+
 ```bash
 pip install onnx onnxruntime onnxscript
 ```
 
 <h3>Export warnings</h3>
+
 Default `--opset_version 18` produces clean output with no warnings. If using lower versions (<18), you may see opset conversion warnings that are safe to ignore.
+
+---
 
 <h2>Dataset Reference</h2>
 
@@ -186,6 +223,8 @@ Default `--opset_version 18` produces clean output with no warnings. If using lo
 |------------|------------------|-----------------|
 | 28x28 | `bloodmnist`, `dermamnist`, `organmnist_axial` | - |
 | 224x224 | `pathmnist`, `chestmnist`, `octmnist` | `galaxy10` |
+
+---
 
 <h2>What Happens During Export</h2>
 

@@ -48,6 +48,7 @@ dependencies = [
     "onnx>=1.17.0",
     "onnxruntime>=1.20.0; python_version < '3.14'",
     "onnxscript>=0.5.0",
+    "typer>=0.9.0",
 ]
 
 [project.urls]
@@ -55,6 +56,9 @@ Homepage = "https://github.com/tomrussobuilds/orchard-ml"
 Repository = "https://github.com/tomrussobuilds/orchard-ml"
 Issues = "https://github.com/tomrussobuilds/orchard-ml/issues"
 Documentation = "https://github.com/tomrussobuilds/orchard-ml/tree/main/docs/guide"
+
+[project.scripts]
+orchard = "orchard.cli_app:app"
 
 [project.optional-dependencies]
 tracking = [

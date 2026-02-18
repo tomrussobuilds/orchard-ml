@@ -181,27 +181,35 @@ pip install -e ".[dev]"
 # Downloads BloodMNIST 28×28 by default
 python -m tests.smoke_test
 
-# Note: You can skip this step - forge.py will auto-download datasets as needed
+# Note: You can skip this step - datasets are auto-downloaded on first run
 ```
 
 <h3>Step 3: Training Workflow</h3>
 
-Orchard ML uses `forge.py` as the **single entry point** for all workflows. The pipeline behavior is controlled entirely by the `YAML` configuration:
+Orchard ML uses the `orchard` CLI as the **single entry point** for all workflows. The pipeline behavior is controlled entirely by the `YAML` recipe:
 
 - **Training only**: Use a `config_*.yaml` file (no `optuna:` section)
 - **Optimization + Training**: Use an `optuna_*.yaml` file (has `optuna:` section)
 - **With Export**: Add an `export:` section to your config
 
+```bash
+orchard --version                          # Verify installation
+orchard run --help                         # Show available options
+```
+
 <h4><strong>Training Only</strong> (Quick start)</h4>
 
 ```bash
 # 28×28 resolution (CPU-compatible)
-python forge.py --config recipes/config_mini_cnn.yaml              # ~2-3 min GPU, ~10 min CPU
-python forge.py --config recipes/config_resnet_18.yaml             # ~10-15 min GPU, ~2.5h CPU
+orchard run recipes/config_mini_cnn.yaml              # ~2-3 min GPU, ~10 min CPU
+orchard run recipes/config_resnet_18.yaml             # ~10-15 min GPU, ~2.5h CPU
 
 # 224×224 resolution (GPU required)
-python forge.py --config recipes/config_efficientnet_b0.yaml       # ~30 min GPU
-python forge.py --config recipes/config_vit_tiny.yaml              # ~25-35 min GPU
+orchard run recipes/config_efficientnet_b0.yaml       # ~30 min GPU
+orchard run recipes/config_vit_tiny.yaml              # ~25-35 min GPU
+
+# Override any config value on the fly
+orchard run recipes/config_mini_cnn.yaml --set training.epochs=20 --set training.seed=99
 ```
 
 **What happens:**
@@ -215,12 +223,12 @@ python forge.py --config recipes/config_vit_tiny.yaml              # ~25-35 min 
 
 ```bash
 # 28×28 resolution - fast iteration
-python forge.py --config recipes/optuna_mini_cnn.yaml              # ~5 min GPU, ~10 min CPU
-python forge.py --config recipes/optuna_resnet_18.yaml             # ~15-20 min GPU
+orchard run recipes/optuna_mini_cnn.yaml              # ~5 min GPU, ~10 min CPU
+orchard run recipes/optuna_resnet_18.yaml             # ~15-20 min GPU
 
 # 224×224 resolution - requires GPU
-python forge.py --config recipes/optuna_efficientnet_b0.yaml       # ~1.5-5h*, GPU
-python forge.py --config recipes/optuna_vit_tiny.yaml              # ~3-5h*, GPU
+orchard run recipes/optuna_efficientnet_b0.yaml       # ~1.5-5h*, GPU
+orchard run recipes/optuna_vit_tiny.yaml              # ~3-5h*, GPU
 
 # *Time varies due to early stopping (may finish in 1-3h if target AUC reached)
 ```
@@ -245,7 +253,7 @@ firefox outputs/*/figures/optimization_history.html    # Trial progression
 
 All training configs (`config_*.yaml`) include `ONNX` export by default:
 ```bash
-python forge.py --config recipes/config_efficientnet_b0.yaml
+orchard run recipes/config_efficientnet_b0.yaml
 # → Training + ONNX export to outputs/*/exports/model.onnx
 ```
 
@@ -272,11 +280,11 @@ Every run generates a complete artifact suite for total traceability. Both train
 See the [full artifact tree](docs/artifacts/artifacts_structure.png) for the complete directory layout — logs, model weights, and HTML plots are generated locally and not tracked in the repo.
 
 **[Browse Recipe Configs](./recipes)** — Ready-to-use `YAML` configurations for every architecture and workflow.
-Copy the closest recipe, tweak the parameters, and run with `forge.py`:
+Copy the closest recipe, tweak the parameters, and run:
 ```bash
 cp recipes/config_efficientnet_b0.yaml my_run.yaml
 # edit hyperparameters, swap dataset/model, add or remove sections (optuna, export, tracking)
-python forge.py --config my_run.yaml
+orchard run my_run.yaml
 ```
 
 ---

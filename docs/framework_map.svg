@@ -12,7 +12,7 @@
 <!-- orchard -->
 <g id="node1" class="node">
 <title>orchard</title><style>.edge>path:hover{stroke-width:8}</style>
-<ellipse fill="#924e4e" stroke="black" cx="1538.15" cy="-18" rx="31.4" ry="18"/>
+<ellipse fill="#9d4343" stroke="black" cx="1538.15" cy="-18" rx="31.4" ry="18"/>
 <text text-anchor="middle" x="1538.15" y="-15.5" font-family="Helvetica,sans-Serif" font-size="10.00" fill="#ffffff">orchard</text>
 </g>
 <!-- orchard_core -->

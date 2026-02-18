@@ -30,8 +30,12 @@ fi
 sed -i "s/^version = \".*\"/version = \"${VERSION}\"/" pyproject.toml
 echo "Updated pyproject.toml to version ${VERSION}"
 
+# Generate changelog with the new tag
+git-cliff --tag "$TAG" -o CHANGELOG.md
+echo "Generated CHANGELOG.md for ${TAG}"
+
 # Commit and tag
-git add pyproject.toml
+git add pyproject.toml CHANGELOG.md
 git commit -m "release: v${VERSION}"
 git tag "$TAG"
 

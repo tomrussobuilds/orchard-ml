@@ -22,7 +22,7 @@ repos:
       - id: mypy
         name: mypy (type checking)
         language: system
-        entry: mypy
+        entry: mypy --cache-dir /dev/null
         types: [python]
         pass_filenames: false
         args: [orchard/]

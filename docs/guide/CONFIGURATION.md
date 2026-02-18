@@ -13,36 +13,36 @@
 python -m tests.smoke_test
 
 # Train with presets (28×28 resolution, CPU-compatible)
-python forge.py --config recipes/config_resnet_18.yaml     # ~15 min GPU, ~2.5h CPU
-python forge.py --config recipes/config_mini_cnn.yaml              # ~2-3 min GPU, ~10 min CPU
+orchard run recipes/config_resnet_18.yaml     # ~15 min GPU, ~2.5h CPU
+orchard run recipes/config_mini_cnn.yaml              # ~2-3 min GPU, ~10 min CPU
 
 # Train with presets (224×224 resolution, GPU required)
-python forge.py --config recipes/config_efficientnet_b0.yaml       # ~30 min each trial
-python forge.py --config recipes/config_vit_tiny.yaml              # ~25-35 min each trial
+orchard run recipes/config_efficientnet_b0.yaml       # ~30 min each trial
+orchard run recipes/config_vit_tiny.yaml              # ~25-35 min each trial
 ```
 
 <h3>CLI Overrides</h3>
 
-For rapid experimentation (not recommended for production):
+Use `--set` to override individual values without editing the YAML recipe:
 
 ```bash
 # Quick test on different dataset
-python forge.py --dataset dermamnist --epochs 10 --batch_size 64
+orchard run recipes/config_resnet_18.yaml --set dataset.name=dermamnist --set training.epochs=10
 
 # Custom learning rate schedule
-python forge.py --lr 0.001 --min_lr 1e-7 --epochs 100
+orchard run recipes/config_resnet_18.yaml --set training.learning_rate=0.001 --set training.min_lr=1e-7
 
 # Disable augmentations
-python forge.py --mixup_alpha 0 --no_tta
+orchard run recipes/config_resnet_18.yaml --set augmentation.mixup_alpha=0
 ```
 
-> [!WARNING]
+> [!TIP]
 > **Configuration Precedence Order:**
-> 1. **YAML file** (highest priority - if `--config` is provided)
-> 2. **CLI arguments** (only used when no `--config` specified)
+> 1. **`--set` overrides** (highest priority)
+> 2. **YAML recipe values**
 > 3. **Defaults** (from Pydantic field definitions)
 >
-> **When `--config` is provided, YAML values override CLI arguments.** This prevents configuration drift but means CLI flags are ignored. For reproducible research, always use YAML recipes.
+> The `--set` flag uses dot-notation paths matching the YAML structure (`training.epochs=30`, `dataset.name=pathmnist`). Values are auto-cast to the appropriate type (int, float, bool, null).
 
 ---
 
@@ -124,7 +124,7 @@ DATASET_REGISTRY = {
 <h3>2. Train Immediately</h3>
 
 ```bash
-python forge.py --dataset custom_dataset --epochs 30
+orchard run recipes/config_resnet_18.yaml --set dataset.name=custom_dataset --set training.epochs=30
 ```
 
 No code changes required—the configuration engine automatically resolves metadata.

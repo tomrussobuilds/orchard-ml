@@ -1,22 +1,21 @@
 """
-Vision Pipeline Configuration & Orchestration Engine.
+Vision Pipeline Configuration Manifest.
 
-Declarative core defining the hierarchical schema and validation logic
-for the pipeline. Transforms raw inputs (CLI, YAML) into a structured,
-type-safe manifest synchronizing hardware state with experiment logic.
+Defines the hierarchical ``Config`` schema that aggregates specialized
+sub-configs (Hardware, Dataset, Architecture, Training, Evaluation,
+Augmentation, Optuna, Export) into a single immutable manifest.
 
-Key Features:
-    * Hierarchical aggregation: Unifies specialized sub-configs (Hardware,
-      Dataset, Architecture, Training, Evaluation, Augmentation, Optuna) into a single,
-      immutable object.
-    * Cross-domain validation: Complex logic checks (AMP vs Device, LR bounds,
-      Mixup scheduling) spanning multiple sub-modules
-    * Metadata-driven injection: Centralizes dataset specification resolution,
-      ensuring architectural synchronization
-    * Factory polymorphism: Dual entry points via YAML files or CLI arguments
-
-Strict validation during initialization guarantees logically sound and
-reproducible execution context for the RootOrchestrator.
+Layout:
+    * ``Config`` — main Pydantic model, ordered as:
+        1. Fields & model validator
+        2. Properties (``run_slug``, ``num_workers``)
+        3. Serialization (``dump_portable``, ``dump_serialized``)
+        4. ``from_recipe`` — primary factory (``orchard`` CLI)
+        5. ``from_args`` / ``from_yaml`` — legacy factories (``forge.py``)
+        6. Private argparse helpers
+    * ``_CrossDomainValidator`` — cross-domain validation logic
+      (AMP vs Device, LR bounds, Mixup scheduling, resolution/model pairing)
+    * ``_deep_set`` — dot-notation dict helper for CLI overrides
 """
 
 import argparse
@@ -41,132 +40,6 @@ from .tracking_config import TrackingConfig
 from .training_config import TrainingConfig
 
 
-# CROSS-DOMAIN VALIDATOR (module-level for direct import by tests)
-class _CrossDomainValidator:
-    """Internal cross-domain validator (no public API)."""
-
-    @classmethod
-    def validate(cls, config: "Config") -> "Config":
-        """Run all cross-domain validation checks."""
-        cls._check_architecture_resolution(config)
-        cls._check_mixup_epochs(config)
-        cls._check_amp_device(config)
-        cls._check_pretrained_channels(config)
-        cls._check_lr_bounds(config)
-        return config
-
-    @classmethod
-    def _check_architecture_resolution(cls, config: "Config") -> None:
-        """
-        Validate architecture-resolution compatibility.
-
-        Enforces that each built-in model is used with its supported resolution(s):
-            - 28x28 only: mini_cnn
-            - 224x224 only: efficientnet_b0, vit_tiny, convnext_tiny
-            - Multi-resolution (28x28, 224x224): resnet_18
-
-        timm models (prefixed with ``timm/``) bypass this check as they
-        support variable resolutions managed by the user.
-
-        Raises:
-            ValueError: If architecture and resolution are incompatible.
-        """
-        model_name = config.architecture.name.lower()
-
-        # timm models handle their own resolution requirements
-        if model_name.startswith("timm/"):
-            return
-
-        resolution = config.dataset.resolution
-
-        resolution_28_only = {"mini_cnn"}
-        resolution_224_only = {"efficientnet_b0", "vit_tiny", "convnext_tiny"}
-        multi_resolution = {"resnet_18"}
-
-        if model_name in resolution_28_only and resolution != 28:
-            raise ValueError(
-                f"'{config.architecture.name}' requires resolution=28, got {resolution}. "
-                f"Use a 224x224 architecture (efficientnet_b0, vit_tiny, convnext_tiny) "
-                f"or resnet_18 for high resolution."
-            )
-
-        if model_name in resolution_224_only and resolution != 224:
-            raise ValueError(
-                f"'{config.architecture.name}' requires resolution=224, got {resolution}. "
-                f"Use resnet_18 or mini_cnn for low resolution."
-            )
-
-        if model_name in multi_resolution and resolution not in (28, 224):
-            raise ValueError(
-                f"'{config.architecture.name}' supports resolutions 28 or 224, "
-                f"got {resolution}."
-            )
-
-    @classmethod
-    def _check_mixup_epochs(cls, config: "Config") -> None:
-        """
-        Validate mixup scheduling within training bounds.
-
-        Raises:
-            ValueError: If mixup_epochs exceeds total epochs.
-        """
-        if config.training.mixup_epochs > config.training.epochs:
-            raise ValueError(
-                f"mixup_epochs ({config.training.mixup_epochs}) exceeds "
-                f"total epochs ({config.training.epochs})"
-            )
-
-    @classmethod
-    def _check_amp_device(cls, config: "Config") -> None:
-        """
-        Validate AMP-device alignment.
-
-        Auto-disables AMP on CPU with a warning instead of failing,
-        since this is a recoverable misconfiguration.
-        """
-        if config.hardware.device == "cpu" and config.training.use_amp:
-            import warnings
-
-            warnings.warn(
-                "AMP requires GPU (CUDA/MPS) but CPU detected. Disabling AMP automatically.",
-                UserWarning,
-                stacklevel=4,
-            )
-            object.__setattr__(config.training, "use_amp", False)
-
-    @classmethod
-    def _check_pretrained_channels(cls, config: "Config") -> None:
-        """
-        Validate pretrained model channel requirements.
-
-        Pretrained models require RGB (3 channels). Grayscale datasets
-        must use force_rgb=True or disable pretraining.
-
-        Raises:
-            ValueError: If pretrained model used with non-RGB input.
-        """
-        if config.architecture.pretrained and config.dataset.effective_in_channels != 3:
-            raise ValueError(
-                f"Pretrained {config.architecture.name} requires RGB (3 channels), "
-                f"but dataset will provide {config.dataset.effective_in_channels} channels. "
-                f"Set 'force_rgb: true' in dataset config or disable pretraining"
-            )
-
-    @classmethod
-    def _check_lr_bounds(cls, config: "Config") -> None:
-        """
-        Validate learning rate bounds consistency.
-
-        Raises:
-            ValueError: If min_lr >= learning_rate.
-        """
-        if config.training.min_lr >= config.training.learning_rate:
-            raise ValueError(
-                f"min_lr ({config.training.min_lr}) must be less than "
-                f"learning_rate ({config.training.learning_rate})"
-            )
-
-
 # MAIN CONFIGURATION
 class Config(BaseModel):
     """
@@ -188,9 +61,8 @@ class Config(BaseModel):
         export: Model export configuration for ONNX/TorchScript (optional)
 
     Example:
-        >>> from orchard.core import Config, parse_args
-        >>> args = parse_args()  # --config recipes/config_mini_cnn.yaml
-        >>> cfg = Config.from_args(args)
+        >>> from orchard.core import Config
+        >>> cfg = Config.from_recipe(Path("recipes/config_mini_cnn.yaml"))
         >>> cfg.architecture.name
         'mini_cnn'
     """
@@ -228,6 +100,8 @@ class Config(BaseModel):
         """
         return _CrossDomainValidator.validate(self)
 
+    # -- Properties ----------------------------------------------------------
+
     @property
     def run_slug(self) -> str:
         """
@@ -256,6 +130,8 @@ class Config(BaseModel):
             Number of DataLoader worker processes.
         """
         return self.hardware.effective_num_workers
+
+    # -- Serialization -------------------------------------------------------
 
     def dump_portable(self) -> Dict[str, Any]:
         """
@@ -296,6 +172,101 @@ class Config(BaseModel):
         """
         return self.model_dump(mode="json")
 
+    # -- Factory: YAML recipe (primary, used by ``orchard`` CLI) -------------
+
+    @classmethod
+    def from_recipe(
+        cls,
+        recipe_path: Path,
+        overrides: Optional[Dict[str, Any]] = None,
+    ) -> "Config":
+        """
+        Factory from YAML recipe with optional dot-notation overrides.
+
+        Loads the recipe, applies overrides to the raw dict *before*
+        Pydantic instantiation, resolves dataset metadata, and returns
+        a validated Config. This is the preferred entry point for the
+        ``orchard`` CLI.
+
+        Args:
+            recipe_path: Path to YAML recipe file
+            overrides: Flat dict of dot-notation keys to values
+                       (e.g. ``{"training.epochs": 20}``)
+
+        Returns:
+            Validated Config instance
+
+        Raises:
+            FileNotFoundError: If recipe_path does not exist
+            ValueError: If recipe is missing ``dataset.name``
+            KeyError: If dataset not found in registry
+
+        Example:
+            >>> cfg = Config.from_recipe(Path("recipes/config_mini_cnn.yaml"))
+            >>> cfg = Config.from_recipe(
+            ...     Path("recipes/config_mini_cnn.yaml"),
+            ...     overrides={"training.epochs": 20, "training.seed": 123},
+            ... )
+        """
+        raw_data = load_config_from_yaml(recipe_path)
+
+        if overrides:
+            for dotted_key, value in overrides.items():
+                _deep_set(raw_data, dotted_key, value)
+
+        dataset_section = raw_data.get("dataset", {})
+        ds_name = dataset_section.get("name")
+        if not ds_name:
+            raise ValueError(f"Recipe '{recipe_path}' must specify 'dataset.name'")
+
+        resolution = dataset_section.get("resolution", 28)
+        wrapper = DatasetRegistryWrapper(resolution=resolution)
+
+        if ds_name not in wrapper.registry:
+            available = list(wrapper.registry.keys())
+            raise KeyError(
+                f"Dataset '{ds_name}' not found at resolution {resolution}. "
+                f"Available at {resolution}px: {available}"
+            )
+
+        metadata = wrapper.get_dataset(ds_name)
+        raw_data.setdefault("dataset", {})["metadata"] = metadata
+
+        cfg = cls(**raw_data)
+        return cls.model_validate(cfg)
+
+    # -- Factory: argparse (legacy, used by ``forge.py``) --------------------
+
+    @classmethod
+    def from_args(cls, args: argparse.Namespace) -> "Config":
+        """
+        Factory from CLI arguments.
+
+        Args:
+            args: Parsed argparse namespace
+
+        Returns:
+            Configured instance with resolved metadata
+        """
+        ds_meta = cls._resolve_dataset_metadata(args)
+        return cls._build_from_yaml_or_args(args, ds_meta)
+
+    @classmethod
+    def from_yaml(cls, yaml_path: Path, metadata: DatasetMetadata) -> "Config":
+        """
+        Factory from YAML file with metadata injection.
+
+        Args:
+            yaml_path: Path to config YAML
+            metadata: Dataset metadata
+
+        Returns:
+            Hydrated Config instance
+        """
+        return cls._hydrate_yaml(yaml_path, metadata)
+
+    # -- Private helpers (argparse path) -------------------------------------
+
     @classmethod
     def _resolve_dataset_metadata(cls, args: argparse.Namespace) -> DatasetMetadata:
         """
@@ -325,47 +296,30 @@ class Config(BaseModel):
             )
 
     @classmethod
-    def _hydrate_yaml(cls, yaml_path: Path, metadata: DatasetMetadata) -> "Config":
+    def _build_from_yaml_or_args(
+        cls, args: argparse.Namespace, ds_meta: DatasetMetadata
+    ) -> "Config":
         """
-        Loads YAML config and injects dataset metadata.
+        Constructs Config from YAML or CLI arguments.
 
-        Metadata must be passed in from _build_from_yaml_or_args
-        after proper resolution handling.
+        **PRECEDENCE ORDER:**
+        1. If --config provided → YAML values take precedence (CLI ignored)
+        2. If no --config → CLI arguments used
+        3. Fallback → Pydantic field defaults
+
+        This ensures YAML recipes are the authoritative source when specified,
+        preventing configuration drift in reproducible research.
 
         Args:
-            yaml_path: Path to config YAML
-            metadata: Pre-resolved dataset metadata for correct resolution
+            args: Parsed argparse namespace
+            ds_meta: Initial dataset metadata (may be overridden by YAML)
 
         Returns:
-            Validated Config instance
+            Configured instance with correct metadata
         """
-        raw_data = load_config_from_yaml(yaml_path)
-
-        # Inject metadata into dataset section BEFORE instantiation
-        if "dataset" not in raw_data:
-            raw_data["dataset"] = {}
-
-        # Store metadata object (will be excluded from serialization)
-        raw_data["dataset"]["metadata"] = metadata
-
-        # Instantiate config with pre-injected metadata
-        cfg = cls(**raw_data)
-
-        return cls.model_validate(cfg)
-
-    @classmethod
-    def from_yaml(cls, yaml_path: Path, metadata: DatasetMetadata) -> "Config":
-        """
-        Factory from YAML file with metadata injection.
-
-        Args:
-            yaml_path: Path to config YAML
-            metadata: Dataset metadata
-
-        Returns:
-            Hydrated Config instance
-        """
-        return cls._hydrate_yaml(yaml_path, metadata)
+        if getattr(args, "config", None):
+            return cls._build_from_yaml(args, ds_meta)
+        return cls._build_from_cli(args)
 
     @classmethod
     def _build_from_yaml(cls, args: argparse.Namespace, ds_meta: DatasetMetadata) -> "Config":
@@ -439,41 +393,176 @@ class Config(BaseModel):
         )
 
     @classmethod
-    def _build_from_yaml_or_args(
-        cls, args: argparse.Namespace, ds_meta: DatasetMetadata
-    ) -> "Config":
+    def _hydrate_yaml(cls, yaml_path: Path, metadata: DatasetMetadata) -> "Config":
         """
-        Constructs Config from YAML or CLI arguments.
+        Loads YAML config and injects dataset metadata.
 
-        **PRECEDENCE ORDER:**
-        1. If --config provided → YAML values take precedence (CLI ignored)
-        2. If no --config → CLI arguments used
-        3. Fallback → Pydantic field defaults
-
-        This ensures YAML recipes are the authoritative source when specified,
-        preventing configuration drift in reproducible research.
+        Metadata must be passed in from _build_from_yaml_or_args
+        after proper resolution handling.
 
         Args:
-            args: Parsed argparse namespace
-            ds_meta: Initial dataset metadata (may be overridden by YAML)
+            yaml_path: Path to config YAML
+            metadata: Pre-resolved dataset metadata for correct resolution
 
         Returns:
-            Configured instance with correct metadata
+            Validated Config instance
         """
-        if getattr(args, "config", None):
-            return cls._build_from_yaml(args, ds_meta)
-        return cls._build_from_cli(args)
+        raw_data = load_config_from_yaml(yaml_path)
+
+        # Inject metadata into dataset section BEFORE instantiation
+        if "dataset" not in raw_data:
+            raw_data["dataset"] = {}
+
+        # Store metadata object (will be excluded from serialization)
+        raw_data["dataset"]["metadata"] = metadata
+
+        # Instantiate config with pre-injected metadata
+        cfg = cls(**raw_data)
+
+        return cls.model_validate(cfg)
+
+
+# CROSS-DOMAIN VALIDATION
+class _CrossDomainValidator:
+    """Internal cross-domain validator (no public API)."""
 
     @classmethod
-    def from_args(cls, args: argparse.Namespace) -> "Config":
-        """
-        Factory from CLI arguments.
+    def validate(cls, config: Config) -> Config:
+        """Run all cross-domain validation checks."""
+        cls._check_architecture_resolution(config)
+        cls._check_mixup_epochs(config)
+        cls._check_amp_device(config)
+        cls._check_pretrained_channels(config)
+        cls._check_lr_bounds(config)
+        return config
 
-        Args:
-            args: Parsed argparse namespace
-
-        Returns:
-            Configured instance with resolved metadata
+    @classmethod
+    def _check_architecture_resolution(cls, config: Config) -> None:
         """
-        ds_meta = cls._resolve_dataset_metadata(args)
-        return cls._build_from_yaml_or_args(args, ds_meta)
+        Validate architecture-resolution compatibility.
+
+        Enforces that each built-in model is used with its supported resolution(s):
+            - 28x28 only: mini_cnn
+            - 224x224 only: efficientnet_b0, vit_tiny, convnext_tiny
+            - Multi-resolution (28x28, 224x224): resnet_18
+
+        timm models (prefixed with ``timm/``) bypass this check as they
+        support variable resolutions managed by the user.
+
+        Raises:
+            ValueError: If architecture and resolution are incompatible.
+        """
+        model_name = config.architecture.name.lower()
+
+        # timm models handle their own resolution requirements
+        if model_name.startswith("timm/"):
+            return
+
+        resolution = config.dataset.resolution
+
+        resolution_28_only = {"mini_cnn"}
+        resolution_224_only = {"efficientnet_b0", "vit_tiny", "convnext_tiny"}
+        multi_resolution = {"resnet_18"}
+
+        if model_name in resolution_28_only and resolution != 28:
+            raise ValueError(
+                f"'{config.architecture.name}' requires resolution=28, got {resolution}. "
+                f"Use a 224x224 architecture (efficientnet_b0, vit_tiny, convnext_tiny) "
+                f"or resnet_18 for high resolution."
+            )
+
+        if model_name in resolution_224_only and resolution != 224:
+            raise ValueError(
+                f"'{config.architecture.name}' requires resolution=224, got {resolution}. "
+                f"Use resnet_18 or mini_cnn for low resolution."
+            )
+
+        if model_name in multi_resolution and resolution not in (28, 224):
+            raise ValueError(
+                f"'{config.architecture.name}' supports resolutions 28 or 224, "
+                f"got {resolution}."
+            )
+
+    @classmethod
+    def _check_mixup_epochs(cls, config: Config) -> None:
+        """
+        Validate mixup scheduling within training bounds.
+
+        Raises:
+            ValueError: If mixup_epochs exceeds total epochs.
+        """
+        if config.training.mixup_epochs > config.training.epochs:
+            raise ValueError(
+                f"mixup_epochs ({config.training.mixup_epochs}) exceeds "
+                f"total epochs ({config.training.epochs})"
+            )
+
+    @classmethod
+    def _check_amp_device(cls, config: Config) -> None:
+        """
+        Validate AMP-device alignment.
+
+        Auto-disables AMP on CPU with a warning instead of failing,
+        since this is a recoverable misconfiguration.
+        """
+        if config.hardware.device == "cpu" and config.training.use_amp:
+            import warnings
+
+            warnings.warn(
+                "AMP requires GPU (CUDA/MPS) but CPU detected. Disabling AMP automatically.",
+                UserWarning,
+                stacklevel=4,
+            )
+            object.__setattr__(config.training, "use_amp", False)
+
+    @classmethod
+    def _check_pretrained_channels(cls, config: Config) -> None:
+        """
+        Validate pretrained model channel requirements.
+
+        Pretrained models require RGB (3 channels). Grayscale datasets
+        must use force_rgb=True or disable pretraining.
+
+        Raises:
+            ValueError: If pretrained model used with non-RGB input.
+        """
+        if config.architecture.pretrained and config.dataset.effective_in_channels != 3:
+            raise ValueError(
+                f"Pretrained {config.architecture.name} requires RGB (3 channels), "
+                f"but dataset will provide {config.dataset.effective_in_channels} channels. "
+                f"Set 'force_rgb: true' in dataset config or disable pretraining"
+            )
+
+    @classmethod
+    def _check_lr_bounds(cls, config: Config) -> None:
+        """
+        Validate learning rate bounds consistency.
+
+        Raises:
+            ValueError: If min_lr >= learning_rate.
+        """
+        if config.training.min_lr >= config.training.learning_rate:
+            raise ValueError(
+                f"min_lr ({config.training.min_lr}) must be less than "
+                f"learning_rate ({config.training.learning_rate})"
+            )
+
+
+# OVERRIDE UTILITIES
+def _deep_set(data: Dict[str, Any], dotted_key: str, value: Any) -> None:
+    """
+    Set a nested dict value using a dot-separated key path.
+
+    Creates intermediate dicts as needed. Used by ``Config.from_recipe``
+    to apply CLI overrides before Pydantic instantiation.
+
+    Args:
+        data: Target dictionary to modify in-place
+        dotted_key: Dot-separated path (e.g. ``"training.epochs"``)
+        value: Value to set at the leaf key
+    """
+    keys = dotted_key.split(".")
+    current = data
+    for key in keys[:-1]:
+        current = current.setdefault(key, {})
+    current[keys[-1]] = value

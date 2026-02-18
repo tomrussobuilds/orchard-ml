@@ -9,22 +9,23 @@
 pip install optuna plotly timm  # timm required for ViT support
 
 # Run optimization with presets
-python forge.py --config recipes/optuna_resnet_18.yaml  # 50 trials, ~3 min GPU, ~2.5h CPU
-python forge.py --config recipes/optuna_mini_cnn.yaml           # 50 trials, ~1-2 min GPU, ~5 min CPU
+orchard run recipes/optuna_resnet_18.yaml  # 50 trials, ~3 min GPU, ~2.5h CPU
+orchard run recipes/optuna_mini_cnn.yaml           # 50 trials, ~1-2 min GPU, ~5 min CPU
 
 # 224×224 resolution (includes weight variant search for ViT)
-python forge.py --config recipes/optuna_efficientnet_b0.yaml    # 20 trials, ~1.5-5h GPU
-python forge.py --config recipes/optuna_vit_tiny.yaml           # 20 trials, ~3-5h GPU
+orchard run recipes/optuna_efficientnet_b0.yaml    # 20 trials, ~1.5-5h GPU
+orchard run recipes/optuna_vit_tiny.yaml           # 20 trials, ~3-5h GPU
 
-# Custom search (20 trials, 10 epochs each)
-python forge.py --dataset pathmnist \
-    --n_trials 20 \
-    --epochs 10 \
-    --search_space_preset quick
+# Custom search via --set overrides
+orchard run recipes/optuna_resnet_18.yaml \
+    --set dataset.name=pathmnist \
+    --set optuna.n_trials=20 \
+    --set training.epochs=10 \
+    --set optuna.search_space_preset=quick
 
 # Resume interrupted study
-python forge.py --config recipes/optuna_vit_tiny.yaml \
-    --load_if_exists true
+orchard run recipes/optuna_vit_tiny.yaml \
+    --set optuna.load_if_exists=true
 ```
 
 <h3>Search Space Coverage</h3>
@@ -71,14 +72,14 @@ When enabled, the optimizer treats the model architecture as an additional categ
 
 ```bash
 # Phase 1: Comprehensive search (configurable trials, early stopping enabled)
-python forge.py --config recipes/optuna_efficientnet_b0.yaml
+orchard run recipes/optuna_efficientnet_b0.yaml
 
 # Phase 2: Review results
 firefox outputs/*/figures/param_importances.html
 firefox outputs/*/figures/optimization_history.html
 
 # Phase 3: Train with best config (60 epochs, full evaluation)
-python forge.py --config outputs/*/reports/best_config.yaml
+orchard run outputs/*/reports/best_config.yaml
 ```
 
 <h3>Artifacts Generated</h3>
