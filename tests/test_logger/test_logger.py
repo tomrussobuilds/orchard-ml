@@ -429,6 +429,28 @@ def test_color_formatter_warning_yellow():
 
 
 @pytest.mark.unit
+def test_color_formatter_early_stopping_green():
+    """Test ColorFormatter applies green to EARLY STOPPING banner."""
+    from orchard.core.logger.logger import ColorFormatter
+    from orchard.core.logger.styles import LogStyle
+
+    formatter = ColorFormatter("%(levelname)s - %(message)s")
+    msg = "EARLY STOPPING: Target performance achieved!"
+    record = logging.LogRecord(
+        name="test",
+        level=logging.INFO,
+        pathname="",
+        lineno=0,
+        msg=msg,
+        args=(),
+        exc_info=None,
+    )
+    output = formatter.format(record)
+    assert LogStyle.GREEN in output
+    assert output.endswith(f"{msg}{LogStyle.RESET}")
+
+
+@pytest.mark.unit
 def test_color_formatter_plain_info():
     """Test ColorFormatter does not add color to plain INFO messages."""
     from orchard.core.logger.logger import ColorFormatter

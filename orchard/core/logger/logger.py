@@ -39,9 +39,9 @@ class ColorFormatter(logging.Formatter):
     Colors are applied based on log level and message content:
         - WARNING/ERROR/CRITICAL: yellow/red level prefix
         - Lines with ✓ or 'New best model': green
-        - Lines with ⚠ or 'Early stopping': yellow
+        - Lines with 'EARLY STOPPING': green
         - Separator lines (━, ═, ─): dim
-        - Centered header text: bold magenta
+        - Centered UPPER CASE headers: bold magenta
         - Subtitle tags like [Hardware], [OPTIMIZATION]: bold magenta
     """
 
@@ -77,13 +77,18 @@ class ColorFormatter(logging.Formatter):
             if stripped and all(c in _SEPARATOR_CHARS for c in stripped):
                 return self._color_message_only(formatted, msg, LogStyle.DIM)
 
-            # Centered headers (e.g. "ENVIRONMENT INITIALIZATION") → bold magenta
+            # Centered headers (e.g. "ENVIRONMENT INITIALIZATION",
+            # "TRAINING PIPELINE - RESNET_18") → bold magenta
             if (
                 stripped == stripped.upper()
                 and len(stripped) > 5
-                and stripped.replace(" ", "").isalpha()
+                and any(c.isalpha() for c in stripped)
             ):
                 return self._color_message_only(formatted, msg, LogStyle.BOLD + LogStyle.MAGENTA)
+
+            # Early stopping banner → green
+            if "EARLY STOPPING" in stripped:
+                return self._color_message_only(formatted, msg, LogStyle.GREEN)
 
             # Success lines (✓, New best model) → green
             if "✓" in msg or "New best model" in msg:
