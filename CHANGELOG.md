@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- extend ColorFormatter with header and early-stopping coloring
+
 ### Fixed
 
 - sanitize timm/ slash in artifact paths and polish v0.1.3

@@ -21,37 +21,19 @@ Two reproducibility levels are supported:
         on GPU workloads.
 
 Detection:
-    Strict mode is activated by either a CLI flag (``--reproducible``) or the
-    ``DOCKER_REPRODUCIBILITY_MODE=TRUE`` environment variable, checked by
-    ``is_repro_mode_requested()``.
+    Strict mode is controlled by ``HardwareConfig.use_deterministic_algorithms``,
+    resolved from the recipe YAML or direct Config construction.
 """
 
-import logging
 import os
 import random
+import warnings
 
 import numpy as np
 import torch
 
 
 # REPRODUCIBILITY LOGIC
-def is_repro_mode_requested(cli_flag: bool = False) -> bool:
-    """
-    Detect if strict reproducibility mode is requested.
-
-    Checks both the CLI flag and the ``DOCKER_REPRODUCIBILITY_MODE``
-    environment variable. Either source is sufficient to enable strict mode.
-
-    Args:
-        cli_flag: Value passed from the command line argument.
-
-    Returns:
-        True if strict mode should be enabled.
-    """
-    docker_flag = os.environ.get("DOCKER_REPRODUCIBILITY_MODE", "FALSE").upper() == "TRUE"
-    return cli_flag or docker_flag
-
-
 def set_seed(seed: int, strict: bool = False) -> None:
     """
     Seed all PRNGs and optionally enforce deterministic algorithms.
@@ -76,17 +58,14 @@ def set_seed(seed: int, strict: bool = False) -> None:
     random.seed(seed)
 
     # Best-effort: effective only if set before interpreter startup (see Note)
+    already_set = os.environ.get("PYTHONHASHSEED") == str(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
-    if strict:
-        logging.warning(
-            "PYTHONHASHSEED=%s set at runtime, but CPython reads it only at "
-            "interpreter startup — this assignment has no effect on the "
-            "running process. Full determinism requires the variable to be "
-            "set *before* the interpreter starts (the project Dockerfile "
-            "does this via ENV PYTHONHASHSEED=0). For bare-metal runs use: "
-            "PYTHONHASHSEED=%s orchard run <recipe>",
-            seed,
-            seed,
+    if strict and not already_set:
+        warnings.warn(
+            f"PYTHONHASHSEED={seed} set at runtime, but CPython reads it only at "
+            "interpreter startup. For bare-metal determinism: "
+            f"PYTHONHASHSEED={seed} orchard run <recipe>",
+            stacklevel=2,
         )
 
     np.random.seed(seed)
@@ -105,7 +84,6 @@ def set_seed(seed: int, strict: bool = False) -> None:
 
     if strict:
         torch.use_deterministic_algorithms(True)
-        logging.info("STRICT REPRODUCIBILITY ENABLED: Using deterministic algorithms.")
 
 
 def worker_init_fn(worker_id: int) -> None:

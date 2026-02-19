@@ -28,7 +28,6 @@ from .environment import (
     ensure_single_instance,
     get_cuda_name,
     get_num_workers,
-    is_repro_mode_requested,
     release_single_instance,
     set_seed,
     to_device_obj,
@@ -130,7 +129,6 @@ __all__ = [
     "worker_init_fn",
     "ensure_single_instance",
     "release_single_instance",
-    "is_repro_mode_requested",
     # I/O
     "save_config_as_yaml",
     "load_config_from_yaml",

@@ -1,8 +1,7 @@
 """
 Test Suite for Reproducibility Utilities.
 
-Covers deterministic seeding, reproducibility mode detection,
-and DataLoader worker initialization logic.
+Covers deterministic seeding and DataLoader worker initialization logic.
 """
 
 import os
@@ -13,28 +12,7 @@ import numpy as np
 import pytest
 import torch
 
-from orchard.core import is_repro_mode_requested, set_seed, worker_init_fn
-
-
-# TESTS: MODE DETECTION
-@pytest.mark.unit
-def test_is_repro_mode_requested_cli_flag():
-    """CLI flag alone enables reproducibility mode."""
-    assert is_repro_mode_requested(cli_flag=True) is True
-
-
-@pytest.mark.unit
-def test_is_repro_mode_requested_env_var(monkeypatch):
-    """Environment variable enables reproducibility mode."""
-    monkeypatch.setenv("DOCKER_REPRODUCIBILITY_MODE", "TRUE")
-    assert is_repro_mode_requested(cli_flag=False) is True
-
-
-@pytest.mark.unit
-def test_is_repro_mode_requested_disabled(monkeypatch):
-    """No flags -> reproducibility disabled."""
-    monkeypatch.delenv("DOCKER_REPRODUCIBILITY_MODE", raising=False)
-    assert is_repro_mode_requested(cli_flag=False) is False
+from orchard.core import set_seed, worker_init_fn
 
 
 # TESTS: set_seed

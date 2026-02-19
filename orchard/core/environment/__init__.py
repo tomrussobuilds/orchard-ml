@@ -25,7 +25,7 @@ from .hardware import (
 from .policy import determine_tta_mode
 
 # Determinism & Seeding (from .reproducibility)
-from .reproducibility import is_repro_mode_requested, set_seed, worker_init_fn
+from .reproducibility import set_seed, worker_init_fn
 
 # Timing (from .timing)
 from .timing import TimeTracker, TimeTrackerProtocol
@@ -43,7 +43,6 @@ __all__ = [
     # Reproducibility
     "set_seed",
     "worker_init_fn",
-    "is_repro_mode_requested",
     # Guards
     "ensure_single_instance",
     "release_single_instance",
