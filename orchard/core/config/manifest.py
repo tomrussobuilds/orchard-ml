@@ -244,6 +244,7 @@ class _CrossDomainValidator:
         cls._check_amp_device(config)
         cls._check_pretrained_channels(config)
         cls._check_lr_bounds(config)
+        cls._check_cpu_highres_performance(config)
         return config
 
     @classmethod
@@ -355,6 +356,25 @@ class _CrossDomainValidator:
             raise ValueError(
                 f"min_lr ({config.training.min_lr}) must be less than "
                 f"learning_rate ({config.training.learning_rate})"
+            )
+
+    @classmethod
+    def _check_cpu_highres_performance(cls, config: Config) -> None:
+        """
+        Warn when training at high resolution on CPU.
+
+        Emits a UserWarning when the resolved device is CPU and the
+        dataset resolution is 224px or above, as this combination
+        results in significantly slower training.
+        """
+        if config.hardware.device == "cpu" and config.dataset.resolution >= 224:
+            import warnings
+
+            warnings.warn(
+                f"Training at resolution {config.dataset.resolution}px on CPU "
+                f"will be significantly slower than on a GPU accelerator.",
+                UserWarning,
+                stacklevel=4,
             )
 
 

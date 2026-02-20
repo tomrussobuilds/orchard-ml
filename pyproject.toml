@@ -101,6 +101,9 @@ addopts = [
 ]
 filterwarnings = [
     "ignore:AMP requires GPU.*:UserWarning",
+    "ignore:CUDA was explicitly requested.*:UserWarning",
+    "ignore:MPS was explicitly requested.*:UserWarning",
+    "ignore:Training at resolution.*on CPU.*:UserWarning",
     "ignore:`isinstance\\(treespec, LeafSpec\\)` is deprecated.*:FutureWarning",
 ]
 testpaths = ["tests"]

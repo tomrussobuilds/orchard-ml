@@ -337,6 +337,10 @@ class RootOrchestrator:
             try:
                 self._device_cache = self.get_device()
             except RuntimeError as e:
+                # Last-resort safety net: resolve_device in HardwareConfig already
+                # warns at config-time when GPU is unavailable. This catch handles
+                # the unlikely case where to_device_obj() fails at runtime despite
+                # a valid config (e.g. driver crash after config was built).
                 self._device_cache = torch.device("cpu")
                 phase_logger.warning(f"Device detection failed, fallback to CPU: {e}")
 

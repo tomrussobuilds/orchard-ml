@@ -250,6 +250,44 @@ class TestCheckLrBounds:
         assert cfg.training.min_lr < cfg.training.learning_rate
 
 
+# CPU HIGH-RES PERFORMANCE
+@pytest.mark.unit
+class TestCheckCpuHighresPerformance:
+    """Tests for _check_cpu_highres_performance."""
+
+    def test_cpu_with_224_emits_warning(self):
+        with pytest.warns(UserWarning, match="Training at resolution 224px on CPU"):
+            Config(
+                dataset=DatasetConfig(name="bloodmnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="resnet_18", pretrained=False),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+    def test_cpu_with_28_no_warning(self):
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            Config(
+                dataset=DatasetConfig(name="bloodmnist", resolution=28),
+                architecture=ArchitectureConfig(name="resnet_18", pretrained=False),
+                training=TrainingConfig(use_amp=False),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+    def test_cpu_with_64_no_warning(self):
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            Config(
+                dataset=DatasetConfig(name="bloodmnist", resolution=64, force_rgb=True),
+                architecture=ArchitectureConfig(name="mini_cnn", pretrained=False),
+                training=TrainingConfig(use_amp=False),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+
 # DIRECT VALIDATOR CALL
 @pytest.mark.unit
 class TestValidatorDirectCall:

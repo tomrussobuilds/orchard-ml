@@ -43,19 +43,21 @@ def test_device_cuda_when_available():
 @pytest.mark.unit
 @pytest.mark.skipif(torch.cuda.is_available(), reason="Test requires no CUDA")
 def test_device_cuda_fallback_to_cpu():
-    """Test device='cuda' falls back to CPU when unavailable."""
-    config = HardwareConfig(device="cuda")
+    """Test device='cuda' falls back to CPU with warning when unavailable."""
+    with pytest.warns(UserWarning, match="CUDA was explicitly requested"):
+        config = HardwareConfig(device="cuda")
 
     assert config.device == "cpu"
 
 
 @pytest.mark.unit
 def test_device_cuda_fallback_when_unavailable():
-    """Test device='cuda' falls back to CPU when CUDA unavailable (mocked)."""
+    """Test device='cuda' falls back to CPU with warning when CUDA unavailable (mocked)."""
     from unittest.mock import patch
 
     with patch("torch.cuda.is_available", return_value=False):
-        config = HardwareConfig(device="cuda")
+        with pytest.warns(UserWarning, match="CUDA was explicitly requested"):
+            config = HardwareConfig(device="cuda")
 
         assert config.device == "cpu"
 
@@ -66,6 +68,50 @@ def test_invalid_device_fallback():
     config = HardwareConfig(device="mps")
 
     assert config.device in ("mps", "cpu")
+
+
+@pytest.mark.unit
+def test_device_mps_fallback_emits_warning():
+    """Test device='mps' emits warning when MPS unavailable (mocked)."""
+    from unittest.mock import MagicMock, patch
+
+    mock_backends = MagicMock()
+    mock_backends.mps.is_available.return_value = False
+
+    with patch("torch.backends", mock_backends):
+        with pytest.warns(UserWarning, match="MPS was explicitly requested"):
+            config = HardwareConfig(device="mps")
+
+    assert config.device == "cpu"
+
+
+@pytest.mark.unit
+def test_device_cpu_explicit_no_fallback_warning():
+    """Test device='cpu' emits no fallback warning."""
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        config = HardwareConfig(device="cpu")
+
+    assert config.device == "cpu"
+
+
+@pytest.mark.unit
+def test_device_auto_no_fallback_warning():
+    """Test device='auto' resolving to CPU emits no fallback warning."""
+    import warnings
+    from unittest.mock import patch
+
+    with patch(
+        "orchard.core.config.hardware_config.detect_best_device",
+        return_value="cpu",
+    ):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            config = HardwareConfig(device="auto")
+
+    assert config.device == "cpu"
 
 
 # HARDWARE CONFIG: REPRODUCIBILITY

@@ -78,8 +78,22 @@ class HardwareConfig(BaseModel):
         requested = v.lower()
 
         if requested == "cuda" and not torch.cuda.is_available():
+            import warnings
+
+            warnings.warn(
+                "CUDA was explicitly requested but is not available. Falling back to CPU.",
+                UserWarning,
+                stacklevel=2,
+            )
             return "cpu"
         if requested == "mps" and not torch.backends.mps.is_available():
+            import warnings
+
+            warnings.warn(
+                "MPS was explicitly requested but is not available. Falling back to CPU.",
+                UserWarning,
+                stacklevel=2,
+            )
             return "cpu"
 
         return cast(DeviceType, requested)
