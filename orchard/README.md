@@ -8,6 +8,7 @@
 
 ```
 orchard/
+├── cli_app.py                  # Typer CLI entry point (orchard run / orchard init)
 ├── core/                       # Framework nucleus
 │   ├── config/                 # Pydantic V2 schemas (14 modules)
 │   │   ├── manifest.py         # Main Config (SSOT)
@@ -26,11 +27,13 @@ orchard/
 │   ├── environment/            # Hardware abstraction
 │   │   ├── hardware.py         # Device detection, CPU/GPU/MPS
 │   │   ├── reproducibility.py  # Seeding, determinism
+│   │   ├── distributed.py      # Rank detection, DDP guards
+│   │   ├── timing.py           # Execution timing utilities
 │   │   ├── policy.py           # TTA mode selection
 │   │   └── guards.py           # Process management, flock
 │   ├── io/                     # Serialization utilities
 │   │   ├── checkpoints.py      # Model weight loading
-│   │   ├── serialization.py    # YAML config I/O
+│   │   ├── serialization.py    # YAML config I/O, requirements dump
 │   │   └── data_io.py          # Dataset validation
 │   ├── logger/                 # Telemetry system
 │   │   ├── logger.py           # Logger setup
@@ -46,7 +49,6 @@ orchard/
 │   ├── paths/                  # Path management
 │   │   ├── constants.py        # Static paths (PROJECT_ROOT, etc.)
 │   │   └── run_paths.py        # Dynamic workspace paths
-│   ├── cli.py                  # Argument parser
 │   └── orchestrator.py         # RootOrchestrator (7-phase lifecycle)
 ├── data_handler/               # Data loading pipeline
 │   ├── fetcher.py              # Fetch dispatcher + loading interface
@@ -60,8 +62,8 @@ orchard/
 │   └── synthetic.py            # Synthetic data generation
 ├── models/                     # Architecture factory
 │   ├── factory.py              # Model registry & builder
-│   ├── resnet_18.py            # ResNet-18 multi-resolution (28×28/224×224)
-│   ├── mini_cnn.py             # Compact CNN (~94K params)
+│   ├── resnet_18.py            # ResNet-18 multi-resolution (28/64/224)
+│   ├── mini_cnn.py             # Compact CNN (~95K params, 28/64)
 │   ├── efficientnet_b0.py      # EfficientNet for 224×224
 │   ├── convnext_tiny.py        # ConvNeXt-Tiny for 224×224
 │   ├── vit_tiny.py             # Vision Transformer for 224×224
@@ -93,8 +95,10 @@ orchard/
     │   └── metric_extractor.py # Metric extraction
     ├── orchestrator/           # Study management
     │   ├── orchestrator.py     # OptunaOrchestrator
+    │   ├── config.py           # Study configuration
     │   ├── builders.py         # Sampler/pruner builders
     │   ├── exporters.py        # Results export (YAML, Excel)
+    │   ├── utils.py            # Utility helpers
     │   └── visualizers.py      # Plotly visualizations
     ├── search_spaces.py        # Hyperparameter distributions
     └── early_stopping.py       # Convergence detection

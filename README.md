@@ -57,7 +57,7 @@
 <td align="right"><strong>Project</strong></td>
 <td>
   <a href="https://docs.pytest.org/"><img src="https://img.shields.io/badge/tested%20with-pytest-blue?logo=pytest&logoColor=white" alt="Tested with pytest"></a>
-  <img src="https://img.shields.io/badge/tests-1100+-success" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-1150+-success" alt="Tests">
   <img src="https://img.shields.io/badge/Architecture-Decoupled-blueviolet" alt="Architecture">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
   <img src="https://img.shields.io/badge/status-Active-success" alt="Status">
@@ -328,7 +328,7 @@ orchard run my_run.yaml
 | [Export Guide](docs/guide/EXPORT.md) | `ONNX` export pipeline, quantization options, validation and benchmarking |
 | [Tracking Guide](docs/guide/TRACKING.md) | `MLflow` local setup, dashboard and run comparison, programmatic querying |
 | [Artifact Guide](docs/guide/ARTIFACTS.md) | Output directory structure, training vs optimization artifact differences |
-| [Testing Guide](docs/guide/TESTING.md) | 1,100+ test suite, quality automation scripts, CI/CD pipeline details |
+| [Testing Guide](docs/guide/TESTING.md) | 1,150+ test suite, quality automation scripts, CI/CD pipeline details |
 | [`orchard/`](orchard/README.md) / [`tests/`](tests/README.md) | Internal package structure, module responsibilities, extension points |
 
 <h2>Citation</h2>

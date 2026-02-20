@@ -45,7 +45,7 @@ docker run -it --rm \
   -v $(pwd)/dataset:/app/dataset \
   -v $(pwd)/outputs:/app/outputs \
   orchard-ml:latest \
-  --config recipes/config_resnet_18.yaml
+  recipes/config_resnet_18.yaml
 ```
 
 **Strict Reproducibility Mode** (Bit-Perfect Determinism):
@@ -59,7 +59,7 @@ docker run -it --rm \
   -v $(pwd)/dataset:/app/dataset \
   -v $(pwd)/outputs:/app/outputs \
   orchard-ml:latest \
-  --config recipes/config_resnet_18.yaml
+  recipes/config_resnet_18.yaml
 ```
 
 > [!NOTE]

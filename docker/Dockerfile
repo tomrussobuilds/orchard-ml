@@ -41,6 +41,9 @@ RUN pip3 install -r requirements.txt
 # Copy project files (changes most frequently — last layer)
 COPY . .
 
+# Install the package (editable for local dev, baked for production)
+RUN pip3 install -e .
+
 # Default command
-ENTRYPOINT ["python3", "forge.py"]
+ENTRYPOINT ["orchard", "run"]
 CMD []
