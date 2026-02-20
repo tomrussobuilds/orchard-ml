@@ -274,9 +274,9 @@ class _CrossDomainValidator:
         resolution_224_only = {"efficientnet_b0", "vit_tiny", "convnext_tiny"}
         multi_resolution = {"resnet_18"}
 
-        if model_name in resolution_low and resolution not in (28, 64):
+        if model_name in resolution_low and resolution not in (28, 32, 64):
             raise ValueError(
-                f"'{config.architecture.name}' requires resolution 28 or 64, "
+                f"'{config.architecture.name}' requires resolution 28, 32, or 64, "
                 f"got {resolution}. Use a 224x224 architecture "
                 f"(efficientnet_b0, vit_tiny, convnext_tiny) or resnet_18."
             )

@@ -1,6 +1,7 @@
 """
 Unit and integration tests for the ResNet-18 multi-resolution architecture.
-Tests 28x28 (adapted stem), 64x64 (standard stem), and 224x224 (standard stem).
+Tests 28x28 (adapted stem), 32x32 (adapted stem), 64x64 (standard stem),
+and 224x224 (standard stem).
 """
 
 from unittest.mock import MagicMock, patch
@@ -19,6 +20,16 @@ def mock_cfg_28():
     cfg.architecture.pretrained = False
     cfg.architecture.dropout = 0.5
     cfg.dataset.resolution = 28
+    return cfg
+
+
+@pytest.fixture
+def mock_cfg_32():
+    """Provides a configuration mock for 32x32 resolution."""
+    cfg = MagicMock()
+    cfg.architecture.pretrained = False
+    cfg.architecture.dropout = 0.5
+    cfg.dataset.resolution = 32
     return cfg
 
 
@@ -139,6 +150,69 @@ class TestResNet18Low:
 
             assert activations["conv1"][2] == 28
             assert activations["conv1"][3] == 28
+
+
+# UNIT TESTS — 32x32 MODE
+@pytest.mark.unit
+class TestResNet18At32:
+    """Test suite for ResNet-18 at 32x32 resolution (adapted stem, same as 28x28)."""
+
+    @pytest.mark.parametrize(
+        "in_channels, num_classes, batch_size",
+        [
+            (3, 10, 1),
+            (3, 100, 2),
+        ],
+    )
+    def test_output_shape_32(self, mock_cfg_32, device, in_channels, num_classes, batch_size):
+        """Verify output shape matches expected dimensions for 32x32 inputs."""
+        model = build_resnet18(
+            device, num_classes=num_classes, in_channels=in_channels, cfg=mock_cfg_32
+        )
+        model.eval()
+
+        dummy_input = torch.randn(batch_size, in_channels, 32, 32)
+
+        with torch.no_grad():
+            output = model(dummy_input)
+
+        assert output.shape == (batch_size, num_classes)
+
+    def test_adapted_stem_at_32(self, mock_cfg_32, device):
+        """Verify 32x32 uses adapted 3x3 conv1 with stride 1 (same as 28x28)."""
+        model = build_resnet18(device, num_classes=10, in_channels=3, cfg=mock_cfg_32)
+
+        assert model.conv1.kernel_size == (3, 3)
+        assert model.conv1.stride == (1, 1)
+        assert model.conv1.out_channels == 64
+
+    def test_maxpool_removed_at_32(self, mock_cfg_32, device):
+        """Verify maxpool is replaced with Identity at 32x32."""
+        model = build_resnet18(device, num_classes=10, in_channels=3, cfg=mock_cfg_32)
+
+        assert isinstance(model.maxpool, torch.nn.Identity)
+
+    def test_spatial_preservation_32(self, mock_cfg_32, device):
+        """Verify spatial dimensions are preserved for 32x32 inputs after conv1."""
+        model = build_resnet18(device, num_classes=10, in_channels=3, cfg=mock_cfg_32)
+        model.eval()
+
+        dummy_input = torch.randn(1, 3, 32, 32)
+
+        with torch.no_grad():
+            activations = {}
+
+            def get_activation(name):
+                def hook(model, input, output):
+                    activations[name] = output.shape
+
+                return hook
+
+            model.conv1.register_forward_hook(get_activation("conv1"))
+            _ = model(dummy_input)
+
+            assert activations["conv1"][2] == 32
+            assert activations["conv1"][3] == 32
 
 
 # UNIT TESTS — 64x64 MODE

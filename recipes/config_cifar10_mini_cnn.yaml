@@ -1,0 +1,25 @@
+# ==============================================================================
+# FILE: recipes/config_cifar10_mini_cnn.yaml
+# MiniCNN on CIFAR-10 (32x32)
+# ==============================================================================
+# Usage: orchard run recipes/config_cifar10_mini_cnn.yaml
+
+dataset:
+  name: "cifar10"
+  resolution: 32
+  force_rgb: true
+
+architecture:
+  name: "mini_cnn"
+  pretrained: false
+  dropout: 0.3
+
+training:
+  seed: 42
+  batch_size: 128
+  learning_rate: 0.01
+  weight_decay: 5e-4
+  epochs: 60
+  patience: 15
+  grad_clip: 1.0
+  scheduler_type: "cosine"

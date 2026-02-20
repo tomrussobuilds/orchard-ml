@@ -18,7 +18,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..metadata import DatasetMetadata, DatasetRegistryWrapper
-from ..paths import DATASET_DIR
+from ..paths import DATASET_DIR, SUPPORTED_RESOLUTIONS
 from .types import ImageSize, PositiveInt, ValidatedPath
 
 
@@ -61,7 +61,10 @@ class DatasetConfig(BaseModel):
     force_rgb: bool = Field(
         default=True, description="Convert grayscale to RGB for ImageNet weights"
     )
-    resolution: int = Field(default=28, description="Target dataset resolution (28, 64, or 224)")
+    resolution: int = Field(
+        default=28,
+        description=f"Target dataset resolution {sorted(SUPPORTED_RESOLUTIONS)}",
+    )
 
     @model_validator(mode="before")
     @classmethod

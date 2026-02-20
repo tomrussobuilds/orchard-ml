@@ -1,0 +1,162 @@
+# ==============================================================================
+# FILE: recipes/optuna_cifar100_resnet_18.yaml
+# ResNet-18 on CIFAR-100 (32x32) with Optuna Optimization
+# ==============================================================================
+# Usage: orchard run recipes/optuna_cifar100_resnet_18.yaml
+# Estimated Time: ~15 min GPU (50 trials × 15 epochs)
+# Memory Usage: ~2GB VRAM per trial
+
+dataset:
+  name: "cifar100"
+  resolution: 32
+  force_rgb: true
+  use_weighted_sampler: false
+
+architecture:
+  name: "resnet_18"
+  pretrained: false
+  dropout: 0.3
+
+training:
+  seed: 42
+  batch_size: 128
+  learning_rate: 0.1
+  weight_decay: 5e-4
+  momentum: 0.9
+  min_lr: 1e-6
+  mixup_alpha: 0.0
+  label_smoothing: 0.0
+  epochs: 100
+  patience: 20
+  grad_clip: 1.0
+  mixup_epochs: 0
+  scheduler_type: "cosine"
+  cosine_fraction: 0.5
+  scheduler_patience: 5
+  scheduler_factor: 0.1
+  step_size: 20
+  use_amp: true
+  use_tta: false
+  criterion_type: "cross_entropy"
+  weighted_loss: false
+  focal_gamma: 2.0
+
+augmentation:
+  hflip: 0.5
+  rotation_angle: 5
+  jitter_val: 0.05
+  min_scale: 0.95
+  tta_translate: 0.5
+  tta_scale: 1.02
+  tta_blur_sigma: 0.1
+
+hardware:
+  device: "auto"
+  reproducible: false
+
+telemetry:
+  output_dir: ./outputs
+  log_level: "INFO"
+  log_interval: 50
+
+evaluation:
+  batch_size: 256
+  n_samples: 16
+  fig_dpi: 200
+  cmap_confusion: Blues
+  plot_style: seaborn-v0_8-muted
+  grid_cols: 4
+  fig_size_predictions: [12, 8]
+  report_format: xlsx
+  save_confusion_matrix: false
+  save_predictions_grid: false
+
+optuna:
+  study_name: "cifar100_resnet18_optimized"
+  n_trials: 50
+  epochs: 15
+  timeout: null
+  metric_name: "auc"
+  direction: "maximize"
+  enable_early_stopping: true
+  early_stopping_threshold: 0.9999
+  early_stopping_patience: 2
+  sampler_type: "tpe"
+  search_space_preset: "full"
+  enable_model_search: false
+  enable_pruning: true
+  pruner_type: "median"
+  pruning_warmup_epochs: 5
+  storage_type: "sqlite"
+  storage_path: null
+  n_jobs: 1
+  load_if_exists: true
+  show_progress_bar: false
+  save_plots: true
+  save_best_config: true
+
+  search_space_overrides:
+      learning_rate:
+          low: 1.0e-05
+          high: 0.01
+          log: true
+      weight_decay:
+          low: 1.0e-06
+          high: 0.001
+          log: true
+      momentum:
+          low: 0.85
+          high: 0.95
+          log: false
+      min_lr:
+          low: 1.0e-07
+          high: 1.0e-05
+          log: true
+      mixup_alpha:
+          low: 0.0
+          high: 0.4
+          log: false
+      label_smoothing:
+          low: 0.0
+          high: 0.2
+          log: false
+      dropout:
+          low: 0.1
+          high: 0.5
+          log: false
+      cosine_fraction:
+          low: 0.3
+          high: 0.7
+          log: false
+      scheduler_patience:
+          low: 3
+          high: 10
+      rotation_angle:
+          low: 0
+          high: 15
+      jitter_val:
+          low: 0.0
+          high: 0.15
+          log: false
+      min_scale:
+          low: 0.9
+          high: 1.0
+          log: false
+      batch_size_low_res:
+      - 16
+      - 32
+      - 48
+      - 64
+      batch_size_high_res:
+      - 8
+      - 12
+      - 16
+
+tracking:
+  enabled: true
+  experiment_name: "orchard-ml"
+
+export:
+  format: onnx
+  opset_version: 18
+  validate_export: true

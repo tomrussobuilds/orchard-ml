@@ -84,7 +84,7 @@
 
 <h2>Overview</h2>
 
-**Orchard ML** is a research-grade `PyTorch` training framework engineered for reproducible, scalable computer vision experiments across diverse domains. Built on [MedMNIST v2](https://zenodo.org/records/6496656) medical imaging datasets and expanded to astronomical imaging ([Galaxy10 DECals](https://zenodo.org/records/10845026)), it provides a domain-agnostic platform supporting multi-resolution architectures (28×28, 64×64, 224×224), automated hyperparameter optimization, and cluster-safe execution.
+**Orchard ML** is a research-grade `PyTorch` training framework engineered for reproducible, scalable computer vision experiments across diverse domains. Built on [MedMNIST v2](https://zenodo.org/records/6496656) medical imaging datasets and expanded to astronomical imaging ([Galaxy10 DECals](https://zenodo.org/records/10845026)) and standard benchmarks ([CIFAR-10/100](https://www.cs.toronto.edu/~kriz/cifar.html)), it provides a domain-agnostic platform supporting multi-resolution architectures (28×28, 32×32, 64×64, 224×224), automated hyperparameter optimization, and cluster-safe execution.
 
 **Key Differentiators:**
 - **Type-Safe Configuration Engine**: `Pydantic V2`-based declarative manifests eliminate runtime errors

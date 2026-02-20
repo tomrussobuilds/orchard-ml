@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..paths import SUPPORTED_RESOLUTIONS
 from .base import DatasetMetadata
-from .domains import MEDICAL_28, MEDICAL_64, MEDICAL_224, SPACE_224
+from .domains import BENCHMARK_32, MEDICAL_28, MEDICAL_64, MEDICAL_224, SPACE_224
 
 
 # WRAPPER DEFINITION
@@ -32,7 +32,7 @@ class DatasetRegistryWrapper(BaseModel):
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
-    resolution: int = Field(default=28, description="Target resolution (28, 64, or 224)")
+    resolution: int = Field(default=28, description="Target resolution (28, 32, 64, or 224)")
 
     registry: Dict[str, DatasetMetadata] = Field(
         default_factory=dict, description="Dataset registry for selected resolution"
@@ -55,6 +55,8 @@ class DatasetRegistryWrapper(BaseModel):
         # Merge domain registries based on resolution
         if res == 28:
             merged = {**MEDICAL_28}
+        elif res == 32:
+            merged = {**BENCHMARK_32}
         elif res == 64:
             merged = {**MEDICAL_64}
         else:  # res == 224

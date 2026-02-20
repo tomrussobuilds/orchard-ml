@@ -1,5 +1,5 @@
 """
-Pytest test suite for MedMNIST dataset fetching and loading.
+Pytest test suite for dataset fetching and loading.
 
 Covers download logic, retry behavior, NPZ validation,
 and metadata extraction without performing real network calls.
@@ -576,6 +576,44 @@ def test_load_dataset_health_check_small_chunk(metadata, tmp_path, monkeypatch_m
     data = load_dataset_health_check(metadata, chunk_size=3)
 
     assert data.num_classes == 2
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("dataset_name", ["cifar10", "cifar100"])
+def test_ensure_dataset_npz_cifar_routing(dataset_name, tmp_path, monkeypatch):
+    """CIFAR datasets should route to ensure_cifar_npz converter."""
+    target_npz = tmp_path / f"{dataset_name}.npz"
+
+    dummy_data = {
+        "train_images": np.zeros((5, 32, 32, 3), dtype=np.uint8),
+        "train_labels": np.zeros((5, 1), dtype=np.int64),
+        "val_images": np.zeros((2, 32, 32, 3), dtype=np.uint8),
+        "val_labels": np.zeros((2, 1), dtype=np.int64),
+        "test_images": np.zeros((3, 32, 32, 3), dtype=np.uint8),
+        "test_labels": np.zeros((3, 1), dtype=np.int64),
+    }
+    np.savez_compressed(target_npz, **dummy_data)
+
+    cifar_metadata = SimpleNamespace(
+        name=dataset_name,
+        display_name=f"CIFAR-{dataset_name[-2:]}",
+        url="torchvision",
+        md5_checksum="",
+        path=target_npz,
+        native_resolution=32,
+    )
+
+    def mock_ensure_cifar_npz(metadata):
+        return metadata.path
+
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.ensure_cifar_npz",
+        mock_ensure_cifar_npz,
+    )
+
+    result = ensure_dataset_npz(cifar_metadata)
+
+    assert result == target_npz
 
 
 @pytest.mark.unit

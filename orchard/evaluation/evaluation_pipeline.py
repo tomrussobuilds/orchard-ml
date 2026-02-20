@@ -11,7 +11,6 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Tuple
 
-import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
@@ -51,8 +50,8 @@ def run_final_evaluation(
         tracker: Optional experiment tracker for logging test metrics to MLflow.
     """
 
-    # Resolve device from config
-    device = torch.device(cfg.hardware.device)
+    # Resolve device from model (already placed on the correct device by the trainer)
+    device = next(model.parameters()).device
 
     # Filesystem-safe architecture tag (e.g. "timm/model" → "timm_model")
     arch_tag = cfg.architecture.name.replace("/", "_")

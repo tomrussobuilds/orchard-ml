@@ -189,7 +189,7 @@ class TestFromRecipe:
         recipe = tmp_path / "recipe.yaml"
         recipe.write_text(yaml.dump(yaml_content))
 
-        with pytest.raises(Exception, match="mini_cnn.*requires resolution 28 or 64"):
+        with pytest.raises(Exception, match="mini_cnn.*requires resolution 28, 32, or 64"):
             Config.from_recipe(recipe)
 
 

@@ -64,10 +64,11 @@ def ensure_dataset_npz(
 
         return ensure_galaxy10_npz(metadata)
 
-    # Extension point: add your custom dataset fetcher here
-    # if metadata.name == "your_dataset":
-    #     from .fetchers.your_fetcher import ensure_your_dataset_npz
-    #     return ensure_your_dataset_npz(metadata)
+    # CIFAR-10/100 via torchvision download and NPZ conversion
+    if metadata.name in ("cifar10", "cifar100"):
+        from .fetchers import ensure_cifar_npz
+
+        return ensure_cifar_npz(metadata)
 
     # Default: standard NPZ download with retries and MD5 check
     from .fetchers import ensure_medmnist_npz
@@ -107,8 +108,6 @@ def _load_and_inspect(
 
 def load_dataset(metadata: DatasetMetadata) -> DatasetData:
     """
-    Ensures the dataset is present and returns its metadata container.
-
     Ensures the dataset is present and returns its metadata container.
     """
     return _load_and_inspect(metadata)

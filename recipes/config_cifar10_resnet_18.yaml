@@ -1,0 +1,25 @@
+# ==============================================================================
+# FILE: recipes/config_cifar10_resnet_18.yaml
+# ResNet-18 on CIFAR-10 (32x32)
+# ==============================================================================
+# Usage: orchard run recipes/config_cifar10_resnet_18.yaml
+
+dataset:
+  name: "cifar10"
+  resolution: 32
+  force_rgb: true
+
+architecture:
+  name: "resnet_18"
+  pretrained: false
+  dropout: 0.0
+
+training:
+  seed: 42
+  batch_size: 128
+  learning_rate: 0.1
+  weight_decay: 5e-4
+  epochs: 100
+  patience: 20
+  grad_clip: 1.0
+  scheduler_type: "cosine"

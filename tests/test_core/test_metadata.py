@@ -63,7 +63,7 @@ def test_registry_wrapper_invalid_resolution():
 
     error_msg = str(exc_info.value)
     assert "Unsupported resolution 128" in error_msg
-    assert "[28, 64, 224]" in error_msg
+    assert "[28, 32, 64, 224]" in error_msg
 
 
 @pytest.mark.unit
@@ -76,6 +76,31 @@ def test_registry_wrapper_resolution_28():
 
     for metadata in wrapper.registry.values():
         assert metadata.native_resolution == 28
+
+
+@pytest.mark.unit
+def test_registry_wrapper_resolution_32():
+    """Test DatasetRegistryWrapper loads 32x32 registry correctly."""
+    wrapper = DatasetRegistryWrapper(resolution=32)
+
+    assert wrapper.resolution == 32
+    assert len(wrapper.registry) > 0
+
+    for metadata in wrapper.registry.values():
+        assert metadata.native_resolution == 32
+
+
+@pytest.mark.unit
+def test_registry_wrapper_resolution_32_contains_cifar():
+    """Test 32x32 registry contains CIFAR-10 and CIFAR-100."""
+    wrapper = DatasetRegistryWrapper(resolution=32)
+
+    assert "cifar10" in wrapper.registry
+    assert "cifar100" in wrapper.registry
+    assert wrapper.registry["cifar10"].in_channels == 3
+    assert wrapper.registry["cifar100"].in_channels == 3
+    assert len(wrapper.registry["cifar10"].classes) == 10
+    assert len(wrapper.registry["cifar100"].classes) == 100
 
 
 @pytest.mark.unit
@@ -147,14 +172,15 @@ def test_dataset_metadata_normalization_info_property():
 def test_registry_wrapper_empty_source_registry():
     """Test DatasetRegistryWrapper raises ValueError when source registry is empty (line 55 in wrapper.py)."""
     with patch("orchard.core.metadata.wrapper.MEDICAL_28", {}):
-        with patch("orchard.core.metadata.wrapper.MEDICAL_64", {}):
-            with patch("orchard.core.metadata.wrapper.MEDICAL_224", {}):
-                with patch("orchard.core.metadata.wrapper.SPACE_224", {}):
-                    with pytest.raises(ValueError) as exc_info:
-                        DatasetRegistryWrapper(resolution=28)
+        with patch("orchard.core.metadata.wrapper.BENCHMARK_32", {}):
+            with patch("orchard.core.metadata.wrapper.MEDICAL_64", {}):
+                with patch("orchard.core.metadata.wrapper.MEDICAL_224", {}):
+                    with patch("orchard.core.metadata.wrapper.SPACE_224", {}):
+                        with pytest.raises(ValueError) as exc_info:
+                            DatasetRegistryWrapper(resolution=28)
 
-                    error_msg = str(exc_info.value)
-                    assert "Dataset registry for resolution 28 is empty" in error_msg
+                        error_msg = str(exc_info.value)
+                        assert "Dataset registry for resolution 28 is empty" in error_msg
 
 
 if __name__ == "__main__":

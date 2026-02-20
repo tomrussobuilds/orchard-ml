@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- remove domain-specific naming from framework code
+
 ### Documentation
 
 - update changelog for v0.1.5
