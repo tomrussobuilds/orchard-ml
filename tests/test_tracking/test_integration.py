@@ -28,8 +28,11 @@ def mock_cfg():
     cfg.training.patience = 10
     cfg.training.use_amp = False
     cfg.training.mixup_alpha = 0.0
+    cfg.training.mixup_epochs = 0
     cfg.training.cosine_fraction = 0.5
     cfg.training.grad_clip = 1.0
+    cfg.training.use_tqdm = False
+    cfg.training.seed = 42
     return cfg
 
 

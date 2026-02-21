@@ -216,7 +216,7 @@ class TrialTrainingExecutor:
                 device=self.device,
             )
 
-            if not isinstance(val_metrics, dict) or val_metrics is None:
+            if val_metrics is None or not isinstance(val_metrics, dict):
                 logger.error(f"Invalid validation result: {val_metrics}")
                 return {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
 

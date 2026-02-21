@@ -48,27 +48,29 @@ def show_predictions(
         n: Number of samples to display. Defaults to ``cfg.evaluation.n_samples``.
     """
     model.eval()
+    style = cfg.evaluation.plot_style if cfg else "seaborn-v0_8-muted"
 
-    # 1. Parameter Resolution & Batch Inference
-    num_samples = n or (cfg.evaluation.n_samples if cfg else 12)
-    images, labels, preds = _get_predictions_batch(model, loader, device, num_samples)
+    with plt.style.context(style):
+        # 1. Parameter Resolution & Batch Inference
+        num_samples = n or (cfg.evaluation.n_samples if cfg else 12)
+        images, labels, preds = _get_predictions_batch(model, loader, device, num_samples)
 
-    # 2. Grid & Figure Setup
-    grid_cols = cfg.evaluation.grid_cols if cfg else 4
-    _, axes = _setup_prediction_grid(len(images), grid_cols, cfg)
+        # 2. Grid & Figure Setup
+        grid_cols = cfg.evaluation.grid_cols if cfg else 4
+        _, axes = _setup_prediction_grid(len(images), grid_cols, cfg)
 
-    # 3. Plotting Loop
-    for i, ax in enumerate(axes):
-        if i < len(images):
-            _plot_single_prediction(ax, images[i], labels[i], preds[i], classes, cfg)
-        ax.axis("off")
+        # 3. Plotting Loop
+        for i, ax in enumerate(axes):
+            if i < len(images):
+                _plot_single_prediction(ax, images[i], labels[i], preds[i], classes, cfg)
+            ax.axis("off")
 
-    # 4. Suptitle
-    if cfg:
-        plt.suptitle(_build_suptitle(cfg), fontsize=14)
+        # 4. Suptitle
+        if cfg:
+            plt.suptitle(_build_suptitle(cfg), fontsize=14)
 
-    # 5. Export and Cleanup
-    _finalize_figure(plt, save_path, cfg)
+        # 5. Export and Cleanup
+        _finalize_figure(plt, save_path, cfg)
 
 
 def plot_training_curves(
@@ -85,36 +87,37 @@ def plot_training_curves(
         out_path: Destination file path for the saved figure.
         cfg: Configuration with architecture and evaluation settings.
     """
-    fig, ax1 = plt.subplots(figsize=(9, 6))
+    with plt.style.context(cfg.evaluation.plot_style):
+        fig, ax1 = plt.subplots(figsize=(9, 6))
 
-    # Left Axis: Training Loss
-    ax1.plot(train_losses, color="#e74c3c", lw=2, label="Training Loss")
-    ax1.set_xlabel("Epoch")
-    ax1.set_ylabel("Loss", color="#e74c3c", fontweight="bold")
-    ax1.tick_params(axis="y", labelcolor="#e74c3c")
-    ax1.grid(True, linestyle="--", alpha=0.4)
+        # Left Axis: Training Loss
+        ax1.plot(train_losses, color="#e74c3c", lw=2, label="Training Loss")
+        ax1.set_xlabel("Epoch")
+        ax1.set_ylabel("Loss", color="#e74c3c", fontweight="bold")
+        ax1.tick_params(axis="y", labelcolor="#e74c3c")
+        ax1.grid(True, linestyle="--", alpha=0.4)
 
-    # Right Axis: Validation Accuracy
-    ax2 = ax1.twinx()
-    ax2.plot(val_accuracies, color="#3498db", lw=2, label="Validation Accuracy")
-    ax2.set_ylabel("Accuracy", color="#3498db", fontweight="bold")
-    ax2.tick_params(axis="y", labelcolor="#3498db")
+        # Right Axis: Validation Accuracy
+        ax2 = ax1.twinx()
+        ax2.plot(val_accuracies, color="#3498db", lw=2, label="Validation Accuracy")
+        ax2.set_ylabel("Accuracy", color="#3498db", fontweight="bold")
+        ax2.tick_params(axis="y", labelcolor="#3498db")
 
-    fig.suptitle(
-        f"Training Metrics — {cfg.architecture.name} | Resolution — {cfg.dataset.resolution}",
-        fontsize=14,
-        y=1.02,
-    )
+        fig.suptitle(
+            f"Training Metrics — {cfg.architecture.name} | Resolution — {cfg.dataset.resolution}",
+            fontsize=14,
+            y=1.02,
+        )
 
-    fig.tight_layout()
+        fig.tight_layout()
 
-    plt.savefig(out_path, dpi=cfg.evaluation.fig_dpi, bbox_inches="tight")
-    logger.info(f"Training curves saved → {out_path.name}")
+        plt.savefig(out_path, dpi=cfg.evaluation.fig_dpi, bbox_inches="tight")
+        logger.info(f"Training curves saved → {out_path.name}")
 
-    # Export raw data for post-run analysis
-    npz_path = out_path.with_suffix(".npz")
-    np.savez(npz_path, train_losses=train_losses, val_accuracies=val_accuracies)
-    plt.close()
+        # Export raw data for post-run analysis
+        npz_path = out_path.with_suffix(".npz")
+        np.savez(npz_path, train_losses=train_losses, val_accuracies=val_accuracies)
+        plt.close()
 
 
 def plot_confusion_matrix(
@@ -129,24 +132,29 @@ def plot_confusion_matrix(
         out_path: Destination file path for the saved figure.
         cfg: Configuration with architecture and evaluation settings.
     """
-    cm = confusion_matrix(all_labels, all_preds, labels=np.arange(len(classes)), normalize="true")
-    cm = np.nan_to_num(cm)
+    with plt.style.context(cfg.evaluation.plot_style):
+        cm = confusion_matrix(
+            all_labels, all_preds, labels=np.arange(len(classes)), normalize="true"
+        )
+        cm = np.nan_to_num(cm)
 
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=classes)
-    fig, ax = plt.subplots(figsize=(11, 9))
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=classes)
+        fig, ax = plt.subplots(figsize=(11, 9))
 
-    disp.plot(ax=ax, cmap=cfg.evaluation.cmap_confusion, xticks_rotation=45, values_format=".3f")
-    plt.title(
-        f"Confusion Matrix — {cfg.architecture.name} | Resolution — {cfg.dataset.resolution}",
-        fontsize=12,
-        pad=20,
-    )
+        disp.plot(
+            ax=ax, cmap=cfg.evaluation.cmap_confusion, xticks_rotation=45, values_format=".3f"
+        )
+        plt.title(
+            f"Confusion Matrix — {cfg.architecture.name} | Resolution — {cfg.dataset.resolution}",
+            fontsize=12,
+            pad=20,
+        )
 
-    plt.tight_layout()
+        plt.tight_layout()
 
-    fig.savefig(out_path, dpi=cfg.evaluation.fig_dpi, bbox_inches="tight")
-    plt.close()
-    logger.info(f"Confusion matrix saved → {out_path.name}")
+        fig.savefig(out_path, dpi=cfg.evaluation.fig_dpi, bbox_inches="tight")
+        plt.close()
+        logger.info(f"Confusion matrix saved → {out_path.name}")
 
 
 def _plot_single_prediction(

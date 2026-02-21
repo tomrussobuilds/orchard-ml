@@ -25,7 +25,7 @@ def export_to_onnx(
     model: nn.Module,
     checkpoint_path: Path,
     output_path: Path,
-    input_shape: Tuple[int, int, int] = (3, 224, 224),
+    input_shape: Tuple[int, int, int],
     opset_version: int = 18,
     dynamic_axes: bool = True,
     do_constant_folding: bool = True,
@@ -38,7 +38,7 @@ def export_to_onnx(
         model: PyTorch model architecture (uninitialized weights OK)
         checkpoint_path: Path to trained .pth checkpoint
         output_path: Output path for .onnx file
-        input_shape: Input tensor shape (C, H, W), default (3, 224, 224)
+        input_shape: Input tensor shape (C, H, W)
         opset_version: ONNX opset version (18=latest, clean export with no warnings)
         dynamic_axes: Enable dynamic batch size (required for production)
         do_constant_folding: Optimize constant operations at export
@@ -153,7 +153,7 @@ def export_to_onnx(
 
 def benchmark_onnx_inference(
     onnx_path: Path,
-    input_shape: Tuple[int, int, int] = (3, 224, 224),
+    input_shape: Tuple[int, int, int],
     num_runs: int = 100,
 ) -> float:
     """
@@ -184,7 +184,7 @@ def benchmark_onnx_inference(
 
         # Prepare dummy input using random Generator
         rng = np.random.default_rng(42)
-        dummy_input = rng.random(size=(1, *input_shape), dtype=np.float32) * 256
+        dummy_input = rng.random(size=(1, *input_shape), dtype=np.float32) * 255
 
         # Warmup
         for _ in range(10):

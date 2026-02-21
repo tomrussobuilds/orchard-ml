@@ -31,7 +31,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, WeightedRandomSampler
 
-from ..core import Config, DatasetRegistryWrapper, worker_init_fn
+from ..core import LOGGER_NAME, Config, DatasetRegistryWrapper, worker_init_fn
 from .dataset import LazyNPZDataset, VisionDataset
 from .fetcher import DatasetData
 from .transforms import get_pipeline_transforms
@@ -64,7 +64,7 @@ class DataLoaderFactory:
 
         wrapper = DatasetRegistryWrapper(resolution=cfg.dataset.resolution)
         self.ds_meta = wrapper.get_dataset(cfg.dataset.dataset_name)
-        self.logger = logging.getLogger("orchard-ml")
+        self.logger = logging.getLogger(LOGGER_NAME)
 
     def _get_transformation_pipelines(self) -> Tuple[torch.nn.Module, torch.nn.Module]:
         """Retrieves specialized vision pipelines.
@@ -129,11 +129,16 @@ class DataLoaderFactory:
         num_workers = self.cfg.num_workers
 
         # OPTUNA MODE: Reduce workers to prevent file descriptor exhaustion
+        _OPTUNA_WORKERS_HIGHRES = 4  # Cap for resolution >= _HIGHRES_THRESHOLD
+        _OPTUNA_WORKERS_LOWRES = 6  # Cap for resolution < _HIGHRES_THRESHOLD
+        _HIGHRES_THRESHOLD = 224  # Resolution boundary for worker tuning
         if is_optuna:
-            if self.cfg.dataset.resolution >= 224:
-                num_workers = min(num_workers, 4)
-            else:
-                num_workers = min(num_workers, 6)
+            cap = (
+                _OPTUNA_WORKERS_HIGHRES
+                if self.cfg.dataset.resolution >= _HIGHRES_THRESHOLD
+                else _OPTUNA_WORKERS_LOWRES
+            )
+            num_workers = min(num_workers, cap)
 
             self.logger.info(
                 f"Optuna mode: Reducing workers to {num_workers} "
@@ -180,7 +185,7 @@ class DataLoaderFactory:
         # Proportional downsizing for validation/testing if max_samples is set
         sub_samples = None
         if self.cfg.dataset.max_samples:
-            sub_samples = max(10, int(self.cfg.dataset.max_samples * 0.10))
+            sub_samples = max(10, int(self.cfg.dataset.max_samples * self.cfg.dataset.val_ratio))
 
         val_ds = VisionDataset(
             **ds_params, split="val", transform=val_trans, max_samples=sub_samples
@@ -222,7 +227,9 @@ class DataLoaderFactory:
         return train_loader, val_loader, test_loader
 
 
-def get_dataloaders(metadata, cfg, is_optuna: bool = False):
+def get_dataloaders(
+    metadata: DatasetData, cfg: Config, is_optuna: bool = False
+) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """
     Convenience function for creating train/val/test DataLoaders.
 

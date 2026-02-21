@@ -44,10 +44,11 @@ def _get_tta_transforms(is_anatomical: bool, is_texture_based: bool, cfg: Config
     """
     tta_mode = cfg.augmentation.tta_mode
 
-    # Scale TTA intensity relative to resolution (224 as baseline).
+    # Scale TTA intensity relative to resolution.
     # A 2px shift on 224x224 (~0.9%) should map to ~0.25px on 28x28 (~0.9%).
+    _TTA_BASELINE_RESOLUTION = 224  # Reference resolution for TTA scaling
     resolution = cfg.dataset.resolution
-    scale_factor = resolution / 224.0
+    scale_factor = resolution / _TTA_BASELINE_RESOLUTION
     tta_translate = cfg.augmentation.tta_translate * scale_factor
     tta_scale = 1.0 + (cfg.augmentation.tta_scale - 1.0) * scale_factor
     tta_blur_sigma = cfg.augmentation.tta_blur_sigma * scale_factor

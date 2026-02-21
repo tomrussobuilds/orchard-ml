@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add timm weight sources, pretrained trial logging, and update docs
 - add explicit warnings for GPU-to-CPU device fallback
 - add dataset size validation and robust device comparison
+- add optimizer_type config field and Bandit quality badge
 
 ### Changed
 

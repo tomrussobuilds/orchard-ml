@@ -104,6 +104,9 @@ def _download_and_convert(metadata, cifar_cls) -> Path:
     )
 
     # Create stratified train/val split
+    # NOTE: val_ratio=0.15 is baked into the NPZ at download time.
+    # This is independent from DatasetConfig.val_ratio (which controls
+    # runtime sub-sampling when max_samples is set in loader.py).
     train_imgs, train_labels, val_imgs, val_labels = _create_stratified_split(
         train_images, train_targets
     )

@@ -172,7 +172,7 @@ class InfrastructureManager(BaseModel):
             torch.cuda.empty_cache()
             log.debug(" » CUDA cache cleared.")
 
-        if hasattr(torch, "mps") and torch.backends.mps.is_available():
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
             try:
                 torch.mps.empty_cache()
                 log.debug(" » MPS cache cleared.")

@@ -15,6 +15,15 @@ from ..core import LOGGER_NAME, LogStyle
 
 logger = logging.getLogger(LOGGER_NAME)
 
+# Default early-stopping thresholds per metric direction.
+# Intentionally aggressive: stop only when near-perfect performance is achieved.
+_THRESH_AUC = 0.9999  # Near-perfect ROC-AUC
+_THRESH_ACCURACY = 0.995  # 99.5% classification accuracy
+_THRESH_F1 = 0.98  # 98% F1 score
+_THRESH_LOSS = 0.01  # Very low cross-entropy loss
+_THRESH_MAE = 0.01  # Mean absolute error
+_THRESH_MSE = 0.001  # Mean squared error
+
 
 # EARLY STOPPING CALLBACK
 class StudyEarlyStoppingCallback:
@@ -152,17 +161,18 @@ def get_early_stopping_callback(
     if not enabled:
         return None
 
-    # Default thresholds for common metrics
+    # Default thresholds for common metrics — intentionally aggressive
+    # to stop only when near-perfect performance is clearly achieved.
     DEFAULT_THRESHOLDS = {
         "maximize": {
-            "auc": 0.9999,  # Near-perfect AUC
-            "accuracy": 0.995,  # 99.5% accuracy
-            "f1": 0.98,  # 98% F1 score
+            "auc": _THRESH_AUC,
+            "accuracy": _THRESH_ACCURACY,
+            "f1": _THRESH_F1,
         },
         "minimize": {
-            "loss": 0.01,  # Very low loss
-            "mae": 0.01,  # Mean absolute error
-            "mse": 0.001,  # Mean squared error
+            "loss": _THRESH_LOSS,
+            "mae": _THRESH_MAE,
+            "mse": _THRESH_MSE,
         },
     }
 

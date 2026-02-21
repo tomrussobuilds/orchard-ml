@@ -21,7 +21,7 @@ logger = logging.getLogger(LOGGER_NAME)
 def validate_export(
     pytorch_model: nn.Module,
     onnx_path: Path,
-    input_shape: Tuple[int, int, int] = (3, 224, 224),
+    input_shape: Tuple[int, int, int],
     num_samples: int = 10,
     max_deviation: float = 1e-5,
 ) -> bool:

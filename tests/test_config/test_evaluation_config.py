@@ -108,12 +108,12 @@ def test_report_format_validation_valid():
 
 @pytest.mark.unit
 def test_report_format_validation_invalid():
-    """Test report_format defaults to xlsx for invalid formats."""
-    config = EvaluationConfig(report_format="pdf")
-    assert config.report_format == "xlsx"
+    """Test report_format raises ValueError for unsupported formats."""
+    with pytest.raises(ValidationError, match="Unsupported report_format"):
+        EvaluationConfig(report_format="pdf")
 
-    config = EvaluationConfig(report_format="invalid")
-    assert config.report_format == "xlsx"
+    with pytest.raises(ValidationError, match="Unsupported report_format"):
+        EvaluationConfig(report_format="invalid")
 
 
 @pytest.mark.unit

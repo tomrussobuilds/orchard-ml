@@ -82,4 +82,6 @@ class EvaluationConfig(BaseModel):
         """
         supported = {"xlsx", "csv", "json"}
         normalized = v.lower()
-        return normalized if normalized in supported else "xlsx"
+        if normalized not in supported:
+            raise ValueError(f"Unsupported report_format '{v}'. Choose from: {sorted(supported)}")
+        return normalized

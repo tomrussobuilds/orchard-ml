@@ -19,7 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from ..metadata import DatasetMetadata, DatasetRegistryWrapper
 from ..paths import DATASET_DIR, SUPPORTED_RESOLUTIONS
-from .types import ImageSize, PositiveInt, ValidatedPath
+from .types import ImageSize, PositiveInt, Probability, ValidatedPath
 
 
 # DATASET CONFIGURATION
@@ -37,6 +37,7 @@ class DatasetConfig(BaseModel):
         data_root: Root directory containing dataset files.
         use_weighted_sampler: Enable class-balanced sampling for imbalanced datasets.
         max_samples: Maximum samples to load (None=all).
+        val_ratio: Fraction of max_samples for val/test splits (default 0.10).
         img_size: Target square resolution for model input (auto-synced).
         force_rgb: Convert grayscale to RGB for pretrained ImageNet weights.
         resolution: Target resolution variant (28 or 224).
@@ -53,6 +54,10 @@ class DatasetConfig(BaseModel):
     data_root: ValidatedPath = DATASET_DIR
     use_weighted_sampler: bool = True
     max_samples: Optional[PositiveInt] = Field(default=None)
+    val_ratio: Probability = Field(
+        default=0.10,
+        description="Fraction of max_samples used for val/test splits (0.0-1.0)",
+    )
 
     img_size: Optional[ImageSize] = Field(
         description="Target square resolution for model input",
@@ -119,8 +124,11 @@ class DatasetConfig(BaseModel):
         """
         Return metadata, lazily loading from registry if None.
 
-        Uses object.__setattr__ to bypass frozen restriction for
-        one-time initialization.
+        **Safety net only**: the primary path (``Config.from_recipe``)
+        injects metadata before frozen instantiation.  This lazy
+        fallback exists for direct ``DatasetConfig()`` construction
+        in tests or standalone usage.  Uses ``object.__setattr__``
+        to bypass frozen restriction for one-time initialization.
 
         Returns:
             DatasetMetadata object for this dataset.

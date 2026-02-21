@@ -259,6 +259,8 @@ def mixup_data(
         return x, y, y, 1.0
 
     if rng is None:
+        # Defensive fallback — production path always provides a seeded rng
+        # via ModelTrainer (seeded from cfg.training.seed).
         rng = np.random.default_rng(seed=42)
 
     # Draw mixing coefficient from Beta distribution

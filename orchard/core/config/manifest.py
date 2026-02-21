@@ -315,7 +315,14 @@ class _CrossDomainValidator:
         Validate AMP-device alignment.
 
         Auto-disables AMP on CPU with a warning instead of failing,
-        since this is a recoverable misconfiguration.
+        since this is a recoverable misconfiguration (e.g. GPU recipe
+        running on a CPU-only machine).
+
+        Note:
+            Uses ``object.__setattr__`` to bypass Pydantic frozen
+            restriction.  This is intentional: AMP auto-disable is a
+            UX convenience that must happen after device resolution,
+            which occurs during model validation (post-freeze).
         """
         if config.hardware.device.lower().startswith("cpu") and config.training.use_amp:
             import warnings

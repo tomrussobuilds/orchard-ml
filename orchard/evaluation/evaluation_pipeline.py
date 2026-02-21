@@ -70,13 +70,16 @@ def run_final_evaluation(
 
     # --- 2) Visualizations ---
     # Diagnostic Confusion Matrix
-    plot_confusion_matrix(
-        all_labels=all_labels,
-        all_preds=all_preds,
-        classes=class_names,
-        out_path=paths.get_fig_path(f"confusion_matrix_{arch_tag}_{cfg.dataset.resolution}.png"),
-        cfg=cfg,
-    )
+    if cfg.evaluation.save_confusion_matrix:
+        plot_confusion_matrix(
+            all_labels=all_labels,
+            all_preds=all_preds,
+            classes=class_names,
+            out_path=paths.get_fig_path(
+                f"confusion_matrix_{arch_tag}_{cfg.dataset.resolution}.png"
+            ),
+            cfg=cfg,
+        )
 
     # Historical Training Curves
     val_acc_list = [m["accuracy"] for m in val_metrics_history]
@@ -88,14 +91,17 @@ def run_final_evaluation(
     )
 
     # Lazy-loaded prediction grid (samples from loader)
-    show_predictions(
-        model=model,
-        loader=test_loader,
-        device=device,
-        classes=class_names,
-        save_path=paths.get_fig_path(f"sample_predictions_{arch_tag}_{cfg.dataset.resolution}.png"),
-        cfg=cfg,
-    )
+    if cfg.evaluation.save_predictions_grid:
+        show_predictions(
+            model=model,
+            loader=test_loader,
+            device=device,
+            classes=class_names,
+            save_path=paths.get_fig_path(
+                f"sample_predictions_{arch_tag}_{cfg.dataset.resolution}.png"
+            ),
+            cfg=cfg,
+        )
 
     # --- 3) Structured Reporting ---
     # Aggregates everything into a formatted Excel summary

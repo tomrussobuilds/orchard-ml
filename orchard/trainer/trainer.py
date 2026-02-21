@@ -184,14 +184,13 @@ class ModelTrainer:
 
         Notes:
             - Model weights are automatically restored to best checkpoint after training
-            - Mixup augmentation is disabled after cosine_fraction × epochs
+            - Mixup augmentation is disabled after mixup_epochs
             - Early stopping triggers if no AUC improvement for `patience` epochs
         """
         for epoch in range(1, self.epochs + 1):
             logger.info(f" Epoch {epoch:02d}/{self.epochs} ".center(60, "-"))
 
-            mixup_cutoff = int(self.cfg.training.cosine_fraction * self.epochs)
-            current_mixup = self.mixup_fn if epoch <= mixup_cutoff else None
+            current_mixup = self.mixup_fn if epoch <= self.cfg.training.mixup_epochs else None
 
             # --- 1. Training Phase ---
             epoch_loss = train_one_epoch(
@@ -205,6 +204,7 @@ class ModelTrainer:
                 grad_clip=self.cfg.training.grad_clip,
                 epoch=epoch,
                 total_epochs=self.epochs,
+                use_tqdm=self.cfg.training.use_tqdm,
             )
             self.train_losses.append(epoch_loss)
 

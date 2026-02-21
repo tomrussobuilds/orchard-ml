@@ -25,8 +25,10 @@ def mock_cfg():
     cfg.training.patience = 3
     cfg.training.use_amp = False
     cfg.training.mixup_alpha = 0.0
-    cfg.training.cosine_fraction = 0.5
+    cfg.training.mixup_epochs = 0
     cfg.training.grad_clip = 1.0
+    cfg.training.use_tqdm = False
+    cfg.training.seed = 42
     return cfg
 
 
@@ -157,8 +159,10 @@ def test_trainer_amp_scaler_enabled(simple_model, mock_loaders, optimizer, sched
     cfg.training.patience = 1
     cfg.training.use_amp = True
     cfg.training.mixup_alpha = 0.0
-    cfg.training.cosine_fraction = 0.5
+    cfg.training.mixup_epochs = 0
     cfg.training.grad_clip = 0.0
+    cfg.training.use_tqdm = False
+    cfg.training.seed = 42
 
     trainer = ModelTrainer(
         model=simple_model,
@@ -335,7 +339,7 @@ def test_train_early_stopping(mock_validate, mock_train, trainer):
 def test_train_mixup_cutoff(
     mock_validate, mock_train, simple_model, mock_loaders, optimizer, scheduler, criterion
 ):
-    """Test MixUp is disabled after cosine_fraction epochs."""
+    """Test MixUp is disabled after mixup_epochs."""
     train_loader, val_loader = mock_loaders
 
     cfg = MagicMock()
@@ -343,9 +347,10 @@ def test_train_mixup_cutoff(
     cfg.training.patience = 20
     cfg.training.use_amp = False
     cfg.training.mixup_alpha = 1.0
-    cfg.training.cosine_fraction = 0.5
+    cfg.training.mixup_epochs = 5
     cfg.training.grad_clip = 0.0
     cfg.training.seed = 42
+    cfg.training.use_tqdm = False
 
     with tempfile.TemporaryDirectory() as tmpdir:
         trainer = ModelTrainer(

@@ -103,6 +103,10 @@ def get_vram_info(device_idx: int = 0) -> str:
 
 
 # CPU MANAGEMENT
+_MIN_WORKERS = 2  # Floor: always at least 2 workers for I/O overlap
+_MAX_WORKERS = 8  # Ceiling: prevent RAM thrashing on high-core machines
+
+
 def get_num_workers() -> int:
     """
     Determines optimal DataLoader workers with RAM stability cap.
@@ -110,10 +114,10 @@ def get_num_workers() -> int:
     Returns:
         Recommended number of subprocesses (2-8 range)
     """
-    total_cores = os.cpu_count() or 2
+    total_cores = os.cpu_count() or _MIN_WORKERS
     if total_cores <= 4:
-        return 2
-    return min(total_cores // 2, 8)
+        return _MIN_WORKERS
+    return min(total_cores // 2, _MAX_WORKERS)
 
 
 def apply_cpu_threads(num_workers: int) -> int:

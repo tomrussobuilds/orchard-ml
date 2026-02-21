@@ -10,7 +10,7 @@ Example:
     ...     model=trained_model,
     ...     checkpoint_path="outputs/best_model.pth",
     ...     output_path="exports/model.onnx",
-    ...     opset_version=18,
+    ...     input_shape=(3, 224, 224),
     ... )
 """
 
