@@ -51,7 +51,7 @@ class TrialConfigBuilder:
         "augmentation": ["rotation_angle", "jitter_val", "min_scale"],
     }
 
-    def __init__(self, base_cfg: Config):
+    def __init__(self, base_cfg: Config) -> None:
         """
         Initialize config builder.
 

@@ -41,7 +41,7 @@ class SearchSpaceRegistry:
         overrides: Configurable search range bounds. Uses defaults if None.
     """
 
-    def __init__(self, overrides: SearchSpaceOverrides | None = None):
+    def __init__(self, overrides: SearchSpaceOverrides | None = None) -> None:
         self.ov = overrides if overrides is not None else _default_overrides()
 
     def get_optimization_space(self) -> dict[str, Callable]:

@@ -28,7 +28,7 @@ class MetricExtractor:
         >>> best = extractor.update_best(current)  # 0.92
     """
 
-    def __init__(self, metric_name: str):
+    def __init__(self, metric_name: str) -> None:
         """
         Initialize metric extractor.
 

@@ -178,8 +178,7 @@ jobs:
       - name: Run Bandit security scan
         run: |
           pip install bandit
-          bandit -r orchard/ -ll -s B101 || true
-        continue-on-error: true
+          bandit -r orchard/ -ll -s B101
 
       - name: Run pip-audit (dependency vulnerability scan)
         run: |
@@ -203,5 +202,5 @@ jobs:
           echo "Security: ${{ needs.security.result }}"
 
       - name: Fail if critical jobs failed
-        if: needs.lint.result == 'failure' || needs.test-pytest.result == 'failure' || needs.test-smoke.result == 'failure'
+        if: needs.lint.result == 'failure' || needs.test-pytest.result == 'failure' || needs.test-smoke.result == 'failure' || needs.security.result == 'failure'
         run: exit 1

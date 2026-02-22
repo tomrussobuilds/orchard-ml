@@ -9,6 +9,7 @@ selected resolution while avoiding global metadata overwrites.
 from __future__ import annotations
 
 import copy
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -41,7 +42,7 @@ class DatasetRegistryWrapper(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def _load_registry(cls, values):
+    def _load_registry(cls, values: dict[str, Any]) -> dict[str, Any]:
         """
         Loads and merges domain registries based on resolution.
         Validates resolution and creates deep copy to prevent mutation.

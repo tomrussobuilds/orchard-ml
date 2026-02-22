@@ -53,7 +53,7 @@ class DataLoaderFactory:
         logger (logging.Logger): Module-specific logger.
     """
 
-    def __init__(self, cfg: Config, metadata: DatasetData):
+    def __init__(self, cfg: Config, metadata: DatasetData) -> None:
         """Initializes the factory with environment and dataset metadata.
 
         Args:

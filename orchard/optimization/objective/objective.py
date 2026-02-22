@@ -109,7 +109,7 @@ class OptunaObjective:
         dataloader_factory: DataloaderFactoryProtocol | None = None,
         model_factory: ModelFactoryProtocol | None = None,
         tracker: TrackerProtocol | None = None,
-    ):
+    ) -> None:
         """
         Initialize Optuna objective.
 

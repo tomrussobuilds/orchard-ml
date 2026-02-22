@@ -22,6 +22,7 @@ Attributes:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -67,7 +68,7 @@ class TelemetryConfig(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def handle_empty_config(cls, data):
+    def handle_empty_config(cls, data: Any) -> Any:
         """
         Handle empty YAML section by returning default dict.
 

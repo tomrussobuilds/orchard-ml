@@ -109,7 +109,7 @@ class ModelTrainer:
         cfg: Config,
         output_path: Path | None = None,
         tracker: TrackerProtocol | None = None,
-    ):
+    ) -> None:
         """
         Initializes the ModelTrainer with all required training components.
 

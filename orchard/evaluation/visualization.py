@@ -215,7 +215,9 @@ def _build_suptitle(cfg: "Config") -> str:
     )
 
 
-def _get_predictions_batch(model: nn.Module, loader: DataLoader, device: torch.device, n: int):
+def _get_predictions_batch(
+    model: nn.Module, loader: DataLoader, device: torch.device, n: int
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Extract a sample batch and run model inference.
 
     Args:
@@ -238,7 +240,9 @@ def _get_predictions_batch(model: nn.Module, loader: DataLoader, device: torch.d
     return images_tensor.cpu().numpy(), labels_tensor.numpy().flatten(), preds
 
 
-def _setup_prediction_grid(num_samples: int, cols: int, cfg: Config | None):
+def _setup_prediction_grid(
+    num_samples: int, cols: int, cfg: Config | None
+) -> tuple[plt.Figure, np.ndarray]:
     """Calculate grid dimensions and initialize matplotlib subplots.
 
     Args:
@@ -259,7 +263,7 @@ def _setup_prediction_grid(num_samples: int, cols: int, cfg: Config | None):
     return fig, np.atleast_1d(axes).flatten()
 
 
-def _finalize_figure(plt_obj, save_path: Path | None, cfg: Config | None):
+def _finalize_figure(plt_obj, save_path: Path | None, cfg: Config | None) -> None:
     """Save the current figure to disk or display interactively, then close.
 
     Args:

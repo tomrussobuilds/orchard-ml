@@ -51,7 +51,7 @@ class StudyEarlyStoppingCallback:
 
     def __init__(
         self, threshold: float, direction: str = "maximize", patience: int = 2, enabled: bool = True
-    ):
+    ) -> None:
         """
         Initialize early stopping callback.
 

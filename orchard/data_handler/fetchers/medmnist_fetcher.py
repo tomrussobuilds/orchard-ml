@@ -117,7 +117,7 @@ def _is_valid_npz(path: Path, expected_md5: str) -> bool:
     return md5_checksum(path) == expected_md5
 
 
-def _stream_download(url: str, tmp_path: Path, chunk_size: int = 8192):
+def _stream_download(url: str, tmp_path: Path, chunk_size: int = 8192) -> None:
     """Executes the streaming GET request and writes to a temporary file."""
     headers = {
         "User-Agent": "Wget/1.0",

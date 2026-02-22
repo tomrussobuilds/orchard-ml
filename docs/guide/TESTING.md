@@ -216,13 +216,13 @@ GitHub Actions automatically run on every push:
 | **Pytest Suite** | 1,175+ tests, 5 Python versions | ✅ Required to pass |
 | **Smoke Test** | 1-epoch E2E validation | ✅ Required to pass |
 | **Documentation** | README verification | ✅ Required to pass |
-| **Security Scan** | Bandit + pip-audit | Continue-on-error (advisory) |
-| **Build Status** | Aggregate summary | ✅ Fails if lint, pytest, or smoke test fails |
+| **Security Scan** | Bandit + pip-audit | ✅ Required to pass (Bandit hard-fail, pip-audit advisory) |
+| **Build Status** | Aggregate summary | ✅ Fails if lint, pytest, smoke test, or security fails |
 
 View the latest build: [![CI/CD](https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml/badge.svg)](https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml)
 
 > **Note**: Health checks are not run in CI to avoid excessive dataset downloads. Run locally with `python -m tests.health_check` for dataset integrity validation.
 
-> **Note**: Python 3.14 (dev) is tested for core functionality only. ONNX export is not supported on 3.14-dev as `onnxruntime` does not yet provide compatible wheels.
+> **Note**: Python 3.14 (dev) is tested for core functionality only. ONNX export requires `onnxruntime>=1.24.1` which provides Python 3.14 wheels.
 
 ---

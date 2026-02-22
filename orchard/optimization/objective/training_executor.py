@@ -83,7 +83,7 @@ class TrialTrainingExecutor:
         cfg: Config,
         device: torch.device,
         metric_extractor: MetricExtractor,
-    ):
+    ) -> None:
         """
         Initialize training executor.
 
@@ -268,7 +268,7 @@ class TrialTrainingExecutor:
         trial: optuna.Trial,
         best_metric: float,
         final_loss: float,
-    ):
+    ) -> None:
         """
         Log trial completion summary.
 

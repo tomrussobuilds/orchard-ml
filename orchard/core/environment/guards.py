@@ -136,7 +136,7 @@ class DuplicateProcessCleaner:
         current_pid (int): PID of the current process.
     """
 
-    def __init__(self, script_name: str | None = None):
+    def __init__(self, script_name: str | None = None) -> None:
         self.script_path = os.path.realpath(script_name or sys.argv[0])
         self.current_pid = os.getpid()
 

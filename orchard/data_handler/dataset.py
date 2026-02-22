@@ -43,7 +43,7 @@ class VisionDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
         transform: transforms.Compose | None = None,
         max_samples: int | None = None,
         seed: int = 42,
-    ):
+    ) -> None:
         """
         Initializes the dataset by loading the specified .npz split into RAM.
 
@@ -119,7 +119,7 @@ class LazyNPZDataset(Dataset):
         labels (np.ndarray): Memory-mapped view of ``train_labels``.
     """
 
-    def __init__(self, npz_path: Path):
+    def __init__(self, npz_path: Path) -> None:
         """Initializes the dataset with a memory-mapped ``.npz`` archive.
 
         Args:

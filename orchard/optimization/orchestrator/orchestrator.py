@@ -80,7 +80,7 @@ class OptunaOrchestrator:
         device,
         paths: RunPaths,
         tracker: TrackerProtocol | None = None,
-    ):
+    ) -> None:
         """Initialize orchestrator.
 
         Args:

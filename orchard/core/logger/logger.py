@@ -195,7 +195,7 @@ class Logger:
         level: int = logging.INFO,
         max_bytes: int = 5 * 1024 * 1024,
         backup_count: int = 5,
-    ):
+    ) -> None:
         """
         Initializes the Logger with specified configuration.
 

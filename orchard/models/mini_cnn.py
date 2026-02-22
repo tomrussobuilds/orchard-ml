@@ -28,7 +28,7 @@ from ..core import Config
 class MiniCNN(nn.Module):
     """Compact CNN optimized for 28×28 resolution datasets."""
 
-    def __init__(self, in_channels: int, num_classes: int, dropout: float = 0.0):
+    def __init__(self, in_channels: int, num_classes: int, dropout: float = 0.0) -> None:
         """
         Initialize MiniCNN architecture.
 
