@@ -69,7 +69,6 @@ telemetry:
   log_interval: 50
 
 evaluation:
-  batch_size: 256
   n_samples: 16
   fig_dpi: 200
   cmap_confusion: Blues

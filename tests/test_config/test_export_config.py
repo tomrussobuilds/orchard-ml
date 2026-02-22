@@ -7,8 +7,6 @@ parameters, quantization settings, and validation options.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 from pydantic import ValidationError
 
@@ -22,11 +20,9 @@ def test_export_config_defaults():
     config = ExportConfig()
 
     assert config.format == "onnx"
-    assert config.output_path is None
     assert config.opset_version == 18
     assert config.dynamic_axes is True
     assert config.do_constant_folding is True
-    assert config.torchscript_method == "trace"
     assert config.quantize is False
     assert config.quantization_backend == "qnnpack"
     assert config.validate_export is True
@@ -39,7 +35,6 @@ def test_export_config_custom_values():
     """Test ExportConfig with custom parameters."""
     config = ExportConfig(
         format="torchscript",
-        output_path=Path("/mock/model.pt"),
         opset_version=16,
         dynamic_axes=False,
         quantize=True,
@@ -47,7 +42,6 @@ def test_export_config_custom_values():
     )
 
     assert config.format == "torchscript"
-    assert config.output_path == Path("/mock/model.pt")
     assert config.opset_version == 16
     assert config.dynamic_axes is False
     assert config.quantize is True
@@ -102,22 +96,6 @@ def test_constant_folding_boolean():
 
     config_false = ExportConfig(do_constant_folding=False)
     assert config_false.do_constant_folding is False
-
-
-# EXPORT CONFIG: TORCHSCRIPT PARAMETERS
-@pytest.mark.unit
-def test_valid_torchscript_methods():
-    """Test valid TorchScript methods are accepted."""
-    for method in ["trace", "script"]:
-        config = ExportConfig(torchscript_method=method)
-        assert config.torchscript_method == method
-
-
-@pytest.mark.unit
-def test_invalid_torchscript_method_rejected():
-    """Test invalid TorchScript method is rejected."""
-    with pytest.raises(ValidationError):
-        ExportConfig(torchscript_method="invalid_method")
 
 
 # EXPORT CONFIG: QUANTIZATION
@@ -188,29 +166,6 @@ def test_max_deviation_accepts_float():
     assert config2.max_deviation == pytest.approx(0.001)
 
 
-# EXPORT CONFIG: OUTPUT PATH
-@pytest.mark.unit
-def test_output_path_none_by_default():
-    """Test output_path is None by default (auto-generated)."""
-    config = ExportConfig()
-    assert config.output_path is None
-
-
-@pytest.mark.unit
-def test_output_path_accepts_path():
-    """Test output_path accepts Path objects."""
-    path = Path("/mock/exported_model.onnx")
-    config = ExportConfig(output_path=path)
-    assert config.output_path == path
-
-
-@pytest.mark.unit
-def test_output_path_accepts_string():
-    """Test output_path accepts string paths."""
-    config = ExportConfig(output_path="/mock/model.onnx")
-    assert config.output_path == Path("/mock/model.onnx")
-
-
 # EXPORT CONFIG: IMMUTABILITY
 @pytest.mark.unit
 def test_config_is_frozen():
@@ -248,16 +203,14 @@ def test_onnx_export_config():
 
 
 @pytest.mark.unit
-def test_torchscript_export_config():
-    """Test typical TorchScript export configuration."""
+def test_torchscript_format_accepted():
+    """Test torchscript format is accepted (future feature)."""
     config = ExportConfig(
         format="torchscript",
-        torchscript_method="trace",
         validate_export=True,
     )
 
     assert config.format == "torchscript"
-    assert config.torchscript_method == "trace"
     assert config.validate_export is True
 
 

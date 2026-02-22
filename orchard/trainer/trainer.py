@@ -228,7 +228,7 @@ class ModelTrainer:
             self.val_aucs.append(val_auc)
 
             # --- 3. Scheduling Phase ---
-            self._smart_step_scheduler(val_loss)
+            self._step_scheduler(val_loss)
 
             if val_acc > self.best_acc:
                 self.best_acc = val_acc
@@ -260,13 +260,12 @@ class ModelTrainer:
 
         return self.best_path, self.train_losses, self.val_metrics_history
 
-    def _smart_step_scheduler(self, val_loss: float) -> None:
+    def _step_scheduler(self, val_loss: float) -> None:
         """
-        Updates the learning rate scheduler based on its type.
+        Step the learning rate scheduler.
 
-        If the scheduler is an instance of ReduceLROnPlateau, it requires
-        the validation loss to determine the next step. Otherwise, it
-        performs a standard step.
+        ReduceLROnPlateau requires the monitored metric (val_loss);
+        all other schedulers use a plain step().
 
         Args:
             val_loss: Current epoch's validation loss
@@ -274,8 +273,7 @@ class ModelTrainer:
         if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
             self.scheduler.step(val_loss)
         else:
-            if not isinstance(self.scaler, torch.amp.GradScaler):
-                self.scheduler.step()
+            self.scheduler.step()
 
     def _handle_checkpointing(self, val_metrics: dict) -> bool:
         """

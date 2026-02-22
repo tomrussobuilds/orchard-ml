@@ -1,11 +1,11 @@
 """
 Evaluation Engine Module.
 
-Orchestrates the model inference lifecycle on test datasets.
+Orchestrates the model evaluation lifecycle on labelled test datasets.
 Handles batch processing, TTA integration, and results consolidation.
 
 Key Functions:
-    evaluate_model: Full-dataset inference with optional TTA and metric computation
+    evaluate_model: Full-dataset evaluation with optional TTA and metric computation
 
 Example:
     >>> preds, labels, metrics, f1 = evaluate_model(
@@ -41,7 +41,7 @@ def evaluate_model(
     cfg: Config = None,
 ) -> tuple[np.ndarray, np.ndarray, dict, float]:
     """
-    Performs full-set inference and coordinates metric calculation.
+    Performs full-set evaluation and coordinates metric calculation.
 
     Args:
         model: The trained neural network.

@@ -169,9 +169,9 @@ def run_training_phase(
     run_logger.info(LogStyle.DOUBLE)
 
     model = get_model(device=device, cfg=cfg)
-    criterion = get_criterion(cfg)
-    optimizer = get_optimizer(model, cfg)
-    scheduler = get_scheduler(optimizer, cfg)
+    criterion = get_criterion(cfg.training)
+    optimizer = get_optimizer(model, cfg.training)
+    scheduler = get_scheduler(optimizer, cfg.training)
 
     trainer = ModelTrainer(
         model=model,
@@ -264,14 +264,17 @@ def run_export_phase(
     # Reload model architecture (on CPU for export)
     export_model = get_model(device=torch.device("cpu"), cfg=cfg, verbose=False)
 
+    # Read export flags from config (with safe defaults if export config is missing)
+    export_cfg = cfg.export
     export_to_onnx(
         model=export_model,
         checkpoint_path=checkpoint_path,
         output_path=onnx_path,
         input_shape=input_shape,
         opset_version=opset_version,
-        dynamic_axes=True,
-        validate=True,
+        dynamic_axes=export_cfg.dynamic_axes if export_cfg else True,
+        do_constant_folding=export_cfg.do_constant_folding if export_cfg else True,
+        validate=export_cfg.validate_export if export_cfg else True,
     )
 
     # Numerical validation: compare PyTorch vs ONNX outputs

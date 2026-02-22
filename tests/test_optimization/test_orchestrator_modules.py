@@ -103,21 +103,21 @@ def test_map_param_to_config_path_architecture():
 @pytest.mark.unit
 def test_build_sampler_tpe(mock_cfg):
     """Test building TPE sampler."""
-    sampler = build_sampler(mock_cfg)
+    sampler = build_sampler(mock_cfg.optuna)
     assert isinstance(sampler, optuna.samplers.TPESampler)
 
 
 @pytest.mark.unit
 def test_build_pruner_median(mock_cfg):
     """Test building Median pruner."""
-    pruner = build_pruner(mock_cfg)
+    pruner = build_pruner(mock_cfg.optuna)
     assert isinstance(pruner, optuna.pruners.MedianPruner)
 
 
 @pytest.mark.unit
 def test_build_pruner_disabled(mock_cfg):
     """Test disabled pruning returns NopPruner."""
-    pruner = build_pruner(mock_cfg)
+    pruner = build_pruner(mock_cfg.optuna)
     assert isinstance(pruner, optuna.pruners.BasePruner)
 
 
@@ -126,7 +126,7 @@ def test_build_pruner_disabled(mock_cfg):
 def test_build_callbacks(mock_callback_fn, mock_cfg):
     """Test building callbacks list."""
     mock_callback_fn.return_value = None
-    callbacks = build_callbacks(mock_cfg)
+    callbacks = build_callbacks(mock_cfg.optuna)
     assert isinstance(callbacks, list)
 
 

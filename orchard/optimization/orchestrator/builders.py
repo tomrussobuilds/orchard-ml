@@ -2,8 +2,8 @@
 Factory Functions for Optuna Components.
 
 Provides builder functions that construct Optuna samplers, pruners,
-and callbacks based on configuration strings. Centralizes the
-instantiation logic and provides clear error messages for invalid
+and callbacks based on the Optuna configuration sub-model. Centralizes
+the instantiation logic and provides clear error messages for invalid
 configurations.
 
 Functions:
@@ -20,7 +20,7 @@ from typing import cast
 import optuna
 from optuna.pruners import HyperbandPruner, MedianPruner, NopPruner, PercentilePruner
 
-from ...core import LOGGER_NAME, Config
+from ...core import LOGGER_NAME, OptunaConfig
 from ..early_stopping import get_early_stopping_callback
 from .config import PRUNER_REGISTRY, SAMPLER_REGISTRY
 
@@ -28,12 +28,12 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 # CONFIGURATION BUILDERS
-def build_sampler(cfg: Config) -> optuna.samplers.BaseSampler:
+def build_sampler(optuna_cfg: OptunaConfig) -> optuna.samplers.BaseSampler:
     """
     Create Optuna sampler from configuration.
 
     Args:
-        cfg: Global configuration with optuna.sampler_type
+        optuna_cfg: Optuna sub-config with sampler_type
 
     Returns:
         Configured Optuna sampler instance
@@ -41,21 +41,23 @@ def build_sampler(cfg: Config) -> optuna.samplers.BaseSampler:
     Raises:
         ValueError: If sampler_type is not in SAMPLER_REGISTRY
     """
-    sampler_cls = SAMPLER_REGISTRY.get(cfg.optuna.sampler_type)
+    sampler_cls = SAMPLER_REGISTRY.get(optuna_cfg.sampler_type)
     if sampler_cls is None:
         raise ValueError(
-            f"Unknown sampler: {cfg.optuna.sampler_type}. "
+            f"Unknown sampler: {optuna_cfg.sampler_type}. "
             f"Valid options: {list(SAMPLER_REGISTRY.keys())}"
         )
     return sampler_cls()
 
 
-def build_pruner(cfg: Config) -> MedianPruner | PercentilePruner | HyperbandPruner | NopPruner:
+def build_pruner(
+    optuna_cfg: OptunaConfig,
+) -> MedianPruner | PercentilePruner | HyperbandPruner | NopPruner:
     """
     Create Optuna pruner from configuration.
 
     Args:
-        cfg: Global configuration with optuna.enable_pruning and optuna.pruner_type
+        optuna_cfg: Optuna sub-config with enable_pruning and pruner_type
 
     Returns:
         Configured Optuna pruner instance (NopPruner if disabled)
@@ -63,20 +65,20 @@ def build_pruner(cfg: Config) -> MedianPruner | PercentilePruner | HyperbandPrun
     Raises:
         ValueError: If pruner_type is not in PRUNER_REGISTRY
     """
-    if not cfg.optuna.enable_pruning:
+    if not optuna_cfg.enable_pruning:
         return NopPruner()
 
-    pruner_factory = PRUNER_REGISTRY.get(cfg.optuna.pruner_type)
+    pruner_factory = PRUNER_REGISTRY.get(optuna_cfg.pruner_type)
     if pruner_factory is None:
         raise ValueError(
-            f"Unknown pruner: {cfg.optuna.pruner_type}. "
+            f"Unknown pruner: {optuna_cfg.pruner_type}. "
             f"Valid options: {list(PRUNER_REGISTRY.keys())}"
         )
     # type narrowing: PRUNER_REGISTRY values are concrete pruner factories
     return cast(MedianPruner | PercentilePruner | HyperbandPruner | NopPruner, pruner_factory())
 
 
-def build_callbacks(cfg: Config) -> list:
+def build_callbacks(optuna_cfg: OptunaConfig) -> list:
     """
     Construct list of optimization callbacks from configuration.
 
@@ -84,21 +86,21 @@ def build_callbacks(cfg: Config) -> list:
         - Early stopping callback (based on metric threshold)
 
     Args:
-        cfg: Global configuration with optuna section
+        optuna_cfg: Optuna sub-config with early stopping parameters
 
     Returns:
         list of Optuna callback objects (may be empty)
 
     Example:
-        >>> callbacks = build_callbacks(cfg)
+        >>> callbacks = build_callbacks(optuna_cfg)
         >>> len(callbacks)  # 0 or 1 depending on early_stopping config
     """
     early_stop_callback = get_early_stopping_callback(
-        direction=cfg.optuna.direction,
-        threshold=cfg.optuna.early_stopping_threshold,
-        patience=cfg.optuna.early_stopping_patience,
-        enabled=cfg.optuna.enable_early_stopping,
-        metric_name=cfg.optuna.metric_name,
+        direction=optuna_cfg.direction,
+        threshold=optuna_cfg.early_stopping_threshold,
+        patience=optuna_cfg.early_stopping_patience,
+        enabled=optuna_cfg.enable_early_stopping,
+        metric_name=optuna_cfg.metric_name,
     )
 
     return [early_stop_callback] if early_stop_callback else []

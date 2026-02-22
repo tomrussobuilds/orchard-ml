@@ -182,9 +182,9 @@ class OptunaObjective:
                 self.dataset_data, trial_cfg, is_optuna=True
             )
             model = self._model_factory(self.device, trial_cfg)
-            optimizer = get_optimizer(model, trial_cfg)
-            scheduler = get_scheduler(optimizer, trial_cfg)
-            criterion = get_criterion(trial_cfg)
+            optimizer = get_optimizer(model, trial_cfg.training)
+            scheduler = get_scheduler(optimizer, trial_cfg.training)
+            criterion = get_criterion(trial_cfg.training)
 
             # Execute training
             executor = TrialTrainingExecutor(

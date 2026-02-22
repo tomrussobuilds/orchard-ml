@@ -218,7 +218,9 @@ def test_run_final_evaluation_creates_report(
     )
 
     mock_report.assert_called_once()
-    mock_report_obj.save.assert_called_once_with(mock_paths.final_report_path)
+    mock_report_obj.save.assert_called_once_with(
+        mock_paths.final_report_path, fmt=mock_cfg.evaluation.report_format
+    )
 
 
 if __name__ == "__main__":

@@ -91,7 +91,6 @@ telemetry:
   log_interval: 50
 
 evaluation:
-  batch_size: 64
   n_samples: 6
   fig_dpi: 200
   cmap_confusion: Blues
@@ -99,8 +98,8 @@ evaluation:
   grid_cols: 4
   fig_size_predictions: [12, 8]
   report_format: xlsx
-  save_confusion_matrix: false  # Skip during optimization
-  save_predictions_grid: false
+  save_confusion_matrix: true
+  save_predictions_grid: true
 
 optuna:
   study_name: "breastmnist_resnet18_optimized"

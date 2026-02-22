@@ -138,24 +138,24 @@ class TestBuilders:
 
     def test_build_sampler_tpe(self, mock_cfg):
         """Test building TPE sampler."""
-        sampler = build_sampler(mock_cfg)
+        sampler = build_sampler(mock_cfg.optuna)
         assert isinstance(sampler, optuna.samplers.TPESampler)
 
     def test_build_pruner_median(self, mock_cfg):
         """Test building Median pruner."""
-        pruner = build_pruner(mock_cfg)
+        pruner = build_pruner(mock_cfg.optuna)
         assert isinstance(pruner, optuna.pruners.MedianPruner)
 
     def test_build_pruner_disabled(self, mock_cfg):
         """Test disabled pruning returns NopPruner."""
-        pruner = build_pruner(mock_cfg)
+        pruner = build_pruner(mock_cfg.optuna)
         assert isinstance(pruner, optuna.pruners.BasePruner)
 
     @patch("orchard.optimization.orchestrator.builders.get_early_stopping_callback")
     def test_build_callbacks(self, mock_callback_fn, mock_cfg):
         """Test building callbacks list."""
         mock_callback_fn.return_value = None
-        callbacks = build_callbacks(mock_cfg)
+        callbacks = build_callbacks(mock_cfg.optuna)
         assert isinstance(callbacks, list)
 
 

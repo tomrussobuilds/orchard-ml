@@ -74,7 +74,6 @@ telemetry:
   log_interval: 50
 
 evaluation:
-  batch_size: 256               # Larger batch for fast evaluation
   n_samples: 16                 # More samples for grid visualization
   fig_dpi: 200
   cmap_confusion: Blues

@@ -100,8 +100,8 @@ class OptunaOrchestrator:
         Returns:
             Configured Optuna study instance
         """
-        sampler = build_sampler(self.cfg)
-        pruner = build_pruner(self.cfg)
+        sampler = build_sampler(self.cfg.optuna)
+        pruner = build_pruner(self.cfg.optuna)
         storage_url = self.cfg.optuna.get_storage_url(self.paths)
 
         study = optuna.create_study(
@@ -144,7 +144,7 @@ class OptunaOrchestrator:
         # Configure callbacks and log our structured header
         log_optimization_header(self.cfg)
 
-        callbacks = build_callbacks(self.cfg)
+        callbacks = build_callbacks(self.cfg.optuna)
 
         study.set_user_attr("n_trials", self.cfg.optuna.n_trials)
 

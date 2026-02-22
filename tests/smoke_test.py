@@ -89,9 +89,9 @@ def run_smoke_test(cfg: Config) -> None:
             # MODEL TRAINING
             run_logger.info("[Stage 3/5] Testing Model & Optimizer Factories...")
             model = get_model(device=device, cfg=cfg)
-            criterion = get_criterion(cfg)
-            optimizer = get_optimizer(model, cfg)
-            scheduler = get_scheduler(optimizer, cfg)
+            criterion = get_criterion(cfg.training)
+            optimizer = get_optimizer(model, cfg.training)
+            scheduler = get_scheduler(optimizer, cfg.training)
 
             trainer = ModelTrainer(
                 model=model,

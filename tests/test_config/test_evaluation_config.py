@@ -19,7 +19,6 @@ def test_evaluation_config_defaults():
     """Test EvaluationConfig with default values."""
     config = EvaluationConfig()
 
-    assert config.batch_size == 64
     assert config.n_samples == 12
     assert config.fig_dpi == 200
     assert config.cmap_confusion == "Blues"
@@ -34,11 +33,8 @@ def test_evaluation_config_defaults():
 @pytest.mark.unit
 def test_evaluation_config_custom_values():
     """Test EvaluationConfig with custom parameters."""
-    config = EvaluationConfig(
-        batch_size=128, n_samples=20, fig_dpi=300, grid_cols=5, report_format="csv"
-    )
+    config = EvaluationConfig(n_samples=20, fig_dpi=300, grid_cols=5, report_format="csv")
 
-    assert config.batch_size == 128
     assert config.n_samples == 20
     assert config.fig_dpi == 300
     assert config.grid_cols == 5
@@ -46,20 +42,6 @@ def test_evaluation_config_custom_values():
 
 
 # EVALUATION CONFIG: VALIDATION
-@pytest.mark.unit
-def test_batch_size_bounds():
-    """Test batch_size must be in [1, 2048]."""
-
-    config = EvaluationConfig(batch_size=1)
-    assert config.batch_size == 1
-
-    with pytest.raises(ValidationError):
-        EvaluationConfig(batch_size=0)
-
-    with pytest.raises(ValidationError):
-        EvaluationConfig(batch_size=3000)
-
-
 @pytest.mark.unit
 def test_n_samples_positive():
     """Test n_samples must be positive."""
@@ -188,7 +170,7 @@ def test_config_is_frozen():
     config = EvaluationConfig()
 
     with pytest.raises(ValidationError):
-        config.batch_size = 256
+        config.n_samples = 256
 
 
 @pytest.mark.unit

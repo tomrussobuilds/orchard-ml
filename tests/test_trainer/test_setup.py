@@ -54,7 +54,7 @@ def test_get_criterion_types(base_cfg, crit_type):
     """Test all valid criterion types."""
     base_cfg.training.criterion_type = crit_type
 
-    criterion = setup.get_criterion(base_cfg)
+    criterion = setup.get_criterion(base_cfg.training)
     assert isinstance(criterion, nn.Module)
 
 
@@ -63,7 +63,7 @@ def test_get_criterion_invalid_type(base_cfg):
     """Test unknown criterion type raises ValueError."""
     base_cfg.training.criterion_type = "unknown_type"
     with pytest.raises(ValueError, match="Unknown criterion type"):
-        setup.get_criterion(base_cfg)
+        setup.get_criterion(base_cfg.training)
 
 
 # TESTS: OPTIMIZER
@@ -71,7 +71,7 @@ def test_get_criterion_invalid_type(base_cfg):
 def test_get_optimizer_sgd(base_cfg, simple_model):
     """Test SGD optimizer via optimizer_type config."""
     base_cfg.training.optimizer_type = "sgd"
-    optimizer = setup.get_optimizer(simple_model, base_cfg)
+    optimizer = setup.get_optimizer(simple_model, base_cfg.training)
     assert isinstance(optimizer, optim.SGD)
 
 
@@ -79,7 +79,7 @@ def test_get_optimizer_sgd(base_cfg, simple_model):
 def test_get_optimizer_adamw(base_cfg, simple_model):
     """Test AdamW optimizer via optimizer_type config."""
     base_cfg.training.optimizer_type = "adamw"
-    optimizer = setup.get_optimizer(simple_model, base_cfg)
+    optimizer = setup.get_optimizer(simple_model, base_cfg.training)
     assert isinstance(optimizer, optim.AdamW)
 
 
@@ -88,7 +88,7 @@ def test_get_optimizer_adamw_with_resnet_name(base_cfg, simple_model):
     """Test AdamW is used when optimizer_type=adamw regardless of model name."""
     base_cfg.training.optimizer_type = "adamw"
     base_cfg.architecture.name = "resnet_18"
-    optimizer = setup.get_optimizer(simple_model, base_cfg)
+    optimizer = setup.get_optimizer(simple_model, base_cfg.training)
     assert isinstance(optimizer, optim.AdamW)
 
 
@@ -97,7 +97,7 @@ def test_get_optimizer_invalid_type(base_cfg, simple_model):
     """Test unknown optimizer type raises ValueError."""
     base_cfg.training.optimizer_type = "invalid_opt"
     with pytest.raises(ValueError, match="Unknown optimizer type"):
-        setup.get_optimizer(simple_model, base_cfg)
+        setup.get_optimizer(simple_model, base_cfg.training)
 
 
 # TESTS: SCHEDULER
@@ -106,8 +106,8 @@ def test_get_optimizer_invalid_type(base_cfg, simple_model):
 def test_get_scheduler_types(base_cfg, simple_model, sched_type):
     """Test all scheduler types."""
     base_cfg.training.scheduler_type = sched_type
-    optimizer = setup.get_optimizer(simple_model, base_cfg)
-    scheduler = setup.get_scheduler(optimizer, base_cfg)
+    optimizer = setup.get_optimizer(simple_model, base_cfg.training)
+    scheduler = setup.get_scheduler(optimizer, base_cfg.training)
 
     if sched_type == "cosine":
         assert isinstance(scheduler, lr_scheduler.CosineAnnealingLR)
@@ -123,6 +123,6 @@ def test_get_scheduler_types(base_cfg, simple_model, sched_type):
 def test_get_scheduler_invalid_type(base_cfg, simple_model):
     """Test invalid scheduler type raises ValueError."""
     base_cfg.training.scheduler_type = "invalid_sched"
-    optimizer = setup.get_optimizer(simple_model, base_cfg)
+    optimizer = setup.get_optimizer(simple_model, base_cfg.training)
     with pytest.raises(ValueError, match="Unsupported scheduler_type"):
-        setup.get_scheduler(optimizer, base_cfg)
+        setup.get_scheduler(optimizer, base_cfg.training)

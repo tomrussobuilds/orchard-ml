@@ -11,7 +11,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .types import PositiveInt, ValidatedPath
+from .types import PositiveInt
 
 
 # EXPORT CONFIGURATION
@@ -24,11 +24,9 @@ class ExportConfig(BaseModel):
 
     Attributes:
         format: Export format ('onnx', 'torchscript', 'both').
-        output_path: Custom output path (auto-generated if None).
         opset_version: ONNX opset version (18 recommended).
         dynamic_axes: Enable dynamic batch size for flexible inference.
         do_constant_folding: Optimize constant operations during export.
-        torchscript_method: TorchScript conversion method ('trace', 'script').
         quantize: Apply INT8 quantization for deployment optimization.
         quantization_backend: Backend for quantization ('qnnpack', 'fbgemm').
         validate_export: Validate exported model matches PyTorch output.
@@ -50,10 +48,6 @@ class ExportConfig(BaseModel):
         default="onnx", description="Export format"
     )
 
-    output_path: ValidatedPath | None = Field(
-        default=None, description="Output path (auto-generated if None)"
-    )
-
     # ==================== ONNX Settings ====================
     opset_version: PositiveInt = Field(
         default=18,
@@ -69,12 +63,8 @@ class ExportConfig(BaseModel):
         default=True, description="Optimize constant operations at export time"
     )
 
-    # ==================== TorchScript Settings ====================
-    torchscript_method: Literal["trace", "script"] = Field(
-        default="trace", description="TorchScript conversion method"
-    )
-
     # ==================== Optimization ====================
+    # TODO: wire when quantization is implemented (currently logging-only in reporter)
     quantize: bool = Field(default=False, description="Apply INT8 quantization")
 
     quantization_backend: Literal["qnnpack", "fbgemm"] = Field(

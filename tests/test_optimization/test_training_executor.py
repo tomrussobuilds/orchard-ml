@@ -98,8 +98,7 @@ def test_should_prune_respects_flag(executor, mock_trial):
 @pytest.mark.unit
 def test_step_scheduler_plateau(executor):
     """Test plateau scheduler receives val_loss."""
-    executor.cfg.training.scheduler_type = "plateau"
-    executor.scheduler = MagicMock()
+    executor.scheduler = MagicMock(spec=torch.optim.lr_scheduler.ReduceLROnPlateau)
 
     executor._step_scheduler(val_loss=0.5)
     executor.scheduler.step.assert_called_once_with(0.5)
@@ -108,8 +107,7 @@ def test_step_scheduler_plateau(executor):
 @pytest.mark.unit
 def test_step_scheduler_standard(executor):
     """Test standard scheduler (StepLR) is called without arguments."""
-    executor.cfg.training.scheduler_type = "step"
-    executor.scheduler = MagicMock()
+    executor.scheduler = MagicMock(spec=torch.optim.lr_scheduler.StepLR)
 
     executor._step_scheduler(val_loss=0.5)
     executor.scheduler.step.assert_called_once_with()

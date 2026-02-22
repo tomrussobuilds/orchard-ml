@@ -12,7 +12,7 @@ Key Features:
       model errors and blind spots
     * Tabular export: Validated serialization formats compatible with
       downstream analysis tools
-    * Resource efficiency: Inference batch size control for memory optimization
+    * Resource efficiency: Configurable output artifacts for memory optimization
 
 Centralizes reporting parameters to ensure standardized, publication-quality
 diagnostic output for every experiment.
@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from .types import BatchSize, PositiveInt
+from .types import PositiveInt
 
 
 # EVALUATION CONFIGURATION
@@ -34,7 +34,6 @@ class EvaluationConfig(BaseModel):
     for confusion matrices and prediction grids.
 
     Attributes:
-        batch_size: Batch size for inference/evaluation (1-2048).
         n_samples: Number of samples to display in prediction grid.
         fig_dpi: DPI resolution for saved figure files.
         cmap_confusion: Matplotlib colormap for confusion matrix.
@@ -47,9 +46,6 @@ class EvaluationConfig(BaseModel):
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
-
-    # Inference
-    batch_size: BatchSize = Field(default=64, description="Batch size for inference/evaluation")
 
     # Visualization
     n_samples: PositiveInt = Field(default=12, description="Number of samples in prediction grid")

@@ -224,7 +224,7 @@ def test_handle_checkpointing_early_stop(trainer):
 
 # TESTS: SCHEDULER
 @pytest.mark.unit
-def test_smart_step_scheduler_reduce_on_plateau(
+def test_step_scheduler_reduce_on_plateau(
     simple_model, mock_loaders, optimizer, criterion, mock_cfg
 ):
     """Test scheduler step with ReduceLROnPlateau."""
@@ -242,14 +242,14 @@ def test_smart_step_scheduler_reduce_on_plateau(
         cfg=mock_cfg,
     )
 
-    trainer._smart_step_scheduler(0.5)
+    trainer._step_scheduler(0.5)
 
 
 @pytest.mark.unit
-def test_smart_step_scheduler_step_lr(trainer):
+def test_step_scheduler_step_lr(trainer):
     """Test scheduler step with StepLR."""
     trainer.optimizer.step = MagicMock()
-    trainer._smart_step_scheduler(0.5)
+    trainer._step_scheduler(0.5)
 
 
 # TESTS: LOAD BEST WEIGHTS
@@ -381,10 +381,10 @@ def test_train_mixup_cutoff(
 
 @pytest.mark.unit
 @pytest.mark.filterwarnings("ignore:.*lr_scheduler.step.*before.*optimizer.step.*:UserWarning")
-def test_smart_step_scheduler_with_non_gradscaler(
+def test_step_scheduler_calls_step_for_non_plateau(
     simple_model, mock_loaders, optimizer, criterion, mock_cfg
 ):
-    """Test scheduler.step() is called when scaler is not GradScaler."""
+    """Test scheduler.step() is called for non-plateau schedulers."""
     train_loader, val_loader = mock_loaders
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2)
 
@@ -399,8 +399,6 @@ def test_smart_step_scheduler_with_non_gradscaler(
         cfg=mock_cfg,
     )
 
-    trainer.scaler = MagicMock()
-
     original_step = trainer.scheduler.step
     call_count = [0]
 
@@ -410,9 +408,9 @@ def test_smart_step_scheduler_with_non_gradscaler(
 
     trainer.scheduler.step = mock_step
 
-    trainer._smart_step_scheduler(0.5)
+    trainer._step_scheduler(0.5)
 
-    assert call_count[0] == 1, "scheduler.step() should be called when scaler is not GradScaler"
+    assert call_count[0] == 1, "scheduler.step() should be called for non-plateau schedulers"
 
 
 @pytest.mark.integration

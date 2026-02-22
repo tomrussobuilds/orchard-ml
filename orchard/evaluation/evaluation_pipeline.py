@@ -104,7 +104,7 @@ def run_final_evaluation(
         )
 
     # --- 3) Structured Reporting ---
-    # Aggregates everything into a formatted Excel summary
+    # Aggregates everything into a formatted report (xlsx/csv/json)
     final_log = log_path if log_path is not None else (paths.logs / "run.log")
 
     report = create_structured_report(
@@ -117,7 +117,7 @@ def run_final_evaluation(
         cfg=cfg,
         aug_info=aug_info,
     )
-    report.save(paths.final_report_path)
+    report.save(paths.final_report_path, fmt=cfg.evaluation.report_format)
 
     test_acc = test_metrics["accuracy"]
 

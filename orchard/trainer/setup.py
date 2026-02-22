@@ -3,7 +3,7 @@ Optimization Setup Module
 
 This module provides factory functions to instantiate PyTorch optimization
 components (optimizers, schedulers, and loss functions) based on the
-hierarchical configuration manifest.
+training configuration sub-model.
 """
 
 from __future__ import annotations
@@ -13,54 +13,58 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 
-from ..core import Config
+from ..core import TrainingConfig
 from .losses import FocalLoss
 
 
 # FACTORIES
-def get_criterion(cfg: Config, class_weights: torch.Tensor | None = None) -> nn.Module:
+def get_criterion(training: TrainingConfig, class_weights: torch.Tensor | None = None) -> nn.Module:
     """
     Universal Vision Criterion Factory.
+
+    Args:
+        training: Training sub-config with criterion parameters.
+        class_weights: Optional per-class weights for imbalanced datasets.
     """
-    c_type = cfg.training.criterion_type.lower()
-    weights = class_weights if cfg.training.weighted_loss else None
+    c_type = training.criterion_type.lower()
+    weights = class_weights if training.weighted_loss else None
 
     if c_type == "cross_entropy":
-        return nn.CrossEntropyLoss(label_smoothing=cfg.training.label_smoothing, weight=weights)
+        return nn.CrossEntropyLoss(label_smoothing=training.label_smoothing, weight=weights)
 
     elif c_type == "bce_logit":
         return nn.BCEWithLogitsLoss(pos_weight=weights)
 
     elif c_type == "focal":
-        return FocalLoss(gamma=cfg.training.focal_gamma, weight=weights)
+        return FocalLoss(gamma=training.focal_gamma, weight=weights)
 
     else:
         raise ValueError(f"Unknown criterion type: {c_type}")
 
 
-def get_optimizer(model: nn.Module, cfg: Config) -> optim.Optimizer:
+def get_optimizer(model: nn.Module, training: TrainingConfig) -> optim.Optimizer:
     """
     Factory function to instantiate optimizer from config.
 
-    Dispatches on cfg.training.optimizer_type:
+    Dispatches on training.optimizer_type:
         - sgd: SGD with momentum, suited for convolutional architectures.
         - adamw: AdamW with decoupled weight decay, suited for transformers.
     """
-    opt_type = cfg.training.optimizer_type.lower()
+    opt_type = training.optimizer_type.lower()
 
     if opt_type == "sgd":
         return optim.SGD(
             model.parameters(),
-            lr=cfg.training.learning_rate,
-            momentum=cfg.training.momentum,
-            weight_decay=cfg.training.weight_decay,
+            lr=training.learning_rate,
+            momentum=training.momentum,
+            weight_decay=training.weight_decay,
         )
 
     elif opt_type == "adamw":
         return optim.AdamW(
             model.parameters(),
-            lr=cfg.training.learning_rate,
-            weight_decay=cfg.training.weight_decay,
+            lr=training.learning_rate,
+            weight_decay=training.weight_decay,
         )
 
     else:
@@ -70,7 +74,7 @@ def get_optimizer(model: nn.Module, cfg: Config) -> optim.Optimizer:
 
 
 def get_scheduler(
-    optimizer: optim.Optimizer, cfg: Config
+    optimizer: optim.Optimizer, training: TrainingConfig
 ) -> (
     lr_scheduler.CosineAnnealingLR
     | lr_scheduler.ReduceLROnPlateau
@@ -86,25 +90,25 @@ def get_scheduler(
         - step: Periodic reduction by a fixed factor.
         - none: Maintains a constant learning rate.
     """
-    sched_type = cfg.training.scheduler_type.lower()
+    sched_type = training.scheduler_type.lower()
 
     if sched_type == "cosine":
         return lr_scheduler.CosineAnnealingLR(
-            optimizer, T_max=cfg.training.epochs, eta_min=cfg.training.min_lr
+            optimizer, T_max=training.epochs, eta_min=training.min_lr
         )
 
     elif sched_type == "plateau":
         return lr_scheduler.ReduceLROnPlateau(
             optimizer,
             mode="min",
-            factor=cfg.training.scheduler_factor,
-            patience=cfg.training.scheduler_patience,
-            min_lr=cfg.training.min_lr,
+            factor=training.scheduler_factor,
+            patience=training.scheduler_patience,
+            min_lr=training.min_lr,
         )
 
     elif sched_type == "step":
         return lr_scheduler.StepLR(
-            optimizer, step_size=cfg.training.step_size, gamma=cfg.training.scheduler_factor
+            optimizer, step_size=training.step_size, gamma=training.scheduler_factor
         )
 
     elif sched_type == "none":

@@ -18,6 +18,7 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..core import LOGGER_NAME, Config
+from ..data_handler import get_augmentations_description
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -93,33 +94,43 @@ class TrainingReport(BaseModel):
         data = self.model_dump()
         return pd.DataFrame(list(data.items()), columns=["Parameter", "Value"])
 
-    def save(self, path: Path) -> None:
+    def save(self, path: Path, fmt: str = "xlsx") -> None:
         """
-        Saves the report DataFrame to an Excel file with professional formatting.
+        Saves the report to disk in the requested format.
 
-        Applies conditional formatting and column widths to ensure the report
-        is presentation-ready.
+        Supported formats:
+            - ``xlsx``: Professional Excel with conditional formatting.
+            - ``csv``: Flat CSV (two columns: Parameter, Value).
+            - ``json``: Pretty-printed JSON array.
 
         Args:
-            path (Path): Filesystem path where the .xlsx file will be created.
+            path: Base file path (suffix is replaced to match *fmt*).
+            fmt: Output format — one of ``"xlsx"``, ``"csv"``, ``"json"``.
         """
+        fmt = fmt.lower()
+        path.parent.mkdir(parents=True, exist_ok=True)
+
         try:
-
-            path = path.with_suffix(".xlsx")
-            path.parent.mkdir(parents=True, exist_ok=True)
-
             df = self.to_vertical_df()
+            if fmt == "csv":
+                path = path.with_suffix(".csv")
+                df.to_csv(path, index=False)
+            elif fmt == "json":
+                path = path.with_suffix(".json")
+                df.to_json(path, orient="records", indent=2)
+            else:
+                path = path.with_suffix(".xlsx")
+                with pd.ExcelWriter(
+                    path,
+                    engine="xlsxwriter",
+                    engine_kwargs={"options": {"nan_inf_to_errors": True}},
+                ) as writer:
+                    df.to_excel(writer, sheet_name="Detailed Report", index=False)
+                    self._apply_excel_formatting(writer, df)
 
-            with pd.ExcelWriter(
-                path, engine="xlsxwriter", engine_kwargs={"options": {"nan_inf_to_errors": True}}
-            ) as writer:
-                df.to_excel(writer, sheet_name="Detailed Report", index=False)
-
-                self._apply_excel_formatting(writer, df)
-
-            logger.info(f"Summary Excel report saved → {path.name}")
+            logger.info(f"Summary report saved → {path.name}")
         except Exception as e:  # noqa: broad-except — xlsxwriter raises non-standard exceptions
-            logger.error(f"Failed to generate Excel report: {e}")
+            logger.error(f"Failed to generate report: {e}")
 
     def _apply_excel_formatting(self, writer: pd.ExcelWriter, df: pd.DataFrame) -> None:
         """
@@ -200,7 +211,7 @@ def create_structured_report(
         TrainingReport: A validated Pydantic model ready for export.
     """
     # Auto-generate augmentation info if not provided
-    aug_info = aug_info or _format_augmentation_string(cfg)
+    aug_info = aug_info or get_augmentations_description(cfg)
 
     best_val_acc = max((m["accuracy"] for m in val_metrics), default=0.0)
     best_val_auc = max((m["auc"] for m in val_metrics), default=0.0)
@@ -225,9 +236,3 @@ def create_structured_report(
         log_path=str(log_path.resolve()),
         seed=cfg.training.seed,
     )
-
-
-def _format_augmentation_string(cfg: Config) -> str:
-    """Internal helper to transform the aug dictionary into a readable string."""
-    aug_dict = cfg.augmentation.model_dump()
-    return ", ".join([f"{k.replace('_', ' ').capitalize()}: {v}" for k, v in aug_dict.items()])

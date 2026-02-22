@@ -19,6 +19,7 @@ import logging
 
 import optuna
 import torch
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from ...core import LOGGER_NAME, Config, LogStyle
 from ...trainer import train_one_epoch, validate_epoch
@@ -248,9 +249,10 @@ class TrialTrainingExecutor:
 
     def _step_scheduler(self, val_loss: float) -> None:
         """
-        Step learning rate scheduler.
+        Step the learning rate scheduler.
 
-        Handles plateau-specific logic (requires validation loss).
+        ReduceLROnPlateau requires the monitored metric (val_loss);
+        all other schedulers use a plain step().
 
         Args:
             val_loss: Validation loss for current epoch
@@ -258,7 +260,7 @@ class TrialTrainingExecutor:
         if self.scheduler is None:
             return
 
-        if self.cfg.training.scheduler_type == "plateau":
+        if isinstance(self.scheduler, ReduceLROnPlateau):
             self.scheduler.step(val_loss)
         else:
             self.scheduler.step()

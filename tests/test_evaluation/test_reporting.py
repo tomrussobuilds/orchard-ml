@@ -97,7 +97,8 @@ def test_report_save_success(mock_mkdir, mock_writer, sample_report_data):
 
 @pytest.mark.unit
 @patch("orchard.evaluation.reporting.logger")
-def test_report_save_failure(mock_logger, sample_report_data):
+@patch("pathlib.Path.mkdir")
+def test_report_save_failure(mock_mkdir, mock_logger, sample_report_data):
     """Test error handling when Excel saving fails."""
     report = TrainingReport(**sample_report_data)
 
@@ -122,13 +123,14 @@ def test_create_structured_report(mock_config):
         best_path=Path("/models/best.pth"),
         log_path=Path("/logs/run.log"),
         cfg=mock_config,
+        aug_info="HFlip(True), Rotation(15°)",
     )
 
     assert isinstance(report, TrainingReport)
     assert report.best_val_accuracy == pytest.approx(0.9)
     assert report.epochs_trained == 3
     assert report.test_accuracy == pytest.approx(0.88)
-    assert "Horizontal flip" in report.augmentations
+    assert "HFlip" in report.augmentations
 
 
 @pytest.mark.unit
@@ -178,6 +180,36 @@ def test_report_save_with_existing_xlsx_suffix(sample_report_data, tmp_path):
 
 
 @pytest.mark.unit
+def test_report_save_csv(sample_report_data, tmp_path):
+    """Test save() creates a .csv file when fmt='csv'."""
+    report = TrainingReport(**sample_report_data)
+    path = tmp_path / "report"
+
+    report.save(path, fmt="csv")
+
+    csv_path = tmp_path / "report.csv"
+    assert csv_path.exists()
+    assert csv_path.suffix == ".csv"
+    content = csv_path.read_text()
+    assert "architecture" in content
+
+
+@pytest.mark.unit
+def test_report_save_json(sample_report_data, tmp_path):
+    """Test save() creates a .json file when fmt='json'."""
+    report = TrainingReport(**sample_report_data)
+    path = tmp_path / "report"
+
+    report.save(path, fmt="json")
+
+    json_path = tmp_path / "report.json"
+    assert json_path.exists()
+    assert json_path.suffix == ".json"
+    content = json_path.read_text()
+    assert "architecture" in content
+
+
+@pytest.mark.unit
 def test_create_structured_report_handles_empty_val_metrics(mock_config):
     """Test create_structured_report with empty validation metrics."""
     val_metrics = []
@@ -192,6 +224,7 @@ def test_create_structured_report_handles_empty_val_metrics(mock_config):
         best_path=Path("/models/best.pth"),
         log_path=Path("/logs/run.log"),
         cfg=mock_config,
+        aug_info="N/A",
     )
     assert isinstance(report, TrainingReport)
 

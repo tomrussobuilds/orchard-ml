@@ -72,7 +72,6 @@ telemetry:
   log_interval: 50
 
 evaluation:
-  batch_size: 128
   n_samples: 16
   fig_dpi: 200
   cmap_confusion: Blues
@@ -80,8 +79,8 @@ evaluation:
   grid_cols: 4
   fig_size_predictions: [12, 8]
   report_format: xlsx
-  save_confusion_matrix: false
-  save_predictions_grid: false
+  save_confusion_matrix: true
+  save_predictions_grid: true
 
 optuna:
   study_name: "bloodmnist_64_model_search"
