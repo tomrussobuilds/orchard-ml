@@ -32,7 +32,7 @@ orchard run recipes/optuna_vit_tiny.yaml \
     --set optuna.load_if_exists=true
 ```
 
-<h3>Search Space Coverage</h3>
+<h3 id="search-space-coverage">Search Space Coverage</h3>
 
 Select a preset via `search_space_preset`:
 

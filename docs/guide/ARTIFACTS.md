@@ -100,7 +100,7 @@ outputs/20260123_organcmnist_efficientnetb0_a3f7c2/
 
 <h2>Sample Artifacts</h2>
 
-Explore real experiment outputs in the [artifacts directory](../artifacts/):
+Explore real experiment outputs in the artifacts directory:
 
 - **Excel Reports**: Training metrics, predictions, class-wise analysis
 - **YAML Configs**: Frozen configurations and optimized hyperparameters
