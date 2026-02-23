@@ -92,12 +92,6 @@ class NoOpTracker:  # pragma: no cover
     def end_run(self) -> None:
         """No-op: skip MLflow run closure."""
 
-    def __enter__(self) -> NoOpTracker:
-        return self
-
-    def __exit__(self, *args: Any) -> None:
-        """No-op: context manager exit."""
-
 
 class MLflowTracker:  # pragma: no cover
     """MLflow-based experiment tracker for Orchard ML runs.

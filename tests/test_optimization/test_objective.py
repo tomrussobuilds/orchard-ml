@@ -387,7 +387,6 @@ def test_optuna_objective_sample_params_dict():
     mock_cfg.dataset._ensure_metadata = MagicMock()
     mock_cfg.training.momentum = 0.9
     mock_cfg.training.mixup_alpha = 0.0
-    mock_cfg.training.cosine_fraction = 1.0
     mock_suggest = MagicMock(return_value=0.001)
     search_space = {"learning_rate": mock_suggest}
 

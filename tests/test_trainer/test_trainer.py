@@ -31,6 +31,7 @@ def mock_cfg():
     cfg.training.grad_clip = 1.0
     cfg.training.use_tqdm = False
     cfg.training.seed = 42
+    cfg.training.monitor_metric = "auc"
     return cfg
 
 
@@ -116,7 +117,7 @@ def test_trainer_init(trainer):
     assert trainer.epochs == 5
     assert trainer.patience == 3
     assert trainer.best_acc == -1.0
-    assert trainer.best_auc == -1.0
+    assert trainer.best_metric == -1.0
     assert trainer.epochs_no_improve == 0
     assert len(trainer.train_losses) == 0
     assert len(trainer.val_metrics_history) == 0
@@ -165,6 +166,7 @@ def test_trainer_amp_scaler_enabled(simple_model, mock_loaders, optimizer, sched
     cfg.training.grad_clip = 0.0
     cfg.training.use_tqdm = False
     cfg.training.seed = 42
+    cfg.training.monitor_metric = "auc"
 
     trainer = ModelTrainer(
         model=simple_model,
@@ -188,7 +190,7 @@ def test_handle_checkpointing_improves(trainer):
 
     should_stop = trainer._handle_checkpointing(val_metrics)
 
-    assert trainer.best_auc == pytest.approx(0.85)
+    assert trainer.best_metric == pytest.approx(0.85)
     assert trainer.epochs_no_improve == 0
     assert should_stop is False
     assert trainer.best_path.exists()
@@ -197,13 +199,13 @@ def test_handle_checkpointing_improves(trainer):
 @pytest.mark.unit
 def test_handle_checkpointing_no_improve(trainer):
     """Test checkpointing increments patience when no improvement."""
-    trainer.best_auc = 0.9
+    trainer.best_metric = 0.9
 
     val_metrics = {"accuracy": 0.8, "auc": 0.85}
 
     should_stop = trainer._handle_checkpointing(val_metrics)
 
-    assert trainer.best_auc == pytest.approx(0.9)
+    assert trainer.best_metric == pytest.approx(0.9)
     assert trainer.epochs_no_improve == 1
     assert should_stop is False
 
@@ -211,7 +213,7 @@ def test_handle_checkpointing_no_improve(trainer):
 @pytest.mark.unit
 def test_handle_checkpointing_early_stop(trainer):
     """Test early stopping triggers after patience exhausted."""
-    trainer.best_auc = 0.95
+    trainer.best_metric = 0.95
     trainer.epochs_no_improve = 2
 
     val_metrics = {"accuracy": 0.8, "auc": 0.85}
@@ -315,7 +317,7 @@ def test_train_early_stopping(mock_validate, mock_train, trainer):
     mock_validate.return_value = {"loss": 0.5, "accuracy": 0.5, "auc": 0.5}
 
     # --- 2. Force early stopping scenario ---
-    trainer.best_auc = 0.95
+    trainer.best_metric = 0.95
     trainer.epochs_no_improve = 0
 
     # --- 3. Mock optimizer step to suppress PyTorch warnings ---
@@ -353,6 +355,7 @@ def test_train_mixup_cutoff(
     cfg.training.grad_clip = 0.0
     cfg.training.seed = 42
     cfg.training.use_tqdm = False
+    cfg.training.monitor_metric = "auc"
 
     with tempfile.TemporaryDirectory() as tmpdir:
         trainer = ModelTrainer(
@@ -444,8 +447,8 @@ def test_train_loads_existing_checkpoint_when_no_improvement(
             output_path=output_path,
         )
 
-        # set best_auc very high so model never improves
-        trainer.best_auc = 0.9999
+        # set best_metric very high so model never improves
+        trainer.best_metric = 0.9999
 
         mock_train.return_value = 0.5
         # Return constant metrics that won't improve best_auc

@@ -203,7 +203,7 @@ class TestCLIRun:
 
         mock_orch = MagicMock()
         mock_orch_cls.return_value.__enter__.return_value = mock_orch
-        mock_train.return_value = (Path("model.pt"), None, None, None, 0.95, 0.90)
+        mock_train.return_value = (Path("model.pt"), None, None, None, 0.95, 0.90, 0.92)
         mock_tracker_fn.return_value = MagicMock()
 
         runner = CliRunner()
@@ -253,7 +253,7 @@ class TestCLIRun:
         mock_orch = MagicMock()
         mock_orch_cls.return_value.__enter__.return_value = mock_orch
         mock_optuna.return_value = (MagicMock(), best_config)
-        mock_train.return_value = (Path("model.pt"), None, None, None, 0.95, 0.90)
+        mock_train.return_value = (Path("model.pt"), None, None, None, 0.95, 0.90, 0.92)
         mock_export.return_value = Path("model.onnx")
         mock_tracker_fn.return_value = MagicMock()
 

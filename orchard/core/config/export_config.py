@@ -1,8 +1,8 @@
 """
 Export Configuration Schema.
 
-Pydantic v2 schema defining model export parameters for ONNX and TorchScript.
-Supports quantization, optimization, and validation settings.
+Pydantic v2 schema defining model export parameters for ONNX.
+Supports optimization and validation settings.
 """
 
 from __future__ import annotations
@@ -19,33 +19,27 @@ class ExportConfig(BaseModel):
     """
     Model export configuration for production deployment.
 
-    Defines export format (ONNX/TorchScript), optimization level,
-    quantization settings, and validation parameters.
+    Defines ONNX export settings, optimization level, and validation parameters.
 
     Attributes:
-        format: Export format ('onnx', 'torchscript', 'both').
+        format: Export format (only 'onnx' supported).
         opset_version: ONNX opset version (18 recommended).
         dynamic_axes: Enable dynamic batch size for flexible inference.
         do_constant_folding: Optimize constant operations during export.
-        quantize: Apply INT8 quantization for deployment optimization.
-        quantization_backend: Backend for quantization ('qnnpack', 'fbgemm').
         validate_export: Validate exported model matches PyTorch output.
         validation_samples: Number of samples for export validation.
         max_deviation: Maximum allowed output deviation for validation.
+        benchmark: Run inference latency benchmark after export.
 
     Example:
-        >>> cfg = ExportConfig(
-        ...     format="onnx",
-        ...     opset_version=18,
-        ...     quantize=True,
-        ... )
+        >>> cfg = ExportConfig(format="onnx", opset_version=18)
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     # ==================== Export Format ====================
-    format: Literal["onnx", "torchscript", "both"] = Field(
-        default="onnx", description="Export format"
+    format: Literal["onnx"] = Field(
+        default="onnx", description="Export format (only ONNX supported)"
     )
 
     # ==================== ONNX Settings ====================
@@ -83,4 +77,9 @@ class ExportConfig(BaseModel):
     max_deviation: float = Field(
         default=1e-4,
         description="Maximum allowed output deviation between PyTorch and exported model",
+    )
+
+    # ==================== Benchmark ====================
+    benchmark: bool = Field(
+        default=False, description="Run ONNX inference latency benchmark after export"
     )

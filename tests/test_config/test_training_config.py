@@ -219,13 +219,14 @@ def test_criterion_types():
 
 
 @pytest.mark.unit
-def test_cosine_fraction_probability():
-    """Test cosine_fraction is probability [0, 1]."""
-    config = TrainingConfig(cosine_fraction=0.5)
-    assert config.cosine_fraction == pytest.approx(0.5)
+def test_monitor_metric_values():
+    """Test monitor_metric accepts valid values and rejects invalid."""
+    for metric in ["auc", "accuracy"]:
+        config = TrainingConfig(monitor_metric=metric)
+        assert config.monitor_metric == metric
 
     with pytest.raises(ValidationError):
-        TrainingConfig(cosine_fraction=1.5)
+        TrainingConfig(monitor_metric="loss")
 
 
 # UNIT TESTS: OPTIMIZER TYPE

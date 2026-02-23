@@ -146,7 +146,7 @@ def run(
                 run_logger.info("Skipping optimization (no optuna config)")
 
             # Phase 2: Training
-            best_model_path, _, _, _, macro_f1, test_acc = run_training_phase(
+            best_model_path, _, _, _, macro_f1, test_acc, test_auc = run_training_phase(
                 orchestrator, cfg=training_cfg, tracker=tracker
             )
 
@@ -169,6 +169,7 @@ def run(
             log_pipeline_summary(
                 test_acc=test_acc,
                 macro_f1=macro_f1,
+                test_auc=test_auc,
                 best_model_path=best_model_path,
                 run_dir=paths.root,
                 duration=orchestrator.time_tracker.elapsed_formatted,

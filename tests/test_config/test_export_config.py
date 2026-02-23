@@ -28,20 +28,21 @@ def test_export_config_defaults():
     assert config.validate_export is True
     assert config.validation_samples == 10
     assert config.max_deviation == pytest.approx(1e-4)
+    assert config.benchmark is False
 
 
 @pytest.mark.unit
 def test_export_config_custom_values():
     """Test ExportConfig with custom parameters."""
     config = ExportConfig(
-        format="torchscript",
+        format="onnx",
         opset_version=16,
         dynamic_axes=False,
         quantize=True,
         quantization_backend="fbgemm",
     )
 
-    assert config.format == "torchscript"
+    assert config.format == "onnx"
     assert config.opset_version == 16
     assert config.dynamic_axes is False
     assert config.quantize is True
@@ -51,17 +52,17 @@ def test_export_config_custom_values():
 # EXPORT CONFIG: FORMAT VALIDATION
 @pytest.mark.unit
 def test_valid_formats():
-    """Test valid export formats are accepted."""
-    for fmt in ["onnx", "torchscript", "both"]:
-        config = ExportConfig(format=fmt)
-        assert config.format == fmt
+    """Test only ONNX format is accepted."""
+    config = ExportConfig(format="onnx")
+    assert config.format == "onnx"
 
 
 @pytest.mark.unit
 def test_invalid_format_rejected():
-    """Test invalid format is rejected."""
-    with pytest.raises(ValidationError):
-        ExportConfig(format="invalid_format")
+    """Test non-onnx formats are rejected."""
+    for fmt in ["torchscript", "both", "invalid_format"]:
+        with pytest.raises(ValidationError):
+            ExportConfig(format=fmt)
 
 
 # EXPORT CONFIG: ONNX PARAMETERS
@@ -173,7 +174,7 @@ def test_config_is_frozen():
     config = ExportConfig()
 
     with pytest.raises(ValidationError):
-        config.format = "torchscript"
+        config.format = "changed"
 
 
 @pytest.mark.unit
@@ -203,18 +204,6 @@ def test_onnx_export_config():
 
 
 @pytest.mark.unit
-def test_torchscript_format_accepted():
-    """Test torchscript format is accepted (future feature)."""
-    config = ExportConfig(
-        format="torchscript",
-        validate_export=True,
-    )
-
-    assert config.format == "torchscript"
-    assert config.validate_export is True
-
-
-@pytest.mark.unit
 def test_quantized_export_config():
     """Test quantized export configuration."""
     config = ExportConfig(
@@ -228,6 +217,13 @@ def test_quantized_export_config():
     assert config.quantize is True
     assert config.quantization_backend == "fbgemm"
     assert config.max_deviation == pytest.approx(1e-3)
+
+
+@pytest.mark.unit
+def test_benchmark_can_be_enabled():
+    """Test benchmark flag can be enabled."""
+    config = ExportConfig(benchmark=True)
+    assert config.benchmark is True
 
 
 if __name__ == "__main__":

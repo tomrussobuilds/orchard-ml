@@ -44,7 +44,7 @@ class TrialConfigBuilder:
             "mixup_alpha",
             "label_smoothing",
             "batch_size",
-            "cosine_fraction",
+            "scheduler_type",
             "scheduler_patience",
         ],
         "architecture": ["dropout", "weight_variant"],

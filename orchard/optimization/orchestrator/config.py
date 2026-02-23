@@ -58,7 +58,7 @@ TRAINING_PARAMS: set[str] = {
     "mixup_alpha",
     "label_smoothing",
     "batch_size",
-    "cosine_fraction",
+    "scheduler_type",
     "scheduler_patience",
 }
 """Hyperparameters that belong in the training section of Config."""

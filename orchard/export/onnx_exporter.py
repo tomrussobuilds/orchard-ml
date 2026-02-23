@@ -148,14 +148,13 @@ def export_to_onnx(
             raise
 
     logger.info("")
-    logger.info(f"  {LogStyle.SUCCESS} Export completed")
-    logger.info(f"    {LogStyle.ARROW} Output            : {output_path.name}")
 
 
 def benchmark_onnx_inference(
     onnx_path: Path,
     input_shape: tuple[int, int, int],
     num_runs: int = 100,
+    seed: int = 42,
 ) -> float:
     """
     Benchmark ONNX model inference speed.
@@ -164,6 +163,7 @@ def benchmark_onnx_inference(
         onnx_path: Path to ONNX model
         input_shape: Input tensor shape (C, H, W)
         num_runs: Number of inference runs for averaging
+        seed: Random seed for reproducible dummy input
 
     Returns:
         Average inference time in milliseconds
@@ -178,13 +178,13 @@ def benchmark_onnx_inference(
         import numpy as np
         import onnxruntime as ort
 
-        logger.info(f"Benchmarking ONNX model: {onnx_path}")
+        logger.info("  [Benchmark]")
 
         # Create inference session
         session = ort.InferenceSession(str(onnx_path))
 
         # Prepare dummy input using random Generator
-        rng = np.random.default_rng(42)
+        rng = np.random.default_rng(seed)
         dummy_input = rng.random(size=(1, *input_shape), dtype=np.float32) * 255
 
         # Warmup
@@ -198,7 +198,8 @@ def benchmark_onnx_inference(
         elapsed = time.time() - start
 
         avg_latency_ms = (elapsed / num_runs) * 1000
-        logger.info(f"✓ Average latency: {avg_latency_ms:.2f}ms ({num_runs} runs)")
+        logger.info(f"    {LogStyle.BULLET} Runs              : {num_runs}")
+        logger.info(f"    {LogStyle.BULLET} Avg latency       : " f"{avg_latency_ms:.2f}ms")
 
         return avg_latency_ms
 

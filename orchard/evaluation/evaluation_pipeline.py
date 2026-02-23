@@ -39,15 +39,15 @@ def run_final_evaluation(
     aug_info: str = "N/A",
     log_path: Path | None = None,
     tracker: TrackerProtocol | None = None,
-) -> tuple[float, float]:
+) -> tuple[float, float, float]:
     """
-    Executes the complete evaluation pipeline.
+    Execute the complete evaluation pipeline.
 
     Coordinates full-set inference (with TTA support), visualizes metrics,
-    and generates the final structured Excel report.
+    and generates the final structured report.
 
-    Args:
-        tracker: Optional experiment tracker for logging test metrics to MLflow.
+    Returns:
+        tuple of (macro_f1, test_acc, test_auc)
     """
 
     # Resolve device from model (already placed on the correct device by the trainer)
@@ -120,6 +120,7 @@ def run_final_evaluation(
     report.save(paths.final_report_path, fmt=cfg.evaluation.report_format)
 
     test_acc = test_metrics["accuracy"]
+    test_auc = test_metrics.get("auc", 0.0)
 
     # Log test metrics to experiment tracker
     if tracker is not None:
@@ -127,4 +128,4 @@ def run_final_evaluation(
 
     logger.info("Final Evaluation Phase Complete.")
 
-    return macro_f1, test_acc
+    return macro_f1, test_acc, test_auc

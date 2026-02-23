@@ -109,7 +109,10 @@ class SearchSpaceOverrides(BaseModel):
     dropout: FloatRange = Field(default_factory=lambda: FloatRange(low=0.1, high=0.5))
 
     # ---- Scheduler ----
-    cosine_fraction: FloatRange = Field(default_factory=lambda: FloatRange(low=0.3, high=0.7))
+    scheduler_type: list[str] = Field(
+        default=["cosine", "plateau", "step"],
+        description="Scheduler types to explore",
+    )
     scheduler_patience: IntRange = Field(default_factory=lambda: IntRange(low=3, high=10))
 
     # ---- Augmentation ----

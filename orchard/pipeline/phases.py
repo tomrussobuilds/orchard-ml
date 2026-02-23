@@ -39,7 +39,7 @@ from ..data_handler import (
     show_samples_for_dataset,
 )
 from ..evaluation import run_final_evaluation
-from ..export import export_to_onnx, validate_export
+from ..export import benchmark_onnx_inference, export_to_onnx, validate_export
 from ..models import get_model
 from ..optimization import run_optimization
 from ..trainer import ModelTrainer, get_criterion, get_optimizer, get_scheduler
@@ -109,7 +109,7 @@ def run_training_phase(
     orchestrator: RootOrchestrator,
     cfg: Config | None = None,
     tracker: TrackerProtocol | None = None,
-) -> tuple[Path, list[float], list[dict], nn.Module, float, float]:
+) -> tuple[Path, list[float], list[dict], nn.Module, float, float, float]:
     """
     Execute model training phase.
 
@@ -122,11 +122,11 @@ def run_training_phase(
         tracker: Optional experiment tracker for MLflow metric logging
 
     Returns:
-        tuple of (best_model_path, train_losses, val_metrics, model, macro_f1, test_acc)
+        tuple of (best_model_path, train_losses, val_metrics, model, macro_f1, test_acc, test_auc)
 
     Example:
         >>> with RootOrchestrator(cfg) as orch:
-        ...     best_path, losses, metrics, model, f1, acc = run_training_phase(orch)
+        ...     best_path, losses, metrics, model, f1, acc, auc = run_training_phase(orch)
         ...     print(f"Test Accuracy: {acc:.4f}")
     """
     cfg = cfg or orchestrator.cfg
@@ -194,7 +194,7 @@ def run_training_phase(
     run_logger.info(f"{'FINAL EVALUATION':^80}")
     run_logger.info(LogStyle.HEAVY)
 
-    macro_f1, test_acc = run_final_evaluation(
+    macro_f1, test_acc, test_auc = run_final_evaluation(
         model=model,
         test_loader=test_loader,
         train_losses=train_losses,
@@ -207,7 +207,7 @@ def run_training_phase(
         tracker=tracker,
     )
 
-    return best_model_path, train_losses, val_metrics_history, model, macro_f1, test_acc
+    return best_model_path, train_losses, val_metrics_history, model, macro_f1, test_acc, test_auc
 
 
 def run_export_phase(
@@ -286,5 +286,16 @@ def run_export_phase(
             num_samples=cfg.export.validation_samples,
             max_deviation=cfg.export.max_deviation,
         )
+
+    # Inference latency benchmark
+    if cfg.export is not None and cfg.export.benchmark:
+        benchmark_onnx_inference(
+            onnx_path=onnx_path,
+            input_shape=input_shape,
+            seed=cfg.training.seed,
+        )
+
+    logger.info(f"  {LogStyle.SUCCESS} Export completed")
+    logger.info(f"    {LogStyle.ARROW} Output            : {onnx_path.name}")
 
     return onnx_path

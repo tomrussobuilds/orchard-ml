@@ -15,14 +15,14 @@
 #     - Dropout: 0.1 to 0.5
 #     - MixUp alpha: 0.0 to 0.4
 #     - Label smoothing: 0.0 to 0.2
-#     - Cosine fraction: 0.3 to 0.7
+#     - Scheduler type: cosine, plateau, step
 #     - Scheduler patience: 3 to 10
 #     - Augmentation: rotation (0-15°), jitter (0-0.15), scale (0.9-1.0)
 #     - Model architecture (if enable_model_search: true):
 #         efficientnet_b0 vs vit_tiny (+ ViT weight variants)
 #
 #   FIXED PARAMETERS (not optimized):
-#     - epochs, patience, grad_clip, scheduler_type
+#     - epochs, patience, grad_clip
 #     - use_amp, use_tta, criterion_type, weighted_loss
 
 dataset:
@@ -60,8 +60,8 @@ training:
   mixup_epochs: 0
   
   # Scheduler (PARTIALLY OPTIMIZED)
+  monitor_metric: "auc"
   scheduler_type: "cosine"
-  cosine_fraction: 0.5
   scheduler_patience: 5
   scheduler_factor: 0.1
   step_size: 20
@@ -169,10 +169,6 @@ optuna:
       dropout:
           low: 0.1
           high: 0.5
-          log: false
-      cosine_fraction:
-          low: 0.3
-          high: 0.7
           log: false
       scheduler_patience:
           low: 3

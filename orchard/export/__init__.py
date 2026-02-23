@@ -1,8 +1,8 @@
 """
 Model Export Package.
 
-Provides utilities for exporting trained PyTorch models to production formats
-(ONNX, TorchScript) with validation and optimization support.
+Provides utilities for exporting trained PyTorch models to ONNX format
+with validation, benchmarking, and optimization support.
 
 Example:
     >>> from orchard.export import export_to_onnx
@@ -14,7 +14,7 @@ Example:
     ... )
 """
 
-from .onnx_exporter import export_to_onnx
+from .onnx_exporter import benchmark_onnx_inference, export_to_onnx
 from .validation import validate_export
 
-__all__ = ["export_to_onnx", "validate_export"]
+__all__ = ["benchmark_onnx_inference", "export_to_onnx", "validate_export"]

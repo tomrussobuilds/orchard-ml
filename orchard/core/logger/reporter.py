@@ -278,16 +278,9 @@ class Reporter(BaseModel):
         if export_cfg is None:
             return
 
+        I, A = LogStyle.INDENT, LogStyle.ARROW  # noqa: E741
         logger_instance.info("[EXPORT]")
-        logger_instance.info(
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Format':<18}: {export_cfg.format.upper()}"
-        )
-        logger_instance.info(
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Quantize':<18}: {export_cfg.quantize}"
-        )
-        if export_cfg.quantize:
-            logger_instance.info(
-                f"{LogStyle.INDENT}{LogStyle.ARROW} "
-                f"{'Backend':<18}: {export_cfg.quantization_backend}"
-            )
+        logger_instance.info(f"{I}{A} {'Format':<18}: {export_cfg.format.upper()}")
+        logger_instance.info(f"{I}{A} {'Opset Version':<18}: {export_cfg.opset_version}")
+        logger_instance.info(f"{I}{A} {'Validate':<18}: {export_cfg.validate_export}")
         logger_instance.info("")

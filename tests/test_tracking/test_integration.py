@@ -31,8 +31,8 @@ def mock_cfg():
     cfg.training.use_amp = False
     cfg.training.mixup_alpha = 0.0
     cfg.training.mixup_epochs = 0
-    cfg.training.cosine_fraction = 0.5
     cfg.training.grad_clip = 1.0
+    cfg.training.monitor_metric = "auc"
     cfg.training.use_tqdm = False
     cfg.training.seed = 42
     return cfg
@@ -143,7 +143,7 @@ def test_evaluation_calls_tracker_log_test_metrics(mock_tracker):
     ):
         mock_report.return_value = MagicMock()
 
-        macro_f1, test_acc = run_final_evaluation(
+        macro_f1, test_acc, test_auc = run_final_evaluation(
             model=mock_model,
             test_loader=mock_loader,
             train_losses=[0.5, 0.4],
@@ -157,6 +157,7 @@ def test_evaluation_calls_tracker_log_test_metrics(mock_tracker):
     mock_tracker.log_test_metrics.assert_called_once_with(test_acc=0.92, macro_f1=0.88)
     assert test_acc == pytest.approx(0.92, abs=1e-5)
     assert macro_f1 == pytest.approx(0.88, abs=1e-5)
+    assert test_auc == pytest.approx(0.96, abs=1e-5)
 
 
 # --- OPTUNA OBJECTIVE INTEGRATION ---

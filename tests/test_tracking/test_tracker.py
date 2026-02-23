@@ -135,13 +135,6 @@ def test_noop_tracker_end_run():
 
 
 @pytest.mark.unit
-def test_noop_tracker_context_manager():
-    """NoOpTracker works as a context manager."""
-    with NoOpTracker() as tracker:
-        assert isinstance(tracker, NoOpTracker)
-
-
-@pytest.mark.unit
 def test_create_tracker_mlflow_not_installed():
     """create_tracker returns NoOpTracker with warning when mlflow is missing."""
     from unittest.mock import patch

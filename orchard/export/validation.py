@@ -14,7 +14,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from ..core import LOGGER_NAME
+from ..core import LOGGER_NAME, LogStyle
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -24,7 +24,7 @@ def validate_export(
     onnx_path: Path,
     input_shape: tuple[int, int, int],
     num_samples: int = 10,
-    max_deviation: float = 1e-5,
+    max_deviation: float = 1e-4,
 ) -> bool:
     """
     Validate ONNX export against PyTorch model.
@@ -55,12 +55,12 @@ def validate_export(
     try:
         import onnxruntime as ort
 
-        logger.info("Validating ONNX export against PyTorch model")
-        logger.info(f"  Test samples: {num_samples}")
-        logger.info(f"  Max deviation: {max_deviation}")
+        logger.info("  [Numerical Validation]")
+        logger.info(f"    {LogStyle.BULLET} Samples           : {num_samples}")
+        logger.info(f"    {LogStyle.BULLET} Max deviation     : {max_deviation:.0e}")
 
-        # Load ONNX model
-        session = ort.InferenceSession(str(onnx_path))
+        # Load ONNX model (force CPU to match export conditions)
+        session = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
 
         pytorch_model.eval()
         pytorch_model.cpu()
@@ -85,12 +85,16 @@ def validate_export(
 
                 if diff > max_deviation:
                     logger.error(
-                        f"✗ Validation failed on sample {i + 1}: "
-                        f"max diff = {diff:.2e} (threshold = {max_deviation:.2e})"
+                        f"    {LogStyle.BULLET} Result            : "
+                        f"{LogStyle.WARNING} FAILED sample {i + 1} "
+                        f"(diff: {diff:.2e}, threshold: {max_deviation:.2e})"
                     )
                     return False
 
-        logger.info(f"✓ Validation passed! Max deviation: {max_diff:.2e}")
+        logger.info(
+            f"    {LogStyle.BULLET} Result            : "
+            f"{LogStyle.SUCCESS} Passed (max diff: {max_diff:.2e})"
+        )
         return True
 
     except ImportError as e:

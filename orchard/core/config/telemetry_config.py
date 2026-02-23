@@ -7,15 +7,13 @@ environment-agnostic manifests.
 
 Single Source of Truth (SSOT) for:
     - Dataset and output directory resolution and anchoring
-    - Logging cadence, verbosity, and persistence policy
+    - Logging cadence and verbosity
     - Experiment identity and run-level metadata
     - Portable, host-independent configuration serialization
 
 Attributes:
     data_dir: Validated path to dataset directory (default: ./dataset).
     output_dir: Validated path to outputs directory (default: ./outputs).
-    save_model: Whether to persist model checkpoints.
-    log_interval: Frequency of logging in batches.
     log_level: Logging verbosity (DEBUG, INFO, WARNING, ERROR, CRITICAL).
 """
 
@@ -41,10 +39,9 @@ class TelemetryConfig(BaseModel):
     Attributes:
         data_dir: Validated absolute path to dataset directory.
         output_dir: Validated absolute path to outputs directory.
-        save_model: Whether to persist model checkpoints after training.
-        log_interval: Batch frequency for progress logging (1-1000).
         log_level: Logging verbosity (DEBUG, INFO, WARNING, ERROR, CRITICAL).
-        io_chunk_size: Streaming chunk size in bytes for checksums and downloads.
+        io_chunk_size: Streaming chunk size in bytes for checksums and downloads
+            (hardcoded in data_io to avoid circular import).
     """
 
     model_config = ConfigDict(
@@ -59,11 +56,11 @@ class TelemetryConfig(BaseModel):
     output_dir: ValidatedPath = Field(default="./outputs")  # type: ignore[assignment]
 
     # Telemetry
-    save_model: bool = True
     log_interval: LogFrequency = Field(default=10)
     log_level: LogLevel = Field(default="INFO")
 
-    # I/O
+    # I/O — io_chunk_size is hardcoded in data_io.py to avoid circular import;
+    # this field documents the canonical value but is not read at runtime.
     io_chunk_size: PositiveInt = Field(default=8192, description="Streaming chunk size (bytes)")
 
     @model_validator(mode="before")

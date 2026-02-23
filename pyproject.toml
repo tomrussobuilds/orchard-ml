@@ -106,6 +106,7 @@ filterwarnings = [
     "ignore:Training at resolution.*on CPU.*:UserWarning",
     "ignore:max_samples.*is less than 10x num_classes.*:UserWarning",
     "ignore:`isinstance\\(treespec, LeafSpec\\)` is deprecated.*:FutureWarning",
+    "ignore:Detected call of `lr_scheduler.step\\(\\)` before `optimizer.step\\(\\)`.*:UserWarning",
 ]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

@@ -27,6 +27,9 @@ from .metric_extractor import MetricExtractor
 
 logger = logging.getLogger(LOGGER_NAME)
 
+# Module-level constants
+_FALLBACK_METRICS: dict[str, float] = {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
+
 
 # TRAINING EXECUTOR
 class TrialTrainingExecutor:
@@ -116,6 +119,7 @@ class TrialTrainingExecutor:
         # Training state
         self.scaler = torch.amp.GradScaler() if cfg.training.use_amp else None
         self.epochs = cfg.training.epochs
+        self.log_interval = cfg.telemetry.log_interval
 
     def execute(self, trial: optuna.Trial) -> float:
         """
@@ -164,7 +168,7 @@ class TrialTrainingExecutor:
             self._step_scheduler(val_metrics["loss"])
 
             # Logging
-            if epoch % 5 == 0 or epoch == self.epochs:
+            if epoch % self.log_interval == 0 or epoch == self.epochs:
                 logger.info(
                     f"T{trial.number} E{epoch}/{self.epochs} | "
                     f"Loss:{epoch_loss:.4f} | "
@@ -220,13 +224,13 @@ class TrialTrainingExecutor:
 
             if val_metrics is None or not isinstance(val_metrics, dict):
                 logger.error(f"Invalid validation result: {val_metrics}")
-                return {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
+                return dict(_FALLBACK_METRICS)
 
             return val_metrics
 
         except (RuntimeError, ValueError) as e:
             logger.error(f"Validation failed: {e}")
-            return {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
+            return dict(_FALLBACK_METRICS)
 
     def _should_prune(self, trial: optuna.Trial, epoch: int) -> bool:
         """

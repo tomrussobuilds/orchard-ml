@@ -24,7 +24,6 @@ def test_telemetry_config_defaults():
 
     assert str(config.data_dir) == "./dataset"
     assert str(config.output_dir) == "./outputs"
-    assert config.save_model is True
     assert config.log_interval == 10
     assert config.log_level == "INFO"
 
@@ -140,13 +139,12 @@ def test_to_portable_dict_absolute_outside_project():
 @pytest.mark.unit
 def test_to_portable_dict_preserves_other_fields():
     """Test to_portable_dict() preserves non-path fields."""
-    config = TelemetryConfig(log_level="DEBUG", log_interval=5, save_model=False)
+    config = TelemetryConfig(log_level="DEBUG", log_interval=5)
 
     portable = config.to_portable_dict()
 
     assert portable["log_level"] == "DEBUG"
     assert portable["log_interval"] == 5
-    assert portable["save_model"] is False
 
 
 # TELEMETRY CONFIG: EMPTY YAML HANDLING

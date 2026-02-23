@@ -15,6 +15,7 @@ import torch
 import torch.nn as nn
 
 from orchard.optimization import MetricExtractor, TrialTrainingExecutor
+from orchard.optimization.objective.training_executor import _FALLBACK_METRICS
 
 
 # FIXTURES
@@ -146,7 +147,7 @@ def test_validate_epoch_returns_fallback_on_exception():
         mock_validate.side_effect = RuntimeError("Validation error")
         result = executor._validate_epoch()
 
-        assert result == {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
+        assert result == _FALLBACK_METRICS
 
 
 @pytest.mark.unit
@@ -173,7 +174,7 @@ def test_validate_epoch_returns_fallback_on_invalid_type():
         mock_validate.return_value = "not_a_dict"
         result = executor._validate_epoch()
 
-        assert result == {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
+        assert result == _FALLBACK_METRICS
 
 
 @pytest.mark.unit
@@ -200,7 +201,7 @@ def test_validate_epoch_returns_fallback_on_none():
         mock_validate.return_value = None
         result = executor._validate_epoch()
 
-        assert result == {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
+        assert result == _FALLBACK_METRICS
 
 
 # TESTS: EXECUTE ERROR HANDLING

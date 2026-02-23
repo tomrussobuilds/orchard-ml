@@ -425,7 +425,7 @@ def test_validate_with_runtime_error(tmp_path, monkeypatch):
         model,
         dummy_input,
         str(onnx_path),
-        opset_version=13,
+        opset_version=18,
         input_names=["input"],
         output_names=["output"],
     )
@@ -433,7 +433,7 @@ def test_validate_with_runtime_error(tmp_path, monkeypatch):
     # Mock InferenceSession to raise RuntimeError
     import onnxruntime as ort
 
-    def mock_inference_session(*_):
+    def mock_inference_session(*_args, **_kwargs):
         raise RuntimeError("ONNX Runtime error")
 
     monkeypatch.setattr(ort, "InferenceSession", mock_inference_session)

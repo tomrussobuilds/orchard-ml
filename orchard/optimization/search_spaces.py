@@ -132,10 +132,9 @@ class SearchSpaceRegistry:
         """
         ov = self.ov
         return {
-            "cosine_fraction": lambda trial: trial.suggest_float(
-                "cosine_fraction",
-                ov.cosine_fraction.low,
-                ov.cosine_fraction.high,
+            "scheduler_type": lambda trial: trial.suggest_categorical(
+                "scheduler_type",
+                ov.scheduler_type,
             ),
             "scheduler_patience": lambda trial: trial.suggest_int(
                 "scheduler_patience",
@@ -423,11 +422,6 @@ class FullSearchSpace:
                 ov.dropout.high,
             ),
             "batch_size": trial.suggest_categorical("batch_size", batch_choices),
-            "cosine_fraction": trial.suggest_float(
-                "cosine_fraction",
-                ov.cosine_fraction.low,
-                ov.cosine_fraction.high,
-            ),
             "scheduler_patience": trial.suggest_int(
                 "scheduler_patience",
                 ov.scheduler_patience.low,

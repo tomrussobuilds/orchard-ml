@@ -163,17 +163,18 @@ def test_run_training_phase_returns_expected_tuple(
     mock_trainer.train.return_value = (Path("/mock/best.pth"), [0.5, 0.4], [{"accuracy": 0.9}])
     mock_trainer_cls.return_value = mock_trainer
 
-    mock_final_eval.return_value = (0.85, 0.90)
+    mock_final_eval.return_value = (0.85, 0.90, 0.92)
     mock_aug_desc.return_value = "test_aug"
 
     result = run_training_phase(mock_orchestrator)
 
-    assert len(result) == 6
-    best_path, losses, _metrics, _model, f1, acc = result
+    assert len(result) == 7
+    best_path, losses, _metrics, _model, f1, acc, auc = result
     assert best_path == Path("/mock/best.pth")
     assert losses == [0.5, 0.4]
     assert f1 == pytest.approx(0.85)
     assert acc == pytest.approx(0.90)
+    assert auc == pytest.approx(0.92)
 
 
 @pytest.mark.unit
@@ -218,7 +219,7 @@ def test_run_training_phase_with_custom_config(
     mock_trainer.train.return_value = (Path("/mock/best.pth"), [], [])
     mock_trainer_cls.return_value = mock_trainer
 
-    mock_final_eval.return_value = (0.8, 0.85)
+    mock_final_eval.return_value = (0.8, 0.85, 0.90)
     mock_aug_desc.return_value = ""
 
     run_training_phase(mock_orchestrator, cfg=custom_cfg)
@@ -329,6 +330,49 @@ def test_run_export_phase_logs_output_path(
     )
 
     mock_orchestrator.run_logger.info.assert_called()
+
+
+@pytest.mark.unit
+@patch("orchard.pipeline.phases.benchmark_onnx_inference")
+@patch("orchard.pipeline.phases.validate_export")
+@patch("orchard.pipeline.phases.get_model")
+@patch("orchard.pipeline.phases.export_to_onnx")
+def test_run_export_phase_benchmark(
+    _mock_export, _mock_get_model, _mock_validate, mock_benchmark, mock_orchestrator
+):
+    """Test run_export_phase calls benchmark when enabled."""
+    mock_orchestrator.cfg.export.benchmark = True
+    mock_orchestrator.cfg.training.seed = 42
+
+    run_export_phase(
+        mock_orchestrator,
+        checkpoint_path=Path("/mock/model.pth"),
+        export_format="onnx",
+    )
+
+    mock_benchmark.assert_called_once()
+    call_kwargs = mock_benchmark.call_args.kwargs
+    assert call_kwargs["seed"] == 42
+
+
+@pytest.mark.unit
+@patch("orchard.pipeline.phases.benchmark_onnx_inference")
+@patch("orchard.pipeline.phases.validate_export")
+@patch("orchard.pipeline.phases.get_model")
+@patch("orchard.pipeline.phases.export_to_onnx")
+def test_run_export_phase_no_benchmark_by_default(
+    _mock_export, _mock_get_model, _mock_validate, mock_benchmark, mock_orchestrator
+):
+    """Test run_export_phase skips benchmark when disabled."""
+    mock_orchestrator.cfg.export.benchmark = False
+
+    run_export_phase(
+        mock_orchestrator,
+        checkpoint_path=Path("/mock/model.pth"),
+        export_format="onnx",
+    )
+
+    mock_benchmark.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -42,8 +42,8 @@ training:
   patience: 20
   grad_clip: 1.0
   mixup_epochs: 0
+  monitor_metric: "auc"
   scheduler_type: "cosine"
-  cosine_fraction: 0.5
   scheduler_patience: 5
   scheduler_factor: 0.1
   step_size: 20
@@ -140,10 +140,6 @@ optuna:
       dropout:
           low: 0.1
           high: 0.5
-          log: false
-      cosine_fraction:
-          low: 0.3
-          high: 0.7
           log: false
       scheduler_patience:
           low: 3

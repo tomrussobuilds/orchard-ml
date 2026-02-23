@@ -29,7 +29,7 @@ def test_run_final_evaluation_returns_tuple(
     _mock_confusion,
     mock_evaluate,
 ):
-    """Test run_final_evaluation returns (macro_f1, test_acc) tuple."""
+    """Test run_final_evaluation returns (macro_f1, test_acc, test_auc) tuple."""
     mock_evaluate.return_value = (
         [0, 1, 2],
         [0, 1, 2],
@@ -69,10 +69,11 @@ def test_run_final_evaluation_returns_tuple(
     )
 
     assert isinstance(result, tuple)
-    assert len(result) == 2
-    macro_f1, test_acc = result
+    assert len(result) == 3
+    macro_f1, test_acc, test_auc = result
     assert macro_f1 == pytest.approx(0.94)
     assert test_acc == pytest.approx(0.95)
+    assert test_auc == pytest.approx(0.98)
 
 
 @pytest.mark.unit

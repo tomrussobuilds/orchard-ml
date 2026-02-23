@@ -7,7 +7,7 @@ validated configurations with execution kernels, ensuring atomic state managemen
 through specialized checkpointing and weight restoration logic.
 
 Key Features:
-    - Automated Checkpointing: Tracks performance metrics (AUC/Accuracy) and
+    - Automated Checkpointing: Tracks the configured monitor_metric and
       persists the optimal model state.
     - Deterministic Restoration: Guarantees that the model instance in memory
       reflects the 'best' found parameters upon completion.
@@ -30,7 +30,7 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 
-from ..core import LOGGER_NAME, Config, load_model_weights
+from ..core import LOGGER_NAME, Config, LogStyle, load_model_weights
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..tracking import TrackerProtocol
@@ -55,7 +55,7 @@ class ModelTrainer:
         1. Training Phase: Forward/backward passes with optional Mixup augmentation
         2. Validation Phase: Performance evaluation on held-out data
         3. Scheduling Phase: Learning rate updates (ReduceLROnPlateau or step-based)
-        4. Checkpointing: Save model when validation AUC improves
+        4. Checkpointing: Save model when monitor_metric improves
         5. Early Stopping: Halt training if no improvement for `patience` epochs
 
     Attributes:
@@ -71,14 +71,14 @@ class ModelTrainer:
         epochs (int): Total number of training epochs
         patience (int): Early stopping patience (epochs without improvement)
         best_acc (float): Best validation accuracy achieved
-        best_auc (float): Best validation AUC achieved
-        epochs_no_improve (int): Consecutive epochs without AUC improvement
+        best_metric (float): Best value of the monitored metric
+        epochs_no_improve (int): Consecutive epochs without monitored metric improvement
         scaler (torch.amp.GradScaler): Automatic Mixed Precision scaler
         mixup_fn (callable | None): Mixup augmentation function (partial of mixup_data)
         best_path (Path): Filesystem path for best model checkpoint
         train_losses (list[float]): Training loss history per epoch
         val_metrics_history (list[dict]): Validation metrics history per epoch
-        val_aucs (list[float]): Validation AUC history per epoch
+        monitor_metric (str): Name of metric driving checkpointing
 
     Example:
         >>> from orchard.trainer import ModelTrainer
@@ -138,8 +138,9 @@ class ModelTrainer:
         # Hyperparameters
         self.epochs = cfg.training.epochs
         self.patience = cfg.training.patience
+        self.monitor_metric = cfg.training.monitor_metric
         self.best_acc = -1.0
-        self.best_auc = -1.0
+        self.best_metric = -1.0
         self.epochs_no_improve = 0
 
         # Modern AMP Support (PyTorch 2.x+)
@@ -158,7 +159,6 @@ class ModelTrainer:
         # History tracking
         self.train_losses: list[float] = []
         self.val_metrics_history: list[dict] = []
-        self.val_aucs: list[float] = []
 
         # Track if we saved at least one valid checkpoint during training
         self._checkpoint_saved: bool = False
@@ -173,7 +173,7 @@ class ModelTrainer:
             - Forward/backward passes with optional Mixup augmentation
             - Validation metric computation (loss, accuracy, AUC)
             - Learning rate scheduling (plateau-aware or step-based)
-            - Automated checkpointing on validation AUC improvement
+            - Automated checkpointing on monitor_metric improvement
             - Early stopping with patience-based criteria
 
         Returns:
@@ -185,7 +185,7 @@ class ModelTrainer:
         Notes:
             - Model weights are automatically restored to best checkpoint after training
             - Mixup augmentation is disabled after mixup_epochs
-            - Early stopping triggers if no AUC improvement for `patience` epochs
+            - Early stopping triggers if no monitor_metric improvement for `patience` epochs
         """
         for epoch in range(1, self.epochs + 1):
             logger.info(f" Epoch {epoch:02d}/{self.epochs} ".center(60, "-"))
@@ -219,13 +219,7 @@ class ModelTrainer:
 
             val_acc = val_metrics["accuracy"]
             val_loss = val_metrics["loss"]
-            val_auc = val_metrics.get("auc", 0.0)
-
-            logger.info(
-                f"Epoch {epoch} Validation AUC: {val_auc:.4f} "
-                f"Previous Best AUC: {self.best_auc:.4f}"
-            )
-            self.val_aucs.append(val_auc)
+            monitor_value = val_metrics.get(self.monitor_metric, 0.0)
 
             # --- 3. Scheduling Phase ---
             self._step_scheduler(val_loss)
@@ -240,22 +234,20 @@ class ModelTrainer:
 
             # --- 5. Unified Logging ---
             current_lr = self.optimizer.param_groups[0]["lr"]
-            logger.info(
-                f"Loss: [T: {epoch_loss:.4f} | V: {val_loss:.4f}] | "
-                f"Acc: {val_acc:.4f} (Best Acc: {self.best_acc:.4f}) | "
-                f"AUC: {val_auc:.4f} (Best AUC: {self.best_auc:.4f}) | "
-                f"LR: {current_lr:.2e} | Patience: {self.patience - self.epochs_no_improve}"
+            self._log_epoch_summary(
+                epoch,
+                epoch_loss,
+                val_loss,
+                val_acc,
+                monitor_value,
+                current_lr,
             )
 
             # --- 6. Experiment Tracking ---
             if self.tracker is not None:
                 self.tracker.log_epoch(epoch, epoch_loss, val_metrics, current_lr)
 
-        logger.info(
-            f"Training finished. Peak Performance -> AUC: {self.best_auc:.4f} "
-            f"| Acc: {self.best_acc:.4f}"
-        )
-
+        self._log_training_complete()
         self._finalize_weights()
 
         return self.best_path, self.train_losses, self.val_metrics_history
@@ -275,28 +267,64 @@ class ModelTrainer:
         else:
             self.scheduler.step()
 
+    def _log_epoch_summary(
+        self,
+        epoch: int,
+        train_loss: float,
+        val_loss: float,
+        val_acc: float,
+        monitor_value: float,
+        lr: float,
+    ) -> None:
+        """Log structured per-epoch metrics using project LogStyle."""
+        I = LogStyle.INDENT  # noqa: E741
+        A = LogStyle.ARROW
+        B = LogStyle.BULLET
+        remaining = self.patience - self.epochs_no_improve
+        label = self.monitor_metric.upper()
+
+        logger.info(LogStyle.LIGHT)
+        logger.info(
+            f"{I}Epoch {epoch} {B} "
+            f"Val {label}: {monitor_value:.4f} "
+            f"(Best: {self.best_metric:.4f})"
+        )
+        logger.info(f"{I}{A} Loss  : T {train_loss:.4f} / V {val_loss:.4f}")
+        logger.info(f"{I}{A} Acc   : {val_acc:.4f} (Best: {self.best_acc:.4f})")
+        logger.info(f"{I}{A} {label:<5} : {monitor_value:.4f} " f"(Best: {self.best_metric:.4f})")
+        logger.info(f"{I}{A} LR    : {lr:.2e} {B} Patience: {remaining}")
+
+    def _log_training_complete(self) -> None:
+        """Log final training summary banner."""
+        logger.info(LogStyle.DOUBLE)
+        logger.info(
+            f"{LogStyle.INDENT}{LogStyle.SUCCESS} Training Complete "
+            f"{LogStyle.BULLET} Best {self.monitor_metric.upper()}: {self.best_metric:.4f} "
+            f"{LogStyle.BULLET} Best Acc: {self.best_acc:.4f}"
+        )
+        logger.info(LogStyle.DOUBLE)
+
     def _handle_checkpointing(self, val_metrics: dict) -> bool:
         """
-        Manages model checkpointing and tracks early stopping progress.
+        Manage model checkpointing and track early stopping progress.
 
-        Saves the model state if the current validation AUC exceeds
-        the previous best. Increments the patience counter otherwise.
+        Saves the model state if the monitored metric exceeds the
+        previous best. Increments the patience counter otherwise.
 
         Args:
-            val_metrics: Validation metrics dictionary containing 'accuracy' and 'auc'
+            val_metrics: Validation metrics dictionary
 
         Returns:
             True if early stopping criteria are met, False otherwise
         """
-        val_acc = val_metrics["accuracy"]
-        val_auc = val_metrics.get("auc", 0.0)
+        current_value = val_metrics.get(self.monitor_metric, 0.0)
 
-        if val_acc > self.best_acc:
-            self.best_acc = val_acc
-
-        if val_auc > self.best_auc:
-            logger.info(f"New best model! Val AUC: {val_auc:.4f} ↑ Checkpoint saved.")
-            self.best_auc = val_auc
+        if current_value > self.best_metric:
+            logger.info(
+                f"New best model! Val {self.monitor_metric}: "
+                f"{current_value:.4f} ↑ Checkpoint saved."
+            )
+            self.best_metric = current_value
             self.epochs_no_improve = 0
             torch.save(self.model.state_dict(), self.best_path)
             self._checkpoint_saved = True

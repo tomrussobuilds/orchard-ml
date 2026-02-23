@@ -42,8 +42,8 @@ training:
   mixup_epochs: 0               # 0 = apply throughout training
   
   # Scheduler
+  monitor_metric: "auc"
   scheduler_type: "cosine"
-  cosine_fraction: 0.8
   scheduler_patience: 5
   scheduler_factor: 0.1
   step_size: 20

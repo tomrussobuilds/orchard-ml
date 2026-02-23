@@ -846,6 +846,28 @@ def test_log_pipeline_summary_uses_module_logger_when_none():
         assert mock_module_logger.info.call_count > 0
 
 
+@pytest.mark.unit
+def test_log_pipeline_summary_with_test_auc():
+    """Test log_pipeline_summary includes AUC line when test_auc is provided."""
+    mock_logger = MagicMock()
+
+    log_pipeline_summary(
+        test_acc=0.92,
+        macro_f1=0.88,
+        best_model_path="/mock/best.pth",
+        run_dir="/mock/run",
+        duration="3m 0s",
+        test_auc=0.9567,
+        logger_instance=mock_logger,
+    )
+
+    calls = [str(call) for call in mock_logger.info.call_args_list]
+    log_output = " ".join(calls)
+
+    assert "Test AUC" in log_output
+    assert "0.9567" in log_output
+
+
 # REPORTER: TRACKING SECTION
 @pytest.mark.unit
 def test_reporter_log_tracking_section_enabled():
@@ -933,13 +955,14 @@ def test_reporter_log_optimization_section_absent():
 
 # REPORTER: EXPORT SECTION
 @pytest.mark.unit
-def test_reporter_log_export_section_without_quantization():
-    """Test _log_export_section logs export format without quantization."""
+def test_reporter_log_export_section_basic():
+    """Test _log_export_section logs format, opset, and validate_export."""
     reporter = Reporter()
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
     mock_cfg.export.format = "onnx"
-    mock_cfg.export.quantize = False
+    mock_cfg.export.opset_version = 18
+    mock_cfg.export.validate_export = True
 
     reporter._log_export_section(mock_logger, mock_cfg)
 
@@ -947,26 +970,8 @@ def test_reporter_log_export_section_without_quantization():
     log_output = " ".join(calls)
     assert "EXPORT" in log_output
     assert "ONNX" in log_output
-    assert "Backend" not in log_output
-
-
-@pytest.mark.unit
-def test_reporter_log_export_section_with_quantization():
-    """Test _log_export_section logs quantization backend when enabled."""
-    reporter = Reporter()
-    mock_logger = MagicMock()
-    mock_cfg = MagicMock()
-    mock_cfg.export.format = "onnx"
-    mock_cfg.export.quantize = True
-    mock_cfg.export.quantization_backend = "fbgemm"
-
-    reporter._log_export_section(mock_logger, mock_cfg)
-
-    calls = [str(call) for call in mock_logger.info.call_args_list]
-    log_output = " ".join(calls)
-    assert "ONNX" in log_output
+    assert "18" in log_output
     assert "True" in log_output
-    assert "fbgemm" in log_output
 
 
 @pytest.mark.unit

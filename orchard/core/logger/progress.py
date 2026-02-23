@@ -109,7 +109,7 @@ def log_trial_start(
     categories = {
         "Optimization": ["learning_rate", "weight_decay", "momentum", "min_lr"],
         "Regularization": ["mixup_alpha", "label_smoothing", "dropout"],
-        "Scheduling": ["cosine_fraction", "scheduler_patience", "batch_size"],
+        "Scheduling": ["scheduler_type", "scheduler_patience", "batch_size"],
         "Augmentation": ["rotation_angle", "jitter_val", "min_scale"],
         "Architecture": ["model_name", "pretrained", "weight_variant"],
     }
@@ -190,7 +190,7 @@ def log_trial_params_compact(
     categories = [
         ("Optimization", ["learning_rate", "weight_decay", "momentum", "min_lr"]),
         ("Regularization", ["mixup_alpha", "label_smoothing", "dropout"]),
-        ("Scheduling", ["cosine_fraction", "scheduler_patience", "batch_size"]),
+        ("Scheduling", ["scheduler_type", "scheduler_patience", "batch_size"]),
         ("Augmentation", ["rotation_angle", "jitter_val", "min_scale"]),
         ("Architecture", ["model_name", "pretrained", "weight_variant"]),
     ]
@@ -328,6 +328,7 @@ def log_pipeline_summary(
     best_model_path: Any,
     run_dir: Any,
     duration: str,
+    test_auc: float | None = None,
     onnx_path: Any = None,
     logger_instance: logging.Logger | None = None,
 ) -> None:
@@ -343,6 +344,7 @@ def log_pipeline_summary(
         best_model_path: Path to best model checkpoint
         run_dir: Root directory for this run
         duration: Human-readable duration string
+        test_auc: Final test AUC (if available)
         onnx_path: Path to ONNX export (if performed)
         logger_instance: Logger instance to use (defaults to module logger)
     """
@@ -354,6 +356,8 @@ def log_pipeline_summary(
     log.info(LogStyle.DOUBLE)
     log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Test Accuracy  : {test_acc:>8.2%}")
     log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Macro F1       : {macro_f1:>8.4f}")
+    if test_auc is not None:
+        log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Test AUC       : {test_auc:>8.4f}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Best Model     : {best_model_path}")
     if onnx_path:
         log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} ONNX Export    : {onnx_path}")

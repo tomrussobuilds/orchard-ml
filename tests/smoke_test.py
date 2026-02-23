@@ -118,7 +118,7 @@ def run_smoke_test(cfg: Config) -> None:
             # REPORT GENERATION
             run_logger.info("[Stage 5/5] Verifying reporting utilities...")
 
-            _, test_acc = run_final_evaluation(
+            _, test_acc, _ = run_final_evaluation(
                 model=model,
                 test_loader=test_loader,
                 train_losses=train_losses,
