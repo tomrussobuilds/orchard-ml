@@ -49,7 +49,7 @@ def base_cfg():
 
 # TESTS: CRITERION
 @pytest.mark.unit
-@pytest.mark.parametrize("crit_type", ["cross_entropy", "bce_logit", "focal"])
+@pytest.mark.parametrize("crit_type", ["cross_entropy", "focal"])
 def test_get_criterion_types(base_cfg, crit_type):
     """Test all valid criterion types."""
     base_cfg.training.criterion_type = crit_type

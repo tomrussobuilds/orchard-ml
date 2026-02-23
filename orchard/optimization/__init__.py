@@ -17,7 +17,7 @@ from .orchestrator import (
     export_top_trials,
     run_optimization,
 )
-from .search_spaces import FullSearchSpace, SearchSpaceRegistry, get_search_space
+from .search_spaces import SearchSpaceRegistry, get_search_space
 
 __all__ = [
     "SearchSpaceRegistry",
@@ -30,7 +30,6 @@ __all__ = [
     "run_optimization",
     "StudyEarlyStoppingCallback",
     "get_early_stopping_callback",
-    "FullSearchSpace",
     "export_best_config",
     "export_study_summary",
     "export_top_trials",

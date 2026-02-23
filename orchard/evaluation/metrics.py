@@ -13,6 +13,7 @@ import numpy as np
 from sklearn.metrics import f1_score, roc_auc_score
 
 from ..core import LOGGER_NAME
+from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -45,4 +46,4 @@ def compute_classification_metrics(
         logger.warning(f"ROC-AUC calculation failed: {e}. Defaulting to 0.0")
         auc = 0.0
 
-    return {"accuracy": float(accuracy), "auc": float(auc), "f1": float(macro_f1)}
+    return {METRIC_ACCURACY: float(accuracy), METRIC_AUC: float(auc), METRIC_F1: float(macro_f1)}

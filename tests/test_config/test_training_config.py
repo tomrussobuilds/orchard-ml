@@ -56,7 +56,7 @@ def test_batch_size_valid_range():
 @pytest.mark.unit
 def test_batch_size_too_large_rejected():
     """Test batch_size > 128 is rejected."""
-    with pytest.raises(ValidationError, match="too large"):
+    with pytest.raises(ValidationError, match="less than or equal to 128"):
         TrainingConfig(batch_size=256)
 
 
@@ -213,7 +213,7 @@ def test_scheduler_types():
 @pytest.mark.unit
 def test_criterion_types():
     """Test valid criterion types."""
-    for criterion in ["cross_entropy", "focal", "bce_logit"]:
+    for criterion in ["cross_entropy", "focal"]:
         config = TrainingConfig(criterion_type=criterion)
         assert config.criterion_type == criterion
 

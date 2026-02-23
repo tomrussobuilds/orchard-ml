@@ -14,7 +14,7 @@ from optuna.trial import Trial
 from pydantic import ValidationError
 
 from orchard.core.config.optuna_config import FloatRange, IntRange, SearchSpaceOverrides
-from orchard.optimization import FullSearchSpace, SearchSpaceRegistry, get_search_space
+from orchard.optimization import SearchSpaceRegistry, get_search_space
 
 
 # SEARCH SPACE REGISTRY: DEFAULT OVERRIDES
@@ -188,46 +188,6 @@ def test_get_search_space_with_models_resolution_28():
     assert "batch_size" in space
 
 
-# FULL SEARCH SPACE CLASS
-@pytest.mark.unit
-def test_full_search_space_sample_params():
-    """Test resolution-aware sampling in the FullSearchSpace class."""
-    full_space = FullSearchSpace(resolution=28)
-
-    trial_mock = MagicMock(spec=Trial)
-
-    trial_mock.suggest_float = MagicMock()
-    trial_mock.suggest_float.return_value = 0.001
-
-    trial_mock.suggest_categorical = MagicMock()
-    trial_mock.suggest_categorical.return_value = 32
-    sampled_params = full_space.sample_params(trial_mock)
-
-    assert sampled_params["batch_size"] in [16, 32, 48, 64]
-    assert sampled_params["batch_size"] == 32
-    assert "learning_rate" in sampled_params
-    assert "momentum" in sampled_params
-    assert "dropout" in sampled_params
-
-
-@pytest.mark.unit
-def test_full_search_space_sample_params_high_resolution():
-    """Test FullSearchSpace with 224x224 resolution uses smaller batch choices."""
-    full_space = FullSearchSpace(resolution=224)
-
-    trial_mock = MagicMock(spec=Trial)
-    trial_mock.suggest_float = MagicMock(return_value=0.001)
-    trial_mock.suggest_int = MagicMock(return_value=5)
-    trial_mock.suggest_categorical = MagicMock(return_value=12)
-
-    sampled_params = full_space.sample_params(trial_mock)
-
-    assert sampled_params["batch_size"] in [8, 12, 16]
-    assert sampled_params["batch_size"] == 12
-
-    trial_mock.suggest_categorical.assert_called_with("batch_size", [8, 12, 16])
-
-
 # CUSTOM OVERRIDES
 @pytest.mark.unit
 def test_custom_overrides_applied():
@@ -281,24 +241,6 @@ def test_get_search_space_with_overrides():
     space["batch_size"](trial_mock)
 
     trial_mock.suggest_categorical.assert_called_with("batch_size", [4, 8, 12])
-
-
-@pytest.mark.unit
-def test_full_search_space_with_overrides():
-    """Test FullSearchSpace accepts and uses overrides."""
-    custom_ov = SearchSpaceOverrides(
-        dropout=FloatRange(low=0.2, high=0.8),
-    )
-    full_space = FullSearchSpace(resolution=28, overrides=custom_ov)
-
-    trial_mock = MagicMock(spec=Trial)
-    trial_mock.suggest_float = MagicMock(return_value=0.5)
-    trial_mock.suggest_int = MagicMock(return_value=5)
-    trial_mock.suggest_categorical = MagicMock(return_value=32)
-
-    full_space.sample_params(trial_mock)
-
-    trial_mock.suggest_float.assert_any_call("dropout", 0.2, 0.8)
 
 
 # SEARCH SPACE OVERRIDES VALIDATION

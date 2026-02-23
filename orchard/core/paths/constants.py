@@ -24,6 +24,12 @@ from typing import Final
 # Supported image resolutions across all model architectures
 SUPPORTED_RESOLUTIONS: Final[frozenset[int]] = frozenset({28, 32, 64, 224})
 
+# Canonical metric key strings used across training, evaluation, and optimization
+METRIC_ACCURACY: Final[str] = "accuracy"
+METRIC_AUC: Final[str] = "auc"
+METRIC_LOSS: Final[str] = "loss"
+METRIC_F1: Final[str] = "f1"
+
 # Global logger identity used by all modules to ensure log synchronization
 LOGGER_NAME: Final[str] = "OrchardML"
 

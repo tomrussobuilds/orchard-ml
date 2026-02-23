@@ -170,6 +170,7 @@ class InfrastructureManager(BaseModel):
         """
         log = log or logging.getLogger("Infrastructure")
 
+        # Full session teardown (see also OptunaObjective._cleanup for per-trial flush)
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
             log.debug(" » CUDA cache cleared.")

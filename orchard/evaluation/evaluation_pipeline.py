@@ -15,6 +15,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from ..core import LOGGER_NAME, Config, RunPaths
+from ..core.paths import METRIC_ACCURACY, METRIC_AUC
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..tracking import TrackerProtocol
@@ -94,7 +95,7 @@ def run_final_evaluation(
         )
 
     # Historical Training Curves
-    val_acc_list = [m["accuracy"] for m in val_metrics_history]
+    val_acc_list = [m[METRIC_ACCURACY] for m in val_metrics_history]
     plot_training_curves(
         train_losses=train_losses,
         val_accuracies=val_acc_list,
@@ -131,8 +132,8 @@ def run_final_evaluation(
     )
     report.save(paths.final_report_path, fmt=cfg.evaluation.report_format)
 
-    test_acc = test_metrics["accuracy"]
-    test_auc = test_metrics.get("auc", 0.0)
+    test_acc = test_metrics[METRIC_ACCURACY]
+    test_auc = test_metrics.get(METRIC_AUC, 0.0)
 
     # Log test metrics to experiment tracker
     if tracker is not None:

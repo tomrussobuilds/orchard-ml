@@ -189,8 +189,8 @@ class OptunaConfig(BaseModel):
         default="tpe", description="Hyperparameter sampling algorithm"
     )
 
-    search_space_preset: Literal["quick", "full", "optimization_only", "regularization_only"] = (
-        Field(default="full", description="Predefined search space configuration")
+    search_space_preset: Literal["quick", "full"] = Field(
+        default="full", description="Predefined search space configuration"
     )
 
     enable_model_search: bool = Field(

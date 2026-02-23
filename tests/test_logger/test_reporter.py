@@ -7,7 +7,7 @@ and summary logging functions.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, patch
 
 import optuna
 import pytest
@@ -16,12 +16,9 @@ import torch
 from orchard.core.logger import (
     LogStyle,
     Reporter,
-    log_best_config_export,
     log_optimization_header,
     log_optimization_summary,
     log_pipeline_summary,
-    log_study_summary,
-    log_training_summary,
     log_trial_start,
 )
 
@@ -71,87 +68,6 @@ def test_reporter_init():
     """Test Reporter can be instantiated."""
     reporter = Reporter()
     assert isinstance(reporter, Reporter)
-
-
-# LOG TRAINING SUMMARY
-@pytest.mark.unit
-def test_log_training_summary_basic():
-    """Test log_training_summary logs basic training results."""
-    mock_logger = MagicMock()
-    mock_cfg = MagicMock()
-    mock_cfg.dataset.dataset_name = "bloodmnist"
-    mock_cfg.architecture.name = "resnet_18"
-    mock_cfg.architecture.weight_variant = None
-    mock_device = torch.device("cpu")
-    mock_paths = MagicMock()
-    mock_paths.root = "/mock/outputs/run123"
-
-    log_training_summary(
-        cfg=mock_cfg,
-        test_acc=0.9678,
-        macro_f1=0.9643,
-        device=mock_device,
-        paths=mock_paths,
-        logger_instance=mock_logger,
-    )
-
-    assert mock_logger.info.call_count > 5
-    calls = [str(call) for call in mock_logger.info.call_args_list]
-    log_output = " ".join(calls)
-    assert "bloodmnist" in log_output
-    assert "resnet_18" in log_output
-
-
-@pytest.mark.unit
-def test_log_training_summary_with_weight_variant():
-    """Test log_training_summary includes weight variant when present."""
-    mock_logger = MagicMock()
-    mock_cfg = MagicMock()
-    mock_cfg.dataset.dataset_name = "pathmnist"
-    mock_cfg.architecture.name = "vit_tiny"
-    mock_cfg.architecture.weight_variant = "IMAGENET1K_V1"
-    mock_device = torch.device("cuda")
-    mock_paths = MagicMock()
-    mock_paths.root = "/mock/outputs/run456"
-
-    log_training_summary(
-        cfg=mock_cfg,
-        test_acc=0.92,
-        macro_f1=0.91,
-        device=mock_device,
-        paths=mock_paths,
-        logger_instance=mock_logger,
-    )
-
-    calls = [str(call) for call in mock_logger.info.call_args_list]
-    log_output = " ".join(calls)
-    assert "IMAGENET1K_V1" in log_output
-
-
-@pytest.mark.unit
-def test_log_training_summary_formats_accuracy():
-    """Test log_training_summary formats accuracy as percentage."""
-    mock_logger = MagicMock()
-    mock_cfg = MagicMock()
-    mock_cfg.dataset.dataset_name = "test"
-    mock_cfg.architecture.name = "model"
-    mock_cfg.architecture.weight_variant = None
-    mock_device = torch.device("cpu")
-    mock_paths = MagicMock()
-    mock_paths.root = "/mock"
-
-    log_training_summary(
-        cfg=mock_cfg,
-        test_acc=0.8765,
-        macro_f1=0.8543,
-        device=mock_device,
-        paths=mock_paths,
-        logger_instance=mock_logger,
-    )
-
-    calls = [str(call) for call in mock_logger.info.call_args_list]
-    log_output = " ".join(calls)
-    assert "87.65%" in log_output or "0.8765" in log_output
 
 
 # LOG OPTIMIZATION SUMMARY
@@ -450,43 +366,6 @@ def test_log_trial_start_with_regular_floats():
     assert "e-" not in log_output
 
 
-# LOG STUDY SUMMARY
-@pytest.mark.unit
-def test_log_study_summary_value_error_on_best_trial():
-    """Test log_study_summary handles ValueError from best_trial lookup."""
-    import optuna
-
-    mock_logger = MagicMock()
-    mock_study = MagicMock()
-    mock_trial = MagicMock()
-    mock_trial.state = optuna.trial.TrialState.COMPLETE
-    mock_study.trials = [mock_trial]
-
-    type(mock_study).best_value = PropertyMock(side_effect=ValueError("No best trial"))
-
-    with patch("orchard.core.logger.progress.logger") as mock_module_logger:
-        log_study_summary(study=mock_study, metric_name="auc", logger_instance=mock_logger)
-        warning_called = mock_logger.warning.called or mock_module_logger.warning.called
-        assert warning_called, "Warning should be called when ValueError is raised"
-
-
-# LOG BEST CONFIG EXPORT
-@pytest.mark.unit
-def test_log_best_config_export():
-    """Test log_best_config_export logs config path."""
-    config_path = MagicMock()
-    config_path.__str__ = lambda x: "/mock/best_config.yaml"
-    config_path.parent.parent = MagicMock()
-
-    with patch("orchard.core.logger.progress.logger") as mock_module_logger:
-        log_best_config_export(config_path=config_path, logger_instance=None)
-
-        assert mock_module_logger.info.call_count > 5
-        calls = [str(call) for call in mock_module_logger.info.call_args_list]
-        log_output = " ".join(calls)
-        assert "best_config.yaml" in log_output or "Configuration" in log_output
-
-
 # REPORTER: LOG INITIAL STATUS
 @pytest.mark.unit
 def test_reporter_log_initial_status():
@@ -621,31 +500,6 @@ def test_reporter_log_initial_status_with_weight_variant():
     assert "IMAGENET1K_V1" in log_output
 
 
-# INTEGRATION: LOGGER FALLBACK
-@pytest.mark.unit
-def test_functions_use_module_logger_when_no_instance():
-    """Test logging functions use module logger when no instance provided."""
-    mock_cfg = MagicMock()
-    mock_cfg.dataset.dataset_name = "test"
-    mock_cfg.architecture.name = "model"
-    mock_cfg.architecture.weight_variant = None
-    mock_device = torch.device("cpu")
-    mock_paths = MagicMock()
-    mock_paths.root = "/mock"
-
-    with patch("orchard.core.logger.progress.logger") as mock_module_logger:
-        log_training_summary(
-            cfg=mock_cfg,
-            test_acc=0.9,
-            macro_f1=0.88,
-            device=mock_device,
-            paths=mock_paths,
-            logger_instance=None,
-        )
-
-        assert mock_module_logger.info.called
-
-
 @pytest.mark.unit
 def test_reporter_log_hardware_section_device_fallback():
     """Test _log_hardware_section logs warning for device fallback."""
@@ -693,73 +547,6 @@ def test_reporter_log_hardware_section_cuda_device():
     log_output = " ".join(calls)
     assert "RTX 5070" in log_output or "GPU" in log_output
     assert "8 GB" in log_output or "VRAM" in log_output
-
-
-@pytest.mark.unit
-def test_log_study_summary_with_completed_trials():
-    """Test log_study_summary with completed trials."""
-    import optuna
-
-    with patch("orchard.core.logger.progress.logger") as mock_module_logger:
-        mock_study = MagicMock()
-        mock_trial_complete = MagicMock()
-        mock_trial_complete.state = optuna.trial.TrialState.COMPLETE
-        mock_study.trials = [mock_trial_complete]
-        mock_study.best_value = 0.9876
-        mock_study.best_trial.number = 0
-        mock_study.best_params = {"learning_rate": 0.001, "batch_size": 32}
-
-        log_study_summary(study=mock_study, metric_name="auc", logger_instance=None)
-
-        assert mock_module_logger.info.call_count > 0
-        calls = [str(call) for call in mock_module_logger.info.call_args_list]
-        log_output = " ".join(calls)
-        assert "0.987" in log_output or "Best" in log_output
-
-
-@pytest.mark.unit
-def test_log_study_summary_with_failed_trials():
-    """Test log_study_summary includes failed trials count."""
-    import optuna
-
-    with patch("orchard.core.logger.progress.logger") as mock_module_logger:
-        mock_study = MagicMock()
-        mock_trial_complete = MagicMock()
-        mock_trial_complete.state = optuna.trial.TrialState.COMPLETE
-        mock_trial_failed = MagicMock()
-        mock_trial_failed.state = optuna.trial.TrialState.FAIL
-
-        mock_study.trials = [mock_trial_complete, mock_trial_failed]
-        mock_study.best_value = 0.95
-        mock_study.best_trial.number = 0
-        mock_study.best_params = {}
-
-        log_study_summary(study=mock_study, metric_name="acc", logger_instance=None)
-
-        assert mock_module_logger.info.call_count > 0
-        calls = [str(call) for call in mock_module_logger.info.call_args_list]
-        log_output = " ".join(calls)
-        assert "Failed" in log_output or "FAIL" in log_output
-
-
-@pytest.mark.unit
-def test_log_study_summary_no_completed_trials():
-    """Test log_study_summary when no trials completed (lines 354-355)."""
-    import optuna
-
-    with patch("orchard.core.logger.progress.logger") as mock_module_logger:
-        mock_study = MagicMock()
-        mock_trial_pruned = MagicMock()
-        mock_trial_pruned.state = optuna.trial.TrialState.PRUNED
-
-        mock_study.trials = [mock_trial_pruned]
-
-        log_study_summary(study=mock_study, metric_name="auc", logger_instance=None)
-
-        assert mock_module_logger.warning.called
-        warning_calls = [str(call) for call in mock_module_logger.warning.call_args_list]
-        warning_output = " ".join(warning_calls)
-        assert "No trials completed successfully" in warning_output
 
 
 # LOG PIPELINE SUMMARY

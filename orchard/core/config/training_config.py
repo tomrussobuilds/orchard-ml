@@ -23,6 +23,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .types import (
+    BatchSize,
     GradNorm,
     LearningRate,
     Momentum,
@@ -65,7 +66,7 @@ class TrainingConfig(BaseModel):
         scheduler_factor: LR reduction factor for plateau scheduler.
         step_size: StepLR decay period in epochs.
         use_amp: Enable Automatic Mixed Precision training.
-        criterion_type: Loss function ('cross_entropy', 'focal', 'bce_logit').
+        criterion_type: Loss function ('cross_entropy' or 'focal').
         weighted_loss: Enable class-frequency loss weighting.
         focal_gamma: Focal loss focusing parameter.
     """
@@ -76,7 +77,7 @@ class TrainingConfig(BaseModel):
     seed: int = Field(default=42, description="Random seed")
 
     # ==================== Training Loop ====================
-    batch_size: PositiveInt = Field(default=16, description="Samples per batch")
+    batch_size: BatchSize = Field(default=16, description="Samples per batch")
     epochs: PositiveInt = Field(default=60, description="Maximum epochs")
     patience: NonNegativeInt = Field(default=15, description="Early stopping patience")
     use_tqdm: bool = Field(default=True, description="Progress Bar activation / deactivation")
@@ -110,28 +111,11 @@ class TrainingConfig(BaseModel):
     use_amp: bool = Field(default=True, description="Automatic Mixed Precision")
 
     # ==================== Loss ====================
-    criterion_type: Literal["cross_entropy", "focal", "bce_logit"] = Field(
+    criterion_type: Literal["cross_entropy", "focal"] = Field(
         default="cross_entropy", description="Loss function type"
     )
     weighted_loss: bool = Field(default=False, description="Class-frequency weighting")
     focal_gamma: NonNegativeFloat = Field(default=2.0, description="Focal Loss gamma")
-
-    @model_validator(mode="after")
-    def validate_batch_size(self) -> "TrainingConfig":
-        """
-        Validate batch size is within safe AMP limits.
-
-        Raises:
-            ValueError: If batch_size exceeds 128.
-
-        Returns:
-            Validated TrainingConfig instance.
-        """
-        if self.batch_size > 128:
-            raise ValueError(
-                f"Batch size too large ({self.batch_size}). Reduce to <=128 for AMP stability."
-            )
-        return self
 
     @model_validator(mode="after")
     def validate_amp(self) -> "TrainingConfig":

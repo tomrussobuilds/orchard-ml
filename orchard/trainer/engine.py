@@ -23,6 +23,7 @@ from sklearn.metrics import roc_auc_score
 from tqdm.auto import tqdm
 
 from ..core import LOGGER_NAME
+from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_LOSS
 
 # Module-level logger (avoid dynamic imports in exception handlers)
 logger = logging.getLogger(LOGGER_NAME)
@@ -34,7 +35,7 @@ def _backward_step(
     optimizer: torch.optim.Optimizer,
     model: nn.Module,
     scaler: torch.amp.grad_scaler.GradScaler | None,
-    grad_clip: float,
+    grad_clip: float | None,
 ) -> None:
     """Perform a backward pass with optional gradient scaling and clipping.
 
@@ -47,12 +48,13 @@ def _backward_step(
         model (nn.Module): The neural network model whose parameters will be updated.
         scaler (torch.amp.GradScaler | None): Automatic Mixed Precision (AMP) scaler.
             If `None`, standard precision backward pass is used.
-        grad_clip (float): Maximum norm for gradient clipping. If <= 0, no clipping is applied.
+        grad_clip (float | None): Maximum norm for gradient clipping.
+            If None or <= 0, no clipping is applied.
     """
     if scaler:
         # Mixed precision backward pass
         scaler.scale(loss).backward()
-        if grad_clip > 0:
+        if grad_clip is not None and grad_clip > 0:
             scaler.unscale_(optimizer)
             torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
         scaler.step(optimizer)
@@ -60,7 +62,7 @@ def _backward_step(
     else:
         # Standard backward pass
         loss.backward()
-        if grad_clip > 0:
+        if grad_clip is not None and grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
         optimizer.step()
 
@@ -73,7 +75,7 @@ def train_one_epoch(
     device: torch.device,
     mixup_fn: Callable | None = None,
     scaler: torch.amp.grad_scaler.GradScaler | None = None,
-    grad_clip: float = 0.0,
+    grad_clip: float | None = 0.0,
     epoch: int = 0,
     total_epochs: int = 1,
     use_tqdm: bool = True,
@@ -107,19 +109,25 @@ def train_one_epoch(
     else:
         iterator = loader
 
+    # Resolve autocast device type for AMP
+    amp_enabled = scaler is not None
+    amp_device_type = device.type if amp_enabled else "cpu"
+
     # Training loop - iterate directly without enumerate
     for inputs, targets in iterator:
         inputs, targets = inputs.to(device), targets.to(device)
         optimizer.zero_grad()
 
-        # Apply MixUp if enabled
-        if mixup_fn:
-            inputs, y_a, y_b, lam = mixup_fn(inputs, targets)
-            outputs = model(inputs)
-            loss = lam * criterion(outputs, y_a) + (1 - lam) * criterion(outputs, y_b)
-        else:
-            outputs = model(inputs)
-            loss = criterion(outputs, targets)
+        # Forward pass with optional AMP autocast
+        with torch.autocast(device_type=amp_device_type, enabled=amp_enabled):
+            # Apply MixUp if enabled
+            if mixup_fn:
+                inputs, y_a, y_b, lam = mixup_fn(inputs, targets)
+                outputs = model(inputs)
+                loss = lam * criterion(outputs, y_a) + (1 - lam) * criterion(outputs, y_b)
+            else:
+                outputs = model(inputs)
+                loss = criterion(outputs, targets)
 
         # Guard: halt on diverged loss to prevent saving corrupted weights
         if torch.isnan(loss) or torch.isinf(loss):
@@ -207,27 +215,20 @@ def validate_epoch(
     # Handle empty validation set (defensive guard)
     if total == 0 or len(all_targets) == 0:
         logger.warning("Empty validation set: no samples processed. Returning zero metrics.")
-        return {"loss": 0.0, "accuracy": 0.0, "auc": 0.0}
+        return {METRIC_LOSS: 0.0, METRIC_ACCURACY: 0.0, METRIC_AUC: 0.0}
 
     # Global metric computation
     y_true = torch.cat(all_targets).numpy()
     y_score = torch.cat(all_probs).numpy()
 
-    num_classes = y_score.shape[1]
-
-    # Compute ROC-AUC
+    # Compute ROC-AUC (One-vs-Rest, macro-averaged — matches metrics.py)
     try:
-        if num_classes == 2:
-            # Binary classification: use only positive class probabilities
-            auc = roc_auc_score(y_true, y_score[:, 1])
-        else:
-            # Multi-class: use macro-averaged One-vs-Rest
-            auc = roc_auc_score(y_true, y_score, multi_class="ovr", average="macro")
+        auc = roc_auc_score(y_true, y_score, multi_class="ovr", average="macro")
     except (ValueError, IndexError) as e:
         logger.warning(f"AUC calculation failed: {e}. Setting auc=0.0")
         auc = 0.0
 
-    return {"loss": val_loss / total, "accuracy": correct / total, "auc": auc}
+    return {METRIC_LOSS: val_loss / total, METRIC_ACCURACY: correct / total, METRIC_AUC: auc}
 
 
 # MIXUP UTILITY

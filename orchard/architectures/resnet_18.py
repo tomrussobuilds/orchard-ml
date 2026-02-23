@@ -20,10 +20,10 @@ from typing import cast
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torchvision import models
 
 from ..core import Config
+from ._morphing import morph_conv_weights
 
 
 # MODEL BUILDER
@@ -94,14 +94,7 @@ def _adapt_stem_28(model: nn.Module, in_channels: int, pretrained: bool) -> None
     )
 
     if pretrained:
-        with torch.no_grad():
-            w = old_conv.weight.clone()  # [64, 3, 7, 7]
-            w = F.interpolate(w, size=(3, 3), mode="bicubic", align_corners=True)
-
-            if in_channels == 1:
-                w = w.mean(dim=1, keepdim=True)
-
-            new_conv.weight.copy_(w)
+        morph_conv_weights(old_conv, new_conv, in_channels, target_kernel_size=(3, 3))
 
     model.conv1 = new_conv
     model.maxpool = nn.Identity()
@@ -129,12 +122,6 @@ def _adapt_stem_224(model: nn.Module, in_channels: int, pretrained: bool) -> Non
     )
 
     if pretrained:
-        with torch.no_grad():
-            w = old_conv.weight.clone()  # [64, 3, 7, 7]
-
-            if in_channels == 1:
-                w = w.mean(dim=1, keepdim=True)
-
-            new_conv.weight.copy_(w)
+        morph_conv_weights(old_conv, new_conv, in_channels)
 
     model.conv1 = new_conv

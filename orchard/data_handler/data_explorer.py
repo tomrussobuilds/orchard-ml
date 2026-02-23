@@ -84,7 +84,8 @@ def show_sample_images(
     # Ensure target directory exists
     save_path.parent.mkdir(parents=True, exist_ok=True)
 
-    plt.savefig(save_path, dpi=200, bbox_inches="tight")
+    dpi = cfg.evaluation.fig_dpi if cfg else 200
+    plt.savefig(save_path, dpi=dpi, bbox_inches="tight")
     plt.close()
     logger.info(f"Sample images saved → {save_path}")
 

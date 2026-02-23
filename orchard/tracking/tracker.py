@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from ..core import LOGGER_NAME
+from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_LOSS
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -147,9 +148,9 @@ class MLflowTracker:  # pragma: no cover
         mlflow.log_metrics(
             {
                 "train_loss": train_loss,
-                "val_loss": val_metrics["loss"],
-                "val_accuracy": val_metrics["accuracy"],
-                "val_auc": val_metrics.get("auc", 0.0),
+                "val_loss": val_metrics[METRIC_LOSS],
+                "val_accuracy": val_metrics[METRIC_ACCURACY],
+                "val_auc": val_metrics.get(METRIC_AUC, 0.0),
                 "learning_rate": lr,
             },
             step=epoch,

@@ -15,28 +15,33 @@ class MetricExtractor:
     Extracts and tracks metrics from validation results.
 
     Handles metric extraction with validation and maintains
-    the best metric value achieved during training.
+    the best metric value achieved during training. Direction-aware:
+    uses max() for maximize objectives, min() for minimize.
 
     Attributes:
         metric_name: Name of metric to track (e.g., 'auc', 'accuracy')
+        direction: Optimization direction ('maximize' or 'minimize')
         best_metric: Best metric value achieved so far
 
     Example:
-        >>> extractor = MetricExtractor("auc")
+        >>> extractor = MetricExtractor("auc", direction="maximize")
         >>> val_metrics = {"loss": 0.5, "accuracy": 0.85, "auc": 0.92}
         >>> current = extractor.extract(val_metrics)  # 0.92
         >>> best = extractor.update_best(current)  # 0.92
     """
 
-    def __init__(self, metric_name: str) -> None:
+    def __init__(self, metric_name: str, direction: str = "maximize") -> None:
         """
         Initialize metric extractor.
 
         Args:
             metric_name: Name of metric to track
+            direction: 'maximize' or 'minimize'
         """
         self.metric_name = metric_name
-        self.best_metric = -float("inf")
+        self.direction = direction
+        self._is_maximize = direction == "maximize"
+        self.best_metric = -float("inf") if self._is_maximize else float("inf")
 
     def extract(self, val_metrics: dict[str, float]) -> float:
         """
@@ -58,18 +63,21 @@ class MetricExtractor:
 
     def reset(self) -> None:
         """Reset best metric tracking for a new trial."""
-        self.best_metric = -float("inf")
+        self.best_metric = -float("inf") if self._is_maximize else float("inf")
 
     def update_best(self, current_metric: float) -> float:
         """
         Update and return best metric achieved within current trial.
 
+        Direction-aware: uses max() for maximize, min() for minimize.
+
         Args:
             current_metric: Current metric value
 
         Returns:
-            Best metric value (max of current and previous best)
+            Best metric value achieved so far
         """
-        self.best_metric = max(self.best_metric, current_metric)
+        comparator = max if self._is_maximize else min
+        self.best_metric = comparator(self.best_metric, current_metric)
 
         return self.best_metric

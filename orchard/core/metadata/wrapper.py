@@ -94,7 +94,3 @@ class DatasetRegistryWrapper(BaseModel):
             raise KeyError(f"Dataset '{name}' not found. Available: {available}")
 
         return copy.deepcopy(self.registry[name])
-
-
-# Default wrapper for backward compatibility (28x28 resolution)
-DEFAULT_WRAPPER = DatasetRegistryWrapper(resolution=28)

@@ -18,6 +18,7 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..core import LOGGER_NAME, Config
+from ..core.paths import METRIC_ACCURACY, METRIC_AUC
 from ..data_handler import get_augmentations_description
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -198,14 +199,14 @@ def create_structured_report(
     validated container, resolving paths and extracting augmentation summaries.
 
     Args:
-        val_accuracies (Sequence[float]): History of validation accuracies.
-        macro_f1 (float): Final Macro F1 score on test set.
-        test_acc (float): Final accuracy on test set.
-        train_losses (Sequence[float]): History of training losses.
-        best_path (Path): Path to the saved model weights.
-        log_path (Path): Path to the run log file.
-        cfg (Config): Validated global configuration.
-        aug_info (str, optional): Pre-formatted augmentation string.
+        val_metrics: History of per-epoch validation metric dicts.
+        test_metrics: Final test-set metric dict (accuracy, auc, etc.).
+        macro_f1: Final Macro F1 score on test set.
+        train_losses: History of per-epoch training losses.
+        best_path: Path to the saved model weights.
+        log_path: Path to the run log file.
+        cfg: Validated global configuration.
+        aug_info: Pre-formatted augmentation string.
 
     Returns:
         TrainingReport: A validated Pydantic model ready for export.
@@ -213,16 +214,16 @@ def create_structured_report(
     # Auto-generate augmentation info if not provided
     aug_info = aug_info or get_augmentations_description(cfg)
 
-    best_val_acc = max((m["accuracy"] for m in val_metrics), default=0.0)
-    best_val_auc = max((m["auc"] for m in val_metrics), default=0.0)
+    best_val_acc = max((m[METRIC_ACCURACY] for m in val_metrics), default=0.0)
+    best_val_auc = max((m[METRIC_AUC] for m in val_metrics), default=0.0)
 
     return TrainingReport(
         architecture=cfg.architecture.name,
         dataset=cfg.dataset.dataset_name,
         best_val_accuracy=best_val_acc,
         best_val_auc=best_val_auc,
-        test_accuracy=test_metrics["accuracy"],
-        test_auc=test_metrics["auc"],
+        test_accuracy=test_metrics[METRIC_ACCURACY],
+        test_auc=test_metrics[METRIC_AUC],
         test_macro_f1=macro_f1,
         is_texture_based=cfg.dataset.metadata.is_texture_based,
         is_anatomical=cfg.dataset.metadata.is_anatomical,

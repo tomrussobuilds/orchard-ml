@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - remove domain-specific naming from framework code
 - modernize type hints with PEP 585 and __future__ annotations
+- rename models/ to architectures/ and RunPaths models to checkpoints
 
 ### Documentation
 

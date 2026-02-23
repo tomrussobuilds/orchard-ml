@@ -24,6 +24,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from ..core import LOGGER_NAME, Config
+from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1
 from .metrics import compute_classification_metrics
 from .tta import adaptive_tta_predict
 
@@ -38,7 +39,7 @@ def evaluate_model(
     use_tta: bool = False,
     is_anatomical: bool = False,
     is_texture_based: bool = False,
-    cfg: Config = None,
+    cfg: Config | None = None,
 ) -> tuple[np.ndarray, np.ndarray, dict, float]:
     """
     Performs full-set evaluation and coordinates metric calculation.
@@ -87,13 +88,13 @@ def evaluate_model(
 
     # Performance logging
     log_msg = (
-        f"Test Metrics -> Acc: {metrics['accuracy']:.4f} | "
-        f"AUC: {metrics['auc']:.4f} | F1: {metrics['f1']:.4f}"
+        f"Test Metrics -> Acc: {metrics[METRIC_ACCURACY]:.4f} | "
+        f"AUC: {metrics[METRIC_AUC]:.4f} | F1: {metrics[METRIC_F1]:.4f}"
     )
-    if actual_tta:
+    if actual_tta and cfg is not None:
         mode = cfg.augmentation.tta_mode.upper()
         log_msg += f" | TTA ENABLED (Mode: {mode})"
 
     logger.info(log_msg)
 
-    return all_preds, all_labels, metrics, metrics["f1"]
+    return all_preds, all_labels, metrics, metrics[METRIC_F1]

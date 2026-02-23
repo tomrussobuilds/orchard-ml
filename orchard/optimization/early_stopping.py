@@ -13,6 +13,7 @@ from optuna.study import Study
 from optuna.trial import FrozenTrial, TrialState
 
 from ..core import LOGGER_NAME, LogStyle
+from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -166,12 +167,12 @@ def get_early_stopping_callback(
     # to stop only when near-perfect performance is clearly achieved.
     DEFAULT_THRESHOLDS = {
         "maximize": {
-            "auc": _THRESH_AUC,
-            "accuracy": _THRESH_ACCURACY,
-            "f1": _THRESH_F1,
+            METRIC_AUC: _THRESH_AUC,
+            METRIC_ACCURACY: _THRESH_ACCURACY,
+            METRIC_F1: _THRESH_F1,
         },
         "minimize": {
-            "loss": _THRESH_LOSS,
+            METRIC_LOSS: _THRESH_LOSS,
             "mae": _THRESH_MAE,
             "mse": _THRESH_MSE,
         },

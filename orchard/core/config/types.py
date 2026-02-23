@@ -11,7 +11,7 @@ Core Responsibilities:
       expansion (~), ensuring consistency without disk I/O
     * Boundary enforcement: Strict validation of hyperparameters (LR,
       probabilities, smoothing) using field constraints to prevent unstable states
-    * type aliasing: Centralized registry of domain-specific types (WorkerCount,
+    * type aliasing: Centralized registry of domain-specific types (BatchSize,
       ProjectSlug, LearningRate) for semantic consistency
     * Serialization policy: Custom serialization for complex objects (Path)
       ensuring JSON/YAML compatibility
@@ -49,9 +49,7 @@ def _sanitize_path(v: str | Path) -> Path:
 # GENERIC PRIMITIVES
 PositiveInt = Annotated[int, Field(gt=0)]
 NonNegativeInt = Annotated[int, Field(ge=0)]
-PositiveFloat = Annotated[float, Field(gt=0)]
 NonNegativeFloat = Annotated[float, Field(ge=0.0)]
-Percentage = Annotated[float, Field(gt=0.0, le=1.0)]
 Probability = Annotated[float, Field(ge=0.0, le=1.0)]
 
 # FILESYSTEM
@@ -61,9 +59,8 @@ ValidatedPath = Annotated[
     PlainSerializer(lambda v: str(v), when_used="json", return_type=str),
 ]
 
-# HARDWARE & PERFORMANCE
-WorkerCount = Annotated[int, Field(ge=0)]
-BatchSize = Annotated[int, Field(ge=1, le=2048)]
+# TRAINING
+BatchSize = Annotated[int, Field(ge=1, le=128)]
 
 # MODEL GEOMETRY
 ImageSize = Annotated[int, Field(ge=28, le=1024)]

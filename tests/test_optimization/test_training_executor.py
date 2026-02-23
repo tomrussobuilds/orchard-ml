@@ -16,6 +16,7 @@ import torch.nn as nn
 
 from orchard.optimization import MetricExtractor, TrialTrainingExecutor
 from orchard.optimization.objective.training_executor import _FALLBACK_METRICS
+from orchard.trainer._scheduling import step_scheduler
 
 
 # FIXTURES
@@ -101,7 +102,7 @@ def test_step_scheduler_plateau(executor):
     """Test plateau scheduler receives val_loss."""
     executor.scheduler = MagicMock(spec=torch.optim.lr_scheduler.ReduceLROnPlateau)
 
-    executor._step_scheduler(val_loss=0.5)
+    step_scheduler(executor.scheduler, val_loss=0.5)
     executor.scheduler.step.assert_called_once_with(0.5)
 
 
@@ -110,15 +111,14 @@ def test_step_scheduler_standard(executor):
     """Test standard scheduler (StepLR) is called without arguments."""
     executor.scheduler = MagicMock(spec=torch.optim.lr_scheduler.StepLR)
 
-    executor._step_scheduler(val_loss=0.5)
+    step_scheduler(executor.scheduler, val_loss=0.5)
     executor.scheduler.step.assert_called_once_with()
 
 
 @pytest.mark.unit
 def test_return_if_scheduler_is_none(executor):
     """Ensures the function exits early when the scheduler is not initialized."""
-    executor.scheduler = None
-    result = executor._step_scheduler(val_loss=0.5)
+    result = step_scheduler(None, val_loss=0.5)
     assert result is None
 
 

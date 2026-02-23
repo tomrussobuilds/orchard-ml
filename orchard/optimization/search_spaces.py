@@ -13,8 +13,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable
 
-import optuna
-
 if TYPE_CHECKING:  # pragma: no cover
     from ..core.config.optuna_config import SearchSpaceOverrides
 
@@ -295,10 +293,7 @@ def get_search_space(
     elif preset == "full":
         space = registry.get_full_space(resolution)
     else:
-        raise ValueError(
-            f"Unknown preset '{preset}'. Available: quick, full, "
-            f"optimization_only, regularization_only"
-        )
+        raise ValueError(f"Unknown preset '{preset}'. Available: quick, full")
 
     if include_models:
         if model_pool is not None:
@@ -340,106 +335,3 @@ def _build_model_space_from_pool(pool: list[str]) -> dict[str, Callable]:
         )
 
     return space
-
-
-class FullSearchSpace:
-    """
-    Resolution-aware full search space with dynamic batch_size constraints.
-
-    Prevents OOM errors by limiting batch sizes based on input resolution.
-    Reads bounds from SearchSpaceOverrides for configurability.
-    """
-
-    def __init__(
-        self,
-        resolution: int = 28,
-        overrides: SearchSpaceOverrides | None = None,
-    ):
-        """
-        Initialize search space with resolution context.
-
-        Args:
-            resolution: Input image resolution (28, 224, etc.)
-            overrides: Configurable search range bounds (uses defaults if None)
-        """
-        self.resolution = resolution
-        self.ov = overrides if overrides is not None else _default_overrides()
-
-    def sample_params(self, trial: optuna.Trial) -> dict:
-        """
-        Sample hyperparameters with resolution-aware constraints.
-
-        Args:
-            trial: Optuna trial object
-
-        Returns:
-            dict of sampled hyperparameters
-        """
-        ov = self.ov
-
-        if self.resolution >= 224:
-            batch_choices = list(ov.batch_size_high_res)
-        else:
-            batch_choices = list(ov.batch_size_low_res)
-
-        return {
-            "learning_rate": trial.suggest_float(
-                "learning_rate",
-                ov.learning_rate.low,
-                ov.learning_rate.high,
-                log=ov.learning_rate.log,
-            ),
-            "weight_decay": trial.suggest_float(
-                "weight_decay",
-                ov.weight_decay.low,
-                ov.weight_decay.high,
-                log=ov.weight_decay.log,
-            ),
-            "momentum": trial.suggest_float(
-                "momentum",
-                ov.momentum.low,
-                ov.momentum.high,
-            ),
-            "min_lr": trial.suggest_float(
-                "min_lr",
-                ov.min_lr.low,
-                ov.min_lr.high,
-                log=ov.min_lr.log,
-            ),
-            "mixup_alpha": trial.suggest_float(
-                "mixup_alpha",
-                ov.mixup_alpha.low,
-                ov.mixup_alpha.high,
-            ),
-            "label_smoothing": trial.suggest_float(
-                "label_smoothing",
-                ov.label_smoothing.low,
-                ov.label_smoothing.high,
-            ),
-            "dropout": trial.suggest_float(
-                "dropout",
-                ov.dropout.low,
-                ov.dropout.high,
-            ),
-            "batch_size": trial.suggest_categorical("batch_size", batch_choices),
-            "scheduler_patience": trial.suggest_int(
-                "scheduler_patience",
-                ov.scheduler_patience.low,
-                ov.scheduler_patience.high,
-            ),
-            "rotation_angle": trial.suggest_int(
-                "rotation_angle",
-                ov.rotation_angle.low,
-                ov.rotation_angle.high,
-            ),
-            "jitter_val": trial.suggest_float(
-                "jitter_val",
-                ov.jitter_val.low,
-                ov.jitter_val.high,
-            ),
-            "min_scale": trial.suggest_float(
-                "min_scale",
-                ov.min_scale.low,
-                ov.min_scale.high,
-            ),
-        }

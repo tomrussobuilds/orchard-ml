@@ -8,13 +8,9 @@ across the entire pipeline.
 """
 
 from .base import DatasetMetadata
-from .wrapper import DEFAULT_WRAPPER, DatasetRegistryWrapper
+from .wrapper import DatasetRegistryWrapper
 
 __all__ = [
     "DatasetMetadata",
     "DatasetRegistryWrapper",
-    "DEFAULT_WRAPPER",
 ]
-
-# Global registry exposed at package level
-DATASET_REGISTRY = DEFAULT_WRAPPER.registry

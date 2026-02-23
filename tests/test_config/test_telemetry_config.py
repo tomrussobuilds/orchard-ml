@@ -90,29 +90,6 @@ def test_path_sanitization():
     assert config.output_dir.is_absolute()
 
 
-@pytest.mark.unit
-def test_resolved_data_dir():
-    """Test resolved_data_dir property."""
-    config = TelemetryConfig(data_dir=Path("./dataset"))
-
-    resolved = config.resolved_data_dir
-
-    assert resolved.is_absolute()
-    assert resolved == (PROJECT_ROOT / "./dataset").resolve()
-
-
-@pytest.mark.unit
-def test_resolved_data_dir_absolute():
-    """Test resolved_data_dir with absolute path."""
-    abs_path = Path("/mock/dataset").resolve()
-    config = TelemetryConfig(data_dir=abs_path)
-
-    resolved = config.resolved_data_dir
-
-    assert resolved == abs_path
-    assert resolved.is_absolute()
-
-
 # TELEMETRY CONFIG: PORTABILITY
 @pytest.mark.unit
 def test_to_portable_dict():

@@ -32,9 +32,6 @@ def get_criterion(training: TrainingConfig, class_weights: torch.Tensor | None =
     if c_type == "cross_entropy":
         return nn.CrossEntropyLoss(label_smoothing=training.label_smoothing, weight=weights)
 
-    elif c_type == "bce_logit":
-        return nn.BCEWithLogitsLoss(pos_weight=weights)
-
     elif c_type == "focal":
         return FocalLoss(gamma=training.focal_gamma, weight=weights)
 

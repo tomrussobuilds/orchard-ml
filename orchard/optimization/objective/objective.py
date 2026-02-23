@@ -135,7 +135,9 @@ class OptunaObjective:
 
         # Components (read metric_name from cfg.optuna for single source of truth)
         self.config_builder = TrialConfigBuilder(cfg)
-        self.metric_extractor = MetricExtractor(cfg.optuna.metric_name)
+        self.metric_extractor = MetricExtractor(
+            cfg.optuna.metric_name, direction=cfg.optuna.direction
+        )
 
         # Load dataset once (reused across all trials)
         self.dataset_data = self._dataset_loader(self.config_builder.base_metadata)
@@ -256,6 +258,7 @@ class OptunaObjective:
 
         Note: Orchestrator handles full resource cleanup. This only clears accelerator cache.
         """
+        # Per-trial cache flush (mirrors InfraManager.flush_compute_cache for session teardown)
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 

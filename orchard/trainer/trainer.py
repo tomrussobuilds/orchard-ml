@@ -31,10 +31,12 @@ from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 
 from ..core import LOGGER_NAME, Config, LogStyle, load_model_weights
+from ..core.paths import METRIC_ACCURACY, METRIC_LOSS
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..tracking import TrackerProtocol
 
+from ._scheduling import step_scheduler
 from .engine import mixup_data, train_one_epoch, validate_epoch
 
 # Global logger instance
@@ -217,12 +219,12 @@ class ModelTrainer:
             )
             self.val_metrics_history.append(val_metrics)
 
-            val_acc = val_metrics["accuracy"]
-            val_loss = val_metrics["loss"]
+            val_acc = val_metrics[METRIC_ACCURACY]
+            val_loss = val_metrics[METRIC_LOSS]
             monitor_value = val_metrics.get(self.monitor_metric, 0.0)
 
             # --- 3. Scheduling Phase ---
-            self._step_scheduler(val_loss)
+            step_scheduler(self.scheduler, val_loss)
 
             if val_acc > self.best_acc:
                 self.best_acc = val_acc
@@ -251,21 +253,6 @@ class ModelTrainer:
         self._finalize_weights()
 
         return self.best_path, self.train_losses, self.val_metrics_history
-
-    def _step_scheduler(self, val_loss: float) -> None:
-        """
-        Step the learning rate scheduler.
-
-        ReduceLROnPlateau requires the monitored metric (val_loss);
-        all other schedulers use a plain step().
-
-        Args:
-            val_loss: Current epoch's validation loss
-        """
-        if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
-            self.scheduler.step(val_loss)
-        else:
-            self.scheduler.step()
 
     def _log_epoch_summary(
         self,

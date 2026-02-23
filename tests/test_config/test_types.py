@@ -26,7 +26,6 @@ from orchard.core.config.types import (
     Momentum,
     NonNegativeFloat,
     NonNegativeInt,
-    Percentage,
     PixelShift,
     PositiveInt,
     Probability,
@@ -35,7 +34,6 @@ from orchard.core.config.types import (
     SmoothingValue,
     ValidatedPath,
     WeightDecay,
-    WorkerCount,
     ZoomScale,
 )
 
@@ -119,23 +117,6 @@ def test_probability_bounds():
         Model(prob=1.5)
 
 
-@pytest.mark.unit
-def test_percentage_bounds():
-    """Test Percentage accepts (0.0, 1.0]."""
-
-    class Model(BaseModel):
-        pct: Percentage
-
-    assert Model(pct=0.01).pct == pytest.approx(0.01)
-    assert Model(pct=1.0).pct == pytest.approx(1.0)
-
-    with pytest.raises(ValidationError):
-        Model(pct=0.0)
-
-    with pytest.raises(ValidationError):
-        Model(pct=1.5)
-
-
 # FILESYSTEM: VALIDATED PATH
 @pytest.mark.unit
 def test_validated_path_expansion():
@@ -176,36 +157,22 @@ def test_validated_path_json_serialization():
     assert json_data["path"] == str(model.path)
 
 
-# HARDWARE: WORKER COUNT AND BATCH SIZE
-@pytest.mark.unit
-def test_worker_count_bounds():
-    """Test WorkerCount accepts non-negative integers."""
-
-    class Model(BaseModel):
-        workers: WorkerCount
-
-    assert Model(workers=0).workers == 0
-    assert Model(workers=8).workers == 8
-
-    with pytest.raises(ValidationError):
-        Model(workers=-1)
-
-
+# TRAINING: BATCH SIZE
 @pytest.mark.unit
 def test_batch_size_bounds():
-    """Test BatchSize must be in [1, 2048]."""
+    """Test BatchSize must be in [1, 128]."""
 
     class Model(BaseModel):
         batch: BatchSize
 
     assert Model(batch=1).batch == 1
-    assert Model(batch=2048).batch == 2048
+    assert Model(batch=128).batch == 128
 
     with pytest.raises(ValidationError):
         Model(batch=0)
 
     with pytest.raises(ValidationError):
-        Model(batch=3000)
+        Model(batch=256)
 
 
 # MODEL GEOMETRY

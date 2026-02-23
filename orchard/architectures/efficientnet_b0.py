@@ -19,6 +19,7 @@ import torch.nn as nn
 from torchvision import models
 
 from ..core import Config
+from ._morphing import morph_conv_weights
 
 
 # MODEL BUILDER
@@ -39,7 +40,7 @@ def build_efficientnet_b0(
         device: Target hardware for model placement
         num_classes: Number of dataset classes for classification head
         in_channels: Input channels (1=Grayscale, 3=RGB)
-        cfg: Global configuration with pretrained/dropout settings
+        cfg: Global configuration with pretrained settings
 
     Returns:
         Adapted EfficientNet-B0 model deployed to device
@@ -65,15 +66,7 @@ def build_efficientnet_b0(
 
     # --- Step 3: Weight Morphing (Transfer Pretrained Knowledge) ---
     if cfg.architecture.pretrained:
-        with torch.no_grad():
-            w = old_conv.weight  # Shape: [32, 3, 3, 3]
-
-            # For grayscale: compress RGB channels by averaging
-            # Preserves learned edge detectors while adapting to 1-channel input
-            if in_channels == 1:
-                w = w.mean(dim=1, keepdim=True)  # [32, 1, 3, 3]
-
-            new_conv.weight.copy_(w)
+        morph_conv_weights(old_conv, new_conv, in_channels)
 
     # Replace entry layer with adapted version
     model.features[0][0] = new_conv

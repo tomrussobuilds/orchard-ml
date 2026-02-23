@@ -27,6 +27,7 @@ import torch
 import torch.nn as nn
 
 from ..core import LOGGER_NAME, Config
+from ._morphing import morph_conv_weights
 
 # LOGGER CONFIGURATION
 logger = logging.getLogger(LOGGER_NAME)
@@ -50,7 +51,7 @@ def build_vit_tiny(
         device: Target hardware for model placement
         num_classes: Number of dataset classes for classification head
         in_channels: Input channels (1=Grayscale, 3=RGB)
-        cfg: Global configuration with pretrained/dropout/weight_variant settings
+        cfg: Global configuration with pretrained/weight_variant settings
 
     Returns:
         Adapted ViT-Tiny model deployed to device
@@ -106,17 +107,7 @@ def build_vit_tiny(
 
         # --- Step 4: Weight Morphing (Transfer Pretrained Knowledge) ---
         if cfg.architecture.pretrained:
-            with torch.no_grad():
-                w = old_proj.weight  # Shape: [192, 3, 16, 16]
-
-                if in_channels == 1:
-                    # Compress RGB channels by averaging (preserves learned patterns)
-                    w = w.mean(dim=1, keepdim=True)  # [192, 1, 16, 16]
-
-                new_proj.weight.copy_(w)
-
-                if old_proj.bias is not None and new_proj.bias is not None:
-                    new_proj.bias.copy_(old_proj.bias)
+            morph_conv_weights(old_proj, new_proj, in_channels)
 
         # Replace patch embedding projection
         model.patch_embed.proj = new_proj  # type: ignore[union-attr]

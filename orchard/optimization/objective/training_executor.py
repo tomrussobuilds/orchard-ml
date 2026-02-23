@@ -19,16 +19,17 @@ import logging
 
 import optuna
 import torch
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from ...core import LOGGER_NAME, Config, LogStyle
+from ...core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_LOSS
 from ...trainer import train_one_epoch, validate_epoch
+from ...trainer._scheduling import step_scheduler
 from .metric_extractor import MetricExtractor
 
 logger = logging.getLogger(LOGGER_NAME)
 
 # Module-level constants
-_FALLBACK_METRICS: dict[str, float] = {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
+_FALLBACK_METRICS: dict[str, float] = {METRIC_LOSS: 999.0, METRIC_ACCURACY: 0.0, METRIC_AUC: 0.0}
 
 
 # TRAINING EXECUTOR
@@ -118,6 +119,7 @@ class TrialTrainingExecutor:
 
         # Training state
         self.scaler = torch.amp.GradScaler() if cfg.training.use_amp else None
+        self.amp_device_type = device.type if self.scaler is not None else "cpu"
         self.epochs = cfg.training.epochs
         self.log_interval = cfg.telemetry.log_interval
 
@@ -165,7 +167,7 @@ class TrialTrainingExecutor:
                 raise optuna.TrialPruned()
 
             # Scheduler step
-            self._step_scheduler(val_metrics["loss"])
+            step_scheduler(self.scheduler, val_metrics[METRIC_LOSS])
 
             # Logging
             if epoch % self.log_interval == 0 or epoch == self.epochs:
@@ -250,24 +252,6 @@ class TrialTrainingExecutor:
         if not self.enable_pruning or epoch < self.warmup_epochs:
             return False
         return trial.should_prune()
-
-    def _step_scheduler(self, val_loss: float) -> None:
-        """
-        Step the learning rate scheduler.
-
-        ReduceLROnPlateau requires the monitored metric (val_loss);
-        all other schedulers use a plain step().
-
-        Args:
-            val_loss: Validation loss for current epoch
-        """
-        if self.scheduler is None:
-            return
-
-        if isinstance(self.scheduler, ReduceLROnPlateau):
-            self.scheduler.step(val_loss)
-        else:
-            self.scheduler.step()
 
     def _log_trial_complete(
         self,

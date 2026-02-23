@@ -48,18 +48,14 @@ from .logger import (
     Logger,
     LogStyle,
     Reporter,
-    log_best_config_export,
     log_optimization_header,
     log_optimization_summary,
     log_pipeline_summary,
-    log_study_summary,
-    log_training_summary,
-    log_trial_params_compact,
     log_trial_start,
 )
 
 # Dataset Registry
-from .metadata import DATASET_REGISTRY, DatasetMetadata, DatasetRegistryWrapper
+from .metadata import DatasetMetadata, DatasetRegistryWrapper
 
 # Environment Orchestration
 from .orchestrator import InfraManagerProtocol, RootOrchestrator, TimeTracker, TimeTrackerProtocol
@@ -99,7 +95,6 @@ __all__ = [
     # Metadata
     "DatasetMetadata",
     "DatasetRegistryWrapper",
-    "DATASET_REGISTRY",
     # Orchestration
     "RootOrchestrator",
     "InfraManagerProtocol",
@@ -109,14 +104,10 @@ __all__ = [
     "Logger",
     "Reporter",
     "log_optimization_header",
-    "log_study_summary",
-    "log_best_config_export",
     "LogStyle",
     "log_trial_start",
-    "log_trial_params_compact",
     "log_optimization_summary",
     "log_pipeline_summary",
-    "log_training_summary",
     # Environment
     "set_seed",
     "detect_best_device",

@@ -83,16 +83,6 @@ class TelemetryConfig(BaseModel):
             return {}
         return data
 
-    @property
-    def resolved_data_dir(self) -> Path:
-        """
-        Absolute path to the dataset directory.
-
-        Returns:
-            Resolved data_dir Path (already validated and absolute).
-        """
-        return self.data_dir
-
     def to_portable_dict(self) -> dict:
         """
         Convert to portable dictionary with environment-agnostic paths.

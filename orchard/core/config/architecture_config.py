@@ -43,7 +43,12 @@ class ArchitectureConfig(BaseModel):
     )
 
     dropout: DropoutRate = Field(
-        default=0.2, description="Dropout probability for the classification head."
+        default=0.2,
+        description=(
+            "Dropout probability for the classification head. "
+            "Only wired for mini_cnn and timm_backbone; ignored by "
+            "convnext_tiny, efficientnet_b0, vit_tiny, resnet_18."
+        ),
     )
 
     weight_variant: str | None = Field(
