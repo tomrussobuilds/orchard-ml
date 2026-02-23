@@ -140,7 +140,7 @@ class OptunaConfig(BaseModel):
         timeout: Maximum optimization time in seconds (None=unlimited).
         metric_name: Optimization target metric.
         direction: Whether to 'maximize' or 'minimize' the metric.
-        sampler_type: Sampling algorithm ('tpe', 'cmaes', 'random', 'grid').
+        sampler_type: Sampling algorithm ('tpe', 'cmaes', 'random').
         search_space_preset: Predefined search space ('quick', 'full', etc.).
         enable_model_search: Include architecture in search space.
         model_pool: Restrict model search to these architectures (None=all).
@@ -185,7 +185,7 @@ class OptunaConfig(BaseModel):
     )
 
     # ==================== Search Strategy ====================
-    sampler_type: Literal["tpe", "cmaes", "random", "grid"] = Field(
+    sampler_type: Literal["tpe", "cmaes", "random"] = Field(
         default="tpe", description="Hyperparameter sampling algorithm"
     )
 

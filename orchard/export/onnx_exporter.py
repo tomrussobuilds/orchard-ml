@@ -270,6 +270,7 @@ def benchmark_onnx_inference(
     input_shape: tuple[int, int, int],
     num_runs: int = 100,
     seed: int = 42,
+    label: str = "ONNX",
 ) -> float:
     """
     Benchmark ONNX model inference speed.
@@ -279,6 +280,7 @@ def benchmark_onnx_inference(
         input_shape: Input tensor shape (C, H, W)
         num_runs: Number of inference runs for averaging
         seed: Random seed for reproducible dummy input
+        label: Display label for the benchmark log header
 
     Returns:
         Average inference time in milliseconds
@@ -293,7 +295,7 @@ def benchmark_onnx_inference(
         import numpy as np
         import onnxruntime as ort
 
-        logger.info("  [Benchmark]")
+        logger.info(f"  [Benchmark — {label}]")
 
         # Create inference session
         session = ort.InferenceSession(str(onnx_path))
@@ -315,6 +317,7 @@ def benchmark_onnx_inference(
         avg_latency_ms = (elapsed / num_runs) * 1000
         logger.info(f"    {LogStyle.BULLET} Runs              : {num_runs}")
         logger.info(f"    {LogStyle.BULLET} Avg latency       : " f"{avg_latency_ms:.2f}ms")
+        logger.info("")
 
         return avg_latency_ms
 

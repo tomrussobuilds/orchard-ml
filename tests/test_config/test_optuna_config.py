@@ -153,7 +153,7 @@ def test_early_stopping_patience_positive():
 @pytest.mark.unit
 def test_sampler_types():
     """Test valid sampler types are accepted."""
-    for sampler in ["tpe", "cmaes", "random", "grid"]:
+    for sampler in ["tpe", "cmaes", "random"]:
         config = OptunaConfig(sampler_type=sampler)
         assert config.sampler_type == sampler
 

@@ -83,7 +83,7 @@ class TestClassificationMetrics:
         probs = np.array([[0.8, 0.2], [0.2, 0.8]])
 
         with patch(
-            "orchard.evaluation.metrics.roc_auc_score",
+            "orchard.trainer.engine.roc_auc_score",
             side_effect=ValueError("mocked"),
         ):
             results = compute_classification_metrics(labels, preds, probs)

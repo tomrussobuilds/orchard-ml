@@ -16,6 +16,7 @@ Features:
       NaN/Inf loss to prevent checkpointing corrupted weights.
 
 Key Functions:
+    compute_auc: Macro-averaged ROC-AUC with graceful fallback.
     train_one_epoch: Single training pass with AMP, MixUp, and tqdm progress.
     validate_epoch: No-grad evaluation returning loss, accuracy, and macro AUC.
     mixup_data: Convex sample blending for data augmentation.
@@ -39,44 +40,37 @@ from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_LOSS
 logger = logging.getLogger(LOGGER_NAME)
 
 
-# TRAINING ENGINE
-def _backward_step(
-    loss: torch.Tensor,
-    optimizer: torch.optim.Optimizer,
-    model: nn.Module,
-    scaler: torch.amp.grad_scaler.GradScaler | None,
-    grad_clip: float | None,
-) -> None:
-    """Perform a backward pass with optional gradient scaling and clipping.
+# AUC COMPUTATION (shared by trainer.engine and evaluation.metrics)
+def compute_auc(y_true: np.ndarray, y_score: np.ndarray) -> float:
+    """
+    Compute macro-averaged ROC-AUC with graceful fallback.
 
-    This function handles mixed precision training via a `GradScaler` if provided.
-    It also applies gradient clipping if `grad_clip` is greater than zero.
+    Handles binary (positive class probability) and multiclass (OvR)
+    cases. Returns 0.0 on failure or NaN.
 
     Args:
-        loss (torch.Tensor): The computed loss for the current batch.
-        optimizer (torch.optim.Optimizer): The optimizer used to update model parameters.
-        model (nn.Module): The neural network model whose parameters will be updated.
-        scaler (torch.amp.GradScaler | None): Automatic Mixed Precision (AMP) scaler.
-            If `None`, standard precision backward pass is used.
-        grad_clip (float | None): Maximum norm for gradient clipping.
-            If None or <= 0, no clipping is applied.
+        y_true: Ground truth class indices, shape ``(N,)``.
+        y_score: Probability distributions, shape ``(N, C)`` (softmax output).
+
+    Returns:
+        ROC-AUC score, or 0.0 if computation fails.
     """
-    if scaler:
-        # Mixed precision backward pass
-        scaler.scale(loss).backward()
-        if grad_clip is not None and grad_clip > 0:
-            scaler.unscale_(optimizer)
-            torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
-        scaler.step(optimizer)
-        scaler.update()
-    else:
-        # Standard backward pass
-        loss.backward()
-        if grad_clip is not None and grad_clip > 0:
-            torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
-        optimizer.step()
+    try:
+        n_classes = y_score.shape[1] if y_score.ndim == 2 else 1
+        if n_classes <= 2:
+            auc = roc_auc_score(y_true, y_score[:, 1] if y_score.ndim == 2 else y_score)
+        else:
+            auc = roc_auc_score(y_true, y_score, multi_class="ovr", average="macro")
+    except (ValueError, TypeError, IndexError) as e:
+        logger.warning(f"ROC-AUC calculation failed: {e}. Defaulting to 0.0")
+        return 0.0
+
+    if np.isnan(auc):
+        return 0.0
+    return float(auc)
 
 
+# TRAINING ENGINE
 def train_one_epoch(
     model: nn.Module,
     loader: torch.utils.data.DataLoader,
@@ -231,18 +225,7 @@ def validate_epoch(
     y_true = torch.cat(all_targets).numpy()
     y_score = torch.cat(all_probs).numpy()
 
-    # Compute ROC-AUC
-    try:
-        n_classes = y_score.shape[1] if y_score.ndim == 2 else 1
-        if n_classes <= 2:
-            # Binary: use probability of the positive class
-            auc = roc_auc_score(y_true, y_score[:, 1] if y_score.ndim == 2 else y_score)
-        else:
-            # Multiclass: One-vs-Rest, macro-averaged
-            auc = roc_auc_score(y_true, y_score, multi_class="ovr", average="macro")
-    except (ValueError, IndexError) as e:
-        logger.warning(f"AUC calculation failed: {e}. Setting auc=0.0")
-        auc = 0.0
+    auc = compute_auc(y_true, y_score)
 
     return {METRIC_LOSS: val_loss / total, METRIC_ACCURACY: correct / total, METRIC_AUC: auc}
 
@@ -300,3 +283,41 @@ def mixup_data(
     y_b: torch.Tensor = y[index]
 
     return mixed_x, y_a, y_b, lam
+
+
+# INTERNAL HELPERS
+def _backward_step(
+    loss: torch.Tensor,
+    optimizer: torch.optim.Optimizer,
+    model: nn.Module,
+    scaler: torch.amp.grad_scaler.GradScaler | None,
+    grad_clip: float | None,
+) -> None:
+    """Perform a backward pass with optional gradient scaling and clipping.
+
+    This function handles mixed precision training via a `GradScaler` if provided.
+    It also applies gradient clipping if `grad_clip` is greater than zero.
+
+    Args:
+        loss (torch.Tensor): The computed loss for the current batch.
+        optimizer (torch.optim.Optimizer): The optimizer used to update model parameters.
+        model (nn.Module): The neural network model whose parameters will be updated.
+        scaler (torch.amp.GradScaler | None): Automatic Mixed Precision (AMP) scaler.
+            If `None`, standard precision backward pass is used.
+        grad_clip (float | None): Maximum norm for gradient clipping.
+            If None or <= 0, no clipping is applied.
+    """
+    if scaler:
+        # Mixed precision backward pass
+        scaler.scale(loss).backward()
+        if grad_clip is not None and grad_clip > 0:
+            scaler.unscale_(optimizer)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+        scaler.step(optimizer)
+        scaler.update()
+    else:
+        # Standard backward pass
+        loss.backward()
+        if grad_clip is not None and grad_clip > 0:
+            torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+        optimizer.step()

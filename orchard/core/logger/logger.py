@@ -30,9 +30,9 @@ from .styles import LogStyle
 # Separator characters used to detect decorative lines
 _SEPARATOR_CHARS = {"━", "═", "─"}
 
-# Matches subtitle tags like [Hardware], [OPTIMIZATION], [Export Settings]
-# but NOT data brackets like [T: 0.2131 | V: 0.1196] or [!]
-_SUBTITLE_RE = re.compile(r"\[([A-Za-z][A-Za-z ]*)\]")
+# Matches subtitle tags like [Hardware], [OPTIMIZATION], [Export Settings],
+# [Benchmark — ONNX] but NOT data brackets like [T: 0.2131 | V: 0.1196] or [!]
+_SUBTITLE_RE = re.compile(r"\[([A-Za-z][A-Za-z \u2014\-]*)\]")
 
 
 class ColorFormatter(logging.Formatter):

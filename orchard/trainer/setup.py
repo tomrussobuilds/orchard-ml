@@ -8,6 +8,7 @@ training configuration sub-model.
 
 from __future__ import annotations
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -15,6 +16,28 @@ from torch.optim import lr_scheduler
 
 from ..core import TrainingConfig
 from .losses import FocalLoss
+
+
+# CLASS WEIGHTS
+def compute_class_weights(
+    labels: np.ndarray, num_classes: int, device: torch.device
+) -> torch.Tensor:
+    """
+    Compute balanced class weights (sklearn formula: N / (n_classes * count_c)).
+
+    Args:
+        labels: Training set labels (1D array).
+        num_classes: Total number of classes.
+        device: Target device for the weight tensor.
+
+    Returns:
+        1D tensor of per-class weights, shape ``(num_classes,)``.
+    """
+    classes, counts = np.unique(labels, return_counts=True)
+    n_total = len(labels)
+    weight_map = {int(c): n_total / (num_classes * cnt) for c, cnt in zip(classes, counts)}
+    weights = [weight_map.get(i, 1.0) for i in range(num_classes)]
+    return torch.tensor(weights, dtype=torch.float).to(device)
 
 
 # FACTORIES

@@ -42,7 +42,13 @@ from ..data_handler import (
 from ..evaluation import run_final_evaluation
 from ..export import benchmark_onnx_inference, export_to_onnx, quantize_model, validate_export
 from ..optimization import run_optimization
-from ..trainer import ModelTrainer, get_criterion, get_optimizer, get_scheduler
+from ..trainer import (
+    ModelTrainer,
+    compute_class_weights,
+    get_criterion,
+    get_optimizer,
+    get_scheduler,
+)
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -169,7 +175,13 @@ def run_training_phase(
     run_logger.info(LogStyle.DOUBLE)
 
     model = get_model(device=device, cfg=cfg)
-    criterion = get_criterion(cfg.training)
+
+    class_weights = None
+    if cfg.training.weighted_loss:
+        train_labels = train_loader.dataset.labels.flatten()  # type: ignore[attr-defined]
+        class_weights = compute_class_weights(train_labels, ds_meta.num_classes, device)
+
+    criterion = get_criterion(cfg.training, class_weights=class_weights)
     optimizer = get_optimizer(model, cfg.training)
     scheduler = get_scheduler(optimizer, cfg.training)
 
@@ -287,13 +299,18 @@ def run_export_phase(
 
     # Numerical validation: compare PyTorch vs ONNX outputs
     if cfg.export is not None and cfg.export.validate_export:
-        validate_export(
+        is_valid = validate_export(
             pytorch_model=export_model,
             onnx_path=onnx_path,
             input_shape=input_shape,
             num_samples=cfg.export.validation_samples,
             max_deviation=cfg.export.max_deviation,
         )
+        if not is_valid:
+            logger.warning(
+                f"  {LogStyle.WARNING} Numerical validation failed: "
+                "ONNX outputs diverge from PyTorch model"
+            )
 
     # Inference latency benchmark
     if cfg.export is not None and cfg.export.benchmark:
@@ -301,12 +318,14 @@ def run_export_phase(
             onnx_path=onnx_path,
             input_shape=input_shape,
             seed=cfg.training.seed,
+            label="ONNX",
         )
         if quantized_path:
             benchmark_onnx_inference(
                 onnx_path=quantized_path,
                 input_shape=input_shape,
                 seed=cfg.training.seed,
+                label="Quantized",
             )
 
     logger.info(f"  {LogStyle.SUCCESS} Export completed")

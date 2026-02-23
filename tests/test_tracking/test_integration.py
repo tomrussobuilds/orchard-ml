@@ -192,6 +192,10 @@ def test_objective_calls_tracker_nested_runs(mock_tracker):
         tracker=mock_tracker,
     )
 
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+
     # Mock executor to return a metric
     with patch(
         "orchard.optimization.objective.objective.TrialTrainingExecutor"

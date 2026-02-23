@@ -41,7 +41,7 @@ training:
   epochs: 100
   patience: 20
   grad_clip: 1.0
-  mixup_epochs: 0
+  mixup_epochs: 100             # Capped to optuna.epochs by config_builder
   monitor_metric: "auc"
   scheduler_type: "cosine"
   scheduler_patience: 5

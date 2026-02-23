@@ -84,6 +84,11 @@ class TrialConfigBuilder:
         # Override epochs for Optuna trials
         config_dict["training"]["epochs"] = self.optuna_epochs
 
+        # Cap mixup_epochs to trial length (prevents _check_mixup_epochs ValueError)
+        config_dict["training"]["mixup_epochs"] = min(
+            config_dict["training"]["mixup_epochs"], self.optuna_epochs
+        )
+
         # Apply trial-specific overrides
         self._apply_param_overrides(config_dict, trial_params)
 

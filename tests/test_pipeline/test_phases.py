@@ -435,5 +435,28 @@ def test_run_export_phase_quantize_logs_output(
     assert mock_quantize.call_args.kwargs["backend"] == "qnnpack"
 
 
+@pytest.mark.unit
+@patch("orchard.pipeline.phases.logger")
+@patch("orchard.pipeline.phases.validate_export", return_value=False)
+@patch("orchard.pipeline.phases.get_model")
+@patch("orchard.pipeline.phases.export_to_onnx")
+def test_run_export_phase_validation_failure_logs_warning(
+    _mock_export, _mock_get_model, mock_validate, mock_logger, mock_orchestrator
+):
+    """Test run_export_phase logs warning when numerical validation fails."""
+    mock_orchestrator.cfg.export.benchmark = False
+    mock_orchestrator.cfg.export.quantize = False
+
+    run_export_phase(
+        mock_orchestrator,
+        checkpoint_path=Path("/mock/model.pth"),
+        export_format="onnx",
+    )
+
+    mock_validate.assert_called_once()
+    warning_calls = [str(c) for c in mock_logger.warning.call_args_list]
+    assert any("Numerical validation failed" in w for w in warning_calls)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

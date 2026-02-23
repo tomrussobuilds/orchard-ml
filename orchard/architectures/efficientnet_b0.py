@@ -59,7 +59,7 @@ def build_efficientnet_b0(
         in_channels=in_channels,  # Custom: 1 or 3
         out_channels=32,  # EfficientNet standard
         kernel_size=(3, 3),
-        stride=(1, 1),
+        stride=(2, 2),  # Original EfficientNet stem (matches pretrained spatial statistics)
         padding=(1, 1),
         bias=False,
     )

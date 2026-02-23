@@ -27,6 +27,8 @@ def mock_cfg():
     cfg.training.epochs = 5
     cfg.training.use_amp = False
     cfg.training.grad_clip = 1.0
+    cfg.training.mixup_alpha = 0
+    cfg.training.mixup_epochs = 0
     cfg.training.scheduler_type = "step"
 
     cfg.optuna.enable_pruning = True
@@ -72,6 +74,38 @@ def test_executor_init(executor):
     assert executor.enable_pruning is True
     assert executor.warmup_epochs == 2
     assert executor.scaler is None
+    assert executor.mixup_fn is None
+
+
+@pytest.mark.unit
+def test_executor_init_with_mixup():
+    """Test executor initializes MixUp when mixup_alpha > 0."""
+    cfg = MagicMock()
+    cfg.training.epochs = 5
+    cfg.training.use_amp = False
+    cfg.training.grad_clip = 1.0
+    cfg.training.mixup_alpha = 0.2
+    cfg.training.mixup_epochs = 3
+    cfg.training.seed = 42
+    cfg.training.scheduler_type = "step"
+    cfg.optuna.enable_pruning = False
+    cfg.optuna.pruning_warmup_epochs = 0
+
+    executor = TrialTrainingExecutor(
+        model=nn.Linear(10, 2),
+        train_loader=MagicMock(),
+        val_loader=MagicMock(),
+        optimizer=torch.optim.SGD(
+            nn.Linear(10, 2).parameters(), lr=0.01, momentum=0.0, weight_decay=0.0
+        ),
+        scheduler=MagicMock(),
+        criterion=nn.CrossEntropyLoss(),
+        cfg=cfg,
+        device=torch.device("cpu"),
+        metric_extractor=MetricExtractor("auc"),
+    )
+
+    assert executor.mixup_fn is not None
 
 
 # TESTS: OPTUNA INTEGRATION
@@ -136,7 +170,7 @@ def test_validate_epoch_returns_fallback_on_exception():
         scheduler=MagicMock(),
         criterion=nn.CrossEntropyLoss(),
         cfg=MagicMock(
-            training=MagicMock(use_amp=False, epochs=5),
+            training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
             optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
         ),
         device=torch.device("cpu"),
@@ -163,7 +197,7 @@ def test_validate_epoch_returns_fallback_on_invalid_type():
         scheduler=MagicMock(),
         criterion=nn.CrossEntropyLoss(),
         cfg=MagicMock(
-            training=MagicMock(use_amp=False, epochs=5),
+            training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
             optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
         ),
         device=torch.device("cpu"),
@@ -190,7 +224,7 @@ def test_validate_epoch_returns_fallback_on_none():
         scheduler=MagicMock(),
         criterion=nn.CrossEntropyLoss(),
         cfg=MagicMock(
-            training=MagicMock(use_amp=False, epochs=5),
+            training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
             optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
         ),
         device=torch.device("cpu"),
@@ -212,6 +246,7 @@ def test_execute_handles_none_validation_result():
     mock_cfg.training.epochs = 1
     mock_cfg.training.use_amp = False
     mock_cfg.training.grad_clip = 0.0
+    mock_cfg.training.mixup_alpha = 0
     mock_cfg.training.scheduler_type = "step"
     mock_cfg.optuna.enable_pruning = False
     mock_cfg.optuna.pruning_warmup_epochs = 0
@@ -246,6 +281,7 @@ def test_execute_handles_invalid_validation_type():
     mock_cfg.training.epochs = 1
     mock_cfg.training.use_amp = False
     mock_cfg.training.grad_clip = 0.0
+    mock_cfg.training.mixup_alpha = 0
     mock_cfg.training.scheduler_type = "step"
     mock_cfg.optuna.enable_pruning = False
     mock_cfg.optuna.pruning_warmup_epochs = 0

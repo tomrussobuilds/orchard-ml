@@ -16,7 +16,7 @@ import logging
 from typing import Callable
 
 from optuna.pruners import HyperbandPruner, MedianPruner, NopPruner, PercentilePruner
-from optuna.samplers import CmaEsSampler, GridSampler, RandomSampler, TPESampler
+from optuna.samplers import CmaEsSampler, RandomSampler, TPESampler
 
 from ...core import LOGGER_NAME
 
@@ -34,7 +34,6 @@ SAMPLER_REGISTRY: dict[str, type] = {
     "tpe": TPESampler,
     "cmaes": CmaEsSampler,
     "random": RandomSampler,
-    "grid": GridSampler,
 }
 """Registry mapping sampler type strings to Optuna sampler classes."""
 

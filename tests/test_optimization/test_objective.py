@@ -230,6 +230,7 @@ def test_training_executor_should_prune_warmup():
     mock_cfg = MagicMock()
     mock_cfg.training.use_amp = False
     mock_cfg.training.epochs = 30
+    mock_cfg.training.mixup_alpha = 0
     mock_cfg.training.scheduler_type = "cosine"
     mock_cfg.optuna.enable_pruning = True
     mock_cfg.optuna.pruning_warmup_epochs = 10
@@ -261,6 +262,7 @@ def test_training_executor_disabled_pruning():
     mock_cfg.training.use_amp = False
     mock_cfg.training.epochs = 30
     mock_cfg.training.grad_clip = 0.0
+    mock_cfg.training.mixup_alpha = 0
     mock_cfg.training.scheduler_type = "cosine"
     mock_cfg.training.mixup_epochs = 0
     mock_cfg.optuna.enable_pruning = False
@@ -293,6 +295,7 @@ def test_training_executor_validate_epoch_error_handling():
     mock_cfg = MagicMock()
     mock_cfg.training.use_amp = False
     mock_cfg.training.epochs = 30
+    mock_cfg.training.mixup_alpha = 0
     mock_cfg.optuna.enable_pruning = True
     mock_cfg.optuna.pruning_warmup_epochs = 5
 
@@ -462,6 +465,10 @@ def test_optuna_objective_call_with_pruning():
         model_factory=mock_model_factory,
     )
 
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
@@ -506,6 +513,10 @@ def test_optuna_objective_call_cleanup_on_success():
     )
 
     objective._cleanup = MagicMock()
+
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
 
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
@@ -555,6 +566,10 @@ def test_optuna_objective_call_returns_worst_metric_on_failure():
 
     objective._cleanup = MagicMock()
 
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
@@ -603,6 +618,10 @@ def test_optuna_objective_call_returns_inf_on_failure_minimize():
 
     objective._cleanup = MagicMock()
 
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
@@ -650,6 +669,10 @@ def test_optuna_objective_call_reraises_trial_pruned():
     )
 
     objective._cleanup = MagicMock()
+
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
 
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
@@ -845,7 +868,7 @@ def test_trial_config_builder_preserves_resolution_when_none():
 
     mock_cfg.model_dump.return_value = {
         "dataset": {"resolution": None},
-        "training": {"epochs": 60},
+        "training": {"epochs": 60, "mixup_epochs": 20},
         "architecture": {},
         "augmentation": {},
     }
@@ -872,7 +895,7 @@ def test_trial_config_builder_keeps_existing_resolution():
 
     mock_cfg.model_dump.return_value = {
         "dataset": {"resolution": 28},
-        "training": {"epochs": 60},
+        "training": {"epochs": 60, "mixup_epochs": 20},
         "architecture": {},
         "augmentation": {},
     }

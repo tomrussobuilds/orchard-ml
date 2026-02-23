@@ -16,13 +16,15 @@ Key responsibilities:
 from __future__ import annotations
 
 import logging
+from functools import partial
 
+import numpy as np
 import optuna
 import torch
 
 from ...core import LOGGER_NAME, Config, LogStyle
 from ...core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_LOSS
-from ...trainer import train_one_epoch, validate_epoch
+from ...trainer import mixup_data, train_one_epoch, validate_epoch
 from ...trainer._scheduling import step_scheduler
 from .metric_extractor import MetricExtractor
 
@@ -119,9 +121,14 @@ class TrialTrainingExecutor:
 
         # Training state
         self.scaler = torch.amp.GradScaler() if cfg.training.use_amp else None
-        self.amp_device_type = device.type if self.scaler is not None else "cpu"
         self.epochs = cfg.training.epochs
         self.log_interval = cfg.telemetry.log_interval
+
+        # MixUp configuration (mirrors ModelTrainer, seeded for reproducibility)
+        self.mixup_fn = None
+        if cfg.training.mixup_alpha > 0:
+            mixup_rng = np.random.default_rng(cfg.training.seed)
+            self.mixup_fn = partial(mixup_data, alpha=cfg.training.mixup_alpha, rng=mixup_rng)
 
     def execute(self, trial: optuna.Trial) -> float:
         """
@@ -191,8 +198,7 @@ class TrialTrainingExecutor:
         Returns:
             Average training loss for the epoch
         """
-        # Note: MixUp is disabled during Optuna trials for simplicity
-        mixup_fn = None
+        current_mixup = self.mixup_fn if epoch <= self.cfg.training.mixup_epochs else None
 
         return train_one_epoch(
             model=self.model,
@@ -200,7 +206,7 @@ class TrialTrainingExecutor:
             criterion=self.criterion,
             optimizer=self.optimizer,
             device=self.device,
-            mixup_fn=mixup_fn,
+            mixup_fn=current_mixup,
             scaler=self.scaler,
             grad_clip=self.cfg.training.grad_clip,
             epoch=epoch,

@@ -32,7 +32,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 from ...architectures import get_model
 from ...data_handler import DatasetData, get_dataloaders, load_dataset
-from ...trainer import get_criterion, get_optimizer, get_scheduler
+from ...trainer import compute_class_weights, get_criterion, get_optimizer, get_scheduler
 
 # Relative Imports
 from .config_builder import TrialConfigBuilder
@@ -187,7 +187,14 @@ class OptunaObjective:
             model = self._model_factory(self.device, trial_cfg)
             optimizer = get_optimizer(model, trial_cfg.training)
             scheduler = get_scheduler(optimizer, trial_cfg.training)
-            criterion = get_criterion(trial_cfg.training)
+
+            class_weights = None
+            if trial_cfg.training.weighted_loss:
+                train_labels = train_loader.dataset.labels.flatten()
+                num_classes = self.config_builder.base_metadata.num_classes
+                class_weights = compute_class_weights(train_labels, num_classes, self.device)
+
+            criterion = get_criterion(trial_cfg.training, class_weights=class_weights)
 
             # Execute training
             executor = TrialTrainingExecutor(
