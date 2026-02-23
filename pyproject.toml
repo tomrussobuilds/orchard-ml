@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orchard-ml"
-version = "0.1.5"
+version = "0.1.6"
 description = "Type-Safe Deep Learning Framework for Computer Vision"
 readme = "README.md"
 requires-python = ">=3.10"
