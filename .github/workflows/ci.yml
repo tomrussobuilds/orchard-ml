@@ -5,15 +5,22 @@ on:
     branches: [ main, develop ]
     paths-ignore:
       - '**/*.md'
-      - 'docs/**'
       - 'LICENSE'
   pull_request:
     branches: [ main, develop ]
     paths-ignore:
       - '**/*.md'
-      - 'docs/**'
       - 'LICENSE'
   workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   # Job 1: Lint and Code Quality
@@ -149,18 +156,42 @@ jobs:
           path: outputs/
           retention-days: 7
 
-  # Job 4: Documentation Check
-  docs:
-    name: Documentation Check
+  # Job 4: Build & Deploy Documentation (main only, after smoke test)
+  docs-build:
+    name: Build Documentation
     runs-on: ubuntu-latest
+    needs: test-smoke
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
-      - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
 
-      - name: Verify README exists
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install package with docs dependencies
         run: |
-          test -f README.md || exit 1
-          echo "✅ README.md found"
+          python -m pip install --upgrade pip
+          pip install -e ".[docs]"
+
+      - name: Build documentation
+        run: mkdocs build --strict
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/
+
+  docs-deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: docs-build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
 
   # Job 5: Security Scan
   security:
@@ -190,7 +221,7 @@ jobs:
   build-status:
     name: Build Status
     runs-on: ubuntu-latest
-    needs: [lint, test-pytest, test-smoke, docs, security]
+    needs: [lint, test-pytest, test-smoke, docs-deploy, security]
     if: always()
     steps:
       - name: Check build status
@@ -198,7 +229,7 @@ jobs:
           echo "Lint: ${{ needs.lint.result }}"
           echo "Pytest: ${{ needs.test-pytest.result }}"
           echo "Smoke Test: ${{ needs.test-smoke.result }}"
-          echo "Docs: ${{ needs.docs.result }}"
+          echo "Docs Deploy: ${{ needs.docs-deploy.result }}"
           echo "Security: ${{ needs.security.result }}"
 
       - name: Fail if critical jobs failed

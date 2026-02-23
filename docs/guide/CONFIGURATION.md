@@ -1,4 +1,4 @@
-← [Back to Main README](../../README.md)
+← [Back to Home](../index.md)
 
 <h1 align="center">Configuration Guide</h1>
 

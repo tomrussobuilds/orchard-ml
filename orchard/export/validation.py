@@ -95,6 +95,7 @@ def validate_export(
             f"    {LogStyle.BULLET} Result            : "
             f"{LogStyle.SUCCESS} Passed (max diff: {max_diff:.2e})"
         )
+        logger.info("")
         return True
 
     except ImportError as e:

@@ -55,7 +55,7 @@ dependencies = [
 Homepage = "https://github.com/tomrussobuilds/orchard-ml"
 Repository = "https://github.com/tomrussobuilds/orchard-ml"
 Issues = "https://github.com/tomrussobuilds/orchard-ml/issues"
-Documentation = "https://github.com/tomrussobuilds/orchard-ml/tree/main/docs/guide"
+Documentation = "https://tomrussobuilds.github.io/orchard-ml/"
 
 [project.scripts]
 orchard = "orchard.cli_app:app"
@@ -84,6 +84,14 @@ dev = [
     "types-requests>=2.32.0",
     "git-cliff>=2.12.0",
     "pre-commit>=4.0.0",
+]
+docs = [
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocstrings[python]>=1.0.0",
+    "mkdocs-gen-files>=0.5.0",
+    "mkdocs-literate-nav>=0.6.0",
+    "mkdocs-section-index>=0.3.9",
 ]
 
 [tool.setuptools.packages.find]

@@ -496,5 +496,133 @@ def test_benchmark_onnx_inference_success(monkeypatch):
     assert mock_session.run.call_count == 10 + 5
 
 
+# ONNX QUANTIZATION
+def _export_simple_model(tmp_path):
+    """Helper: export a SimpleTestModel and return (model, onnx_path)."""
+    model = SimpleTestModel(in_channels=3, num_classes=10)
+    checkpoint_path = tmp_path / "model.pth"
+    onnx_path = tmp_path / "model.onnx"
+    torch.save({"model_state_dict": model.state_dict()}, checkpoint_path)
+    export_to_onnx(
+        model=model,
+        checkpoint_path=checkpoint_path,
+        output_path=onnx_path,
+        input_shape=(3, 28, 28),
+        validate=False,
+    )
+    return model, onnx_path
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(
+    not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
+    reason="Requires onnxruntime",
+)
+def test_quantize_model_basic(tmp_path):
+    """Test basic INT8 quantization of exported ONNX model."""
+    from orchard.export.onnx_exporter import quantize_model
+
+    _, onnx_path = _export_simple_model(tmp_path)
+    quantized_path = quantize_model(onnx_path)
+
+    assert quantized_path is not None
+    assert quantized_path.exists()
+    assert quantized_path.stat().st_size > 0
+    assert quantized_path.stat().st_size <= onnx_path.stat().st_size
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(
+    not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
+    reason="Requires onnxruntime",
+)
+def test_quantize_model_default_output_name(tmp_path):
+    """Test quantized model uses model_quantized.onnx by default."""
+    from orchard.export.onnx_exporter import quantize_model
+
+    _, onnx_path = _export_simple_model(tmp_path)
+    quantized_path = quantize_model(onnx_path)
+
+    assert quantized_path is not None
+    assert quantized_path.name == "model_quantized.onnx"
+    assert quantized_path.parent == onnx_path.parent
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(
+    not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
+    reason="Requires onnxruntime",
+)
+def test_quantize_model_custom_output_path(tmp_path):
+    """Test quantization with custom output path."""
+    from orchard.export.onnx_exporter import quantize_model
+
+    _, onnx_path = _export_simple_model(tmp_path)
+    custom_path = tmp_path / "custom" / "quantized.onnx"
+    custom_path.parent.mkdir(parents=True)
+
+    quantized_path = quantize_model(onnx_path, output_path=custom_path)
+
+    assert quantized_path is not None
+    assert quantized_path == custom_path
+    assert quantized_path.exists()
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(
+    not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
+    reason="Requires onnxruntime",
+)
+def test_quantize_model_fbgemm_backend(tmp_path):
+    """Test quantization with fbgemm backend (per-channel, x86)."""
+    from orchard.export.onnx_exporter import quantize_model
+
+    _, onnx_path = _export_simple_model(tmp_path)
+    quantized_path = quantize_model(onnx_path, backend="fbgemm")
+
+    assert quantized_path is not None
+    assert quantized_path.exists()
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(
+    not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
+    reason="Requires onnxruntime",
+)
+def test_quantize_model_qnnpack_backend(tmp_path):
+    """Test quantization with qnnpack backend (per-tensor, mobile/ARM)."""
+    from orchard.export.onnx_exporter import quantize_model
+
+    _, onnx_path = _export_simple_model(tmp_path)
+    quantized_path = quantize_model(onnx_path, backend="qnnpack")
+
+    assert quantized_path is not None
+    assert quantized_path.exists()
+
+
+@pytest.mark.unit
+def test_quantize_model_without_onnxruntime(tmp_path, monkeypatch):
+    """Test quantize_model returns None when onnxruntime.quantization unavailable."""
+    import builtins
+
+    real_import = builtins.__import__
+
+    def mock_import(name, *args, **kwargs):
+        if "onnxruntime.quantization" in name:
+            raise ImportError("onnxruntime.quantization not installed")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", mock_import)
+
+    from orchard.export.onnx_exporter import quantize_model
+
+    # Create a dummy ONNX file
+    onnx_path = tmp_path / "model.onnx"
+    onnx_path.write_text("dummy")
+
+    result = quantize_model(onnx_path)
+    assert result is None
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

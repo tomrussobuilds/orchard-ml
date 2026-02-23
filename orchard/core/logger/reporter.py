@@ -283,4 +283,8 @@ class Reporter(BaseModel):
         logger_instance.info(f"{I}{A} {'Format':<18}: {export_cfg.format.upper()}")
         logger_instance.info(f"{I}{A} {'Opset Version':<18}: {export_cfg.opset_version}")
         logger_instance.info(f"{I}{A} {'Validate':<18}: {export_cfg.validate_export}")
+        if export_cfg.quantize:
+            logger_instance.info(
+                f"{I}{A} {'Quantize':<18}: INT8 ({export_cfg.quantization_backend})"
+            )
         logger_instance.info("")

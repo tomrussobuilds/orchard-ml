@@ -40,7 +40,7 @@ from ..data_handler import (
     show_samples_for_dataset,
 )
 from ..evaluation import run_final_evaluation
-from ..export import benchmark_onnx_inference, export_to_onnx, validate_export
+from ..export import benchmark_onnx_inference, export_to_onnx, quantize_model, validate_export
 from ..optimization import run_optimization
 from ..trainer import ModelTrainer, get_criterion, get_optimizer, get_scheduler
 
@@ -277,6 +277,14 @@ def run_export_phase(
         validate=export_cfg.validate_export if export_cfg else True,
     )
 
+    # Post-export quantization
+    quantized_path = None
+    if export_cfg is not None and export_cfg.quantize:
+        quantized_path = quantize_model(
+            onnx_path=onnx_path,
+            backend=export_cfg.quantization_backend,
+        )
+
     # Numerical validation: compare PyTorch vs ONNX outputs
     if cfg.export is not None and cfg.export.validate_export:
         validate_export(
@@ -294,8 +302,16 @@ def run_export_phase(
             input_shape=input_shape,
             seed=cfg.training.seed,
         )
+        if quantized_path:
+            benchmark_onnx_inference(
+                onnx_path=quantized_path,
+                input_shape=input_shape,
+                seed=cfg.training.seed,
+            )
 
     logger.info(f"  {LogStyle.SUCCESS} Export completed")
     logger.info(f"    {LogStyle.ARROW} Output            : {onnx_path.name}")
+    if quantized_path:
+        logger.info(f"    {LogStyle.ARROW} Quantized         : {quantized_path.name}")
 
     return onnx_path

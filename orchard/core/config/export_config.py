@@ -58,7 +58,6 @@ class ExportConfig(BaseModel):
     )
 
     # ==================== Optimization ====================
-    # TODO: wire when quantization is implemented (currently logging-only in reporter)
     quantize: bool = Field(default=False, description="Apply INT8 quantization")
 
     quantization_backend: Literal["qnnpack", "fbgemm"] = Field(

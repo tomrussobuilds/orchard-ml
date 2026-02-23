@@ -221,9 +221,15 @@ def validate_epoch(
     y_true = torch.cat(all_targets).numpy()
     y_score = torch.cat(all_probs).numpy()
 
-    # Compute ROC-AUC (One-vs-Rest, macro-averaged — matches metrics.py)
+    # Compute ROC-AUC
     try:
-        auc = roc_auc_score(y_true, y_score, multi_class="ovr", average="macro")
+        n_classes = y_score.shape[1] if y_score.ndim == 2 else 1
+        if n_classes <= 2:
+            # Binary: use probability of the positive class
+            auc = roc_auc_score(y_true, y_score[:, 1] if y_score.ndim == 2 else y_score)
+        else:
+            # Multiclass: One-vs-Rest, macro-averaged
+            auc = roc_auc_score(y_true, y_score, multi_class="ovr", average="macro")
     except (ValueError, IndexError) as e:
         logger.warning(f"AUC calculation failed: {e}. Setting auc=0.0")
         auc = 0.0

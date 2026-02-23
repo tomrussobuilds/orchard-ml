@@ -1,0 +1,78 @@
+site_name: Orchard ML
+site_url: https://tomrussobuilds.github.io/orchard-ml/
+site_description: Type-safe deep learning framework for reproducible computer vision research
+repo_url: https://github.com/tomrussobuilds/orchard-ml
+repo_name: tomrussobuilds/orchard-ml
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: green
+      accent: light green
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: green
+      accent: light green
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - section-index
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            merge_init_into_class: true
+            show_if_no_docstring: false
+
+nav:
+  - Home: index.md
+  - User Guide:
+      - Framework Overview: guide/FRAMEWORK.md
+      - Configuration: guide/CONFIGURATION.md
+      - Architecture: guide/ARCHITECTURE.md
+      - Optimization: guide/OPTIMIZATION.md
+      - Tracking: guide/TRACKING.md
+      - Export: guide/EXPORT.md
+      - Artifacts: guide/ARTIFACTS.md
+      - Testing: guide/TESTING.md
+      - Docker: guide/DOCKER.md
+  - API Reference: reference/
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - toc:
+      permalink: true

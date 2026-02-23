@@ -375,5 +375,65 @@ def test_run_export_phase_no_benchmark_by_default(
     mock_benchmark.assert_not_called()
 
 
+@pytest.mark.unit
+@patch("orchard.pipeline.phases.benchmark_onnx_inference")
+@patch("orchard.pipeline.phases.quantize_model")
+@patch("orchard.pipeline.phases.validate_export")
+@patch("orchard.pipeline.phases.get_model")
+@patch("orchard.pipeline.phases.export_to_onnx")
+def test_run_export_phase_quantize_with_benchmark(
+    _mock_export,
+    _mock_get_model,
+    _mock_validate,
+    mock_quantize,
+    mock_benchmark,
+    mock_orchestrator,
+):
+    """Test run_export_phase benchmarks quantized model when both enabled."""
+    mock_orchestrator.cfg.export.quantize = True
+    mock_orchestrator.cfg.export.quantization_backend = "fbgemm"
+    mock_orchestrator.cfg.export.benchmark = True
+    mock_orchestrator.cfg.training.seed = 42
+    mock_quantize.return_value = Path("/mock/test_exports/model_quantized.onnx")
+
+    run_export_phase(
+        mock_orchestrator,
+        checkpoint_path=Path("/mock/model.pth"),
+        export_format="onnx",
+    )
+
+    mock_quantize.assert_called_once()
+    # Two benchmark calls: original + quantized
+    assert mock_benchmark.call_count == 2
+
+
+@pytest.mark.unit
+@patch("orchard.pipeline.phases.quantize_model")
+@patch("orchard.pipeline.phases.validate_export")
+@patch("orchard.pipeline.phases.get_model")
+@patch("orchard.pipeline.phases.export_to_onnx")
+def test_run_export_phase_quantize_logs_output(
+    _mock_export,
+    _mock_get_model,
+    _mock_validate,
+    mock_quantize,
+    mock_orchestrator,
+):
+    """Test run_export_phase logs quantized model path."""
+    mock_orchestrator.cfg.export.quantize = True
+    mock_orchestrator.cfg.export.quantization_backend = "qnnpack"
+    mock_orchestrator.cfg.export.benchmark = False
+    mock_quantize.return_value = Path("/mock/test_exports/model_quantized.onnx")
+
+    run_export_phase(
+        mock_orchestrator,
+        checkpoint_path=Path("/mock/model.pth"),
+        export_format="onnx",
+    )
+
+    mock_quantize.assert_called_once()
+    assert mock_quantize.call_args.kwargs["backend"] == "qnnpack"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

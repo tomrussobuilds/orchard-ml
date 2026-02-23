@@ -1,4 +1,4 @@
-← [Back to Main README](../../README.md)
+← [Back to Home](../index.md)
 
 <h1 align="center">Model Export Guide</h1>
 
@@ -49,7 +49,7 @@ export:
   dynamic_axes: true              # dynamic batch size for flexible inference
   do_constant_folding: true       # fold constants at export time
 
-  # Quantization (TODO: not yet wired at runtime)
+  # Quantization
   quantize: false                 # apply INT8 post-training quantization
   quantization_backend: qnnpack   # qnnpack (mobile/ARM) | fbgemm (x86)
 
@@ -68,12 +68,44 @@ export:
 | `opset_version` | `18` | ONNX opset version (18 recommended) |
 | `dynamic_axes` | `true` | Enable dynamic batch size for inference flexibility |
 | `do_constant_folding` | `true` | Optimize constant operations during export |
-| `quantize` | `false` | Apply INT8 post-training quantization (not yet wired) |
+| `quantize` | `false` | Apply INT8 post-training quantization |
 | `quantization_backend` | `qnnpack` | Quantization backend: `qnnpack` (mobile/ARM), `fbgemm` (x86) |
 | `validate_export` | `true` | Run numerical validation after export |
 | `validation_samples` | `10` | Number of random samples for validation |
 | `max_deviation` | `1e-4` | Maximum allowed output deviation (PyTorch vs ONNX) |
 | `benchmark` | `false` | Run inference latency benchmark after export |
+
+<h2>Quantization</h2>
+
+Orchard ML supports INT8 dynamic post-training quantization via ONNX Runtime.
+Quantization reduces model size by 2-4x and can improve inference speed on compatible hardware.
+
+**Enable quantization:**
+
+```yaml
+export:
+  format: onnx
+  quantize: true
+  quantization_backend: fbgemm   # x86 servers
+```
+
+| Backend | Target Hardware | Quantization Style |
+|---------|----------------|--------------------|
+| `qnnpack` | Mobile / ARM | Per-tensor |
+| `fbgemm` | x86 servers | Per-channel |
+
+After export, the output directory will contain both models:
+
+```
+exports/
+  model.onnx                  # Full-precision original
+  model_quantized.onnx        # INT8 quantized
+```
+
+> **Note:** INT8 quantization introduces small numerical deviations compared to the
+> full-precision model. The `validate_export` check runs against the original
+> (non-quantized) ONNX model. If `benchmark: true` is set, both models are benchmarked
+> for latency comparison.
 
 <h2>Troubleshooting</h2>
 

@@ -83,7 +83,7 @@ augmentation:
 
 hardware:
   device: "auto"
-  reproducible: true
+  reproducible: false
 
 telemetry:
   output_dir: ./outputs
@@ -201,3 +201,4 @@ export:
   format: onnx
   opset_version: 18
   validate_export: true
+  quantize: true

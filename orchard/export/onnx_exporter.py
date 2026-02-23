@@ -22,6 +22,15 @@ from ..core.logger import LogStyle
 logger = logging.getLogger(LOGGER_NAME)
 
 
+def _onnx_file_size_mb(path: Path) -> float:
+    """Total size of an ONNX model including external data files (e.g. .data)."""
+    size = path.stat().st_size
+    external = path.parent / f"{path.name}.data"
+    if external.exists():
+        size += external.stat().st_size
+    return size / (1024 * 1024)
+
+
 def export_to_onnx(
     model: nn.Module,
     checkpoint_path: Path,
@@ -54,6 +63,7 @@ def export_to_onnx(
     """
     logger.info("  [Source]")
     logger.info(f"    {LogStyle.BULLET} Checkpoint        : {checkpoint_path.name}")
+    logger.info("")
 
     # Create output directory if needed
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -76,6 +86,7 @@ def export_to_onnx(
     logger.info(f"    {LogStyle.BULLET} Format            : ONNX (opset {opset_version})")
     logger.info(f"    {LogStyle.BULLET} Input shape       : {tuple(dummy_input.shape)}")
     logger.info(f"    {LogStyle.BULLET} Dynamic axes      : {dynamic_axes}")
+    logger.info("")
 
     # Prepare dynamic axes configuration
     if dynamic_axes:
@@ -132,12 +143,10 @@ def export_to_onnx(
             onnx_model = onnx.load(str(output_path))
             onnx.checker.check_model(onnx_model)
 
-            # Report model size
-            file_size_mb = output_path.stat().st_size / (1024 * 1024)
-
             logger.info("  [Validation]")
             logger.info(f"    {LogStyle.BULLET} ONNX check        : {LogStyle.SUCCESS} Valid")
-            logger.info(f"    {LogStyle.BULLET} Model size        : {file_size_mb:.2f} MB")
+            size_mb = _onnx_file_size_mb(output_path)
+            logger.info(f"    {LogStyle.BULLET} Model size        : {size_mb:.2f} MB")
 
         except ImportError:
             logger.warning(
@@ -148,6 +157,98 @@ def export_to_onnx(
             raise
 
     logger.info("")
+
+
+def quantize_model(
+    onnx_path: Path,
+    output_path: Path | None = None,
+    backend: str = "qnnpack",
+) -> Path | None:
+    """
+    Apply INT8 dynamic post-training quantization to an ONNX model.
+
+    Uses onnxruntime.quantization to reduce model size and improve
+    inference speed with minimal accuracy loss.
+
+    Args:
+        onnx_path: Path to the exported ONNX model
+        output_path: Path for quantized model (defaults to model_quantized.onnx
+                     in the same directory)
+        backend: Quantization backend ("qnnpack" for mobile/ARM, "fbgemm" for x86)
+
+    Returns:
+        Path to the quantized ONNX model, or None if quantization failed
+
+    Example:
+        >>> quantized = quantize_model(Path("exports/model.onnx"))
+        >>> print(f"Quantized model: {quantized}")
+    """
+    try:
+        import onnx
+        from onnxruntime.quantization import QuantType, quantize_dynamic
+    except ImportError:
+        logger.warning(
+            f"    {LogStyle.WARNING} onnxruntime.quantization not available. "
+            "Skipping quantization."
+        )
+        return None
+
+    if output_path is None:
+        output_path = onnx_path.parent / "model_quantized.onnx"
+
+    logger.info("  [Quantization]")
+    logger.info(f"    {LogStyle.BULLET} Backend           : {backend}")
+
+    try:
+        # Clear intermediate value_info to avoid shape conflicts from dynamo exporter
+        preprocessed_path = onnx_path.parent / "model_preprocessed.onnx"
+        model_proto = onnx.load(str(onnx_path))
+        while len(model_proto.graph.value_info) > 0:
+            model_proto.graph.value_info.pop()
+        onnx.save(model_proto, str(preprocessed_path))
+
+        per_channel = backend == "fbgemm"
+
+        # Suppress onnxruntime's "Please consider to run pre-processing before
+        # quantization" warning.  We already handle pre-processing ourselves by
+        # clearing value_info from the ONNX graph (see above) to work around
+        # shape conflicts produced by the PyTorch dynamo-based exporter.
+        # Running onnxruntime's own quant_pre_process() is unnecessary and would
+        # re-introduce the conflicting shape annotations we just removed.
+        import logging as _logging
+
+        _root = _logging.getLogger()
+        _prev_level = _root.level
+        _root.setLevel(_logging.ERROR)
+        try:
+            quantize_dynamic(
+                model_input=str(preprocessed_path),
+                model_output=str(output_path),
+                weight_type=QuantType.QInt8,
+                per_channel=per_channel,
+            )
+        finally:
+            _root.setLevel(_prev_level)
+
+        # Clean up intermediate file
+        preprocessed_path.unlink(missing_ok=True)
+
+        original_mb = _onnx_file_size_mb(onnx_path)
+        quantized_mb = _onnx_file_size_mb(output_path)
+        ratio = original_mb / quantized_mb if quantized_mb > 0 else 0
+
+        logger.info(
+            f"    {LogStyle.BULLET} Size              : "
+            f"{original_mb:.2f} MB → {quantized_mb:.2f} MB ({ratio:.1f}x)"
+        )
+        logger.info(f"    {LogStyle.BULLET} Status            : {LogStyle.SUCCESS} Done")
+        logger.info("")
+
+        return output_path
+
+    except Exception as e:
+        logger.error(f"    {LogStyle.WARNING} Quantization failed: {e}")
+        return None
 
 
 def benchmark_onnx_inference(

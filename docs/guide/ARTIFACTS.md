@@ -1,4 +1,4 @@
-← [Back to Main README](../../README.md)
+← [Back to Home](../index.md)
 
 <h1 align="center">Artifact Reference</h1>
 
@@ -108,4 +108,4 @@ Explore real experiment outputs in the [artifacts directory](../artifacts/):
 
 ---
 
-← [Back to Main README](../../README.md) | [Optimization Guide](OPTIMIZATION.md) | [Export Guide](EXPORT.md)
+← [Back to Home](../index.md) | [Optimization Guide](OPTIMIZATION.md) | [Export Guide](EXPORT.md)

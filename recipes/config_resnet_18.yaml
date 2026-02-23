@@ -89,4 +89,5 @@ tracking:
 export:
   format: onnx
   opset_version: 18
+  quantize: true
   validate_export: true

@@ -14,7 +14,7 @@ Example:
     ... )
 """
 
-from .onnx_exporter import benchmark_onnx_inference, export_to_onnx
+from .onnx_exporter import benchmark_onnx_inference, export_to_onnx, quantize_model
 from .validation import validate_export
 
-__all__ = ["benchmark_onnx_inference", "export_to_onnx", "validate_export"]
+__all__ = ["benchmark_onnx_inference", "export_to_onnx", "quantize_model", "validate_export"]

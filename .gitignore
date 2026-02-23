@@ -166,6 +166,7 @@ temp/
 
 # ONNX
 *.onnx
+*.onnx.data
 
 # Other formats
 *.pkl
