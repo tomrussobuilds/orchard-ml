@@ -6,7 +6,7 @@ Pydantic sub-config for experiment tracking settings (MLflow).
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TrackingConfig(BaseModel):
@@ -20,6 +20,8 @@ class TrackingConfig(BaseModel):
         enabled: Whether to activate MLflow logging for this run.
         experiment_name: MLflow experiment name (groups related runs).
     """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     enabled: bool = Field(default=True, description="Enable MLflow tracking")
     experiment_name: str = Field(

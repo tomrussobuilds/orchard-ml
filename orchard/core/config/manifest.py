@@ -235,8 +235,7 @@ class Config(BaseModel):
         metadata = wrapper.get_dataset(ds_name)
         raw_data.setdefault("dataset", {})["metadata"] = metadata
 
-        cfg = cls(**raw_data)
-        return cls.model_validate(cfg)
+        return cls(**raw_data)
 
 
 # CROSS-DOMAIN VALIDATION
