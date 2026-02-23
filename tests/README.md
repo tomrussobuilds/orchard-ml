@@ -19,7 +19,7 @@ tests/                          # Test suite (~1,175 tests, 100% coverage)
 ├── test_export/                # Export tests (ONNX exporter, validation)
 ├── test_io/                    # I/O tests (serialization, checkpoints)
 ├── test_logger/                # Logging tests (logger, reporter)
-├── test_models/                # Architecture tests (factory, all model builders)
+├── test_architectures/         # Architecture tests (factory, all model builders)
 ├── test_optimization/          # Optuna integration tests (objective, orchestrator)
 ├── test_paths/                 # Path management tests (constants, run_paths)
 ├── test_pipeline/              # Pipeline phase tests

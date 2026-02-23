@@ -19,7 +19,7 @@ outputs/20260123_bloodmnist_minicnn_b4a8f1/
 │   ├── training_summary.xlsx          # Complete metrics spreadsheet
 │   ├── config_snapshot.yaml           # Frozen config at run start
 │   └── requirements.txt              # Pinned pip freeze at run start
-├── models/
+├── checkpoints/
 │   └── best_mini_cnn.pth              # Best model weights (by val AUC)
 ├── exports/
 │   └── model.onnx                     # Production-ready ONNX export
@@ -49,7 +49,7 @@ outputs/20260123_organcmnist_efficientnetb0_a3f7c2/
 │   ├── best_config.yaml               # Optimized hyperparameters
 │   ├── study_summary.json             # All trials metadata
 │   └── top_10_trials.xlsx             # Best configurations ranked
-├── models/
+├── checkpoints/
 │   └── best_efficientnet_b0.pth       # Best model weights
 ├── exports/
 │   └── model.onnx                     # Production export

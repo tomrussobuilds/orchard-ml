@@ -1,6 +1,6 @@
 ← [Back to Main README](../../README.md)
 
-<h1 align="center">Framework Architecture</h1>
+<h1 align="center">Framework Design</h1>
 
 <h2>Core Features</h2>
 
@@ -60,7 +60,7 @@ The `InfrastructureManager` bridges declarative configs with physical hardware (
 - **Process Sanitization**: `psutil` wrapper identifies and terminates ghost Python processes
 - **HPC-Aware Safety**: Auto-detects cluster schedulers (SLURM/PBS/LSF) and suspends aggressive process cleanup to preserve multi-user stability
 
-<h3>Reproducibility Architecture</h3>
+<h3>Reproducibility Design</h3>
 
 **Dual-Layer Strategy** (enforced by RootOrchestrator Phase 1):
 1. **Standard Mode**: Global seeding (Seed 42) with performance-optimized algorithms
@@ -94,7 +94,7 @@ The `InfrastructureManager` bridges declarative configs with physical hardware (
 
 ---
 
-<h2>System Architecture</h2>
+<h2>System Design</h2>
 
 The framework implements **Separation of Concerns (SoC)** with six core layers:
 
@@ -129,7 +129,7 @@ The framework implements **Separation of Concerns (SoC)** with six core layers:
     │              Execution Pipeline                        │
     │                                                        │
     │  ┌──────────┐  ┌──────────┐  ┌──────────┐              │
-    │  │   Data   │  │  Model   │  │ Trainer  │              │
+    │  │   Data   │  │  Arch.   │  │ Trainer  │              │
     │  │ Handler  │→ │ Factory  │→ │  Engine  │              │
     │  └──────────┘  └──────────┘  └────┬─────┘              │
     │                                   │                    │
@@ -145,7 +145,7 @@ The framework implements **Separation of Concerns (SoC)** with six core layers:
             ▼ optional         ▼ alternative      ▼ alternative
     ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
     │ Tracking Engine  │  │  Optimization    │  │  Export Engine   │
-    │    (MLflow)      │  │  Engine (Optuna) │  │ (ONNX/TScript)   │
+    │    (MLflow)      │  │  Engine (Optuna) │  │      (ONNX)       │
     │                  │  │                  │  │                  │
     │ • Metric logging │  │ • Study mgmt     │  │ • Checkpoint load│
     │ • Param capture  │  │ • Trial exec     │  │ • ONNX convert   │
@@ -172,7 +172,7 @@ The framework implements **Separation of Concerns (SoC)** with six core layers:
 <img src="../framework_map.svg?v=4" width="900" alt="System Dependency Graph">
 </p>
 
-> *Generated via `pydeps`. Highlights the centralized Config hub and modular architecture.*
+> *Generated via `pydeps`. Highlights the centralized Config hub and modular design.*
 
 **Regenerate:**
 ```bash

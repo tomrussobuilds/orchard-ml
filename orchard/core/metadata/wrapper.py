@@ -17,6 +17,14 @@ from ..paths import SUPPORTED_RESOLUTIONS
 from .base import DatasetMetadata
 from .domains import BENCHMARK_32, MEDICAL_28, MEDICAL_64, MEDICAL_224, SPACE_224
 
+# Resolution → registry merge map (add new resolutions here)
+_RESOLUTION_REGISTRIES: dict[int, tuple[dict[str, DatasetMetadata], ...]] = {
+    28: (MEDICAL_28,),
+    32: (BENCHMARK_32,),
+    64: (MEDICAL_64,),
+    224: (MEDICAL_224, SPACE_224),
+}
+
 
 # WRAPPER DEFINITION
 class DatasetRegistryWrapper(BaseModel):
@@ -54,15 +62,11 @@ class DatasetRegistryWrapper(BaseModel):
                 f"Unsupported resolution {res}. Supported: {sorted(SUPPORTED_RESOLUTIONS)}"
             )
 
-        # Merge domain registries based on resolution
-        if res == 28:
-            merged = {**MEDICAL_28}
-        elif res == 32:
-            merged = {**BENCHMARK_32}
-        elif res == 64:
-            merged = {**MEDICAL_64}
-        else:  # res == 224
-            merged = {**MEDICAL_224, **SPACE_224}
+        # Merge domain registries via dispatch table
+        registries = _RESOLUTION_REGISTRIES[res]
+        merged: dict[str, DatasetMetadata] = {}
+        for registry in registries:
+            merged.update(registry)
 
         if not merged:
             raise ValueError(f"Dataset registry for resolution {res} is empty")

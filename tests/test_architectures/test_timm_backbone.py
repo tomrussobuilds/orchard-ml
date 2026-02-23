@@ -13,7 +13,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from orchard.models.timm_backbone import build_timm_model
+from orchard.architectures.timm_backbone import build_timm_model
 
 
 # FIXTURES
@@ -90,7 +90,7 @@ class TestTimmFactoryRouting:
     """Test that the factory correctly routes timm/ names."""
 
     def test_factory_routes_timm_model(self, device):
-        from orchard.models.factory import get_model
+        from orchard.architectures.factory import get_model
 
         cfg = MagicMock()
         cfg.architecture.name = "timm/resnet10t"
@@ -104,7 +104,7 @@ class TestTimmFactoryRouting:
         assert isinstance(model, nn.Module)
 
     def test_factory_still_routes_builtin(self, device):
-        from orchard.models.factory import get_model
+        from orchard.architectures.factory import get_model
 
         cfg = MagicMock()
         cfg.architecture.name = "mini_cnn"
@@ -117,7 +117,7 @@ class TestTimmFactoryRouting:
         assert isinstance(model, nn.Module)
 
     def test_factory_rejects_unknown_builtin(self, device):
-        from orchard.models.factory import get_model
+        from orchard.architectures.factory import get_model
 
         cfg = MagicMock()
         cfg.architecture.name = "nonexistent_model"

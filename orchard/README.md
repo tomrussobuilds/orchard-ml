@@ -21,7 +21,7 @@ orchard/
 │   │   ├── optuna_config.py    # Hyperparameter optimization
 │   │   ├── tracking_config.py  # MLflow tracking settings
 │   │   ├── telemetry_config.py # Filesystem, logging policy, experiment ID
-│   │   ├── export_config.py    # ONNX/TorchScript export parameters
+│   │   ├── export_config.py    # ONNX export parameters
 │   │   ├── infrastructure_config.py # Resource lifecycle, flock, process mgmt
 │   │   └── types.py            # Semantic types & validation primitives
 │   ├── environment/            # Hardware abstraction
@@ -62,7 +62,7 @@ orchard/
 │   ├── transforms.py           # Augmentation pipelines (torchvision V2)
 │   ├── data_explorer.py        # Visualization utilities
 │   └── synthetic.py            # Synthetic data generation
-├── models/                     # Architecture factory
+├── architectures/              # Architecture factory
 │   ├── factory.py              # Model registry & builder
 │   ├── resnet_18.py            # ResNet-18 multi-resolution (28/32/64/224)
 │   ├── mini_cnn.py             # Compact CNN (~95K params, 28/32/64)
@@ -125,11 +125,11 @@ trainer = ModelTrainer(model=model, cfg=cfg, ...)
 <h3>3. Separation of Concerns</h3>
 - **core/**: Framework infrastructure (config, hardware, logging)
 - **data_handler/**: Data loading only
-- **models/**: Architecture definitions only
+- **architectures/**: Architecture definitions only
 - **trainer/**: Training loop only
 - **evaluation/**: Metrics & visualization only
 - **pipeline/**: Phase orchestration (training, optimization, export)
-- **export/**: ONNX/TorchScript export and validation
+- **export/**: ONNX export and validation
 - **tracking/**: MLflow experiment tracking (optional)
 - **optimization/**: Optuna wrapper only
 
@@ -162,14 +162,14 @@ REGISTRY_224: Final[Dict[str, DatasetMetadata]] = {
 Export from `orchard/core/metadata/domains/__init__.py` to make it available.
 
 <h3>Adding New Architectures</h3>
-1. Create builder in `orchard/models/your_model.py`:
+1. Create builder in `orchard/architectures/your_model.py`:
 ```python
 def build_your_model(device, cfg, in_channels, num_classes):
     # Implementation
     return model
 ```
 
-2. Register in `orchard/models/factory.py`:
+2. Register in `orchard/architectures/factory.py`:
 ```python
 _MODEL_REGISTRY["your_model"] = build_your_model
 ```

@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import torch
 
-from orchard.models import build_mini_cnn
+from orchard.architectures import build_mini_cnn
 
 
 # FIXTURES

@@ -46,6 +46,18 @@ def run_final_evaluation(
     Coordinates full-set inference (with TTA support), visualizes metrics,
     and generates the final structured report.
 
+    Args:
+        model: Trained model for evaluation (already on target device).
+        test_loader: DataLoader for test set.
+        train_losses: Training loss history per epoch.
+        val_metrics_history: Validation metrics history per epoch.
+        class_names: List of class label strings.
+        paths: RunPaths for artifact output.
+        cfg: Global configuration manifest.
+        aug_info: Augmentation description string for report.
+        log_path: Path to session log file for report embedding.
+        tracker: Optional experiment tracker for final metrics.
+
     Returns:
         tuple of (macro_f1, test_acc, test_auc)
     """

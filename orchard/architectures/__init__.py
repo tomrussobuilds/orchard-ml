@@ -1,10 +1,10 @@
 """
-Models Factory Package
+Architectures Factory Package.
 
-This package implements the Factory Pattern to decouple model instantiation
-from the main execution logic. It routes requests to specific architecture
-definitions and ensures models are correctly adapted to the dataset geometry
-(channels and classes) resolved at runtime.
+Implements the Factory Pattern to decouple model instantiation from the
+main execution logic. Routes requests to specific architecture definitions
+and ensures models are correctly adapted to the dataset geometry (channels
+and classes) resolved at runtime.
 """
 
 from .convnext_tiny import build_convnext_tiny

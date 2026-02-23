@@ -15,7 +15,7 @@ Key Components:
     _MODEL_REGISTRY: Internal mapping of architecture names to builders
 
 Example:
-    >>> from orchard.models.factory import get_model
+    >>> from orchard.architectures.factory import get_model
     >>> model = get_model(device=device, cfg=cfg)
     >>> print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
 """

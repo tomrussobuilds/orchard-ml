@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import torch
 
-from orchard.models import build_resnet18
+from orchard.architectures import build_resnet18
 
 
 # FIXTURES
@@ -113,7 +113,7 @@ class TestResNet18Low:
         """Verify pretrained weights are loaded and morphed with bicubic interpolation."""
         mock_cfg_28.architecture.pretrained = True
 
-        from orchard.models import resnet_18 as resnet_module
+        from orchard.architectures import resnet_18 as resnet_module
 
         with patch.object(resnet_module, "models") as mock_models:
             mock_model = MagicMock()
@@ -306,7 +306,7 @@ class TestResNet18High:
         """Verify pretrained weights are loaded and channel-averaged for grayscale 224x224."""
         mock_cfg_224.architecture.pretrained = True
 
-        from orchard.models import resnet_18 as resnet_module
+        from orchard.architectures import resnet_18 as resnet_module
 
         with patch.object(resnet_module, "models") as mock_models:
             mock_model = MagicMock()

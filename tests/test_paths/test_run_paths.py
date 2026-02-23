@@ -22,7 +22,7 @@ from orchard.core.paths import OUTPUTS_ROOT, RunPaths
 def test_sub_dirs_constant():
     """Test SUB_DIRS class constant contains all required subdirectories."""
     assert hasattr(RunPaths, "SUB_DIRS")
-    assert RunPaths.SUB_DIRS == ("figures", "models", "reports", "logs", "database", "exports")
+    assert RunPaths.SUB_DIRS == ("figures", "checkpoints", "reports", "logs", "database", "exports")
     assert len(RunPaths.SUB_DIRS) == 6
 
 
@@ -277,12 +277,12 @@ def test_runpaths_path_attributes(tmp_path):
 
     assert isinstance(run_paths.root, Path)
     assert isinstance(run_paths.figures, Path)
-    assert isinstance(run_paths.models, Path)
+    assert isinstance(run_paths.checkpoints, Path)
     assert isinstance(run_paths.reports, Path)
     assert isinstance(run_paths.logs, Path)
     assert isinstance(run_paths.database, Path)
     assert run_paths.figures == run_paths.root / "figures"
-    assert run_paths.models == run_paths.root / "models"
+    assert run_paths.checkpoints == run_paths.root / "checkpoints"
     assert run_paths.reports == run_paths.root / "reports"
     assert run_paths.logs == run_paths.root / "logs"
     assert run_paths.database == run_paths.root / "database"
@@ -301,7 +301,7 @@ def test_best_model_path_property(tmp_path):
         base_dir=tmp_path,
     )
 
-    expected_path = run_paths.models / "best_resnet50.pth"
+    expected_path = run_paths.checkpoints / "best_resnet50.pth"
     assert run_paths.best_model_path == expected_path
 
 
@@ -494,11 +494,11 @@ def test_runpaths_full_workflow(tmp_path):
 
     assert run_paths.root.exists()
 
-    (run_paths.models / "checkpoint.pth").touch()
+    (run_paths.checkpoints / "checkpoint.pth").touch()
     (run_paths.reports / "metrics.json").touch()
     (run_paths.figures / "plot.png").touch()
 
-    assert (run_paths.models / "checkpoint.pth").exists()
+    assert (run_paths.checkpoints / "checkpoint.pth").exists()
     assert (run_paths.reports / "metrics.json").exists()
     assert (run_paths.figures / "plot.png").exists()
 

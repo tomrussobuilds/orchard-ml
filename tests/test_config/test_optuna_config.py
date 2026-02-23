@@ -54,7 +54,7 @@ def test_optuna_config_custom_values():
 @pytest.mark.unit
 def test_invalid_metric_name_rejected():
     """Test invalid metric_name is rejected."""
-    with pytest.raises(ValidationError, match="metric_name.*invalid"):
+    with pytest.raises(ValidationError):
         OptunaConfig(metric_name="invalid_metric")
 
 

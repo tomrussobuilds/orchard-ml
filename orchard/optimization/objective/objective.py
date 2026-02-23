@@ -29,8 +29,9 @@ from ...core import LOGGER_NAME, Config, log_trial_start
 
 if TYPE_CHECKING:  # pragma: no cover
     from ...tracking import TrackerProtocol
+
+from ...architectures import get_model
 from ...data_handler import DatasetData, get_dataloaders, load_dataset
-from ...models import get_model
 from ...trainer import get_criterion, get_optimizer, get_scheduler
 
 # Relative Imports

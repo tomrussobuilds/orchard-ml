@@ -14,7 +14,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from orchard.models.factory import _suppress_download_noise, get_model
+from orchard.architectures.factory import _suppress_download_noise, get_model
 
 
 # FACTORY: BASIC INSTANTIATION
@@ -173,7 +173,7 @@ def test_get_model_suppresses_download_bar():
     mock_cfg.dataset.num_classes = 10
     mock_cfg.dataset.img_size = 28
 
-    with patch("orchard.models.factory._suppress_download_noise") as mock_suppress:
+    with patch("orchard.architectures.factory._suppress_download_noise") as mock_suppress:
         mock_suppress.return_value.__enter__ = MagicMock(return_value=None)
         mock_suppress.return_value.__exit__ = MagicMock(return_value=False)
         model = get_model(device=device, cfg=mock_cfg)

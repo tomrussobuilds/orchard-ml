@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import torch
 
-from orchard.models import build_efficientnet_b0
+from orchard.architectures import build_efficientnet_b0
 
 
 # FIXTURES
@@ -81,7 +81,7 @@ class TestEfficientNetB0:
         """Verify pretrained weights are loaded and morphed for grayscale."""
         mock_cfg.architecture.pretrained = True
 
-        from orchard.models import efficientnet_b0 as efficientnet_module
+        from orchard.architectures import efficientnet_b0 as efficientnet_module
 
         with patch.object(efficientnet_module, "models") as mock_models:
             mock_model = MagicMock()

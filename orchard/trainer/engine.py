@@ -45,7 +45,7 @@ def _backward_step(
         loss (torch.Tensor): The computed loss for the current batch.
         optimizer (torch.optim.Optimizer): The optimizer used to update model parameters.
         model (nn.Module): The neural network model whose parameters will be updated.
-        scaler (torch.cuda.amp.GradScaler | None): Automatic Mixed Precision (AMP) scaler.
+        scaler (torch.amp.GradScaler | None): Automatic Mixed Precision (AMP) scaler.
             If `None`, standard precision backward pass is used.
         grad_clip (float): Maximum norm for gradient clipping. If <= 0, no clipping is applied.
     """

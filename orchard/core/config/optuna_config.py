@@ -138,7 +138,7 @@ class OptunaConfig(BaseModel):
         n_trials: Total number of optimization trials to run.
         epochs: Training epochs per trial (typically shorter than final training).
         timeout: Maximum optimization time in seconds (None=unlimited).
-        metric_name: Optimization target metric ('auc', 'accuracy', 'loss').
+        metric_name: Optimization target metric.
         direction: Whether to 'maximize' or 'minimize' the metric.
         sampler_type: Sampling algorithm ('tpe', 'cmaes', 'random', 'grid').
         search_space_preset: Predefined search space ('quick', 'full', etc.).
@@ -176,8 +176,8 @@ class OptunaConfig(BaseModel):
     )
 
     # ==================== Optimization Target ====================
-    metric_name: str = Field(
-        default="auc", description="Metric to optimize ['loss', 'accuracy', 'auc']"
+    metric_name: Literal["auc", "accuracy", "loss"] = Field(
+        default="auc", description="Metric to optimize"
     )
 
     direction: Literal["maximize", "minimize"] = Field(
@@ -300,22 +300,6 @@ class OptunaConfig(BaseModel):
         """
         if self.storage_type == "postgresql" and self.storage_path is None:
             raise ValueError("PostgreSQL storage requires storage_path with connection string")
-        return self
-
-    @model_validator(mode="after")
-    def check_metric_name(self) -> "OptunaConfig":
-        """
-        Validate metric_name is a supported optimization target.
-
-        Raises:
-            ValueError: If metric_name not in ['auc', 'accuracy', 'loss'].
-
-        Returns:
-            Validated OptunaConfig instance.
-        """
-        allowed_metrics = ["auc", "accuracy", "loss"]
-        if self.metric_name not in allowed_metrics:
-            raise ValueError(f"metric_name '{self.metric_name}' invalid. Choose: {allowed_metrics}")
         return self
 
     @model_validator(mode="after")

@@ -21,10 +21,10 @@ from __future__ import annotations
 import argparse
 import os
 
+from orchard.architectures import get_model
 from orchard.core import Config, DatasetRegistryWrapper, LogStyle, RootOrchestrator
 from orchard.data_handler import get_augmentations_description, get_dataloaders, load_dataset
 from orchard.evaluation import run_final_evaluation
-from orchard.models import get_model
 from orchard.trainer import ModelTrainer, get_criterion, get_optimizer, get_scheduler
 
 

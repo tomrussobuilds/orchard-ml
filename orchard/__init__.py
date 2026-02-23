@@ -11,6 +11,7 @@ from importlib.metadata import version as _pkg_version
 
 __version__ = _pkg_version("orchard-ml")
 
+from .architectures import get_model
 from .core import (
     Config,
     LogStyle,
@@ -18,7 +19,6 @@ from .core import (
     log_pipeline_summary,
 )
 from .core.paths import MLRUNS_DB
-from .models import get_model
 from .pipeline import run_export_phase, run_optimization_phase, run_training_phase
 from .tracking import create_tracker
 
@@ -31,7 +31,7 @@ __all__ = [
     "log_pipeline_summary",
     # Paths
     "MLRUNS_DB",
-    # Models
+    # Architectures
     "get_model",
     # Pipeline
     "run_export_phase",

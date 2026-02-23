@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import torch
 
-from orchard.models import build_convnext_tiny
+from orchard.architectures import build_convnext_tiny
 
 
 # FIXTURES
@@ -81,7 +81,7 @@ class TestConvNeXtTiny:
         """Verify pretrained weights are loaded and morphed for grayscale."""
         mock_cfg.architecture.pretrained = True
 
-        from orchard.models import convnext_tiny as convnext_module
+        from orchard.architectures import convnext_tiny as convnext_module
 
         with patch.object(convnext_module, "models") as mock_models:
             mock_model = MagicMock()

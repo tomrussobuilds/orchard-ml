@@ -12,7 +12,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from orchard.models.vit_tiny import build_vit_tiny
+from orchard.architectures.vit_tiny import build_vit_tiny
 
 
 # FIXUTRES
@@ -84,7 +84,7 @@ class TestBuildViTTiny:
         num_classes = 10
         in_channels = 3
 
-        with patch("orchard.models.vit_tiny.timm.create_model") as mock_timm:
+        with patch("orchard.architectures.vit_tiny.timm.create_model") as mock_timm:
             mock_model = MagicMock(spec=nn.Module)
             mock_timm.return_value = mock_model
             mock_model.to.return_value = mock_model

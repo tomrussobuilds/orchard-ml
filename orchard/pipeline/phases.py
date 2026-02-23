@@ -32,6 +32,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from ..core import RootOrchestrator
     from ..tracking import TrackerProtocol
 
+from ..architectures import get_model
 from ..data_handler import (
     get_augmentations_description,
     get_dataloaders,
@@ -40,7 +41,6 @@ from ..data_handler import (
 )
 from ..evaluation import run_final_evaluation
 from ..export import benchmark_onnx_inference, export_to_onnx, validate_export
-from ..models import get_model
 from ..optimization import run_optimization
 from ..trainer import ModelTrainer, get_criterion, get_optimizer, get_scheduler
 

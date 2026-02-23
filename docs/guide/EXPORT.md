@@ -2,7 +2,7 @@
 
 <h1 align="center">Model Export Guide</h1>
 
-Convert trained Orchard ML models to ONNX or TorchScript for production deployment.
+Convert trained Orchard ML models to ONNX for production deployment.
 
 <h2>How It Works</h2>
 
@@ -13,16 +13,17 @@ orchard run recipes/config_efficientnet_b0.yaml
 ```
 
 After training completes, the export phase automatically:
-1. Loads the best checkpoint from `models/`
-2. Traces the model and converts to the target format
+1. Loads the best checkpoint from `checkpoints/`
+2. Traces the model and converts to ONNX
 3. Validates PyTorch vs exported output (optional)
-4. Saves the exported file alongside the checkpoint
+4. Benchmarks inference latency (optional)
 
 ```
 outputs/20260219_galaxy10_efficientnetb0_abc123/
-  models/
+  checkpoints/
     best_efficientnetb0.pth     # PyTorch checkpoint
-    best_efficientnetb0.onnx    # Exported ONNX model
+  exports/
+    model.onnx                  # Production-ready ONNX export
 ```
 
 <h2>Configuration</h2>
@@ -41,61 +42,44 @@ export:
 ```yaml
 export:
   # Format
-  format: onnx                    # onnx | torchscript | both
-  output_path: null               # auto-generated if omitted
+  format: onnx                    # only ONNX supported
 
   # ONNX settings
   opset_version: 18               # 18 = latest, no conversion warnings
   dynamic_axes: true              # dynamic batch size for flexible inference
   do_constant_folding: true       # fold constants at export time
 
-  # TorchScript settings
-  torchscript_method: trace       # trace | script
-
-  # Quantization
+  # Quantization (TODO: not yet wired at runtime)
   quantize: false                 # apply INT8 post-training quantization
   quantization_backend: qnnpack   # qnnpack (mobile/ARM) | fbgemm (x86)
 
   # Validation
   validate_export: true           # compare PyTorch vs exported output
   validation_samples: 10          # number of samples for validation
-  max_deviation: 1.0e-05          # max allowed numerical deviation
+  max_deviation: 1.0e-04          # max allowed numerical deviation
+
+  # Benchmark
+  benchmark: false                # run ONNX inference latency benchmark
 ```
 
 | Field | Default | Description |
 |-------|---------|-------------|
-| `format` | `onnx` | Export format: `onnx`, `torchscript`, or `both` |
-| `output_path` | `null` | Custom output path (auto-generated if omitted) |
+| `format` | `onnx` | Export format (only ONNX supported) |
 | `opset_version` | `18` | ONNX opset version (18 recommended) |
 | `dynamic_axes` | `true` | Enable dynamic batch size for inference flexibility |
 | `do_constant_folding` | `true` | Optimize constant operations during export |
-| `torchscript_method` | `trace` | TorchScript method: `trace` (recommended) or `script` |
-| `quantize` | `false` | Apply INT8 post-training quantization |
+| `quantize` | `false` | Apply INT8 post-training quantization (not yet wired) |
 | `quantization_backend` | `qnnpack` | Quantization backend: `qnnpack` (mobile/ARM), `fbgemm` (x86) |
 | `validate_export` | `true` | Run numerical validation after export |
 | `validation_samples` | `10` | Number of random samples for validation |
-| `max_deviation` | `1e-5` | Maximum allowed output deviation (PyTorch vs export) |
-
-<h2>Quantization</h2>
-
-INT8 quantization reduces model size ~4x and speeds up CPU inference, with minimal accuracy loss:
-
-```yaml
-export:
-  format: onnx
-  quantize: true
-  quantization_backend: fbgemm    # x86 server deployment
-  validate_export: true           # verify accuracy after quantization
-  max_deviation: 1.0e-03          # relax tolerance for quantized models
-```
-
-> **Note:** Use `qnnpack` for mobile/ARM targets, `fbgemm` for x86 servers.
+| `max_deviation` | `1e-4` | Maximum allowed output deviation (PyTorch vs ONNX) |
+| `benchmark` | `false` | Run inference latency benchmark after export |
 
 <h2>Troubleshooting</h2>
 
 <h3>Validation failed</h3>
 
-If quantization causes deviations beyond `max_deviation`, either relax the tolerance or set `validate_export: false`.
+If numerical deviations exceed `max_deviation`, relax the tolerance or set `validate_export: false`.
 
 <h3>Missing onnxscript</h3>
 

@@ -51,7 +51,7 @@ class RunPaths(BaseModel):
         model_slug: Sanitized alphanumeric model identifier.
         root: Base directory for all run artifacts.
         figures: Directory for plots, confusion matrices, ROC curves.
-        models: Directory for saved checkpoints (.pth files).
+        checkpoints: Directory for saved checkpoints (.pth files).
         reports: Directory for config mirrors, CSV/XLSX summaries.
         logs: Directory for training logs and session output.
         database: Directory for SQLite optimization studies.
@@ -62,7 +62,7 @@ class RunPaths(BaseModel):
 
             outputs/20260208_organcmnist_efficientnetb0_a3f7c2/
             ├── figures/
-            ├── models/
+            ├── checkpoints/
             ├── reports/
             ├── logs/
             ├── database/
@@ -74,7 +74,7 @@ class RunPaths(BaseModel):
     # Immutable blueprint for the directory tree
     SUB_DIRS: ClassVar[tuple[str, ...]] = (
         "figures",
-        "models",
+        "checkpoints",
         "reports",
         "logs",
         "database",
@@ -89,7 +89,7 @@ class RunPaths(BaseModel):
     # Physical Paths
     root: Path
     figures: Path
-    models: Path
+    checkpoints: Path
     reports: Path
     logs: Path
     database: Path
@@ -160,7 +160,7 @@ class RunPaths(BaseModel):
             architecture_slug=a_slug,
             root=root_path,
             figures=root_path / "figures",
-            models=root_path / "models",
+            checkpoints=root_path / "checkpoints",
             reports=root_path / "reports",
             logs=root_path / "logs",
             database=root_path / "database",
@@ -226,9 +226,9 @@ class RunPaths(BaseModel):
         Path for the best-performing model checkpoint.
 
         Returns:
-            Path in format: models/best_{model_slug}.pth
+            Path in format: checkpoints/best_{model_slug}.pth
         """
-        return self.models / f"best_{self.architecture_slug}.pth"
+        return self.checkpoints / f"best_{self.architecture_slug}.pth"
 
     @property
     def final_report_path(self) -> Path:

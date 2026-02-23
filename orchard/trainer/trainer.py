@@ -91,7 +91,7 @@ class ModelTrainer:
         ...     criterion=criterion,
         ...     device=device,
         ...     cfg=cfg,
-        ...     output_path=paths.models / "best_model.pth"
+        ...     output_path=paths.checkpoints / "best_model.pth"
         ... )
         >>> checkpoint_path, losses, metrics = trainer.train()
         >>> # Model automatically restored to best weights

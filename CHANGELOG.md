@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - audit hardening — config wiring, validation, and constant extraction
 - complete return type annotations and harden Bandit in CI
 - audit hardening — scheduler bug, config wiring, and dead code removal
+- audit hardening — trainer monitor_metric, dead code removal, and export wiring
 
 ### Miscellaneous
 

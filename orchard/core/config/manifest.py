@@ -37,6 +37,11 @@ from .telemetry_config import TelemetryConfig
 from .tracking_config import TrackingConfig
 from .training_config import TrainingConfig
 
+# Architecture resolution constraints (add new architectures here)
+_MODELS_LOW_RES = frozenset({"mini_cnn"})
+_MODELS_224_ONLY = frozenset({"efficientnet_b0", "vit_tiny", "convnext_tiny"})
+_MODELS_MULTI_RES = frozenset({"resnet_18"})
+
 
 # MAIN CONFIGURATION
 class Config(BaseModel):
@@ -274,24 +279,20 @@ class _CrossDomainValidator:
 
         resolution = config.dataset.resolution
 
-        resolution_low = {"mini_cnn"}
-        resolution_224_only = {"efficientnet_b0", "vit_tiny", "convnext_tiny"}
-        multi_resolution = {"resnet_18"}
-
-        if model_name in resolution_low and resolution not in (28, 32, 64):
+        if model_name in _MODELS_LOW_RES and resolution not in (28, 32, 64):
             raise ValueError(
                 f"'{config.architecture.name}' requires resolution 28, 32, or 64, "
                 f"got {resolution}. Use a 224x224 architecture "
                 f"(efficientnet_b0, vit_tiny, convnext_tiny) or resnet_18."
             )
 
-        if model_name in resolution_224_only and resolution != 224:
+        if model_name in _MODELS_224_ONLY and resolution != 224:
             raise ValueError(
                 f"'{config.architecture.name}' requires resolution=224, got {resolution}. "
                 f"Use resnet_18 or mini_cnn for low resolution."
             )
 
-        if model_name in multi_resolution and resolution not in SUPPORTED_RESOLUTIONS:
+        if model_name in _MODELS_MULTI_RES and resolution not in SUPPORTED_RESOLUTIONS:
             raise ValueError(
                 f"'{config.architecture.name}' supports resolutions "
                 f"{sorted(SUPPORTED_RESOLUTIONS)}, got {resolution}."
