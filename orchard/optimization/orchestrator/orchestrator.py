@@ -84,10 +84,10 @@ class OptunaOrchestrator:
         """Initialize orchestrator.
 
         Args:
-            cfg: Base Config to override per trial
-            device: PyTorch device
-            paths: Root directory for outputs
-            tracker: Optional experiment tracker for nested trial logging
+            cfg (Config): Base Config to override per trial
+            device (torch.device): PyTorch device for training
+            paths (RunPaths): Root directory for outputs
+            tracker (TrackerProtocol | None): Optional experiment tracker for nested trial logging
         """
         self.cfg = cfg
         self.device = device
@@ -204,10 +204,10 @@ def run_optimization(
     Convenience function to run complete optimization pipeline.
 
     Args:
-        cfg: Global configuration with optuna section
-        device: PyTorch device for training
-        paths: RunPaths instance for output management
-        tracker: Optional experiment tracker for nested trial logging
+        cfg (Config): Global configuration with optuna section
+        device (torch.device): PyTorch device for training
+        paths (RunPaths): RunPaths instance for output management
+        tracker (TrackerProtocol | None): Optional experiment tracker for nested trial logging
 
     Returns:
         Completed Optuna study with trial results

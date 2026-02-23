@@ -54,6 +54,11 @@ def export_to_onnx(
         do_constant_folding: Optimize constant operations at export
         validate: Validate exported model with ONNX checker
 
+    Raises:
+        FileNotFoundError: If checkpoint_path does not exist.
+        RuntimeError: If state_dict loading fails (architecture mismatch).
+        ValueError: If ONNX validation fails (when validate=True).
+
     Example:
         >>> export_to_onnx(
         ...     model=EfficientNet(),

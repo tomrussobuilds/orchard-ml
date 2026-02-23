@@ -238,12 +238,13 @@ def get_dataloaders(
     automatic class balancing, hardware optimization, and Optuna support.
 
     Args:
-        metadata: Dataset metadata from load_dataset (paths, splits)
-        cfg: Global configuration with batch size, workers, and augmentation settings
-        is_optuna: If True, use memory-conservative settings for hyperparameter tuning
+        metadata (DatasetData): Dataset metadata from load_dataset (paths, splits)
+        cfg (Config): Global configuration with batch size, workers, and augmentation settings
+        is_optuna (bool): If True, use memory-conservative settings for hyperparameter tuning
 
     Returns:
-        tuple of (train_loader, val_loader, test_loader)
+        tuple[DataLoader, DataLoader, DataLoader]: A 3-tuple of
+            (train_loader, val_loader, test_loader)
 
     Example:
         >>> data = load_dataset(ds_meta)

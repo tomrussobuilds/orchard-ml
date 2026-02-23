@@ -11,7 +11,7 @@ fully customized via YAML through OptunaConfig.search_space_overrides.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..core.config.optuna_config import SearchSpaceOverrides
@@ -268,7 +268,7 @@ def get_search_space(
     include_models: bool = False,
     model_pool: list[str] | None = None,
     overrides: SearchSpaceOverrides | None = None,
-):
+) -> dict[str, Any]:
     """
     Factory function to retrieve a search space preset.
 
@@ -281,7 +281,7 @@ def get_search_space(
         overrides: Configurable search range bounds (uses defaults if None)
 
     Returns:
-        dict of parameter samplers
+        dict[str, Any]: Dictionary of parameter samplers keyed by parameter name
 
     Raises:
         ValueError: If preset name not recognized

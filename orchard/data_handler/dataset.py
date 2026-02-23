@@ -92,6 +92,13 @@ class VisionDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
 
         The image is converted to a PIL object to ensure compatibility with
         Torchvision V2 transforms before being returned as a PyTorch Tensor.
+
+        Args:
+            idx (int): Sample index.
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor]: A pair of (image, label) where
+                image is a ``(C, H, W)`` float tensor and label is a scalar long tensor.
         """
         img = self.images[idx]
         label = self.labels[idx]

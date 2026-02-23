@@ -91,12 +91,12 @@ def map_param_to_config_path(param_name: str) -> tuple[str, str]:
         param_name: Name of the hyperparameter from Optuna trial
 
     Returns:
-        tuple of (section, key) for navigating the config dict
+        Tuple of ``(section, field_name)`` for navigating the config dict
 
     Example:
-        >>> section, key = map_param_to_config_path("learning_rate")
-        >>> # Returns: ("training", "learning_rate")
-        >>> config_dict[section][key] = 0.001
+        >>> result = map_param_to_config_path("learning_rate")
+        >>> result
+        ('training', 'learning_rate')
     """
     if param_name in TRAINING_PARAMS:
         return ("training", param_name)

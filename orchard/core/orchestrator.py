@@ -242,9 +242,9 @@ class RootOrchestrator:
         The CLI's top-level handler is responsible for user-facing error reporting.
 
         Args:
-            exc_type: Exception class if the block raised, else None.
-            exc_val: Exception instance if the block raised, else None.
-            exc_tb: Traceback object if the block raised, else None.
+            exc_type (type[BaseException] | None): Exception class if the block raised, else None.
+            exc_val (BaseException | None): Exception instance if the block raised, else None.
+            exc_tb (TracebackType | None): Traceback object if the block raised, else None.
 
         Returns:
             Always False — exceptions are never suppressed.

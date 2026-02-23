@@ -54,7 +54,12 @@ def evaluate_model(
         cfg: Global configuration manifest.
 
     Returns:
-        tuple containing predictions, labels, metrics dict, and macro-f1 scalar.
+        tuple[np.ndarray, np.ndarray, dict, float]: A 4-tuple of:
+
+            - **all_preds** -- Predicted class indices, shape ``(N,)``
+            - **all_labels** -- Ground truth labels, shape ``(N,)``
+            - **metrics** -- Dict with keys ``accuracy``, ``auc``, ``f1``
+            - **macro_f1** -- Macro-averaged F1 score (convenience shortcut)
     """
     model.eval()
     all_probs_list: list[np.ndarray] = []

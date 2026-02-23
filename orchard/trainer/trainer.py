@@ -116,16 +116,16 @@ class ModelTrainer:
         Initializes the ModelTrainer with all required training components.
 
         Args:
-            model: Neural network architecture to train
-            train_loader: DataLoader for training dataset
-            val_loader: DataLoader for validation dataset
-            optimizer: Gradient descent optimizer (e.g., SGD, Adam)
-            scheduler: Learning rate scheduler for training dynamics
-            criterion: Loss function for optimization (e.g., CrossEntropyLoss)
-            device: Compute device (torch.device) for training
-            cfg: Validated global configuration containing training hyperparameters
-            output_path: Optional path for best model checkpoint (default: ./best_model.pth)
-            tracker: Optional experiment tracker for MLflow metric logging
+            model (nn.Module): Neural network architecture to train
+            train_loader (DataLoader): DataLoader for training dataset
+            val_loader (DataLoader): DataLoader for validation dataset
+            optimizer (torch.optim.Optimizer): Gradient descent optimizer (e.g., SGD, Adam)
+            scheduler (LRScheduler): Learning rate scheduler for training dynamics
+            criterion (nn.Module): Loss function for optimization (e.g., CrossEntropyLoss)
+            device (torch.device): Compute device for training
+            cfg (Config): Validated global configuration containing training hyperparameters
+            output_path (Path | None): Path for best model checkpoint (default: ./best_model.pth)
+            tracker (TrackerProtocol | None): Optional experiment tracker for MLflow metric logging
         """
         self.model = model
         self.train_loader = train_loader

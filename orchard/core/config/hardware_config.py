@@ -151,7 +151,7 @@ class HardwareConfig(BaseModel):
         Forces reproducible=True to ensure consistent trial evaluation.
 
         Args:
-            **kwargs: Additional HardwareConfig parameters.
+            **kwargs (Any): Additional HardwareConfig parameters.
 
         Returns:
             HardwareConfig with reproducible mode enabled.

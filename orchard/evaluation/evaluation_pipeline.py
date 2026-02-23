@@ -60,7 +60,11 @@ def run_final_evaluation(
         tracker: Optional experiment tracker for final metrics.
 
     Returns:
-        tuple of (macro_f1, test_acc, test_auc)
+        tuple[float, float, float]: A 3-tuple of:
+
+            - **macro_f1** -- Macro-averaged F1 score
+            - **test_acc** -- Test set accuracy
+            - **test_auc** -- Test set AUC (0.0 if unavailable)
     """
 
     # Resolve device from model (already placed on the correct device by the trainer)

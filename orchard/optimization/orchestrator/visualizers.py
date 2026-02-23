@@ -92,11 +92,11 @@ def save_plot(
         study: Optuna study instance
         plot_name: Human-readable plot name (for logging)
         plot_fn: Optuna plotting function (e.g., plot_optimization_history)
-        output_path: Full path for output HTML file
+        output_dir (Path): Directory for output HTML files
 
     Example:
         >>> from optuna.visualization import plot_optimization_history
-        >>> save_plot(study, "history", plot_optimization_history, Path("history.html"))
+        >>> save_plot(study, "history", plot_optimization_history, Path("./figures"))
     """
     try:
         fig = plot_fn(study)

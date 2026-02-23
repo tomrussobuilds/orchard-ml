@@ -15,6 +15,8 @@ Key Responsibilities:
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from ..metadata import DatasetMetadata, DatasetRegistryWrapper
@@ -84,7 +86,7 @@ class DatasetConfig(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def sync_img_size_with_resolution(cls, values):
+    def sync_img_size_with_resolution(cls, values: dict[str, Any]) -> dict[str, Any]:
         """
         Auto-sync img_size with resolution if not explicitly set.
 
@@ -96,10 +98,10 @@ class DatasetConfig(BaseModel):
         3. If metadata exists → use metadata.native_resolution
 
         Args:
-            values: Raw input dict before Pydantic validation
+            values (dict[str, Any]): Raw input dict before Pydantic validation
 
         Returns:
-            Modified values dict with synced img_size
+            dict[str, Any]: Modified values dict with synced img_size
         """
         img_size = values.get("img_size")
         resolution = values.get("resolution", 28)

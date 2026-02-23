@@ -337,7 +337,7 @@ class OptunaConfig(BaseModel):
         Constructs storage URL for Optuna study.
 
         Args:
-            paths: RunPaths instance
+            paths (RunPaths): RunPaths instance providing database directory
 
         Returns:
             Storage URL string (sqlite:// or postgresql://)

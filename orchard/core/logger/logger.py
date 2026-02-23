@@ -303,7 +303,7 @@ class Logger:
             name: Logger identifier (typically LOGGER_NAME constant)
             log_dir: Directory for log file storage (None = console-only mode)
             level: Logging level as string (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-            **kwargs: Additional arguments passed to Logger constructor
+            **kwargs (Any): Additional arguments passed to Logger constructor
 
         Returns:
             Configured logging.Logger instance ready for use

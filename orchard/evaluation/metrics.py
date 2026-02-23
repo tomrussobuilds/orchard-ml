@@ -31,7 +31,11 @@ def compute_classification_metrics(
         probs: Softmax probability distributions.
 
     Returns:
-        dict: A dictionary containing 'accuracy', 'auc', and 'f1'.
+        dict[str, float]: Metric dictionary with keys:
+
+            - ``accuracy`` -- Overall classification accuracy
+            - ``auc`` -- Macro-averaged ROC-AUC (0.0 if computation fails)
+            - ``f1`` -- Macro-averaged F1 score
     """
     # Direct accuracy calculation via NumPy
     accuracy = np.mean(preds == labels)

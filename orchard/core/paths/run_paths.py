@@ -113,7 +113,7 @@ class RunPaths(BaseModel):
         Args:
             dataset_slug: Dataset identifier (e.g., 'organcmnist'). Will be
                 normalized to lowercase.
-            model_name: Human-readable model name (e.g., 'EfficientNet-B0').
+            architecture_name: Human-readable model name (e.g., 'EfficientNet-B0').
                 Special characters are stripped, converted to lowercase.
             training_cfg: Dictionary of hyperparameters used for hash generation.
                 Supports nested dicts, but only hashable primitives (int, float,
@@ -125,17 +125,17 @@ class RunPaths(BaseModel):
             Fully initialized RunPaths instance with all directories created.
 
         Raises:
-            ValueError: If dataset_slug or model_name is not a string.
+            ValueError: If dataset_slug or architecture_name is not a string.
 
         Example:
             >>> paths = RunPaths.create(
             ...     dataset_slug="OrganCMNIST",
-            ...     model_name="EfficientNet-B0",
+            ...     architecture_name="EfficientNet-B0",
             ...     training_cfg={"batch_size": 32, "lr": 0.001}
             ... )
             >>> paths.dataset_slug
             'organcmnist'
-            >>> paths.model_slug
+            >>> paths.architecture_slug
             'efficientnetb0'
         """
         if not isinstance(dataset_slug, str):
@@ -182,7 +182,7 @@ class RunPaths(BaseModel):
 
         Args:
             ds_slug: Normalized dataset slug (lowercase).
-            m_slug: Sanitized model slug (alphanumeric lowercase).
+            a_slug: Sanitized architecture slug (alphanumeric lowercase).
             cfg: Training configuration dictionary. Only hashable primitives
                 (int, float, str, bool, list) are included in hash computation.
                 May contain 'run_timestamp' key; if absent, current time is used.

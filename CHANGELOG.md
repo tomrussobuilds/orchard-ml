@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ONNX INT8 quantization + MkDocs API documentation
 
+### Fixed
+
+- mkdocs build warnings — remove --strict, fix broken links
+
 ## [0.1.6] - 2026-02-23
 
 ### Added

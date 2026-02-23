@@ -93,15 +93,15 @@ class TrialTrainingExecutor:
         Initialize training executor.
 
         Args:
-            model: PyTorch model to train
-            train_loader: Training data loader
-            val_loader: Validation data loader
-            optimizer: Optimizer instance
-            scheduler: Learning rate scheduler
-            criterion: Loss function
-            cfg: Trial configuration (reads optuna.* settings)
-            device: Training device
-            metric_extractor: Metric extraction and tracking handler
+            model (torch.nn.Module): PyTorch model to train
+            train_loader (DataLoader): Training data loader
+            val_loader (DataLoader): Validation data loader
+            optimizer (torch.optim.Optimizer): Optimizer instance
+            scheduler (LRScheduler | None): Learning rate scheduler
+            criterion (torch.nn.Module): Loss function
+            cfg (Config): Trial configuration (reads optuna.* settings)
+            device (torch.device): Training device
+            metric_extractor (MetricExtractor): Metric extraction and tracking handler
         """
         self.model = model
         self.train_loader = train_loader
