@@ -1,8 +1,12 @@
 """
-Export Validation Utilities.
+Export Numerical Validation.
 
-Validates exported models by comparing outputs against original PyTorch models.
-Ensures numerical consistency and correctness after export.
+Verifies that the ONNX graph produces outputs numerically equivalent to the
+original PyTorch model. ``validate_export`` runs *N* random forward passes
+through both runtimes (PyTorch on CPU, onnxruntime CPUExecutionProvider)
+and asserts that the maximum absolute deviation stays below a configurable
+threshold (default 1e-4). Called automatically by the export pipeline when
+``validate=True``.
 """
 
 from __future__ import annotations

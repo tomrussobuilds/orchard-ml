@@ -1,8 +1,17 @@
 """
-ONNX Model Exporter.
+ONNX Export, Quantization, and Benchmarking.
 
-Converts trained PyTorch models to ONNX format for production deployment.
-Supports dynamic batch sizes, optimization, and validation.
+End-to-end production pipeline for converting trained PyTorch checkpoints
+to optimized ONNX graphs. The module is consumed by the CLI ``orchard``
+export command and operates entirely on CPU.
+
+Key Functions:
+    export_to_onnx: Trace-based export with dynamic batch axes, constant
+        folding, and optional ``onnx.checker`` validation.
+    quantize_model: INT8 dynamic post-training quantization via
+        onnxruntime (qnnpack for ARM, fbgemm for x86).
+    benchmark_onnx_inference: Warm-up + timed inference loop returning
+        average latency in milliseconds.
 """
 
 from __future__ import annotations

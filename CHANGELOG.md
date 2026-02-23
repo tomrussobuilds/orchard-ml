@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
 - fix all mkdocs/griffe warnings and improve API docstrings
+- add usage section to FRAMEWORK.md, fix Quick Start in index.md
 
 ### Fixed
 

@@ -1,8 +1,16 @@
 """
-Evaluation and Reporting Package
+Final Evaluation Pipeline.
 
-This package coordinates model inference, performance visualization,
-and structured experiment reporting using a memory-efficient Lazy approach.
+Top-level orchestrator that chains inference, visualization, and reporting
+into a single ``run_final_evaluation`` call. Coordinates:
+
+1. Test-set inference via ``evaluator.evaluate_model`` (with optional TTA).
+2. Artifact generation — confusion matrix, training curves, prediction grid.
+3. Structured report (Excel/CSV/JSON) via ``reporting.create_structured_report``.
+4. Metric logging to the experiment tracker (MLflow) when enabled.
+
+This module is the last stage of the training lifecycle, invoked by
+``ModelTrainer`` after best-weight restoration.
 """
 
 from __future__ import annotations

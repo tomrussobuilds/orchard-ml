@@ -1,14 +1,24 @@
 """
 Core Training and Validation Engines.
 
-High-performance implementation of training and validation loops with modern
-PyTorch features: Automatic Mixed Precision (AMP), Gradient Clipping, and
-MixUp augmentation for improved numerical stability and hardware utilization.
+Stateless, single-epoch execution kernels consumed by ``ModelTrainer``.
+Each function accepts fully-resolved objects (model, loader, criterion,
+device) and returns plain Python values — no side-effects on global state.
+
+Features:
+    - AMP Integration: ``torch.autocast`` + ``GradScaler`` for mixed precision,
+      with automatic device-type resolution (CUDA/CPU).
+    - Gradient Clipping: Per-batch ``clip_grad_norm_`` applied after unscaling
+      when AMP is active, preventing gradient explosions.
+    - MixUp Augmentation: Beta-distribution blending (``mixup_data``) with
+      seeded NumPy generator for reproducible regularization.
+    - Divergence Guard: ``train_one_epoch`` raises ``RuntimeError`` on
+      NaN/Inf loss to prevent checkpointing corrupted weights.
 
 Key Functions:
-    train_one_epoch: Single training pass with AMP and MixUp support
-    validate_epoch: Validation with loss, accuracy, and AUC metrics
-    mixup_data: Beta-distribution sample blending for regularization
+    train_one_epoch: Single training pass with AMP, MixUp, and tqdm progress.
+    validate_epoch: No-grad evaluation returning loss, accuracy, and macro AUC.
+    mixup_data: Convex sample blending for data augmentation.
 """
 
 from __future__ import annotations

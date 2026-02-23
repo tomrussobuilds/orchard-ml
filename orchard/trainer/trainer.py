@@ -1,20 +1,20 @@
 """
-Model Training & Lifecycle Orchestration.
+Model Training Lifecycle Orchestration.
 
-This module encapsulates the `ModelTrainer` engine, responsible for executing
-the training loop, validation phases, and learning rate scheduling. It bridges
-validated configurations with execution kernels, ensuring atomic state management
-through specialized checkpointing and weight restoration logic.
+Provides the ``ModelTrainer`` class — the top-level coordinator that drives
+epoch iteration, metric-based checkpointing, and early stopping. Low-level
+loop execution is delegated to ``engine`` (train/validate epochs), scheduler
+stepping to ``_scheduling``, and optimizer/criterion construction to ``setup``.
 
 Key Features:
-    - Automated Checkpointing: Tracks the configured monitor_metric and
-      persists the optimal model state.
-    - Deterministic Restoration: Guarantees that the model instance in memory
-      reflects the 'best' found parameters upon completion.
-    - Modern Training Utilities: Native support for Mixed Precision (AMP),
-      Gradient Clipping, and Mixup augmentation.
-    - Lifecycle Telemetry: Unified logging of loss trajectories, metric
-      evolution, and resource utilization.
+    - Configurable Monitor Metric: Checkpointing and early stopping track
+      a user-chosen metric (accuracy, f1, auc, or loss).
+    - Deterministic Restoration: Best model weights are reloaded in-place
+      after training completes, guaranteeing consistency.
+    - Modern Training Utilities: AMP (GradScaler), gradient clipping, and
+      Mixup augmentation via the engine sub-module.
+    - Lifecycle Telemetry: Per-epoch logging of loss trajectories, metric
+      evolution, learning rate, and early stopping status.
 """
 
 from __future__ import annotations

@@ -1,11 +1,15 @@
 """
 Evaluation Engine Module.
 
-Orchestrates the model evaluation lifecycle on labelled test datasets.
-Handles batch processing, TTA integration, and results consolidation.
+Runs batch-level inference on a labelled test set and consolidates
+predictions into global classification metrics (accuracy, macro F1,
+macro AUC). Supports optional Test-Time Augmentation via the ``tta``
+sub-module, applying domain-aware transforms (anatomical, texture)
+and averaging softmax outputs across the ensemble.
 
 Key Functions:
-    evaluate_model: Full-dataset evaluation with optional TTA and metric computation
+    evaluate_model: Full-dataset evaluation with optional TTA,
+        returning predictions, labels, metric dict, and macro F1.
 
 Example:
     >>> preds, labels, metrics, f1 = evaluate_model(
