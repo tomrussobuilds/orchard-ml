@@ -2,6 +2,25 @@
 
 <h1 align="center">Framework Design</h1>
 
+<h2>Usage</h2>
+
+```bash
+# Install
+pip install orchard-ml
+
+# Generate a default recipe (all config options with defaults)
+orchard init
+
+# Run training
+orchard run recipe.yaml
+
+# Override any config value on the fly
+orchard run recipe.yaml --set training.epochs=20 --set training.seed=99
+
+# Use a built-in recipe
+orchard run recipes/config_mini_cnn.yaml
+```
+
 <h2>Core Features</h2>
 
 <h3>RootOrchestrator -- Lifecycle Management</h3>
@@ -145,7 +164,7 @@ The framework implements **Separation of Concerns (SoC)** with six core layers:
             ▼ optional         ▼ alternative      ▼ alternative
     ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
     │ Tracking Engine  │  │  Optimization    │  │  Export Engine   │
-    │    (MLflow)      │  │  Engine (Optuna) │  │      (ONNX)       │
+    │    (MLflow)      │  │  Engine (Optuna) │  │      (ONNX)      │
     │                  │  │                  │  │                  │
     │ • Metric logging │  │ • Study mgmt     │  │ • Checkpoint load│
     │ • Param capture  │  │ • Trial exec     │  │ • ONNX convert   │

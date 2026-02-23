@@ -20,7 +20,8 @@ ONNX export with quantization.
 
 ```bash
 pip install orchard-ml
-orchard run recipes/config_mini_cnn.yaml
+orchard init
+orchard run recipe.yaml
 ```
 
 ## Documentation
