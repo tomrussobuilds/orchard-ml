@@ -69,7 +69,8 @@ orchard/
 │   ├── efficientnet_b0.py      # EfficientNet for 224×224
 │   ├── convnext_tiny.py        # ConvNeXt-Tiny for 224×224
 │   ├── vit_tiny.py             # Vision Transformer for 224×224
-│   └── timm_backbone.py        # Timm pass-through support
+│   ├── timm_backbone.py        # Timm pass-through support
+│   └── _morphing.py            # Pretrained weight adaptation (channel mismatch)
 ├── trainer/                    # Training loop
 │   ├── engine.py               # Core train/validation logic + mixup
 │   ├── trainer.py              # ModelTrainer orchestrator
@@ -111,6 +112,7 @@ orchard/
 <h2>Architecture Principles</h2>
 
 <h3>1. Dependency Injection</h3>
+
 All modules receive `Config` as dependency - no global state:
 ```python
 model = get_model(device=device, cfg=cfg)
@@ -119,12 +121,14 @@ trainer = ModelTrainer(model=model, cfg=cfg, ...)
 ```
 
 <h3>2. Single Source of Truth (SSOT)</h3>
+
 `Config` is the immutable configuration manifest validated by Pydantic V2:
 - Cross-domain validation (AMP ↔ device, pretrained ↔ RGB)
 - Late-binding metadata injection (dataset specs from registry)
 - Path portability (relative anchoring from PROJECT_ROOT)
 
 <h3>3. Separation of Concerns</h3>
+
 - **core/**: Framework infrastructure (config, hardware, logging)
 - **data_handler/**: Data loading only
 - **architectures/**: Architecture definitions only
@@ -136,6 +140,7 @@ trainer = ModelTrainer(model=model, cfg=cfg, ...)
 - **optimization/**: Optuna wrapper only
 
 <h3>4. Protocol-Based Design</h3>
+
 Use protocols for testability:
 ```python
 class InfraManagerProtocol(Protocol):
@@ -146,6 +151,7 @@ class InfraManagerProtocol(Protocol):
 <h2>Key Extension Points</h2>
 
 <h3>Adding New Datasets</h3>
+
 Register in the appropriate domain file (e.g., `orchard/core/metadata/domains/medical.py`):
 ```python
 REGISTRY_224: Final[Dict[str, DatasetMetadata]] = {
@@ -164,6 +170,7 @@ REGISTRY_224: Final[Dict[str, DatasetMetadata]] = {
 Export from `orchard/core/metadata/domains/__init__.py` to make it available.
 
 <h3>Adding New Architectures</h3>
+
 1. Create builder in `orchard/architectures/your_model.py`:
 ```python
 def build_your_model(device, cfg, in_channels, num_classes):
@@ -177,6 +184,7 @@ _MODEL_REGISTRY["your_model"] = build_your_model
 ```
 
 <h3>Adding New Optimizers</h3>
+
 Extend `orchard/trainer/setup.py`:
 ```python
 def get_optimizer(model, cfg):

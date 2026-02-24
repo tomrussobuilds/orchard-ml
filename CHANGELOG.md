@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - extract TrainingLoop to unify trainer and executor epoch logic
+- remove dead code and harden config immutability
 
 ### Documentation
 

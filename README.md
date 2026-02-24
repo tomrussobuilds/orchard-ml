@@ -205,7 +205,7 @@ orchard --version                          # Verify installation
 orchard run --help                         # Show available options
 ```
 
-<h4><strong>Training Only</strong> (Quick start)</h4>
+<h4>Training Only (Quick start)</h4>
 
 ```bash
 # 28×28 resolution (CPU-compatible)
@@ -234,7 +234,7 @@ orchard run recipes/config_mini_cnn.yaml --set training.epochs=20 --set training
 
 ---
 
-<h4><strong>Hyperparameter Optimization + Training</strong> (Full pipeline)</h4>
+<h4>Hyperparameter Optimization + Training (Full pipeline)</h4>
 
 ```bash
 # 28×28 resolution - fast iteration
@@ -268,7 +268,7 @@ firefox outputs/*/figures/optimization_history.html    # Trial progression
 
 ---
 
-<h4><strong>Model Export</strong> (Production deployment)</h4>
+<h4>Model Export (Production deployment)</h4>
 
 All training configs (`config_*.yaml`) include `ONNX` export by default:
 ```bash
@@ -320,7 +320,7 @@ orchard run my_run.yaml
 | [Export Guide](docs/guide/EXPORT.md) | `ONNX` export pipeline, quantization options, validation and benchmarking |
 | [Tracking Guide](docs/guide/TRACKING.md) | `MLflow` local setup, dashboard and run comparison, programmatic querying |
 | [Artifact Guide](docs/guide/ARTIFACTS.md) | Output directory structure, training vs optimization artifact differences |
-| [Testing Guide](docs/guide/TESTING.md) | 1,175+ test suite, quality automation scripts, CI/CD pipeline details |
+| [Testing Guide](docs/guide/TESTING.md) | Test suite, quality automation scripts, CI/CD pipeline details |
 | [`orchard/`](orchard/README.md) / [`tests/`](tests/README.md) | Internal package structure, module responsibilities, extension points |
 
 <h2>Citation</h2>

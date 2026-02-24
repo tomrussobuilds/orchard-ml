@@ -7,7 +7,7 @@ Orchard ML's comprehensive testing infrastructure ensures reliability and mainta
 <h2>Test Organization</h2>
 
 ```
-tests/                          # Test suite (~1,175 tests, 100% coverage)
+tests/                          # Test suite (100% coverage)
 ├── conftest.py                 # Shared pytest fixtures
 ├── smoke_test.py               # 1-epoch E2E verification (~30s)
 ├── health_check.py             # Dataset integrity validation
@@ -31,7 +31,12 @@ tests/                          # Test suite (~1,175 tests, 100% coverage)
 
 <h3>Test Suite</h3>
 
-Orchard ML includes a comprehensive test suite with **1,175+ tests** targeting **100% code coverage**:
+Orchard ML includes a comprehensive test suite targeting **100% code coverage**:
+
+<p>
+  <img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tomrussobuilds/7835190af6011e9051b673c8be974f8a/raw/tests_unit.json" alt="Unit Tests">
+  <img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tomrussobuilds/7835190af6011e9051b673c8be974f8a/raw/tests_integration.json" alt="Integration Tests">
+</p>
 
 ```bash
 # Run full test suite
@@ -50,8 +55,8 @@ pytest tests/ -n auto
 
 <h3>Test Categories</h3>
 
-- **Unit Tests** (~950 tests): Config validation, metadata injection, type safety
-- **Integration Tests** (~150 tests): End-to-end pipeline validation, YAML hydration
+- **Unit Tests**: Config validation, metadata injection, type safety
+- **Integration Tests**: End-to-end pipeline validation, YAML hydration
 - **Smoke Tests**: 1-epoch sanity checks (~30 seconds)
 - **Health Checks**: Dataset integrity verification
 
@@ -60,7 +65,7 @@ pytest tests/ -n auto
 GitHub Actions automatically run on every push:
 
 - ✅ **Code Quality**: Black, isort, Flake8 formatting and linting checks
-- ✅ **Multi-Python Testing**: Unit tests across Python 3.10–3.14 (1,175+ tests)
+- ✅ **Multi-Python Testing**: Unit tests across Python 3.10–3.14
 - ✅ **Smoke Test**: 1-epoch end-to-end validation (~30s, CPU-only)
 - ✅ **Documentation**: README.md presence verification
 - ✅ **Security Scanning**: Bandit (code analysis) and pip-audit (dependency vulnerabilities)
@@ -71,7 +76,7 @@ GitHub Actions automatically run on every push:
 | Job | Description | Status |
 |-----|-------------|--------|
 | **Code Quality** | Black, isort, Flake8, mypy | ✅ Required to pass |
-| **Pytest Suite** | 1,175+ tests, 5 Python versions | ✅ Required to pass |
+| **Pytest Suite** | 5 Python versions | ✅ Required to pass |
 | **Smoke Test** | 1-epoch E2E validation | ✅ Required to pass |
 | **Documentation** | README verification | ✅ Required to pass |
 | **Security Scan** | Bandit + pip-audit | Continue-on-error (advisory) |
