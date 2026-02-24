@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - ONNX INT8 quantization + MkDocs API documentation
+- add configurable TTA blur kernel size + fix docs 404
 
 ### Documentation
 

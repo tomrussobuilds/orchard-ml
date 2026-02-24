@@ -73,6 +73,8 @@ orchard/
 ├── trainer/                    # Training loop
 │   ├── engine.py               # Core train/validation logic + mixup
 │   ├── trainer.py              # ModelTrainer orchestrator
+│   ├── _loop.py                # Shared TrainingLoop kernel + AMP/MixUp factories
+│   ├── _scheduling.py          # Scheduler stepping utility
 │   ├── losses.py               # FocalLoss implementation
 │   └── setup.py                # Optimizer/scheduler/criterion factories
 ├── evaluation/                 # Metrics and visualization

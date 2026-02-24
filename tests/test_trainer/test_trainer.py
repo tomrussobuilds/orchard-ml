@@ -285,8 +285,8 @@ def test_load_best_weights_file_not_found(trainer):
 
 # TESTS: TRAINING LOOP
 @pytest.mark.integration
-@patch("orchard.trainer.trainer.train_one_epoch")
-@patch("orchard.trainer.trainer.validate_epoch")
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.trainer._loop.validate_epoch")
 def test_train_full_loop(mock_validate, mock_train, trainer):
     """Test full training loop executes all epochs without early stopping."""
     mock_train.return_value = 0.5
@@ -308,8 +308,8 @@ def test_train_full_loop(mock_validate, mock_train, trainer):
 
 
 @pytest.mark.integration
-@patch("orchard.trainer.trainer.train_one_epoch")
-@patch("orchard.trainer.trainer.validate_epoch")
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.trainer._loop.validate_epoch")
 def test_train_early_stopping(mock_validate, mock_train, trainer):
     """Test training stops early when patience is exhausted."""
 
@@ -339,8 +339,8 @@ def test_train_early_stopping(mock_validate, mock_train, trainer):
 
 
 @pytest.mark.integration
-@patch("orchard.trainer.trainer.train_one_epoch")
-@patch("orchard.trainer.trainer.validate_epoch")
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.trainer._loop.validate_epoch")
 def test_train_mixup_cutoff(
     mock_validate, mock_train, simple_model, mock_loaders, optimizer, scheduler, criterion
 ):
@@ -418,8 +418,8 @@ def test_step_scheduler_calls_step_for_non_plateau(
 
 
 @pytest.mark.integration
-@patch("orchard.trainer.trainer.train_one_epoch")
-@patch("orchard.trainer.trainer.validate_epoch")
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.trainer._loop.validate_epoch")
 def test_train_loads_existing_checkpoint_when_no_improvement(
     mock_validate, mock_train, simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cfg
 ):

@@ -3,7 +3,9 @@ Training execution utilities for Optuna trials.
 
 Provides TrialTrainingExecutor, which orchestrates the training and validation
 loop for a single Optuna trial with built-in pruning, metric tracking, and
-scheduler management.
+scheduler management. Per-epoch training is delegated to ``_loop.TrainingLoop``
+(shared with ModelTrainer), while validation remains local with error-resilient
+fallback metrics.
 
 Key responsibilities:
     - Execute epoch-level training/validation cycles
@@ -16,15 +18,14 @@ Key responsibilities:
 from __future__ import annotations
 
 import logging
-from functools import partial
 
-import numpy as np
 import optuna
 import torch
 
 from ...core import LOGGER_NAME, Config, LogStyle
 from ...core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_LOSS
-from ...trainer import mixup_data, train_one_epoch, validate_epoch
+from ...trainer import validate_epoch
+from ...trainer._loop import TrainingLoop, create_amp_scaler, create_mixup_fn
 from ...trainer._scheduling import step_scheduler
 from .metric_extractor import MetricExtractor
 
@@ -61,8 +62,11 @@ class TrialTrainingExecutor:
         metric_extractor: Handles metric extraction and best-value tracking
         enable_pruning: Whether to enable trial pruning (from cfg.optuna.enable_pruning)
         warmup_epochs: Epochs before pruning activates (from cfg.optuna.pruning_warmup_epochs)
-        scaler: AMP gradient scaler (if enabled)
+        scaler (GradScaler | None): AMP gradient scaler (None when use_amp is False)
+        mixup_fn (callable | None): Mixup augmentation function (None when alpha is 0)
         epochs: Total training epochs
+        log_interval: Epoch interval for progress logging
+        _loop (TrainingLoop): Shared epoch kernel for training steps (train only, no validation)
 
     Example:
         >>> executor = TrialTrainingExecutor(
@@ -120,15 +124,27 @@ class TrialTrainingExecutor:
         self.warmup_epochs = cfg.optuna.pruning_warmup_epochs
 
         # Training state
-        self.scaler = torch.amp.GradScaler() if cfg.training.use_amp else None
+        self.scaler = create_amp_scaler(cfg)
+        self.mixup_fn = create_mixup_fn(cfg)
         self.epochs = cfg.training.epochs
         self.log_interval = cfg.telemetry.log_interval
 
-        # MixUp configuration (mirrors ModelTrainer, seeded for reproducibility)
-        self.mixup_fn = None
-        if cfg.training.mixup_alpha > 0:
-            mixup_rng = np.random.default_rng(cfg.training.seed)
-            self.mixup_fn = partial(mixup_data, alpha=cfg.training.mixup_alpha, rng=mixup_rng)
+        # Shared epoch kernel (train step only — validation is error-resilient here)
+        self._loop = TrainingLoop(
+            model=model,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            criterion=criterion,
+            device=device,
+            scaler=self.scaler,
+            mixup_fn=self.mixup_fn,
+            grad_clip=cfg.training.grad_clip,
+            total_epochs=self.epochs,
+            mixup_epochs=cfg.training.mixup_epochs,
+            use_tqdm=False,
+        )
 
     def execute(self, trial: optuna.Trial) -> float:
         """
@@ -147,8 +163,8 @@ class TrialTrainingExecutor:
             optuna.TrialPruned: If trial should terminate early
         """
         for epoch in range(1, self.epochs + 1):
-            # Train
-            epoch_loss = self._train_epoch(epoch)
+            # Train (delegated to shared loop)
+            epoch_loss = self._loop.run_train_step(epoch)
 
             # Validate
             val_metrics = self._validate_epoch()
@@ -187,32 +203,6 @@ class TrialTrainingExecutor:
 
         self._log_trial_complete(trial, best_metric, epoch_loss)
         return best_metric
-
-    def _train_epoch(self, epoch: int) -> float:
-        """
-        Train single epoch.
-
-        Args:
-            epoch: Current epoch number
-
-        Returns:
-            Average training loss for the epoch
-        """
-        current_mixup = self.mixup_fn if epoch <= self.cfg.training.mixup_epochs else None
-
-        return train_one_epoch(
-            model=self.model,
-            loader=self.train_loader,
-            criterion=self.criterion,
-            optimizer=self.optimizer,
-            device=self.device,
-            mixup_fn=current_mixup,
-            scaler=self.scaler,
-            grad_clip=self.cfg.training.grad_clip,
-            epoch=epoch,
-            total_epochs=self.epochs,
-            use_tqdm=False,
-        )
 
     def _validate_epoch(self) -> dict[str, float]:
         """

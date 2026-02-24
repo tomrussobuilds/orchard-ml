@@ -87,9 +87,9 @@ def test_trainer_calls_tracker_log_epoch(mock_cfg, mock_tracker):
 
         # Mock train/validate to avoid real computation
         with (
-            patch("orchard.trainer.trainer.train_one_epoch", return_value=0.5),
+            patch("orchard.trainer._loop.train_one_epoch", return_value=0.5),
             patch(
-                "orchard.trainer.trainer.validate_epoch",
+                "orchard.trainer._loop.validate_epoch",
                 return_value={"loss": 0.3, "accuracy": 0.9, "auc": 0.95},
             ),
         ):

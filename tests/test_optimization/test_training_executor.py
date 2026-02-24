@@ -268,7 +268,7 @@ def test_execute_handles_none_validation_result():
     mock_trial = MagicMock()
     mock_trial.number = 1
 
-    with patch.object(executor, "_train_epoch", return_value=0.5):
+    with patch.object(executor._loop, "run_train_step", return_value=0.5):
         with patch.object(executor, "_validate_epoch", return_value=None):
             result = executor.execute(mock_trial)
             assert result == pytest.approx(0.0)
@@ -306,7 +306,7 @@ def test_execute_handles_invalid_validation_type():
     mock_trial = MagicMock()
     mock_trial.number = 1
 
-    with patch.object(executor, "_train_epoch", return_value=0.5):
+    with patch.object(executor._loop, "run_train_step", return_value=0.5):
         with patch.object(executor, "_validate_epoch", return_value="invalid"):
             result = executor.execute(mock_trial)
             assert result == pytest.approx(0.0)
@@ -314,7 +314,7 @@ def test_execute_handles_invalid_validation_type():
 
 # TESTS: FULL EXECUTION LOOP
 @pytest.mark.integration
-@patch("orchard.optimization.objective.training_executor.train_one_epoch")
+@patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.optimization.objective.training_executor.validate_epoch")
 def test_execute_full_loop(mock_val, mock_train, executor, mock_trial):
     """Test a complete successful execution of the trial."""
@@ -331,7 +331,7 @@ def test_execute_full_loop(mock_val, mock_train, executor, mock_trial):
 
 
 @pytest.mark.integration
-@patch("orchard.optimization.objective.training_executor.train_one_epoch")
+@patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.optimization.objective.training_executor.validate_epoch")
 def test_execute_pruning_raises(mock_val, mock_train, executor, mock_trial):
     """Test that TrialPruned is raised and execution stops."""
@@ -349,7 +349,7 @@ def test_execute_pruning_raises(mock_val, mock_train, executor, mock_trial):
 
 
 @pytest.mark.integration
-@patch("orchard.optimization.objective.training_executor.train_one_epoch")
+@patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.optimization.objective.training_executor.validate_epoch")
 def test_execute_logs_completion(mock_val, mock_train, executor, mock_trial):
     """Test that trial completion is logged correctly."""

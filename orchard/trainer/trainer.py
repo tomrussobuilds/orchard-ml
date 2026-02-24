@@ -2,9 +2,10 @@
 Model Training Lifecycle Orchestration.
 
 Provides the ``ModelTrainer`` class — the top-level coordinator that drives
-epoch iteration, metric-based checkpointing, and early stopping. Low-level
-loop execution is delegated to ``engine`` (train/validate epochs), scheduler
-stepping to ``_scheduling``, and optimizer/criterion construction to ``setup``.
+epoch iteration, metric-based checkpointing, and early stopping. The per-epoch
+cycle (train → validate → schedule) is delegated to ``_loop.TrainingLoop``,
+while raw epoch functions live in ``engine`` and optimizer/criterion
+construction in ``setup``.
 
 Key Features:
     - Configurable Monitor Metric: Checkpointing and early stopping track
@@ -12,7 +13,7 @@ Key Features:
     - Deterministic Restoration: Best model weights are reloaded in-place
       after training completes, guaranteeing consistency.
     - Modern Training Utilities: AMP (GradScaler), gradient clipping, and
-      Mixup augmentation via the engine sub-module.
+      Mixup augmentation via shared factories in ``_loop``.
     - Lifecycle Telemetry: Per-epoch logging of loss trajectories, metric
       evolution, learning rate, and early stopping status.
 """
@@ -20,11 +21,9 @@ Key Features:
 from __future__ import annotations
 
 import logging
-from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import numpy as np
 import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import LRScheduler
@@ -36,8 +35,7 @@ from ..core.paths import METRIC_ACCURACY, METRIC_LOSS
 if TYPE_CHECKING:  # pragma: no cover
     from ..tracking import TrackerProtocol
 
-from ._scheduling import step_scheduler
-from .engine import mixup_data, train_one_epoch, validate_epoch
+from ._loop import TrainingLoop, create_amp_scaler, create_mixup_fn
 
 # Global logger instance
 logger = logging.getLogger(LOGGER_NAME)
@@ -75,12 +73,13 @@ class ModelTrainer:
         best_acc (float): Best validation accuracy achieved
         best_metric (float): Best value of the monitored metric
         epochs_no_improve (int): Consecutive epochs without monitored metric improvement
-        scaler (torch.amp.GradScaler): Automatic Mixed Precision scaler
+        scaler (torch.amp.GradScaler | None): AMP scaler (None when use_amp is False)
         mixup_fn (callable | None): Mixup augmentation function (partial of mixup_data)
         best_path (Path): Filesystem path for best model checkpoint
         train_losses (list[float]): Training loss history per epoch
         val_metrics_history (list[dict]): Validation metrics history per epoch
         monitor_metric (str): Name of metric driving checkpointing
+        _loop (TrainingLoop): Shared epoch kernel handling train → validate → schedule
 
     Example:
         >>> from orchard.trainer import ModelTrainer
@@ -145,14 +144,9 @@ class ModelTrainer:
         self.best_metric = -1.0
         self.epochs_no_improve = 0
 
-        # Modern AMP Support (PyTorch 2.x+)
-        self.scaler = torch.amp.GradScaler(enabled=cfg.training.use_amp)
-
-        # Mixup configuration (RNG seeded from training seed for reproducibility)
-        self.mixup_fn = None
-        if cfg.training.mixup_alpha > 0:
-            mixup_rng = np.random.default_rng(cfg.training.seed)
-            self.mixup_fn = partial(mixup_data, alpha=cfg.training.mixup_alpha, rng=mixup_rng)
+        # AMP and MixUp (shared factories from _loop)
+        self.scaler = create_amp_scaler(cfg)
+        self.mixup_fn = create_mixup_fn(cfg)
 
         # Output Management
         self.best_path = output_path or Path("./best_model.pth")
@@ -164,6 +158,23 @@ class ModelTrainer:
 
         # Track if we saved at least one valid checkpoint during training
         self._checkpoint_saved: bool = False
+
+        # Shared epoch kernel (train → validate → schedule)
+        self._loop = TrainingLoop(
+            model=model,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            criterion=criterion,
+            device=device,
+            scaler=self.scaler,
+            mixup_fn=self.mixup_fn,
+            grad_clip=cfg.training.grad_clip,
+            total_epochs=self.epochs,
+            mixup_epochs=cfg.training.mixup_epochs,
+            use_tqdm=cfg.training.use_tqdm,
+        )
 
         logger.info(f"Trainer initialized. Best model checkpoint: {self.best_path.name}")
 
@@ -192,39 +203,14 @@ class ModelTrainer:
         for epoch in range(1, self.epochs + 1):
             logger.info(f" Epoch {epoch:02d}/{self.epochs} ".center(60, "-"))
 
-            current_mixup = self.mixup_fn if epoch <= self.cfg.training.mixup_epochs else None
-
-            # --- 1. Training Phase ---
-            epoch_loss = train_one_epoch(
-                model=self.model,
-                loader=self.train_loader,
-                criterion=self.criterion,
-                optimizer=self.optimizer,
-                device=self.device,
-                mixup_fn=current_mixup,
-                scaler=self.scaler,
-                grad_clip=self.cfg.training.grad_clip,
-                epoch=epoch,
-                total_epochs=self.epochs,
-                use_tqdm=self.cfg.training.use_tqdm,
-            )
+            # --- 1. Train → Validate → Schedule (delegated to _loop) ---
+            epoch_loss, val_metrics = self._loop.run_epoch(epoch)
             self.train_losses.append(epoch_loss)
-
-            # --- 2. Validation Phase ---
-            val_metrics = validate_epoch(
-                model=self.model,
-                val_loader=self.val_loader,
-                criterion=self.criterion,
-                device=self.device,
-            )
             self.val_metrics_history.append(val_metrics)
 
             val_acc = val_metrics[METRIC_ACCURACY]
             val_loss = val_metrics[METRIC_LOSS]
             monitor_value = val_metrics.get(self.monitor_metric, 0.0)
-
-            # --- 3. Scheduling Phase ---
-            step_scheduler(self.scheduler, val_loss)
 
             if val_acc > self.best_acc:
                 self.best_acc = val_acc
