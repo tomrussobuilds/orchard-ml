@@ -27,6 +27,7 @@ from ..core import (
     LogStyle,
     log_optimization_summary,
 )
+from ..core.config import ExportConfig
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..core import RootOrchestrator
@@ -277,34 +278,34 @@ def run_export_phase(
     export_model = get_model(device=torch.device("cpu"), cfg=cfg, verbose=False)
 
     # Read export flags from config (with safe defaults if export config is missing)
-    export_cfg = cfg.export
+    export_cfg = cfg.export or ExportConfig()
     export_to_onnx(
         model=export_model,
         checkpoint_path=checkpoint_path,
         output_path=onnx_path,
         input_shape=input_shape,
         opset_version=opset_version,
-        dynamic_axes=export_cfg.dynamic_axes if export_cfg else True,
-        do_constant_folding=export_cfg.do_constant_folding if export_cfg else True,
-        validate=export_cfg.validate_export if export_cfg else True,
+        dynamic_axes=export_cfg.dynamic_axes,
+        do_constant_folding=export_cfg.do_constant_folding,
+        validate=export_cfg.validate_export,
     )
 
     # Post-export quantization
     quantized_path = None
-    if export_cfg is not None and export_cfg.quantize:
+    if export_cfg.quantize:
         quantized_path = quantize_model(
             onnx_path=onnx_path,
             backend=export_cfg.quantization_backend,
         )
 
     # Numerical validation: compare PyTorch vs ONNX outputs
-    if cfg.export is not None and cfg.export.validate_export:
+    if export_cfg.validate_export:
         is_valid = validate_export(
             pytorch_model=export_model,
             onnx_path=onnx_path,
             input_shape=input_shape,
-            num_samples=cfg.export.validation_samples,
-            max_deviation=cfg.export.max_deviation,
+            num_samples=export_cfg.validation_samples,
+            max_deviation=export_cfg.max_deviation,
         )
         if not is_valid:
             logger.warning(
@@ -313,7 +314,7 @@ def run_export_phase(
             )
 
     # Inference latency benchmark
-    if cfg.export is not None and cfg.export.benchmark:
+    if export_cfg.benchmark:
         benchmark_onnx_inference(
             onnx_path=onnx_path,
             input_shape=input_shape,

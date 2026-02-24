@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix all mkdocs/griffe warnings and improve API docstrings
 - add usage section to FRAMEWORK.md, fix Quick Start in index.md
 - improve module-level docstrings for trainer, export, and evaluation
+- dynamic test count badges, fix HTML rendering and changelog entry
 
 ### Fixed
 

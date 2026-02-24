@@ -316,7 +316,7 @@ def benchmark_onnx_inference(
 
         avg_latency_ms = (elapsed / num_runs) * 1000
         logger.info(f"    {LogStyle.BULLET} Runs              : {num_runs}")
-        logger.info(f"    {LogStyle.BULLET} Avg latency       : " f"{avg_latency_ms:.2f}ms")
+        logger.info(f"    {LogStyle.BULLET} Avg latency       : {avg_latency_ms:.2f}ms")
         logger.info("")
 
         return avg_latency_ms
