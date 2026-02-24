@@ -37,6 +37,14 @@ from .dataset import LazyNPZDataset, VisionDataset
 from .fetcher import DatasetData
 from .transforms import get_pipeline_transforms
 
+# Optuna mode: cap workers to prevent file descriptor exhaustion during trials
+_OPTUNA_WORKERS_HIGHRES = 4  # Max workers for resolution >= _HIGHRES_THRESHOLD
+_OPTUNA_WORKERS_LOWRES = 6  # Max workers for resolution < _HIGHRES_THRESHOLD
+_HIGHRES_THRESHOLD = 224  # Resolution boundary for worker tuning
+
+_MIN_SUBSAMPLED_SPLIT = 10  # Floor for val/test splits under max_samples
+_DEFAULT_HEALTHCHECK_BATCH_SIZE = 16  # Batch size for create_temp_loader
+
 
 # DATALOADER FACTORY
 class DataLoaderFactory:
@@ -130,9 +138,6 @@ class DataLoaderFactory:
         num_workers = self.cfg.num_workers
 
         # OPTUNA MODE: Reduce workers to prevent file descriptor exhaustion
-        _OPTUNA_WORKERS_HIGHRES = 4  # Cap for resolution >= _HIGHRES_THRESHOLD
-        _OPTUNA_WORKERS_LOWRES = 6  # Cap for resolution < _HIGHRES_THRESHOLD
-        _HIGHRES_THRESHOLD = 224  # Resolution boundary for worker tuning
         if is_optuna:
             cap = (
                 _OPTUNA_WORKERS_HIGHRES
@@ -186,7 +191,10 @@ class DataLoaderFactory:
         # Proportional downsizing for validation/testing if max_samples is set
         sub_samples = None
         if self.cfg.dataset.max_samples:
-            sub_samples = max(10, int(self.cfg.dataset.max_samples * self.cfg.dataset.val_ratio))
+            sub_samples = max(
+                _MIN_SUBSAMPLED_SPLIT,
+                int(self.cfg.dataset.max_samples * self.cfg.dataset.val_ratio),
+            )
 
         val_ds = VisionDataset(
             **ds_params, split="val", transform=val_trans, max_samples=sub_samples
@@ -256,7 +264,9 @@ def get_dataloaders(
 
 
 # HEALTH UTILITIES
-def create_temp_loader(dataset_path: Path, batch_size: int = 16) -> DataLoader:
+def create_temp_loader(
+    dataset_path: Path, batch_size: int = _DEFAULT_HEALTHCHECK_BATCH_SIZE
+) -> DataLoader:
     """
     Load a NPZ dataset lazily and return a DataLoader for health checks.
 

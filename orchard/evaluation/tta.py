@@ -19,6 +19,8 @@ import torchvision.transforms.functional as TF
 
 from ..core import Config
 
+_TTA_BASELINE_RESOLUTION = 224  # Reference resolution for TTA intensity scaling
+
 
 # TTA HELPERS
 def _get_tta_transforms(is_anatomical: bool, is_texture_based: bool, cfg: Config) -> list:
@@ -46,7 +48,6 @@ def _get_tta_transforms(is_anatomical: bool, is_texture_based: bool, cfg: Config
 
     # Scale TTA intensity relative to resolution.
     # A 2px shift on 224x224 (~0.9%) should map to ~0.25px on 28x28 (~0.9%).
-    _TTA_BASELINE_RESOLUTION = 224  # Reference resolution for TTA scaling
     resolution = cfg.dataset.resolution
     scale_factor = resolution / _TTA_BASELINE_RESOLUTION
     tta_translate = cfg.augmentation.tta_translate * scale_factor
@@ -74,6 +75,7 @@ def _get_tta_transforms(is_anatomical: bool, is_texture_based: bool, cfg: Config
         _translate = tta_translate
         _scale = tta_scale
         _sigma = max(tta_blur_sigma, 0.01)  # blur sigma must be > 0
+        _kernel = cfg.augmentation.tta_blur_kernel_size
 
         # Non-texture datasets can tolerate geometric/photometric perturbations
         t_list.extend(
@@ -84,7 +86,7 @@ def _get_tta_transforms(is_anatomical: bool, is_texture_based: bool, cfg: Config
                     )
                 ),
                 (lambda x: TF.affine(x, angle=0, translate=(0, 0), scale=_scale, shear=0)),
-                (lambda x: TF.gaussian_blur(x, kernel_size=3, sigma=_sigma)),
+                (lambda x: TF.gaussian_blur(x, kernel_size=_kernel, sigma=_sigma)),
             ]
         )
 

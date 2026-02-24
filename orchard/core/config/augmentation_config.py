@@ -19,9 +19,17 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from .types import BlurSigma, NonNegativeFloat, PixelShift, Probability, RotationDegrees, ZoomScale
+from .types import (
+    BlurSigma,
+    KernelSize,
+    NonNegativeFloat,
+    PixelShift,
+    Probability,
+    RotationDegrees,
+    ZoomScale,
+)
 
 
 # AUGMENTATION CONFIGURATION
@@ -40,6 +48,7 @@ class AugmentationConfig(BaseModel):
         tta_translate: Pixel translation range for TTA ensemble.
         tta_scale: Scale factor for TTA zoom augmentation.
         tta_blur_sigma: Gaussian blur sigma for TTA smoothing.
+        tta_blur_kernel_size: Gaussian blur kernel size for TTA (must be odd).
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -60,3 +69,13 @@ class AugmentationConfig(BaseModel):
     tta_translate: PixelShift = Field(default=2.0, description="TTA pixel shift")
     tta_scale: ZoomScale = Field(default=1.1, description="TTA scaling factor")
     tta_blur_sigma: BlurSigma = Field(default=0.4, description="TTA Gaussian blur sigma")
+    tta_blur_kernel_size: KernelSize = Field(
+        default=3, description="TTA Gaussian blur kernel size (must be odd)"
+    )
+
+    @field_validator("tta_blur_kernel_size")
+    @classmethod
+    def _kernel_must_be_odd(cls, v: int) -> int:
+        if v % 2 == 0:
+            raise ValueError(f"tta_blur_kernel_size must be odd, got {v}")
+        return v

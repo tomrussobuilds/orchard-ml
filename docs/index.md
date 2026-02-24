@@ -27,4 +27,4 @@ orchard run recipe.yaml
 ## Documentation
 
 - [User Guide](guide/FRAMEWORK.md) -- Framework overview, configuration, and workflows
-- [API Reference](reference/index.md) -- Auto-generated from source code
+- [API Reference](https://tomrussobuilds.github.io/orchard-ml/reference/) -- Auto-generated from source code

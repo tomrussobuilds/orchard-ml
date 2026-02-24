@@ -34,6 +34,7 @@ def mock_cfg():
     cfg.augmentation.tta_translate = 5
     cfg.augmentation.tta_scale = 1.1
     cfg.augmentation.tta_blur_sigma = 0.5
+    cfg.augmentation.tta_blur_kernel_size = 3
     cfg.augmentation.tta_mode = "full"
     cfg.dataset = MagicMock()
     cfg.dataset.num_classes = 3
@@ -126,6 +127,7 @@ def test_get_tta_transforms_full_mode_rotations():
     mock_cfg.augmentation.tta_translate = 2
     mock_cfg.augmentation.tta_scale = 1.05
     mock_cfg.augmentation.tta_blur_sigma = 0.5
+    mock_cfg.augmentation.tta_blur_kernel_size = 3
     mock_cfg.augmentation.tta_mode = "full"
     mock_cfg.dataset.resolution = 224
 
@@ -146,6 +148,7 @@ def test_get_tta_transforms_light_mode_vertical_flip():
     mock_cfg.augmentation.tta_translate = 2
     mock_cfg.augmentation.tta_scale = 1.05
     mock_cfg.augmentation.tta_blur_sigma = 0.5
+    mock_cfg.augmentation.tta_blur_kernel_size = 3
     mock_cfg.augmentation.tta_mode = "light"
     mock_cfg.dataset.resolution = 224
 
@@ -174,6 +177,7 @@ def test_get_tta_transforms_full_mode_rotations_on_cpu():
     mock_cfg.augmentation.tta_translate = 2
     mock_cfg.augmentation.tta_scale = 1.05
     mock_cfg.augmentation.tta_blur_sigma = 0.5
+    mock_cfg.augmentation.tta_blur_kernel_size = 3
     mock_cfg.augmentation.tta_mode = "full"
     mock_cfg.dataset.resolution = 224
 
@@ -222,6 +226,7 @@ def test_tta_scaling_preserves_transform_count(resolution):
     cfg.augmentation.tta_translate = 5
     cfg.augmentation.tta_scale = 1.1
     cfg.augmentation.tta_blur_sigma = 0.5
+    cfg.augmentation.tta_blur_kernel_size = 3
     cfg.augmentation.tta_mode = "full"
     cfg.dataset.resolution = resolution
 
@@ -266,6 +271,7 @@ def test_tta_scaling_at_baseline_224_is_identity():
     cfg.augmentation.tta_translate = 5.0
     cfg.augmentation.tta_scale = 1.1
     cfg.augmentation.tta_blur_sigma = 0.5
+    cfg.augmentation.tta_blur_kernel_size = 3
     cfg.augmentation.tta_mode = "light"
     cfg.dataset.resolution = 224
 

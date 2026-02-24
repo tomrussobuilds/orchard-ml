@@ -58,6 +58,7 @@ augmentation:
   rotation_angle: 10
   jitter_val: 0.2
   min_scale: 0.9
+  tta_blur_kernel_size: 3
 
 hardware:
   device: "auto"

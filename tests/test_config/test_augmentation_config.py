@@ -150,6 +150,16 @@ def test_tta_blur_sigma_bounds():
         AugmentationConfig(tta_blur_sigma=10.0)
 
 
+@pytest.mark.unit
+def test_tta_blur_kernel_size_must_be_odd():
+    """Test tta_blur_kernel_size rejects even values."""
+    config = AugmentationConfig(tta_blur_kernel_size=5)
+    assert config.tta_blur_kernel_size == 5
+
+    with pytest.raises(ValidationError, match="must be odd"):
+        AugmentationConfig(tta_blur_kernel_size=4)
+
+
 # AUGMENTATION CONFIG: IMMUTABILITY
 @pytest.mark.unit
 def test_config_is_frozen():

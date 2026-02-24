@@ -79,6 +79,7 @@ RotationDegrees = Annotated[int, Field(ge=0, le=360)]
 ZoomScale = Annotated[float, Field(gt=0.0, le=2.0)]
 PixelShift = Annotated[float, Field(ge=0.0, le=50.0)]
 BlurSigma = Annotated[float, Field(ge=0.0, le=5.0)]
+KernelSize = Annotated[int, Field(ge=1, le=31)]
 
 # SYSTEM & METADATA
 ProjectSlug = Annotated[str, Field(pattern=r"^[a-z0-9_-]+$", min_length=3, max_length=50)]

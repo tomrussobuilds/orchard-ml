@@ -24,6 +24,8 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 
+_MAX_PIXEL_VALUE: Final = 255.0  # 8-bit normalization divisor
+
 
 # DATASET CLASS
 class VisionDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
@@ -163,6 +165,6 @@ class LazyNPZDataset(Dataset):
         else:
             raise ValueError(f"Unexpected image shape: {img.shape}")
 
-        img = torch.from_numpy(img).float() / 255.0
+        img = torch.from_numpy(img).float() / _MAX_PIXEL_VALUE
         label = int(self.labels[idx][0])
         return img, label

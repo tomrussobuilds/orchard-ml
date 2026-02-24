@@ -80,6 +80,7 @@ augmentation:
   tta_translate: 0.5
   tta_scale: 1.02
   tta_blur_sigma: 0.1
+  tta_blur_kernel_size: 3
 
 hardware:
   device: "auto"

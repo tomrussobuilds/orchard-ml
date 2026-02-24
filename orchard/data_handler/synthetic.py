@@ -14,6 +14,10 @@ import numpy as np
 
 from .fetcher import DatasetData
 
+_SYNTHETIC_SEED = 42  # Fixed seed for deterministic synthetic data generation
+_SYNTHETIC_PIXEL_RANGE = 255  # Exclusive upper bound for rng.integers (uint8)
+_MIN_SPLIT_SAMPLES = 10  # Floor for val/test split sizes
+
 
 # FACTORY FUNCTIONS
 def create_synthetic_dataset(
@@ -43,23 +47,25 @@ def create_synthetic_dataset(
         >>> data = create_synthetic_dataset(num_classes=8, samples=100)
         >>> train_loader, val_loader, test_loader = get_dataloaders(data, cfg)
     """
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(_SYNTHETIC_SEED)
 
     # Generate synthetic image data
-    train_images = rng.integers(0, 255, (samples, resolution, resolution, channels), dtype=np.uint8)
+    train_images = rng.integers(
+        0, _SYNTHETIC_PIXEL_RANGE, (samples, resolution, resolution, channels), dtype=np.uint8
+    )
     train_labels = rng.integers(0, num_classes, (samples, 1), dtype=np.uint8)
 
     # Validation and test sets are smaller (10% of training size each)
-    val_samples = max(10, samples // 10)
-    test_samples = max(10, samples // 10)
+    val_samples = max(_MIN_SPLIT_SAMPLES, samples // 10)
+    test_samples = max(_MIN_SPLIT_SAMPLES, samples // 10)
 
     val_images = rng.integers(
-        0, 255, (val_samples, resolution, resolution, channels), dtype=np.uint8
+        0, _SYNTHETIC_PIXEL_RANGE, (val_samples, resolution, resolution, channels), dtype=np.uint8
     )
     val_labels = rng.integers(0, num_classes, (val_samples, 1), dtype=np.uint8)
 
     test_images = rng.integers(
-        0, 255, (test_samples, resolution, resolution, channels), dtype=np.uint8
+        0, _SYNTHETIC_PIXEL_RANGE, (test_samples, resolution, resolution, channels), dtype=np.uint8
     )
     test_labels = rng.integers(0, num_classes, (test_samples, 1), dtype=np.uint8)
 

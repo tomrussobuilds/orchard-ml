@@ -198,6 +198,7 @@ class DuplicateProcessCleaner:
                 count += 1
                 continue
             except psutil.TimeoutExpired:
+                # Graceful SIGTERM timed out — fall through to SIGKILL escalation
                 pass
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
@@ -208,6 +209,7 @@ class DuplicateProcessCleaner:
                 proc.wait(timeout=1)
                 count += 1
             except (psutil.TimeoutExpired, psutil.NoSuchProcess, psutil.AccessDenied):
+                # SIGKILL also failed or process vanished — nothing more we can do
                 continue
 
         if count and logger:
