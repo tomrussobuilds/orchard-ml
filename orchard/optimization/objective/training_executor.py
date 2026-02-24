@@ -169,11 +169,6 @@ class TrialTrainingExecutor:
             # Validate
             val_metrics = self._validate_epoch()
 
-            # Explicit check before calling the extractor
-            if val_metrics is None or not isinstance(val_metrics, dict):
-                logger.error(f"Invalid validation result: {val_metrics}")
-                return 0.0
-
             # Extract and track metric
             current_metric = self.metric_extractor.extract(val_metrics)
             best_metric = self.metric_extractor.update_best(current_metric)

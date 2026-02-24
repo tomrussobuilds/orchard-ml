@@ -190,7 +190,7 @@ def test_optuna_hardware_integration():
     """Test InfrastructureManager works with Optuna-optimized HardwareConfig."""
     from orchard.core.config import OptunaConfig
 
-    hw_config = HardwareConfig.for_optuna(device="cpu")
+    hw_config = HardwareConfig(device="cpu", reproducible=True)
     optuna_config = OptunaConfig(n_trials=10)
 
     assert hw_config.reproducible is True

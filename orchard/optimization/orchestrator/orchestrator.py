@@ -1,19 +1,20 @@
 """
-OptunaOrchestrator Core Implementation.
+Optuna Study Orchestrator — Core Implementation.
 
-Coordinates hyperparameter optimization lifecycle through Optuna integration.
-Manages study creation, trial execution, and artifact generation while
-delegating specialized tasks to focused submodules (builders, exporters, visualizers).
+Provides ``OptunaOrchestrator``, the lifecycle manager that coordinates
+study creation, trial execution, and artifact generation for
+hyperparameter optimization. Specialized tasks are delegated to focused
+submodules (``builders``, ``exporters``, ``visualizers``).
 
-Architecture:
-    - High-level coordination: OptunaOrchestrator manages study lifecycle
-    - Delegation pattern: Specialized modules handle samplers, pruners, callbacks
-    - Config integration: Seamless override of base Config per trial
-    - Artifact generation: Automated visualization and results export
+Key Functions:
+    ``run_optimization``: Convenience function that wires the
+        orchestrator to the pipeline and returns the completed study.
 
 Key Components:
-    OptunaOrchestrator: Study lifecycle manager
-    run_optimization: Convenience function for full pipeline execution
+    ``OptunaOrchestrator``: Study lifecycle manager that assembles
+        sampler, pruner, callbacks, and objective, then drives
+        ``study.optimize()``. Base ``Config`` is seamlessly overridden
+        per trial via ``TrialConfigBuilder``.
 
 Typical Usage:
     >>> from orchard.optimization.orchestrator import run_optimization

@@ -1,8 +1,24 @@
 """
 Early Stopping Callback for Optuna Studies.
 
-Terminates optimization when a satisfactory metric threshold is reached,
-preventing wasteful computation when near-perfect performance is achieved.
+Provides ``StudyEarlyStoppingCallback`` and its factory
+``get_early_stopping_callback``, which terminate an Optuna study when a
+user-defined (or metric-specific default) performance threshold is
+sustained for a configurable number of consecutive trials.
+
+Key Functions:
+    ``get_early_stopping_callback``: Factory that resolves sensible
+        default thresholds for common metrics (AUC, accuracy, F1,
+        loss, MAE, MSE) and returns a configured callback.
+
+Key Components:
+    ``StudyEarlyStoppingCallback``: Optuna callback that tracks
+        consecutive threshold hits and calls ``study.stop()`` once
+        ``patience`` is reached. Direction-aware (maximize/minimize).
+
+Example:
+    >>> callback = get_early_stopping_callback("auc", "maximize")
+    >>> study.optimize(objective, callbacks=[callback])
 """
 
 from __future__ import annotations

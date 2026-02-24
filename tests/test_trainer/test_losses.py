@@ -10,7 +10,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from orchard.trainer.losses import FocalLoss, get_loss_name
+from orchard.trainer.losses import FocalLoss
 
 
 # TESTS: FocalLoss
@@ -193,57 +193,6 @@ def test_focal_loss_deterministic():
     loss2 = loss_fn(inputs, targets)
 
     assert torch.equal(loss1, loss2)
-
-
-# TESTS: get_loss_name
-def test_get_loss_name_focal_loss():
-    """Test get_loss_name with FocalLoss."""
-    loss_fn = FocalLoss()
-    name = get_loss_name(loss_fn)
-
-    assert name == "FocalLoss"
-
-
-@pytest.mark.unit
-def test_get_loss_name_cross_entropy():
-    """Test get_loss_name with CrossEntropyLoss."""
-    loss_fn = nn.CrossEntropyLoss()
-    name = get_loss_name(loss_fn)
-
-    assert name == "CrossEntropyLoss"
-
-
-@pytest.mark.unit
-def test_get_loss_name_mse():
-    """Test get_loss_name with MSELoss."""
-    loss_fn = nn.MSELoss()
-    name = get_loss_name(loss_fn)
-
-    assert name == "MSELoss"
-
-
-@pytest.mark.unit
-def test_get_loss_name_custom_class():
-    """Test get_loss_name with custom loss class."""
-
-    class CustomLoss(nn.Module):
-        def forward(self, x, y):
-            return (x - y).pow(2).mean()
-
-    loss_fn = CustomLoss()
-    name = get_loss_name(loss_fn)
-
-    assert name == "CustomLoss"
-
-
-@pytest.mark.unit
-def test_get_loss_name_returns_string():
-    """Test that get_loss_name always returns a string."""
-    loss_fn = FocalLoss()
-    name = get_loss_name(loss_fn)
-
-    assert isinstance(name, str)
-    assert len(name) > 0
 
 
 # INTEGRATION TESTS

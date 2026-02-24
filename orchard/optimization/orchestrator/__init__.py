@@ -5,14 +5,16 @@ High-level coordination for hyperparameter optimization studies.
 Provides a modular architecture for study creation, execution,
 visualization, and result export.
 
-Main Components:
-    - OptunaOrchestrator: Primary orchestration class
-    - run_optimization: Convenience function for full pipeline
+Key Components:
+    ``OptunaOrchestrator``: Primary study lifecycle manager.
+    ``run_optimization``: Convenience function for full pipeline
+        execution (study creation → trial loop → artifact export).
+    ``export_best_config``, ``export_study_summary``,
+        ``export_top_trials``: Post-study artifact generators.
 
-Usage:
-    from orchard.optimization.orchestrator import OptunaOrchestrator, run_optimization
-
-    study = run_optimization(cfg=config, device=device, paths=paths)
+Typical Usage:
+    >>> from orchard.optimization.orchestrator import run_optimization
+    >>> study = run_optimization(cfg=config, device=device, paths=paths)
 """
 
 from .exporters import (

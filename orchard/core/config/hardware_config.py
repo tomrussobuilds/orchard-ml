@@ -43,7 +43,7 @@ class HardwareConfig(BaseModel):
     """
 
     model_config = ConfigDict(
-        frozen=False,
+        frozen=True,
         extra="forbid",
         arbitrary_types_allowed=True,
     )
@@ -142,19 +142,3 @@ class HardwareConfig(BaseModel):
             True if reproducible mode is enabled, False otherwise.
         """
         return self.reproducible
-
-    @classmethod
-    def for_optuna(cls, **kwargs) -> "HardwareConfig":
-        """
-        Create HardwareConfig for Optuna trials with reproducibility enabled.
-
-        Forces reproducible=True to ensure consistent trial evaluation.
-
-        Args:
-            **kwargs (Any): Additional HardwareConfig parameters.
-
-        Returns:
-            HardwareConfig with reproducible mode enabled.
-        """
-        kwargs["reproducible"] = True
-        return cls(**kwargs)

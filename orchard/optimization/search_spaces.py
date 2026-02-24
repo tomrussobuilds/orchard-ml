@@ -1,12 +1,29 @@
 """
 Hyperparameter Search Space Definitions for Optuna.
 
-Defines search distributions for each optimizable parameter using
-configurable bounds from SearchSpaceOverrides (Pydantic V2).
+Provides ``SearchSpaceRegistry``, a centralized catalogue of parameter
+sampling functions, and the ``get_search_space`` factory that assembles
+preset search spaces (``quick`` or ``full``) for Optuna studies.
 
-Search ranges respect the type constraints in core/config/types.py
-and default to domain-expert values for medical imaging, but can be
-fully customized via YAML through OptunaConfig.search_space_overrides.
+All bounds are read from a ``SearchSpaceOverrides`` Pydantic V2 model,
+so ranges can be fully customized via YAML through
+``OptunaConfig.search_space_overrides`` without code changes. Defaults
+are tuned for medical-imaging classification and respect the type
+constraints defined in ``core/config/types.py``.
+
+Key Functions:
+    ``get_search_space``: Factory that returns a preset search space
+        dict (``quick`` or ``full``), optionally including model
+        architecture selection.
+
+Key Components:
+    ``SearchSpaceRegistry``: Resolution-aware registry of sampling
+        functions for optimization, regularization, batch size,
+        scheduler, and augmentation parameters.
+
+Example:
+    >>> space = get_search_space("full", resolution=224, include_models=True)
+    >>> study.optimize(OptunaObjective(cfg, space, device), n_trials=50)
 """
 
 from __future__ import annotations
@@ -240,25 +257,6 @@ class SearchSpaceRegistry:
                 "model_name", ["resnet_18", "mini_cnn"]
             ),
         }
-
-    def get_full_space_with_models(self, resolution: int = 28) -> dict[str, Callable]:
-        """
-        Combined search space including model architecture selection.
-
-        Args:
-            resolution: Input image resolution (determines model choices)
-
-        Returns:
-            Unified dict of all parameter samplers + model selection
-        """
-        full_space = self.get_full_space(resolution)
-
-        if resolution >= 224:
-            full_space.update(self.get_model_space_224())
-        else:
-            full_space.update(self.get_model_space_28())
-
-        return full_space
 
 
 # PRESET CONFIGURATIONS

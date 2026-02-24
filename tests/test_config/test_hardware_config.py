@@ -143,15 +143,6 @@ def test_reproducible_mode_affects_num_workers():
     assert config.effective_num_workers >= 0
 
 
-@pytest.mark.unit
-def test_for_optuna_factory_enables_reproducibility():
-    """Test HardwareConfig.for_optuna() enables reproducible mode."""
-    config = HardwareConfig.for_optuna(device="cpu")
-
-    assert config.reproducible is True
-    assert config.effective_num_workers == 0
-
-
 # HARDWARE CONFIG: NUM_WORKERS
 @pytest.mark.unit
 def test_effective_num_workers_zero_when_reproducible():
@@ -253,14 +244,14 @@ def test_hardware_config_defaults():
     assert config.allow_process_kill is True
 
 
-# HARDWARE CONFIG: MUTABILITY
+# HARDWARE CONFIG: IMMUTABILITY
 @pytest.mark.unit
-def test_config_not_frozen():
-    """Test HardwareConfig is NOT frozen (allows reproducible mutation)."""
+def test_config_is_frozen():
+    """Test HardwareConfig is frozen (consistent with all other sub-configs)."""
     config = HardwareConfig()
 
-    config.reproducible = True
-    assert config.reproducible is True
+    with pytest.raises(ValidationError):
+        config.reproducible = True
 
 
 @pytest.mark.unit

@@ -64,11 +64,3 @@ class FocalLoss(nn.Module):
         focal_loss = self.alpha * (1 - pt) ** self.gamma * ce_loss
 
         return focal_loss.mean()
-
-
-# HELPER FUNCTIONS
-def get_loss_name(criterion: nn.Module) -> str:
-    """
-    Utility to extract a human-readable name from a loss instance.
-    """
-    return criterion.__class__.__name__

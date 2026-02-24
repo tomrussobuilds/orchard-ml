@@ -130,20 +130,6 @@ def test_get_model_space_28():
     assert model_name == "resnet_18"
 
 
-@pytest.mark.unit
-def test_get_full_space_with_models():
-    """Test retrieval of full space with model selection based on resolution."""
-    registry = SearchSpaceRegistry()
-
-    space_28 = registry.get_full_space_with_models(resolution=28)
-    assert "model_name" in space_28
-    assert "batch_size" in space_28
-
-    space_224 = registry.get_full_space_with_models(resolution=224)
-    assert "model_name" in space_224
-    assert "weight_variant" in space_224
-
-
 # PRESET FACTORY
 @pytest.mark.unit
 def test_get_search_space_invalid_preset():

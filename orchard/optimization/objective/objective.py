@@ -1,20 +1,27 @@
 """
 Optuna Objective Function for Vision Pipeline.
 
-Provides OptunaObjective, a highly testable objective function for Optuna
-hyperparameter optimization with dependency injection and specialized components.
+Provides ``OptunaObjective``, the callable that Optuna invokes for each
+trial. It orchestrates the full trial lifecycle — config sampling, data
+loading, model creation, training, and metric extraction — using
+dependency injection for maximum testability.
 
-Architecture:
-    - TrialConfigBuilder: Builds trial-specific configurations
-    - MetricExtractor: Handles metric extraction and best-value tracking
-    - TrialTrainingExecutor: Executes training loops with pruning
-    - OptunaObjective: High-level orchestration with dependency injection
+Key Components:
+    ``OptunaObjective``: High-level orchestration callable. All external
+        dependencies (dataset loader, dataloader factory, model factory)
+        are injectable via Protocol-based abstractions. Settings are read
+        from ``cfg.optuna.*`` as single source of truth.
+    ``TrialConfigBuilder``: Builds trial-specific ``Config`` instances
+        from sampled hyperparameters.
+    ``MetricExtractor``: Handles metric extraction and best-value
+        tracking across epochs.
+    ``TrialTrainingExecutor``: Executes training loops with Optuna
+        pruning integration.
 
-Key features:
-    - Complete dependency injection for testability
-    - Protocol-based abstractions for mocking
-    - Single source of truth (all settings from cfg.optuna.*)
-    - Memory-efficient cleanup between trials
+Example:
+    >>> objective = OptunaObjective(cfg, search_space, device)
+    >>> study = optuna.create_study(direction="maximize")
+    >>> study.optimize(objective, n_trials=50)
 """
 
 from __future__ import annotations
