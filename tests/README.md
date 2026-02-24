@@ -76,15 +76,17 @@ GitHub Actions automatically run on every push:
 | Job | Description | Status |
 |-----|-------------|--------|
 | **Code Quality** | Black, isort, Flake8, mypy | ✅ Required to pass |
-| **Pytest Suite** | 5 Python versions | ✅ Required to pass |
+| **Pytest Suite** | 5 Python versions + SonarCloud | ✅ Required to pass |
 | **Smoke Test** | 1-epoch E2E validation | ✅ Required to pass |
-| **Documentation** | README verification | ✅ Required to pass |
-| **Security Scan** | Bandit + pip-audit | Continue-on-error (advisory) |
-| **Build Status** | Aggregate summary | ✅ Fails if lint, pytest, or smoke test fails |
+| **Documentation** | MkDocs build + GitHub Pages deploy | ✅ Main branch only |
+| **Security Scan** | Bandit (hard-fail) + pip-audit (advisory) | ✅ Required to pass |
+| **Build Status** | Aggregate summary | ✅ Fails if lint, pytest, smoke, or security fails |
 
 View the latest build: [![CI/CD](https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml/badge.svg)](https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml)
 
 > **Note**: Health checks are not run in CI to avoid excessive dataset downloads. Run locally with `python -m tests.health_check` for dataset integrity validation.
+>
+> For detailed guides on smoke tests and health checks, see [docs/guide/TESTING.md](../docs/guide/TESTING.md).
 
 <h3>Additional CI/CD Workflows</h3>
 
@@ -92,8 +94,9 @@ Beyond the main CI pipeline, the project includes automated release and publishi
 
 | Workflow | Trigger | Description |
 |----------|---------|-------------|
-| **CI/CD** (`ci.yml`) | Every push/PR | Full test suite, code quality, smoke test, security scan |
+| **CI/CD** (`ci.yml`) | Every push/PR | Full test suite, code quality, smoke test, security scan, docs deploy |
 | **Badges** (`badges.yml`) | Push to main | Updates dynamic quality badges (Black, isort, Flake8, mypy, Radon) |
+| **Documentation** (`docs.yml`) | Manual dispatch | MkDocs build + GitHub Pages deploy (standalone re-deploy) |
 | **Release** (`release.yml`) | Tag push (`v*`) | Creates GitHub Release with auto-generated changelog (git-cliff) |
 | **Publish** (`publish.yml`) | Tag push (`v*`) | Builds and publishes package to PyPI via Trusted Publisher |
 

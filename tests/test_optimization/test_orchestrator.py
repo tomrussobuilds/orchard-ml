@@ -340,13 +340,20 @@ class TestOptunaOrchestrator:
         mock_export_summary.assert_called_once()
         mock_generate_viz.assert_not_called()
 
+    @patch("orchard.optimization.orchestrator.orchestrator.time.sleep")
     @patch("orchard.optimization.orchestrator.orchestrator.OptunaObjective")
     @patch("orchard.optimization.orchestrator.orchestrator.get_search_space")
     @patch("optuna.create_study")
     def test_optimize_keyboard_interrupt(
-        self, mock_create_study, mock_get_search_space, mock_objective_class, mock_cfg, mock_paths
+        self,
+        mock_create_study,
+        mock_get_search_space,
+        mock_objective_class,
+        mock_sleep,
+        mock_cfg,
+        mock_paths,
     ):
-        """Test optimize handles KeyboardInterrupt."""
+        """Test optimize handles KeyboardInterrupt with grace period."""
         mock_study = MagicMock()
         mock_study.trials = []
         mock_study.study_name = "test"
@@ -367,6 +374,7 @@ class TestOptunaOrchestrator:
 
             mock_post.assert_called_once_with(mock_study)
             assert result == mock_study
+            mock_sleep.assert_called_once_with(5)
 
 
 if __name__ == "__main__":

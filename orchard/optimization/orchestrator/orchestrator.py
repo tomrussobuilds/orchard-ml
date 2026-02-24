@@ -167,9 +167,9 @@ class OptunaOrchestrator:
 
         if interrupted:
             logger.warning(
-                "Continuing to training in 10 seconds... (Ctrl+C again to abort pipeline)"
+                "Continuing to training in 5 seconds... (Ctrl+C again to abort pipeline)"
             )
-            time.sleep(10)
+            time.sleep(5)  # grace period for the user to fully abort
 
         return study
 

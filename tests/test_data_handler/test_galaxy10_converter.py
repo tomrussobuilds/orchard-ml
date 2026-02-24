@@ -64,8 +64,8 @@ def test_download_galaxy10_h5_retry_on_error(tmp_path):
     with patch("orchard.data_handler.fetchers.galaxy10_converter.requests.get") as mock_get:
         with patch("orchard.data_handler.fetchers.galaxy10_converter.logger") as mock_logger:
             mock_get.side_effect = [
-                Exception("Network error"),
-                Exception("Network error"),
+                requests.ConnectionError("Network error"),
+                requests.ConnectionError("Network error"),
             ]
 
             with pytest.raises(RuntimeError, match="Failed to download Galaxy10 after 2 attempts"):
@@ -82,7 +82,7 @@ def test_download_galaxy10_h5_cleans_tmp_on_failure(tmp_path):
     tmp_file = target_h5.with_suffix(".tmp")
     url = "https://example.com/galaxy10.h5"
 
-    def iter_with_failure(*_):
+    def iter_with_failure(*_args, **_kwargs):
         yield b"chunk1"
         raise requests.ConnectionError("Network error during download")
 

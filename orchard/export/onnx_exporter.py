@@ -260,7 +260,7 @@ def quantize_model(
 
         return output_path
 
-    except Exception as e:
+    except Exception as e:  # noqa: broad-except — onnxruntime raises non-standard exceptions
         logger.error(f"    {LogStyle.WARNING} Quantization failed: {e}")
         return None
 

@@ -182,7 +182,7 @@ def run(
             run_logger.warning(f"{LogStyle.WARNING} Interrupted by user.")
             raise SystemExit(1)
 
-        except Exception as e:
+        except Exception as e:  # noqa: broad-except — top-level catch-all for logging; re-raises
             run_logger.error(f"{LogStyle.WARNING} Pipeline failed: {e}", exc_info=True)
             raise
 
