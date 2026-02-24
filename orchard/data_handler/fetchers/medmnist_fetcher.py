@@ -14,7 +14,7 @@ from pathlib import Path
 
 import requests
 
-from ...core import DatasetMetadata, md5_checksum
+from ...core import DatasetMetadata, LogStyle, md5_checksum
 from ...core.paths import LOGGER_NAME
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -48,7 +48,10 @@ def ensure_medmnist_npz(
 
     # 1. Validation of existing file
     if _is_valid_npz(target_npz, metadata.md5_checksum):
-        logger.info(f"Valid dataset '{metadata.name}' found at: {target_npz}")
+        logger.debug(
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Dataset':<18}: "
+            f"'{metadata.name}' found at {target_npz.name}"
+        )
         return target_npz
 
     # 2. Cleanup corrupted file
@@ -57,7 +60,7 @@ def ensure_medmnist_npz(
         target_npz.unlink()
 
     # 3. Download logic with retries
-    logger.info(f"Downloading {metadata.name} from {metadata.url}")
+    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Downloading':<18}: {metadata.name}")
     target_npz.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = target_npz.with_suffix(".tmp")
 
@@ -72,7 +75,7 @@ def ensure_medmnist_npz(
 
             # Atomic move
             tmp_path.replace(target_npz)
-            logger.info(f"Successfully downloaded and verified: {metadata.name}")
+            logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} {'Verified':<18}: {metadata.name}")
             return target_npz
 
         except Exception as e:

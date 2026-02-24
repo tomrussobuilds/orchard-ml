@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from orchard.pipeline.phases import (
+    TrainingResult,
     run_export_phase,
     run_optimization_phase,
     run_training_phase,
@@ -168,13 +169,13 @@ def test_run_training_phase_returns_expected_tuple(
 
     result = run_training_phase(mock_orchestrator)
 
+    assert isinstance(result, TrainingResult)
     assert len(result) == 7
-    best_path, losses, _metrics, _model, f1, acc, auc = result
-    assert best_path == Path("/mock/best.pth")
-    assert losses == [0.5, 0.4]
-    assert f1 == pytest.approx(0.85)
-    assert acc == pytest.approx(0.90)
-    assert auc == pytest.approx(0.92)
+    assert result.best_model_path == Path("/mock/best.pth")
+    assert result.train_losses == [0.5, 0.4]
+    assert result.macro_f1 == pytest.approx(0.85)
+    assert result.test_acc == pytest.approx(0.90)
+    assert result.test_auc == pytest.approx(0.92)
 
 
 @pytest.mark.unit
@@ -230,12 +231,12 @@ def test_run_training_phase_with_custom_config(
 
 # EXPORT PHASE TESTS
 @pytest.mark.unit
-def test_run_export_phase_returns_none_when_format_is_none(mock_orchestrator):
-    """Test run_export_phase returns None when export_format is 'none'."""
+def test_run_export_phase_returns_none_when_no_export_config(mock_orchestrator):
+    """Test run_export_phase returns None when export config is absent."""
+    mock_orchestrator.cfg.export = None
     result = run_export_phase(
         mock_orchestrator,
         checkpoint_path=Path("/mock/model.pth"),
-        export_format="none",
     )
 
     assert result is None
@@ -257,15 +258,12 @@ def test_run_export_phase_exports_onnx(
     result = run_export_phase(
         mock_orchestrator,
         checkpoint_path=checkpoint_path,
-        export_format="onnx",
-        opset_version=17,
     )
 
     assert result == mock_orchestrator.paths.exports / "model.onnx"
     mock_export_onnx.assert_called_once()
     call_kwargs = mock_export_onnx.call_args.kwargs
     assert call_kwargs["checkpoint_path"] == checkpoint_path
-    assert call_kwargs["opset_version"] == 17
     assert call_kwargs["input_shape"] == (3, 28, 28)
     mock_validate.assert_called_once()
 
@@ -285,7 +283,6 @@ def test_run_export_phase_grayscale_input(
     run_export_phase(
         mock_orchestrator,
         checkpoint_path=Path("/mock/model.pth"),
-        export_format="onnx",
     )
 
     call_kwargs = mock_export_onnx.call_args.kwargs
@@ -308,7 +305,6 @@ def test_run_export_phase_with_custom_config(
         mock_orchestrator,
         checkpoint_path=Path("/mock/model.pth"),
         cfg=custom_cfg,
-        export_format="onnx",
     )
 
     call_kwargs = mock_export_onnx.call_args.kwargs
@@ -326,7 +322,6 @@ def test_run_export_phase_logs_output_path(
     run_export_phase(
         mock_orchestrator,
         checkpoint_path=Path("/mock/model.pth"),
-        export_format="onnx",
     )
 
     mock_orchestrator.run_logger.info.assert_called()
@@ -347,7 +342,6 @@ def test_run_export_phase_benchmark(
     run_export_phase(
         mock_orchestrator,
         checkpoint_path=Path("/mock/model.pth"),
-        export_format="onnx",
     )
 
     mock_benchmark.assert_called_once()
@@ -369,7 +363,6 @@ def test_run_export_phase_no_benchmark_by_default(
     run_export_phase(
         mock_orchestrator,
         checkpoint_path=Path("/mock/model.pth"),
-        export_format="onnx",
     )
 
     mock_benchmark.assert_not_called()
@@ -399,7 +392,6 @@ def test_run_export_phase_quantize_with_benchmark(
     run_export_phase(
         mock_orchestrator,
         checkpoint_path=Path("/mock/model.pth"),
-        export_format="onnx",
     )
 
     mock_quantize.assert_called_once()
@@ -428,7 +420,6 @@ def test_run_export_phase_quantize_logs_output(
     run_export_phase(
         mock_orchestrator,
         checkpoint_path=Path("/mock/model.pth"),
-        export_format="onnx",
     )
 
     mock_quantize.assert_called_once()
@@ -450,7 +441,6 @@ def test_run_export_phase_validation_failure_logs_warning(
     run_export_phase(
         mock_orchestrator,
         checkpoint_path=Path("/mock/model.pth"),
-        export_format="onnx",
     )
 
     mock_validate.assert_called_once()

@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from ..core import LOGGER_NAME, Config, RunPaths
+from ..core import LOGGER_NAME, Config, LogStyle, RunPaths
 from ..core.paths import METRIC_ACCURACY, METRIC_AUC
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -151,6 +151,6 @@ def run_final_evaluation(
     if tracker is not None:
         tracker.log_test_metrics(test_acc=test_acc, macro_f1=macro_f1)
 
-    logger.info("Final Evaluation Phase Complete.")
+    logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Final Evaluation Phase Complete.")
 
     return macro_f1, test_acc, test_auc

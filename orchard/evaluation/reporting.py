@@ -17,7 +17,7 @@ from typing import Sequence
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..core import LOGGER_NAME, Config
+from ..core import LOGGER_NAME, Config, LogStyle
 from ..core.paths import METRIC_ACCURACY, METRIC_AUC
 from ..data_handler import get_augmentations_description
 
@@ -129,7 +129,7 @@ class TrainingReport(BaseModel):
                     df.to_excel(writer, sheet_name="Detailed Report", index=False)
                     self._apply_excel_formatting(writer, df)
 
-            logger.info(f"Summary report saved → {path.name}")
+            logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Summary Report':<18}: {path.name}")
         except Exception as e:  # noqa: broad-except — xlsxwriter raises non-standard exceptions
             logger.error(f"Failed to generate report: {e}")
 

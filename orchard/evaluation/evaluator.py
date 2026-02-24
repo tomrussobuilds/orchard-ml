@@ -27,7 +27,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from ..core import LOGGER_NAME, Config
+from ..core import LOGGER_NAME, Config, LogStyle
 from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1
 from .metrics import compute_classification_metrics
 from .tta import adaptive_tta_predict
@@ -97,7 +97,8 @@ def evaluate_model(
 
     # Performance logging
     log_msg = (
-        f"Test Metrics -> Acc: {metrics[METRIC_ACCURACY]:.4f} | "
+        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Test Metrics':<18}: "
+        f"Acc: {metrics[METRIC_ACCURACY]:.4f} | "
         f"AUC: {metrics[METRIC_AUC]:.4f} | F1: {metrics[METRIC_F1]:.4f}"
     )
     if actual_tta and cfg is not None:

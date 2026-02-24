@@ -8,6 +8,7 @@ and pipeline completion summaries.
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import optuna
@@ -147,9 +148,7 @@ def log_optimization_summary(
     log = logger_instance or logger
     completed, pruned, failed = _count_trial_states(study)
 
-    log.info(f"{LogStyle.DOUBLE}")
-    log.info(f"{'OPTIMIZATION SUMMARY':^80}")
-    log.info(LogStyle.DOUBLE)
+    LogStyle.log_phase_header(log, "OPTIMIZATION SUMMARY", LogStyle.DOUBLE)
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset        : {cfg.dataset.dataset_name}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Search Space   : {cfg.optuna.search_space_preset}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Total Trials   : {len(study.trials)}")
@@ -177,7 +176,7 @@ def log_optimization_summary(
         log.warning(f"{LogStyle.INDENT}{LogStyle.WARNING} No trials completed")
 
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Device         : {str(device).upper()}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Artifacts      : {paths.root}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Artifacts      : {Path(paths.root).name}")
     log.info(f"{LogStyle.DOUBLE}")
     log.info("")
 
@@ -210,17 +209,14 @@ def log_pipeline_summary(
     """
     log = logger_instance or logger
 
-    log.info("")
-    log.info(f"{LogStyle.DOUBLE}")
-    log.info(f"{'PIPELINE COMPLETE':^80}")
-    log.info(LogStyle.DOUBLE)
+    LogStyle.log_phase_header(log, "PIPELINE COMPLETE", LogStyle.DOUBLE)
     log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Test Accuracy  : {test_acc:>8.2%}")
     log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Macro F1       : {macro_f1:>8.4f}")
     if test_auc is not None:
         log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Test AUC       : {test_auc:>8.4f}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Best Model     : {best_model_path}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Best Model     : {Path(best_model_path).name}")
     if onnx_path:
-        log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} ONNX Export    : {onnx_path}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Run Directory  : {run_dir}")
+        log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} ONNX Export    : {Path(onnx_path).name}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Run Directory  : {Path(run_dir).name}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Duration       : {duration}")
     log.info(f"{LogStyle.DOUBLE}")

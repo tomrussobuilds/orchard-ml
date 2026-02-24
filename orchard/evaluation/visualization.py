@@ -18,7 +18,7 @@ import torch.nn as nn
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 from torch.utils.data import DataLoader
 
-from ..core import LOGGER_NAME, Config
+from ..core import LOGGER_NAME, Config, LogStyle
 
 # Global logger instance
 logger = logging.getLogger(LOGGER_NAME)
@@ -114,7 +114,7 @@ def plot_training_curves(
         fig.tight_layout()
 
         plt.savefig(out_path, dpi=cfg.evaluation.fig_dpi, bbox_inches="tight")
-        logger.info(f"Training curves saved → {out_path.name}")
+        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Training Curves':<18}: {out_path.name}")
 
         # Export raw data for post-run analysis
         npz_path = out_path.with_suffix(".npz")
@@ -156,7 +156,7 @@ def plot_confusion_matrix(
 
         fig.savefig(out_path, dpi=cfg.evaluation.fig_dpi, bbox_inches="tight")
         plt.close()
-        logger.info(f"Confusion matrix saved → {out_path.name}")
+        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Confusion Matrix':<18}: {out_path.name}")
 
 
 def _plot_single_prediction(
@@ -275,7 +275,7 @@ def _finalize_figure(plt_obj, save_path: Path | None, cfg: Config | None) -> Non
         save_path.parent.mkdir(parents=True, exist_ok=True)
         dpi = cfg.evaluation.fig_dpi if cfg else 200
         plt_obj.savefig(save_path, dpi=dpi, bbox_inches="tight", facecolor="white")
-        logger.info(f"Predictions grid saved → {save_path.name}")
+        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Predictions Grid':<18}: {save_path.name}")
     else:
         plt_obj.show()
         logger.debug("Displaying figure interactive mode")  # visible at log_level: DEBUG

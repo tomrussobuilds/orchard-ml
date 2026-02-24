@@ -15,6 +15,7 @@ import numpy as np
 import requests
 from PIL import Image
 
+from ...core.logger.styles import LogStyle
 from ...core.metadata import DatasetMetadata
 from ...core.paths import LOGGER_NAME
 
@@ -39,7 +40,7 @@ def download_galaxy10_h5(
         chunk_size: Streaming chunk size in bytes (default: TelemetryConfig.io_chunk_size).
     """
     if target_h5.exists():
-        logger.info(f"Galaxy10 HDF5 already exists: {target_h5}")
+        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'HDF5 Cache':<18}: {target_h5.name}")
         return
 
     target_h5.parent.mkdir(parents=True, exist_ok=True)
@@ -47,7 +48,10 @@ def download_galaxy10_h5(
 
     for attempt in range(1, retries + 1):
         try:
-            logger.info(f"Downloading Galaxy10 from {url} (attempt {attempt}/{retries})")
+            logger.info(
+                f"{LogStyle.INDENT}{LogStyle.ARROW} {'Downloading':<18}: "
+                f"Galaxy10 (attempt {attempt}/{retries})"
+            )
 
             with requests.get(url, timeout=timeout, stream=True) as r:
                 r.raise_for_status()
@@ -58,7 +62,7 @@ def download_galaxy10_h5(
                             f.write(chunk)
 
             tmp_path.replace(target_h5)
-            logger.info(f"Successfully downloaded Galaxy10 HDF5: {target_h5}")
+            logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} {'Downloaded':<18}: {target_h5.name}")
             return
 
         except Exception as e:
@@ -88,18 +92,25 @@ def convert_galaxy10_to_npz(
         target_size: Target image size (default 224)
         seed: Random seed for splits
     """
-    logger.info(f"Converting Galaxy10 to NPZ format (target size: {target_size}x{target_size})")
+    logger.info(
+        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Converting':<18}: "
+        f"Galaxy10 → NPZ ({target_size}x{target_size})"
+    )
 
     with h5py.File(h5_path, "r") as f:
         images = np.array(f["images"])
         labels = np.array(f["ans"])
 
-        logger.info(f"Loaded {len(images)} images with shape {images.shape}")
+        logger.info(
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Loaded':<18}: "
+            f"{len(images)} images ({images.shape})"
+        )
 
         # Resize if needed
         if images.shape[1] != target_size or images.shape[2] != target_size:
             logger.info(
-                f"Resizing from {images.shape[1]}x{images.shape[2]} to {target_size}x{target_size}"
+                f"{LogStyle.INDENT}{LogStyle.ARROW} {'Resizing':<18}: "
+                f"{images.shape[1]}x{images.shape[2]} → {target_size}x{target_size}"
             )
             resized_images = []
 
@@ -130,9 +141,10 @@ def convert_galaxy10_to_npz(
             test_labels=test_labels,
         )
 
-        logger.info(f"Successfully created NPZ: {output_npz}")
+        logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} {'NPZ Created':<18}: {output_npz.name}")
         logger.info(
-            f"Splits - Train: {len(train_imgs)}, Val: {len(val_imgs)}, Test: {len(test_imgs)}"
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Splits':<18}: "
+            f"Train: {len(train_imgs)}, Val: {len(val_imgs)}, Test: {len(test_imgs)}"
         )
 
 
@@ -229,7 +241,10 @@ def ensure_galaxy10_npz(metadata: DatasetMetadata) -> Path:
             actual_md5 == metadata.md5_checksum
             or metadata.md5_checksum == "placeholder_will_be_calculated_after_conversion"
         ):
-            logger.info(f"Galaxy10 NPZ found: {target_npz} (MD5: {actual_md5})")
+            logger.debug(
+                f"{LogStyle.INDENT}{LogStyle.ARROW} {'Dataset':<18}: "
+                f"Galaxy10 found at {target_npz.name}"
+            )
             return target_npz
         else:
             logger.warning("Galaxy10 NPZ MD5 mismatch, regenerating...")
@@ -249,9 +264,12 @@ def ensure_galaxy10_npz(metadata: DatasetMetadata) -> Path:
 
     # Report MD5
     actual_md5 = md5_checksum(target_npz)
-    logger.info(f"Galaxy10 NPZ MD5: {actual_md5}")
+    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'MD5':<18}: {actual_md5}")
 
     if metadata.md5_checksum == "placeholder_will_be_calculated_after_conversion":
-        logger.info(f'Update metadata.md5_checksum = "{actual_md5}"')
+        logger.info(
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Action Required':<18}: "
+            f'Update metadata.md5_checksum = "{actual_md5}"'
+        )
 
     return target_npz

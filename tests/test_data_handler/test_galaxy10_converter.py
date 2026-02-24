@@ -248,7 +248,7 @@ def test_ensure_galaxy10_npz_file_exists_valid_md5(tmp_path):
             result = ensure_galaxy10_npz(mock_metadata)
 
             assert result == target_npz
-            mock_logger.info.assert_called()
+            mock_logger.debug.assert_called()
 
 
 @pytest.mark.unit
@@ -273,7 +273,7 @@ def test_ensure_galaxy10_npz_file_exists_placeholder_md5(tmp_path):
             result = ensure_galaxy10_npz(mock_metadata)
 
             assert result == target_npz
-            mock_logger.info.assert_called()
+            mock_logger.debug.assert_called()
 
 
 @pytest.mark.unit

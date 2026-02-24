@@ -179,6 +179,7 @@ class TrialTrainingExecutor:
             # Check pruning
             if self._should_prune(trial, epoch):
                 logger.info(
+                    f"{LogStyle.INDENT}{LogStyle.ARROW} "
                     f"Trial {trial.number} pruned at epoch {epoch} "
                     f"({self.metric_extractor.metric_name}={current_metric:.4f})"
                 )
@@ -190,7 +191,8 @@ class TrialTrainingExecutor:
             # Logging
             if epoch % self.log_interval == 0 or epoch == self.epochs:
                 logger.info(
-                    f"T{trial.number} E{epoch}/{self.epochs} | "
+                    f"{LogStyle.DOUBLE_INDENT}T{trial.number} "
+                    f"E{epoch}/{self.epochs} | "
                     f"Loss:{epoch_loss:.4f} | "
                     f"{self.metric_extractor.metric_name}:{current_metric:.4f} "
                     f"(Best:{best_metric:.4f})"
@@ -260,9 +262,7 @@ class TrialTrainingExecutor:
         """
         logger.info("")
         logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Trial {trial.number} completed")
-        logger.info(
-            f"{LogStyle.INDENT}{LogStyle.ARROW} "
-            f"Best {self.metric_extractor.metric_name.upper():<10} : {best_metric:.6f}"
-        )
-        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Final Loss       : {final_loss:.4f}")
+        best_label = f"Best {self.metric_extractor.metric_name.upper()}"
+        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {best_label:<18}: {best_metric:.6f}")
+        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Final Loss':<18}: {final_loss:.4f}")
         logger.info("")

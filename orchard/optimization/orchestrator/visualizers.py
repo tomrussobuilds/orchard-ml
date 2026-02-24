@@ -19,7 +19,7 @@ from typing import Any, Callable
 
 import optuna
 
-from ...core import LOGGER_NAME
+from ...core import LOGGER_NAME, LogStyle
 from .utils import has_completed_trials
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -102,6 +102,6 @@ def save_plot(
         fig = plot_fn(study)
         output_path = output_dir / f"{plot_name}.html"
         fig.write_html(str(output_path))
-        logger.info(f"Saved {plot_name} to {output_path}")
+        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {plot_name:<22}: {output_path.name}")
     except (ValueError, RuntimeError) as e:
         logger.warning(f"Failed to generate {plot_name}: {e}")

@@ -176,7 +176,7 @@ class ModelTrainer:
             use_tqdm=cfg.training.use_tqdm,
         )
 
-        logger.info(f"Trainer initialized. Best model checkpoint: {self.best_path.name}")
+        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Checkpoint':<18}: {self.best_path.name}")
 
     def train(self) -> tuple[Path, list[float], list[dict]]:
         """
@@ -337,10 +337,10 @@ class ModelTrainer:
         """
         try:
             load_model_weights(model=self.model, path=self.best_path, device=self.device)
+            logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Model state restored")
             logger.info(
-                f" » [LIFECYCLE] Success: Model state restored to best checkpoint "
-                f"({self.best_path.name})"
+                f"{LogStyle.INDENT}{LogStyle.ARROW} {'Checkpoint':<18}: {self.best_path.name}"
             )
         except (RuntimeError, FileNotFoundError) as e:
-            logger.error(f" » [LIFECYCLE] Critical failure during weight restoration: {e}")
+            logger.error(f"{LogStyle.INDENT}{LogStyle.WARNING} Weight restoration failed: {e}")
             raise

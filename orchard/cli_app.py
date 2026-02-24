@@ -141,24 +141,25 @@ def run(
                 _, best_config_path = run_optimization_phase(orchestrator, tracker=tracker)
                 if best_config_path and best_config_path.exists():
                     training_cfg = Config.from_recipe(best_config_path)
-                    run_logger.info(f"Using optimized config: {best_config_path.name}")
+                    run_logger.info(
+                        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Optimized Config':<18}: "
+                        f"{best_config_path.name}"
+                    )
             else:
-                run_logger.info("Skipping optimization (no optuna config)")
+                run_logger.info(
+                    f"{LogStyle.INDENT}{LogStyle.ARROW} Skipping optimization (no optuna config)"
+                )
 
             # Phase 2: Training
-            best_model_path, _, _, _, macro_f1, test_acc, test_auc = run_training_phase(
-                orchestrator, cfg=training_cfg, tracker=tracker
-            )
+            result = run_training_phase(orchestrator, cfg=training_cfg, tracker=tracker)
 
             # Phase 3: Export (if export config present)
             onnx_path = None
             if cfg.export is not None:
                 onnx_path = run_export_phase(
                     orchestrator,
-                    checkpoint_path=best_model_path,
+                    checkpoint_path=result.best_model_path,
                     cfg=training_cfg,
-                    export_format=cfg.export.format,
-                    opset_version=cfg.export.opset_version,
                 )
 
             # Log final artifacts
@@ -167,10 +168,10 @@ def run(
             tracker.log_artifact(paths.get_config_path())
 
             log_pipeline_summary(
-                test_acc=test_acc,
-                macro_f1=macro_f1,
-                test_auc=test_auc,
-                best_model_path=best_model_path,
+                test_acc=result.test_acc,
+                macro_f1=result.macro_f1,
+                test_auc=result.test_auc,
+                best_model_path=result.best_model_path,
                 run_dir=paths.root,
                 duration=orchestrator.time_tracker.elapsed_formatted,
                 onnx_path=onnx_path,

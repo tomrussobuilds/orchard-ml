@@ -32,7 +32,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, WeightedRandomSampler
 
-from ..core import LOGGER_NAME, Config, DatasetRegistryWrapper, worker_init_fn
+from ..core import LOGGER_NAME, Config, DatasetRegistryWrapper, LogStyle, worker_init_fn
 from .dataset import LazyNPZDataset, VisionDataset
 from .fetcher import DatasetData
 from .transforms import get_pipeline_transforms
@@ -116,7 +116,9 @@ class DataLoaderFactory:
             [weight_map[int(label)] for label in labels], dtype=torch.float
         )
 
-        self.logger.info("Class balancing: WeightedRandomSampler generated.")
+        self.logger.info(
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Balancing':<18}: WeightedRandomSampler generated"
+        )
         return WeightedRandomSampler(
             weights=sample_weights.tolist(),
             num_samples=len(sample_weights),
@@ -147,8 +149,8 @@ class DataLoaderFactory:
             num_workers = min(num_workers, cap)
 
             self.logger.info(
-                f"Optuna mode: Reducing workers to {num_workers} "
-                f"(resolution={self.cfg.dataset.resolution})"
+                f"{LogStyle.INDENT}{LogStyle.ARROW} {'Optuna Workers':<18}: "
+                f"{num_workers} (Resolution={self.cfg.dataset.resolution})"
             )
 
         # Hardware acceleration: Pin memory for CUDA or MPS
@@ -226,9 +228,10 @@ class DataLoaderFactory:
         )
 
         mode_str = "RGB" if self.ds_meta.in_channels == 3 else "Grayscale"
-        optuna_str = " [OPTUNA-MODE]" if is_optuna else ""
+        optuna_str = " (Optuna)" if is_optuna else ""
         self.logger.info(
-            f"DataLoaders synchronized ({mode_str}){optuna_str} → "
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'DataLoaders':<18}: "
+            f"({mode_str}){optuna_str} → "
             f"Train:[{len(train_ds)}] Val:[{len(val_ds)}] Test:[{len(test_ds)}] "
             f"Workers:[{infra_kwargs['num_workers']}]"
         )

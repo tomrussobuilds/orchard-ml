@@ -22,12 +22,14 @@ Example:
 """
 
 from .phases import (
+    TrainingResult,
     run_export_phase,
     run_optimization_phase,
     run_training_phase,
 )
 
 __all__ = [
+    "TrainingResult",
     "run_optimization_phase",
     "run_training_phase",
     "run_export_phase",

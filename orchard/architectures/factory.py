@@ -30,7 +30,7 @@ from typing import Iterator
 import torch
 import torch.nn as nn
 
-from ..core import LOGGER_NAME, Config
+from ..core import LOGGER_NAME, Config, LogStyle
 from .convnext_tiny import build_convnext_tiny
 from .efficientnet_b0 import build_efficientnet_b0
 from .mini_cnn import build_mini_cnn
@@ -109,7 +109,8 @@ def get_model(device: torch.device, cfg: Config, verbose: bool = True) -> nn.Mod
 
     if verbose:
         logger.info(
-            f"Initializing Architecture: {cfg.architecture.name} | "
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Architecture':<18}: "
+            f"{cfg.architecture.name} | "
             f"Input: {cfg.dataset.img_size}x{cfg.dataset.img_size}x{in_channels} | "
             f"Output: {num_classes} classes"
         )
@@ -148,6 +149,10 @@ def get_model(device: torch.device, cfg: Config, verbose: bool = True) -> nn.Mod
     model = model.to(device)
     if verbose:
         total_params = sum(p.numel() for p in model.parameters())
-        logger.info(f"Model deployed to {str(device).upper()} | Total Parameters: {total_params:,}")
+        logger.info(
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Deployed':<18}: "
+            f"{str(device).upper()} | Parameters: {total_params:,}"
+        )
+        logger.info("")
 
     return model

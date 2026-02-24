@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - mkdocs build warnings — remove --strict, fix broken links
 - fix:
+- resolve SonarQube code smells in logger and export phase
 
 ## [0.1.6] - 2026-02-23
 

@@ -7,6 +7,7 @@ and summary logging functions.
 
 from __future__ import annotations
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import optuna
@@ -394,7 +395,7 @@ def test_reporter_log_initial_status():
     mock_cfg.dataset.img_size = 28
 
     mock_paths = MagicMock()
-    mock_paths.root = "/mock/run"
+    mock_paths.root = Path("/mock/run")
     mock_device = torch.device("cuda")
 
     reporter.log_initial_status(
@@ -439,7 +440,7 @@ def test_reporter_log_initial_status_cpu_device():
     mock_cfg.dataset.img_size = 28
 
     mock_paths = MagicMock()
-    mock_paths.root = "/mock"
+    mock_paths.root = Path("/mock")
     mock_device = torch.device("cpu")
 
     reporter.log_initial_status(

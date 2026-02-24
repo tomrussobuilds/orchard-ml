@@ -120,6 +120,7 @@ class StudyEarlyStoppingCallback:
         # Threshold met
         self._count += 1
         logger.info(
+            f"{LogStyle.INDENT}{LogStyle.SUCCESS} "
             f"Trial {trial.number} reached threshold "
             f"({value:.6f} "
             f"{'≥' if self.direction == 'maximize' else '≤'} "
@@ -139,10 +140,9 @@ class StudyEarlyStoppingCallback:
             trials_saved = "N/A"
 
         # Use LogStyle for consistent formatting
-        logger.info("")
-        logger.info(LogStyle.DOUBLE)
-        logger.info(f"{'EARLY STOPPING: Target performance achieved!':^80}")
-        logger.info(LogStyle.DOUBLE)
+        LogStyle.log_phase_header(
+            logger, "EARLY STOPPING: Target performance achieved!", LogStyle.DOUBLE
+        )
         logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Metric           : {value:.6f}")
         logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Threshold        : {self.threshold:.6f}")
         logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Trials completed : {trial.number + 1}")

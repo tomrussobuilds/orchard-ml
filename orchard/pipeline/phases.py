@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 
 import optuna
 import torch
@@ -27,7 +27,6 @@ from ..core import (
     LogStyle,
     log_optimization_summary,
 )
-from ..core.config import ExportConfig
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..core import RootOrchestrator
@@ -55,6 +54,18 @@ logger = logging.getLogger(LOGGER_NAME)
 
 _ERR_LOGGER_NOT_INIT = "Logger not initialized"
 _ERR_PATHS_NOT_INIT = "Paths not initialized"
+
+
+class TrainingResult(NamedTuple):
+    """Structured return type for :func:`run_training_phase`."""
+
+    best_model_path: Path
+    train_losses: list[float]
+    val_metrics: list[dict]
+    model: nn.Module
+    macro_f1: float
+    test_acc: float
+    test_auc: float
 
 
 def run_optimization_phase(
@@ -90,10 +101,7 @@ def run_optimization_phase(
     assert run_logger is not None, _ERR_LOGGER_NOT_INIT  # nosec B101
     assert paths is not None, _ERR_PATHS_NOT_INIT  # nosec B101
 
-    run_logger.info("")
-    run_logger.info(LogStyle.DOUBLE)
-    run_logger.info(f"{'HYPERPARAMETER OPTIMIZATION':^80}")
-    run_logger.info(LogStyle.DOUBLE)
+    LogStyle.log_phase_header(run_logger, "HYPERPARAMETER OPTIMIZATION", LogStyle.DOUBLE)
 
     # Execute Optuna study (includes post-processing: visualizations, best config export)
     study = run_optimization(cfg=cfg, device=device, paths=paths, tracker=tracker)
@@ -116,7 +124,7 @@ def run_training_phase(
     orchestrator: RootOrchestrator,
     cfg: Config | None = None,
     tracker: TrackerProtocol | None = None,
-) -> tuple[Path, list[float], list[dict], nn.Module, float, float, float]:
+) -> TrainingResult:
     """
     Execute model training phase.
 
@@ -129,12 +137,13 @@ def run_training_phase(
         tracker: Optional experiment tracker for MLflow metric logging
 
     Returns:
-        tuple of (best_model_path, train_losses, val_metrics, model, macro_f1, test_acc, test_auc)
+        TrainingResult named tuple with best_model_path, train_losses,
+        val_metrics, model, macro_f1, test_acc, test_auc.
 
     Example:
         >>> with RootOrchestrator(cfg) as orch:
-        ...     best_path, losses, metrics, model, f1, acc, auc = run_training_phase(orch)
-        ...     print(f"Test Accuracy: {acc:.4f}")
+        ...     result = run_training_phase(orch)
+        ...     print(f"Test Accuracy: {result.test_acc:.4f}")
     """
     cfg = cfg or orchestrator.cfg
     paths = orchestrator.paths
@@ -150,10 +159,7 @@ def run_training_phase(
     ds_meta = wrapper.get_dataset(cfg.dataset.dataset_name.lower())
 
     # DATA PREPARATION
-    run_logger.info("")
-    run_logger.info(LogStyle.HEAVY)
-    run_logger.info(f"{'DATA PREPARATION':^80}")
-    run_logger.info(LogStyle.HEAVY)
+    LogStyle.log_phase_header(run_logger, "DATA PREPARATION")
 
     data = load_dataset(ds_meta)
     loaders = get_dataloaders(data, cfg)
@@ -170,10 +176,9 @@ def run_training_phase(
     )
 
     # MODEL TRAINING
-    run_logger.info("")
-    run_logger.info(LogStyle.DOUBLE)
-    run_logger.info(f"{'TRAINING PIPELINE - ' + cfg.architecture.name.upper():^80}")
-    run_logger.info(LogStyle.DOUBLE)
+    LogStyle.log_phase_header(
+        run_logger, "TRAINING PIPELINE - " + cfg.architecture.name.upper(), LogStyle.DOUBLE
+    )
 
     model = get_model(device=device, cfg=cfg)
 
@@ -202,10 +207,7 @@ def run_training_phase(
     best_model_path, train_losses, val_metrics_history = trainer.train()
 
     # FINAL EVALUATION
-    run_logger.info("")
-    run_logger.info(LogStyle.HEAVY)
-    run_logger.info(f"{'FINAL EVALUATION':^80}")
-    run_logger.info(LogStyle.HEAVY)
+    LogStyle.log_phase_header(run_logger, "FINAL EVALUATION")
 
     macro_f1, test_acc, test_auc = run_final_evaluation(
         model=model,
@@ -220,30 +222,35 @@ def run_training_phase(
         tracker=tracker,
     )
 
-    return best_model_path, train_losses, val_metrics_history, model, macro_f1, test_acc, test_auc
+    return TrainingResult(
+        best_model_path=best_model_path,
+        train_losses=train_losses,
+        val_metrics=val_metrics_history,
+        model=model,
+        macro_f1=macro_f1,
+        test_acc=test_acc,
+        test_auc=test_auc,
+    )
 
 
 def run_export_phase(
     orchestrator: RootOrchestrator,
     checkpoint_path: Path,
     cfg: Config | None = None,
-    export_format: str = "onnx",
-    opset_version: int = 18,
 ) -> Path | None:
     """
     Execute model export phase.
 
     Exports trained model to production format (ONNX) with validation.
+    Export format and opset version are read from ``cfg.export``.
 
     Args:
         orchestrator: Active RootOrchestrator providing paths, device, logger
         checkpoint_path: Path to trained model checkpoint (.pth)
         cfg: Optional config override (defaults to orchestrator's config)
-        export_format: Export format ("onnx" or "none")
-        opset_version: ONNX opset version (default: 18)
 
     Returns:
-        Path to exported model, or None if export_format is "none"
+        Path to exported model, or None if export config is absent
 
     Example:
         >>> with RootOrchestrator(cfg) as orch:
@@ -251,10 +258,11 @@ def run_export_phase(
         ...     onnx_path = run_export_phase(orch, best_path)
         ...     print(f"Exported to: {onnx_path}")
     """
-    if export_format == "none":
+    cfg = cfg or orchestrator.cfg
+
+    if cfg.export is None:
         return None
 
-    cfg = cfg or orchestrator.cfg
     paths = orchestrator.paths
     run_logger = orchestrator.run_logger
 
@@ -262,10 +270,7 @@ def run_export_phase(
     assert run_logger is not None, _ERR_LOGGER_NOT_INIT  # nosec B101
     assert paths is not None, _ERR_PATHS_NOT_INIT  # nosec B101
 
-    run_logger.info("")
-    run_logger.info(LogStyle.HEAVY)
-    run_logger.info(f"{'MODEL EXPORT':^80}")
-    run_logger.info(LogStyle.HEAVY)
+    LogStyle.log_phase_header(run_logger, "MODEL EXPORT")
 
     # Determine input shape from config (must match get_model's channel resolution)
     resolution = cfg.dataset.resolution
@@ -277,14 +282,13 @@ def run_export_phase(
     # Reload model architecture (on CPU for export)
     export_model = get_model(device=torch.device("cpu"), cfg=cfg, verbose=False)
 
-    # Read export flags from config (with safe defaults if export config is missing)
-    export_cfg = cfg.export or ExportConfig()
+    export_cfg = cfg.export  # guaranteed non-None (checked above)
     export_to_onnx(
         model=export_model,
         checkpoint_path=checkpoint_path,
         output_path=onnx_path,
         input_shape=input_shape,
-        opset_version=opset_version,
+        opset_version=export_cfg.opset_version,
         dynamic_axes=export_cfg.dynamic_axes,
         do_constant_folding=export_cfg.do_constant_folding,
         validate=export_cfg.validate_export,

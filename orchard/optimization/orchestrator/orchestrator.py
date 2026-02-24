@@ -166,7 +166,9 @@ class OptunaOrchestrator:
         self._post_optimization_processing(study)
 
         if interrupted:
-            logger.info("Continuing to training in 10 seconds... (Ctrl+C again to abort pipeline)")
+            logger.warning(
+                "Continuing to training in 10 seconds... (Ctrl+C again to abort pipeline)"
+            )
             time.sleep(10)
 
         return study

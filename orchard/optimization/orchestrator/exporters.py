@@ -22,7 +22,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
 
-from ...core import LOGGER_NAME, Config, RunPaths, save_config_as_yaml
+from ...core import LOGGER_NAME, Config, LogStyle, RunPaths, save_config_as_yaml
 from .config import map_param_to_config_path
 from .utils import get_completed_trials, has_completed_trials
 
@@ -112,7 +112,9 @@ def export_study_summary(study: optuna.Study, paths: RunPaths) -> None:
     with open(output_path, "w") as f:
         json.dump(summary, f, indent=2)
 
-    logger.info(f"Saved study summary to {output_path}")
+    logger.info(
+        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Study Summary':<22}: {Path(output_path).name}"
+    )
 
 
 def export_top_trials(
@@ -164,7 +166,10 @@ def export_top_trials(
     _auto_adjust_column_widths(ws)
 
     wb.save(output_path)
-    logger.info(f"Saved top {len(sorted_trials)} trials to {output_path}")
+    logger.info(
+        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Top Trials':<22}: {Path(output_path).name} "
+        f"({len(sorted_trials)} trials)"
+    )
 
 
 def _write_styled_rows(ws, df: pd.DataFrame) -> None:

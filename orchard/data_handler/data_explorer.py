@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import torch
 from torchvision.utils import make_grid
 
-from ..core import LOGGER_NAME, Config, RunPaths
+from ..core import LOGGER_NAME, Config, LogStyle, RunPaths
 from .loader import DataLoader
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -87,7 +87,7 @@ def show_sample_images(
     dpi = cfg.evaluation.fig_dpi if cfg else 200
     plt.savefig(save_path, dpi=dpi, bbox_inches="tight")
     plt.close()
-    logger.info(f"Sample images saved → {save_path}")
+    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Sample Grid':<18}: {save_path.name}")
 
 
 def show_samples_for_dataset(

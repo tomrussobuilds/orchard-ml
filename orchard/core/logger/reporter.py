@@ -82,11 +82,8 @@ class Reporter(BaseModel):
             applied_threads: Number of intra-op threads assigned
             num_workers: Number of DataLoader workers
         """
-        # Newline + Header Block
-        logger_instance.info("")
-        logger_instance.info(LogStyle.HEAVY)
-        logger_instance.info(f"{'ENVIRONMENT INITIALIZATION':^80}")
-        logger_instance.info(LogStyle.HEAVY)
+        # Header Block
+        LogStyle.log_phase_header(logger_instance, "ENVIRONMENT INITIALIZATION")
 
         # Hardware Section
         self._log_hardware_section(logger_instance, cfg, device, applied_threads, num_workers)
@@ -124,7 +121,9 @@ class Reporter(BaseModel):
 
         # Filesystem Section
         logger_instance.info("[FILESYSTEM]")
-        logger_instance.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Run Root':<18}: {paths.root}")
+        logger_instance.info(
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Run Root':<18}: {paths.root.name}"
+        )
         logger_instance.info(
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Manifest':<18}: config.yaml, requirements.txt"
         )
