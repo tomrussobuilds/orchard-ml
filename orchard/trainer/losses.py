@@ -24,15 +24,14 @@ class FocalLoss(nn.Module):
     focusing the model's learning on hard, misclassified samples.
 
     Formula:
-        Loss = -alpha * (1 - pt)^gamma * log(pt)
-        where pt is the probability of the true class.
+        ``Loss = -alpha * (1 - pt)^gamma * log(pt)``
+        where ``pt`` is the probability of the true class.
 
     Attributes:
-        gamma (float): Focusing parameter. Higher values reduce the relative
+        gamma: Focusing parameter. Higher values reduce the relative
             loss for well-classified examples (default: 2.0).
-        alpha (float): Balancing parameter for class importance.
-        weight (torch.Tensor, optional): A manual rescaling weight given to
-            each class.
+        alpha: Balancing parameter for class importance.
+        weight: A manual rescaling weight given to each class.
     """
 
     def __init__(
@@ -48,11 +47,11 @@ class FocalLoss(nn.Module):
         Calculates the focal loss between input logits and ground truth targets.
 
         Args:
-            inputs (torch.Tensor): Model predictions (logits) of shape (N, C).
-            targets (torch.Tensor): Ground truth labels of shape (N).
+            inputs: Model predictions (logits) of shape ``(N, C)``.
+            targets: Ground truth labels of shape ``(N,)``.
 
         Returns:
-            torch.Tensor: The computed scalar loss.
+            Scalar focal loss averaged over the batch.
         """
         # Calculate standard cross entropy without reduction
         ce_loss = F.cross_entropy(inputs, targets, reduction="none", weight=self.weight)

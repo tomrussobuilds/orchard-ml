@@ -13,6 +13,7 @@ Design:
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from functools import partial
 from typing import TYPE_CHECKING, Callable
 
@@ -60,6 +61,32 @@ def create_mixup_fn(cfg: Config) -> Callable | None:
     return None
 
 
+# ── Loop Options ───────────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True, slots=True)
+class LoopOptions:
+    """Scalar configuration for a :class:`TrainingLoop`.
+
+    Groups training hyper-parameters that do not depend on PyTorch objects,
+    keeping the ``TrainingLoop`` constructor lean.
+
+    Attributes:
+        grad_clip: Max norm for gradient clipping (0 disables).
+        total_epochs: Total number of epochs (for tqdm progress bar).
+        mixup_epochs: Epoch cutoff after which MixUp is disabled.
+        use_tqdm: Whether to show tqdm progress bar.
+        monitor_metric: Metric key for ReduceLROnPlateau stepping
+            (e.g. ``"auc"``, ``"accuracy"``).
+    """
+
+    grad_clip: float
+    total_epochs: int
+    mixup_epochs: int
+    use_tqdm: bool
+    monitor_metric: str
+
+
 # ── Training Loop ──────────────────────────────────────────────────────────
 
 
@@ -80,11 +107,7 @@ class TrainingLoop:
         device: Hardware target (CUDA/MPS/CPU).
         scaler: AMP GradScaler (or None).
         mixup_fn: MixUp partial function (or None).
-        grad_clip: Max norm for gradient clipping (0 disables).
-        total_epochs: Total number of epochs (for tqdm progress bar).
-        mixup_epochs: Epoch cutoff after which MixUp is disabled.
-        use_tqdm: Whether to show tqdm progress bar.
-        monitor_metric: Metric key for ReduceLROnPlateau stepping (e.g. "auc", "accuracy").
+        options: Scalar training options (see :class:`LoopOptions`).
     """
 
     def __init__(
@@ -98,11 +121,7 @@ class TrainingLoop:
         device: torch.device,
         scaler: torch.amp.GradScaler | None,
         mixup_fn: Callable | None,
-        grad_clip: float,
-        total_epochs: int,
-        mixup_epochs: int,
-        use_tqdm: bool,
-        monitor_metric: str,
+        options: LoopOptions,
     ) -> None:
         self.model = model
         self.train_loader = train_loader
@@ -113,11 +132,7 @@ class TrainingLoop:
         self.device = device
         self.scaler = scaler
         self.mixup_fn = mixup_fn
-        self.grad_clip = grad_clip
-        self.total_epochs = total_epochs
-        self.mixup_epochs = mixup_epochs
-        self.use_tqdm = use_tqdm
-        self.monitor_metric = monitor_metric
+        self.options = options
 
     def run_train_step(self, epoch: int) -> float:
         """Execute a single training epoch with MixUp cutoff.
@@ -131,7 +146,7 @@ class TrainingLoop:
         Returns:
             Average training loss for the epoch.
         """
-        current_mixup = self.mixup_fn if epoch <= self.mixup_epochs else None
+        current_mixup = self.mixup_fn if epoch <= self.options.mixup_epochs else None
         return train_one_epoch(
             model=self.model,
             loader=self.train_loader,
@@ -140,10 +155,10 @@ class TrainingLoop:
             device=self.device,
             mixup_fn=current_mixup,
             scaler=self.scaler,
-            grad_clip=self.grad_clip,
+            grad_clip=self.options.grad_clip,
             epoch=epoch,
-            total_epochs=self.total_epochs,
-            use_tqdm=self.use_tqdm,
+            total_epochs=self.options.total_epochs,
+            use_tqdm=self.options.use_tqdm,
         )
 
     def run_epoch(self, epoch: int) -> tuple[float, dict[str, float]]:
@@ -162,5 +177,5 @@ class TrainingLoop:
             criterion=self.criterion,
             device=self.device,
         )
-        step_scheduler(self.scheduler, val_metrics[self.monitor_metric])
+        step_scheduler(self.scheduler, val_metrics[self.options.monitor_metric])
         return train_loss, val_metrics

@@ -13,7 +13,7 @@ import pytest
 import torch
 import torch.nn as nn
 
-from orchard.trainer._loop import TrainingLoop, create_amp_scaler, create_mixup_fn
+from orchard.trainer._loop import LoopOptions, TrainingLoop, create_amp_scaler, create_mixup_fn
 
 # ── FIXTURES ───────────────────────────────────────────────────────────────
 
@@ -45,11 +45,13 @@ def loop():
         device=torch.device("cpu"),
         scaler=None,
         mixup_fn=None,
-        grad_clip=1.0,
-        total_epochs=5,
-        mixup_epochs=3,
-        use_tqdm=False,
-        monitor_metric="auc",
+        options=LoopOptions(
+            grad_clip=1.0,
+            total_epochs=5,
+            mixup_epochs=3,
+            use_tqdm=False,
+            monitor_metric="auc",
+        ),
     )
 
 
@@ -122,7 +124,6 @@ def test_run_train_step_basic(mock_train, loop):
 def test_run_train_step_mixup_cutoff(mock_train, loop):
     """MixUp is passed when epoch <= mixup_epochs, None after."""
     loop.mixup_fn = MagicMock()
-    loop.mixup_epochs = 3
 
     # Epoch 2 → mixup active
     loop.run_train_step(epoch=2)
@@ -150,10 +151,10 @@ def test_run_train_step_passes_all_args(mock_train, loop):
     assert call_kwargs["optimizer"] is loop.optimizer
     assert call_kwargs["device"] is loop.device
     assert call_kwargs["scaler"] is loop.scaler
-    assert call_kwargs["grad_clip"] == loop.grad_clip
+    assert call_kwargs["grad_clip"] == loop.options.grad_clip
     assert call_kwargs["epoch"] == 2
-    assert call_kwargs["total_epochs"] == loop.total_epochs
-    assert call_kwargs["use_tqdm"] is loop.use_tqdm
+    assert call_kwargs["total_epochs"] == loop.options.total_epochs
+    assert call_kwargs["use_tqdm"] is loop.options.use_tqdm
 
 
 # ── TESTS: TrainingLoop.run_epoch ──────────────────────────────────────────

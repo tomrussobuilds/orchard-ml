@@ -25,7 +25,7 @@ import torch
 from ...core import LOGGER_NAME, Config, LogStyle
 from ...core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_LOSS
 from ...trainer import validate_epoch
-from ...trainer._loop import TrainingLoop, create_amp_scaler, create_mixup_fn
+from ...trainer._loop import LoopOptions, TrainingLoop, create_amp_scaler, create_mixup_fn
 from ...trainer._scheduling import step_scheduler
 from .metric_extractor import MetricExtractor
 
@@ -140,11 +140,13 @@ class TrialTrainingExecutor:
             device=device,
             scaler=self.scaler,
             mixup_fn=self.mixup_fn,
-            grad_clip=cfg.training.grad_clip,
-            total_epochs=self.epochs,
-            mixup_epochs=cfg.training.mixup_epochs,
-            use_tqdm=False,
-            monitor_metric=cfg.training.monitor_metric,
+            options=LoopOptions(
+                grad_clip=cfg.training.grad_clip,
+                total_epochs=self.epochs,
+                mixup_epochs=cfg.training.mixup_epochs,
+                use_tqdm=False,
+                monitor_metric=cfg.training.monitor_metric,
+            ),
         )
 
     def execute(self, trial: optuna.Trial) -> float:

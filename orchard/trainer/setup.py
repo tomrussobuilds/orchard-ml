@@ -48,6 +48,12 @@ def get_criterion(training: TrainingConfig, class_weights: torch.Tensor | None =
     Args:
         training: Training sub-config with criterion parameters.
         class_weights: Optional per-class weights for imbalanced datasets.
+
+    Returns:
+        Loss module (CrossEntropyLoss or FocalLoss).
+
+    Raises:
+        ValueError: If ``training.criterion_type`` is not recognised.
     """
     c_type = training.criterion_type.lower()
     weights = class_weights if training.weighted_loss else None
@@ -66,9 +72,20 @@ def get_optimizer(model: nn.Module, training: TrainingConfig) -> optim.Optimizer
     """
     Factory function to instantiate optimizer from config.
 
-    Dispatches on training.optimizer_type:
-        - sgd: SGD with momentum, suited for convolutional architectures.
-        - adamw: AdamW with decoupled weight decay, suited for transformers.
+    Dispatches on ``training.optimizer_type``:
+
+    - **sgd** — SGD with momentum, suited for convolutional architectures.
+    - **adamw** — AdamW with decoupled weight decay, suited for transformers.
+
+    Args:
+        model: Network whose parameters will be optimised.
+        training: Training sub-config with optimizer hyper-parameters.
+
+    Returns:
+        Configured optimizer instance.
+
+    Raises:
+        ValueError: If ``training.optimizer_type`` is not recognised.
     """
     opt_type = training.optimizer_type.lower()
 
@@ -105,10 +122,21 @@ def get_scheduler(
     Advanced Scheduler Factory.
 
     Supports multiple LR decay strategies based on TrainingConfig:
-        - cosine: Smooth decay following a cosine curve.
-        - plateau: Reduces LR when monitor_metric stops improving (mode="max").
-        - step: Periodic reduction by a fixed factor.
-        - none: Maintains a constant learning rate.
+
+    - **cosine** — Smooth decay following a cosine curve.
+    - **plateau** — Reduces LR when ``monitor_metric`` stops improving (``mode="max"``).
+    - **step** — Periodic reduction by a fixed factor.
+    - **none** — Maintains a constant learning rate.
+
+    Args:
+        optimizer: Optimizer whose learning rate will be scheduled.
+        training: Training sub-config with scheduler hyper-parameters.
+
+    Returns:
+        Configured learning rate scheduler instance.
+
+    Raises:
+        ValueError: If ``training.scheduler_type`` is not recognised.
     """
     sched_type = training.scheduler_type.lower()
 

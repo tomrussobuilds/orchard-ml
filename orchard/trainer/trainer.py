@@ -35,7 +35,7 @@ from ..core.paths import METRIC_ACCURACY, METRIC_LOSS
 if TYPE_CHECKING:  # pragma: no cover
     from ..tracking import TrackerProtocol
 
-from ._loop import TrainingLoop, create_amp_scaler, create_mixup_fn
+from ._loop import LoopOptions, TrainingLoop, create_amp_scaler, create_mixup_fn
 
 # Global logger instance
 logger = logging.getLogger(LOGGER_NAME)
@@ -59,27 +59,26 @@ class ModelTrainer:
         5. Early Stopping: Halt training if no improvement for `patience` epochs
 
     Attributes:
-        model (nn.Module): Neural network architecture to train
-        train_loader (DataLoader): Training data provider
-        val_loader (DataLoader): Validation data provider
-        optimizer (torch.optim.Optimizer): Gradient descent optimizer
-        scheduler (LRScheduler): Learning rate scheduler
-        criterion (nn.Module): Loss function (e.g., CrossEntropyLoss)
-        device (torch.device): Hardware target (CUDA/MPS/CPU)
-        cfg (Config): Global configuration manifest (SSOT)
-        output_path (Path | None): Checkpoint save location (default: ./best_model.pth)
-        epochs (int): Total number of training epochs
-        patience (int): Early stopping patience (epochs without improvement)
-        best_acc (float): Best validation accuracy achieved
-        best_metric (float): Best value of the monitored metric
-        epochs_no_improve (int): Consecutive epochs without monitored metric improvement
-        scaler (torch.amp.GradScaler | None): AMP scaler (None when use_amp is False)
-        mixup_fn (callable | None): Mixup augmentation function (partial of mixup_data)
-        best_path (Path): Filesystem path for best model checkpoint
-        train_losses (list[float]): Training loss history per epoch
-        val_metrics_history (list[dict]): Validation metrics history per epoch
-        monitor_metric (str): Name of metric driving checkpointing
-        _loop (TrainingLoop): Shared epoch kernel handling train → validate → schedule
+        model: Neural network architecture to train.
+        train_loader: Training data provider.
+        val_loader: Validation data provider.
+        optimizer: Gradient descent optimizer.
+        scheduler: Learning rate scheduler.
+        criterion: Loss function (e.g., CrossEntropyLoss).
+        device: Hardware target (CUDA/MPS/CPU).
+        cfg: Global configuration manifest (SSOT).
+        epochs: Total number of training epochs.
+        patience: Early stopping patience (epochs without improvement).
+        best_acc: Best validation accuracy achieved.
+        best_metric: Best value of the monitored metric.
+        epochs_no_improve: Consecutive epochs without monitored metric improvement.
+        scaler: AMP scaler (``None`` when ``use_amp`` is ``False``).
+        mixup_fn: Mixup augmentation function (partial of ``mixup_data``).
+        best_path: Filesystem path for best model checkpoint.
+        train_losses: Training loss history per epoch.
+        val_metrics_history: Validation metrics history per epoch.
+        monitor_metric: Name of metric driving checkpointing.
+        _loop: Shared epoch kernel handling train → validate → schedule.
 
     Example:
         >>> from orchard.trainer import ModelTrainer
@@ -115,16 +114,16 @@ class ModelTrainer:
         Initializes the ModelTrainer with all required training components.
 
         Args:
-            model (nn.Module): Neural network architecture to train
-            train_loader (DataLoader): DataLoader for training dataset
-            val_loader (DataLoader): DataLoader for validation dataset
-            optimizer (torch.optim.Optimizer): Gradient descent optimizer (e.g., SGD, Adam)
-            scheduler (LRScheduler): Learning rate scheduler for training dynamics
-            criterion (nn.Module): Loss function for optimization (e.g., CrossEntropyLoss)
-            device (torch.device): Compute device for training
-            cfg (Config): Validated global configuration containing training hyperparameters
-            output_path (Path | None): Path for best model checkpoint (default: ./best_model.pth)
-            tracker (TrackerProtocol | None): Optional experiment tracker for MLflow metric logging
+            model: Neural network architecture to train.
+            train_loader: DataLoader for training dataset.
+            val_loader: DataLoader for validation dataset.
+            optimizer: Gradient descent optimizer (e.g., SGD, AdamW).
+            scheduler: Learning rate scheduler for training dynamics.
+            criterion: Loss function for optimisation (e.g., CrossEntropyLoss).
+            device: Compute device for training.
+            cfg: Validated global configuration containing training hyperparameters.
+            output_path: Path for best model checkpoint (default: ``./best_model.pth``).
+            tracker: Optional experiment tracker for MLflow metric logging.
         """
         self.model = model
         self.train_loader = train_loader
@@ -170,11 +169,13 @@ class ModelTrainer:
             device=device,
             scaler=self.scaler,
             mixup_fn=self.mixup_fn,
-            grad_clip=cfg.training.grad_clip,
-            total_epochs=self.epochs,
-            mixup_epochs=cfg.training.mixup_epochs,
-            use_tqdm=cfg.training.use_tqdm,
-            monitor_metric=self.monitor_metric,
+            options=LoopOptions(
+                grad_clip=cfg.training.grad_clip,
+                total_epochs=self.epochs,
+                mixup_epochs=cfg.training.mixup_epochs,
+                use_tqdm=cfg.training.use_tqdm,
+                monitor_metric=self.monitor_metric,
+            ),
         )
 
         logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Checkpoint':<18}: {self.best_path.name}")
@@ -216,12 +217,12 @@ class ModelTrainer:
             if val_acc > self.best_acc:
                 self.best_acc = val_acc
 
-            # --- 4. Checkpoint & Early Stopping Logic ---
+            # --- 2. Checkpoint & Early Stopping ---
             if self._handle_checkpointing(val_metrics):
                 logger.warning(f"Early stopping triggered at epoch {epoch}.")
                 break
 
-            # --- 5. Unified Logging ---
+            # --- 3. Epoch Logging ---
             current_lr = self.optimizer.param_groups[0]["lr"]
             self._log_epoch_summary(
                 epoch,
@@ -232,7 +233,7 @@ class ModelTrainer:
                 current_lr,
             )
 
-            # --- 6. Experiment Tracking ---
+            # --- 4. Experiment Tracking ---
             if self.tracker is not None:
                 self.tracker.log_epoch(epoch, epoch_loss, val_metrics, current_lr)
 

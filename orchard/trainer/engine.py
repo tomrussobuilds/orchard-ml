@@ -295,17 +295,16 @@ def _backward_step(
 ) -> None:
     """Perform a backward pass with optional gradient scaling and clipping.
 
-    This function handles mixed precision training via a `GradScaler` if provided.
-    It also applies gradient clipping if `grad_clip` is greater than zero.
+    Handles mixed precision training via a GradScaler if provided and
+    applies gradient clipping when ``grad_clip`` is greater than zero.
 
     Args:
-        loss (torch.Tensor): The computed loss for the current batch.
-        optimizer (torch.optim.Optimizer): The optimizer used to update model parameters.
-        model (nn.Module): The neural network model whose parameters will be updated.
-        scaler (torch.amp.GradScaler | None): Automatic Mixed Precision (AMP) scaler.
-            If `None`, standard precision backward pass is used.
-        grad_clip (float | None): Maximum norm for gradient clipping.
-            If None or <= 0, no clipping is applied.
+        loss: Computed loss for the current batch.
+        optimizer: Optimizer used to update model parameters.
+        model: Neural network whose parameters will be updated.
+        scaler: AMP scaler. If ``None``, standard precision backward pass is used.
+        grad_clip: Maximum norm for gradient clipping.
+            If ``None`` or ``<= 0``, no clipping is applied.
     """
     if scaler:
         # Mixed precision backward pass
