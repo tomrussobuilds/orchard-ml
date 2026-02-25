@@ -133,7 +133,7 @@ def get_scheduler(
 
     elif sched_type == "none":
         # Returns a dummy scheduler that keeps LR constant
-        return lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: 1.0)
+        return lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda _epoch: 1.0)
 
     else:
         raise ValueError(

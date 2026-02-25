@@ -260,7 +260,7 @@ def quantize_model(
 
         return output_path
 
-    except Exception as e:  # noqa: broad-except — onnxruntime raises non-standard exceptions
+    except Exception as e:  # onnxruntime raises non-standard exceptions
         logger.error(f"    {LogStyle.WARNING} Quantization failed: {e}")
         return None
 
@@ -324,6 +324,6 @@ def benchmark_onnx_inference(
     except ImportError:
         logger.warning("onnxruntime not installed. Skipping benchmark.")
         return -1.0
-    except Exception as e:  # noqa: broad-except — onnxruntime raises non-standard exceptions
+    except Exception as e:  # onnxruntime raises non-standard exceptions
         logger.error(f"Benchmark failed: {e}")
         return -1.0

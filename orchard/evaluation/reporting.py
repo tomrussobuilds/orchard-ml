@@ -130,7 +130,7 @@ class TrainingReport(BaseModel):
                     self._apply_excel_formatting(writer, df)
 
             logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Summary Report':<18}: {path.name}")
-        except Exception as e:  # noqa: broad-except — xlsxwriter raises non-standard exceptions
+        except Exception as e:  # xlsxwriter raises non-standard exceptions
             logger.error(f"Failed to generate report: {e}")
 
     def _apply_excel_formatting(self, writer: pd.ExcelWriter, df: pd.DataFrame) -> None:

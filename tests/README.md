@@ -64,7 +64,7 @@ pytest tests/ -n auto
 
 GitHub Actions automatically run on every push:
 
-- ✅ **Code Quality**: Black, isort, Flake8 formatting and linting checks
+- ✅ **Code Quality**: Black, Ruff formatting and linting checks
 - ✅ **Multi-Python Testing**: Unit tests across Python 3.10–3.14
 - ✅ **Smoke Test**: 1-epoch end-to-end validation (~30s, CPU-only)
 - ✅ **Documentation**: README.md presence verification
@@ -75,7 +75,7 @@ GitHub Actions automatically run on every push:
 
 | Job | Description | Status |
 |-----|-------------|--------|
-| **Code Quality** | Black, isort, Flake8, mypy | ✅ Required to pass |
+| **Code Quality** | Black, Ruff, mypy | ✅ Required to pass |
 | **Pytest Suite** | 5 Python versions + SonarCloud | ✅ Required to pass |
 | **Smoke Test** | 1-epoch E2E validation | ✅ Required to pass |
 | **Documentation** | MkDocs build + GitHub Pages deploy | ✅ Main branch only |
@@ -95,7 +95,7 @@ Beyond the main CI pipeline, the project includes automated release and publishi
 | Workflow | Trigger | Description |
 |----------|---------|-------------|
 | **CI/CD** (`ci.yml`) | Every push/PR | Full test suite, code quality, smoke test, security scan, docs deploy |
-| **Badges** (`badges.yml`) | Push to main | Updates dynamic quality badges (Black, isort, Flake8, mypy, Radon) |
+| **Badges** (`badges.yml`) | Push to main | Updates dynamic quality badges (Black, Ruff, mypy, Bandit, Radon) |
 | **Documentation** (`docs.yml`) | Manual dispatch | MkDocs build + GitHub Pages deploy (standalone re-deploy) |
 | **Release** (`release.yml`) | Tag push (`v*`) | Creates GitHub Release with auto-generated changelog (git-cliff) |
 | **Publish** (`publish.yml`) | Tag push (`v*`) | Builds and publishes package to PyPI via Trusted Publisher |

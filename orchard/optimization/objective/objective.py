@@ -223,7 +223,7 @@ class OptunaObjective:
         except optuna.TrialPruned:
             raise
 
-        except Exception as e:  # noqa: broad-except — must not crash study
+        except Exception as e:  # must not crash study
             logger.error(f"Trial {trial.number} failed: {type(e).__name__}: {e}")
             return self._worst_metric()
 

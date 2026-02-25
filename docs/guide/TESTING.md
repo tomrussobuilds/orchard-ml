@@ -47,8 +47,7 @@ bash scripts/check_quality.sh
 
 **What it checks:**
 - **Black**: Code formatting compliance (PEP 8 style, 100 chars)
-- **isort**: Import statement ordering
-- **Flake8**: PEP 8 linting and code smells
+- **Ruff**: Linting + import sorting (replaces Flake8 and isort)
 - **Bandit**: Security vulnerability scanning
 - **Radon**: Cyclomatic complexity & maintainability index
 - **Pytest**: Full test suite with coverage report
@@ -76,28 +75,24 @@ bash scripts/check_quality_full.sh
   black orchard/ tests/  # Auto-fix
   ```
 
-- **isort**: Sorts imports alphabetically and by type
-  ```bash
-  isort orchard/ tests/  # Auto-fix
-  ```
+<h4>Linting & Import Sorting</h4>
 
-<h4>Linting Tools</h4>
-
-- **Flake8**: PEP 8 style guide enforcement
-  - Checks: unused variables, imports, style violations
-  - Max line length: 100
-  - Ignored: E203, W503
+- **Ruff**: Fast linter and import sorter (replaces Flake8 + isort)
+  - Checks: unused variables, imports, style violations, argument usage
+  - Line length: 100 (E501 ignored, handled by Black)
+  - Rules: E, F, W, I, ARG
   ```bash
-  flake8 orchard/ tests/ --max-line-length=100 --extend-ignore=E203,W503
+  ruff check orchard/ tests/       # Check
+  ruff check --fix orchard/ tests/  # Auto-fix
   ```
 
 <h4>Security Tools</h4>
 
 - **Bandit**: Detects common security issues
   - Checks: hardcoded passwords, SQL injection, insecure temp files
-  - Severity: Medium and High only (`-ll`)
+  - Severity: Low, Medium, and High (`-l`)
   ```bash
-  bandit -r orchard/ -ll -q
+  bandit -r orchard/ -l -q
   ```
 
 <h4>Complexity Analysis</h4>
@@ -125,14 +120,11 @@ bash scripts/check_quality_full.sh
 # Code formatting check
 black --check --diff orchard/ tests/
 
-# Import sorting check
-isort --check-only --diff orchard/ tests/
-
-# Linting
-flake8 orchard/ tests/ --max-line-length=100 --extend-ignore=E203,W503
+# Linting + import sorting
+ruff check orchard/ tests/
 
 # Security scanning
-bandit -r orchard/ -ll -q
+bandit -r orchard/ -l -q
 
 # Complexity analysis
 radon cc orchard/ -n B --total-average
@@ -141,8 +133,8 @@ radon mi orchard/ -n B
 # Type checking
 mypy orchard/ --ignore-missing-imports
 
-# Tests with coverage
-pytest --cov=orchard --cov-report=term-missing -v tests/
+# Tests with coverage (fails if < 100%)
+pytest --cov=orchard --cov-report=term-missing --cov-fail-under=100 -v tests/
 ```
 
 <h3>Installation</h3>
@@ -192,7 +184,7 @@ pytest tests/ -n auto
 
 GitHub Actions automatically run on every push:
 
-- ✅ **Code Quality**: Black, isort, Flake8, mypy formatting, linting, and type checks
+- ✅ **Code Quality**: Black, Ruff, mypy formatting, linting, and type checks
 - ✅ **Multi-Python Testing**: Unit tests across Python 3.10–3.14
 - ✅ **Smoke Test**: 1-epoch end-to-end validation (~30s, CPU-only)
 - ✅ **Documentation**: README.md presence verification
@@ -217,7 +209,7 @@ GitHub Actions automatically run on every push:
 
 | Job | Description | Status |
 |-----|-------------|--------|
-| **Code Quality** | Black, isort, Flake8, mypy | ✅ Required to pass |
+| **Code Quality** | Black, Ruff, mypy | ✅ Required to pass |
 | **Pytest Suite** | 5 Python versions | ✅ Required to pass |
 | **Smoke Test** | 1-epoch E2E validation | ✅ Required to pass |
 | **Documentation** | README verification | ✅ Required to pass |

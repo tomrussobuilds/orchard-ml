@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ONNX INT8 quantization + MkDocs API documentation
 - add configurable TTA blur kernel size + fix docs 404
 
+### Build
+
+- replace flake8/isort with ruff, enforce 100% coverage, add pre-push hook
+
 ### Changed
 
 - extract TrainingLoop to unify trainer and executor epoch logic

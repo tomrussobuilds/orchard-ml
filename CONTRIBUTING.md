@@ -47,8 +47,7 @@ bash scripts/check_quality_full.sh
 
 **Quick checks** (`check_quality.sh`):
 - Black (code formatting)
-- isort (import sorting)
-- Flake8 (linting)
+- Ruff (linting + import sorting)
 - Bandit (security)
 - Radon (complexity)
 - Pytest with coverage

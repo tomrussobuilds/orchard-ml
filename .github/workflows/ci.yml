@@ -44,16 +44,13 @@ jobs:
 
       - name: Install linting tools
         run: |
-          pip install black flake8 isort mypy==1.19.1 types-PyYAML types-requests
+          pip install black ruff mypy==1.19.1 types-PyYAML types-requests
 
       - name: Run Black
         run: black --check --diff .
 
-      - name: Run isort
-        run: isort --check-only --diff .
-
-      - name: Run Flake8
-        run: flake8 --max-line-length=100 --ignore=E203,W503,E501 orchard/ tests/
+      - name: Run Ruff
+        run: ruff check orchard/ tests/
 
       - name: Run mypy (type checking)
         run: mypy orchard/
@@ -94,10 +91,15 @@ jobs:
 
       - name: Run pytest suite
         run: |
+          COV_THRESHOLD=100
+          if [[ "${{ matrix.python-version }}" == "3.14-dev" ]]; then
+            COV_THRESHOLD=90  # onnxruntime unavailable on 3.14 → export tests skipped
+          fi
           pytest tests/ \
             --cov=orchard \
             --cov-report=xml \
             --cov-report=term-missing \
+            --cov-fail-under=$COV_THRESHOLD \
             -v \
             --tb=short \
             --maxfail=5
@@ -209,7 +211,7 @@ jobs:
       - name: Run Bandit security scan
         run: |
           pip install bandit
-          bandit -r orchard/ -ll -s B101
+          bandit -r orchard/ -l -s B101
 
       - name: Run pip-audit (dependency vulnerability scan)
         # Advisory-only: pip-audit may flag transitive deps outside our control.

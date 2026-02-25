@@ -30,7 +30,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[test]"
-          pip install black isort flake8 mypy radon bandit types-PyYAML types-requests
+          pip install black ruff mypy radon bandit types-PyYAML types-requests
 
       # --- Black ---
       - name: Run Black
@@ -56,51 +56,27 @@ jobs:
           namedLogo: python
           logoColor: white
 
-      # --- isort ---
-      - name: Run isort
-        id: isort
+      # --- Ruff ---
+      - name: Run Ruff
+        id: ruff
         run: |
-          if isort --check-only --quiet . 2>/dev/null; then
+          if ruff check orchard/ tests/ 2>/dev/null; then
             echo "status=passing" >> "$GITHUB_OUTPUT"
-            echo "color=1674b1" >> "$GITHUB_OUTPUT"
+            echo "color=d4aa00" >> "$GITHUB_OUTPUT"
           else
             echo "status=failing" >> "$GITHUB_OUTPUT"
             echo "color=e74c3c" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Update isort badge
+      - name: Update Ruff badge
         uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483  # v1.7.0
         with:
           auth: "${{ env.GIST_AUTH }}"
           gistID: "7835190af6011e9051b673c8be974f8a"
-          filename: isort.json
-          label: isort
-          message: "${{ steps.isort.outputs.status }}"
-          color: "${{ steps.isort.outputs.color }}"
-          namedLogo: python
-          logoColor: white
-
-      # --- Flake8 ---
-      - name: Run Flake8
-        id: flake8
-        run: |
-          if flake8 orchard/ tests/ 2>/dev/null; then
-            echo "status=passing" >> "$GITHUB_OUTPUT"
-            echo "color=brightgreen" >> "$GITHUB_OUTPUT"
-          else
-            echo "status=failing" >> "$GITHUB_OUTPUT"
-            echo "color=e74c3c" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Update Flake8 badge
-        uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483  # v1.7.0
-        with:
-          auth: "${{ env.GIST_AUTH }}"
-          gistID: "7835190af6011e9051b673c8be974f8a"
-          filename: flake8.json
-          label: flake8
-          message: "${{ steps.flake8.outputs.status }}"
-          color: "${{ steps.flake8.outputs.color }}"
+          filename: ruff.json
+          label: ruff
+          message: "${{ steps.ruff.outputs.status }}"
+          color: "${{ steps.ruff.outputs.color }}"
           namedLogo: python
           logoColor: white
 
@@ -132,7 +108,7 @@ jobs:
       - name: Run Bandit
         id: bandit
         run: |
-          if bandit -r orchard/ -ll -q 2>/dev/null; then
+          if bandit -r orchard/ -l -q 2>/dev/null; then
             echo "status=passing" >> "$GITHUB_OUTPUT"
             echo "color=brightgreen" >> "$GITHUB_OUTPUT"
           else

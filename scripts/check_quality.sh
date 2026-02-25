@@ -13,18 +13,13 @@ black --check --diff orchard/ tests/
 echo "✓ Black passed"
 echo ""
 
-echo "📦 isort (import sorting)..."
-isort --check-only --diff orchard/ tests/
-echo "✓ isort passed"
-echo ""
-
-echo "✨ Flake8 (linting)..."
-flake8 orchard/ tests/
-echo "✓ Flake8 passed"
+echo "✨ Ruff (linting + import sorting)..."
+ruff check orchard/ tests/
+echo "✓ Ruff passed"
 echo ""
 
 echo "🔒 Bandit (security linting)..."
-bandit -r orchard/ -ll -q
+bandit -r orchard/ -l -q
 echo "✓ Bandit passed"
 echo ""
 
@@ -38,7 +33,7 @@ echo "✓ Radon passed"
 echo ""
 
 echo "🧪 Pytest (tests + coverage)..."
-pytest --cov=orchard --cov-report=term-missing -v tests/
+pytest --cov=orchard --cov-report=term-missing --cov-fail-under=100 -v tests/
 echo ""
 
 echo "✅ All quality checks passed!"

@@ -7,16 +7,10 @@ repos:
         entry: black --check --quiet
         types: [python]
 
-      - id: isort
-        name: isort (import sorting)
+      - id: ruff
+        name: ruff (linting + import sorting)
         language: system
-        entry: isort --check-only
-        types: [python]
-
-      - id: flake8
-        name: flake8 (linting)
-        language: system
-        entry: flake8
+        entry: ruff check --fix
         types: [python]
 
       - id: mypy
@@ -33,10 +27,10 @@ repos:
         entry: bandit -c pyproject.toml -r
         types: [python]
 
-      - id: smoke-guard
-        name: smoke test guard (import & config)
+      - id: test-coverage
+        name: test suite + 100% coverage
         language: system
-        entry: python -m pytest tests/test_smoke_test.py -x -q --tb=short --no-header
+        entry: pytest tests/ --cov=orchard --cov-fail-under=100 -x -q --tb=short --no-header
         pass_filenames: false
         always_run: true
 
@@ -59,3 +53,11 @@ repos:
         stages: [pre-commit]
         always_run: true
         pass_filenames: false
+
+      - id: pre-push-quality-gate
+        name: pre-push quality gate
+        language: system
+        entry: bash -c 'ruff check orchard/ tests/ && bandit -c pyproject.toml -r orchard/ && mypy orchard/'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

@@ -57,7 +57,7 @@ def build_timm_model(
             in_chans=in_channels,
             drop_rate=cfg.architecture.dropout,
         )
-    except Exception as e:  # noqa: broad-except — timm raises diverse internal errors
+    except Exception as e:  # timm raises diverse internal errors
         raise ValueError(
             f"Failed to create timm model '{model_id}'. "
             f"Verify the identifier is valid: https://huggingface.co/timm. "

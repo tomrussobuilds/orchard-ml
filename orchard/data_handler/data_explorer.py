@@ -92,7 +92,7 @@ def show_sample_images(
 
 def show_samples_for_dataset(
     loader: DataLoader,
-    classes: list[str],
+    classes: list[str],  # noqa: ARG001
     dataset_name: str,
     run_paths: RunPaths,
     cfg: Config | None = None,
