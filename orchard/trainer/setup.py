@@ -106,7 +106,7 @@ def get_scheduler(
 
     Supports multiple LR decay strategies based on TrainingConfig:
         - cosine: Smooth decay following a cosine curve.
-        - plateau: Reduces LR when a metric (loss) stops improving.
+        - plateau: Reduces LR when monitor_metric stops improving (mode="max").
         - step: Periodic reduction by a fixed factor.
         - none: Maintains a constant learning rate.
     """
@@ -118,9 +118,10 @@ def get_scheduler(
         )
 
     elif sched_type == "plateau":
+        # monitor_metric is Literal["auc", "accuracy"] — both maximize
         return lr_scheduler.ReduceLROnPlateau(
             optimizer,
-            mode="min",
+            mode="max",
             factor=training.scheduler_factor,
             patience=training.scheduler_patience,
             min_lr=training.min_lr,

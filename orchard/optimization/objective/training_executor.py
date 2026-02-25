@@ -144,6 +144,7 @@ class TrialTrainingExecutor:
             total_epochs=self.epochs,
             mixup_epochs=cfg.training.mixup_epochs,
             use_tqdm=False,
+            monitor_metric=cfg.training.monitor_metric,
         )
 
     def execute(self, trial: optuna.Trial) -> float:
@@ -185,8 +186,8 @@ class TrialTrainingExecutor:
                 )
                 raise optuna.TrialPruned()
 
-            # Scheduler step
-            step_scheduler(self.scheduler, val_metrics[METRIC_LOSS])
+            # Scheduler step (uses monitor_metric, consistent with ModelTrainer)
+            step_scheduler(self.scheduler, val_metrics[self.cfg.training.monitor_metric])
 
             # Logging
             if epoch % self.log_interval == 0 or epoch == self.epochs:

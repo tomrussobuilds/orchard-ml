@@ -21,7 +21,6 @@ import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import LRScheduler
 
-from ..core.paths import METRIC_LOSS
 from ._scheduling import step_scheduler
 from .engine import mixup_data, train_one_epoch, validate_epoch
 
@@ -85,6 +84,7 @@ class TrainingLoop:
         total_epochs: Total number of epochs (for tqdm progress bar).
         mixup_epochs: Epoch cutoff after which MixUp is disabled.
         use_tqdm: Whether to show tqdm progress bar.
+        monitor_metric: Metric key for ReduceLROnPlateau stepping (e.g. "auc", "accuracy").
     """
 
     def __init__(
@@ -102,6 +102,7 @@ class TrainingLoop:
         total_epochs: int,
         mixup_epochs: int,
         use_tqdm: bool,
+        monitor_metric: str,
     ) -> None:
         self.model = model
         self.train_loader = train_loader
@@ -116,6 +117,7 @@ class TrainingLoop:
         self.total_epochs = total_epochs
         self.mixup_epochs = mixup_epochs
         self.use_tqdm = use_tqdm
+        self.monitor_metric = monitor_metric
 
     def run_train_step(self, epoch: int) -> float:
         """Execute a single training epoch with MixUp cutoff.
@@ -160,5 +162,5 @@ class TrainingLoop:
             criterion=self.criterion,
             device=self.device,
         )
-        step_scheduler(self.scheduler, val_metrics.get(METRIC_LOSS, 0.0))
+        step_scheduler(self.scheduler, val_metrics[self.monitor_metric])
         return train_loss, val_metrics

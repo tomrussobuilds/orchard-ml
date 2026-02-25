@@ -174,6 +174,7 @@ class ModelTrainer:
             total_epochs=self.epochs,
             mixup_epochs=cfg.training.mixup_epochs,
             use_tqdm=cfg.training.use_tqdm,
+            monitor_metric=self.monitor_metric,
         )
 
         logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Checkpoint':<18}: {self.best_path.name}")
@@ -210,7 +211,7 @@ class ModelTrainer:
 
             val_acc = val_metrics[METRIC_ACCURACY]
             val_loss = val_metrics[METRIC_LOSS]
-            monitor_value = val_metrics.get(self.monitor_metric, 0.0)
+            monitor_value = val_metrics[self.monitor_metric]
 
             if val_acc > self.best_acc:
                 self.best_acc = val_acc
@@ -290,7 +291,7 @@ class ModelTrainer:
         Returns:
             True if early stopping criteria are met, False otherwise
         """
-        current_value = val_metrics.get(self.monitor_metric, 0.0)
+        current_value = val_metrics[self.monitor_metric]
 
         if current_value > self.best_metric:
             logger.info(

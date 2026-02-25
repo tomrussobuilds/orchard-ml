@@ -49,6 +49,7 @@ def loop():
         total_epochs=5,
         mixup_epochs=3,
         use_tqdm=False,
+        monitor_metric="auc",
     )
 
 
@@ -182,10 +183,10 @@ def test_run_epoch_returns_loss_and_metrics(mock_train, mock_val, mock_sched, lo
 )
 @patch("orchard.trainer._loop.train_one_epoch", return_value=0.42)
 def test_run_epoch_steps_scheduler(mock_train, mock_val, mock_sched, loop):
-    """run_epoch calls step_scheduler with scheduler and val_loss."""
+    """run_epoch calls step_scheduler with scheduler and monitor_metric value."""
     loop.run_epoch(epoch=1)
 
-    mock_sched.assert_called_once_with(loop.scheduler, 0.3)
+    mock_sched.assert_called_once_with(loop.scheduler, 0.95)
 
 
 @pytest.mark.unit

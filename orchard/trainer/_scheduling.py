@@ -10,21 +10,22 @@ from __future__ import annotations
 from torch.optim.lr_scheduler import LRScheduler, ReduceLROnPlateau
 
 
-def step_scheduler(scheduler: LRScheduler | ReduceLROnPlateau | None, val_loss: float) -> None:
+def step_scheduler(scheduler: LRScheduler | ReduceLROnPlateau | None, monitor_value: float) -> None:
     """
     Step the learning rate scheduler.
 
-    ReduceLROnPlateau requires the monitored metric (val_loss);
+    ReduceLROnPlateau requires the monitored metric value (e.g. accuracy,
+    auc, or loss — whichever ``training.monitor_metric`` specifies);
     all other schedulers use a plain step().
 
     Args:
         scheduler: Learning rate scheduler instance, or None (no-op).
-        val_loss: Current epoch's validation loss.
+        monitor_value: Current epoch's value of the monitored metric.
     """
     if scheduler is None:
         return
 
     if isinstance(scheduler, ReduceLROnPlateau):
-        scheduler.step(val_loss)
+        scheduler.step(monitor_value)
     else:
         scheduler.step()

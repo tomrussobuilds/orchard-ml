@@ -30,6 +30,7 @@ def mock_cfg():
     cfg.training.mixup_alpha = 0
     cfg.training.mixup_epochs = 0
     cfg.training.scheduler_type = "step"
+    cfg.training.monitor_metric = "auc"
 
     cfg.optuna.enable_pruning = True
     cfg.optuna.pruning_warmup_epochs = 2
@@ -133,10 +134,10 @@ def test_should_prune_respects_flag(executor, mock_trial):
 # TESTS: SCHEDULER LOGIC
 @pytest.mark.unit
 def test_step_scheduler_plateau(executor):
-    """Test plateau scheduler receives val_loss."""
+    """Test plateau scheduler receives monitor_value."""
     executor.scheduler = MagicMock(spec=torch.optim.lr_scheduler.ReduceLROnPlateau)
 
-    step_scheduler(executor.scheduler, val_loss=0.5)
+    step_scheduler(executor.scheduler, monitor_value=0.5)
     executor.scheduler.step.assert_called_once_with(0.5)
 
 
@@ -145,14 +146,14 @@ def test_step_scheduler_standard(executor):
     """Test standard scheduler (StepLR) is called without arguments."""
     executor.scheduler = MagicMock(spec=torch.optim.lr_scheduler.StepLR)
 
-    step_scheduler(executor.scheduler, val_loss=0.5)
+    step_scheduler(executor.scheduler, monitor_value=0.5)
     executor.scheduler.step.assert_called_once_with()
 
 
 @pytest.mark.unit
 def test_return_if_scheduler_is_none(executor):
     """Ensures the function exits early when the scheduler is not initialized."""
-    result = step_scheduler(None, val_loss=0.5)
+    result = step_scheduler(None, monitor_value=0.5)
     assert result is None
 
 

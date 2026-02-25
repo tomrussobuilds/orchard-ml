@@ -78,7 +78,7 @@ def ensure_medmnist_npz(
             logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} {'Verified':<18}: {metadata.name}")
             return target_npz
 
-        except (requests.RequestException, ValueError, OSError) as e:
+        except (ValueError, OSError) as e:
             if tmp_path.exists():
                 tmp_path.unlink()
 

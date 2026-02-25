@@ -65,7 +65,7 @@ def download_galaxy10_h5(
             logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} {'Downloaded':<18}: {target_h5.name}")
             return
 
-        except (requests.RequestException, OSError) as e:
+        except OSError as e:
             if tmp_path.exists():
                 tmp_path.unlink()
 
