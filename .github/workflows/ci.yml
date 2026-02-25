@@ -115,7 +115,7 @@ jobs:
       - name: SonarCloud Scan
         if: matrix.python-version == '3.10'
         uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602  # v6
-        continue-on-error: true
+        continue-on-error: true  # External service — must not block CI on outages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -212,6 +212,8 @@ jobs:
           bandit -r orchard/ -ll -s B101
 
       - name: Run pip-audit (dependency vulnerability scan)
+        # Advisory-only: pip-audit may flag transitive deps outside our control.
+        # Failures are logged but must not block CI.
         run: |
           pip install pip-audit
           pip-audit || true

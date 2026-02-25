@@ -52,7 +52,9 @@ class HardwareConfig(BaseModel):
     device: DeviceType = Field(
         default="auto", description="Device selection: 'cpu', 'cuda', 'mps', or 'auto'"
     )
-    project_name: ProjectSlug = "orchard_ml"
+    project_name: ProjectSlug = Field(
+        default="orchard_ml", description="Project identifier for lock file naming"
+    )
     allow_process_kill: bool = Field(
         default=True, description="Allow terminating duplicate processes for cleanup"
     )

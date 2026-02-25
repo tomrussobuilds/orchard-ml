@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - extract TrainingLoop to unify trainer and executor epoch logic
 - remove dead code and harden config immutability
 - unify log styling with LogStyle across entire pipeline
+- narrow exception types and reduce interrupt grace period
 
 ### Documentation
 
@@ -30,6 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - mkdocs build warnings — remove --strict, fix broken links
 - fix:
 - resolve SonarQube code smells in logger and export phase
+
+### Miscellaneous
+
+- fix test typo, add MIT classifier, document CI decisions
 
 ## [0.1.6] - 2026-02-23
 

@@ -53,8 +53,12 @@ class DatasetConfig(BaseModel):
     metadata: DatasetMetadata | None = Field(default=None, exclude=True)
 
     # Runtime parameters
-    data_root: ValidatedPath = DATASET_DIR
-    use_weighted_sampler: bool = True
+    data_root: ValidatedPath = Field(
+        default=DATASET_DIR, description="Root directory for downloaded datasets"
+    )
+    use_weighted_sampler: bool = Field(
+        default=True, description="Use class-weighted sampler to handle imbalanced datasets"
+    )
     max_samples: PositiveInt | None = Field(default=None)
     val_ratio: Probability = Field(
         default=0.10,
