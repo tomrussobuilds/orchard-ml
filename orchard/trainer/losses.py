@@ -37,7 +37,7 @@ class FocalLoss(nn.Module):
     def __init__(
         self, gamma: float = 2.0, alpha: float = 1.0, weight: torch.Tensor | None = None
     ) -> None:
-        super(FocalLoss, self).__init__()
+        super().__init__()
         self.gamma = gamma
         self.alpha = alpha
         self.weight = weight

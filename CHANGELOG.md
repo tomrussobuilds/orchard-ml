@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- add f1 as monitor_metric, compute F1 in validate_epoch, drop unused deps
+
 ### Changed
 
 - unify scheduler stepping on monitor_metric
+- extract LoopOptions dataclass, fix docstrings in trainer/
 
 ## [0.1.7] - 2026-02-25
 

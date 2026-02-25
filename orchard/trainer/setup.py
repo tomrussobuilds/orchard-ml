@@ -146,7 +146,7 @@ def get_scheduler(
         )
 
     elif sched_type == "plateau":
-        # monitor_metric is Literal["auc", "accuracy"] — both maximize
+        # monitor_metric is Literal["auc", "accuracy", "f1"] — all maximize
         return lr_scheduler.ReduceLROnPlateau(
             optimizer,
             mode="max",

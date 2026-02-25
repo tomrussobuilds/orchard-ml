@@ -61,7 +61,8 @@ class TrainingConfig(BaseModel):
         mixup_epochs: Number of epochs to apply mixup.
         use_tta: Enable test-time augmentation.
         scheduler_type: LR scheduler type ('cosine', 'plateau', 'step', 'none').
-        monitor_metric: Metric driving checkpointing and early stopping.
+        monitor_metric: Metric driving checkpointing and early stopping
+            ('auc', 'accuracy', or 'f1').
         scheduler_patience: ReduceLROnPlateau patience epochs.
         scheduler_factor: LR reduction factor for plateau scheduler.
         step_size: StepLR decay period in epochs.
@@ -102,7 +103,7 @@ class TrainingConfig(BaseModel):
     scheduler_type: Literal["cosine", "plateau", "step", "none"] = Field(
         default="cosine", description="LR scheduler type"
     )
-    monitor_metric: Literal["auc", "accuracy"] = Field(
+    monitor_metric: Literal["auc", "accuracy", "f1"] = Field(
         default="auc", description="Metric for checkpointing and early stopping"
     )
     scheduler_patience: NonNegativeInt = Field(default=5, description="Plateau patience")

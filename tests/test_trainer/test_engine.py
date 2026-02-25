@@ -421,7 +421,7 @@ def test_validate_epoch_empty_loader(simple_model, criterion):
         device=device,
     )
 
-    assert metrics == {"loss": 0.0, "accuracy": 0.0, "auc": 0.0}
+    assert metrics == {"loss": 0.0, "accuracy": 0.0, "auc": 0.0, "f1": 0.0}
 
 
 if __name__ == "__main__":

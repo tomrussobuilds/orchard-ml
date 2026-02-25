@@ -9,7 +9,7 @@ construction in ``setup``.
 
 Key Features:
     - Configurable Monitor Metric: Checkpointing and early stopping track
-      a user-chosen metric (accuracy, f1, auc, or loss).
+      a user-chosen metric (auc, accuracy, or f1).
     - Deterministic Restoration: Best model weights are reloaded in-place
       after training completes, guaranteeing consistency.
     - Modern Training Utilities: AMP (GradScaler), gradient clipping, and

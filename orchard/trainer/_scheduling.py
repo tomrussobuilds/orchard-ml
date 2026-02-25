@@ -14,8 +14,8 @@ def step_scheduler(scheduler: LRScheduler | ReduceLROnPlateau | None, monitor_va
     """
     Step the learning rate scheduler.
 
-    ReduceLROnPlateau requires the monitored metric value (e.g. accuracy,
-    auc, or loss — whichever ``training.monitor_metric`` specifies);
+    ReduceLROnPlateau requires the monitored metric value (e.g. auc,
+    accuracy, or f1 — whichever ``training.monitor_metric`` specifies);
     all other schedulers use a plain step().
 
     Args:

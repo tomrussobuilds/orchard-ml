@@ -18,7 +18,7 @@ Features:
 Key Functions:
     compute_auc: Macro-averaged ROC-AUC with graceful fallback.
     train_one_epoch: Single training pass with AMP, MixUp, and tqdm progress.
-    validate_epoch: No-grad evaluation returning loss, accuracy, and macro AUC.
+    validate_epoch: No-grad evaluation returning loss, accuracy, macro AUC, and macro F1.
     mixup_data: Convex sample blending for data augmentation.
 """
 
@@ -30,11 +30,11 @@ from typing import Callable
 import numpy as np
 import torch
 import torch.nn as nn
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import f1_score, roc_auc_score
 from tqdm.auto import tqdm
 
 from ..core import LOGGER_NAME
-from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_LOSS
+from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS
 
 # Module-level logger (avoid dynamic imports in exception handlers)
 logger = logging.getLogger(LOGGER_NAME)
@@ -185,6 +185,7 @@ def validate_epoch(
             - 'loss' (float): Average cross-entropy loss
             - 'accuracy' (float): Classification accuracy [0.0, 1.0]
             - 'auc' (float): Macro-averaged Area Under the ROC Curve
+            - 'f1' (float): Macro-averaged F1 score
     """
     model.eval()
     val_loss = 0.0
@@ -219,15 +220,22 @@ def validate_epoch(
     # Handle empty validation set (defensive guard)
     if total == 0 or len(all_targets) == 0:
         logger.warning("Empty validation set: no samples processed. Returning zero metrics.")
-        return {METRIC_LOSS: 0.0, METRIC_ACCURACY: 0.0, METRIC_AUC: 0.0}
+        return {METRIC_LOSS: 0.0, METRIC_ACCURACY: 0.0, METRIC_AUC: 0.0, METRIC_F1: 0.0}
 
     # Global metric computation
     y_true = torch.cat(all_targets).numpy()
     y_score = torch.cat(all_probs).numpy()
+    y_pred = y_score.argmax(axis=1)
 
     auc = compute_auc(y_true, y_score)
+    macro_f1 = float(f1_score(y_true, y_pred, average="macro", zero_division=0.0))
 
-    return {METRIC_LOSS: val_loss / total, METRIC_ACCURACY: correct / total, METRIC_AUC: auc}
+    return {
+        METRIC_LOSS: val_loss / total,
+        METRIC_ACCURACY: correct / total,
+        METRIC_AUC: auc,
+        METRIC_F1: macro_f1,
+    }
 
 
 # MIXUP UTILITY

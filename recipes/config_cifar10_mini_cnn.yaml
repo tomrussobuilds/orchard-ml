@@ -22,5 +22,5 @@ training:
   epochs: 60
   patience: 15
   grad_clip: 1.0
-  monitor_metric: "auc"
+  monitor_metric: "f1"
   scheduler_type: "cosine"
