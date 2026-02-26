@@ -1,5 +1,5 @@
 """
-Metrics Computation Module
+Metrics Computation Module.
 
 Provides a standardized interface for calculating classification performance
 metrics from model outputs. Isolates statistical logic from inference loops.
@@ -11,7 +11,9 @@ import numpy as np
 from sklearn.metrics import f1_score
 
 from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1
-from ..trainer.engine import compute_auc  # noqa: F401 (re-exported via evaluation/__init__.py)
+from ..trainer.engine import (  # noqa: F401 (re-exported via evaluation/__init__.py)
+    compute_auc,
+)
 
 
 # METRIC LOGIC

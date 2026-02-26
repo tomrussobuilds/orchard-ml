@@ -6,10 +6,11 @@ like 28×28 low-resolution datasets. Provides a fast baseline alternative to ada
 with reduced parameter count and computational overhead.
 
 Key Features:
-    - Minimal Depth: 3 convolutional blocks for rapid convergence
-    - Adaptive Pooling: Maintains spatial resolution through progressive downsampling
-    - Dropout Regularization: Configurable dropout for overfitting prevention
-    - Efficient Design: ~50K parameters vs ~11M for ResNet-18
+
+- Minimal Depth: 3 convolutional blocks for rapid convergence
+- Adaptive Pooling: Maintains spatial resolution through progressive downsampling
+- Dropout Regularization: Configurable dropout for overfitting prevention
+- Efficient Design: ~50K parameters vs ~11M for ResNet-18
 
 Architecture:
     Input [28×28×C] → Conv1 [14×14×32] → Conv2 [7×7×64] → Conv3 [7×7×128]

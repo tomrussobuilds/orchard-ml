@@ -4,14 +4,16 @@ Filesystem Authority and Path Orchestration Package.
 Centralizes all path-related logic for Orchard ML using a dual-layer approach:
 
 1. **Static Layer** (constants module):
-   - PROJECT_ROOT: Dynamically resolved project root
-   - DATASET_DIR, OUTPUTS_ROOT: Global directory constants
-   - LOGGER_NAME: Unified logging identity
+
+- PROJECT_ROOT: Dynamically resolved project root
+- DATASET_DIR, OUTPUTS_ROOT: Global directory constants
+- LOGGER_NAME: Unified logging identity
 
 2. **Dynamic Layer** (RunPaths class):
-   - Experiment-specific directory management
-   - Atomic run isolation via deterministic hashing
-   - Automatic subdirectory creation (figures, models, reports, logs, etc.)
+
+- Experiment-specific directory management
+- Atomic run isolation via deterministic hashing
+- Automatic subdirectory creation (figures, models, reports, logs, etc.)
 
 Example:
     >>> from orchard.core.paths import PROJECT_ROOT, RunPaths

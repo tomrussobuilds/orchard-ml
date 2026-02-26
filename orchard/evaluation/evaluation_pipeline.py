@@ -74,7 +74,6 @@ def run_final_evaluation(
             - **test_acc** -- Test set accuracy
             - **test_auc** -- Test set AUC (0.0 if unavailable)
     """
-
     # Resolve device from model (already placed on the correct device by the trainer)
     device = next(model.parameters()).device
 

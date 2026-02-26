@@ -89,11 +89,12 @@ class Config(BaseModel):
         Cross-domain validation enforcing consistency across sub-configs.
 
         Invokes _CrossDomainValidator to check:
-            - Model/resolution compatibility (ResNet-18 → 28x28)
-            - Training epochs bounds (mixup_epochs ≤ epochs)
-            - Hardware/feature alignment (AMP requires GPU)
-            - Pretrained/channel consistency (pretrained → RGB)
-            - Optimizer bounds (min_lr < learning_rate)
+
+        - Model/resolution compatibility (ResNet-18 → 28x28)
+        - Training epochs bounds (mixup_epochs ≤ epochs)
+        - Hardware/feature alignment (AMP requires GPU)
+        - Pretrained/channel consistency (pretrained → RGB)
+        - Optimizer bounds (min_lr < learning_rate)
 
         Returns:
             Validated Config instance with auto-corrections applied
@@ -240,11 +241,15 @@ class Config(BaseModel):
 
 # CROSS-DOMAIN VALIDATION
 class _CrossDomainValidator:
-    """Internal cross-domain validator (no public API)."""
+    """
+    Internal cross-domain validator (no public API).
+    """
 
     @classmethod
     def validate(cls, config: Config) -> Config:
-        """Run all cross-domain validation checks."""
+        """
+        Run all cross-domain validation checks.
+        """
         cls._check_architecture_resolution(config)
         cls._check_mixup_epochs(config)
         cls._check_amp_device(config)
@@ -260,9 +265,10 @@ class _CrossDomainValidator:
         Validate architecture-resolution compatibility.
 
         Enforces that each built-in model is used with its supported resolution(s):
-            - Low-resolution (28, 64): mini_cnn
-            - 224x224 only: efficientnet_b0, vit_tiny, convnext_tiny
-            - Multi-resolution (28, 64, 224): resnet_18
+
+        - Low-resolution (28, 64): mini_cnn
+        - 224x224 only: efficientnet_b0, vit_tiny, convnext_tiny
+        - Multi-resolution (28, 64, 224): resnet_18
 
         timm models (prefixed with ``timm/``) bypass this check as they
         support variable resolutions managed by the user.
@@ -417,7 +423,7 @@ class _CrossDomainValidator:
 # OVERRIDE UTILITIES
 def _deep_set(data: dict[str, Any], dotted_key: str, value: Any) -> None:
     """
-    set a nested dict value using a dot-separated key path.
+    Set a nested dict value using a dot-separated key path.
 
     Creates intermediate dicts as needed. Used by ``Config.from_recipe``
     to apply CLI overrides before Pydantic instantiation.

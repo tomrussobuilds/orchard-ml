@@ -1,5 +1,5 @@
 """
-CIFAR-10/100 Dataset Converter
+CIFAR-10/100 Dataset Converter.
 
 Downloads CIFAR datasets via torchvision and converts them to NPZ format
 compatible with the Orchard ML pipeline. Creates stratified train/val/test splits

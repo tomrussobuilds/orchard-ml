@@ -1,5 +1,5 @@
 """
-Trainer Package Facade
+Trainer Package Facade.
 
 This package exposes the central ModelTrainer class, the optimization factories,
 and the low-level execution engines, providing a unified interface for the

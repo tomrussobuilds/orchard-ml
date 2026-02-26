@@ -1,5 +1,5 @@
 """
-Dataset Fetching Dispatcher and Loading Interface
+Dataset Fetching Dispatcher and Loading Interface.
 
 Central entry point for dataset retrieval. Routes each dataset to its
 dedicated fetch module inside the ``fetchers/`` sub-package and exposes the
@@ -26,6 +26,7 @@ from ..core.paths import LOGGER_NAME
 class DatasetData:
     """
     Metadata container for a loaded dataset.
+
     Stores path and format info instead of raw arrays to save RAM.
     """
 

@@ -2,9 +2,10 @@
 Study Result Export Functions.
 
 Handles serialization of Optuna study results to various formats:
-    - Best trial configuration (YAML)
-    - Complete study metadata (JSON)
-    - Top K trials comparison (Excel)
+
+- Best trial configuration (YAML)
+- Complete study metadata (JSON)
+- Top K trials comparison (Excel)
 
 All export functions handle edge cases (no completed trials, missing
 timestamps) and provide informative logging with professional Excel formatting.
@@ -134,11 +135,12 @@ def export_top_trials(
         top_k: Number of top trials to export (default: 10)
 
     DataFrame Columns:
-        - Rank: 1-based ranking
-        - Trial: Trial number
-        - {METRIC_NAME}: Objective value
-        - {param_name}: Each hyperparameter
-        - Duration (s): Trial duration if available
+
+    - Rank: 1-based ranking
+    - Trial: Trial number
+    - {METRIC_NAME}: Objective value
+    - {param_name}: Each hyperparameter
+    - Duration (s): Trial duration if available
 
     Example:
         >>> export_top_trials(study, paths, "auc", top_k=10)
@@ -173,7 +175,8 @@ def export_top_trials(
 
 
 def _write_styled_rows(ws, df: pd.DataFrame) -> None:
-    """Write DataFrame rows to worksheet with professional formatting.
+    """
+    Write DataFrame rows to worksheet with professional formatting.
 
     Applies header styling (green fill, bold, centered) and body styling
     (left-aligned, number formatting for floats/ints).
@@ -212,7 +215,8 @@ def _write_styled_rows(ws, df: pd.DataFrame) -> None:
 
 
 def _auto_adjust_column_widths(ws) -> None:
-    """Auto-adjust column widths based on cell content length.
+    """
+    Auto-adjust column widths based on cell content length.
 
     Args:
         ws: Active openpyxl worksheet with populated cells.

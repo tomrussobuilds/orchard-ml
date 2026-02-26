@@ -1,16 +1,17 @@
 """
-Logging Management Module
+Logging Management Module.
 
 Handles centralized logging configuration with dynamic reconfiguration support.
 Enables transition from console-only logging (bootstrap phase) to dual console+file
 logging once experiment directories are provisioned by RootOrchestrator.
 
 Key Features:
-    - Singleton-like Behavior: Prevents duplicate logger configurations
-    - Dynamic Reconfiguration: Switches from console-only to file-based logging
-    - Rotating File Handler: Automatic log rotation with size limits
-    - Thread-safe: Safe for concurrent access across modules
-    - Timestamp-based Files: Unique log files per experiment session
+
+- Singleton-like Behavior: Prevents duplicate logger configurations
+- Dynamic Reconfiguration: Switches from console-only to file-based logging
+- Rotating File Handler: Automatic log rotation with size limits
+- Thread-safe: Safe for concurrent access across modules
+- Timestamp-based Files: Unique log files per experiment session
 """
 
 from __future__ import annotations
@@ -36,15 +37,17 @@ _SUBTITLE_RE = re.compile(r"\[([A-Za-z][A-Za-z \u2014\-]*)\]")
 
 
 class ColorFormatter(logging.Formatter):
-    """Formatter that applies ANSI colors to console output.
+    """
+    Formatter that applies ANSI colors to console output.
 
     Colors are applied based on log level and message content:
-        - WARNING/ERROR/CRITICAL: yellow/red level prefix
-        - Lines with ✓ or 'New best model': green
-        - Lines with 'EARLY STOPPING': green
-        - Separator lines (━, ═, ─): dim
-        - Centered UPPER CASE headers: bold magenta
-        - Subtitle tags like [Hardware], [OPTIMIZATION]: bold magenta
+
+    - WARNING/ERROR/CRITICAL: yellow/red level prefix
+    - Lines with ✓ or 'New best model': green
+    - Lines with 'EARLY STOPPING': green
+    - Separator lines (━, ═, ─): dim
+    - Centered UPPER CASE headers: bold magenta
+    - Subtitle tags like [Hardware], [OPTIMIZATION]: bold magenta
     """
 
     _LEVEL_COLORS = {
@@ -54,7 +57,8 @@ class ColorFormatter(logging.Formatter):
     }
 
     def format(self, record: logging.LogRecord) -> str:
-        """Format a log record with ANSI color codes.
+        """
+        Format a log record with ANSI color codes.
 
         Colors are applied **only to the message text**; the timestamp and
         level prefix on the left remain uncolored.
@@ -178,10 +182,11 @@ class Logger:
         >>> print(f"Logs saved to: {log_path}")
 
     Notes:
-        - Reconfiguration is idempotent: calling setup() multiple times is safe
-        - All handlers are properly closed before reconfiguration
-        - Log files use UTC timestamps for consistency across time zones
-        - RotatingFileHandler prevents disk space exhaustion
+
+    - Reconfiguration is idempotent: calling setup() multiple times is safe
+    - All handlers are properly closed before reconfiguration
+    - Log files use UTC timestamps for consistency across time zones
+    - RotatingFileHandler prevents disk space exhaustion
     """
 
     _configured_names: Final[dict[str, bool]] = {}
@@ -229,10 +234,11 @@ class Logger:
         adds a rotating file handler when log_dir is specified.
 
         Handler Configuration:
-            - Console: Always enabled, outputs to sys.stdout
-            - File: Enabled only when log_dir is provided, uses RotatingFileHandler
-            - Format: "YYYY-MM-DD HH:MM:SS - LEVEL - message"
-            - Rotation: Automatic when max_bytes threshold exceeded
+
+        - Console: Always enabled, outputs to sys.stdout
+        - File: Enabled only when log_dir is provided, uses RotatingFileHandler
+        - Format: "YYYY-MM-DD HH:MM:SS - LEVEL - message"
+        - Rotation: Automatic when max_bytes threshold exceeded
         """
         fmt_str = "%(asctime)s - %(levelname)s - %(message)s"
         datefmt = "%Y-%m-%d %H:%M:%S"

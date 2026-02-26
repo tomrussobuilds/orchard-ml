@@ -6,10 +6,11 @@ execution. It manages the complete lifecycle from configuration validation to
 resource cleanup, ensuring deterministic and reproducible ML experiments.
 
 Architecture:
-    - Dependency Injection: All external dependencies are injectable for testability
-    - 7-Phase Initialization: Sequential setup from seeding to environment reporting
-    - Context Manager: Automatic resource acquisition and cleanup
-    - Protocol-Based: type-safe abstractions for mockability
+
+- Dependency Injection: All external dependencies are injectable for testability
+- 7-Phase Initialization: Sequential setup from seeding to environment reporting
+- Context Manager: Automatic resource acquisition and cleanup
+- Protocol-Based: type-safe abstractions for mockability
 
 Key Components:
     RootOrchestrator: Main lifecycle controller
@@ -92,25 +93,28 @@ class RootOrchestrator:
     Uses the Context Manager pattern to guarantee resource cleanup even during failures.
 
     Initialization Phases:
-        1. Determinism: Global RNG seeding (Python, NumPy, PyTorch)
-        2. Runtime Configuration: CPU thread affinity, system libraries
-        3. Filesystem Provisioning: Dynamic workspace creation via RunPaths
-        4. Logging Initialization: File-based persistent logging setup
-        5. Config Persistence: YAML manifest export for auditability
-        6. Infrastructure Guarding: OS-level resource locks (prevents race conditions)
-        7. Environment Reporting: Comprehensive telemetry logging
+
+    1. Determinism: Global RNG seeding (Python, NumPy, PyTorch)
+    2. Runtime Configuration: CPU thread affinity, system libraries
+    3. Filesystem Provisioning: Dynamic workspace creation via RunPaths
+    4. Logging Initialization: File-based persistent logging setup
+    5. Config Persistence: YAML manifest export for auditability
+    6. Infrastructure Guarding: OS-level resource locks (prevents race conditions)
+    7. Environment Reporting: Comprehensive telemetry logging
 
     Dependency Injection:
-        All external dependencies are injectable with sensible defaults:
-        - infra_manager: OS resource management (locks, cleanup)
-        - reporter: Environment telemetry engine
-        - log_initializer: Logging setup strategy
-        - seed_setter: RNG seeding function
-        - thread_applier: CPU thread configuration
-        - system_configurator: System library setup (matplotlib, etc)
-        - static_dir_setup: Static directory creation
-        - config_saver: YAML persistence function
-        - device_resolver: Hardware device detection
+
+    All external dependencies are injectable with sensible defaults:
+
+    - infra_manager: OS resource management (locks, cleanup)
+    - reporter: Environment telemetry engine
+    - log_initializer: Logging setup strategy
+    - seed_setter: RNG seeding function
+    - thread_applier: CPU thread configuration
+    - system_configurator: System library setup (matplotlib, etc)
+    - static_dir_setup: Static directory creation
+    - config_saver: YAML persistence function
+    - device_resolver: Hardware device detection
 
     Attributes:
         cfg (Config): Validated global configuration (Single Source of Truth)
@@ -133,11 +137,12 @@ class RootOrchestrator:
         ...     # Execute training pipeline with guaranteed cleanup
 
     Notes:
-        - Thread-safe: Single-instance locking via InfrastructureManager
-        - Idempotent: initialize_core_services() is safe to call multiple times
-          (subsequent calls return cached RunPaths without re-executing phases)
-        - Auditable: All configuration saved to YAML in workspace
-        - Deterministic: Reproducible experiments via strict seeding
+
+    - Thread-safe: Single-instance locking via InfrastructureManager
+    - Idempotent: initialize_core_services() is safe to call multiple times
+      (subsequent calls return cached RunPaths without re-executing phases)
+    - Auditable: All configuration saved to YAML in workspace
+    - Deterministic: Reproducible experiments via strict seeding
     """
 
     def __init__(
@@ -279,6 +284,7 @@ class RootOrchestrator:
     def _phase_3_filesystem_provisioning(self) -> None:
         """
         Constructs experiment workspace via RunPaths.
+
         Anchors relative paths to validated PROJECT_ROOT.
         """
         logger.debug("Phase 3: Provisioning filesystem")
@@ -293,6 +299,7 @@ class RootOrchestrator:
     def _phase_4_logging_initialization(self) -> None:
         """
         Bridges static Logger to session-specific filesystem.
+
         Reconfigures handlers for file-based persistence in run directory.
         """
         logger.debug("Phase 4: Initializing session logging")
@@ -304,6 +311,7 @@ class RootOrchestrator:
     def _phase_5_run_manifest(self) -> None:
         """
         Persists run manifest: config YAML and frozen dependency snapshot.
+
         Ensures full reproducibility from artifacts alone.
         """
         logger.debug("Phase 5: Persisting run manifest (config + requirements)")
@@ -316,6 +324,7 @@ class RootOrchestrator:
     def _phase_6_infrastructure_guarding(self) -> None:
         """
         Secures system-level resource locks via InfrastructureManager.
+
         Prevents concurrent execution conflicts and manages cleanup.
         """
         logger.debug("Phase 6: Acquiring infrastructure locks")
@@ -329,6 +338,7 @@ class RootOrchestrator:
     def _phase_7_environment_report(self, applied_threads: int) -> None:
         """
         Emits baseline environment report to active logging streams.
+
         Summarizes hardware, dataset metadata, and execution policies.
         """
         logger.debug("Phase 7: Generating environment report")

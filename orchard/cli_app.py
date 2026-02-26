@@ -207,7 +207,8 @@ _INIT_HEADER = """\
 
 
 def _auto_cast(value: str) -> Any:
-    """Cast a CLI string to the appropriate Python scalar type.
+    """
+    Cast a CLI string to the appropriate Python scalar type.
 
     Args:
         value: Raw string from the command line.
@@ -232,7 +233,8 @@ def _auto_cast(value: str) -> Any:
 
 
 def _parse_overrides(raw: list[str]) -> dict[str, Any]:
-    """Parse ``key.path=value`` strings into a flat override dict.
+    """
+    Parse ``key.path=value`` strings into a flat override dict.
 
     Args:
         raw: list of "dotted.key=value" strings from ``--set`` flags.
@@ -256,7 +258,8 @@ def _parse_overrides(raw: list[str]) -> dict[str, Any]:
 
 
 def _build_init_dict() -> dict[str, Any]:
-    """Build a complete config dict with all defaults for recipe generation.
+    """
+    Build a complete config dict with all defaults for recipe generation.
 
     Returns:
         Ordered dict with every config section dumped via ``model_dump(mode="json")``,

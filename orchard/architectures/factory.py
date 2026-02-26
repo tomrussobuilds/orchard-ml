@@ -6,9 +6,10 @@ model instantiation from execution logic. Architectures are dynamically
 adapted to geometric constraints (channels, classes) resolved at runtime.
 
 Architecture:
-    - Registry Pattern: Internal _MODEL_REGISTRY maps names to builders
-    - Dynamic Adaptation: Structural parameters derived from DatasetConfig
-    - Device Management: Automatic model transfer to target accelerator
+
+- Registry Pattern: Internal _MODEL_REGISTRY maps names to builders
+- Dynamic Adaptation: Structural parameters derived from DatasetConfig
+- Device Management: Automatic model transfer to target accelerator
 
 Key Components:
     get_model: Factory function for architecture resolution and instantiation
@@ -44,7 +45,9 @@ logger = logging.getLogger(LOGGER_NAME)
 
 @contextmanager
 def _suppress_download_noise() -> Iterator[None]:
-    """Suppress tqdm progress bars and download logging from torch.hub and huggingface_hub."""
+    """
+    Suppress tqdm progress bars and download logging from torch.hub and huggingface_hub.
+    """
     prev = os.environ.get("TQDM_DISABLE")
     os.environ["TQDM_DISABLE"] = "1"
     noisy_loggers = [
@@ -78,6 +81,7 @@ def get_model(device: torch.device, cfg: Config, verbose: bool = True) -> nn.Mod
     Args:
         device: Hardware accelerator target.
         cfg: Global configuration manifest with resolved metadata.
+        verbose: Suppress builder-internal INFO logging.
 
     Returns:
         nn.Module: The instantiated model synchronized with the target device.

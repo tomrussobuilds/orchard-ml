@@ -22,6 +22,7 @@ def morph_conv_weights(
     Adapt pretrained conv weights for channel and optional spatial mismatch.
 
     Performs in-place weight copy from old_conv to new_conv with:
+
     - Optional bicubic spatial interpolation (e.g., 7x7 → 3x3)
     - Channel compression via mean averaging for grayscale (RGB → 1ch)
     - Conditional bias transfer

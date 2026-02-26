@@ -1,5 +1,5 @@
 """
-Reporting & Experiment Summarization Module
+Reporting & Experiment Summarization Module.
 
 This module orchestrates the generation of human-readable artifacts following
 the completion of a training pipeline. It leverages Pydantic for strict

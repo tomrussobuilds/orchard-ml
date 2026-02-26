@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - unify scheduler stepping on monitor_metric
 - extract LoopOptions dataclass, fix docstrings in trainer/
+- unify metric source — remove optuna.metric_name, use training.monitor_metric as SSOT
 
 ## [0.1.7] - 2026-02-25
 

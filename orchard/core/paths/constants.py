@@ -50,6 +50,7 @@ def get_project_root() -> Path:
         Resolved absolute Path to the project root directory.
 
     Note:
+
         - IN_DOCKER=1 or IN_DOCKER=TRUE returns /app
         - Falls back to fixed parent traversal if no markers found
     """

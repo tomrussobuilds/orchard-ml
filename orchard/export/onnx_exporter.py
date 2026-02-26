@@ -32,7 +32,9 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 def _onnx_file_size_mb(path: Path) -> float:
-    """Total size of an ONNX model including external data files (e.g. .data)."""
+    """
+    Total size of an ONNX model including external data files (e.g. .data).
+    """
     size = path.stat().st_size
     external = path.parent / f"{path.name}.data"
     if external.exists():

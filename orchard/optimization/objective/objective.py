@@ -39,7 +39,12 @@ if TYPE_CHECKING:  # pragma: no cover
 
 from ...architectures import get_model
 from ...data_handler import DatasetData, get_dataloaders, load_dataset
-from ...trainer import compute_class_weights, get_criterion, get_optimizer, get_scheduler
+from ...trainer import (
+    compute_class_weights,
+    get_criterion,
+    get_optimizer,
+    get_scheduler,
+)
 
 # Relative Imports
 from .config_builder import TrialConfigBuilder
@@ -80,12 +85,14 @@ class OptunaObjective:
     Optuna objective function with dependency injection.
 
     Orchestrates hyperparameter optimization trials by:
+
     - Building trial-specific configurations
     - Creating data loaders, models, and optimizers
     - Executing training with pruning
     - Tracking and returning best metrics
 
     All external dependencies are injectable for testability:
+
     - dataset_loader: Dataset loading function
     - dataloader_factory: DataLoader creation function
     - model_factory: Model instantiation function

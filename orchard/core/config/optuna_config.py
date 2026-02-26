@@ -40,7 +40,9 @@ class FloatRange(BaseModel):
 
     @model_validator(mode="after")
     def check_bounds(self) -> "FloatRange":
-        """Validate low < high."""
+        """
+        Validate low < high.
+        """
         if self.low >= self.high:
             raise ValueError(
                 f"FloatRange low ({self.low}) must be strictly less than high ({self.high})"
@@ -64,7 +66,9 @@ class IntRange(BaseModel):
 
     @model_validator(mode="after")
     def check_bounds(self) -> "IntRange":
-        """Validate low < high."""
+        """
+        Validate low < high.
+        """
         if self.low >= self.high:
             raise ValueError(
                 f"IntRange low ({self.low}) must be strictly less than high ({self.high})"

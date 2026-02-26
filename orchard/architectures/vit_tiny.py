@@ -6,15 +6,17 @@ multiple pretrained weight variants. Designed for efficient medical image
 classification with transfer learning capabilities.
 
 Key Features:
-    - Patch-Based Attention: Processes 16×16 patches with transformer encoders
-    - Multi-Weight Support: Compatible with ImageNet-1k/21k pretraining
-    - Adaptive Input: Dynamic first-layer modification for grayscale datasets
-    - Efficient Scale: Tiny variant balances performance and compute requirements
+
+- Patch-Based Attention: Processes 16×16 patches with transformer encoders
+- Multi-Weight Support: Compatible with ImageNet-1k/21k pretraining
+- Adaptive Input: Dynamic first-layer modification for grayscale datasets
+- Efficient Scale: Tiny variant balances performance and compute requirements
 
 Pretrained Weight Options:
-    - 'vit_tiny_patch16_224.augreg_in21k_ft_in1k': ImageNet-21k → 1k fine-tuned
-    - 'vit_tiny_patch16_224.augreg_in21k': ImageNet-21k (requires custom head)
-    - 'vit_tiny_patch16_224': ImageNet-1k baseline
+
+- 'vit_tiny_patch16_224.augreg_in21k_ft_in1k': ImageNet-21k → 1k fine-tuned
+- 'vit_tiny_patch16_224.augreg_in21k': ImageNet-21k (requires custom head)
+- 'vit_tiny_patch16_224': ImageNet-1k baseline
 """
 
 from __future__ import annotations

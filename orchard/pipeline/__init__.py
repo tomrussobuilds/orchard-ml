@@ -2,9 +2,10 @@
 Pipeline Orchestration Module.
 
 Provides reusable phase functions for the complete ML lifecycle:
-    - Optimization Phase: Optuna hyperparameter search
-    - Training Phase: Model training with best parameters
-    - Export Phase: ONNX model export
+
+- Optimization Phase: Optuna hyperparameter search
+- Training Phase: Model training with best parameters
+- Export Phase: ONNX model export
 
 These functions are designed to work with a shared RootOrchestrator,
 enabling unified artifact management and logging across all phases.

@@ -1,5 +1,5 @@
 """
-Domain-Specific Dataset Fetchers
+Domain-Specific Dataset Fetchers.
 
 Each module in this sub-package handles the download and conversion logic
 for a single dataset domain (MedMNIST, Galaxy10, etc.), keeping the main

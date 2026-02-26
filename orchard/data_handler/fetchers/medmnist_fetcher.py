@@ -1,5 +1,5 @@
 """
-MedMNIST Dataset Fetcher
+MedMNIST Dataset Fetcher.
 
 Downloads MedMNIST NPZ files with robust retry logic, MD5 verification,
 and atomic file operations. Follows the same pattern as ``galaxy10_converter``
@@ -97,7 +97,9 @@ def ensure_medmnist_npz(
 
 # PRIVATE HELPERS
 def _retry_delay(exc: Exception, base_delay: float, attempt: int) -> float:
-    """Compute retry delay with quadratic backoff for 429 responses."""
+    """
+    Compute retry delay with quadratic backoff for 429 responses.
+    """
     if hasattr(exc, "response") and exc.response is not None and exc.response.status_code == 429:
         delay = base_delay * (attempt**2)
         logger.warning(f"Rate limited (429). Waiting {delay}s before retrying...")
@@ -106,7 +108,9 @@ def _retry_delay(exc: Exception, base_delay: float, attempt: int) -> float:
 
 
 def _is_valid_npz(path: Path, expected_md5: str) -> bool:
-    """Checks file existence, header (ZIP/NPZ), and MD5 checksum."""
+    """
+    Checks file existence, header (ZIP/NPZ), and MD5 checksum.
+    """
     if not path.exists():
         return False
     try:
@@ -121,7 +125,9 @@ def _is_valid_npz(path: Path, expected_md5: str) -> bool:
 
 
 def _stream_download(url: str, tmp_path: Path, chunk_size: int = 8192) -> None:
-    """Executes the streaming GET request and writes to a temporary file."""
+    """
+    Executes the streaming GET request and writes to a temporary file.
+    """
     headers = {
         "User-Agent": "Wget/1.0",
         "Accept": "application/octet-stream",

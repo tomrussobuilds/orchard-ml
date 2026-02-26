@@ -1,5 +1,5 @@
 """
-Dataset Metadata Package
+Dataset Metadata Package.
 
 This package centralizes the specifications for all supported datasets.
 It serves as the single source of truth for the Orchard, ensuring that

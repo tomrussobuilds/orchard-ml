@@ -30,12 +30,7 @@ from typing import TYPE_CHECKING
 
 import optuna
 
-from ...core import (
-    LOGGER_NAME,
-    Config,
-    RunPaths,
-    log_optimization_header,
-)
+from ...core import LOGGER_NAME, Config, RunPaths, log_optimization_header
 
 if TYPE_CHECKING:  # pragma: no cover
     from ...tracking import TrackerProtocol
@@ -82,7 +77,8 @@ class OptunaOrchestrator:
         paths: RunPaths,
         tracker: TrackerProtocol | None = None,
     ) -> None:
-        """Initialize orchestrator.
+        """
+        Initialize orchestrator.
 
         Args:
             cfg (Config): Base Config to override per trial
@@ -96,7 +92,8 @@ class OptunaOrchestrator:
         self.tracker = tracker
 
     def create_study(self) -> optuna.Study:
-        """Create or load Optuna study with configured sampler and pruner.
+        """
+        Create or load Optuna study with configured sampler and pruner.
 
         Returns:
             Configured Optuna study instance
@@ -117,7 +114,8 @@ class OptunaOrchestrator:
         return study
 
     def optimize(self) -> optuna.Study:
-        """Execute hyperparameter optimization.
+        """
+        Execute hyperparameter optimization.
 
         Returns:
             Completed study with trial results
@@ -174,7 +172,8 @@ class OptunaOrchestrator:
         return study
 
     def _post_optimization_processing(self, study: optuna.Study) -> None:
-        """Execute all post-optimization tasks.
+        """
+        Execute all post-optimization tasks.
 
         Args:
             study: Completed Optuna study

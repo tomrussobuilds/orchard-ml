@@ -2,14 +2,20 @@
 Optuna Hyperparameter Optimization Module.
 
 Provides components for automated hyperparameter search:
-    - SearchSpaceRegistry: Predefined search distributions
-    - OptunaObjective: Objective function for optimization
-    - OptunaOrchestrator: Study lifecycle management
-    - run_optimization: Convenience function for complete workflow
+
+- SearchSpaceRegistry: Predefined search distributions
+- OptunaObjective: Objective function for optimization
+- OptunaOrchestrator: Study lifecycle management
+- run_optimization: Convenience function for complete workflow
 """
 
 from .early_stopping import StudyEarlyStoppingCallback, get_early_stopping_callback
-from .objective import MetricExtractor, OptunaObjective, TrialConfigBuilder, TrialTrainingExecutor
+from .objective import (
+    MetricExtractor,
+    OptunaObjective,
+    TrialConfigBuilder,
+    TrialTrainingExecutor,
+)
 from .orchestrator import (
     OptunaOrchestrator,
     export_best_config,

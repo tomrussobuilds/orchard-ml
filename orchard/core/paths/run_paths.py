@@ -274,5 +274,7 @@ class RunPaths(BaseModel):
         return self.database / "study.db"
 
     def __repr__(self) -> str:
-        """Return string representation with run_id and root path."""
+        """
+        Return string representation with run_id and root path.
+        """
         return f"RunPaths(run_id='{self.run_id}', root={self.root})"

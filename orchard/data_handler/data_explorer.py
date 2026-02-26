@@ -1,5 +1,5 @@
 """
-Data Visualization Module
+Data Visualization Module.
 
 Utilities to inspect datasets visually by generating grids of sample images
 from raw tensors or NumPy arrays. Supports grayscale and RGB images and optional
@@ -31,8 +31,9 @@ def show_sample_images(
     title_prefix: str | None = None,
 ) -> None:
     """
-    Extracts a batch from the DataLoader and saves a grid of sample images
-    with their corresponding labels to verify data integrity and augmentations.
+    Extract a batch from the DataLoader and save a grid of sample images.
+
+    Saves images with their corresponding labels to verify data integrity and augmentations.
 
     Args:
         loader (DataLoader): The PyTorch DataLoader to sample from.
@@ -100,9 +101,9 @@ def show_samples_for_dataset(
     resolution: int | None = None,
 ) -> None:
     """
-    Generates a grid of sample images from a dataset and saves it in the
-    run-specific figures directory. Optionally uses Config to display
-    the model name and apply denormalization.
+    Generate a grid of sample images from a dataset and save to the figures directory.
+
+    Optionally uses Config to display the model name and apply denormalization.
 
     Args:
         loader (DataLoader): PyTorch DataLoader to sample images from.

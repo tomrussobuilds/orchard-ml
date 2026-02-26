@@ -8,11 +8,12 @@ scheduler management. Per-epoch training is delegated to ``_loop.TrainingLoop``
 fallback metrics.
 
 Key responsibilities:
-    - Execute epoch-level training/validation cycles
-    - Apply Optuna pruning logic with warmup period
-    - Track and report metrics to Optuna
-    - Handle scheduler stepping (plateau-aware)
-    - Provide error-resilient validation with fallback metrics
+
+- Execute epoch-level training/validation cycles
+- Apply Optuna pruning logic with warmup period
+- Track and report metrics to Optuna
+- Handle scheduler stepping (plateau-aware)
+- Provide error-resilient validation with fallback metrics
 """
 
 from __future__ import annotations
@@ -25,7 +26,12 @@ import torch
 from ...core import LOGGER_NAME, Config, LogStyle
 from ...core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS
 from ...trainer import validate_epoch
-from ...trainer._loop import LoopOptions, TrainingLoop, create_amp_scaler, create_mixup_fn
+from ...trainer._loop import (
+    LoopOptions,
+    TrainingLoop,
+    create_amp_scaler,
+    create_mixup_fn,
+)
 from ...trainer._scheduling import step_scheduler
 from .metric_extractor import MetricExtractor
 
@@ -46,6 +52,7 @@ class TrialTrainingExecutor:
     Executes training loop with Optuna pruning integration.
 
     Orchestrates a complete training cycle for a single Optuna trial, including:
+
     - Training and validation epochs
     - Metric extraction and tracking
     - Pruning decisions with warmup period
@@ -240,6 +247,7 @@ class TrialTrainingExecutor:
         Check if trial should be pruned.
 
         Pruning is disabled if:
+
         - enable_pruning is False
         - epoch < warmup_epochs
 

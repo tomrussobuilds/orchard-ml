@@ -50,7 +50,8 @@ class LogStyle:
         title: str,
         style: str | None = None,
     ) -> None:
-        """Log a centered phase header with separator lines.
+        """
+        Log a centered phase header with separator lines.
 
         Args:
             log: Logger instance to write to.

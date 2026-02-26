@@ -6,10 +6,11 @@ classification with transfer learning support. Handles both RGB and grayscale
 inputs through dynamic first-layer adaptation.
 
 Key Features:
-    - Efficient Scaling: Balances depth, width, and resolution
-    - Transfer Learning: Leverages ImageNet pretrained weights
-    - Adaptive Input: Customizes first layer for grayscale datasets
-    - Channel Compression: Weight morphing for 1→3 channel promotion
+
+- Efficient Scaling: Balances depth, width, and resolution
+- Transfer Learning: Leverages ImageNet pretrained weights
+- Adaptive Input: Customizes first layer for grayscale datasets
+- Channel Compression: Weight morphing for 1→3 channel promotion
 """
 
 from __future__ import annotations
@@ -45,7 +46,6 @@ def build_efficientnet_b0(
     Returns:
         Adapted EfficientNet-B0 model deployed to device
     """
-
     # --- Step 1: Initialize with Optional Pretraining ---
     weights = models.EfficientNet_B0_Weights.IMAGENET1K_V1 if cfg.architecture.pretrained else None
     model = models.efficientnet_b0(weights=weights)

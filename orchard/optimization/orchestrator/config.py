@@ -2,9 +2,10 @@
 Optuna Configuration Constants and Registries.
 
 Centralized definitions for:
-    - Sampler type registry (TPE, CmaES, Random, Grid)
-    - Pruner type registry (Median, Percentile, Hyperband)
-    - Parameter-to-config mapping (training/architecture/augmentation sections)
+
+- Sampler type registry (TPE, CmaES, Random, Grid)
+- Pruner type registry (Median, Percentile, Hyperband)
+- Parameter-to-config mapping (training/architecture/augmentation sections)
 
 These registries enable the factory pattern in builders.py and
 provide a single point of maintenance for supported algorithms.

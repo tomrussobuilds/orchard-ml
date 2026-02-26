@@ -6,9 +6,10 @@ and MixUp initialization. Both ``ModelTrainer`` and ``TrialTrainingExecutor``
 compose a ``TrainingLoop`` to avoid duplicating per-epoch execution logic.
 
 Design:
-    - ``run_epoch()`` executes the full train → validate → schedule cycle.
-    - ``run_train_step()`` executes training only (no validation, no scheduling),
-      for callers that need custom validation or scheduling logic.
+
+- ``run_epoch()`` executes the full train → validate → schedule cycle.
+- ``run_train_step()`` executes training only (no validation, no scheduling),
+  for callers that need custom validation or scheduling logic.
 """
 
 from __future__ import annotations
@@ -33,7 +34,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def create_amp_scaler(cfg: Config) -> torch.amp.GradScaler | None:
-    """Create AMP GradScaler if mixed precision is enabled.
+    """
+    Create AMP GradScaler if mixed precision is enabled.
 
     Args:
         cfg: Global configuration (reads ``cfg.training.use_amp``).
@@ -45,7 +47,8 @@ def create_amp_scaler(cfg: Config) -> torch.amp.GradScaler | None:
 
 
 def create_mixup_fn(cfg: Config) -> Callable | None:
-    """Create a seeded MixUp partial function if alpha > 0.
+    """
+    Create a seeded MixUp partial function if alpha > 0.
 
     Args:
         cfg: Global configuration (reads ``cfg.training.mixup_alpha``
@@ -66,17 +69,18 @@ def create_mixup_fn(cfg: Config) -> Callable | None:
 
 @dataclass(frozen=True, slots=True)
 class LoopOptions:
-    """Scalar configuration for a :class:`TrainingLoop`.
+    """
+    Scalar configuration for a :class:`TrainingLoop`.
 
     Groups training hyper-parameters that do not depend on PyTorch objects,
     keeping the ``TrainingLoop`` constructor lean.
 
     Attributes:
-        grad_clip: Max norm for gradient clipping (0 disables).
-        total_epochs: Total number of epochs (for tqdm progress bar).
-        mixup_epochs: Epoch cutoff after which MixUp is disabled.
-        use_tqdm: Whether to show tqdm progress bar.
-        monitor_metric: Metric key for ReduceLROnPlateau stepping
+        grad_clip (float): Max norm for gradient clipping (0 disables).
+        total_epochs (int): Total number of epochs (for tqdm progress bar).
+        mixup_epochs (int): Epoch cutoff after which MixUp is disabled.
+        use_tqdm (bool): Whether to show tqdm progress bar.
+        monitor_metric (str): Metric key for ReduceLROnPlateau stepping
             (e.g. ``"auc"``, ``"accuracy"``).
     """
 
@@ -91,23 +95,24 @@ class LoopOptions:
 
 
 class TrainingLoop:
-    """Single-epoch execution kernel shared by ModelTrainer and TrialTrainingExecutor.
+    """
+    Single-epoch execution kernel shared by ModelTrainer and TrialTrainingExecutor.
 
     Encapsulates the per-epoch train/validate/schedule cycle. Callers own the
     outer epoch loop and policy decisions (checkpointing, early stopping,
     Optuna pruning). This class only executes one epoch at a time.
 
     Attributes:
-        model: Neural network to train.
-        train_loader: Training data provider.
-        val_loader: Validation data provider.
-        optimizer: Gradient descent optimizer.
-        scheduler: Learning rate scheduler (or None).
-        criterion: Loss function.
-        device: Hardware target (CUDA/MPS/CPU).
-        scaler: AMP GradScaler (or None).
-        mixup_fn: MixUp partial function (or None).
-        options: Scalar training options (see :class:`LoopOptions`).
+        model (nn.Module): Neural network to train.
+        train_loader (DataLoader): Training data provider.
+        val_loader (DataLoader): Validation data provider.
+        optimizer (Optimizer): Gradient descent optimizer.
+        scheduler (LRScheduler | None): Learning rate scheduler (or None).
+        criterion (nn.Module): Loss function.
+        device (torch.device): Hardware target (CUDA/MPS/CPU).
+        scaler (GradScaler | None): AMP GradScaler (or None).
+        mixup_fn (Callable | None): MixUp partial function (or None).
+        options (LoopOptions): Scalar training options (see :class:`LoopOptions`).
     """
 
     def __init__(
@@ -135,7 +140,8 @@ class TrainingLoop:
         self.options = options
 
     def run_train_step(self, epoch: int) -> float:
-        """Execute a single training epoch with MixUp cutoff.
+        """
+        Execute a single training epoch with MixUp cutoff.
 
         Applies MixUp augmentation only when ``epoch <= mixup_epochs``.
         Does **not** run validation or step the scheduler.
@@ -162,7 +168,8 @@ class TrainingLoop:
         )
 
     def run_epoch(self, epoch: int) -> tuple[float, dict[str, float]]:
-        """Execute a full train → validate → schedule cycle for one epoch.
+        """
+        Execute a full train → validate → schedule cycle for one epoch.
 
         Args:
             epoch: Current epoch number (1-indexed).

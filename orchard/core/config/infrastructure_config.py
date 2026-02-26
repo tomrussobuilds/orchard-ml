@@ -22,7 +22,11 @@ from typing import Any, Protocol
 import torch
 from pydantic import BaseModel, ConfigDict
 
-from ..environment import DuplicateProcessCleaner, ensure_single_instance, release_single_instance
+from ..environment import (
+    DuplicateProcessCleaner,
+    ensure_single_instance,
+    release_single_instance,
+)
 
 
 # PROTOCOLS

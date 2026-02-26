@@ -66,7 +66,6 @@ def get_pipeline_transforms(cfg: Config, ds_meta: DatasetMetadata) -> tuple[v2.C
     Returns:
         tuple[v2.Compose, v2.Compose]: (train_transform, val_transform)
     """
-
     # Determine if dataset is native RGB or requires grayscale promotion
     is_rgb = ds_meta.in_channels == 3
 

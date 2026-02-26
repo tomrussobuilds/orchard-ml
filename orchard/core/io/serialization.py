@@ -130,6 +130,7 @@ def _sanitize_for_yaml(obj: Any) -> Any:
     Recursively converts non-serializable types into YAML-standard formats.
 
     Specifically handles:
+
     - Path objects -> converted to strings.
     - Dicts/Lists/Tuples -> processed recursively.
     """

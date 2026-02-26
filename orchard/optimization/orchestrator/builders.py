@@ -7,9 +7,10 @@ the instantiation logic and provides clear error messages for invalid
 configurations.
 
 Functions:
-    - build_sampler: Create Optuna sampler from type string
-    - build_pruner: Create Optuna pruner from config
-    - build_callbacks: Construct optimization callbacks list
+
+- build_sampler: Create Optuna sampler from type string
+- build_pruner: Create Optuna pruner from config
+- build_callbacks: Construct optimization callbacks list
 """
 
 from __future__ import annotations
@@ -83,6 +84,7 @@ def build_callbacks(optuna_cfg: OptunaConfig, monitor_metric: str) -> list:
     Construct list of optimization callbacks from configuration.
 
     Currently supports:
+
         - Early stopping callback (based on metric threshold)
 
     Args:

@@ -1,5 +1,5 @@
 """
-Custom Loss Functions Module
+Custom Loss Functions Module.
 
 This module implements advanced objective functions for computer vision tasks,
 extending standard PyTorch criteria. It includes specialized losses like

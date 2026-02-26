@@ -6,10 +6,11 @@ visual telemetry. It provides high-level utilities to initialize system-wide
 loggers and format experiment metadata for reproducibility.
 
 Available Components:
-    - Logger: Static utility for stream and file logging initialization.
-    - Reporter: Metadata reporting engine for environment baseline status.
-    - LogStyle: Unified logging style constants.
-    - Progress functions: Optimization and training progress logging.
+
+- Logger: Static utility for stream and file logging initialization.
+- Reporter: Metadata reporting engine for environment baseline status.
+- LogStyle: Unified logging style constants.
+- Progress functions: Optimization and training progress logging.
 """
 
 from .logger import Logger

@@ -1,4 +1,5 @@
-"""Visualization utilities for model evaluation.
+"""
+Visualization utilities for model evaluation.
 
 Provides formatted visual reports including training loss/accuracy curves,
 normalized confusion matrices, and sample prediction grids. Integrated with
@@ -34,7 +35,8 @@ def show_predictions(
     cfg: Config | None = None,
     n: int | None = None,
 ) -> None:
-    """Visualize model predictions on a sample batch.
+    """
+    Visualize model predictions on a sample batch.
 
     Coordinates data extraction, model inference, grid layout generation,
     and image post-processing. Highlights correct (green) vs. incorrect
@@ -78,7 +80,8 @@ def show_predictions(
 def plot_training_curves(
     train_losses: Sequence[float], val_accuracies: Sequence[float], out_path: Path, cfg: Config
 ) -> None:
-    """Plot training loss and validation accuracy on a dual-axis chart.
+    """
+    Plot training loss and validation accuracy on a dual-axis chart.
 
     Saves the figure to disk and exports raw numerical data as ``.npz``
     for reproducibility.
@@ -125,7 +128,8 @@ def plot_training_curves(
 def plot_confusion_matrix(
     all_labels: np.ndarray, all_preds: np.ndarray, classes: list[str], out_path: Path, cfg: Config
 ) -> None:
-    """Generate and save a row-normalized confusion matrix plot.
+    """
+    Generate and save a row-normalized confusion matrix plot.
 
     Args:
         all_labels: Ground-truth label array.
@@ -167,7 +171,8 @@ def _plot_single_prediction(
     classes: list[str],
     cfg: "Config | None",
 ) -> None:
-    """Render a single prediction cell with color-coded correctness title.
+    """
+    Render a single prediction cell with color-coded correctness title.
 
     Args:
         ax: Matplotlib axes for this cell.
@@ -191,7 +196,8 @@ def _plot_single_prediction(
 
 
 def _build_suptitle(cfg: "Config") -> str:
-    """Build the figure suptitle with architecture, resolution, domain, and TTA info.
+    """
+    Build the figure suptitle with architecture, resolution, domain, and TTA info.
 
     Args:
         cfg: Configuration object providing architecture, dataset, and training fields.
@@ -218,7 +224,8 @@ def _build_suptitle(cfg: "Config") -> str:
 def _get_predictions_batch(
     model: nn.Module, loader: DataLoader, device: torch.device, n: int
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Extract a sample batch and run model inference.
+    """
+    Extract a sample batch and run model inference.
 
     Args:
         model: Trained model in eval mode.
@@ -243,7 +250,8 @@ def _get_predictions_batch(
 def _setup_prediction_grid(
     num_samples: int, cols: int, cfg: Config | None
 ) -> tuple[plt.Figure, np.ndarray]:
-    """Calculate grid dimensions and initialize matplotlib subplots.
+    """
+    Calculate grid dimensions and initialize matplotlib subplots.
 
     Args:
         num_samples: Total number of images to display.
@@ -264,7 +272,8 @@ def _setup_prediction_grid(
 
 
 def _finalize_figure(plt_obj, save_path: Path | None, cfg: Config | None) -> None:
-    """Save the current figure to disk or display interactively, then close.
+    """
+    Save the current figure to disk or display interactively, then close.
 
     Args:
         plt_obj: The ``matplotlib.pyplot`` module reference.
@@ -284,7 +293,8 @@ def _finalize_figure(plt_obj, save_path: Path | None, cfg: Config | None) -> Non
 
 
 def _denormalize_image(img: np.ndarray, cfg: Config) -> np.ndarray:
-    """Reverse channel-wise normalization using dataset-specific statistics.
+    """
+    Reverse channel-wise normalization using dataset-specific statistics.
 
     Args:
         img: Normalized image array in ``(C, H, W)`` format.
@@ -300,7 +310,8 @@ def _denormalize_image(img: np.ndarray, cfg: Config) -> np.ndarray:
 
 
 def _prepare_for_plt(img: np.ndarray) -> np.ndarray:
-    """Convert a deep-learning tensor layout to matplotlib-compatible format.
+    """
+    Convert a deep-learning tensor layout to matplotlib-compatible format.
 
     Transposes ``(C, H, W)`` to ``(H, W, C)`` and squeezes single-channel
     images to 2-D for correct grayscale rendering.

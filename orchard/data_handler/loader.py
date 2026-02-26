@@ -6,10 +6,11 @@ features: class balancing via WeightedRandomSampler, hardware-aware configuratio
 (workers, pinned memory), and Optuna-compatible resource management.
 
 Architecture:
-    - Factory Pattern: Centralizes DataLoader construction logic
-    - Hardware Optimization: Adaptive workers and memory pinning (CUDA/MPS)
-    - Class Balancing: WeightedRandomSampler for imbalanced datasets
-    - Optuna Integration: Resource-conservative settings for hyperparameter tuning
+
+- Factory Pattern: Centralizes DataLoader construction logic
+- Hardware Optimization: Adaptive workers and memory pinning (CUDA/MPS)
+- Class Balancing: WeightedRandomSampler for imbalanced datasets
+- Optuna Integration: Resource-conservative settings for hyperparameter tuning
 
 Key Components:
     DataLoaderFactory: Main orchestrator for train/val/test loader creation
@@ -48,7 +49,8 @@ _DEFAULT_HEALTHCHECK_BATCH_SIZE = 16  # Batch size for create_temp_loader
 
 # DATALOADER FACTORY
 class DataLoaderFactory:
-    """Orchestrates the creation of optimized PyTorch DataLoaders.
+    """
+    Orchestrates the creation of optimized PyTorch DataLoaders.
 
     This factory centralizes the configuration of training, validation, and
     testing pipelines. It ensures that data transformations, class balancing,
@@ -62,7 +64,8 @@ class DataLoaderFactory:
     """
 
     def __init__(self, cfg: Config, metadata: DatasetData) -> None:
-        """Initializes the factory with environment and dataset metadata.
+        """
+        Initializes the factory with environment and dataset metadata.
 
         Args:
             cfg: The global configuration object (Pydantic).
@@ -76,7 +79,8 @@ class DataLoaderFactory:
         self.logger = logging.getLogger(LOGGER_NAME)
 
     def _get_transformation_pipelines(self) -> tuple[torch.nn.Module, torch.nn.Module]:
-        """Retrieves specialized vision pipelines.
+        """
+        Retrieves specialized vision pipelines.
 
         Returns:
             A tuple containing (train_transform, val_transform).
@@ -84,7 +88,8 @@ class DataLoaderFactory:
         return get_pipeline_transforms(self.cfg, self.ds_meta)
 
     def _get_balancing_sampler(self, dataset: VisionDataset) -> WeightedRandomSampler | None:
-        """Calculates class weights and builds a WeightedRandomSampler.
+        """
+        Calculates class weights and builds a WeightedRandomSampler.
 
         This method addresses class imbalance by assigning higher sampling
         probabilities to under-represented classes.
@@ -165,7 +170,8 @@ class DataLoaderFactory:
         }
 
     def build(self, is_optuna: bool = False) -> tuple[DataLoader, DataLoader, DataLoader]:
-        """Constructs and returns the full suite of DataLoaders.
+        """
+        Constructs and returns the full suite of DataLoaders.
 
         Assembles train/val/test splits with transforms, optional class
         balancing, and hardware-aware infrastructure settings.

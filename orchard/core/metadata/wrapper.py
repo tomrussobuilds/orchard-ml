@@ -53,6 +53,7 @@ class DatasetRegistryWrapper(BaseModel):
     def _load_registry(cls, values: dict[str, Any]) -> dict[str, Any]:
         """
         Loads and merges domain registries based on resolution.
+
         Validates resolution and creates deep copy to prevent mutation.
         """
         res = values.get("resolution", 28)

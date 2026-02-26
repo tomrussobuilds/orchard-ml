@@ -37,7 +37,8 @@ def _flatten_dict(d: dict[str, Any], parent_key: str = "", sep: str = ".") -> di
 
 
 class TrackerProtocol(Protocol):
-    """Protocol defining the experiment tracker interface.
+    """
+    Protocol defining the experiment tracker interface.
 
     Both MLflowTracker and NoOpTracker implement this protocol,
     enabling type-safe dependency injection without inheritance.
@@ -61,7 +62,8 @@ class TrackerProtocol(Protocol):
 
 
 class NoOpTracker:  # pragma: no cover
-    """Silent no-op tracker used when MLflow is disabled or unavailable.
+    """
+    Silent no-op tracker used when MLflow is disabled or unavailable.
 
     All methods mirror the MLflowTracker interface but perform no operations,
     ensuring zero overhead when tracking is not active.
@@ -95,14 +97,15 @@ class NoOpTracker:  # pragma: no cover
 
 
 class MLflowTracker:  # pragma: no cover
-    """MLflow-based experiment tracker for Orchard ML runs.
+    """
+    MLflow-based experiment tracker for Orchard ML runs.
 
     Manages a single MLflow run lifecycle: parameter logging, per-epoch metrics,
     final test metrics, and artifact collection. Supports nested runs for
     Optuna trial tracking.
 
     Attributes:
-        experiment_name: MLflow experiment name.
+        experiment_name (str): MLflow experiment name.
     """
 
     def __init__(self, experiment_name: str = "orchard-ml") -> None:
@@ -110,7 +113,8 @@ class MLflowTracker:  # pragma: no cover
         self._parent_run_id: str | None = None
 
     def start_run(self, cfg: Any, run_name: str, tracking_uri: str) -> None:
-        """Start an MLflow run and log all config parameters.
+        """
+        Start an MLflow run and log all config parameters.
 
         Args:
             cfg: Config object with dump_serialized() method.
@@ -137,7 +141,8 @@ class MLflowTracker:  # pragma: no cover
         logger.info("  » MLflow run started")
 
     def log_epoch(self, epoch: int, train_loss: float, val_metrics: dict, lr: float) -> None:
-        """Log per-epoch training metrics.
+        """
+        Log per-epoch training metrics.
 
         Args:
             epoch: Current epoch number (1-based).
@@ -158,7 +163,8 @@ class MLflowTracker:  # pragma: no cover
         )
 
     def log_test_metrics(self, test_acc: float, macro_f1: float) -> None:
-        """Log final test set metrics.
+        """
+        Log final test set metrics.
 
         Args:
             test_acc: Test set accuracy.
@@ -167,7 +173,8 @@ class MLflowTracker:  # pragma: no cover
         mlflow.log_metrics({"test_accuracy": test_acc, "test_macro_f1": macro_f1})
 
     def log_artifact(self, path: Path) -> None:
-        """Log a single file as an MLflow artifact.
+        """
+        Log a single file as an MLflow artifact.
 
         Args:
             path: Path to file to log.
@@ -176,7 +183,8 @@ class MLflowTracker:  # pragma: no cover
             mlflow.log_artifact(str(path))
 
     def log_artifacts_dir(self, directory: Path) -> None:
-        """Log all files in a directory as MLflow artifacts.
+        """
+        Log all files in a directory as MLflow artifacts.
 
         Args:
             directory: Directory whose contents to log.
@@ -185,7 +193,8 @@ class MLflowTracker:  # pragma: no cover
             mlflow.log_artifacts(str(directory))
 
     def start_optuna_trial(self, trial_number: int, params: dict[str, Any]) -> None:
-        """Start a nested MLflow run for an Optuna trial.
+        """
+        Start a nested MLflow run for an Optuna trial.
 
         Args:
             trial_number: Optuna trial number.
@@ -199,7 +208,8 @@ class MLflowTracker:  # pragma: no cover
         mlflow.log_params(safe_params)
 
     def end_optuna_trial(self, best_metric: float) -> None:
-        """End the current nested Optuna trial run.
+        """
+        End the current nested Optuna trial run.
 
         Args:
             best_metric: Best validation metric achieved in this trial.
@@ -221,7 +231,8 @@ class MLflowTracker:  # pragma: no cover
 
 
 def create_tracker(cfg: Any) -> TrackerProtocol:
-    """Factory: returns MLflowTracker if tracking is configured, else NoOpTracker.
+    """
+    Factory: returns MLflowTracker if tracking is configured, else NoOpTracker.
 
     Args:
         cfg: Config object. If cfg.tracking is set and enabled, returns MLflowTracker.

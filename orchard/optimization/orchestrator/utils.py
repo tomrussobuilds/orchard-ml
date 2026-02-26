@@ -2,9 +2,10 @@
 Utility Functions for Study Analysis.
 
 Provides helper functions for working with Optuna studies:
-    - Extract completed trials
-    - Check if study has successful completions
-    - Compute trial statistics
+
+- Extract completed trials
+- Check if study has successful completions
+- Compute trial statistics
 
 These utilities eliminate code duplication across orchestrator modules.
 """

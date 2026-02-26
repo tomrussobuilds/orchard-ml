@@ -80,7 +80,9 @@ class DatasetConfig(BaseModel):
     @field_validator("max_samples")
     @classmethod
     def validate_min_samples(cls, v: int | None) -> int | None:
-        """Enforce minimum sample count for meaningful train/val/test splits."""
+        """
+        Enforce minimum sample count for meaningful train/val/test splits.
+        """
         if v is not None and v < 20:
             raise ValueError(
                 f"max_samples={v} is too small for meaningful train/val/test splits. "

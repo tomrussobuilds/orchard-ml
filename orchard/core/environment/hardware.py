@@ -125,6 +125,7 @@ def get_num_workers() -> int:
 def apply_cpu_threads(num_workers: int) -> int:
     """
     Sets optimal compute threads to avoid resource contention.
+
     Synchronizes PyTorch, OMP, and MKL thread counts.
 
     Args:

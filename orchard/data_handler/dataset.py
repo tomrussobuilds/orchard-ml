@@ -33,9 +33,10 @@ class VisionDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
     Enhanced PyTorch Dataset for NPZ-based vision data.
 
     Features:
-        - In-memory caching of specific splits to eliminate disk I/O bottlenecks.
-        - Seed-aware deterministic subsampling for rapid smoke testing.
-        - Automatic dimensionality standardization (N, H, W, C).
+
+    - In-memory caching of specific splits to eliminate disk I/O bottlenecks.
+    - Seed-aware deterministic subsampling for rapid smoke testing.
+    - Automatic dimensionality standardization (N, H, W, C).
     """
 
     def __init__(
@@ -50,11 +51,11 @@ class VisionDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
         Initializes the dataset by loading the specified .npz split into RAM.
 
         Args:
-            path (Path): Path to the dataset .npz archive.
-            split (str): Dataset split to load ('train', 'val', or 'test').
-            transform (transforms.Compose | None): Pipeline of Torchvision transforms.
-            max_samples (int | None): If set, limits the number of samples (subsampling).
-            seed (int): Random seed for deterministic subsampling.
+            path: Path to the dataset .npz archive.
+            split: Dataset split to load ('train', 'val', or 'test').
+            transform: Pipeline of Torchvision transforms.
+            max_samples: If set, limits the number of samples (subsampling).
+            seed: Random seed for deterministic subsampling.
         """
         if not path.exists():
             raise FileNotFoundError(f"Dataset file not found at: {path}")
@@ -116,7 +117,8 @@ class VisionDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
 
 
 class LazyNPZDataset(Dataset):
-    """Memory-mapped PyTorch Dataset for lazy loading from ``.npz`` files.
+    """
+    Memory-mapped PyTorch Dataset for lazy loading from ``.npz`` files.
 
     Uses NumPy memory-mapping (``mmap_mode="r"``) to avoid loading the entire
     archive into RAM, making it suitable for large-scale health checks and
@@ -129,7 +131,8 @@ class LazyNPZDataset(Dataset):
     """
 
     def __init__(self, npz_path: Path) -> None:
-        """Initializes the dataset with a memory-mapped ``.npz`` archive.
+        """
+        Initializes the dataset with a memory-mapped ``.npz`` archive.
 
         Args:
             npz_path: Path to the ``.npz`` file containing
@@ -145,7 +148,8 @@ class LazyNPZDataset(Dataset):
         return len(self.labels)
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, int]:
-        """Retrieves a normalized (C, H, W) tensor and its integer label.
+        """
+        Retrieves a normalized (C, H, W) tensor and its integer label.
 
         Args:
             idx: Sample index.

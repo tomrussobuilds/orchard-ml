@@ -10,7 +10,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class TrackingConfig(BaseModel):
-    """Configuration for MLflow experiment tracking.
+    """
+    Configuration for MLflow experiment tracking.
 
     Controls whether MLflow logging is active and under which experiment
     name runs are grouped. When present in the YAML config, tracking

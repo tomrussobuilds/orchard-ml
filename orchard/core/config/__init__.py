@@ -5,10 +5,11 @@ Provides a unified, flat public API for configuration components while
 avoiding eager imports of heavy or optional dependencies (e.g. torch).
 
 Architecture:
-    - Lazy Import Pattern (PEP 562): Uses __getattr__ for on-demand loading
-    - Deferred Dependencies: torch and pydantic loaded only when needed
-    - Flat API: All configs accessible from orchard.core.config namespace
-    - Caching: Loaded modules cached in globals() for performance
+
+- Lazy Import Pattern (PEP 562): Uses __getattr__ for on-demand loading
+- Deferred Dependencies: torch and pydantic loaded only when needed
+- Flat API: All configs accessible from orchard.core.config namespace
+- Caching: Loaded modules cached in globals() for performance
 
 Implementation:
     1. __all__: Public API contract listing all available configs

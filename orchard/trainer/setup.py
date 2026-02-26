@@ -1,5 +1,5 @@
 """
-Optimization Setup Module
+Optimization Setup Module.
 
 This module provides factory functions to instantiate PyTorch optimization
 components (optimizers, schedulers, and loss functions) based on the

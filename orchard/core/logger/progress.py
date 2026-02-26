@@ -26,7 +26,9 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 def _format_param_value(value: Any) -> str:
-    """Format a hyperparameter value for log display."""
+    """
+    Format a hyperparameter value for log display.
+    """
     if isinstance(value, float):
         return f"{value:.2e}" if value < 0.001 else f"{value:.4f}"
     return str(value)

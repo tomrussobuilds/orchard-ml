@@ -6,10 +6,11 @@ classification with transfer learning support. Handles both RGB and grayscale
 inputs through dynamic first-layer adaptation.
 
 Key Features:
-    - Modern ConvNet Design: Incorporates design choices from transformers
-    - Transfer Learning: Leverages ImageNet pretrained weights
-    - Adaptive Input: Customizes first layer for grayscale datasets
-    - Channel Compression: Weight morphing for RGB→grayscale adaptation
+
+- Modern ConvNet Design: Incorporates design choices from transformers
+- Transfer Learning: Leverages ImageNet pretrained weights
+- Adaptive Input: Customizes first layer for grayscale datasets
+- Channel Compression: Weight morphing for RGB→grayscale adaptation
 """
 
 from __future__ import annotations
@@ -45,7 +46,6 @@ def build_convnext_tiny(
     Returns:
         Adapted ConvNeXt-Tiny model deployed to device
     """
-
     # --- Step 1: Initialize with Optional Pretraining ---
     weights = models.ConvNeXt_Tiny_Weights.IMAGENET1K_V1 if cfg.architecture.pretrained else None
     model = models.convnext_tiny(weights=weights)

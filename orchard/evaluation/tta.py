@@ -1,5 +1,5 @@
 """
-Test-Time Augmentation (TTA) Module
+Test-Time Augmentation (TTA) Module.
 
 This module implements adaptive TTA strategies for robust inference.
 It provides an ensemble-based prediction mechanism that respects
@@ -25,13 +25,13 @@ _TTA_BASELINE_RESOLUTION = 224  # Reference resolution for TTA intensity scaling
 # TTA HELPERS
 def _get_tta_transforms(is_anatomical: bool, is_texture_based: bool, cfg: Config) -> list:
     """
-    Internal factory to resolve the augmentation suite based on
-    dataset constraints and configuration policy.
+    Internal factory to resolve the augmentation suite based on dataset constraints and config.
 
     Transform selection is deterministic and hardware-independent to ensure
     reproducible predictions across CPU, CUDA, and MPS devices.
 
     Transform selection logic:
+
         - Anatomical datasets: NO flips or rotations (orientation is diagnostic)
         - Texture-based datasets: Minimal transforms (texture patterns are fragile)
         - Non-anatomical + Non-texture: Full or light suite based on tta_mode config

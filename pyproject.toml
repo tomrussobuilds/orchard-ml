@@ -180,11 +180,26 @@ target-version = "py310"
 extend-exclude = ["notebooks"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "ARG"]
-ignore = ["E501"]
+select = ["E", "F", "W", "I", "ARG", "D"]
+ignore = [
+    "E501",
+    # Docstring style choices (our convention: Pattern A)
+    "D212",   # multi-line-summary-first-line — we use D213 (summary on second line)
+    "D203",   # blank-line-before-class — conflicts with D211
+    "D413",   # missing-blank-line-after-last-section — not our style
+    "D412",   # blank-lines-between-header-and-content — we add them for mkdocs
+    "D200",   # unnecessary-multiline-docstring — Pattern A allows expanded one-liners
+    "D401",   # non-imperative-mood — too noisy ("Applies" vs "Apply")
+    "D102",   # undocumented-public-method — class docstring covers these
+    "D105",   # undocumented-magic-method — __repr__/__len__ are self-explanatory
+    "D107",   # undocumented-public-init — class docstring covers __init__
+]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["F841", "E501", "W293", "ARG"]
+"tests/*" = ["F841", "E501", "W293", "ARG", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.lint.isort]
 known-first-party = ["orchard"]

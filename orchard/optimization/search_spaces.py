@@ -207,10 +207,11 @@ class SearchSpaceRegistry:
         Reduced search space for fast exploration (most impactful params).
 
         Focuses on:
-            - Learning rate (most critical)
-            - Weight decay
-            - Batch size (resolution-aware)
-            - Dropout
+
+        - Learning rate (most critical)
+        - Weight decay
+        - Batch size (resolution-aware)
+        - Dropout
 
         Args:
             resolution: Input image resolution for batch size calculation

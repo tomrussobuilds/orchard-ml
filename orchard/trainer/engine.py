@@ -6,14 +6,15 @@ Each function accepts fully-resolved objects (model, loader, criterion,
 device) and returns plain Python values — no side-effects on global state.
 
 Features:
-    - AMP Integration: ``torch.autocast`` + ``GradScaler`` for mixed precision,
-      with automatic device-type resolution (CUDA/CPU).
-    - Gradient Clipping: Per-batch ``clip_grad_norm_`` applied after unscaling
-      when AMP is active, preventing gradient explosions.
-    - MixUp Augmentation: Beta-distribution blending (``mixup_data``) with
-      seeded NumPy generator for reproducible regularization.
-    - Divergence Guard: ``train_one_epoch`` raises ``RuntimeError`` on
-      NaN/Inf loss to prevent checkpointing corrupted weights.
+
+- AMP Integration: ``torch.autocast`` + ``GradScaler`` for mixed precision,
+  with automatic device-type resolution (CUDA/CPU).
+- Gradient Clipping: Per-batch ``clip_grad_norm_`` applied after unscaling
+  when AMP is active, preventing gradient explosions.
+- MixUp Augmentation: Beta-distribution blending (``mixup_data``) with
+  seeded NumPy generator for reproducible regularization.
+- Divergence Guard: ``train_one_epoch`` raises ``RuntimeError`` on
+  NaN/Inf loss to prevent checkpointing corrupted weights.
 
 Key Functions:
     compute_auc: Macro-averaged ROC-AUC with graceful fallback.
@@ -181,11 +182,12 @@ def validate_epoch(
         device: Hardware target (CUDA/MPS/CPU)
 
     Returns:
-        dict: Validation metrics
-            - 'loss' (float): Average cross-entropy loss
-            - 'accuracy' (float): Classification accuracy [0.0, 1.0]
-            - 'auc' (float): Macro-averaged Area Under the ROC Curve
-            - 'f1' (float): Macro-averaged F1 score
+        Validation metrics dict with keys:
+
+        - ``loss``: Average cross-entropy loss
+        - ``accuracy``: Classification accuracy [0.0, 1.0]
+        - ``auc``: Macro-averaged Area Under the ROC Curve
+        - ``f1``: Macro-averaged F1 score
     """
     model.eval()
     val_loss = 0.0
@@ -249,8 +251,7 @@ def mixup_data(
     Applies MixUp augmentation by blending two random samples.
 
     MixUp generates convex combinations of training pairs to improve
-    generalization and calibration. Particularly effective for small
-    medical imaging datasets.
+    generalization and calibration.
 
     Args:
         x: Input data batch (images)
@@ -259,11 +260,7 @@ def mixup_data(
         rng: NumPy random generator for reproducibility (seeded from config)
 
     Returns:
-        tuple containing:
-            - mixed_x: Blended input images
-            - y_a: Original targets
-            - y_b: Permuted targets
-            - lam: Mixing coefficient lambda
+        4-tuple of (mixed_x, y_a, y_b, lam).
     """
     if alpha <= 0:
         return x, y, y, 1.0
@@ -301,7 +298,8 @@ def _backward_step(
     scaler: torch.amp.grad_scaler.GradScaler | None,
     grad_clip: float | None,
 ) -> None:
-    """Perform a backward pass with optional gradient scaling and clipping.
+    """
+    Perform a backward pass with optional gradient scaling and clipping.
 
     Handles mixed precision training via a GradScaler if provided and
     applies gradient clipping when ``grad_clip`` is greater than zero.

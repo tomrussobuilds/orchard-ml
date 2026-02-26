@@ -1,5 +1,5 @@
 """
-Evaluation and Reporting Package
+Evaluation and Reporting Package.
 
 This package coordinates model inference, performance visualization,
 and structured experiment reporting. It provides a unified interface to

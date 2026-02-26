@@ -8,14 +8,15 @@ while raw epoch functions live in ``engine`` and optimizer/criterion
 construction in ``setup``.
 
 Key Features:
-    - Configurable Monitor Metric: Checkpointing and early stopping track
-      a user-chosen metric (auc, accuracy, or f1).
-    - Deterministic Restoration: Best model weights are reloaded in-place
-      after training completes, guaranteeing consistency.
-    - Modern Training Utilities: AMP (GradScaler), gradient clipping, and
-      Mixup augmentation via shared factories in ``_loop``.
-    - Lifecycle Telemetry: Per-epoch logging of loss trajectories, metric
-      evolution, learning rate, and early stopping status.
+
+- Configurable Monitor Metric: Checkpointing and early stopping track
+  a user-chosen metric (auc, accuracy, or f1).
+- Deterministic Restoration: Best model weights are reloaded in-place
+  after training completes, guaranteeing consistency.
+- Modern Training Utilities: AMP (GradScaler), gradient clipping, and
+  Mixup augmentation via shared factories in ``_loop``.
+- Lifecycle Telemetry: Per-epoch logging of loss trajectories, metric
+  evolution, learning rate, and early stopping status.
 """
 
 from __future__ import annotations
@@ -52,11 +53,12 @@ class ModelTrainer:
     clipping) and ensures deterministic model restoration to best-performing weights.
 
     The trainer follows a structured execution flow:
-        1. Training Phase: Forward/backward passes with optional Mixup augmentation
-        2. Validation Phase: Performance evaluation on held-out data
-        3. Scheduling Phase: Learning rate updates (ReduceLROnPlateau or step-based)
-        4. Checkpointing: Save model when monitor_metric improves
-        5. Early Stopping: Halt training if no improvement for `patience` epochs
+
+    1. Training Phase: Forward/backward passes with optional Mixup augmentation
+    2. Validation Phase: Performance evaluation on held-out data
+    3. Scheduling Phase: Learning rate updates (ReduceLROnPlateau or step-based)
+    4. Checkpointing: Save model when monitor_metric improves
+    5. Early Stopping: Halt training if no improvement for `patience` epochs
 
     Attributes:
         model: Neural network architecture to train.
@@ -185,22 +187,25 @@ class ModelTrainer:
         Executes the main training loop with checkpointing and early stopping.
 
         Performs iterative training across configured epochs, executing:
-            - Forward/backward passes with optional Mixup augmentation
-            - Validation metric computation (loss, accuracy, AUC)
-            - Learning rate scheduling (plateau-aware or step-based)
-            - Automated checkpointing on monitor_metric improvement
-            - Early stopping with patience-based criteria
+
+        - Forward/backward passes with optional Mixup augmentation
+        - Validation metric computation (loss, accuracy, AUC)
+        - Learning rate scheduling (plateau-aware or step-based)
+        - Automated checkpointing on monitor_metric improvement
+        - Early stopping with patience-based criteria
 
         Returns:
             tuple containing:
-                - Path: Filesystem path to best model checkpoint
-                - list[float]: Training loss history per epoch
-                - list[dict]: Validation metrics history (loss, accuracy, AUC per epoch)
+
+        - Path: Filesystem path to best model checkpoint
+        - list[float]: Training loss history per epoch
+        - list[dict]: Validation metrics history (loss, accuracy, AUC per epoch)
 
         Notes:
-            - Model weights are automatically restored to best checkpoint after training
-            - Mixup augmentation is disabled after mixup_epochs
-            - Early stopping triggers if no monitor_metric improvement for `patience` epochs
+
+        - Model weights are automatically restored to best checkpoint after training
+        - Mixup augmentation is disabled after mixup_epochs
+        - Early stopping triggers if no monitor_metric improvement for `patience` epochs
         """
         for epoch in range(1, self.epochs + 1):
             logger.info(f" Epoch {epoch:02d}/{self.epochs} ".center(60, "-"))

@@ -1,4 +1,5 @@
-"""Synthetic Data Handler for Testing.
+"""
+Synthetic Data Handler for Testing.
 
 This module provides tiny synthetic NPZ datasets for unit tests without
 requiring any external downloads or network access. It generates random image
@@ -27,7 +28,8 @@ def create_synthetic_dataset(
     channels: int = 3,
     name: str = "syntheticmnist",
 ) -> DatasetData:
-    """Create a synthetic NPZ-compatible dataset for testing.
+    """
+    Create a synthetic NPZ-compatible dataset for testing.
 
     This function generates random image data and labels, saves them to a
     temporary .npz file, and returns a DatasetData object that can be used
@@ -103,7 +105,8 @@ def create_synthetic_grayscale_dataset(
     samples: int = 100,
     resolution: int = 28,
 ) -> DatasetData:
-    """Create a synthetic grayscale NPZ dataset for testing.
+    """
+    Create a synthetic grayscale NPZ dataset for testing.
 
     Convenience function for creating single-channel (grayscale) synthetic data.
 

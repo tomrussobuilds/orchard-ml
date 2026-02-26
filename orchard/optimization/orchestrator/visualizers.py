@@ -2,10 +2,11 @@
 Optuna Visualization Generation.
 
 Creates interactive Plotly visualizations for study analysis:
-    - Optimization history (metric over trials)
-    - Parameter importance (feature importance for hyperparameters)
-    - Slice plots (1D parameter effects)
-    - Parallel coordinate plot (multi-dimensional view)
+
+- Optimization history (metric over trials)
+- Parameter importance (feature importance for hyperparameters)
+- Slice plots (1D parameter effects)
+- Parallel coordinate plot (multi-dimensional view)
 
 All functions handle missing dependencies (plotly) and plot generation
 failures gracefully with informative logging.
@@ -38,6 +39,7 @@ def generate_visualizations(study: optuna.Study, output_dir: Path) -> None:
         output_dir: Directory to save HTML plot files (typically paths.figures)
 
     Generated Plots:
+
         - optimization_history.html: Metric progression over trials
         - param_importances.html: Hyperparameter importance ranking
         - slice.html: Individual parameter effects

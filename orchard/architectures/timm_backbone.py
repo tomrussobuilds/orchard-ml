@@ -30,10 +30,11 @@ def build_timm_model(
     Construct any timm-registered model with automatic adaptation.
 
     timm.create_model handles:
-        - Pretrained weight loading (from HuggingFace Hub or torch.hub)
-        - Classification head replacement (num_classes)
-        - Input channel adaptation with weight morphing (in_chans)
-        - Dropout rate injection (drop_rate)
+
+    - Pretrained weight loading (from HuggingFace Hub or torch.hub)
+    - Classification head replacement (num_classes)
+    - Input channel adaptation with weight morphing (in_chans)
+    - Dropout rate injection (drop_rate)
 
     Args:
         device: Target hardware for model placement.

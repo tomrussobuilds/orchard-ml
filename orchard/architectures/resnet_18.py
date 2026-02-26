@@ -5,13 +5,17 @@ Adaptive ResNet-18 supporting 28x28, 32x32, 64x64, and 224x224 resolutions
 with resolution-specific architectural modifications.
 
 Resolution-Specific Adaptations:
-    28x28 / 32x32:
-        - 7x7 Conv1 → 3x3 Conv1 (stride 1 instead of 2)
-        - MaxPool removed (prevents excessive spatial loss)
-        - Weight morphing via bicubic interpolation
-    64x64 / 224x224:
-        - Standard ResNet-18 stem (7x7 Conv1, stride 2, MaxPool)
-        - Only channel adaptation for grayscale inputs
+
+28x28 / 32x32:
+
+- 7x7 Conv1 → 3x3 Conv1 (stride 1 instead of 2)
+- MaxPool removed (prevents excessive spatial loss)
+- Weight morphing via bicubic interpolation
+
+64x64 / 224x224:
+
+- Standard ResNet-18 stem (7x7 Conv1, stride 2, MaxPool)
+- Only channel adaptation for grayscale inputs
 """
 
 from __future__ import annotations
@@ -51,7 +55,6 @@ def build_resnet18(
     Returns:
         Adapted ResNet-18 deployed to device
     """
-
     # --- Step 1: Initialize with Optional Pretraining ---
     weights = models.ResNet18_Weights.IMAGENET1K_V1 if cfg.architecture.pretrained else None
     model = models.resnet18(weights=weights)

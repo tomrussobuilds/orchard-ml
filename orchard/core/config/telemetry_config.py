@@ -6,10 +6,11 @@ experiment identity. Resolves paths, configures logging, and exports
 environment-agnostic manifests.
 
 Single Source of Truth (SSOT) for:
-    - Dataset and output directory resolution and anchoring
-    - Logging cadence and verbosity
-    - Experiment identity and run-level metadata
-    - Portable, host-independent configuration serialization
+
+- Dataset and output directory resolution and anchoring
+- Logging cadence and verbosity
+- Experiment identity and run-level metadata
+- Portable, host-independent configuration serialization
 
 Attributes:
     data_dir: Validated path to dataset directory (default: ./dataset).

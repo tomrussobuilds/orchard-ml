@@ -40,7 +40,12 @@ from ..data_handler import (
     show_samples_for_dataset,
 )
 from ..evaluation import run_final_evaluation
-from ..export import benchmark_onnx_inference, export_to_onnx, quantize_model, validate_export
+from ..export import (
+    benchmark_onnx_inference,
+    export_to_onnx,
+    quantize_model,
+    validate_export,
+)
 from ..optimization import run_optimization
 from ..trainer import (
     ModelTrainer,
