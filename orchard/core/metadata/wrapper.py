@@ -2,7 +2,7 @@
 Pydantic Wrapper for Multi-Domain Dataset Registries.
 
 type-safe, validated access to multiple dataset domains (medical, space)
-and resolutions (28x28, 64x64, 224x224). Merges domain registries based on
+and resolutions (28x28, 64x64, 128x128, 224x224). Merges domain registries based on
 selected resolution while avoiding global metadata overwrites.
 """
 
@@ -15,13 +15,21 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..paths import SUPPORTED_RESOLUTIONS
 from .base import DatasetMetadata
-from .domains import BENCHMARK_32, MEDICAL_28, MEDICAL_64, MEDICAL_224, SPACE_224
+from .domains import (
+    BENCHMARK_32,
+    MEDICAL_28,
+    MEDICAL_64,
+    MEDICAL_128,
+    MEDICAL_224,
+    SPACE_224,
+)
 
 # Resolution → registry merge map (add new resolutions here)
 _RESOLUTION_REGISTRIES: dict[int, tuple[dict[str, DatasetMetadata], ...]] = {
     28: (MEDICAL_28,),
     32: (BENCHMARK_32,),
     64: (MEDICAL_64,),
+    128: (MEDICAL_128,),
     224: (MEDICAL_224, SPACE_224),
 }
 
@@ -36,13 +44,13 @@ class DatasetRegistryWrapper(BaseModel):
     dataset metadata entries.
 
     Attributes:
-        resolution: Target dataset resolution (28, 64, or 224).
+        resolution: Target dataset resolution (28, 32, 64, 128, or 224).
         registry: Deep-copied metadata registry for the selected resolution.
     """
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
-    resolution: int = Field(default=28, description="Target resolution (28, 32, 64, or 224)")
+    resolution: int = Field(default=28, description="Target resolution (28, 32, 64, 128, or 224)")
 
     registry: dict[str, DatasetMetadata] = Field(
         default_factory=dict, description="Dataset registry for selected resolution"

@@ -53,7 +53,7 @@ class DatasetMetadata(BaseModel):
     # Image properties
     in_channels: int = Field(..., description="1 for grayscale, 3 for RGB")
     native_resolution: int | None = Field(
-        default=None, description="Native pixel resolution (28 or 224)"
+        default=None, description="Native pixel resolution (28, 32, 64, 128, or 224)"
     )
 
     # Normalization

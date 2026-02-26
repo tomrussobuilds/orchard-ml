@@ -61,11 +61,11 @@ def test_registry_wrapper_get_dataset_not_found():
 def test_registry_wrapper_invalid_resolution():
     """Test DatasetRegistryWrapper raises ValueError for invalid resolution."""
     with pytest.raises(ValueError) as exc_info:
-        DatasetRegistryWrapper(resolution=128)
+        DatasetRegistryWrapper(resolution=999)
 
     error_msg = str(exc_info.value)
-    assert "Unsupported resolution 128" in error_msg
-    assert "[28, 32, 64, 224]" in error_msg
+    assert "Unsupported resolution 999" in error_msg
+    assert "[28, 32, 64, 128, 224]" in error_msg
 
 
 @pytest.mark.unit
@@ -115,6 +115,18 @@ def test_registry_wrapper_resolution_64():
 
     for metadata in wrapper.registry.values():
         assert metadata.native_resolution == 64
+
+
+@pytest.mark.unit
+def test_registry_wrapper_resolution_128():
+    """Test DatasetRegistryWrapper loads 128x128 registry correctly."""
+    wrapper = DatasetRegistryWrapper(resolution=128)
+
+    assert wrapper.resolution == 128
+    assert len(wrapper.registry) == 11
+
+    for metadata in wrapper.registry.values():
+        assert metadata.native_resolution == 128
 
 
 @pytest.mark.unit
@@ -173,7 +185,7 @@ def test_dataset_metadata_normalization_info_property():
 @pytest.mark.unit
 def test_registry_wrapper_empty_source_registry():
     """Test DatasetRegistryWrapper raises ValueError when source registry is empty."""
-    empty_table = {28: ({},), 32: ({},), 64: ({},), 224: ({}, {})}
+    empty_table = {28: ({},), 32: ({},), 64: ({},), 128: ({},), 224: ({}, {})}
     with patch("orchard.core.metadata.wrapper._RESOLUTION_REGISTRIES", empty_table):
         with pytest.raises(ValueError) as exc_info:
             DatasetRegistryWrapper(resolution=28)

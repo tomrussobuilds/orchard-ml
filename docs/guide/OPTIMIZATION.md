@@ -16,6 +16,9 @@ orchard run recipes/optuna_mini_cnn.yaml           # 50 trials, ~1-2 min GPU, ~5
 orchard run recipes/optuna_cifar100_mini_cnn.yaml  # 50 trials, ~1-2h GPU
 orchard run recipes/optuna_cifar100_resnet_18.yaml # 50 trials, ~3-4h GPU
 
+# 128×128 resolution - timm model search
+orchard run recipes/optuna_128.yaml                # 20 trials, ~2-4h GPU
+
 # 224×224 resolution (includes weight variant search for ViT)
 orchard run recipes/optuna_efficientnet_b0.yaml    # 20 trials, ~1.5-5h GPU
 orchard run recipes/optuna_vit_tiny.yaml           # 20 trials, ~3-5h GPU
@@ -48,10 +51,12 @@ Select a preset via `search_space_preset`:
 - **Scheduling**: `cosine_fraction`, `scheduler_patience`
 - **Augmentation**: `rotation_angle`, `jitter_val`, `min_scale`
 - **Batch Size**: Resolution-aware categorical choices
-  - ≤32×32: `batch_size_low_res` — [16, 32, 48, 64]
+  - ≤64×64: `batch_size_low_res` — [16, 32, 48, 64]
+  - 128×128: `batch_size_low_res` — [16, 32, 48, 64]
   - 224×224: `batch_size_high_res` — [8, 12, 16] (OOM-safe for 8GB VRAM)
 - **Architecture** (requires `enable_model_search: true`):
   - ≤64×64: [`resnet_18`, `mini_cnn`]
+  - 128×128: [`timm/efficientnet_lite0`, `timm/convnextv2_nano`, `timm/mobilenetv3_large_100`]
   - 224×224: [`resnet_18`, `efficientnet_b0`, `convnext_tiny`, `vit_tiny`]
 - **Weight Variants** (ViT only, 224×224):
   - `vit_tiny_patch16_224.augreg_in21k_ft_in1k`

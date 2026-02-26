@@ -20,6 +20,10 @@ orchard run recipes/config_mini_cnn.yaml              # ~2-3 min GPU, ~10 min CP
 orchard run recipes/config_cifar10_mini_cnn.yaml      # ~3-5 min GPU
 orchard run recipes/config_cifar10_resnet_18.yaml     # ~10-15 min GPU
 
+# 128×128 resolution (GPU, timm models)
+orchard run recipes/config_timm_efficientnet_lite0_128.yaml  # ~10 min GPU
+orchard run recipes/config_timm_convnextv2_nano_128.yaml     # ~15 min GPU
+
 # Train with presets (224×224 resolution, GPU required)
 orchard run recipes/config_efficientnet_b0.yaml       # ~30 min each trial
 orchard run recipes/config_vit_tiny.yaml              # ~25-35 min each trial
@@ -82,11 +86,11 @@ orchard run recipes/config_resnet_18.yaml --set augmentation.mixup_alpha=0
 
 | Parameter | Type | Default | Options |
 |-----------|------|---------|---------|
-| `model_name` | str | "resnet_18" | `resnet_18`, `mini_cnn` (28/32/64); `efficientnet_b0`, `vit_tiny` (224) |
+| `model_name` | str | "resnet_18" | `resnet_18`, `mini_cnn` (28/32/64); `timm/*` (128); `efficientnet_b0`, `vit_tiny` (224) |
 | `pretrained` | bool | True | Use ImageNet weights (N/A for MiniCNN) |
 | `weight_variant` | str | None | ViT-specific pretrained variant (e.g., `augreg_in21k_ft_in1k`) |
 | `force_rgb` | bool | True | Convert grayscale to 3-channel |
-| `resolution` | int | 28 | {28, 32, 64, 224} |
+| `resolution` | int | 28 | {28, 32, 64, 128, 224} |
 
 <h3>Dataset Parameters</h3>
 
@@ -105,7 +109,7 @@ The framework is designed for zero-code dataset integration via the registry sys
 
 <h3>1. Add Dataset Metadata</h3>
 
-Edit the appropriate domain file in `orchard/core/metadata/domains/` (e.g., `medical.py` or `space.py`):
+Edit the appropriate domain file in `orchard/core/metadata/domains/` (e.g., `medical.yaml` or `space.py`):
 
 ```python
 DATASET_REGISTRY = {

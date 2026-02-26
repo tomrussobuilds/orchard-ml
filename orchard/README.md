@@ -64,7 +64,7 @@ orchard/
 │   └── synthetic.py            # Synthetic data generation
 ├── architectures/              # Architecture factory
 │   ├── factory.py              # Model registry & builder
-│   ├── resnet_18.py            # ResNet-18 multi-resolution (28/32/64/224)
+│   ├── resnet_18.py            # ResNet-18 multi-resolution (28/32/64/128/224)
 │   ├── mini_cnn.py             # Compact CNN (~95K params, 28/32/64)
 │   ├── efficientnet_b0.py      # EfficientNet for 224×224
 │   ├── convnext_tiny.py        # ConvNeXt-Tiny for 224×224

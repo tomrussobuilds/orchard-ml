@@ -1,574 +1,66 @@
 """
 Medical Imaging Dataset Registry Definitions.
 
-Contains DatasetMetadata instances for the MedMNIST v2 collection at
-28x28, 64x64, and 224x224 resolutions. All datasets sourced from Zenodo.
+Loads DatasetMetadata instances from medical.yaml for the MedMNIST v2
+collection at 28x28, 64x64, 128x128, and 224x224 resolutions. All
+datasets sourced from Zenodo.
 """
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Final
+
+import yaml
 
 from ...paths import DATASET_DIR
 from ..base import DatasetMetadata
 
-# ---------------------------------------------------------------------------
-# Shared class-label constants (single source of truth across resolutions)
-# ---------------------------------------------------------------------------
+_YAML_PATH: Final[Path] = Path(__file__).parent / "medical.yaml"
 
-_PATHMNIST_CLASSES: Final[list[str]] = [
-    "adipose",
-    "background",
-    "debris",
-    "lymphocytes",
-    "mucus",
-    "smooth muscle",
-    "normal colon mucosa",
-    "cancer-associated stroma",
-    "colorectal adenocarcinoma epithelium",
-]
 
-_BLOODMNIST_CLASSES: Final[list[str]] = [
-    "basophil",
-    "eosinophil",
-    "erythroblast",
-    "immature granulocyte",
-    "lymphocyte",
-    "monocyte",
-    "neutrophil",
-    "platelet",
-]
+def _load_registries() -> dict[int, dict[str, DatasetMetadata]]:
+    """
+    Build per-resolution registries from the YAML manifest.
 
-_DERMAMNIST_CLASSES: Final[list[str]] = [
-    "actinic keratoses",
-    "basal cell carcinoma",
-    "benign keratosis",
-    "dermatofibroma",
-    "melanocytic nevi",
-    "melanoma",
-    "vascular lesions",
-]
+    Parses shared dataset properties (classes, channels, normalization,
+    flags) once per dataset, then creates resolution-specific
+    DatasetMetadata instances with the appropriate md5/url/path.
 
-_OCTMNIST_CLASSES: Final[list[str]] = [
-    "choroidal neovascularization",
-    "diabetic macular edema",
-    "drusen",
-    "normal",
-]
+    Returns:
+        Mapping of resolution → {dataset_name → DatasetMetadata}.
+    """
+    data = yaml.safe_load(_YAML_PATH.read_text())
+    registries: dict[int, dict[str, DatasetMetadata]] = {}
 
-_PNEUMONIAMNIST_CLASSES: Final[list[str]] = ["normal", "pneumonia"]
+    for ds_name, ds_info in data["datasets"].items():
+        shared = {
+            "name": ds_name,
+            "display_name": ds_info["display_name"],
+            "classes": ds_info["classes"],
+            "mean": tuple(ds_info["mean"]),
+            "std": tuple(ds_info["std"]),
+            "in_channels": ds_info["in_channels"],
+            "is_anatomical": ds_info["is_anatomical"],
+            "is_texture_based": ds_info["is_texture_based"],
+        }
 
-_RETINAMNIST_CLASSES: Final[list[str]] = [
-    "No DR",
-    "Mild DR",
-    "Moderate DR",
-    "Severe DR",
-    "Proliferative DR",
-]
+        for res, res_info in ds_info["resolutions"].items():
+            res = int(res)
+            registries.setdefault(res, {})[ds_name] = DatasetMetadata(
+                **shared,
+                md5_checksum=res_info["md5"],
+                url=res_info["url"],
+                path=DATASET_DIR / f"{ds_name}_{res}.npz",
+                native_resolution=res,
+            )
 
-_BREASTMNIST_CLASSES: Final[list[str]] = ["malignant", "benign"]
+    return registries
 
-_ORGAN_CLASSES: Final[list[str]] = [
-    "bladder",
-    "femur-left",
-    "femur-right",
-    "heart",
-    "kidney-left",
-    "kidney-right",
-    "liver",
-    "lung-left",
-    "lung-right",
-    "pancreas",
-    "spleen",
-]
 
-_TISSUEMNIST_CLASSES: Final[list[str]] = [
-    "Collecting Duct",
-    "Distal Tubule",
-    "Glomerulus",
-    "Medulla",
-    "Proximal Tubule",
-    "Capsule",
-    "Large Vessel",
-    "Small Vessel",
-]
+_ALL_REGISTRIES: Final[dict[int, dict[str, DatasetMetadata]]] = _load_registries()
 
-# ---------------------------------------------------------------------------
-# MEDMNIST v2 REGISTRY (28x28 Resolution)
-# ---------------------------------------------------------------------------
-REGISTRY_28: Final[dict[str, DatasetMetadata]] = {
-    "pathmnist": DatasetMetadata(
-        name="pathmnist",
-        display_name="PathMNIST",
-        md5_checksum="a8b06965200029087d5bd730944a56c1",
-        url="https://zenodo.org/records/5208230/files/pathmnist.npz",
-        path=DATASET_DIR / "pathmnist_28.npz",
-        classes=_PATHMNIST_CLASSES,
-        mean=(0.485, 0.456, 0.406),
-        std=(0.229, 0.224, 0.225),
-        in_channels=3,
-        native_resolution=28,
-        is_anatomical=False,
-        is_texture_based=True,
-    ),
-    "bloodmnist": DatasetMetadata(
-        name="bloodmnist",
-        display_name="BloodMNIST",
-        md5_checksum="7053d0359d879ad8a5505303e11de1dc",
-        url="https://zenodo.org/records/5208230/files/bloodmnist.npz",
-        path=DATASET_DIR / "bloodmnist_28.npz",
-        classes=_BLOODMNIST_CLASSES,
-        mean=(0.4914, 0.4822, 0.4465),
-        std=(0.2023, 0.1994, 0.2010),
-        in_channels=3,
-        native_resolution=28,
-        is_anatomical=False,
-        is_texture_based=False,
-    ),
-    "dermamnist": DatasetMetadata(
-        name="dermamnist",
-        display_name="DermaMNIST",
-        md5_checksum="0744692d530f8e62ec473284d019b0c7",
-        url="https://zenodo.org/records/5208230/files/dermamnist.npz",
-        path=DATASET_DIR / "dermamnist_28.npz",
-        classes=_DERMAMNIST_CLASSES,
-        mean=(0.485, 0.456, 0.406),
-        std=(0.229, 0.224, 0.225),
-        in_channels=3,
-        native_resolution=28,
-        is_anatomical=False,
-        is_texture_based=True,
-    ),
-    "octmnist": DatasetMetadata(
-        name="octmnist",
-        display_name="OCTMNIST",
-        md5_checksum="c68d92d5b585d8d81f7112f81e2d0842",
-        url="https://zenodo.org/records/5208230/files/octmnist.npz",
-        path=DATASET_DIR / "octmnist_28.npz",
-        classes=_OCTMNIST_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=28,
-        is_anatomical=True,
-        is_texture_based=True,
-    ),
-    "pneumoniamnist": DatasetMetadata(
-        name="pneumoniamnist",
-        display_name="PneumoniaMNIST",
-        md5_checksum="28209eda62fecd6e6a2d98b1501bb15f",
-        url="https://zenodo.org/records/5208230/files/pneumoniamnist.npz",
-        path=DATASET_DIR / "pneumoniamnist_28.npz",
-        classes=_PNEUMONIAMNIST_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=28,
-        is_anatomical=True,
-        is_texture_based=False,
-    ),
-    "retinamnist": DatasetMetadata(
-        name="retinamnist",
-        display_name="RetinaMNIST",
-        md5_checksum="bd4c0672f1bba3e3a89f0e4e876791e4",
-        url="https://zenodo.org/records/5208230/files/retinamnist.npz",
-        path=DATASET_DIR / "retinamnist_28.npz",
-        classes=_RETINAMNIST_CLASSES,
-        mean=(0.485, 0.456, 0.406),
-        std=(0.229, 0.224, 0.225),
-        in_channels=3,
-        native_resolution=28,
-        is_anatomical=False,
-        is_texture_based=True,
-    ),
-    "breastmnist": DatasetMetadata(
-        name="breastmnist",
-        display_name="BreastMNIST",
-        md5_checksum="750601b1f35ba3300ea97c75c52ff8f6",
-        url="https://zenodo.org/records/5208230/files/breastmnist.npz",
-        path=DATASET_DIR / "breastmnist_28.npz",
-        classes=_BREASTMNIST_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=28,
-        is_anatomical=True,
-        is_texture_based=False,
-    ),
-    "organamnist": DatasetMetadata(
-        name="organamnist",
-        display_name="OrganAMNIST",
-        md5_checksum="866b832ed4eeba67bfb9edee1d5544e6",
-        url="https://zenodo.org/records/5208230/files/organamnist.npz",
-        path=DATASET_DIR / "organamnist_28.npz",
-        classes=_ORGAN_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=28,
-        is_anatomical=True,
-        is_texture_based=False,
-    ),
-    "tissuemnist": DatasetMetadata(
-        name="tissuemnist",
-        display_name="TissueMNIST",
-        md5_checksum="ebe78ee8b05294063de985d821c1c34b",
-        url="https://zenodo.org/records/5208230/files/tissuemnist.npz",
-        path=DATASET_DIR / "tissuemnist_28.npz",
-        classes=_TISSUEMNIST_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=28,
-        is_anatomical=False,
-        is_texture_based=True,
-    ),
-    "organcmnist": DatasetMetadata(
-        name="organcmnist",
-        display_name="OrganCMNIST",
-        md5_checksum="0afa5834fb105f7705a7d93372119a21",
-        url="https://zenodo.org/records/5208230/files/organcmnist.npz",
-        path=DATASET_DIR / "organcmnist_28.npz",
-        classes=_ORGAN_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=28,
-        is_anatomical=True,
-        is_texture_based=False,
-    ),
-    "organsmnist": DatasetMetadata(
-        name="organsmnist",
-        display_name="OrganSMNIST",
-        md5_checksum="e5c39f1af030238290b9557d9503af9d",
-        url="https://zenodo.org/records/5208230/files/organsmnist.npz",
-        path=DATASET_DIR / "organsmnist_28.npz",
-        classes=_ORGAN_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=28,
-        is_anatomical=True,
-        is_texture_based=False,
-    ),
-}
-
-# ---------------------------------------------------------------------------
-# MEDMNIST v2 REGISTRY (224x224 Resolution)
-# ---------------------------------------------------------------------------
-REGISTRY_224: Final[dict[str, DatasetMetadata]] = {
-    "pathmnist": DatasetMetadata(
-        name="pathmnist",
-        display_name="PathMNIST",
-        md5_checksum="2c51a510bcdc9cf8ddb2af93af1eadec",
-        url="https://zenodo.org/records/10519652/files/pathmnist_224.npz?download=1",
-        path=DATASET_DIR / "pathmnist_224.npz",
-        classes=_PATHMNIST_CLASSES,
-        mean=(0.485, 0.456, 0.406),
-        std=(0.229, 0.224, 0.225),
-        in_channels=3,
-        native_resolution=224,
-        is_anatomical=False,
-        is_texture_based=True,
-    ),
-    "bloodmnist": DatasetMetadata(
-        name="bloodmnist",
-        display_name="BloodMNIST",
-        md5_checksum="b718ff6835fcbdb22ba9eacccd7b2601",
-        url="https://zenodo.org/records/10519652/files/bloodmnist_224.npz?download=1",
-        path=DATASET_DIR / "bloodmnist_224.npz",
-        classes=_BLOODMNIST_CLASSES,
-        mean=(0.4914, 0.4822, 0.4465),
-        std=(0.2023, 0.1994, 0.2010),
-        in_channels=3,
-        native_resolution=224,
-        is_anatomical=False,
-        is_texture_based=False,
-    ),
-    "dermamnist": DatasetMetadata(
-        name="dermamnist",
-        display_name="DermaMNIST",
-        md5_checksum="8974907d8e169bef5f5b96bc506ae45d",
-        url="https://zenodo.org/records/10519652/files/dermamnist_224.npz?download=1",
-        path=DATASET_DIR / "dermamnist_224.npz",
-        classes=_DERMAMNIST_CLASSES,
-        mean=(0.485, 0.456, 0.406),
-        std=(0.229, 0.224, 0.225),
-        in_channels=3,
-        native_resolution=224,
-        is_anatomical=False,
-        is_texture_based=True,
-    ),
-    "octmnist": DatasetMetadata(
-        name="octmnist",
-        display_name="OCTMNIST",
-        md5_checksum="abc493b6d529d5de7569faaef2773ba3",
-        url="https://zenodo.org/records/10519652/files/octmnist_224.npz?download=1",
-        path=DATASET_DIR / "octmnist_224.npz",
-        classes=_OCTMNIST_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=224,
-        is_anatomical=True,
-        is_texture_based=True,
-    ),
-    "pneumoniamnist": DatasetMetadata(
-        name="pneumoniamnist",
-        display_name="PneumoniaMNIST",
-        md5_checksum="d6a3c71de1b945ea11211b03746c1fe1",
-        url="https://zenodo.org/records/10519652/files/pneumoniamnist_224.npz?download=1",
-        path=DATASET_DIR / "pneumoniamnist_224.npz",
-        classes=_PNEUMONIAMNIST_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=224,
-        is_anatomical=True,
-        is_texture_based=False,
-    ),
-    "retinamnist": DatasetMetadata(
-        name="retinamnist",
-        display_name="RetinaMNIST",
-        md5_checksum="eae7e3b6f3fcbda4ae613ebdcbe35348",
-        url="https://zenodo.org/records/10519652/files/retinamnist_224.npz?download=1",
-        path=DATASET_DIR / "retinamnist_224.npz",
-        classes=_RETINAMNIST_CLASSES,
-        mean=(0.485, 0.456, 0.406),
-        std=(0.229, 0.224, 0.225),
-        in_channels=3,
-        native_resolution=224,
-        is_anatomical=False,
-        is_texture_based=True,
-    ),
-    "breastmnist": DatasetMetadata(
-        name="breastmnist",
-        display_name="BreastMNIST",
-        md5_checksum="b56378a6eefa9fed602bb16d192d4c8b",
-        url="https://zenodo.org/records/10519652/files/breastmnist_224.npz?download=1",
-        path=DATASET_DIR / "breastmnist_224.npz",
-        classes=_BREASTMNIST_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=224,
-        is_anatomical=True,
-        is_texture_based=False,
-    ),
-    "organamnist": DatasetMetadata(
-        name="organamnist",
-        display_name="OrganAMNIST",
-        md5_checksum="50747347e05c87dd3aaf92c49f9f3170",
-        url="https://zenodo.org/records/10519652/files/organamnist_224.npz?download=1",
-        path=DATASET_DIR / "organamnist_224.npz",
-        classes=_ORGAN_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=224,
-        is_anatomical=True,
-        is_texture_based=False,
-    ),
-    "tissuemnist": DatasetMetadata(
-        name="tissuemnist",
-        display_name="TissueMNIST",
-        md5_checksum="b077128c4a949f0a4eb01517f9037b9c",
-        url="https://zenodo.org/records/10519652/files/tissuemnist_224.npz?download=1",
-        path=DATASET_DIR / "tissuemnist_224.npz",
-        classes=_TISSUEMNIST_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=224,
-        is_anatomical=False,
-        is_texture_based=True,
-    ),
-    "organcmnist": DatasetMetadata(
-        name="organcmnist",
-        display_name="OrganCMNIST",
-        md5_checksum="050f5e875dc056f6768abf94ec9995d1",
-        url="https://zenodo.org/records/10519652/files/organcmnist_224.npz?download=1",
-        path=DATASET_DIR / "organcmnist_224.npz",
-        classes=_ORGAN_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=224,
-        is_anatomical=True,
-        is_texture_based=False,
-    ),
-    "organsmnist": DatasetMetadata(
-        name="organsmnist",
-        display_name="OrganSMNIST",
-        md5_checksum="b354719e553fbbb2513d5533f52a4cb1",
-        url="https://zenodo.org/records/10519652/files/organsmnist_224.npz?download=1",
-        path=DATASET_DIR / "organsmnist_224.npz",
-        classes=_ORGAN_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=224,
-        is_anatomical=True,
-        is_texture_based=False,
-    ),
-}
-
-# ---------------------------------------------------------------------------
-# MEDMNIST v2 REGISTRY (64x64 Resolution)
-# ---------------------------------------------------------------------------
-REGISTRY_64: Final[dict[str, DatasetMetadata]] = {
-    "pathmnist": DatasetMetadata(
-        name="pathmnist",
-        display_name="PathMNIST",
-        md5_checksum="55aa9c1e0525abe5a6b9d8343a507616",
-        url="https://zenodo.org/records/10519652/files/pathmnist_64.npz?download=1",
-        path=DATASET_DIR / "pathmnist_64.npz",
-        classes=_PATHMNIST_CLASSES,
-        mean=(0.485, 0.456, 0.406),
-        std=(0.229, 0.224, 0.225),
-        in_channels=3,
-        native_resolution=64,
-        is_anatomical=False,
-        is_texture_based=True,
-    ),
-    "bloodmnist": DatasetMetadata(
-        name="bloodmnist",
-        display_name="BloodMNIST",
-        md5_checksum="2b94928a2ae4916078ca51e05b6b800b",
-        url="https://zenodo.org/records/10519652/files/bloodmnist_64.npz?download=1",
-        path=DATASET_DIR / "bloodmnist_64.npz",
-        classes=_BLOODMNIST_CLASSES,
-        mean=(0.4914, 0.4822, 0.4465),
-        std=(0.2023, 0.1994, 0.2010),
-        in_channels=3,
-        native_resolution=64,
-        is_anatomical=False,
-        is_texture_based=False,
-    ),
-    "dermamnist": DatasetMetadata(
-        name="dermamnist",
-        display_name="DermaMNIST",
-        md5_checksum="b70a2f5635c6199aeaa28c31d7202e1f",
-        url="https://zenodo.org/records/10519652/files/dermamnist_64.npz?download=1",
-        path=DATASET_DIR / "dermamnist_64.npz",
-        classes=_DERMAMNIST_CLASSES,
-        mean=(0.485, 0.456, 0.406),
-        std=(0.229, 0.224, 0.225),
-        in_channels=3,
-        native_resolution=64,
-        is_anatomical=False,
-        is_texture_based=True,
-    ),
-    "octmnist": DatasetMetadata(
-        name="octmnist",
-        display_name="OCTMNIST",
-        md5_checksum="e229e9440236b774d9f0dfef9d07bdaf",
-        url="https://zenodo.org/records/10519652/files/octmnist_64.npz?download=1",
-        path=DATASET_DIR / "octmnist_64.npz",
-        classes=_OCTMNIST_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=64,
-        is_anatomical=True,
-        is_texture_based=True,
-    ),
-    "pneumoniamnist": DatasetMetadata(
-        name="pneumoniamnist",
-        display_name="PneumoniaMNIST",
-        md5_checksum="8f4eceb4ccffa70c672198ea285246c6",
-        url="https://zenodo.org/records/10519652/files/pneumoniamnist_64.npz?download=1",
-        path=DATASET_DIR / "pneumoniamnist_64.npz",
-        classes=_PNEUMONIAMNIST_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=64,
-        is_anatomical=True,
-        is_texture_based=False,
-    ),
-    "retinamnist": DatasetMetadata(
-        name="retinamnist",
-        display_name="RetinaMNIST",
-        md5_checksum="afda852cc34dcda56f86ad2b2457dbcc",
-        url="https://zenodo.org/records/10519652/files/retinamnist_64.npz?download=1",
-        path=DATASET_DIR / "retinamnist_64.npz",
-        classes=_RETINAMNIST_CLASSES,
-        mean=(0.485, 0.456, 0.406),
-        std=(0.229, 0.224, 0.225),
-        in_channels=3,
-        native_resolution=64,
-        is_anatomical=False,
-        is_texture_based=True,
-    ),
-    "breastmnist": DatasetMetadata(
-        name="breastmnist",
-        display_name="BreastMNIST",
-        md5_checksum="742edef2a1fd1524b2efff4bd7ba9364",
-        url="https://zenodo.org/records/10519652/files/breastmnist_64.npz?download=1",
-        path=DATASET_DIR / "breastmnist_64.npz",
-        classes=_BREASTMNIST_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=64,
-        is_anatomical=True,
-        is_texture_based=False,
-    ),
-    "organamnist": DatasetMetadata(
-        name="organamnist",
-        display_name="OrganAMNIST",
-        md5_checksum="2dcccc29b88e6da5a01161ef20cda288",
-        url="https://zenodo.org/records/10519652/files/organamnist_64.npz?download=1",
-        path=DATASET_DIR / "organamnist_64.npz",
-        classes=_ORGAN_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=64,
-        is_anatomical=True,
-        is_texture_based=False,
-    ),
-    "tissuemnist": DatasetMetadata(
-        name="tissuemnist",
-        display_name="TissueMNIST",
-        md5_checksum="123ece2eba09d0aa5d698fda57103344",
-        url="https://zenodo.org/records/10519652/files/tissuemnist_64.npz?download=1",
-        path=DATASET_DIR / "tissuemnist_64.npz",
-        classes=_TISSUEMNIST_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=64,
-        is_anatomical=False,
-        is_texture_based=True,
-    ),
-    "organcmnist": DatasetMetadata(
-        name="organcmnist",
-        display_name="OrganCMNIST",
-        md5_checksum="3ce34a8724ea6f548e6db4744d03b6a9",
-        url="https://zenodo.org/records/10519652/files/organcmnist_64.npz?download=1",
-        path=DATASET_DIR / "organcmnist_64.npz",
-        classes=_ORGAN_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=64,
-        is_anatomical=True,
-        is_texture_based=False,
-    ),
-    "organsmnist": DatasetMetadata(
-        name="organsmnist",
-        display_name="OrganSMNIST",
-        md5_checksum="53a6d115339d874c25e309a994ff46d3",
-        url="https://zenodo.org/records/10519652/files/organsmnist_64.npz?download=1",
-        path=DATASET_DIR / "organsmnist_64.npz",
-        classes=_ORGAN_CLASSES,
-        mean=(0.5,),
-        std=(0.5,),
-        in_channels=1,
-        native_resolution=64,
-        is_anatomical=True,
-        is_texture_based=False,
-    ),
-}
+REGISTRY_28: Final[dict[str, DatasetMetadata]] = _ALL_REGISTRIES[28]
+REGISTRY_64: Final[dict[str, DatasetMetadata]] = _ALL_REGISTRIES[64]
+REGISTRY_128: Final[dict[str, DatasetMetadata]] = _ALL_REGISTRIES[128]
+REGISTRY_224: Final[dict[str, DatasetMetadata]] = _ALL_REGISTRIES[224]

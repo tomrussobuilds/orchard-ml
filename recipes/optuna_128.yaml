@@ -1,0 +1,193 @@
+# ==============================================================================
+# FILE: recipes/optuna_128.yaml
+# Hyperparameter Optimization at 128x128 with timm model search
+# ==============================================================================
+# Usage: orchard run recipes/optuna_128.yaml
+# Estimated Time: ~2-4h GPU (20 trials × 15 epochs, RTX 5070)
+# Memory Usage: ~2-3GB VRAM per trial with AMP
+#
+# OPTUNA SEARCH SPACE:
+#   OPTIMIZED PARAMETERS (ranges):
+#     - Learning rate: 1e-5 to 1e-2 (log scale)
+#     - Weight decay: 1e-6 to 1e-3 (log scale)
+#     - Momentum: 0.85 to 0.95
+#     - Batch size: [16, 32, 48, 64]
+#     - Dropout: 0.1 to 0.5
+#     - MixUp alpha: 0.0 to 0.4
+#     - Label smoothing: 0.0 to 0.2
+#     - Scheduler type: cosine, plateau, step
+#     - Augmentation: rotation (0-15°), jitter (0-0.2), scale (0.85-1.0)
+#     - Model architecture (enable_model_search: true):
+#         efficientnet_lite0, convnextv2_nano, mobilenetv3_large_100
+
+dataset:
+  name: "pathmnist"
+  data_root: ./dataset
+  resolution: 128
+  force_rgb: true
+  use_weighted_sampler: true
+  max_samples: null
+
+architecture:
+  name: "timm/efficientnet_lite0"
+  pretrained: true
+  dropout: 0.2
+
+training:
+  seed: 42
+
+  # Base values (WILL BE OPTIMIZED BY OPTUNA)
+  batch_size: 32
+  learning_rate: 0.0003
+  weight_decay: 1e-4
+  momentum: 0.9
+  min_lr: 1e-6
+
+  # Regularization (WILL BE OPTIMIZED)
+  mixup_alpha: 0.1
+  label_smoothing: 0.1
+
+  # Training loop
+  epochs: 60
+  patience: 15
+  grad_clip: 1.0
+  mixup_epochs: 60
+
+  # Scheduler (PARTIALLY OPTIMIZED)
+  monitor_metric: "auc"
+  scheduler_type: "cosine"
+  scheduler_patience: 5
+  scheduler_factor: 0.1
+  step_size: 20
+
+  # Performance
+  use_amp: true
+  use_tta: false
+  criterion_type: "cross_entropy"
+  weighted_loss: false
+
+augmentation:
+  hflip: 0.5
+  rotation_angle: 10
+  jitter_val: 0.1
+  min_scale: 0.9
+  tta_blur_kernel_size: 3
+
+hardware:
+  device: "auto"
+  reproducible: false
+
+telemetry:
+  output_dir: ./outputs
+  log_level: "INFO"
+  log_interval: 50
+
+evaluation:
+  n_samples: 16
+  fig_dpi: 200
+  cmap_confusion: Blues
+  plot_style: seaborn-v0_8-muted
+  grid_cols: 4
+  fig_size_predictions: [12, 8]
+  report_format: xlsx
+  save_confusion_matrix: true
+  save_predictions_grid: true
+
+optuna:
+  study_name: "pathmnist_128_timm_search"
+  n_trials: 20
+  epochs: 15
+  timeout: null
+
+  # Optimization target
+  direction: "maximize"
+
+  # Early stopping config
+  enable_early_stopping: true
+  early_stopping_threshold: 0.9999
+  early_stopping_patience: 2
+
+  # Search strategy
+  sampler_type: "tpe"
+  search_space_preset: "full"
+  enable_model_search: true
+  model_pool:
+    - "timm/efficientnet_lite0"
+    - "timm/convnextv2_nano.fcmae_ft_in1k"
+    - "timm/mobilenetv3_large_100"
+
+  # Pruning
+  enable_pruning: true
+  pruner_type: "median"
+  pruning_warmup_epochs: 5
+
+  # Storage
+  storage_type: "sqlite"
+  storage_path: null
+
+  # Execution
+  n_jobs: 1
+  load_if_exists: true
+  show_progress_bar: false
+
+  # Output
+  save_plots: true
+  save_best_config: true
+
+  search_space_overrides:
+    learning_rate:
+      low: 1.0e-05
+      high: 0.01
+      log: true
+    weight_decay:
+      low: 1.0e-06
+      high: 0.001
+      log: true
+    momentum:
+      low: 0.85
+      high: 0.95
+      log: false
+    min_lr:
+      low: 1.0e-07
+      high: 1.0e-05
+      log: true
+    mixup_alpha:
+      low: 0.0
+      high: 0.4
+      log: false
+    label_smoothing:
+      low: 0.0
+      high: 0.2
+      log: false
+    dropout:
+      low: 0.1
+      high: 0.5
+      log: false
+    scheduler_patience:
+      low: 3
+      high: 10
+    rotation_angle:
+      low: 0
+      high: 15
+    jitter_val:
+      low: 0.0
+      high: 0.2
+      log: false
+    min_scale:
+      low: 0.85
+      high: 1.0
+      log: false
+    batch_size_low_res:
+      - 16
+      - 32
+      - 48
+      - 64
+
+tracking:
+  enabled: true
+  experiment_name: "orchard-ml"
+
+export:
+  format: onnx
+  opset_version: 18
+  validate_export: true

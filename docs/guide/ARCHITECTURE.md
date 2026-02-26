@@ -43,7 +43,7 @@ Use `model_pool` in Optuna recipes to compare architectures and weight sources a
 
 <h3>Weight Morphing</h3>
 
-Pretrained weights assume RGB input (3 channels) at 224x224 resolution. When the target domain differs — grayscale medical images (1 channel) or lower resolution (28x28, 64x64) — the weights must be **adapted** rather than discarded:
+Pretrained weights assume RGB input (3 channels) at 224x224 resolution. When the target domain differs — grayscale medical images (1 channel) or lower resolution (28x28, 64x64, 128x128) — the weights must be **adapted** rather than discarded:
 
 - **Channel averaging**: compresses 3-channel filters into 1-channel by averaging across the RGB dimension, preserving the learned spatial patterns
 - **Spatial interpolation** (ResNet-18 ≤32×32 only): resizes 7x7 kernel weights to 3x3 via bicubic interpolation to match the smaller stem
@@ -52,7 +52,7 @@ The exact transformations and tensor dimensions are documented under each model 
 
 ---
 
-<h2>ResNet-18 (Multi-Resolution: 28x28 / 32x32 / 64x64 / 224x224)</h2>
+<h2>ResNet-18 (Multi-Resolution: 28x28 / 32x32 / 64x64 / 128x128 / 224x224)</h2>
 
 Adaptive ResNet-18 that automatically selects the appropriate stem configuration based on `cfg.dataset.resolution`.
 
@@ -82,13 +82,14 @@ W_{\text{gray}} = \frac{1}{3} \sum_{c=1}^{3} W[:, c, :, :]
 
 This two-step process (channel compress + spatial resize) preserves learned edge detectors while adapting to both single-channel input and smaller kernel geometry.
 
-<h3>64x64 / 224x224 Mode (Standard Stem)</h3>
+<h3>64x64 / 128x128 / 224x224 Mode (Standard Stem)</h3>
 
-At 64x64 and 224x224, ResNet-18 uses the standard architecture with no structural modifications. The standard stem (7x7 conv stride-2 + MaxPool) produces valid spatial maps at both resolutions:
+At 64x64, 128x128, and 224x224, ResNet-18 uses the standard architecture with no structural modifications. The standard stem (7x7 conv stride-2 + MaxPool) produces valid spatial maps at all three resolutions:
 
 | Resolution | Spatial progression | Final feature map |
 |-----------|-------------------|------------------|
 | **64x64** | 64→32→16→8→4→2→1 | 1x1 (via AdaptiveAvgPool) |
+| **128x128** | 128→64→32→16→8→4→1 | 1x1 (via AdaptiveAvgPool) |
 | **224x224** | 224→112→56→28→14→7→1 | 1x1 (via AdaptiveAvgPool) |
 
 | Layer | Specification | Notes |
@@ -96,7 +97,7 @@ At 64x64 and 224x224, ResNet-18 uses the standard architecture with no structura
 | **Input Conv** | 7x7, stride=2, pad=3 | Standard ImageNet configuration |
 | **Max Pooling** | 3x3, stride=2 | Full downsampling pipeline |
 
-**Weight Transfer (64x64 / 224x224):**
+**Weight Transfer (64x64 / 128x128 / 224x224):**
 
 No spatial interpolation is needed. For grayscale inputs, the pretrained RGB weights are compressed via channel averaging:
 

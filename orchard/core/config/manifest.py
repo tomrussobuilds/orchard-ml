@@ -19,7 +19,7 @@ Layout:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -41,6 +41,10 @@ from .training_config import TrainingConfig
 _MODELS_LOW_RES = frozenset({"mini_cnn"})
 _MODELS_224_ONLY = frozenset({"efficientnet_b0", "vit_tiny", "convnext_tiny"})
 _MODELS_MULTI_RES = frozenset({"resnet_18"})
+
+# Resolution constraints derived from SUPPORTED_RESOLUTIONS
+_RESOLUTIONS_LOW_RES: Final[frozenset[int]] = frozenset({28, 32, 64})
+_RESOLUTIONS_224_ONLY: Final[frozenset[int]] = frozenset({224})
 
 
 # MAIN CONFIGURATION
@@ -266,9 +270,9 @@ class _CrossDomainValidator:
 
         Enforces that each built-in model is used with its supported resolution(s):
 
-        - Low-resolution (28, 64): mini_cnn
+        - Low-resolution (28, 32, 64): mini_cnn
         - 224x224 only: efficientnet_b0, vit_tiny, convnext_tiny
-        - Multi-resolution (28, 64, 224): resnet_18
+        - Multi-resolution (all supported): resnet_18
 
         timm models (prefixed with ``timm/``) bypass this check as they
         support variable resolutions managed by the user.
@@ -284,14 +288,15 @@ class _CrossDomainValidator:
 
         resolution = config.dataset.resolution
 
-        if model_name in _MODELS_LOW_RES and resolution not in (28, 32, 64):
+        if model_name in _MODELS_LOW_RES and resolution not in _RESOLUTIONS_LOW_RES:
             raise ValueError(
-                f"'{config.architecture.name}' requires resolution 28, 32, or 64, "
-                f"got {resolution}. Use a 224x224 architecture "
+                f"'{config.architecture.name}' requires resolution "
+                f"{sorted(_RESOLUTIONS_LOW_RES)}, got {resolution}. "
+                f"Use a 224x224 architecture "
                 f"(efficientnet_b0, vit_tiny, convnext_tiny) or resnet_18."
             )
 
-        if model_name in _MODELS_224_ONLY and resolution != 224:
+        if model_name in _MODELS_224_ONLY and resolution not in _RESOLUTIONS_224_ONLY:
             raise ValueError(
                 f"'{config.architecture.name}' requires resolution=224, got {resolution}. "
                 f"Use resnet_18 or mini_cnn for low resolution."

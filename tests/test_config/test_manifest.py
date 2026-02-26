@@ -87,7 +87,7 @@ def test_mini_cnn_rejects_224():
     """mini_cnn only supports 28x28 and 64x64 resolutions."""
     with pytest.raises(
         ValidationError,
-        match="'mini_cnn' requires resolution 28, 32, or 64",
+        match=r"'mini_cnn' requires resolution \[28, 32, 64\]",
     ):
         Config(
             dataset=DatasetConfig(name="bloodmnist", resolution=224, force_rgb=True),
@@ -123,10 +123,10 @@ def test_resnet_18_accepts_32():
 
 @pytest.mark.unit
 def test_resnet_18_rejects_invalid_resolution():
-    """resnet_18 only supports 28, 32, 64, or 224, not arbitrary resolutions."""
+    """resnet_18 only supports SUPPORTED_RESOLUTIONS, not arbitrary resolutions."""
     with pytest.raises(
         ValidationError,
-        match=r"'resnet_18' supports resolutions \[28, 32, 64, 224\]",
+        match=r"'resnet_18' supports resolutions \[28, 32, 64, 128, 224\]",
     ):
         Config(
             dataset=DatasetConfig(name="bloodmnist", resolution=112),

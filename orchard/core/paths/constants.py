@@ -22,7 +22,7 @@ from typing import Final
 
 # GLOBAL CONSTANTS
 # Supported image resolutions across all model architectures
-SUPPORTED_RESOLUTIONS: Final[frozenset[int]] = frozenset({28, 32, 64, 224})
+SUPPORTED_RESOLUTIONS: Final[frozenset[int]] = frozenset({28, 32, 64, 128, 224})
 
 # Canonical metric key strings used across training, evaluation, and optimization
 METRIC_ACCURACY: Final[str] = "accuracy"

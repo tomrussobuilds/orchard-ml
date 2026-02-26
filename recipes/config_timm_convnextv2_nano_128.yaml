@@ -1,0 +1,90 @@
+# ==============================================================================
+# FILE: recipes/config_timm_convnextv2_nano_128.yaml
+# ConvNeXt V2 Nano via timm (128x128, modern architecture)
+# ==============================================================================
+# Usage: orchard run recipes/config_timm_convnextv2_nano_128.yaml
+# Estimated Time: ~15 min GPU / ~120 min CPU (60 epochs, RTX 5070)
+# Memory Usage: ~3GB VRAM
+# Architecture: ConvNeXt V2 Nano (~15.6M parameters, FCMAE pretrained)
+
+dataset:
+  name: "bloodmnist"
+  data_root: ./dataset
+  resolution: 128
+  force_rgb: true
+  use_weighted_sampler: true
+  max_samples: null
+
+architecture:
+  name: "timm/convnextv2_nano.fcmae_ft_in1k"
+  pretrained: true
+  dropout: 0.2
+
+training:
+  seed: 42
+
+  # Optimization (lower LR for larger pretrained model)
+  batch_size: 32
+  learning_rate: 0.0002
+  weight_decay: 5e-4
+  momentum: 0.9
+  min_lr: 1e-7
+
+  # Regularization
+  mixup_alpha: 0.2
+  label_smoothing: 0.1
+
+  # Training loop
+  epochs: 60
+  patience: 15
+  grad_clip: 1.0
+  mixup_epochs: 0
+
+  # Scheduler
+  monitor_metric: "auc"
+  scheduler_type: "cosine"
+  scheduler_patience: 5
+  scheduler_factor: 0.1
+  step_size: 20
+
+  # Performance
+  use_amp: true
+  use_tta: false
+  criterion_type: "cross_entropy"
+  weighted_loss: false
+
+augmentation:
+  hflip: 0.5
+  rotation_angle: 15
+  jitter_val: 0.2
+  min_scale: 0.85
+  tta_blur_kernel_size: 3
+
+hardware:
+  device: "auto"
+  reproducible: false
+
+telemetry:
+  output_dir: ./outputs
+  log_level: "INFO"
+  log_interval: 50
+
+evaluation:
+  n_samples: 16
+  fig_dpi: 200
+  cmap_confusion: Blues
+  plot_style: seaborn-v0_8-muted
+  grid_cols: 4
+  fig_size_predictions: [12, 8]
+  report_format: xlsx
+  save_confusion_matrix: true
+  save_predictions_grid: true
+
+tracking:
+  enabled: true
+  experiment_name: "orchard-ml"
+
+export:
+  format: onnx
+  opset_version: 18
+  validate_export: true

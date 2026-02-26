@@ -1,0 +1,330 @@
+# MedMNIST v2 Collection — Medical Imaging Dataset Registry
+#
+# Single source of truth for all medical dataset metadata across resolutions.
+# Each dataset defines shared properties once; per-resolution entries only
+# specify md5 checksum and download URL.
+#
+# Sources:
+#   28×28  → https://zenodo.org/records/5208230
+#   64–224 → https://zenodo.org/records/10519652
+
+datasets:
+  pathmnist:
+    display_name: PathMNIST
+    classes:
+      - adipose
+      - background
+      - debris
+      - lymphocytes
+      - mucus
+      - smooth muscle
+      - normal colon mucosa
+      - cancer-associated stroma
+      - colorectal adenocarcinoma epithelium
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+    in_channels: 3
+    is_anatomical: false
+    is_texture_based: true
+    resolutions:
+      28:
+        md5: a8b06965200029087d5bd730944a56c1
+        url: https://zenodo.org/records/5208230/files/pathmnist.npz
+      64:
+        md5: 55aa9c1e0525abe5a6b9d8343a507616
+        url: https://zenodo.org/records/10519652/files/pathmnist_64.npz?download=1
+      128:
+        md5: ac42d08fb904d92c244187169d1fd1d9
+        url: https://zenodo.org/records/10519652/files/pathmnist_128.npz?download=1
+      224:
+        md5: 2c51a510bcdc9cf8ddb2af93af1eadec
+        url: https://zenodo.org/records/10519652/files/pathmnist_224.npz?download=1
+
+  bloodmnist:
+    display_name: BloodMNIST
+    classes:
+      - basophil
+      - eosinophil
+      - erythroblast
+      - immature granulocyte
+      - lymphocyte
+      - monocyte
+      - neutrophil
+      - platelet
+    mean: [0.4914, 0.4822, 0.4465]
+    std: [0.2023, 0.1994, 0.2010]
+    in_channels: 3
+    is_anatomical: false
+    is_texture_based: false
+    resolutions:
+      28:
+        md5: 7053d0359d879ad8a5505303e11de1dc
+        url: https://zenodo.org/records/5208230/files/bloodmnist.npz
+      64:
+        md5: 2b94928a2ae4916078ca51e05b6b800b
+        url: https://zenodo.org/records/10519652/files/bloodmnist_64.npz?download=1
+      128:
+        md5: adace1e0ed228fccda1f39692059dd4c
+        url: https://zenodo.org/records/10519652/files/bloodmnist_128.npz?download=1
+      224:
+        md5: b718ff6835fcbdb22ba9eacccd7b2601
+        url: https://zenodo.org/records/10519652/files/bloodmnist_224.npz?download=1
+
+  dermamnist:
+    display_name: DermaMNIST
+    classes:
+      - actinic keratoses
+      - basal cell carcinoma
+      - benign keratosis
+      - dermatofibroma
+      - melanocytic nevi
+      - melanoma
+      - vascular lesions
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+    in_channels: 3
+    is_anatomical: false
+    is_texture_based: true
+    resolutions:
+      28:
+        md5: 0744692d530f8e62ec473284d019b0c7
+        url: https://zenodo.org/records/5208230/files/dermamnist.npz
+      64:
+        md5: b70a2f5635c6199aeaa28c31d7202e1f
+        url: https://zenodo.org/records/10519652/files/dermamnist_64.npz?download=1
+      128:
+        md5: 2defd784463fa5243564e855ed717de1
+        url: https://zenodo.org/records/10519652/files/dermamnist_128.npz?download=1
+      224:
+        md5: 8974907d8e169bef5f5b96bc506ae45d
+        url: https://zenodo.org/records/10519652/files/dermamnist_224.npz?download=1
+
+  octmnist:
+    display_name: OCTMNIST
+    classes:
+      - choroidal neovascularization
+      - diabetic macular edema
+      - drusen
+      - normal
+    mean: [0.5]
+    std: [0.5]
+    in_channels: 1
+    is_anatomical: true
+    is_texture_based: true
+    resolutions:
+      28:
+        md5: c68d92d5b585d8d81f7112f81e2d0842
+        url: https://zenodo.org/records/5208230/files/octmnist.npz
+      64:
+        md5: e229e9440236b774d9f0dfef9d07bdaf
+        url: https://zenodo.org/records/10519652/files/octmnist_64.npz?download=1
+      128:
+        md5: 0a97e76651ace45c5d943ee3f65b63ae
+        url: https://zenodo.org/records/10519652/files/octmnist_128.npz?download=1
+      224:
+        md5: abc493b6d529d5de7569faaef2773ba3
+        url: https://zenodo.org/records/10519652/files/octmnist_224.npz?download=1
+
+  pneumoniamnist:
+    display_name: PneumoniaMNIST
+    classes:
+      - normal
+      - pneumonia
+    mean: [0.5]
+    std: [0.5]
+    in_channels: 1
+    is_anatomical: true
+    is_texture_based: false
+    resolutions:
+      28:
+        md5: 28209eda62fecd6e6a2d98b1501bb15f
+        url: https://zenodo.org/records/5208230/files/pneumoniamnist.npz
+      64:
+        md5: 8f4eceb4ccffa70c672198ea285246c6
+        url: https://zenodo.org/records/10519652/files/pneumoniamnist_64.npz?download=1
+      128:
+        md5: 05b46931834c231683c68f40c47b2971
+        url: https://zenodo.org/records/10519652/files/pneumoniamnist_128.npz?download=1
+      224:
+        md5: d6a3c71de1b945ea11211b03746c1fe1
+        url: https://zenodo.org/records/10519652/files/pneumoniamnist_224.npz?download=1
+
+  retinamnist:
+    display_name: RetinaMNIST
+    classes:
+      - No DR
+      - Mild DR
+      - Moderate DR
+      - Severe DR
+      - Proliferative DR
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+    in_channels: 3
+    is_anatomical: false
+    is_texture_based: true
+    resolutions:
+      28:
+        md5: bd4c0672f1bba3e3a89f0e4e876791e4
+        url: https://zenodo.org/records/5208230/files/retinamnist.npz
+      64:
+        md5: afda852cc34dcda56f86ad2b2457dbcc
+        url: https://zenodo.org/records/10519652/files/retinamnist_64.npz?download=1
+      128:
+        md5: e48e916a24454daf90583d4e6efb1a18
+        url: https://zenodo.org/records/10519652/files/retinamnist_128.npz?download=1
+      224:
+        md5: eae7e3b6f3fcbda4ae613ebdcbe35348
+        url: https://zenodo.org/records/10519652/files/retinamnist_224.npz?download=1
+
+  breastmnist:
+    display_name: BreastMNIST
+    classes:
+      - malignant
+      - benign
+    mean: [0.5]
+    std: [0.5]
+    in_channels: 1
+    is_anatomical: true
+    is_texture_based: false
+    resolutions:
+      28:
+        md5: 750601b1f35ba3300ea97c75c52ff8f6
+        url: https://zenodo.org/records/5208230/files/breastmnist.npz
+      64:
+        md5: 742edef2a1fd1524b2efff4bd7ba9364
+        url: https://zenodo.org/records/10519652/files/breastmnist_64.npz?download=1
+      128:
+        md5: 363e4b3f8d712e9b5de15470a2aaadf1
+        url: https://zenodo.org/records/10519652/files/breastmnist_128.npz?download=1
+      224:
+        md5: b56378a6eefa9fed602bb16d192d4c8b
+        url: https://zenodo.org/records/10519652/files/breastmnist_224.npz?download=1
+
+  organamnist:
+    display_name: OrganAMNIST
+    classes:
+      - bladder
+      - femur-left
+      - femur-right
+      - heart
+      - kidney-left
+      - kidney-right
+      - liver
+      - lung-left
+      - lung-right
+      - pancreas
+      - spleen
+    mean: [0.5]
+    std: [0.5]
+    in_channels: 1
+    is_anatomical: true
+    is_texture_based: false
+    resolutions:
+      28:
+        md5: 866b832ed4eeba67bfb9edee1d5544e6
+        url: https://zenodo.org/records/5208230/files/organamnist.npz
+      64:
+        md5: 2dcccc29b88e6da5a01161ef20cda288
+        url: https://zenodo.org/records/10519652/files/organamnist_64.npz?download=1
+      128:
+        md5: eeae80d0a227a8d099027e1b3cfd3b60
+        url: https://zenodo.org/records/10519652/files/organamnist_128.npz?download=1
+      224:
+        md5: 50747347e05c87dd3aaf92c49f9f3170
+        url: https://zenodo.org/records/10519652/files/organamnist_224.npz?download=1
+
+  tissuemnist:
+    display_name: TissueMNIST
+    classes:
+      - Collecting Duct
+      - Distal Tubule
+      - Glomerulus
+      - Medulla
+      - Proximal Tubule
+      - Capsule
+      - Large Vessel
+      - Small Vessel
+    mean: [0.5]
+    std: [0.5]
+    in_channels: 1
+    is_anatomical: false
+    is_texture_based: true
+    resolutions:
+      28:
+        md5: ebe78ee8b05294063de985d821c1c34b
+        url: https://zenodo.org/records/5208230/files/tissuemnist.npz
+      64:
+        md5: 123ece2eba09d0aa5d698fda57103344
+        url: https://zenodo.org/records/10519652/files/tissuemnist_64.npz?download=1
+      128:
+        md5: 61b955355d7425a89687b06cca3ce0c2
+        url: https://zenodo.org/records/10519652/files/tissuemnist_128.npz?download=1
+      224:
+        md5: b077128c4a949f0a4eb01517f9037b9c
+        url: https://zenodo.org/records/10519652/files/tissuemnist_224.npz?download=1
+
+  organcmnist:
+    display_name: OrganCMNIST
+    classes:
+      - bladder
+      - femur-left
+      - femur-right
+      - heart
+      - kidney-left
+      - kidney-right
+      - liver
+      - lung-left
+      - lung-right
+      - pancreas
+      - spleen
+    mean: [0.5]
+    std: [0.5]
+    in_channels: 1
+    is_anatomical: true
+    is_texture_based: false
+    resolutions:
+      28:
+        md5: 0afa5834fb105f7705a7d93372119a21
+        url: https://zenodo.org/records/5208230/files/organcmnist.npz
+      64:
+        md5: 3ce34a8724ea6f548e6db4744d03b6a9
+        url: https://zenodo.org/records/10519652/files/organcmnist_64.npz?download=1
+      128:
+        md5: 773c1f009daa3fe5d9a2a201b2a7ed94
+        url: https://zenodo.org/records/10519652/files/organcmnist_128.npz?download=1
+      224:
+        md5: 050f5e875dc056f6768abf94ec9995d1
+        url: https://zenodo.org/records/10519652/files/organcmnist_224.npz?download=1
+
+  organsmnist:
+    display_name: OrganSMNIST
+    classes:
+      - bladder
+      - femur-left
+      - femur-right
+      - heart
+      - kidney-left
+      - kidney-right
+      - liver
+      - lung-left
+      - lung-right
+      - pancreas
+      - spleen
+    mean: [0.5]
+    std: [0.5]
+    in_channels: 1
+    is_anatomical: true
+    is_texture_based: false
+    resolutions:
+      28:
+        md5: e5c39f1af030238290b9557d9503af9d
+        url: https://zenodo.org/records/5208230/files/organsmnist.npz
+      64:
+        md5: 53a6d115339d874c25e309a994ff46d3
+        url: https://zenodo.org/records/10519652/files/organsmnist_64.npz?download=1
+      128:
+        md5: ded0c5fa01a95dc4978b956f613e9b8e
+        url: https://zenodo.org/records/10519652/files/organsmnist_128.npz?download=1
+      224:
+        md5: b354719e553fbbb2513d5533f52a4cb1
+        url: https://zenodo.org/records/10519652/files/organsmnist_224.npz?download=1

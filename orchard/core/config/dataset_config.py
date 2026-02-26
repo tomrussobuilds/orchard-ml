@@ -3,7 +3,7 @@ Dataset Registry Orchestration & Metadata Resolution.
 
 Bridges static dataset metadata with runtime execution requirements. Normalizes
 datasets regardless of native format (Grayscale/RGB) to meet model architecture
-input specifications. Supports multi-resolution (28x28, 224x224) with proper
+input specifications. Supports multi-resolution (28x28 through 224x224) with proper
 YAML override while maintaining frozen immutability.
 
 Key Responsibilities:
@@ -42,7 +42,7 @@ class DatasetConfig(BaseModel):
         val_ratio: Fraction of max_samples for val/test splits (default 0.10).
         img_size: Target square resolution for model input (auto-synced).
         force_rgb: Convert grayscale to RGB for pretrained ImageNet weights.
-        resolution: Target resolution variant (28 or 224).
+        resolution: Target resolution variant (28, 32, 64, 128, or 224).
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid", arbitrary_types_allowed=True)
