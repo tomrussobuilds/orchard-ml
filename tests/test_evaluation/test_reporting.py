@@ -42,6 +42,7 @@ def sample_report_data():
         "dataset": "PathMNIST",
         "best_val_accuracy": 0.95,
         "best_val_auc": 0.98,
+        "best_val_f1": 0.94,
         "test_accuracy": 0.94,
         "test_auc": 0.97,
         "test_macro_f1": 0.93,
@@ -111,7 +112,10 @@ def test_report_save_failure(mock_mkdir, mock_logger, sample_report_data):
 @pytest.mark.unit
 def test_create_structured_report(mock_config):
     """Test the factory function that aggregates metrics into a TrainingReport."""
-    val_metrics = [{"accuracy": 0.8, "auc": 0.85}, {"accuracy": 0.9, "auc": 0.92}]
+    val_metrics = [
+        {"accuracy": 0.8, "auc": 0.85, "f1": 0.78},
+        {"accuracy": 0.9, "auc": 0.92, "f1": 0.89},
+    ]
     test_metrics = {"accuracy": 0.88, "auc": 0.91}
     train_losses = [0.5, 0.4, 0.3]
 
@@ -227,6 +231,53 @@ def test_create_structured_report_handles_empty_val_metrics(mock_config):
         aug_info="N/A",
     )
     assert isinstance(report, TrainingReport)
+
+
+@pytest.mark.unit
+def test_create_structured_report_filters_nan_auc(mock_config):
+    """Test best_val_auc filters NaN values, picks valid max."""
+    val_metrics = [
+        {"accuracy": 0.8, "auc": float("nan"), "f1": 0.78},
+        {"accuracy": 0.9, "auc": 0.92, "f1": 0.89},
+        {"accuracy": 0.85, "auc": float("nan"), "f1": 0.82},
+    ]
+    test_metrics = {"accuracy": 0.88, "auc": 0.91}
+
+    report = create_structured_report(
+        val_metrics=val_metrics,
+        test_metrics=test_metrics,
+        macro_f1=0.87,
+        train_losses=[0.5, 0.4, 0.3],
+        best_path=Path("/models/best.pth"),
+        log_path=Path("/logs/run.log"),
+        cfg=mock_config,
+        aug_info="N/A",
+    )
+
+    assert report.best_val_auc == pytest.approx(0.92)
+
+
+@pytest.mark.unit
+def test_create_structured_report_all_nan_auc(mock_config):
+    """Test best_val_auc defaults to 0.0 when all AUC values are NaN."""
+    val_metrics = [
+        {"accuracy": 0.8, "auc": float("nan"), "f1": 0.78},
+        {"accuracy": 0.9, "auc": float("nan"), "f1": 0.89},
+    ]
+    test_metrics = {"accuracy": 0.88, "auc": 0.91}
+
+    report = create_structured_report(
+        val_metrics=val_metrics,
+        test_metrics=test_metrics,
+        macro_f1=0.87,
+        train_losses=[0.5, 0.4],
+        best_path=Path("/models/best.pth"),
+        log_path=Path("/logs/run.log"),
+        cfg=mock_config,
+        aug_info="N/A",
+    )
+
+    assert report.best_val_auc == pytest.approx(0.0)
 
 
 # ENTRY POINT

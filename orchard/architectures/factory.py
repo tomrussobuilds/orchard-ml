@@ -138,11 +138,6 @@ def get_model(device: torch.device, cfg: Config, verbose: bool = True) -> nn.Mod
         logger.setLevel(logging.WARNING)
     try:
         with _suppress_download_noise():
-            if verbose and cfg.architecture.pretrained:
-                logger.info(
-                    f"Downloading pretrained weights for {cfg.architecture.name} "
-                    f"(cached after first run)..."
-                )
             model = builder(
                 device=device, cfg=cfg, in_channels=in_channels, num_classes=num_classes
             )

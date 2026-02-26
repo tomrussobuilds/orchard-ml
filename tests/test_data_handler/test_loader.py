@@ -30,6 +30,7 @@ def mock_cfg():
     cfg.dataset.dataset_name = "mock_dataset"
     cfg.dataset.use_weighted_sampler = True
     cfg.dataset.max_samples = 10
+    cfg.dataset.num_classes = 2
     cfg.dataset.resolution = 28
     cfg.training.batch_size = 2
     cfg.num_workers = 0
@@ -355,8 +356,24 @@ def test_get_dataloaders_with_optuna_mode(mock_cfg, mock_metadata):
 
 
 @pytest.mark.unit
-def test_balancing_sampler_zero_count_guard(mock_cfg, mock_metadata):
-    """Test _get_balancing_sampler warns when a class has 0 samples."""
+def test_balancing_sampler_missing_class_raises(mock_cfg, mock_metadata):
+    """Test _get_balancing_sampler raises ValueError when classes are missing."""
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
+        factory = DataLoaderFactory(mock_cfg, mock_metadata)
+
+        dataset = MagicMock()
+        dataset.labels = np.array([0, 1, 0, 1])  # only 2 of 3 classes
+        mock_cfg.dataset.num_classes = 3
+
+        with pytest.raises(ValueError, match="missing 1 of 3 classes"):
+            factory._get_balancing_sampler(dataset)
+
+
+@pytest.mark.unit
+def test_balancing_sampler_all_classes_present(mock_cfg, mock_metadata):
+    """Test _get_balancing_sampler succeeds when all classes are represented."""
     mock_ds_meta = MagicMock(in_channels=1)
 
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
@@ -364,13 +381,10 @@ def test_balancing_sampler_zero_count_guard(mock_cfg, mock_metadata):
 
         dataset = MagicMock()
         dataset.labels = np.array([0, 1, 0, 1])
+        mock_cfg.dataset.num_classes = 2
 
-        # Patch np.unique to return a zero count for class 2
-        with patch("orchard.data_handler.loader.np.unique") as mock_unique:
-            mock_unique.return_value = (np.array([0, 1, 2]), np.array([2, 2, 0]))
-            sampler = factory._get_balancing_sampler(dataset)
-
-            assert sampler is not None
+        sampler = factory._get_balancing_sampler(dataset)
+        assert sampler is not None
 
 
 # MAIN TEST RUNNER

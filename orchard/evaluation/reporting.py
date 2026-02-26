@@ -10,6 +10,7 @@ professionally formatted Excel summaries.
 from __future__ import annotations
 
 import logging
+import math
 from datetime import datetime
 from pathlib import Path
 from typing import Sequence
@@ -18,7 +19,7 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..core import LOGGER_NAME, Config, LogStyle
-from ..core.paths import METRIC_ACCURACY, METRIC_AUC
+from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1
 from ..data_handler import get_augmentations_description
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -38,6 +39,7 @@ class TrainingReport(BaseModel):
         model (str): Identifier of the architecture used.
         dataset (str): Name of the dataset.
         best_val_accuracy (float): Peak accuracy achieved on validation set.
+        best_val_f1 (float): Peak macro-averaged F1 on validation set.
         test_accuracy (float): Final accuracy on the unseen test set.
         test_macro_f1 (float): Macro-averaged F1 score (key for imbalanced data).
         is_texture_based (bool): Whether texture-preserving logic was applied.
@@ -64,6 +66,7 @@ class TrainingReport(BaseModel):
     # Core Metrics
     best_val_accuracy: float
     best_val_auc: float
+    best_val_f1: float
     test_accuracy: float
     test_auc: float
     test_macro_f1: float
@@ -214,14 +217,21 @@ def create_structured_report(
     # Auto-generate augmentation info if not provided
     aug_info = aug_info or get_augmentations_description(cfg)
 
-    best_val_acc = max((m[METRIC_ACCURACY] for m in val_metrics), default=0.0)
-    best_val_auc = max((m[METRIC_AUC] for m in val_metrics), default=0.0)
+    def _safe_max(key: str) -> float:
+        """Return the best non-NaN value for *key* across validation epochs."""
+        values = [m[key] for m in val_metrics if not math.isnan(m[key])]
+        return max(values, default=0.0)
+
+    best_val_acc = _safe_max(METRIC_ACCURACY)
+    best_val_auc = _safe_max(METRIC_AUC)
+    best_val_f1 = _safe_max(METRIC_F1)
 
     return TrainingReport(
         architecture=cfg.architecture.name,
         dataset=cfg.dataset.dataset_name,
         best_val_accuracy=best_val_acc,
         best_val_auc=best_val_auc,
+        best_val_f1=best_val_f1,
         test_accuracy=test_metrics[METRIC_ACCURACY],
         test_auc=test_metrics[METRIC_AUC],
         test_macro_f1=macro_f1,

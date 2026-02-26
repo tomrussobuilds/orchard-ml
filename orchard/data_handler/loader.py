@@ -106,15 +106,18 @@ class DataLoaderFactory:
         labels = dataset.labels.flatten()
         classes, counts = np.unique(labels, return_counts=True)
 
-        # Inverse frequency balancing: weight = 1 / frequency
-        # Guard against zero-count classes (possible with aggressive max_samples)
-        safe_counts = np.maximum(counts, 1)
-        if np.any(counts == 0):
-            self.logger.warning(
-                "Some classes have 0 samples in the training set. "
-                "Their sampling weight has been set to 1.0."
+        # Guard: aggressive max_samples can eliminate entire classes
+        expected_classes = self.cfg.dataset.num_classes
+        if len(classes) < expected_classes:
+            missing = sorted(set(range(expected_classes)) - set(classes))
+            raise ValueError(
+                f"Training set is missing {len(missing)} of {expected_classes} classes "
+                f"{missing} after subsampling (max_samples={self.cfg.dataset.max_samples}). "
+                f"Increase max_samples or disable use_weighted_sampler."
             )
-        class_weights = 1.0 / safe_counts
+
+        # Inverse frequency balancing: weight = 1 / frequency
+        class_weights = 1.0 / counts
         weight_map: dict[int, float] = dict(zip(classes, class_weights))
 
         sample_weights = torch.tensor(

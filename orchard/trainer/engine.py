@@ -47,14 +47,15 @@ def compute_auc(y_true: np.ndarray, y_score: np.ndarray) -> float:
     Compute macro-averaged ROC-AUC with graceful fallback.
 
     Handles binary (positive class probability) and multiclass (OvR)
-    cases. Returns 0.0 on failure or NaN.
+    cases. Returns ``NaN`` on failure so callers can distinguish
+    "computation impossible" from "genuinely zero AUC".
 
     Args:
         y_true: Ground truth class indices, shape ``(N,)``.
         y_score: Probability distributions, shape ``(N, C)`` (softmax output).
 
     Returns:
-        ROC-AUC score, or 0.0 if computation fails.
+        ROC-AUC score, or ``NaN`` if computation fails.
     """
     try:
         n_classes = y_score.shape[1] if y_score.ndim == 2 else 1
@@ -63,11 +64,11 @@ def compute_auc(y_true: np.ndarray, y_score: np.ndarray) -> float:
         else:
             auc = roc_auc_score(y_true, y_score, multi_class="ovr", average="macro")
     except (ValueError, TypeError, IndexError) as e:
-        logger.warning(f"ROC-AUC calculation failed: {e}. Defaulting to 0.0")
-        return 0.0
+        logger.warning(f"ROC-AUC calculation failed: {e}. Returning NaN.")
+        return float("nan")
 
     if np.isnan(auc):
-        return 0.0
+        return float("nan")
     return float(auc)
 
 

@@ -8,6 +8,7 @@ graceful handling of edge cases such as single-class labels.
 
 from __future__ import annotations
 
+import math
 from unittest.mock import patch
 
 import numpy as np
@@ -67,17 +68,17 @@ class TestClassificationMetrics:
 
     @pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
     def test_auc_fallback_single_class(self):
-        """AUC defaults to 0.0 when all labels are the same class."""
+        """AUC returns NaN when all labels are the same class."""
         labels = np.array([0, 0, 0, 0])
         preds = np.array([0, 0, 0, 0])
         probs = np.array([[0.9, 0.1], [0.8, 0.2], [0.7, 0.3], [0.6, 0.4]])
 
         results = compute_classification_metrics(labels, preds, probs)
 
-        assert results["auc"] == 0.0
+        assert math.isnan(results["auc"])
 
     def test_auc_fallback_value_error(self):
-        """AUC defaults to 0.0 when roc_auc_score raises ValueError."""
+        """AUC returns NaN when roc_auc_score raises ValueError."""
         labels = np.array([0, 1])
         preds = np.array([0, 1])
         probs = np.array([[0.8, 0.2], [0.2, 0.8]])
@@ -88,7 +89,7 @@ class TestClassificationMetrics:
         ):
             results = compute_classification_metrics(labels, preds, probs)
 
-        assert results["auc"] == 0.0
+        assert math.isnan(results["auc"])
 
     def test_return_types(self):
         """Ensure the returned dictionary contains standard Python floats (not NumPy types)."""

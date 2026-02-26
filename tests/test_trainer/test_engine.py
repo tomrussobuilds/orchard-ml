@@ -6,6 +6,7 @@ Quick tests to cover core training/validation functions and eliminate codecov wa
 
 from __future__ import annotations
 
+import math
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -335,7 +336,7 @@ def test_validate_epoch_auc_error_handling(simple_model, criterion):
         device=device,
     )
 
-    assert metrics["auc"] >= 0.0
+    assert math.isnan(metrics["auc"])
 
 
 # TESTS: MIXUP DATA

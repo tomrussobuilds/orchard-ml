@@ -774,5 +774,105 @@ def test_reporter_log_export_section_absent():
     mock_logger.info.assert_not_called()
 
 
+# _format_param_value
+@pytest.mark.unit
+def test_format_param_value_small_float():
+    """Small floats (<0.001) use scientific notation."""
+    from orchard.core.logger.progress import _format_param_value
+
+    result = _format_param_value(0.0001)
+    assert "e-" in result or "E-" in result
+
+
+@pytest.mark.unit
+def test_format_param_value_regular_float():
+    """Regular floats (>=0.001) use 4-decimal notation."""
+    from orchard.core.logger.progress import _format_param_value
+
+    assert _format_param_value(0.5) == "0.5000"
+
+
+@pytest.mark.unit
+def test_format_param_value_integer():
+    """Non-float values pass through str()."""
+    from orchard.core.logger.progress import _format_param_value
+
+    assert _format_param_value(42) == "42"
+
+
+@pytest.mark.unit
+def test_format_param_value_zero():
+    """Zero is < 0.001, uses scientific notation."""
+    from orchard.core.logger.progress import _format_param_value
+
+    assert _format_param_value(0.0) == "0.00e+00"
+
+
+@pytest.mark.unit
+def test_format_param_value_boundary():
+    """Exactly 0.001 is NOT < 0.001, uses decimal notation."""
+    from orchard.core.logger.progress import _format_param_value
+
+    assert _format_param_value(0.001) == "0.0010"
+
+
+@pytest.mark.unit
+def test_format_param_value_string():
+    """String values pass through str()."""
+    from orchard.core.logger.progress import _format_param_value
+
+    assert _format_param_value("sgd") == "sgd"
+
+
+# _count_trial_states
+@pytest.mark.unit
+def test_count_trial_states_all_complete():
+    """All trials completed."""
+    from orchard.core.logger.progress import _count_trial_states
+
+    mock_study = MagicMock()
+    t1, t2 = MagicMock(), MagicMock()
+    t1.state = optuna.trial.TrialState.COMPLETE
+    t2.state = optuna.trial.TrialState.COMPLETE
+    mock_study.trials = [t1, t2]
+
+    completed, pruned, failed = _count_trial_states(mock_study)
+    assert len(completed) == 2
+    assert len(pruned) == 0
+    assert len(failed) == 0
+
+
+@pytest.mark.unit
+def test_count_trial_states_mixed():
+    """Mixed trial states partitioned correctly."""
+    from orchard.core.logger.progress import _count_trial_states
+
+    mock_study = MagicMock()
+    tc, tp, tf = MagicMock(), MagicMock(), MagicMock()
+    tc.state = optuna.trial.TrialState.COMPLETE
+    tp.state = optuna.trial.TrialState.PRUNED
+    tf.state = optuna.trial.TrialState.FAIL
+    mock_study.trials = [tc, tp, tf]
+
+    completed, pruned, failed = _count_trial_states(mock_study)
+    assert len(completed) == 1
+    assert len(pruned) == 1
+    assert len(failed) == 1
+
+
+@pytest.mark.unit
+def test_count_trial_states_empty():
+    """Empty study returns empty lists."""
+    from orchard.core.logger.progress import _count_trial_states
+
+    mock_study = MagicMock()
+    mock_study.trials = []
+
+    completed, pruned, failed = _count_trial_states(mock_study)
+    assert len(completed) == 0
+    assert len(pruned) == 0
+    assert len(failed) == 0
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

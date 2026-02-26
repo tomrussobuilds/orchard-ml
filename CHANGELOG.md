@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - add f1 as monitor_metric, compute F1 in validate_epoch, drop unused deps
+- add 128×128 resolution support, convert medical registry to YAML
 
 ### Changed
 

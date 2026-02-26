@@ -215,5 +215,71 @@ def test_load_model_weights_architecture_mismatch(mock_torch_load, tmp_path):
         load_model_weights(model, checkpoint_path, device)
 
 
+@pytest.mark.unit
+@patch("torch.load")
+def test_load_model_weights_missing_keys(mock_torch_load, tmp_path):
+    """Test error message includes missing keys on mismatch."""
+    model = nn.Linear(10, 5)
+    checkpoint_path = tmp_path / "model.pth"
+    checkpoint_path.touch()
+
+    # Checkpoint has weight but no bias
+    mock_torch_load.return_value = {"weight": torch.randn(5, 10)}
+    device = torch.device("cpu")
+
+    with pytest.raises(RuntimeError, match="missing keys"):
+        load_model_weights(model, checkpoint_path, device)
+
+
+@pytest.mark.unit
+@patch("torch.load")
+def test_load_model_weights_extra_keys(mock_torch_load, tmp_path):
+    """Test error message includes unexpected keys on mismatch."""
+    model = nn.Linear(10, 5)
+    checkpoint_path = tmp_path / "model.pth"
+    checkpoint_path.touch()
+
+    state_dict = model.state_dict()
+    state_dict["extra_layer.weight"] = torch.randn(3, 3)
+    mock_torch_load.return_value = state_dict
+    device = torch.device("cpu")
+
+    with pytest.raises(RuntimeError, match="unexpected keys"):
+        load_model_weights(model, checkpoint_path, device)
+
+
+@pytest.mark.unit
+@patch("torch.load")
+def test_load_model_weights_empty_state_dict(mock_torch_load, tmp_path):
+    """Test error when checkpoint has empty state dict."""
+    model = nn.Linear(10, 5)
+    checkpoint_path = tmp_path / "model.pth"
+    checkpoint_path.touch()
+
+    mock_torch_load.return_value = {}
+    device = torch.device("cpu")
+
+    with pytest.raises(RuntimeError, match="missing keys"):
+        load_model_weights(model, checkpoint_path, device)
+
+
+@pytest.mark.unit
+def test_load_model_weights_real_tensor_values(tmp_path):
+    """Test loaded weights match saved weights (no mocking)."""
+    model = nn.Linear(10, 5, bias=True)
+    checkpoint_path = tmp_path / "model.pth"
+
+    with torch.no_grad():
+        model.weight.fill_(0.42)
+        model.bias.fill_(0.13)
+    torch.save(model.state_dict(), checkpoint_path)
+
+    fresh_model = nn.Linear(10, 5, bias=True)
+    load_model_weights(fresh_model, checkpoint_path, torch.device("cpu"))
+
+    assert torch.allclose(fresh_model.weight, torch.full((5, 10), 0.42))
+    assert torch.allclose(fresh_model.bias, torch.full((5,), 0.13))
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
