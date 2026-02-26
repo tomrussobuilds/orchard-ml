@@ -213,9 +213,9 @@ def quantize_model(
     logger.info("  [Quantization]")
     logger.info(f"    {LogStyle.BULLET} Backend           : {backend}")
 
+    preprocessed_path = onnx_path.parent / "model_preprocessed.onnx"
     try:
         # Clear intermediate value_info to avoid shape conflicts from dynamo exporter
-        preprocessed_path = onnx_path.parent / "model_preprocessed.onnx"
         model_proto = onnx.load(str(onnx_path))
         while len(model_proto.graph.value_info) > 0:
             model_proto.graph.value_info.pop()
@@ -244,9 +244,6 @@ def quantize_model(
         finally:
             _root.setLevel(_prev_level)
 
-        # Clean up intermediate file
-        preprocessed_path.unlink(missing_ok=True)
-
         original_mb = _onnx_file_size_mb(onnx_path)
         quantized_mb = _onnx_file_size_mb(output_path)
         ratio = original_mb / quantized_mb if quantized_mb > 0 else 0
@@ -263,6 +260,8 @@ def quantize_model(
     except Exception as e:  # onnxruntime raises non-standard exceptions
         logger.error(f"    {LogStyle.WARNING} Quantization failed: {e}")
         return None
+    finally:
+        preprocessed_path.unlink(missing_ok=True)
 
 
 def benchmark_onnx_inference(

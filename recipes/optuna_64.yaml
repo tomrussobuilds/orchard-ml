@@ -89,7 +89,6 @@ optuna:
   epochs: 10
   timeout: null
 
-  metric_name: "accuracy"
   direction: "maximize"
 
   enable_early_stopping: true

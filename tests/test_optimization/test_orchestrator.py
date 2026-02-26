@@ -51,7 +51,7 @@ def mock_cfg():
     cfg.optuna.show_progress_bar = False
     cfg.optuna.save_plots = False
     cfg.optuna.save_best_config = False
-    cfg.optuna.metric_name = "auc"
+    cfg.training.monitor_metric = "auc"
     cfg.optuna.search_space_preset = "quick"
     cfg.optuna.load_if_exists = False
     cfg.optuna.get_storage_url = MagicMock(return_value=None)
@@ -155,7 +155,7 @@ class TestBuilders:
     def test_build_callbacks(self, mock_callback_fn, mock_cfg):
         """Test building callbacks list."""
         mock_callback_fn.return_value = None
-        callbacks = build_callbacks(mock_cfg.optuna)
+        callbacks = build_callbacks(mock_cfg.optuna, mock_cfg.training.monitor_metric)
         assert isinstance(callbacks, list)
 
 

@@ -29,7 +29,7 @@ def validate_export(
     input_shape: tuple[int, int, int],
     num_samples: int = 10,
     max_deviation: float = 1e-4,
-) -> bool:
+) -> bool | None:
     """
     Validate ONNX export against PyTorch model.
 
@@ -44,7 +44,8 @@ def validate_export(
         max_deviation: Maximum allowed absolute difference
 
     Returns:
-        True if validation passes, False otherwise
+        True if validation passes, False if outputs diverge,
+        None if skipped (onnxruntime not installed).
 
     Example:
         >>> model.load_state_dict(torch.load("checkpoint.pth"))
@@ -104,7 +105,7 @@ def validate_export(
 
     except ImportError as e:
         logger.warning(f"onnxruntime not installed. Skipping validation: {e}")
-        return False
+        return None
     except (RuntimeError, ValueError) as e:
         logger.error(f"Validation failed: {e}", exc_info=True)
         raise

@@ -1,7 +1,7 @@
 """
 Test Suite for ExportConfig.
 
-Tests model export configuration, format validation, ONNX/TorchScript
+Tests model export configuration, format validation, ONNX
 parameters, quantization settings, and validation options.
 """
 

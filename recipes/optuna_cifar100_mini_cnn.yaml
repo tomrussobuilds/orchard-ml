@@ -87,7 +87,6 @@ optuna:
   n_trials: 50
   epochs: 10
   timeout: null
-  metric_name: "auc"
   direction: "maximize"
   enable_early_stopping: true
   early_stopping_threshold: 0.999

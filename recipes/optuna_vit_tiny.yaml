@@ -110,7 +110,6 @@ optuna:
   timeout: null
   
   # Optimization target
-  metric_name: "auc"
   direction: "maximize"
   
   # Early stopping config

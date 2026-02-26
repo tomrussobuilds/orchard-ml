@@ -78,7 +78,7 @@ def build_pruner(
     return cast(MedianPruner | PercentilePruner | HyperbandPruner | NopPruner, pruner_factory())
 
 
-def build_callbacks(optuna_cfg: OptunaConfig) -> list:
+def build_callbacks(optuna_cfg: OptunaConfig, monitor_metric: str) -> list:
     """
     Construct list of optimization callbacks from configuration.
 
@@ -87,12 +87,13 @@ def build_callbacks(optuna_cfg: OptunaConfig) -> list:
 
     Args:
         optuna_cfg: Optuna sub-config with early stopping parameters
+        monitor_metric: Target metric name (from ``training.monitor_metric``)
 
     Returns:
         list of Optuna callback objects (may be empty)
 
     Example:
-        >>> callbacks = build_callbacks(optuna_cfg)
+        >>> callbacks = build_callbacks(optuna_cfg, "auc")
         >>> len(callbacks)  # 0 or 1 depending on early_stopping config
     """
     early_stop_callback = get_early_stopping_callback(
@@ -100,7 +101,7 @@ def build_callbacks(optuna_cfg: OptunaConfig) -> list:
         threshold=optuna_cfg.early_stopping_threshold,
         patience=optuna_cfg.early_stopping_patience,
         enabled=optuna_cfg.enable_early_stopping,
-        metric_name=optuna_cfg.metric_name,
+        metric_name=monitor_metric,
     )
 
     return [early_stop_callback] if early_stop_callback else []

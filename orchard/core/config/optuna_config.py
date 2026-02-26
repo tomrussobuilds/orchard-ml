@@ -138,7 +138,6 @@ class OptunaConfig(BaseModel):
         n_trials: Total number of optimization trials to run.
         epochs: Training epochs per trial (typically shorter than final training).
         timeout: Maximum optimization time in seconds (None=unlimited).
-        metric_name: Optimization target metric.
         direction: Whether to 'maximize' or 'minimize' the metric.
         sampler_type: Sampling algorithm ('tpe', 'cmaes', 'random').
         search_space_preset: Predefined search space ('quick', 'full', etc.).
@@ -176,10 +175,6 @@ class OptunaConfig(BaseModel):
     )
 
     # ==================== Optimization Target ====================
-    metric_name: Literal["auc", "accuracy", "loss"] = Field(
-        default="auc", description="Metric to optimize"
-    )
-
     direction: Literal["maximize", "minimize"] = Field(
         default="maximize", description="Optimization direction"
     )
@@ -217,7 +212,8 @@ class OptunaConfig(BaseModel):
     )
 
     early_stopping_threshold: float | None = Field(
-        default=None, description="Metric threshold for early stopping (None=auto from metric_name)"
+        default=None,
+        description="Metric threshold for early stopping (None=auto from monitor_metric)",
     )
 
     early_stopping_patience: PositiveInt = Field(

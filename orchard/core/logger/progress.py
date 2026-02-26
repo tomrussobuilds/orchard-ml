@@ -75,7 +75,7 @@ def log_optimization_header(cfg: "Config", logger_instance: logging.Logger | Non
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Search Space : {cfg.optuna.search_space_preset}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Trials       : {cfg.optuna.n_trials}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Epochs/Trial : {cfg.optuna.epochs}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Metric       : {cfg.optuna.metric_name}")
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Metric       : {cfg.training.monitor_metric}")
     log.info(
         f"{LogStyle.INDENT}{LogStyle.ARROW} Pruning      : "
         f"{'Enabled' if cfg.optuna.enable_pruning else 'Disabled'}"
@@ -162,7 +162,7 @@ def log_optimization_summary(
         try:
             log.info(
                 f"{LogStyle.INDENT}{LogStyle.SUCCESS} "
-                f"Best {cfg.optuna.metric_name.upper():<9} : {study.best_value:.6f}"
+                f"Best {cfg.training.monitor_metric.upper():<9} : {study.best_value:.6f}"
             )
             log.info(
                 f"{LogStyle.INDENT}{LogStyle.SUCCESS} Best Trial     : {study.best_trial.number}"

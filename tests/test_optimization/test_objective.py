@@ -318,7 +318,7 @@ def test_training_executor_validate_epoch_error_handling():
     ):
         result = executor._validate_epoch()
 
-    assert result == {"loss": 999.0, "accuracy": 0.0, "auc": 0.0}
+    assert result == {"loss": 999.0, "accuracy": 0.0, "auc": 0.0, "f1": 0.0}
 
 
 # OPTUNA OBJECTIVE TESTS
@@ -327,7 +327,7 @@ def test_optuna_objective_init_with_defaults():
     """Test OptunaObjective initializes with dependency injection."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 20
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
     mock_cfg.dataset._ensure_metadata.name = "bloodmnist"
 
@@ -355,7 +355,7 @@ def test_optuna_objective_uses_injected_dependencies():
     """Test OptunaObjective uses all injected dependencies."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 20
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
     search_space = {}
@@ -386,7 +386,7 @@ def test_optuna_objective_sample_params_dict():
     """Test OptunaObjective samples params from dict search space."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 20
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
     mock_cfg.training.momentum = 0.9
     mock_cfg.training.mixup_alpha = 0.0
@@ -414,7 +414,7 @@ def test_optuna_objective_sample_params_object():
     """Test OptunaObjective samples params from object with sample_params."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 20
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
     mock_search_space = MagicMock()
@@ -445,7 +445,7 @@ def test_optuna_objective_call_with_pruning():
 
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
     search_space = {}
@@ -492,7 +492,7 @@ def test_optuna_objective_call_cleanup_on_success():
     """Test OptunaObjective.__call__ calls cleanup after successful trial."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
     search_space = {}
@@ -543,7 +543,7 @@ def test_optuna_objective_call_returns_worst_metric_on_failure():
     """Test OptunaObjective.__call__ returns worst metric on exception (maximize)."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.optuna.direction = "maximize"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
@@ -595,7 +595,7 @@ def test_optuna_objective_call_returns_inf_on_failure_minimize():
     """Test OptunaObjective.__call__ returns inf on exception (minimize)."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
-    mock_cfg.optuna.metric_name = "loss"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.optuna.direction = "minimize"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
@@ -647,7 +647,7 @@ def test_optuna_objective_call_reraises_trial_pruned():
     """Test OptunaObjective.__call__ re-raises TrialPruned (not caught)."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.optuna.direction = "maximize"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
@@ -699,7 +699,7 @@ def test_optuna_objective_call_builds_trial_config():
     """Test OptunaObjective.__call__ builds trial-specific config."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
     mock_suggest_lr = MagicMock(return_value=0.005)
@@ -759,7 +759,7 @@ def test_cleanup_with_cuda_available(monkeypatch):
     """Test _cleanup clears CUDA cache when available."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
     search_space = {}
@@ -791,7 +791,7 @@ def test_cleanup_with_cuda_unavailable(monkeypatch):
     """Test _cleanup does nothing when CUDA unavailable."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
     search_space = {}
@@ -823,7 +823,7 @@ def test_cleanup_with_mps(monkeypatch):
     """Test _cleanup clears MPS cache when MPS is available."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
     search_space = {}

@@ -260,7 +260,7 @@ class Reporter(BaseModel):
         )
         logger_instance.info(
             f"{LogStyle.INDENT}{LogStyle.ARROW} "
-            f"{'Metric':<18}: {optuna_cfg.metric_name} ({optuna_cfg.direction})"
+            f"{'Metric':<18}: {cfg.training.monitor_metric} ({optuna_cfg.direction})"
         )
         logger_instance.info(
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Sampler':<18}: {optuna_cfg.sampler_type.upper()}"

@@ -169,7 +169,7 @@ def test_objective_calls_tracker_nested_runs(mock_tracker):
     from orchard.optimization.objective.objective import OptunaObjective
 
     mock_cfg = MagicMock()
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
 
     mock_trial = MagicMock()
     mock_trial.number = 0

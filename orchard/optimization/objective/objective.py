@@ -140,10 +140,11 @@ class OptunaObjective:
         self._dataloader_factory = dataloader_factory or get_dataloaders
         self._model_factory = model_factory or get_model
 
-        # Components (read metric_name from cfg.optuna for single source of truth)
+        # Components (monitor_metric is the single source of truth for the
+        # optimisation target — shared by trainer checkpointing and Optuna ranking)
         self.config_builder = TrialConfigBuilder(cfg)
         self.metric_extractor = MetricExtractor(
-            cfg.optuna.metric_name, direction=cfg.optuna.direction
+            cfg.training.monitor_metric, direction=cfg.optuna.direction
         )
 
         # Load dataset once (reused across all trials)

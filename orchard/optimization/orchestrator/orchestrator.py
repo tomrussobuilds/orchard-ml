@@ -145,7 +145,7 @@ class OptunaOrchestrator:
         # Configure callbacks and log our structured header
         log_optimization_header(self.cfg)
 
-        callbacks = build_callbacks(self.cfg.optuna)
+        callbacks = build_callbacks(self.cfg.optuna, self.cfg.training.monitor_metric)
 
         study.set_user_attr("n_trials", self.cfg.optuna.n_trials)
 
@@ -191,7 +191,7 @@ class OptunaOrchestrator:
             generate_visualizations(study, self.paths.figures)
 
         export_study_summary(study, self.paths)
-        export_top_trials(study, self.paths, self.cfg.optuna.metric_name)
+        export_top_trials(study, self.paths, self.cfg.training.monitor_metric)
 
         if self.cfg.optuna.save_best_config:
             export_best_config(study, self.cfg, self.paths)

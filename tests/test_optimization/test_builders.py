@@ -110,9 +110,7 @@ def test_build_callbacks_with_early_stopping(mock_optuna_cfg):
     mock_optuna_cfg.early_stopping_threshold = 0.95
     mock_optuna_cfg.early_stopping_patience = 5
     mock_optuna_cfg.direction = "maximize"
-    mock_optuna_cfg.metric_name = "val_acc"
-
-    callbacks = build_callbacks(mock_optuna_cfg)
+    callbacks = build_callbacks(mock_optuna_cfg, "auc")
 
     assert len(callbacks) == 1
     assert callbacks[0] is not None
@@ -123,7 +121,7 @@ def test_build_callbacks_without_early_stopping(mock_optuna_cfg):
     """Test building callbacks when early stopping is disabled."""
     mock_optuna_cfg.enable_early_stopping = False
 
-    callbacks = build_callbacks(mock_optuna_cfg)
+    callbacks = build_callbacks(mock_optuna_cfg, "auc")
 
     assert len(callbacks) == 0
 
@@ -142,6 +140,5 @@ def mock_optuna_cfg():
     optuna_mock.early_stopping_threshold = 0.95
     optuna_mock.early_stopping_patience = 5
     optuna_mock.direction = "maximize"
-    optuna_mock.metric_name = "val_acc"
 
     return optuna_mock

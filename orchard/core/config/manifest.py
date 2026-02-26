@@ -61,7 +61,7 @@ class Config(BaseModel):
         evaluation: Metrics, visualization, reporting settings
         architecture: Architecture selection, pretrained weights
         optuna: Hyperparameter optimization configuration (optional)
-        export: Model export configuration for ONNX/TorchScript (optional)
+        export: Model export configuration for ONNX (optional)
 
     Example:
         >>> from orchard.core import Config

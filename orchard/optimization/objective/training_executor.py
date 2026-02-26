@@ -23,7 +23,7 @@ import optuna
 import torch
 
 from ...core import LOGGER_NAME, Config, LogStyle
-from ...core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_LOSS
+from ...core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS
 from ...trainer import validate_epoch
 from ...trainer._loop import LoopOptions, TrainingLoop, create_amp_scaler, create_mixup_fn
 from ...trainer._scheduling import step_scheduler
@@ -32,7 +32,12 @@ from .metric_extractor import MetricExtractor
 logger = logging.getLogger(LOGGER_NAME)
 
 # Module-level constants
-_FALLBACK_METRICS: dict[str, float] = {METRIC_LOSS: 999.0, METRIC_ACCURACY: 0.0, METRIC_AUC: 0.0}
+_FALLBACK_METRICS: dict[str, float] = {
+    METRIC_LOSS: 999.0,
+    METRIC_ACCURACY: 0.0,
+    METRIC_AUC: 0.0,
+    METRIC_F1: 0.0,
+}
 
 
 # TRAINING EXECUTOR

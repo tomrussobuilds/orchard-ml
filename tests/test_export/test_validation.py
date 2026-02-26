@@ -371,7 +371,7 @@ def test_validate_fails_with_large_deviation(tmp_path):
 
 @pytest.mark.unit
 def test_validate_with_onnxruntime_import_error(tmp_path, monkeypatch):
-    """Test validation returns False when onnxruntime import fails."""
+    """Test validation returns None when onnxruntime import fails."""
 
     model = SimpleTestModel()
     model.eval()
@@ -405,7 +405,7 @@ def test_validate_with_onnxruntime_import_error(tmp_path, monkeypatch):
         input_shape=(3, 28, 28),
     )
 
-    assert result is False
+    assert result is None
 
 
 @pytest.mark.unit

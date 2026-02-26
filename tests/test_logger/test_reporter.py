@@ -79,7 +79,7 @@ def test_log_optimization_summary_completed_trials():
     mock_cfg = MagicMock()
     mock_cfg.dataset.dataset_name = "bloodmnist"
     mock_cfg.optuna.search_space_preset = "default"
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_device = torch.device("cuda")
     mock_paths = MagicMock()
     mock_paths.root = "/mock/outputs"
@@ -111,7 +111,7 @@ def test_log_optimization_summary_no_completed_trials():
     mock_cfg = MagicMock()
     mock_cfg.dataset.dataset_name = "test"
     mock_cfg.optuna.search_space_preset = "default"
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_device = torch.device("cpu")
     mock_paths = MagicMock()
     mock_study = MagicMock()
@@ -136,7 +136,7 @@ def test_log_optimization_summary_with_failed_trials():
     mock_cfg = MagicMock()
     mock_cfg.dataset.dataset_name = "test"
     mock_cfg.optuna.search_space_preset = "default"
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_device = torch.device("cpu")
     mock_paths = MagicMock()
     mock_study = MagicMock()
@@ -168,7 +168,7 @@ def test_log_optimization_header_basic():
     mock_cfg.optuna.search_space_preset = "architecture_search"
     mock_cfg.optuna.n_trials = 50
     mock_cfg.optuna.epochs = 10
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.optuna.enable_pruning = True
     mock_cfg.optuna.enable_early_stopping = False
     mock_cfg.optuna.model_pool = None
@@ -191,7 +191,7 @@ def test_log_optimization_header_with_early_stopping():
     mock_cfg.optuna.search_space_preset = "default"
     mock_cfg.optuna.n_trials = 10
     mock_cfg.optuna.epochs = 5
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.optuna.enable_pruning = False
     mock_cfg.optuna.enable_early_stopping = True
     mock_cfg.optuna.early_stopping_threshold = 0.95
@@ -215,7 +215,7 @@ def test_log_optimization_header_logs_only_search_params():
     mock_cfg.optuna.search_space_preset = "default"
     mock_cfg.optuna.n_trials = 10
     mock_cfg.optuna.epochs = 5
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.optuna.enable_pruning = False
     mock_cfg.optuna.enable_early_stopping = False
     mock_cfg.optuna.model_pool = None
@@ -239,7 +239,7 @@ def test_log_optimization_header_early_stop_auto_threshold():
     mock_cfg.optuna.search_space_preset = "default"
     mock_cfg.optuna.n_trials = 10
     mock_cfg.optuna.epochs = 5
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.optuna.enable_pruning = False
     mock_cfg.optuna.enable_early_stopping = True
     mock_cfg.optuna.early_stopping_threshold = None
@@ -261,7 +261,7 @@ def test_log_optimization_header_with_model_pool():
     mock_cfg.optuna.search_space_preset = "full"
     mock_cfg.optuna.n_trials = 20
     mock_cfg.optuna.epochs = 15
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.optuna.enable_pruning = True
     mock_cfg.optuna.enable_early_stopping = False
     mock_cfg.optuna.model_pool = ["vit_tiny", "efficientnet_b0"]
@@ -712,7 +712,7 @@ def test_reporter_log_optimization_section():
     mock_cfg = MagicMock()
     mock_cfg.optuna.n_trials = 20
     mock_cfg.optuna.epochs = 15
-    mock_cfg.optuna.metric_name = "auc"
+    mock_cfg.training.monitor_metric = "auc"
     mock_cfg.optuna.direction = "maximize"
     mock_cfg.optuna.sampler_type = "tpe"
     mock_cfg.optuna.enable_pruning = True

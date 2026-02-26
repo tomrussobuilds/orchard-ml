@@ -126,7 +126,7 @@ def test_build_pruner_disabled(mock_cfg):
 def test_build_callbacks(mock_callback_fn, mock_cfg):
     """Test building callbacks list."""
     mock_callback_fn.return_value = None
-    callbacks = build_callbacks(mock_cfg.optuna)
+    callbacks = build_callbacks(mock_cfg.optuna, "auc")
     assert isinstance(callbacks, list)
 
 

@@ -55,7 +55,7 @@ class RunPaths(BaseModel):
         reports: Directory for config mirrors, CSV/XLSX summaries.
         logs: Directory for training logs and session output.
         database: Directory for SQLite optimization studies.
-        exports: Directory for production exports (ONNX, TorchScript).
+        exports: Directory for production exports (ONNX).
 
     Example:
         Directory structure created::

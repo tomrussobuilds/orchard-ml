@@ -26,7 +26,6 @@ def test_optuna_config_defaults():
     assert config.study_name == "vision_optimization"
     assert config.n_trials == 50
     assert config.epochs == 15
-    assert config.metric_name == "auc"
     assert config.direction == "maximize"
     assert config.sampler_type == "tpe"
     assert config.enable_early_stopping is True
@@ -40,32 +39,15 @@ def test_optuna_config_custom_values():
         study_name="custom_study",
         n_trials=100,
         epochs=30,
-        metric_name="accuracy",
         direction="maximize",
     )
 
     assert config.study_name == "custom_study"
     assert config.n_trials == 100
     assert config.epochs == 30
-    assert config.metric_name == "accuracy"
 
 
 # OPTUNA CONFIG: VALIDATION
-@pytest.mark.unit
-def test_invalid_metric_name_rejected():
-    """Test invalid metric_name is rejected."""
-    with pytest.raises(ValidationError):
-        OptunaConfig(metric_name="invalid_metric")
-
-
-@pytest.mark.unit
-def test_valid_metric_names():
-    """Test valid metric names are accepted."""
-    for metric in ["auc", "accuracy", "loss"]:
-        config = OptunaConfig(metric_name=metric)
-        assert config.metric_name == metric
-
-
 @pytest.mark.unit
 def test_pruning_warmup_exceeds_epochs_rejected():
     """Test pruning_warmup_epochs >= epochs is rejected."""

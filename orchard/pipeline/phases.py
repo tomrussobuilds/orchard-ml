@@ -311,7 +311,7 @@ def run_export_phase(
             num_samples=export_cfg.validation_samples,
             max_deviation=export_cfg.max_deviation,
         )
-        if not is_valid:
+        if is_valid is False:
             logger.warning(
                 f"  {LogStyle.WARNING} Numerical validation failed: "
                 "ONNX outputs diverge from PyTorch model"
