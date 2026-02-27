@@ -6,14 +6,14 @@ and logging behavior during the evaluation process.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
-from orchard.core import Config
 from orchard.evaluation.evaluator import evaluate_model
 
 
@@ -38,12 +38,15 @@ def mock_dataloader():
 
 
 @pytest.fixture
-def mock_config():
-    """Create a minimal Config object."""
-    cfg = MagicMock(spec=Config)
-    cfg.augmentation = MagicMock()
-    cfg.augmentation.tta_mode = "full"
-    return cfg
+def aug_cfg():
+    """Augmentation config stub for TTA."""
+    return SimpleNamespace(
+        tta_mode="full",
+        tta_translate=2,
+        tta_scale=1.05,
+        tta_blur_sigma=0.5,
+        tta_blur_kernel_size=3,
+    )
 
 
 # TEST CASES
@@ -71,7 +74,7 @@ def test_evaluate_model_standard(mock_compute, mock_dataloader):
 @pytest.mark.unit
 @patch("orchard.evaluation.evaluator.compute_classification_metrics")
 @patch("orchard.evaluation.evaluator.adaptive_tta_predict")
-def test_evaluate_model_with_tta(mock_tta, mock_compute, mock_dataloader, mock_config):
+def test_evaluate_model_with_tta(mock_tta, mock_compute, mock_dataloader, aug_cfg):
     """Test the execution path when TTA is enabled."""
     device = torch.device("cpu")
     model = SimpleModel()
@@ -79,7 +82,7 @@ def test_evaluate_model_with_tta(mock_tta, mock_compute, mock_dataloader, mock_c
     mock_compute.return_value = {"accuracy": 1.0, "auc": 1.0, "f1": 1.0}
     mock_tta.return_value = torch.tensor([[0.1, 0.9], [0.8, 0.2]])
 
-    evaluate_model(model, mock_dataloader, device, use_tta=True, cfg=mock_config)
+    evaluate_model(model, mock_dataloader, device, use_tta=True, aug_cfg=aug_cfg, resolution=224)
 
     assert mock_tta.call_count == 2
 
@@ -88,12 +91,12 @@ def test_evaluate_model_with_tta(mock_tta, mock_compute, mock_dataloader, mock_c
 @patch("orchard.evaluation.evaluator.compute_classification_metrics")
 @patch("orchard.evaluation.evaluator.adaptive_tta_predict")
 def test_tta_skipped_without_config(mock_tta, mock_compute, mock_dataloader):
-    """Verify that TTA is skipped if cfg is None, even if use_tta is True."""
+    """Verify that TTA is skipped if aug_cfg is None, even if use_tta is True."""
     device = torch.device("cpu")
     model = SimpleModel()
     mock_compute.return_value = {"accuracy": 0, "auc": 0, "f1": 0}
 
-    evaluate_model(model, mock_dataloader, device, use_tta=True, cfg=None)
+    evaluate_model(model, mock_dataloader, device, use_tta=True, aug_cfg=None)
 
     mock_tta.assert_not_called()
 

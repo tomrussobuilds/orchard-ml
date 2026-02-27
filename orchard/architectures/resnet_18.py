@@ -26,13 +26,17 @@ import torch
 import torch.nn as nn
 from torchvision import models
 
-from ..core import Config
 from ._morphing import morph_conv_weights
 
 
 # MODEL BUILDER
 def build_resnet18(
-    device: torch.device, num_classes: int, in_channels: int, cfg: Config
+    device: torch.device,
+    num_classes: int,
+    in_channels: int,
+    *,
+    pretrained: bool,
+    resolution: int,
 ) -> nn.Module:
     """
     Constructs ResNet-18 with resolution-aware architectural adaptation.
@@ -50,18 +54,15 @@ def build_resnet18(
         device: Target hardware for model placement
         num_classes: Number of dataset classes
         in_channels: Input channels (1=Grayscale, 3=RGB)
-        cfg: Global configuration with pretrained settings and resolution
+        pretrained: Whether to load ImageNet pretrained weights
+        resolution: Input image resolution (28, 32, 64, or 224)
 
     Returns:
         Adapted ResNet-18 deployed to device
     """
     # --- Step 1: Initialize with Optional Pretraining ---
-    weights = models.ResNet18_Weights.IMAGENET1K_V1 if cfg.architecture.pretrained else None
+    weights = models.ResNet18_Weights.IMAGENET1K_V1 if pretrained else None
     model = models.resnet18(weights=weights)
-
-    # --- Step 2: Resolution-Aware Stem Adaptation ---
-    resolution = cfg.dataset.resolution
-    pretrained = cfg.architecture.pretrained
 
     if resolution <= 32:  # 28, 32: small stem (3x3 stride-1, no MaxPool)
         _adapt_stem_28(model, in_channels, pretrained)

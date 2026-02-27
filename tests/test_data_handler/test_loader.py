@@ -79,7 +79,7 @@ def test_build_loaders_with_weighted_sampler(mock_cfg, mock_metadata):
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         with patch(
             "orchard.data_handler.loader.get_pipeline_transforms",
-            lambda cfg, meta: (lambda x: x, lambda x: x),
+            lambda aug_cfg, img_size, meta: (lambda x: x, lambda x: x),
         ):
 
             class FakeDataset:
@@ -116,7 +116,7 @@ def test_build_loaders_without_weighted_sampler(mock_cfg_no_sampler, mock_metada
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         with patch(
             "orchard.data_handler.loader.get_pipeline_transforms",
-            lambda cfg, meta: (lambda x: x, lambda x: x),
+            lambda aug_cfg, img_size, meta: (lambda x: x, lambda x: x),
         ):
 
             class FakeDataset:

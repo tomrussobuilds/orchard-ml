@@ -27,7 +27,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from ..core import LOGGER_NAME, Config, LogStyle
+from ..core import LOGGER_NAME, LogStyle
+from ..core.config import AugmentationConfig
 from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1
 from .metrics import compute_classification_metrics
 from .tta import adaptive_tta_predict
@@ -43,7 +44,8 @@ def evaluate_model(
     use_tta: bool = False,
     is_anatomical: bool = False,
     is_texture_based: bool = False,
-    cfg: Config | None = None,
+    aug_cfg: AugmentationConfig | None = None,
+    resolution: int = 28,
 ) -> tuple[np.ndarray, np.ndarray, dict, float]:
     """
     Performs full-set evaluation and coordinates metric calculation.
@@ -55,7 +57,8 @@ def evaluate_model(
         use_tta: Flag to enable Test-Time Augmentation.
         is_anatomical: Dataset-specific orientation constraint.
         is_texture_based: Dataset-specific texture preservation flag.
-        cfg: Global configuration manifest.
+        aug_cfg: Augmentation sub-configuration (required for TTA).
+        resolution: Dataset resolution for TTA intensity scaling.
 
     Returns:
         tuple[np.ndarray, np.ndarray, dict, float]: A 4-tuple of:
@@ -69,14 +72,14 @@ def evaluate_model(
     all_probs_list: list[np.ndarray] = []
     all_labels_list: list[np.ndarray] = []
 
-    actual_tta = use_tta and (cfg is not None)
+    actual_tta = use_tta and (aug_cfg is not None)
 
     with torch.no_grad():
         for inputs, targets in test_loader:
             if actual_tta:
                 # TTA logic handles its own device placement and softmax
                 probs = adaptive_tta_predict(
-                    model, inputs, device, is_anatomical, is_texture_based, cfg
+                    model, inputs, device, is_anatomical, is_texture_based, aug_cfg, resolution
                 )
             else:
                 # Standard forward pass
@@ -101,8 +104,8 @@ def evaluate_model(
         f"Acc: {metrics[METRIC_ACCURACY]:.4f} | "
         f"AUC: {metrics[METRIC_AUC]:.4f} | F1: {metrics[METRIC_F1]:.4f}"
     )
-    if actual_tta and cfg is not None:
-        mode = cfg.augmentation.tta_mode.upper()
+    if actual_tta and aug_cfg is not None:
+        mode = aug_cfg.tta_mode.upper()
         log_msg += f" | TTA ENABLED (Mode: {mode})"
 
     logger.info(log_msg)

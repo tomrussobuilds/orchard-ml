@@ -85,7 +85,9 @@ class DataLoaderFactory:
         Returns:
             A tuple containing (train_transform, val_transform).
         """
-        return get_pipeline_transforms(self.cfg, self.ds_meta)
+        return get_pipeline_transforms(
+            self.cfg.augmentation, self.cfg.dataset.img_size, self.ds_meta
+        )
 
     def _get_balancing_sampler(self, dataset: VisionDataset) -> WeightedRandomSampler | None:
         """
@@ -241,8 +243,7 @@ class DataLoaderFactory:
         self.logger.info(
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'DataLoaders':<18}: "
             f"({mode_str}){optuna_str} → "
-            f"Train:[{len(train_ds)}] Val:[{len(val_ds)}] Test:[{len(test_ds)}] "
-            f"Workers:[{infra_kwargs['num_workers']}]"
+            f"Train:[{len(train_ds)}] Val:[{len(val_ds)}] Test:[{len(test_ds)}]"
         )
 
         return train_loader, val_loader, test_loader

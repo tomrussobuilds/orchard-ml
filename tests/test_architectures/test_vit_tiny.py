@@ -15,16 +15,7 @@ import torch.nn as nn
 from orchard.architectures.vit_tiny import build_vit_tiny
 
 
-# FIXUTRES
-@pytest.fixture
-def mock_cfg():
-    """Provides a standardized configuration mock for model building."""
-    cfg = MagicMock()
-    cfg.architecture.pretrained = True
-    cfg.architecture.weight_variant = "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
-    return cfg
-
-
+# FIXTURES
 @pytest.fixture
 def device():
     """Resolves target device for test execution."""
@@ -44,14 +35,18 @@ class TestBuildViTTiny:
         - Error handling for invalid variants
     """
 
-    def test_build_vit_tiny_rgb(self, device, mock_cfg):
-        """
-        Ensures standard RGB ViT-Tiny is built with correct dimensions.
-        """
+    def test_build_vit_tiny_rgb(self, device):
+        """Ensures standard RGB ViT-Tiny is built with correct dimensions."""
         num_classes = 5
         in_channels = 3
 
-        model = build_vit_tiny(device, num_classes, in_channels, mock_cfg)
+        model = build_vit_tiny(
+            device,
+            num_classes,
+            in_channels,
+            pretrained=True,
+            weight_variant="vit_tiny_patch16_224.augreg_in21k_ft_in1k",
+        )
 
         assert isinstance(model, nn.Module)
         assert model.patch_embed.proj.in_channels == 3
@@ -61,14 +56,18 @@ class TestBuildViTTiny:
         output = model(x)
         assert output.shape == (1, num_classes)
 
-    def test_build_vit_tiny_grayscale_morphing(self, device, mock_cfg):
-        """
-        Validates the 1-channel adaptation and weight morphing (averaging).
-        """
+    def test_build_vit_tiny_grayscale_morphing(self, device):
+        """Validates the 1-channel adaptation and weight morphing (averaging)."""
         num_classes = 2
         in_channels = 1
 
-        model = build_vit_tiny(device, num_classes, in_channels, mock_cfg)
+        model = build_vit_tiny(
+            device,
+            num_classes,
+            in_channels,
+            pretrained=True,
+            weight_variant="vit_tiny_patch16_224.augreg_in21k_ft_in1k",
+        )
 
         assert model.patch_embed.proj.in_channels == 1
 
@@ -76,11 +75,8 @@ class TestBuildViTTiny:
         output = model(x)
         assert output.shape == (1, num_classes)
 
-    def test_build_vit_tiny_no_pretrained(self, device, mock_cfg):
-        """
-        Tests initialization with random weights when pretrained flag is False.
-        """
-        mock_cfg.architecture.pretrained = False
+    def test_build_vit_tiny_no_pretrained(self, device):
+        """Tests initialization with random weights when pretrained flag is False."""
         num_classes = 10
         in_channels = 3
 
@@ -89,7 +85,7 @@ class TestBuildViTTiny:
             mock_timm.return_value = mock_model
             mock_model.to.return_value = mock_model
 
-            model = build_vit_tiny(device, num_classes, in_channels, mock_cfg)
+            model = build_vit_tiny(device, num_classes, in_channels, pretrained=False)
 
             assert model == mock_model
 
@@ -98,20 +94,20 @@ class TestBuildViTTiny:
             )
             mock_model.to.assert_called_once_with(device)
 
-    def test_invalid_weight_variant_raises_error(self, device, mock_cfg):
-        """
-        Verifies that an invalid timm variant triggers a descriptive ValueError.
-        """
-        mock_cfg.architecture.weight_variant = "invalid_vit_model_name"
-
+    def test_invalid_weight_variant_raises_error(self, device):
+        """Verifies that an invalid timm variant triggers a descriptive ValueError."""
         with pytest.raises(ValueError, match="Invalid ViT weight variant"):
-            build_vit_tiny(device, 2, 3, mock_cfg)
+            build_vit_tiny(device, 2, 3, pretrained=True, weight_variant="invalid_vit_model_name")
 
-    def test_weight_copy_consistency(self, device, mock_cfg):
-        """
-        Confirms that bias is preserved during patch embedding adaptation.
-        """
-        model = build_vit_tiny(device, 2, 1, mock_cfg)
+    def test_weight_copy_consistency(self, device):
+        """Confirms that bias is preserved during patch embedding adaptation."""
+        model = build_vit_tiny(
+            device,
+            2,
+            1,
+            pretrained=True,
+            weight_variant="vit_tiny_patch16_224.augreg_in21k_ft_in1k",
+        )
 
         assert model.patch_embed.proj.bias is not None
         assert model.patch_embed.proj.weight.shape[1] == 1

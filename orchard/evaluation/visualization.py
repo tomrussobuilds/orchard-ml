@@ -3,7 +3,7 @@ Visualization utilities for model evaluation.
 
 Provides formatted visual reports including training loss/accuracy curves,
 normalized confusion matrices, and sample prediction grids. Integrated with
-the Pydantic configuration engine for aesthetic and technical consistency.
+the PlotContext DTO for aesthetic and technical consistency.
 """
 
 from __future__ import annotations
@@ -19,7 +19,8 @@ import torch.nn as nn
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 from torch.utils.data import DataLoader
 
-from ..core import LOGGER_NAME, Config, LogStyle
+from ..core import LOGGER_NAME, LogStyle
+from .plot_context import PlotContext
 
 # Global logger instance
 logger = logging.getLogger(LOGGER_NAME)
@@ -32,7 +33,7 @@ def show_predictions(
     device: torch.device,
     classes: list[str],
     save_path: Path | None = None,
-    cfg: Config | None = None,
+    ctx: PlotContext | None = None,
     n: int | None = None,
 ) -> None:
     """
@@ -48,37 +49,37 @@ def show_predictions(
         device: Target device for inference.
         classes: Human-readable class label names.
         save_path: Output file path. If None, displays interactively.
-        cfg: Configuration object for layout and normalization settings.
-        n: Number of samples to display. Defaults to ``cfg.evaluation.n_samples``.
+        ctx: PlotContext with layout and normalization settings.
+        n: Number of samples to display. Defaults to ``ctx.n_samples``.
     """
     model.eval()
-    style = cfg.evaluation.plot_style if cfg else "seaborn-v0_8-muted"
+    style = ctx.plot_style if ctx else "seaborn-v0_8-muted"
 
     with plt.style.context(style):
         # 1. Parameter Resolution & Batch Inference
-        num_samples = n or (cfg.evaluation.n_samples if cfg else 12)
+        num_samples = n or (ctx.n_samples if ctx else 12)
         images, labels, preds = _get_predictions_batch(model, loader, device, num_samples)
 
         # 2. Grid & Figure Setup
-        grid_cols = cfg.evaluation.grid_cols if cfg else 4
-        _, axes = _setup_prediction_grid(len(images), grid_cols, cfg)
+        grid_cols = ctx.grid_cols if ctx else 4
+        _, axes = _setup_prediction_grid(len(images), grid_cols, ctx)
 
         # 3. Plotting Loop
         for i, ax in enumerate(axes):
             if i < len(images):
-                _plot_single_prediction(ax, images[i], labels[i], preds[i], classes, cfg)
+                _plot_single_prediction(ax, images[i], labels[i], preds[i], classes, ctx)
             ax.axis("off")
 
         # 4. Suptitle
-        if cfg:
-            plt.suptitle(_build_suptitle(cfg), fontsize=14)
+        if ctx:
+            plt.suptitle(_build_suptitle(ctx), fontsize=14)
 
         # 5. Export and Cleanup
-        _finalize_figure(plt, save_path, cfg)
+        _finalize_figure(plt, save_path, ctx)
 
 
 def plot_training_curves(
-    train_losses: Sequence[float], val_accuracies: Sequence[float], out_path: Path, cfg: Config
+    train_losses: Sequence[float], val_accuracies: Sequence[float], out_path: Path, ctx: PlotContext
 ) -> None:
     """
     Plot training loss and validation accuracy on a dual-axis chart.
@@ -90,9 +91,9 @@ def plot_training_curves(
         train_losses: Per-epoch training loss values.
         val_accuracies: Per-epoch validation accuracy values.
         out_path: Destination file path for the saved figure.
-        cfg: Configuration with architecture and evaluation settings.
+        ctx: PlotContext with architecture and evaluation settings.
     """
-    with plt.style.context(cfg.evaluation.plot_style):
+    with plt.style.context(ctx.plot_style):
         fig, ax1 = plt.subplots(figsize=(9, 6))
 
         # Left Axis: Training Loss
@@ -109,14 +110,14 @@ def plot_training_curves(
         ax2.tick_params(axis="y", labelcolor="#3498db")
 
         fig.suptitle(
-            f"Training Metrics — {cfg.architecture.name} | Resolution — {cfg.dataset.resolution}",
+            f"Training Metrics — {ctx.arch_name} | Resolution — {ctx.resolution}",
             fontsize=14,
             y=1.02,
         )
 
         fig.tight_layout()
 
-        plt.savefig(out_path, dpi=cfg.evaluation.fig_dpi, bbox_inches="tight")
+        plt.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")
         logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Training Curves':<18}: {out_path.name}")
 
         # Export raw data for post-run analysis
@@ -126,7 +127,11 @@ def plot_training_curves(
 
 
 def plot_confusion_matrix(
-    all_labels: np.ndarray, all_preds: np.ndarray, classes: list[str], out_path: Path, cfg: Config
+    all_labels: np.ndarray,
+    all_preds: np.ndarray,
+    classes: list[str],
+    out_path: Path,
+    ctx: PlotContext,
 ) -> None:
     """
     Generate and save a row-normalized confusion matrix plot.
@@ -136,9 +141,9 @@ def plot_confusion_matrix(
         all_preds: Predicted label array.
         classes: Human-readable class label names.
         out_path: Destination file path for the saved figure.
-        cfg: Configuration with architecture and evaluation settings.
+        ctx: PlotContext with architecture and evaluation settings.
     """
-    with plt.style.context(cfg.evaluation.plot_style):
+    with plt.style.context(ctx.plot_style):
         cm = confusion_matrix(
             all_labels, all_preds, labels=np.arange(len(classes)), normalize="true"
         )
@@ -147,18 +152,16 @@ def plot_confusion_matrix(
         disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=classes)
         fig, ax = plt.subplots(figsize=(11, 9))
 
-        disp.plot(
-            ax=ax, cmap=cfg.evaluation.cmap_confusion, xticks_rotation=45, values_format=".3f"
-        )
+        disp.plot(ax=ax, cmap=ctx.cmap_confusion, xticks_rotation=45, values_format=".3f")
         plt.title(
-            f"Confusion Matrix — {cfg.architecture.name} | Resolution — {cfg.dataset.resolution}",
+            f"Confusion Matrix — {ctx.arch_name} | Resolution — {ctx.resolution}",
             fontsize=12,
             pad=20,
         )
 
         plt.tight_layout()
 
-        fig.savefig(out_path, dpi=cfg.evaluation.fig_dpi, bbox_inches="tight")
+        fig.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")
         plt.close()
         logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Confusion Matrix':<18}: {out_path.name}")
 
@@ -169,7 +172,7 @@ def _plot_single_prediction(
     label: int,
     pred: int,
     classes: list[str],
-    cfg: "Config | None",
+    ctx: PlotContext | None,
 ) -> None:
     """
     Render a single prediction cell with color-coded correctness title.
@@ -180,9 +183,9 @@ def _plot_single_prediction(
         label: Ground-truth class index.
         pred: Predicted class index.
         classes: Human-readable class label names.
-        cfg: Configuration for denormalization. If None, skips denorm.
+        ctx: PlotContext for denormalization. If None, skips denorm.
     """
-    img = _denormalize_image(image, cfg) if cfg else image
+    img = _denormalize_image(image, ctx) if ctx else image
     display_img = _prepare_for_plt(img)
 
     ax.imshow(display_img, cmap="gray" if display_img.ndim == 2 else None)
@@ -195,28 +198,28 @@ def _plot_single_prediction(
     )
 
 
-def _build_suptitle(cfg: "Config") -> str:
+def _build_suptitle(ctx: PlotContext) -> str:
     """
     Build the figure suptitle with architecture, resolution, domain, and TTA info.
 
     Args:
-        cfg: Configuration object providing architecture, dataset, and training fields.
+        ctx: PlotContext providing architecture, dataset, and training fields.
 
     Returns:
         Formatted suptitle string.
     """
-    tta_info = f" | TTA: {'ON' if cfg.training.use_tta else 'OFF'}"
+    tta_info = f" | TTA: {'ON' if ctx.use_tta else 'OFF'}"
 
-    if cfg.dataset.metadata.is_texture_based:
+    if ctx.is_texture_based:
         domain_info = " | Mode: Texture"
-    elif cfg.dataset.metadata.is_anatomical:
+    elif ctx.is_anatomical:
         domain_info = " | Mode: Anatomical"
     else:
         domain_info = " | Mode: Standard"
 
     return (
-        f"Sample Predictions — {cfg.architecture.name} | "
-        f"Resolution: {cfg.dataset.resolution}"
+        f"Sample Predictions — {ctx.arch_name} | "
+        f"Resolution: {ctx.resolution}"
         f"{domain_info}{tta_info}"
     )
 
@@ -248,7 +251,7 @@ def _get_predictions_batch(
 
 
 def _setup_prediction_grid(
-    num_samples: int, cols: int, cfg: Config | None
+    num_samples: int, cols: int, ctx: PlotContext | None
 ) -> tuple[plt.Figure, np.ndarray]:
     """
     Calculate grid dimensions and initialize matplotlib subplots.
@@ -256,13 +259,13 @@ def _setup_prediction_grid(
     Args:
         num_samples: Total number of images to display.
         cols: Number of columns in the grid.
-        cfg: Configuration for figure size. Falls back to ``(12, 8)`` if None.
+        ctx: PlotContext for figure size. Falls back to ``(12, 8)`` if None.
 
     Returns:
         tuple of ``(fig, axes)`` where axes is a flat 1-D array.
     """
     rows = int(np.ceil(num_samples / cols))
-    base_w, base_h = cfg.evaluation.fig_size_predictions if cfg else (12, 8)
+    base_w, base_h = ctx.fig_size_predictions if ctx else (12, 8)
 
     fig, axes = plt.subplots(
         rows, cols, figsize=(base_w, (base_h / 3) * rows), constrained_layout=True
@@ -271,18 +274,18 @@ def _setup_prediction_grid(
     return fig, np.atleast_1d(axes).flatten()
 
 
-def _finalize_figure(plt_obj, save_path: Path | None, cfg: Config | None) -> None:
+def _finalize_figure(plt_obj, save_path: Path | None, ctx: PlotContext | None) -> None:
     """
     Save the current figure to disk or display interactively, then close.
 
     Args:
         plt_obj: The ``matplotlib.pyplot`` module reference.
         save_path: Output file path. If None, calls ``plt.show()`` instead.
-        cfg: Configuration for DPI. Falls back to 200 if None.
+        ctx: PlotContext for DPI. Falls back to 200 if None.
     """
     if save_path:
         save_path.parent.mkdir(parents=True, exist_ok=True)
-        dpi = cfg.evaluation.fig_dpi if cfg else 200
+        dpi = ctx.fig_dpi if ctx else 200
         plt_obj.savefig(save_path, dpi=dpi, bbox_inches="tight", facecolor="white")
         logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Predictions Grid':<18}: {save_path.name}")
     else:
@@ -292,19 +295,19 @@ def _finalize_figure(plt_obj, save_path: Path | None, cfg: Config | None) -> Non
     plt_obj.close()
 
 
-def _denormalize_image(img: np.ndarray, cfg: Config) -> np.ndarray:
+def _denormalize_image(img: np.ndarray, ctx: PlotContext) -> np.ndarray:
     """
     Reverse channel-wise normalization using dataset-specific statistics.
 
     Args:
         img: Normalized image array in ``(C, H, W)`` format.
-        cfg: Configuration providing ``dataset.mean`` and ``dataset.std``.
+        ctx: PlotContext providing ``mean`` and ``std``.
 
     Returns:
         Denormalized image clipped to ``[0, 1]``.
     """
-    mean = np.array(cfg.dataset.mean).reshape(-1, 1, 1)
-    std = np.array(cfg.dataset.std).reshape(-1, 1, 1)
+    mean = np.array(ctx.mean).reshape(-1, 1, 1)
+    std = np.array(ctx.std).reshape(-1, 1, 1)
     img = (img * std) + mean
     return np.clip(img, 0, 1)
 

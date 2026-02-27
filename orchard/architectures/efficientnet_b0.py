@@ -19,13 +19,16 @@ import torch
 import torch.nn as nn
 from torchvision import models
 
-from ..core import Config
 from ._morphing import morph_conv_weights
 
 
 # MODEL BUILDER
 def build_efficientnet_b0(
-    device: torch.device, num_classes: int, in_channels: int, cfg: Config
+    device: torch.device,
+    num_classes: int,
+    in_channels: int,
+    *,
+    pretrained: bool,
 ) -> nn.Module:
     """
     Constructs EfficientNet-B0 adapted for medical imaging datasets.
@@ -41,13 +44,13 @@ def build_efficientnet_b0(
         device: Target hardware for model placement
         num_classes: Number of dataset classes for classification head
         in_channels: Input channels (1=Grayscale, 3=RGB)
-        cfg: Global configuration with pretrained settings
+        pretrained: Whether to load ImageNet pretrained weights
 
     Returns:
         Adapted EfficientNet-B0 model deployed to device
     """
     # --- Step 1: Initialize with Optional Pretraining ---
-    weights = models.EfficientNet_B0_Weights.IMAGENET1K_V1 if cfg.architecture.pretrained else None
+    weights = models.EfficientNet_B0_Weights.IMAGENET1K_V1 if pretrained else None
     model = models.efficientnet_b0(weights=weights)
 
     # Snapshot original first conv layer (before replacement)
@@ -65,7 +68,7 @@ def build_efficientnet_b0(
     )
 
     # --- Step 3: Weight Morphing (Transfer Pretrained Knowledge) ---
-    if cfg.architecture.pretrained:
+    if pretrained:
         morph_conv_weights(old_conv, new_conv, in_channels)
 
     # Replace entry layer with adapted version

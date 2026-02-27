@@ -215,7 +215,9 @@ def create_structured_report(
         TrainingReport: A validated Pydantic model ready for export.
     """
     # Auto-generate augmentation info if not provided
-    aug_info = aug_info or get_augmentations_description(cfg)
+    aug_info = aug_info or get_augmentations_description(
+        cfg.augmentation, cfg.dataset.img_size, cfg.training.mixup_alpha
+    )
 
     def _safe_max(key: str) -> float:
         """Return the best non-NaN value for *key* across validation epochs."""

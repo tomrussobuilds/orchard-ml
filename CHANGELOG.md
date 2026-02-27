@@ -11,12 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - add f1 as monitor_metric, compute F1 in validate_epoch, drop unused deps
 - add 128×128 resolution support, convert medical registry to YAML
+- harden training pipeline — AUC NaN fallback, subsampling guard, best_val_f1, +25 tests
 
 ### Changed
 
 - unify scheduler stepping on monitor_metric
 - extract LoopOptions dataclass, fix docstrings in trainer/
 - unify metric source — remove optuna.metric_name, use training.monitor_metric as SSOT
+- config narrowing — decouple builders, transforms, TTA and visualization from Config
 
 ### Styling
 

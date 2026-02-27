@@ -8,12 +8,13 @@ These are essential smoke tests to boost coverage from 0% to ~30%.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 import torch
 
+from orchard.evaluation.plot_context import PlotContext
 from orchard.evaluation.visualization import (
     _denormalize_image,
     _prepare_for_plt,
@@ -23,11 +24,52 @@ from orchard.evaluation.visualization import (
 )
 
 
+# FIXTURES
+@pytest.fixture
+def ctx_rgb():
+    """PlotContext for RGB 28x28 datasets."""
+    return PlotContext(
+        arch_name="resnet18",
+        resolution=28,
+        fig_dpi=200,
+        plot_style="seaborn-v0_8-muted",
+        cmap_confusion="Blues",
+        grid_cols=4,
+        n_samples=12,
+        fig_size_predictions=(12, 9),
+        mean=(0.5, 0.5, 0.5),
+        std=(0.5, 0.5, 0.5),
+        use_tta=False,
+        is_anatomical=True,
+        is_texture_based=False,
+    )
+
+
+@pytest.fixture
+def ctx_gray():
+    """PlotContext for grayscale 28x28 datasets."""
+    return PlotContext(
+        arch_name="model",
+        resolution=28,
+        fig_dpi=150,
+        plot_style="seaborn-v0_8-muted",
+        cmap_confusion="viridis",
+        grid_cols=3,
+        n_samples=6,
+        fig_size_predictions=(9, 6),
+        mean=(0.5,),
+        std=(0.5,),
+        use_tta=False,
+        is_anatomical=False,
+        is_texture_based=False,
+    )
+
+
 # PLOT TRAINING CURVES
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.np.savez")
-def test_plot_training_curves_basic(mock_savez, mock_plt, tmp_path):
+def test_plot_training_curves_basic(mock_savez, mock_plt, tmp_path, ctx_rgb):
     """Test plot_training_curves creates and saves figure."""
     mock_fig = MagicMock()
     mock_ax = MagicMock()
@@ -37,12 +79,7 @@ def test_plot_training_curves_basic(mock_savez, mock_plt, tmp_path):
     val_accuracies = [0.6, 0.7, 0.8, 0.9]
     out_path = tmp_path / "curves.png"
 
-    mock_cfg = MagicMock()
-    mock_cfg.architecture.name = "resnet18"
-    mock_cfg.dataset.resolution = 28
-    mock_cfg.evaluation.fig_dpi = 200
-
-    plot_training_curves(train_losses, val_accuracies, out_path, mock_cfg)
+    plot_training_curves(train_losses, val_accuracies, out_path, ctx_rgb)
 
     assert mock_plt.subplots.called
     assert mock_plt.savefig.called
@@ -53,22 +90,15 @@ def test_plot_training_curves_basic(mock_savez, mock_plt, tmp_path):
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.np.savez")
-def test_plot_training_curves_empty_lists(mock_savez, mock_plt, tmp_path):
+def test_plot_training_curves_empty_lists(mock_savez, mock_plt, tmp_path, ctx_gray):
     """Test plot_training_curves handles empty metric lists."""
     mock_fig = MagicMock()
     mock_ax = MagicMock()
     mock_plt.subplots.return_value = (mock_fig, mock_ax)
 
-    train_losses = []
-    val_accuracies = []
     out_path = tmp_path / "curves.png"
 
-    mock_cfg = MagicMock()
-    mock_cfg.architecture.name = "model"
-    mock_cfg.dataset.resolution = 224
-    mock_cfg.evaluation.fig_dpi = 150
-
-    plot_training_curves(train_losses, val_accuracies, out_path, mock_cfg)
+    plot_training_curves([], [], out_path, ctx_gray)
 
 
 # PLOT CONFUSION MATRIX
@@ -86,15 +116,20 @@ def test_plot_confusion_matrix_basic(mock_cm, mock_plt, tmp_path):
     classes = ["class0", "class1", "class2"]
     out_path = tmp_path / "confusion.png"
 
-    mock_cfg = MagicMock()
-    mock_cfg.architecture.name = "efficientnet"
-    mock_cfg.dataset.resolution = 224
-    mock_cfg.evaluation.fig_dpi = 200
-    mock_cfg.evaluation.cmap_confusion = "Blues"
+    ctx = PlotContext(
+        arch_name="efficientnet",
+        resolution=224,
+        fig_dpi=200,
+        plot_style="seaborn-v0_8-muted",
+        cmap_confusion="Blues",
+        grid_cols=4,
+        n_samples=12,
+        fig_size_predictions=(12, 9),
+    )
 
     mock_cm.return_value = np.eye(3)
 
-    plot_confusion_matrix(all_labels, all_preds, classes, out_path, mock_cfg)
+    plot_confusion_matrix(all_labels, all_preds, classes, out_path, ctx)
 
     mock_cm.assert_called_once()
     assert mock_plt.subplots.called
@@ -104,7 +139,7 @@ def test_plot_confusion_matrix_basic(mock_cm, mock_plt, tmp_path):
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.confusion_matrix")
-def test_plot_confusion_matrix_with_nan(mock_cm, mock_plt, tmp_path):
+def test_plot_confusion_matrix_with_nan(mock_cm, mock_plt, tmp_path, ctx_gray):
     """Test plot_confusion_matrix handles NaN values in matrix."""
     mock_fig = MagicMock()
     mock_ax = MagicMock()
@@ -115,22 +150,16 @@ def test_plot_confusion_matrix_with_nan(mock_cm, mock_plt, tmp_path):
     classes = ["class0", "class1", "class2"]
     out_path = tmp_path / "confusion.png"
 
-    mock_cfg = MagicMock()
-    mock_cfg.architecture.name = "model"
-    mock_cfg.dataset.resolution = 28
-    mock_cfg.evaluation.fig_dpi = 150
-    mock_cfg.evaluation.cmap_confusion = "viridis"
-
     mock_cm.return_value = np.array([[1.0, 0.0, np.nan], [0.0, 1.0, np.nan], [0.0, 0.0, 0.0]])
 
-    plot_confusion_matrix(all_labels, all_preds, classes, out_path, mock_cfg)
+    plot_confusion_matrix(all_labels, all_preds, classes, out_path, ctx_gray)
 
 
 # SHOW PREDICTIONS
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization._get_predictions_batch")
-def test_show_predictions_basic(mock_get_batch, mock_plt, tmp_path):
+def test_show_predictions_basic(mock_get_batch, mock_plt, tmp_path, ctx_rgb):
     """Test show_predictions creates prediction grid."""
     mock_fig = MagicMock()
     mock_axes = [MagicMock() for _ in range(12)]
@@ -148,20 +177,7 @@ def test_show_predictions_basic(mock_get_batch, mock_plt, tmp_path):
     classes = ["class0", "class1", "class2"]
     save_path = tmp_path / "predictions.png"
 
-    mock_cfg = MagicMock()
-    mock_cfg.evaluation.n_samples = 12
-    mock_cfg.evaluation.grid_cols = 4
-    mock_cfg.evaluation.fig_dpi = 200
-    mock_cfg.evaluation.fig_size_predictions = (12, 9)
-    mock_cfg.architecture.name = "resnet18"
-    mock_cfg.dataset.resolution = 28
-    mock_cfg.dataset.mean = [0.5, 0.5, 0.5]
-    mock_cfg.dataset.std = [0.5, 0.5, 0.5]
-    mock_cfg.dataset.metadata.is_texture_based = False
-    mock_cfg.dataset.metadata.is_anatomical = True
-    mock_cfg.training.use_tta = False
-
-    show_predictions(mock_model, mock_loader, device, classes, save_path, mock_cfg)
+    show_predictions(mock_model, mock_loader, device, classes, save_path, ctx_rgb)
 
     mock_model.eval.assert_called_once()
     assert mock_plt.subplots.called
@@ -171,8 +187,8 @@ def test_show_predictions_basic(mock_get_batch, mock_plt, tmp_path):
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization._get_predictions_batch")
-def test_show_predictions_without_config(mock_get_batch, mock_plt):
-    """Test show_predictions works without config (uses defaults)."""
+def test_show_predictions_without_ctx(mock_get_batch, mock_plt):
+    """Test show_predictions works without PlotContext (uses defaults)."""
     mock_fig = MagicMock()
     mock_axes = np.empty((3, 4), dtype=object)
     for i in range(3):
@@ -192,19 +208,7 @@ def test_show_predictions_without_config(mock_get_batch, mock_plt):
     device = torch.device("cpu")
     classes = ["class0", "class1"]
 
-    mock_cfg = MagicMock()
-    mock_cfg.evaluation.n_samples = 12
-    mock_cfg.evaluation.grid_cols = 4
-    mock_cfg.evaluation.fig_size_predictions = (12, 9)
-    mock_cfg.evaluation.fig_dpi = 150
-    mock_cfg.architecture.name = "model"
-    mock_cfg.dataset.resolution = 28
-    mock_cfg.dataset.mean = [0.5, 0.5, 0.5]
-    mock_cfg.dataset.std = [0.5, 0.5, 0.5]
-    mock_cfg.training.use_tta = False
-    type(mock_cfg.dataset).metadata = PropertyMock(side_effect=AttributeError())
-
-    show_predictions(mock_model, mock_loader, device, classes, save_path=None, cfg=mock_cfg)
+    show_predictions(mock_model, mock_loader, device, classes, save_path=None, ctx=None)
 
     mock_model.eval.assert_called_once()
     assert mock_plt.subplots.called
@@ -213,8 +217,8 @@ def test_show_predictions_without_config(mock_get_batch, mock_plt):
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization._get_predictions_batch")
-def test_show_predictions_without_save_path(mock_get_batch, mock_plt, tmp_path):
-    """Test show_predictions with save_path=None (interactive mode) - line 214-215."""
+def test_show_predictions_without_save_path(mock_get_batch, mock_plt, ctx_rgb):
+    """Test show_predictions with save_path=None (interactive mode)."""
     mock_fig = MagicMock()
     mock_axes = [MagicMock() for _ in range(12)]
     mock_plt.subplots.return_value = (mock_fig, np.array(mock_axes))
@@ -230,20 +234,7 @@ def test_show_predictions_without_save_path(mock_get_batch, mock_plt, tmp_path):
     device = torch.device("cpu")
     classes = ["class0", "class1"]
 
-    mock_cfg = MagicMock()
-    mock_cfg.evaluation.n_samples = 12
-    mock_cfg.evaluation.grid_cols = 4
-    mock_cfg.evaluation.fig_dpi = 200
-    mock_cfg.evaluation.fig_size_predictions = (12, 9)
-    mock_cfg.architecture.name = "resnet18"
-    mock_cfg.dataset.resolution = 28
-    mock_cfg.dataset.mean = [0.5, 0.5, 0.5]
-    mock_cfg.dataset.std = [0.5, 0.5, 0.5]
-    mock_cfg.dataset.metadata.is_texture_based = False
-    mock_cfg.dataset.metadata.is_anatomical = False
-    mock_cfg.training.use_tta = False
-
-    show_predictions(mock_model, mock_loader, device, classes, save_path=None, cfg=mock_cfg)
+    show_predictions(mock_model, mock_loader, device, classes, save_path=None, ctx=ctx_rgb)
 
     mock_plt.show.assert_called_once()
 
@@ -251,8 +242,8 @@ def test_show_predictions_without_save_path(mock_get_batch, mock_plt, tmp_path):
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization._get_predictions_batch")
-def test_show_predictions_standard_mode(mock_get_batch, mock_plt, tmp_path):
-    """Test show_predictions with standard mode (neither texture nor anatomical) - line 95."""
+def test_show_predictions_standard_mode(mock_get_batch, mock_plt, tmp_path, ctx_gray):
+    """Test show_predictions with standard mode (neither texture nor anatomical)."""
     mock_fig = MagicMock()
     mock_axes = [MagicMock() for _ in range(6)]
     mock_plt.subplots.return_value = (mock_fig, np.array(mock_axes))
@@ -269,20 +260,7 @@ def test_show_predictions_standard_mode(mock_get_batch, mock_plt, tmp_path):
     classes = ["class0", "class1"]
     save_path = tmp_path / "predictions.png"
 
-    mock_cfg = MagicMock()
-    mock_cfg.evaluation.n_samples = 6
-    mock_cfg.evaluation.grid_cols = 3
-    mock_cfg.evaluation.fig_dpi = 150
-    mock_cfg.evaluation.fig_size_predictions = (9, 6)
-    mock_cfg.architecture.name = "model"
-    mock_cfg.dataset.resolution = 28
-    mock_cfg.dataset.mean = [0.5]
-    mock_cfg.dataset.std = [0.5]
-    mock_cfg.dataset.metadata.is_texture_based = False
-    mock_cfg.dataset.metadata.is_anatomical = False
-    mock_cfg.training.use_tta = False
-
-    show_predictions(mock_model, mock_loader, device, classes, save_path, mock_cfg, n=6)
+    show_predictions(mock_model, mock_loader, device, classes, save_path, ctx_gray, n=6)
 
     assert mock_plt.subplots.called
     assert mock_plt.savefig.called
@@ -309,17 +287,21 @@ def test_show_predictions_with_custom_n(mock_get_batch, mock_plt, tmp_path):
     classes = ["class0", "class1", "class2"]
     save_path = tmp_path / "predictions.png"
 
-    mock_cfg = MagicMock()
-    mock_cfg.evaluation.grid_cols = 3
-    mock_cfg.evaluation.fig_dpi = 150
-    mock_cfg.evaluation.fig_size_predictions = (9, 6)
-    mock_cfg.architecture.name = "vit"
-    mock_cfg.dataset.resolution = 224
-    mock_cfg.dataset.metadata.is_texture_based = True
-    mock_cfg.dataset.metadata.is_anatomical = False
-    mock_cfg.training.use_tta = True
+    ctx = PlotContext(
+        arch_name="vit",
+        resolution=224,
+        fig_dpi=150,
+        plot_style="seaborn-v0_8-muted",
+        cmap_confusion="Blues",
+        grid_cols=3,
+        n_samples=12,
+        fig_size_predictions=(9, 6),
+        is_texture_based=True,
+        is_anatomical=False,
+        use_tta=True,
+    )
 
-    show_predictions(mock_model, mock_loader, device, classes, save_path, mock_cfg, n=6)
+    show_predictions(mock_model, mock_loader, device, classes, save_path, ctx, n=6)
 
     mock_get_batch.assert_called_once()
     assert mock_get_batch.call_args[0][3] == 6
@@ -328,7 +310,7 @@ def test_show_predictions_with_custom_n(mock_get_batch, mock_plt, tmp_path):
 # HELPER FUNCTIONS - DIRECT TESTS
 @pytest.mark.unit
 def test_get_predictions_batch_directly():
-    """Test _get_predictions_batch function directly (lines 183-191)."""
+    """Test _get_predictions_batch function directly."""
     from orchard.evaluation.visualization import _get_predictions_batch
 
     mock_model = MagicMock()
@@ -352,12 +334,9 @@ def test_get_predictions_batch_directly():
 
 
 @pytest.mark.unit
-def test_setup_prediction_grid_directly():
+def test_setup_prediction_grid_directly(ctx_rgb):
     """Test _setup_prediction_grid function directly."""
     from orchard.evaluation.visualization import _setup_prediction_grid
-
-    mock_cfg = MagicMock()
-    mock_cfg.evaluation.fig_size_predictions = (12, 9)
 
     with patch("orchard.evaluation.visualization.plt.subplots") as mock_subplots:
         mock_fig = MagicMock()
@@ -368,24 +347,21 @@ def test_setup_prediction_grid_directly():
 
         mock_subplots.return_value = (mock_fig, mock_axes)
 
-        _, axes = _setup_prediction_grid(12, 4, mock_cfg)
+        _, axes = _setup_prediction_grid(12, 4, ctx_rgb)
 
         mock_subplots.assert_called_once()
         assert len(axes) == 12
 
 
 @pytest.mark.unit
-def test_finalize_figure_with_save(tmp_path):
+def test_finalize_figure_with_save(tmp_path, ctx_rgb):
     """Test _finalize_figure with save_path."""
     from orchard.evaluation.visualization import _finalize_figure
 
     mock_plt = MagicMock()
     save_path = tmp_path / "test.png"
 
-    mock_cfg = MagicMock()
-    mock_cfg.evaluation.fig_dpi = 200
-
-    _finalize_figure(mock_plt, save_path, mock_cfg)
+    _finalize_figure(mock_plt, save_path, ctx_rgb)
 
     mock_plt.savefig.assert_called_once()
     mock_plt.show.assert_not_called()
@@ -399,12 +375,19 @@ def test_finalize_figure_without_save():
 
     mock_plt = MagicMock()
 
-    mock_cfg = MagicMock()
-    mock_cfg.evaluation.fig_dpi = 150
+    ctx = PlotContext(
+        arch_name="model",
+        resolution=28,
+        fig_dpi=150,
+        plot_style="seaborn-v0_8-muted",
+        cmap_confusion="Blues",
+        grid_cols=4,
+        n_samples=12,
+        fig_size_predictions=(12, 9),
+    )
 
-    _finalize_figure(mock_plt, save_path=None, cfg=mock_cfg)
+    _finalize_figure(mock_plt, save_path=None, ctx=ctx)
 
-    # Should call show(), not savefig()
     mock_plt.show.assert_called_once()
     mock_plt.savefig.assert_not_called()
     mock_plt.close.assert_called_once()
@@ -416,11 +399,20 @@ def test_denormalize_image():
     """Test _denormalize_image reverses normalization."""
     img = np.array([[[0.0, 0.0], [0.0, 0.0]]])
 
-    mock_cfg = MagicMock()
-    mock_cfg.dataset.mean = [0.5]
-    mock_cfg.dataset.std = [0.5]
+    ctx = PlotContext(
+        arch_name="m",
+        resolution=28,
+        fig_dpi=200,
+        plot_style="seaborn-v0_8-muted",
+        cmap_confusion="Blues",
+        grid_cols=4,
+        n_samples=12,
+        fig_size_predictions=(12, 9),
+        mean=(0.5,),
+        std=(0.5,),
+    )
 
-    result = _denormalize_image(img, mock_cfg)
+    result = _denormalize_image(img, ctx)
 
     expected = np.array([[[0.5, 0.5], [0.5, 0.5]]])
     np.testing.assert_array_almost_equal(result, expected)
@@ -431,11 +423,20 @@ def test_denormalize_image_rgb():
     """Test _denormalize_image handles RGB images."""
     img = np.zeros((3, 2, 2))
 
-    mock_cfg = MagicMock()
-    mock_cfg.dataset.mean = [0.485, 0.456, 0.406]
-    mock_cfg.dataset.std = [0.229, 0.224, 0.225]
+    ctx = PlotContext(
+        arch_name="m",
+        resolution=28,
+        fig_dpi=200,
+        plot_style="seaborn-v0_8-muted",
+        cmap_confusion="Blues",
+        grid_cols=4,
+        n_samples=12,
+        fig_size_predictions=(12, 9),
+        mean=(0.485, 0.456, 0.406),
+        std=(0.229, 0.224, 0.225),
+    )
 
-    result = _denormalize_image(img, mock_cfg)
+    result = _denormalize_image(img, ctx)
 
     assert result.shape == (3, 2, 2)
     assert 0.0 <= result.min() <= 1.0
@@ -447,11 +448,20 @@ def test_denormalize_image_clips_values():
     """Test _denormalize_image clips values to [0, 1]."""
     img = np.full((1, 2, 2), 10.0)
 
-    mock_cfg = MagicMock()
-    mock_cfg.dataset.mean = [0.5]
-    mock_cfg.dataset.std = [0.5]
+    ctx = PlotContext(
+        arch_name="m",
+        resolution=28,
+        fig_dpi=200,
+        plot_style="seaborn-v0_8-muted",
+        cmap_confusion="Blues",
+        grid_cols=4,
+        n_samples=12,
+        fig_size_predictions=(12, 9),
+        mean=(0.5,),
+        std=(0.5,),
+    )
 
-    result = _denormalize_image(img, mock_cfg)
+    result = _denormalize_image(img, ctx)
 
     assert result.max() == pytest.approx(1.0)
 
@@ -487,6 +497,57 @@ def test_prepare_for_plt_already_2d():
     result = _prepare_for_plt(img)
 
     assert result.shape == (28, 28)
+
+
+@pytest.mark.unit
+def test_plot_context_from_config():
+    """Test PlotContext.from_config builds from a mock Config."""
+    mock_cfg = MagicMock()
+    mock_cfg.architecture.name = "resnet18"
+    mock_cfg.dataset.resolution = 28
+    mock_cfg.dataset.mean = (0.5,)
+    mock_cfg.dataset.std = (0.5,)
+    mock_cfg.evaluation.fig_dpi = 200
+    mock_cfg.evaluation.plot_style = "seaborn-v0_8-muted"
+    mock_cfg.evaluation.cmap_confusion = "Blues"
+    mock_cfg.evaluation.grid_cols = 4
+    mock_cfg.evaluation.n_samples = 12
+    mock_cfg.evaluation.fig_size_predictions = (12, 9)
+    mock_cfg.training.use_tta = False
+    mock_cfg.dataset.metadata.is_anatomical = True
+    mock_cfg.dataset.metadata.is_texture_based = False
+
+    ctx = PlotContext.from_config(mock_cfg)
+
+    assert ctx.arch_name == "resnet18"
+    assert ctx.resolution == 28
+    assert ctx.fig_dpi == 200
+    assert ctx.is_anatomical is True
+    assert ctx.is_texture_based is False
+
+
+@pytest.mark.unit
+def test_plot_context_from_config_no_metadata():
+    """Test PlotContext.from_config with metadata=None."""
+    mock_cfg = MagicMock()
+    mock_cfg.architecture.name = "model"
+    mock_cfg.dataset.resolution = 224
+    mock_cfg.dataset.mean = (0.5, 0.5, 0.5)
+    mock_cfg.dataset.std = (0.5, 0.5, 0.5)
+    mock_cfg.evaluation.fig_dpi = 150
+    mock_cfg.evaluation.plot_style = "seaborn-v0_8-muted"
+    mock_cfg.evaluation.cmap_confusion = "viridis"
+    mock_cfg.evaluation.grid_cols = 3
+    mock_cfg.evaluation.n_samples = 6
+    mock_cfg.evaluation.fig_size_predictions = (9, 6)
+    mock_cfg.training.use_tta = True
+    mock_cfg.dataset.metadata = None
+
+    ctx = PlotContext.from_config(mock_cfg)
+
+    assert ctx.is_anatomical is False
+    assert ctx.is_texture_based is False
+    assert ctx.use_tta is True
 
 
 if __name__ == "__main__":

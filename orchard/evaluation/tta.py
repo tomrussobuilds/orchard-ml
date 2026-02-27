@@ -17,13 +17,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms.functional as TF
 
-from ..core import Config
+from ..core.config import AugmentationConfig
 
 _TTA_BASELINE_RESOLUTION = 224  # Reference resolution for TTA intensity scaling
 
 
 # TTA HELPERS
-def _get_tta_transforms(is_anatomical: bool, is_texture_based: bool, cfg: Config) -> list:
+def _get_tta_transforms(
+    is_anatomical: bool,
+    is_texture_based: bool,
+    aug_cfg: AugmentationConfig,
+    resolution: int,
+) -> list:
     """
     Internal factory to resolve the augmentation suite based on dataset constraints and config.
 
@@ -39,20 +44,20 @@ def _get_tta_transforms(is_anatomical: bool, is_texture_based: bool, cfg: Config
     Args:
         is_anatomical: If True, preserves spatial orientation (no flips/rotations)
         is_texture_based: If True, avoids destructive pixel operations
-        cfg: Configuration with TTA parameters and tta_mode policy
+        aug_cfg: Augmentation sub-configuration with TTA parameters
+        resolution: Dataset resolution for TTA intensity scaling
 
     Returns:
         list of transform functions to apply during TTA inference
     """
-    tta_mode = cfg.augmentation.tta_mode
+    tta_mode = aug_cfg.tta_mode
 
     # Scale TTA intensity relative to resolution.
     # A 2px shift on 224x224 (~0.9%) should map to ~0.25px on 28x28 (~0.9%).
-    resolution = cfg.dataset.resolution
     scale_factor = resolution / _TTA_BASELINE_RESOLUTION
-    tta_translate = cfg.augmentation.tta_translate * scale_factor
-    tta_scale = 1.0 + (cfg.augmentation.tta_scale - 1.0) * scale_factor
-    tta_blur_sigma = cfg.augmentation.tta_blur_sigma * scale_factor
+    tta_translate = aug_cfg.tta_translate * scale_factor
+    tta_scale = 1.0 + (aug_cfg.tta_scale - 1.0) * scale_factor
+    tta_blur_sigma = aug_cfg.tta_blur_sigma * scale_factor
 
     # 1. BASE TRANSFORMS: Always include identity
     t_list = [
@@ -75,7 +80,7 @@ def _get_tta_transforms(is_anatomical: bool, is_texture_based: bool, cfg: Config
         _translate = tta_translate
         _scale = tta_scale
         _sigma = max(tta_blur_sigma, 0.01)  # blur sigma must be > 0
-        _kernel = cfg.augmentation.tta_blur_kernel_size
+        _kernel = aug_cfg.tta_blur_kernel_size
 
         # Non-texture datasets can tolerate geometric/photometric perturbations
         t_list.extend(
@@ -115,7 +120,8 @@ def adaptive_tta_predict(
     device: torch.device,
     is_anatomical: bool,
     is_texture_based: bool,
-    cfg: Config,
+    aug_cfg: AugmentationConfig,
+    resolution: int,
 ) -> torch.Tensor:
     """
     Performs Test-Time Augmentation (TTA) inference on a batch of inputs.
@@ -128,21 +134,22 @@ def adaptive_tta_predict(
     ensemble complexity (full vs light) independently of hardware.
 
     Args:
-        model (nn.Module): The trained PyTorch model.
-        inputs (torch.Tensor): The batch of test images.
-        device (torch.device): The device to run the inference on.
-        is_anatomical (bool): Whether the dataset has fixed anatomical orientation.
-        is_texture_based (bool): Whether the dataset relies on high-frequency textures.
-        cfg (Config): The global configuration object containing TTA parameters.
+        model: The trained PyTorch model.
+        inputs: The batch of test images.
+        device: The device to run the inference on.
+        is_anatomical: Whether the dataset has fixed anatomical orientation.
+        is_texture_based: Whether the dataset relies on high-frequency textures.
+        aug_cfg: Augmentation sub-configuration with TTA parameters.
+        resolution: Dataset resolution for TTA intensity scaling.
 
     Returns:
-        torch.Tensor: The averaged softmax probability predictions (mean ensemble).
+        The averaged softmax probability predictions (mean ensemble).
     """
     model.eval()
     inputs = inputs.to(device)
 
     # Generate the suite of transforms via module-level factory
-    transforms = _get_tta_transforms(is_anatomical, is_texture_based, cfg)
+    transforms = _get_tta_transforms(is_anatomical, is_texture_based, aug_cfg, resolution)
 
     # ENSEMBLE EXECUTION: Iterative probability accumulation to save VRAM
     ensemble_probs = None
@@ -159,5 +166,6 @@ def adaptive_tta_predict(
                 ensemble_probs += probs
 
     # Calculate the mean probability across all augmentation passes
-    assert ensemble_probs is not None, "TTA transforms list cannot be empty"  # nosec B101
+    if ensemble_probs is None:
+        raise ValueError("TTA transforms list cannot be empty")
     return ensemble_probs / len(transforms)

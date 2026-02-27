@@ -22,8 +22,6 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
-from ..core import Config
-
 
 # MODEL DEFINITION
 class MiniCNN(nn.Module):
@@ -79,7 +77,11 @@ class MiniCNN(nn.Module):
 
 
 def build_mini_cnn(
-    device: torch.device, num_classes: int, in_channels: int, cfg: Config
+    device: torch.device,
+    num_classes: int,
+    in_channels: int,
+    *,
+    dropout: float,
 ) -> nn.Module:
     """
     Constructs MiniCNN for low-resolution medical imaging.
@@ -88,13 +90,11 @@ def build_mini_cnn(
         device: Target hardware for model placement
         num_classes: Number of dataset classes
         in_channels: Input channels (1=Grayscale, 3=RGB)
-        cfg: Global configuration with dropout settings
+        dropout: Dropout probability before final FC layer
 
     Returns:
         MiniCNN model deployed to device
     """
-    model = MiniCNN(
-        in_channels=in_channels, num_classes=num_classes, dropout=cfg.architecture.dropout
-    )
+    model = MiniCNN(in_channels=in_channels, num_classes=num_classes, dropout=dropout)
 
     return model.to(device)

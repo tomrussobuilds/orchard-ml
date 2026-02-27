@@ -20,11 +20,15 @@ import timm
 import torch
 import torch.nn as nn
 
-from ..core import Config
+from ..core.config import ArchitectureConfig
 
 
 def build_timm_model(
-    device: torch.device, num_classes: int, in_channels: int, cfg: Config
+    device: torch.device,
+    num_classes: int,
+    in_channels: int,
+    *,
+    arch_cfg: ArchitectureConfig,
 ) -> nn.Module:
     """
     Construct any timm-registered model with automatic adaptation.
@@ -40,7 +44,7 @@ def build_timm_model(
         device: Target hardware for model placement.
         num_classes: Number of output classes for the classification head.
         in_channels: Number of input channels (1=grayscale, 3=RGB).
-        cfg: Global config with architecture.name, pretrained, dropout.
+        arch_cfg: Architecture sub-config with name, pretrained, dropout.
 
     Returns:
         Adapted timm model deployed to device.
@@ -48,15 +52,15 @@ def build_timm_model(
     Raises:
         ValueError: If the timm model identifier is not found in the registry.
     """
-    model_id = cfg.architecture.name.split("/", 1)[1]
+    model_id = arch_cfg.name.split("/", 1)[1]
 
     try:
         model = timm.create_model(
             model_id,
-            pretrained=cfg.architecture.pretrained,
+            pretrained=arch_cfg.pretrained,
             num_classes=num_classes,
             in_chans=in_channels,
-            drop_rate=cfg.architecture.dropout,
+            drop_rate=arch_cfg.dropout,
         )
     except Exception as e:  # timm raises diverse internal errors
         raise ValueError(

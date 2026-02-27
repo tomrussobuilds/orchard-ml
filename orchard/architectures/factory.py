@@ -26,7 +26,7 @@ from __future__ import annotations
 import logging
 import os
 from contextlib import contextmanager
-from typing import Iterator
+from typing import Callable, Iterator
 
 import torch
 import torch.nn as nn
@@ -68,6 +68,77 @@ def _suppress_download_noise() -> Iterator[None]:
             lg.setLevel(level)
 
 
+_BuilderFn = Callable[..., nn.Module]
+
+_MODEL_REGISTRY: dict[str, _BuilderFn] = {
+    "resnet_18": build_resnet18,
+    "efficientnet_b0": build_efficientnet_b0,
+    "convnext_tiny": build_convnext_tiny,
+    "vit_tiny": build_vit_tiny,
+    "mini_cnn": build_mini_cnn,
+    # Extension point: register your custom architecture here
+    # "your_model": build_your_model,
+}
+
+
+def _dispatch_builder(
+    model_name_lower: str,
+    device: torch.device,
+    num_classes: int,
+    in_channels: int,
+    cfg: Config,
+) -> nn.Module:
+    """
+    Dispatch to the correct builder with narrowed parameters.
+    """
+    arch = cfg.architecture
+
+    if model_name_lower.startswith("timm/"):
+        return build_timm_model(
+            device,
+            num_classes=num_classes,
+            in_channels=in_channels,
+            arch_cfg=arch,
+        )
+
+    builder = _MODEL_REGISTRY.get(model_name_lower)
+    if builder is None:
+        error_msg = f"Architecture '{arch.name}' is not registered in the Factory."
+        logger.error(f" [!] {error_msg}")
+        raise ValueError(error_msg)
+
+    if builder is build_mini_cnn:
+        return build_mini_cnn(
+            device,
+            num_classes=num_classes,
+            in_channels=in_channels,
+            dropout=arch.dropout,
+        )
+    if builder is build_resnet18:
+        return build_resnet18(
+            device,
+            num_classes=num_classes,
+            in_channels=in_channels,
+            pretrained=arch.pretrained,
+            resolution=cfg.dataset.resolution,
+        )
+    if builder is build_vit_tiny:
+        return build_vit_tiny(
+            device,
+            num_classes=num_classes,
+            in_channels=in_channels,
+            pretrained=arch.pretrained,
+            weight_variant=arch.weight_variant,
+        )
+    # efficientnet_b0, convnext_tiny: pretrained only
+    return builder(
+        device,
+        num_classes=num_classes,
+        in_channels=in_channels,
+        pretrained=arch.pretrained,
+    )
+
+
 # MODEL FACTORY LOGIC
 def get_model(device: torch.device, cfg: Config, verbose: bool = True) -> nn.Module:
     """
@@ -95,17 +166,6 @@ def get_model(device: torch.device, cfg: Config, verbose: bool = True) -> nn.Mod
     Raises:
         ValueError: If the requested architecture is not found in the registry.
     """
-    # Internal Imports
-    _MODEL_REGISTRY = {
-        "resnet_18": build_resnet18,
-        "efficientnet_b0": build_efficientnet_b0,
-        "convnext_tiny": build_convnext_tiny,
-        "vit_tiny": build_vit_tiny,
-        "mini_cnn": build_mini_cnn,
-        # Extension point: register your custom architecture here
-        # "your_model": build_your_model,
-    }
-
     # Resolve structural dimensions from Single Source of Truth (Config)
     in_channels = cfg.dataset.effective_in_channels
     num_classes = cfg.dataset.num_classes
@@ -119,17 +179,6 @@ def get_model(device: torch.device, cfg: Config, verbose: bool = True) -> nn.Mod
             f"Output: {num_classes} classes"
         )
 
-    # Resolve builder: timm pass-through or internal registry
-    if model_name_lower.startswith("timm/"):
-        builder = build_timm_model
-    else:
-        _builder = _MODEL_REGISTRY.get(model_name_lower)
-        if _builder is None:
-            error_msg = f"Architecture '{cfg.architecture.name}' is not registered in the Factory."
-            logger.error(f" [!] {error_msg}")
-            raise ValueError(error_msg)
-        builder = _builder
-
     # Instance construction and adaptation.
     # When verbose=False (e.g. export phase), suppress builder-internal INFO logs
     # to avoid duplicating messages already shown during training.
@@ -138,14 +187,11 @@ def get_model(device: torch.device, cfg: Config, verbose: bool = True) -> nn.Mod
         logger.setLevel(logging.WARNING)
     try:
         with _suppress_download_noise():
-            model = builder(
-                device=device, cfg=cfg, in_channels=in_channels, num_classes=num_classes
-            )
+            model = _dispatch_builder(model_name_lower, device, num_classes, in_channels, cfg)
     finally:
         logger.setLevel(_prev_level)
 
-    # Final deployment and parameter telemetry
-    model = model.to(device)
+    # Parameter telemetry
     if verbose:
         total_params = sum(p.numel() for p in model.parameters())
         logger.info(

@@ -6,7 +6,7 @@ output tensor shapes for the orchard model suite.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import torch
@@ -15,17 +15,6 @@ from orchard.architectures import build_mini_cnn
 
 
 # FIXTURES
-@pytest.fixture
-def mock_cfg():
-    """Provides a standardized configuration mock for model building."""
-    cfg = MagicMock()
-    cfg.architecture.pretrained = True
-    cfg.architecture.dropout = 0.5
-    cfg.dataset = MagicMock()
-    cfg.dataset.img_size = 28
-    return cfg
-
-
 @pytest.fixture
 def device():
     """Resolves target device for test execution."""
@@ -47,12 +36,10 @@ class TestMiniCNN:
             (1, 5, 32),
         ],
     )
-    def test_mini_cnn_forward_flow(self, mock_cfg, device, in_channels, num_classes, img_size):
+    def test_mini_cnn_forward_flow(self, device, in_channels, num_classes, img_size):
         """Verify that the internal layers' call sequence is correct."""
-        mock_cfg.dataset.img_size = img_size
-
         model = build_mini_cnn(
-            device, num_classes=num_classes, in_channels=in_channels, cfg=mock_cfg
+            device, num_classes=num_classes, in_channels=in_channels, dropout=0.5
         )
 
         with (
@@ -80,13 +67,11 @@ class TestMiniCNN:
         ],
     )
     def test_mini_cnn_shape_integration(
-        self, mock_cfg, device, in_channels, num_classes, img_size, batch_size
+        self, device, in_channels, num_classes, img_size, batch_size
     ):
         """Verify the integrity of the shapes produced by the real model (without patches)."""
-        mock_cfg.dataset.img_size = img_size
-
         model = build_mini_cnn(
-            device, num_classes=num_classes, in_channels=in_channels, cfg=mock_cfg
+            device, num_classes=num_classes, in_channels=in_channels, dropout=0.5
         )
         model.eval()
 

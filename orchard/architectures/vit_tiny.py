@@ -28,7 +28,7 @@ import timm
 import torch
 import torch.nn as nn
 
-from ..core import LOGGER_NAME, Config
+from ..core import LOGGER_NAME
 from ._morphing import morph_conv_weights
 
 # LOGGER CONFIGURATION
@@ -37,7 +37,12 @@ logger = logging.getLogger(LOGGER_NAME)
 
 # MODEL BUILDER
 def build_vit_tiny(
-    device: torch.device, num_classes: int, in_channels: int, cfg: Config
+    device: torch.device,
+    num_classes: int,
+    in_channels: int,
+    *,
+    pretrained: bool,
+    weight_variant: str | None = None,
 ) -> nn.Module:
     """
     Constructs Vision Transformer Tiny adapted for medical imaging datasets.
@@ -53,7 +58,8 @@ def build_vit_tiny(
         device: Target hardware for model placement
         num_classes: Number of dataset classes for classification head
         in_channels: Input channels (1=Grayscale, 3=RGB)
-        cfg: Global configuration with pretrained/weight_variant settings
+        pretrained: Whether to load pretrained weights
+        weight_variant: Specific timm weight variant identifier
 
     Returns:
         Adapted ViT-Tiny model deployed to device
@@ -62,27 +68,27 @@ def build_vit_tiny(
         ValueError: If weight variant is invalid or incompatible with pretrained flag
     """
     # --- Step 1: Resolve Weight Variant ---
-    weight_variant = cfg.architecture.weight_variant or "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
+    _weight_variant = weight_variant or "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
 
-    if cfg.architecture.pretrained:
-        logger.info(f"Loading ViT-Tiny with pretrained weights: {weight_variant}")
+    if pretrained:
+        logger.info(f"Loading ViT-Tiny with pretrained weights: {_weight_variant}")
         pretrained_flag = True
     else:
         logger.info("Initializing ViT-Tiny with random weights")
         pretrained_flag = False
-        weight_variant = "vit_tiny_patch16_224"  # Use base architecture
+        _weight_variant = "vit_tiny_patch16_224"  # Use base architecture
 
     # --- Step 2: Load Model via timm ---
     try:
         model = timm.create_model(
-            weight_variant,
+            _weight_variant,
             pretrained=pretrained_flag,
             num_classes=num_classes,
             in_chans=3,  # Initially load for 3 channels (will adapt below)
         )
     except (RuntimeError, ValueError) as e:
-        logger.error(f"Failed to load ViT variant '{weight_variant}': {e}")
-        raise ValueError(f"Invalid ViT weight variant: {weight_variant}") from e
+        logger.error(f"Failed to load ViT variant '{_weight_variant}': {e}")
+        raise ValueError(f"Invalid ViT weight variant: {_weight_variant}") from e
 
     # --- Step 3: Adapt Patch Embedding Layer ---
     if in_channels != 3:
@@ -108,7 +114,7 @@ def build_vit_tiny(
         )
 
         # --- Step 4: Weight Morphing (Transfer Pretrained Knowledge) ---
-        if cfg.architecture.pretrained:
+        if pretrained:
             morph_conv_weights(old_proj, new_proj, in_channels)
 
         # Replace patch embedding projection

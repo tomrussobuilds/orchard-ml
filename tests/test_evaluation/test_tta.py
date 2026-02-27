@@ -8,14 +8,13 @@ Forced to CPU for consistent testing.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from types import SimpleNamespace
 
 import pytest
 import torch
 import torch.nn as nn
 from torch.testing import assert_close
 
-from orchard.core import Config
 from orchard.evaluation import _get_tta_transforms, adaptive_tta_predict
 
 
@@ -27,19 +26,20 @@ def device():
 
 
 @pytest.fixture
-def mock_cfg():
-    """Returns a mock configuration object with defined augmentation parameters."""
-    cfg = MagicMock(spec=Config)
-    cfg.augmentation = MagicMock()
-    cfg.augmentation.tta_translate = 5
-    cfg.augmentation.tta_scale = 1.1
-    cfg.augmentation.tta_blur_sigma = 0.5
-    cfg.augmentation.tta_blur_kernel_size = 3
-    cfg.augmentation.tta_mode = "full"
-    cfg.dataset = MagicMock()
-    cfg.dataset.num_classes = 3
-    cfg.dataset.resolution = 224
-    return cfg
+def aug_cfg():
+    """Returns augmentation config stub with TTA parameters."""
+    return SimpleNamespace(
+        tta_translate=5,
+        tta_scale=1.1,
+        tta_blur_sigma=0.5,
+        tta_blur_kernel_size=3,
+        tta_mode="full",
+    )
+
+
+@pytest.fixture
+def resolution():
+    return 224
 
 
 @pytest.fixture
@@ -49,10 +49,12 @@ def dummy_input():
 
 
 @pytest.fixture
-def mock_model(mock_cfg):
+def mock_model():
     """Creates a mock model that returns consistent logits."""
+    from unittest.mock import MagicMock
+
     model = MagicMock(spec=nn.Module)
-    num_classes = mock_cfg.dataset.num_classes
+    num_classes = 3
     mock_logits = torch.randn(4, num_classes)
     model.return_value = mock_logits
     model.forward.return_value = mock_logits
@@ -62,9 +64,11 @@ def mock_model(mock_cfg):
 
 # TEST CASES: BASE TRANSFORMS
 @pytest.mark.unit
-def test_get_tta_transforms_base(dummy_input, mock_cfg):
+def test_get_tta_transforms_base(dummy_input, aug_cfg, resolution):
     """Test the generation of base transforms (identity and horizontal flip)."""
-    transforms = _get_tta_transforms(is_anatomical=False, is_texture_based=False, cfg=mock_cfg)
+    transforms = _get_tta_transforms(
+        is_anatomical=False, is_texture_based=False, aug_cfg=aug_cfg, resolution=resolution
+    )
 
     assert len(transforms) >= 2, "Base transforms (identity + flip) are missing."
 
@@ -76,9 +80,11 @@ def test_get_tta_transforms_base(dummy_input, mock_cfg):
 
 
 @pytest.mark.unit
-def test_get_tta_transforms_texture_based(dummy_input, mock_cfg):
+def test_get_tta_transforms_texture_based(dummy_input, aug_cfg, resolution):
     """Test texture-based datasets get minimal transforms (identity + flip only)."""
-    transforms = _get_tta_transforms(is_anatomical=False, is_texture_based=True, cfg=mock_cfg)
+    transforms = _get_tta_transforms(
+        is_anatomical=False, is_texture_based=True, aug_cfg=aug_cfg, resolution=resolution
+    )
 
     # Texture-based: only identity + horizontal flip (no aggressive transforms)
     assert len(transforms) == 2, "Texture-based should only have identity + flip."
@@ -90,9 +96,11 @@ def test_get_tta_transforms_texture_based(dummy_input, mock_cfg):
 
 
 @pytest.mark.unit
-def test_get_tta_transforms_anatomical_preserves_orientation(dummy_input, mock_cfg):
+def test_get_tta_transforms_anatomical_preserves_orientation(dummy_input, aug_cfg, resolution):
     """Test anatomical datasets do NOT get flips or rotations."""
-    transforms = _get_tta_transforms(is_anatomical=True, is_texture_based=False, cfg=mock_cfg)
+    transforms = _get_tta_transforms(
+        is_anatomical=True, is_texture_based=False, aug_cfg=aug_cfg, resolution=resolution
+    )
 
     # Anatomical non-texture: identity + translate + scale + blur = 4
     assert len(transforms) == 4, "Anatomical should not have flip or rotations."
@@ -111,9 +119,11 @@ def test_get_tta_transforms_anatomical_preserves_orientation(dummy_input, mock_c
 
 
 @pytest.mark.unit
-def test_get_tta_transforms_anatomical_texture_minimal(dummy_input, mock_cfg):
+def test_get_tta_transforms_anatomical_texture_minimal(dummy_input, aug_cfg, resolution):
     """Test anatomical + texture datasets get only identity (most restrictive)."""
-    transforms = _get_tta_transforms(is_anatomical=True, is_texture_based=True, cfg=mock_cfg)
+    transforms = _get_tta_transforms(
+        is_anatomical=True, is_texture_based=True, aug_cfg=aug_cfg, resolution=resolution
+    )
 
     # Anatomical + texture: only identity (no flip, no aggressive transforms)
     assert len(transforms) == 1, "Anatomical+texture should only have identity."
@@ -123,18 +133,19 @@ def test_get_tta_transforms_anatomical_texture_minimal(dummy_input, mock_cfg):
 @pytest.mark.unit
 def test_get_tta_transforms_full_mode_rotations():
     """Test tta_mode='full' adds rotations for non-anatomical, non-texture datasets."""
-    mock_cfg = MagicMock()
-    mock_cfg.augmentation.tta_translate = 2
-    mock_cfg.augmentation.tta_scale = 1.05
-    mock_cfg.augmentation.tta_blur_sigma = 0.5
-    mock_cfg.augmentation.tta_blur_kernel_size = 3
-    mock_cfg.augmentation.tta_mode = "full"
-    mock_cfg.dataset.resolution = 224
+    aug_cfg = SimpleNamespace(
+        tta_translate=2,
+        tta_scale=1.05,
+        tta_blur_sigma=0.5,
+        tta_blur_kernel_size=3,
+        tta_mode="full",
+    )
 
     full_transforms = _get_tta_transforms(
         is_anatomical=False,
         is_texture_based=False,
-        cfg=mock_cfg,
+        aug_cfg=aug_cfg,
+        resolution=224,
     )
 
     # Full mode non-anatomical non-texture: id + flip + translate + scale + blur + 3 rotations = 8
@@ -144,18 +155,19 @@ def test_get_tta_transforms_full_mode_rotations():
 @pytest.mark.unit
 def test_get_tta_transforms_light_mode_vertical_flip():
     """Test tta_mode='light' adds vertical flip for non-anatomical, non-texture datasets."""
-    mock_cfg = MagicMock()
-    mock_cfg.augmentation.tta_translate = 2
-    mock_cfg.augmentation.tta_scale = 1.05
-    mock_cfg.augmentation.tta_blur_sigma = 0.5
-    mock_cfg.augmentation.tta_blur_kernel_size = 3
-    mock_cfg.augmentation.tta_mode = "light"
-    mock_cfg.dataset.resolution = 224
+    aug_cfg = SimpleNamespace(
+        tta_translate=2,
+        tta_scale=1.05,
+        tta_blur_sigma=0.5,
+        tta_blur_kernel_size=3,
+        tta_mode="light",
+    )
 
     light_transforms = _get_tta_transforms(
         is_anatomical=False,
         is_texture_based=False,
-        cfg=mock_cfg,
+        aug_cfg=aug_cfg,
+        resolution=224,
     )
 
     # Light mode non-anatomical non-texture: id + flip + translate + scale + blur + vflip = 6
@@ -173,18 +185,19 @@ def test_get_tta_transforms_light_mode_vertical_flip():
 @pytest.mark.unit
 def test_get_tta_transforms_full_mode_rotations_on_cpu():
     """Test tta_mode='full' adds 90/180/270 rotations regardless of device."""
-    mock_cfg = MagicMock()
-    mock_cfg.augmentation.tta_translate = 2
-    mock_cfg.augmentation.tta_scale = 1.05
-    mock_cfg.augmentation.tta_blur_sigma = 0.5
-    mock_cfg.augmentation.tta_blur_kernel_size = 3
-    mock_cfg.augmentation.tta_mode = "full"
-    mock_cfg.dataset.resolution = 224
+    aug_cfg = SimpleNamespace(
+        tta_translate=2,
+        tta_scale=1.05,
+        tta_blur_sigma=0.5,
+        tta_blur_kernel_size=3,
+        tta_mode="full",
+    )
 
     full_transforms = _get_tta_transforms(
         is_anatomical=False,
         is_texture_based=False,
-        cfg=mock_cfg,
+        aug_cfg=aug_cfg,
+        resolution=224,
     )
 
     # Full mode non-anatomical non-texture: id + flip + translate + scale + blur + 3 rotations = 8
@@ -193,27 +206,33 @@ def test_get_tta_transforms_full_mode_rotations_on_cpu():
 
 # TEST CASES: ADAPTIVE TTA PREDICT
 @pytest.mark.unit
-def test_adaptive_tta_predict_logic(mock_model, dummy_input, device, mock_cfg):
+def test_adaptive_tta_predict_logic(mock_model, dummy_input, device, aug_cfg, resolution):
     """Test TTA prediction logic: output shape and type validation."""
     model = mock_model
     model.to(device)
 
     result = adaptive_tta_predict(
-        model, dummy_input, device, is_anatomical=False, is_texture_based=False, cfg=mock_cfg
+        model,
+        dummy_input,
+        device,
+        is_anatomical=False,
+        is_texture_based=False,
+        aug_cfg=aug_cfg,
+        resolution=resolution,
     )
 
     assert isinstance(result, torch.Tensor)
-    assert result.shape == (4, mock_cfg.dataset.num_classes)
+    assert result.shape == (4, 3)
 
 
 @pytest.mark.unit
-def test_tta_is_deterministic_under_eval(mock_model, dummy_input, device, mock_cfg):
+def test_tta_is_deterministic_under_eval(mock_model, dummy_input, device, aug_cfg, resolution):
     """Ensures that TTA prediction doesn't introduce random noise if model is in eval mode."""
     model = mock_model
     model.to(device)
 
-    res1 = adaptive_tta_predict(model, dummy_input, device, False, False, mock_cfg)
-    res2 = adaptive_tta_predict(model, dummy_input, device, False, False, mock_cfg)
+    res1 = adaptive_tta_predict(model, dummy_input, device, False, False, aug_cfg, resolution)
+    res2 = adaptive_tta_predict(model, dummy_input, device, False, False, aug_cfg, resolution)
 
     assert_close(res1, res2)
 
@@ -222,15 +241,17 @@ def test_tta_is_deterministic_under_eval(mock_model, dummy_input, device, mock_c
 @pytest.mark.parametrize("resolution", [28, 64, 224])
 def test_tta_scaling_preserves_transform_count(resolution):
     """Verify resolution scaling does not change the number of transforms."""
-    cfg = MagicMock()
-    cfg.augmentation.tta_translate = 5
-    cfg.augmentation.tta_scale = 1.1
-    cfg.augmentation.tta_blur_sigma = 0.5
-    cfg.augmentation.tta_blur_kernel_size = 3
-    cfg.augmentation.tta_mode = "full"
-    cfg.dataset.resolution = resolution
+    aug_cfg = SimpleNamespace(
+        tta_translate=5,
+        tta_scale=1.1,
+        tta_blur_sigma=0.5,
+        tta_blur_kernel_size=3,
+        tta_mode="full",
+    )
 
-    transforms = _get_tta_transforms(is_anatomical=False, is_texture_based=False, cfg=cfg)
+    transforms = _get_tta_transforms(
+        is_anatomical=False, is_texture_based=False, aug_cfg=aug_cfg, resolution=resolution
+    )
     # Full mode: id + flip + translate + scale + blur + 3 rotations = 8
     assert len(transforms) == 8
 
@@ -241,17 +262,17 @@ def test_tta_scaling_reduces_translate_at_low_resolution():
     inp = torch.zeros(1, 1, 28, 28)
     inp[0, 0, 14, 14] = 1.0  # single bright pixel at center
 
-    def _make_cfg(res):
-        c = MagicMock()
-        c.augmentation.tta_translate = 2.0
-        c.augmentation.tta_scale = 1.05
-        c.augmentation.tta_blur_sigma = 0.5
-        c.augmentation.tta_mode = "light"
-        c.dataset.resolution = res
-        return c
+    def _make_aug_cfg():
+        return SimpleNamespace(
+            tta_translate=2.0,
+            tta_scale=1.05,
+            tta_blur_sigma=0.5,
+            tta_blur_kernel_size=3,
+            tta_mode="light",
+        )
 
-    t_28 = _get_tta_transforms(False, False, _make_cfg(28))
-    t_224 = _get_tta_transforms(False, False, _make_cfg(224))
+    t_28 = _get_tta_transforms(False, False, _make_aug_cfg(), 28)
+    t_224 = _get_tta_transforms(False, False, _make_aug_cfg(), 224)
 
     # Index 2 is the translate transform
     out_28 = t_28[2](inp)
@@ -267,21 +288,42 @@ def test_tta_scaling_reduces_translate_at_low_resolution():
 @pytest.mark.unit
 def test_tta_scaling_at_baseline_224_is_identity():
     """At resolution=224 (baseline), scaled params should equal raw config values."""
-    cfg = MagicMock()
-    cfg.augmentation.tta_translate = 5.0
-    cfg.augmentation.tta_scale = 1.1
-    cfg.augmentation.tta_blur_sigma = 0.5
-    cfg.augmentation.tta_blur_kernel_size = 3
-    cfg.augmentation.tta_mode = "light"
-    cfg.dataset.resolution = 224
+    aug_cfg = SimpleNamespace(
+        tta_translate=5.0,
+        tta_scale=1.1,
+        tta_blur_sigma=0.5,
+        tta_blur_kernel_size=3,
+        tta_mode="light",
+    )
 
     # scale_factor = 224/224 = 1.0 → params unchanged
     # We verify indirectly: the function should not raise and transforms should work
-    transforms = _get_tta_transforms(False, False, cfg)
+    transforms = _get_tta_transforms(False, False, aug_cfg, 224)
     test_input = torch.randn(1, 3, 32, 32)
     for t in transforms:
         out = t(test_input)
         assert out.shape == test_input.shape
+
+
+@pytest.mark.unit
+def test_adaptive_tta_predict_raises_on_empty_transforms(mock_model, dummy_input, device):
+    """Test ValueError is raised when _get_tta_transforms returns an empty list."""
+    from unittest.mock import patch
+
+    model = mock_model
+    model.to(device)
+
+    aug_cfg = SimpleNamespace(
+        tta_translate=5,
+        tta_scale=1.1,
+        tta_blur_sigma=0.5,
+        tta_blur_kernel_size=3,
+        tta_mode="full",
+    )
+
+    with patch("orchard.evaluation.tta._get_tta_transforms", return_value=[]):
+        with pytest.raises(ValueError, match="TTA transforms list cannot be empty"):
+            adaptive_tta_predict(model, dummy_input, device, False, False, aug_cfg, 224)
 
 
 if __name__ == "__main__":

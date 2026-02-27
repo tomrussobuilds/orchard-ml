@@ -14,6 +14,7 @@ import torch
 import torch.nn as nn
 
 from orchard.architectures.timm_backbone import build_timm_model
+from orchard.core.config import ArchitectureConfig
 
 
 # FIXTURES
@@ -23,13 +24,9 @@ def device():
 
 
 @pytest.fixture
-def mock_cfg():
-    """Config mock for a lightweight timm model (no pretrained download)."""
-    cfg = MagicMock()
-    cfg.architecture.name = "timm/resnet10t"
-    cfg.architecture.pretrained = False
-    cfg.architecture.dropout = 0.1
-    return cfg
+def arch_cfg():
+    """ArchitectureConfig for a lightweight timm model (no pretrained download)."""
+    return ArchitectureConfig(name="timm/resnet10t", pretrained=False, dropout=0.1)
 
 
 # UNIT TESTS
@@ -37,51 +34,49 @@ def mock_cfg():
 class TestBuildTimmModel:
     """Test suite for generic timm backbone construction."""
 
-    def test_build_returns_nn_module(self, device, mock_cfg):
-        model = build_timm_model(device, num_classes=10, in_channels=3, cfg=mock_cfg)
+    def test_build_returns_nn_module(self, device, arch_cfg):
+        model = build_timm_model(device, num_classes=10, in_channels=3, arch_cfg=arch_cfg)
         assert isinstance(model, nn.Module)
 
-    def test_forward_pass_shape(self, device, mock_cfg):
+    def test_forward_pass_shape(self, device, arch_cfg):
         num_classes = 8
-        model = build_timm_model(device, num_classes=num_classes, in_channels=3, cfg=mock_cfg)
+        model = build_timm_model(device, num_classes=num_classes, in_channels=3, arch_cfg=arch_cfg)
         x = torch.randn(2, 3, 224, 224, device=device)
         output = model(x)
         assert output.shape == (2, num_classes)
 
-    def test_single_channel_input(self, device, mock_cfg):
+    def test_single_channel_input(self, device, arch_cfg):
         """timm handles in_chans=1 with automatic weight morphing."""
-        model = build_timm_model(device, num_classes=5, in_channels=1, cfg=mock_cfg)
+        model = build_timm_model(device, num_classes=5, in_channels=1, arch_cfg=arch_cfg)
         x = torch.randn(1, 1, 224, 224, device=device)
         output = model(x)
         assert output.shape == (1, 5)
 
-    def test_num_classes_respected(self, device, mock_cfg):
+    def test_num_classes_respected(self, device, arch_cfg):
         for n_cls in [2, 10, 100]:
-            model = build_timm_model(device, num_classes=n_cls, in_channels=3, cfg=mock_cfg)
+            model = build_timm_model(device, num_classes=n_cls, in_channels=3, arch_cfg=arch_cfg)
             x = torch.randn(1, 3, 224, 224, device=device)
             assert model(x).shape == (1, n_cls)
 
-    def test_deploys_to_device(self, device, mock_cfg):
-        model = build_timm_model(device, num_classes=10, in_channels=3, cfg=mock_cfg)
+    def test_deploys_to_device(self, device, arch_cfg):
+        model = build_timm_model(device, num_classes=10, in_channels=3, arch_cfg=arch_cfg)
         assert next(model.parameters()).device.type == device.type
 
     def test_invalid_model_raises_valueerror(self, device):
-        cfg = MagicMock()
-        cfg.architecture.name = "timm/absolutely_fake_model_xyz"
-        cfg.architecture.pretrained = False
-        cfg.architecture.dropout = 0.0
+        arch_cfg = ArchitectureConfig(
+            name="timm/absolutely_fake_model_xyz", pretrained=False, dropout=0.0
+        )
 
         with pytest.raises(ValueError, match="Failed to create timm model"):
-            build_timm_model(device, num_classes=10, in_channels=3, cfg=cfg)
+            build_timm_model(device, num_classes=10, in_channels=3, arch_cfg=arch_cfg)
 
     def test_model_id_extraction(self, device):
         """Verify the timm/ prefix is correctly stripped."""
-        cfg = MagicMock()
-        cfg.architecture.name = "timm/mobilenetv3_small_050"
-        cfg.architecture.pretrained = False
-        cfg.architecture.dropout = 0.0
+        arch_cfg = ArchitectureConfig(
+            name="timm/mobilenetv3_small_050", pretrained=False, dropout=0.0
+        )
 
-        model = build_timm_model(device, num_classes=10, in_channels=3, cfg=cfg)
+        model = build_timm_model(device, num_classes=10, in_channels=3, arch_cfg=arch_cfg)
         assert isinstance(model, nn.Module)
 
 

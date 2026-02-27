@@ -126,7 +126,9 @@ def run_smoke_test(cfg: Config) -> None:
                 class_names=ds_meta.classes,
                 paths=paths,
                 cfg=cfg,
-                aug_info=get_augmentations_description(cfg),
+                aug_info=get_augmentations_description(
+                    cfg.augmentation, cfg.dataset.img_size, cfg.training.mixup_alpha
+                ),
                 log_path=paths.logs / "smoke_test.log",
             )
 

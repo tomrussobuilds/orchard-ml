@@ -16,15 +16,6 @@ from orchard.architectures import build_convnext_tiny
 
 # FIXTURES
 @pytest.fixture
-def mock_cfg():
-    """Provides a standardized configuration mock for model building."""
-    cfg = MagicMock()
-    cfg.architecture.pretrained = False
-    cfg.architecture.dropout = 0.2
-    return cfg
-
-
-@pytest.fixture
 def device():
     """Resolves target device for test execution."""
     return torch.device("cpu")
@@ -46,10 +37,10 @@ class TestConvNeXtTiny:
             (3, 100),
         ],
     )
-    def test_convnext_tiny_output_shape(self, mock_cfg, device, in_channels, num_classes):
+    def test_convnext_tiny_output_shape(self, device, in_channels, num_classes):
         """Verify output shape matches expected dimensions."""
         model = build_convnext_tiny(
-            device, num_classes=num_classes, in_channels=in_channels, cfg=mock_cfg
+            device, num_classes=num_classes, in_channels=in_channels, pretrained=False
         )
         model.eval()
 
@@ -61,26 +52,24 @@ class TestConvNeXtTiny:
 
         assert output.shape == (batch_size, num_classes)
 
-    def test_convnext_tiny_grayscale_adaptation(self, mock_cfg, device):
+    def test_convnext_tiny_grayscale_adaptation(self, device):
         """Verify grayscale input channel adaptation."""
-        model = build_convnext_tiny(device, num_classes=10, in_channels=1, cfg=mock_cfg)
+        model = build_convnext_tiny(device, num_classes=10, in_channels=1, pretrained=False)
 
         first_conv = model.features[0][0]
         assert first_conv.in_channels == 1
         assert first_conv.out_channels == 96
 
-    def test_convnext_tiny_rgb_standard(self, mock_cfg, device):
+    def test_convnext_tiny_rgb_standard(self, device):
         """Verify RGB input channel configuration."""
-        model = build_convnext_tiny(device, num_classes=10, in_channels=3, cfg=mock_cfg)
+        model = build_convnext_tiny(device, num_classes=10, in_channels=3, pretrained=False)
 
         first_conv = model.features[0][0]
         assert first_conv.in_channels == 3
         assert first_conv.out_channels == 96
 
-    def test_convnext_tiny_pretrained_weight_morphing(self, mock_cfg, device):
+    def test_convnext_tiny_pretrained_weight_morphing(self, device):
         """Verify pretrained weights are loaded and morphed for grayscale."""
-        mock_cfg.architecture.pretrained = True
-
         from orchard.architectures import convnext_tiny as convnext_module
 
         with patch.object(convnext_module, "models") as mock_models:
@@ -95,22 +84,24 @@ class TestConvNeXtTiny:
             mock_models.convnext_tiny.return_value = mock_model
             mock_models.ConvNeXt_Tiny_Weights.IMAGENET1K_V1 = "mock_weights"
 
-            _ = build_convnext_tiny(device, num_classes=5, in_channels=1, cfg=mock_cfg)
+            _ = build_convnext_tiny(device, num_classes=5, in_channels=1, pretrained=True)
 
             mock_models.convnext_tiny.assert_called_once_with(weights="mock_weights")
 
-    def test_convnext_tiny_classifier_head_replacement(self, mock_cfg, device):
+    def test_convnext_tiny_classifier_head_replacement(self, device):
         """Verify classification head is replaced with correct output size."""
         num_classes = 7
-        model = build_convnext_tiny(device, num_classes=num_classes, in_channels=3, cfg=mock_cfg)
+        model = build_convnext_tiny(
+            device, num_classes=num_classes, in_channels=3, pretrained=False
+        )
 
         assert model.classifier[2].out_features == num_classes
         assert model.classifier[2].in_features == 768
 
-    def test_convnext_tiny_device_placement(self, mock_cfg):
+    def test_convnext_tiny_device_placement(self):
         """Verify model is placed on correct device."""
         device = torch.device("cpu")
-        model = build_convnext_tiny(device, num_classes=10, in_channels=3, cfg=mock_cfg)
+        model = build_convnext_tiny(device, num_classes=10, in_channels=3, pretrained=False)
 
         for param in model.parameters():
             assert param.device.type == "cpu"

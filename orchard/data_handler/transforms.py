@@ -11,16 +11,24 @@ from __future__ import annotations
 import torch
 from torchvision.transforms import v2
 
-from ..core import Config, DatasetMetadata
+from ..core import DatasetMetadata
+from ..core.config import AugmentationConfig
 
 
 # TRANSFORMATION UTILITIES
-def get_augmentations_description(cfg: Config, ds_meta: DatasetMetadata | None = None) -> str:
+def get_augmentations_description(
+    aug_cfg: AugmentationConfig,
+    img_size: int,
+    mixup_alpha: float,
+    ds_meta: DatasetMetadata | None = None,
+) -> str:
     """
     Generates descriptive string of augmentations for logging.
 
     Args:
-        cfg: Global configuration
+        aug_cfg: Augmentation sub-configuration
+        img_size: Target image size for resized crop
+        mixup_alpha: MixUp alpha (0.0 to disable)
         ds_meta: Dataset metadata (if provided, respects domain flags)
 
     Returns:
@@ -31,21 +39,25 @@ def get_augmentations_description(cfg: Config, ds_meta: DatasetMetadata | None =
 
     params = {}
     if not is_anatomical:
-        params["HFlip"] = cfg.augmentation.hflip
-        params["Rotation"] = f"{cfg.augmentation.rotation_angle}°"
+        params["HFlip"] = aug_cfg.hflip
+        params["Rotation"] = f"{aug_cfg.rotation_angle}°"
     if not is_texture:
-        params["Jitter"] = cfg.augmentation.jitter_val
-    params["ResizedCrop"] = f"{cfg.dataset.img_size} ({cfg.augmentation.min_scale}, 1.0)"
+        params["Jitter"] = aug_cfg.jitter_val
+    params["ResizedCrop"] = f"{img_size} ({aug_cfg.min_scale}, 1.0)"
 
     descr = [f"{k}({v})" for k, v in params.items()]
 
-    if cfg.training.mixup_alpha > 0:
-        descr.append(f"MixUp(α={cfg.training.mixup_alpha})")
+    if mixup_alpha > 0:
+        descr.append(f"MixUp(α={mixup_alpha})")
 
     return ", ".join(descr)
 
 
-def get_pipeline_transforms(cfg: Config, ds_meta: DatasetMetadata) -> tuple[v2.Compose, v2.Compose]:
+def get_pipeline_transforms(
+    aug_cfg: AugmentationConfig,
+    img_size: int,
+    ds_meta: DatasetMetadata,
+) -> tuple[v2.Compose, v2.Compose]:
     """
     Constructs training and validation transformation pipelines.
 
@@ -60,7 +72,8 @@ def get_pipeline_transforms(cfg: Config, ds_meta: DatasetMetadata) -> tuple[v2.C
         4. Normalize with dataset-specific statistics
 
     Args:
-        cfg: Global configuration with augmentation parameters
+        aug_cfg: Augmentation sub-configuration
+        img_size: Target image size
         ds_meta: Dataset metadata (channels, normalization stats)
 
     Returns:
@@ -102,24 +115,24 @@ def get_pipeline_transforms(cfg: Config, ds_meta: DatasetMetadata) -> tuple[v2.C
 
     # Geometric: disabled for anatomical datasets (orientation is diagnostic)
     if not ds_meta.is_anatomical:
-        train_ops.append(v2.RandomHorizontalFlip(p=cfg.augmentation.hflip))
-        train_ops.append(v2.RandomRotation(cfg.augmentation.rotation_angle))
+        train_ops.append(v2.RandomHorizontalFlip(p=aug_cfg.hflip))
+        train_ops.append(v2.RandomRotation(aug_cfg.rotation_angle))
 
     # Photometric: reduced for texture-based datasets (fine patterns are fragile)
     if not ds_meta.is_texture_based:
         train_ops.append(
             v2.ColorJitter(
-                brightness=cfg.augmentation.jitter_val,
-                contrast=cfg.augmentation.jitter_val,
-                saturation=cfg.augmentation.jitter_val if is_rgb else 0.0,
+                brightness=aug_cfg.jitter_val,
+                contrast=aug_cfg.jitter_val,
+                saturation=aug_cfg.jitter_val if is_rgb else 0.0,
             )
         )
 
     train_ops.extend(
         [
             v2.RandomResizedCrop(
-                size=cfg.dataset.img_size,
-                scale=(cfg.augmentation.min_scale, 1.0),
+                size=img_size,
+                scale=(aug_cfg.min_scale, 1.0),
                 antialias=True,
                 interpolation=v2.InterpolationMode.BILINEAR,
             ),
@@ -134,7 +147,7 @@ def get_pipeline_transforms(cfg: Config, ds_meta: DatasetMetadata) -> tuple[v2.C
     val_transform = v2.Compose(
         [
             *get_base_ops(),
-            v2.Resize(size=cfg.dataset.img_size, antialias=True),
+            v2.Resize(size=img_size, antialias=True),
             v2.Normalize(mean=mean, std=std),
         ]
     )

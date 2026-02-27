@@ -222,7 +222,12 @@ def run_training_phase(
         class_names=ds_meta.classes,
         paths=paths,
         cfg=cfg,
-        aug_info=get_augmentations_description(cfg, ds_meta=ds_meta),
+        aug_info=get_augmentations_description(
+            cfg.augmentation,
+            cfg.dataset.img_size,  # type: ignore[arg-type]
+            cfg.training.mixup_alpha,
+            ds_meta=ds_meta,
+        ),
         log_path=paths.logs / "session.log",
         tracker=tracker,
     )

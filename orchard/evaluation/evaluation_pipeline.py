@@ -29,6 +29,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from ..tracking import TrackerProtocol
 
 from .evaluator import evaluate_model
+from .plot_context import PlotContext
 from .reporting import create_structured_report
 from .visualization import plot_confusion_matrix, plot_training_curves, show_predictions
 
@@ -89,10 +90,13 @@ def run_final_evaluation(
         use_tta=cfg.training.use_tta,
         is_anatomical=cfg.dataset.metadata.is_anatomical,
         is_texture_based=cfg.dataset.metadata.is_texture_based,
-        cfg=cfg,
+        aug_cfg=cfg.augmentation,
+        resolution=cfg.dataset.resolution,
     )
 
     # --- 2) Visualizations ---
+    ctx = PlotContext.from_config(cfg)
+
     # Diagnostic Confusion Matrix
     if cfg.evaluation.save_confusion_matrix:
         plot_confusion_matrix(
@@ -102,7 +106,7 @@ def run_final_evaluation(
             out_path=paths.get_fig_path(
                 f"confusion_matrix_{arch_tag}_{cfg.dataset.resolution}.png"
             ),
-            cfg=cfg,
+            ctx=ctx,
         )
 
     # Historical Training Curves
@@ -111,7 +115,7 @@ def run_final_evaluation(
         train_losses=train_losses,
         val_accuracies=val_acc_list,
         out_path=paths.get_fig_path(f"training_curves_{arch_tag}_{cfg.dataset.resolution}.png"),
-        cfg=cfg,
+        ctx=ctx,
     )
 
     # Lazy-loaded prediction grid (samples from loader)
@@ -124,7 +128,7 @@ def run_final_evaluation(
             save_path=paths.get_fig_path(
                 f"sample_predictions_{arch_tag}_{cfg.dataset.resolution}.png"
             ),
-            cfg=cfg,
+            ctx=ctx,
         )
 
     # --- 3) Structured Reporting ---
