@@ -8,8 +8,9 @@ sub-module, applying domain-aware transforms (anatomical, texture)
 and averaging softmax outputs across the ensemble.
 
 Key Functions:
-    evaluate_model: Full-dataset evaluation with optional TTA,
-        returning predictions, labels, metric dict, and macro F1.
+
+- ``evaluate_model``: Full-dataset evaluation with optional TTA,
+  returning predictions, labels, metric dict, and macro F1.
 
 Example:
     >>> preds, labels, metrics, f1 = evaluate_model(

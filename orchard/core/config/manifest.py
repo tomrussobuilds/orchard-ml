@@ -6,14 +6,14 @@ sub-configs (Hardware, Dataset, Architecture, Training, Evaluation,
 Augmentation, Optuna, Export) into a single immutable manifest.
 
 Layout:
-    * ``Config`` — main Pydantic model, ordered as:
-        1. Fields & model validator
-        2. Properties (``run_slug``, ``num_workers``)
-        3. Serialization (``dump_portable``, ``dump_serialized``)
-        4. ``from_recipe`` — primary factory (``orchard`` CLI)
-    * ``_CrossDomainValidator`` — cross-domain validation logic
-      (AMP vs Device, LR bounds, Mixup scheduling, resolution/model pairing)
-    * ``_deep_set`` — dot-notation dict helper for CLI overrides
+
+- ``Config`` — main Pydantic model, ordered as:
+  Fields & model validator, Properties (``run_slug``, ``num_workers``),
+  Serialization (``dump_portable``, ``dump_serialized``),
+  ``from_recipe`` — primary factory (``orchard`` CLI)
+- ``_CrossDomainValidator`` — cross-domain validation logic
+  (AMP vs Device, LR bounds, Mixup scheduling, resolution/model pairing)
+- ``_deep_set`` — dot-notation dict helper for CLI overrides
 """
 
 from __future__ import annotations

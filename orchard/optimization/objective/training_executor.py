@@ -136,8 +136,8 @@ class TrialTrainingExecutor:
         self.warmup_epochs = cfg.optuna.pruning_warmup_epochs
 
         # Training state
-        self.scaler = create_amp_scaler(cfg)
-        self.mixup_fn = create_mixup_fn(cfg)
+        self.scaler = create_amp_scaler(cfg.training)
+        self.mixup_fn = create_mixup_fn(cfg.training)
         self.epochs = cfg.training.epochs
         self.log_interval = cfg.telemetry.log_interval
 

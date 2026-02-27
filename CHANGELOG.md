@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - false docstrings, dead field, sentinel logging, LogStyle.FAILURE
+- remove unused `classes` param, reduce ColorFormatter complexity
 
 ### Styling
 

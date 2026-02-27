@@ -6,9 +6,10 @@ pruning policies, storage backend configuration, and configurable
 search space bounds.
 
 Search Space Overrides:
-    FloatRange / IntRange: Typed bounds for continuous/discrete parameters.
-    SearchSpaceOverrides: Aggregates all search ranges with domain defaults.
-    Overrides are applied by SearchSpaceRegistry at trial sampling time.
+
+- ``FloatRange`` / ``IntRange``: Typed bounds for continuous/discrete parameters.
+- ``SearchSpaceOverrides``: Aggregates all search ranges with domain defaults.
+  Overrides are applied by ``SearchSpaceRegistry`` at trial sampling time.
 """
 
 from __future__ import annotations

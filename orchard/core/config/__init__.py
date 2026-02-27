@@ -12,10 +12,11 @@ Architecture:
 - Caching: Loaded modules cached in globals() for performance
 
 Implementation:
-    1. __all__: Public API contract listing all available configs
-    2. _LAZY_IMPORTS: Mapping from config names to module paths
-    3. __getattr__: Dynamic loader triggered on first access
-    4. __dir__: IDE/introspection support for auto-completion
+
+1. ``__all__``: Public API contract listing all available configs
+2. ``_LAZY_IMPORTS``: Mapping from config names to module paths
+3. ``__getattr__``: Dynamic loader triggered on first access
+4. ``__dir__``: IDE/introspection support for auto-completion
 
 Example:
     >>> from orchard.core.config import Config, HardwareConfig

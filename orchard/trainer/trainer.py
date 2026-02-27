@@ -146,8 +146,8 @@ class ModelTrainer:
         self.epochs_no_improve = 0
 
         # AMP and MixUp (shared factories from _loop)
-        self.scaler = create_amp_scaler(cfg)
-        self.mixup_fn = create_mixup_fn(cfg)
+        self.scaler = create_amp_scaler(cfg.training)
+        self.mixup_fn = create_mixup_fn(cfg.training)
 
         # Output Management
         self.best_path = output_path or Path("./best_model.pth")

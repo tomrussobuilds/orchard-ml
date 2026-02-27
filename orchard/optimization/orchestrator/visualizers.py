@@ -38,12 +38,12 @@ def generate_visualizations(study: optuna.Study, output_dir: Path) -> None:
         study: Completed Optuna study with at least one successful trial
         output_dir: Directory to save HTML plot files (typically paths.figures)
 
-    Generated Plots:
+    Generated plots:
 
-        - optimization_history.html: Metric progression over trials
-        - param_importances.html: Hyperparameter importance ranking
-        - slice.html: Individual parameter effects
-        - parallel_coordinate.html: Multi-dimensional parameter view
+    - ``optimization_history.html``: Metric progression over trials
+    - ``param_importances.html``: Hyperparameter importance ranking
+    - ``slice.html``: Individual parameter effects
+    - ``parallel_coordinate.html``: Multi-dimensional parameter view
 
     Note:
         Requires plotly installation. Logs warning if not available.

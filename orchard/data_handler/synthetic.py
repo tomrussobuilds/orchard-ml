@@ -47,7 +47,9 @@ def create_synthetic_dataset(
 
     Example:
         >>> data = create_synthetic_dataset(num_classes=8, samples=100)
-        >>> train_loader, val_loader, test_loader = get_dataloaders(data, cfg)
+        >>> train_loader, val_loader, test_loader = get_dataloaders(
+        ...     data, cfg.dataset, cfg.training, cfg.augmentation, cfg.num_workers
+        ... )
     """
     rng = np.random.default_rng(_SYNTHETIC_SEED)
 

@@ -10,7 +10,7 @@
 orchard/
 ├── cli_app.py                  # Typer CLI entry point (orchard run / orchard init)
 ├── core/                       # Framework nucleus
-│   ├── config/                 # Pydantic V2 schemas (14 modules)
+│   ├── config/                 # Pydantic V2 schemas (13 modules)
 │   │   ├── manifest.py         # Main Config (SSOT)
 │   │   ├── hardware_config.py  # Device, threading, determinism
 │   │   ├── training_config.py  # Optimizer, scheduler, regularization
@@ -38,7 +38,6 @@ orchard/
 │   ├── logger/                 # Telemetry system
 │   │   ├── logger.py           # Logger setup
 │   │   ├── reporter.py         # Environment reporting
-│   │   ├── styles.py           # Log formatting & styling
 │   │   └── progress.py         # Progress tracking utilities
 │   ├── metadata/               # Dataset registry
 │   │   ├── base.py             # DatasetMetadata schema
@@ -48,7 +47,8 @@ orchard/
 │   │   │   └── benchmark.py    # Standard benchmarks (CIFAR-10/100)
 │   │   └── wrapper.py          # Multi-resolution registry wrapper
 │   ├── paths/                  # Path management
-│   │   ├── constants.py        # Static paths (PROJECT_ROOT, etc.)
+│   │   ├── constants.py        # Metric keys, log styles, static values
+│   │   ├── root.py             # Project root discovery, derived paths
 │   │   └── run_paths.py        # Dynamic workspace paths
 │   └── orchestrator.py         # RootOrchestrator (7-phase lifecycle)
 ├── data_handler/               # Data loading pipeline
@@ -82,6 +82,7 @@ orchard/
 │   ├── evaluator.py            # Evaluation orchestration
 │   ├── evaluation_pipeline.py  # Full evaluation pipeline
 │   ├── metrics.py              # AUC, F1, Accuracy, Macro-F1
+│   ├── plot_context.py         # Matplotlib context manager for agg backend
 │   ├── tta.py                  # Test-time augmentation (adaptive)
 │   ├── visualization.py        # Confusion matrix, curves
 │   └── reporting.py            # Excel report generation
@@ -113,10 +114,10 @@ orchard/
 
 <h3>1. Dependency Injection</h3>
 
-All modules receive `Config` as dependency - no global state:
+All modules receive narrowed sub-configs as dependencies - no global state:
 ```python
-model = get_model(device=device, cfg=cfg)
-loaders = get_dataloaders(data, cfg)
+model = get_model(device=device, dataset_cfg=cfg.dataset, arch_cfg=cfg.architecture)
+loaders = get_dataloaders(data, cfg.dataset, cfg.training, cfg.augmentation, cfg.num_workers)
 trainer = ModelTrainer(model=model, cfg=cfg, ...)
 ```
 
@@ -173,9 +174,15 @@ Export from `orchard/core/metadata/domains/__init__.py` to make it available.
 
 1. Create builder in `orchard/architectures/your_model.py`:
 ```python
-def build_your_model(device, cfg, in_channels, num_classes):
-    # Implementation
-    return model
+def build_your_model(
+    device: torch.device,
+    num_classes: int,
+    in_channels: int,
+    *,
+    pretrained: bool,
+) -> nn.Module:
+    model = ...  # Build your model
+    return model.to(device)
 ```
 
 2. Register in `orchard/architectures/factory.py`:
@@ -187,9 +194,14 @@ _MODEL_REGISTRY["your_model"] = build_your_model
 
 Extend `orchard/trainer/setup.py`:
 ```python
-def get_optimizer(model, cfg):
-    if cfg.training.optimizer_type == "adam":
+def get_optimizer(model: nn.Module, training: TrainingConfig) -> optim.Optimizer:
+    if training.optimizer_type == "adam":
         return torch.optim.Adam(...)
+    # Add new case
+
+def get_scheduler(optimizer: optim.Optimizer, training: TrainingConfig) -> LRScheduler:
+    if training.scheduler_type == "cosine":
+        return lr_scheduler.CosineAnnealingLR(...)
     # Add new case
 ```
 

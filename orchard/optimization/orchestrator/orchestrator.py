@@ -7,16 +7,18 @@ hyperparameter optimization. Specialized tasks are delegated to focused
 submodules (``builders``, ``exporters``, ``visualizers``).
 
 Key Functions:
-    ``run_optimization``: Convenience function that wires the
-        orchestrator to the pipeline and returns the completed study.
+
+- ``run_optimization``: Convenience function that wires the
+  orchestrator to the pipeline and returns the completed study.
 
 Key Components:
-    ``OptunaOrchestrator``: Study lifecycle manager that assembles
-        sampler, pruner, callbacks, and objective, then drives
-        ``study.optimize()``. Base ``Config`` is seamlessly overridden
-        per trial via ``TrialConfigBuilder``.
 
-Typical Usage:
+- ``OptunaOrchestrator``: Study lifecycle manager that assembles
+  sampler, pruner, callbacks, and objective, then drives
+  ``study.optimize()``. Base ``Config`` is seamlessly overridden
+  per trial via ``TrialConfigBuilder``.
+
+Example:
     >>> from orchard.optimization.orchestrator import run_optimization
     >>> study = run_optimization(cfg=config, device=device, paths=paths)
     >>> print(f"Best trial: {study.best_trial.number}")

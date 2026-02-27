@@ -798,7 +798,12 @@ def test_optuna_objective_call_builds_trial_config():
             )
 
             mock_dataloader_factory.assert_called_once_with(
-                objective.dataset_data, mock_trial_cfg, is_optuna=True
+                objective.dataset_data,
+                mock_trial_cfg.dataset,
+                mock_trial_cfg.training,
+                mock_trial_cfg.augmentation,
+                mock_trial_cfg.num_workers,
+                is_optuna=True,
             )
 
 

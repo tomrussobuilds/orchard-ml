@@ -7,16 +7,17 @@ loading, model creation, training, and metric extraction — using
 dependency injection for maximum testability.
 
 Key Components:
-    ``OptunaObjective``: High-level orchestration callable. All external
-        dependencies (dataset loader, dataloader factory, model factory)
-        are injectable via Protocol-based abstractions. Settings are read
-        from ``cfg.optuna.*`` as single source of truth.
-    ``TrialConfigBuilder``: Builds trial-specific ``Config`` instances
-        from sampled hyperparameters.
-    ``MetricExtractor``: Handles metric extraction and best-value
-        tracking across epochs.
-    ``TrialTrainingExecutor``: Executes training loops with Optuna
-        pruning integration.
+
+- ``OptunaObjective``: High-level orchestration callable. All external
+  dependencies (dataset loader, dataloader factory, model factory)
+  are injectable via Protocol-based abstractions. Settings are read
+  from ``cfg.optuna.*`` as single source of truth.
+- ``TrialConfigBuilder``: Builds trial-specific ``Config`` instances
+  from sampled hyperparameters.
+- ``MetricExtractor``: Handles metric extraction and best-value
+  tracking across epochs.
+- ``TrialTrainingExecutor``: Executes training loops with Optuna
+  pruning integration.
 
 Example:
     >>> objective = OptunaObjective(cfg, search_space, device)
@@ -32,7 +33,16 @@ from typing import TYPE_CHECKING, Any, Protocol
 import optuna
 import torch
 
-from ...core import LOGGER_NAME, Config, LogStyle, log_trial_start
+from ...core import (
+    LOGGER_NAME,
+    ArchitectureConfig,
+    AugmentationConfig,
+    Config,
+    DatasetConfig,
+    LogStyle,
+    TrainingConfig,
+    log_trial_start,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     from ...tracking import TrackerProtocol
@@ -66,7 +76,15 @@ class DatasetLoaderProtocol(Protocol):
 class DataloaderFactoryProtocol(Protocol):
     """Protocol for dataloader creation (enables dependency injection)."""
 
-    def __call__(self, dataset_data: DatasetData, cfg: Config, is_optuna: bool = False) -> tuple:
+    def __call__(
+        self,
+        metadata: DatasetData,
+        dataset_cfg: DatasetConfig,
+        training_cfg: TrainingConfig,
+        aug_cfg: AugmentationConfig,
+        num_workers: int,
+        is_optuna: bool = False,
+    ) -> tuple:
         """Create train/val/test dataloaders."""
         ...  # pragma: no cover
 
@@ -74,7 +92,12 @@ class DataloaderFactoryProtocol(Protocol):
 class ModelFactoryProtocol(Protocol):
     """Protocol for model creation (enables dependency injection)."""
 
-    def __call__(self, device: torch.device, cfg: Config) -> torch.nn.Module:
+    def __call__(
+        self,
+        device: torch.device,
+        dataset_cfg: DatasetConfig,
+        arch_cfg: ArchitectureConfig,
+    ) -> torch.nn.Module:
         """Create and initialize model."""
         ...  # pragma: no cover
 
@@ -198,9 +221,14 @@ class OptunaObjective:
         try:
             # Setup training components
             train_loader, val_loader, _ = self._dataloader_factory(
-                self.dataset_data, trial_cfg, is_optuna=True
+                self.dataset_data,
+                trial_cfg.dataset,
+                trial_cfg.training,
+                trial_cfg.augmentation,
+                trial_cfg.num_workers,
+                is_optuna=True,
             )
-            model = self._model_factory(self.device, trial_cfg)
+            model = self._model_factory(self.device, trial_cfg.dataset, trial_cfg.architecture)
             optimizer = get_optimizer(model, trial_cfg.training)
             scheduler = get_scheduler(optimizer, trial_cfg.training)
 

@@ -6,7 +6,8 @@ Provides the ``orchard`` entry point with two commands:
 - ``orchard init`` — generate a starter recipe YAML with all defaults
 - ``orchard run``  — execute a training pipeline from a YAML recipe
 
-Usage:
+Usage::
+
     orchard init
     orchard run recipes/config_mini_cnn.yaml
     orchard run recipes/optuna_mini_cnn.yaml --set training.epochs=30

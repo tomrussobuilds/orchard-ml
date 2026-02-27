@@ -29,7 +29,7 @@ def test_get_model_returns_nn_module():
     mock_cfg.dataset.num_classes = 10
     mock_cfg.dataset.img_size = 28
 
-    model = get_model(device=device, cfg=mock_cfg)
+    model = get_model(device=device, dataset_cfg=mock_cfg.dataset, arch_cfg=mock_cfg.architecture)
 
     assert isinstance(model, nn.Module)
 
@@ -45,7 +45,7 @@ def test_get_model_deploys_to_device():
     mock_cfg.dataset.num_classes = 8
     mock_cfg.dataset.img_size = 28
 
-    model = get_model(device=device, cfg=mock_cfg)
+    model = get_model(device=device, dataset_cfg=mock_cfg.dataset, arch_cfg=mock_cfg.architecture)
 
     assert next(model.parameters()).device.type == device.type
 
@@ -61,7 +61,7 @@ def test_get_model_invalid_architecture():
     mock_cfg.dataset.img_size = 28
 
     with pytest.raises(ValueError, match="not registered"):
-        get_model(device=device, cfg=mock_cfg)
+        get_model(device=device, dataset_cfg=mock_cfg.dataset, arch_cfg=mock_cfg.architecture)
 
 
 @pytest.mark.unit
@@ -75,7 +75,7 @@ def test_get_model_case_insensitive():
     mock_cfg.dataset.num_classes = 10
     mock_cfg.dataset.img_size = 28
 
-    model = get_model(device=device, cfg=mock_cfg)
+    model = get_model(device=device, dataset_cfg=mock_cfg.dataset, arch_cfg=mock_cfg.architecture)
 
     assert isinstance(model, nn.Module)
 
@@ -101,7 +101,7 @@ def test_get_model_all_registered_models(model_name):
     mock_cfg.architecture.pretrained = False
     mock_cfg.architecture.weight_variant = None
 
-    model = get_model(device=device, cfg=mock_cfg)
+    model = get_model(device=device, dataset_cfg=mock_cfg.dataset, arch_cfg=mock_cfg.architecture)
 
     assert isinstance(model, nn.Module)
 
@@ -118,7 +118,12 @@ def test_get_model_verbose_false_suppresses_logs(caplog):
     mock_cfg.dataset.img_size = 28
 
     with caplog.at_level("INFO"):
-        model = get_model(device=device, cfg=mock_cfg, verbose=False)
+        model = get_model(
+            device=device,
+            dataset_cfg=mock_cfg.dataset,
+            arch_cfg=mock_cfg.architecture,
+            verbose=False,
+        )
 
     assert isinstance(model, nn.Module)
     assert "Initializing Architecture" not in caplog.text
@@ -176,7 +181,11 @@ def test_get_model_suppresses_download_bar():
     with patch("orchard.architectures.factory._suppress_download_noise") as mock_suppress:
         mock_suppress.return_value.__enter__ = MagicMock(return_value=None)
         mock_suppress.return_value.__exit__ = MagicMock(return_value=False)
-        model = get_model(device=device, cfg=mock_cfg)
+        model = get_model(
+            device=device,
+            dataset_cfg=mock_cfg.dataset,
+            arch_cfg=mock_cfg.architecture,
+        )
 
     mock_suppress.assert_called_once()
     assert isinstance(model, nn.Module)

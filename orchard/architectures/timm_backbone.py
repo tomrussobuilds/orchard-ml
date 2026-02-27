@@ -5,7 +5,8 @@ Provides a universal builder for any model available in the timm
 (PyTorch Image Models) registry. Delegates channel adaptation,
 head replacement, and weight loading entirely to timm's native API.
 
-Usage via YAML config:
+Usage via YAML config::
+
     architecture:
       name: "timm/convnext_base.fb_in22k"
       pretrained: true

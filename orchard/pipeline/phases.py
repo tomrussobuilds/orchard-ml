@@ -5,9 +5,10 @@ Reusable functions for each phase of the ML lifecycle, designed to work
 with a shared RootOrchestrator for unified artifact management.
 
 Phases:
-    1. Optimization: Optuna hyperparameter search
-    2. Training: Model training with validation and checkpointing
-    3. Export: ONNX model export with validation
+
+1. Optimization: Optuna hyperparameter search
+2. Training: Model training with validation and checkpointing
+3. Export: ONNX model export with validation
 """
 
 from __future__ import annotations
@@ -168,7 +169,7 @@ def run_training_phase(
     Reporter.log_phase_header(run_logger, "DATA PREPARATION")
 
     data = load_dataset(ds_meta)
-    loaders = get_dataloaders(data, cfg)
+    loaders = get_dataloaders(data, cfg.dataset, cfg.training, cfg.augmentation, cfg.num_workers)
     train_loader, val_loader, test_loader = loaders
 
     show_samples_for_dataset(
@@ -188,7 +189,7 @@ def run_training_phase(
         run_logger, "TRAINING PIPELINE - " + cfg.architecture.name.upper(), LogStyle.DOUBLE
     )
 
-    model = get_model(device=device, cfg=cfg)
+    model = get_model(device=device, dataset_cfg=cfg.dataset, arch_cfg=cfg.architecture)
 
     class_weights = None
     if cfg.training.weighted_loss:
@@ -293,7 +294,12 @@ def run_export_phase(
     onnx_path = paths.exports / "model.onnx"
 
     # Reload model architecture (on CPU for export)
-    export_model = get_model(device=torch.device("cpu"), cfg=cfg, verbose=False)
+    export_model = get_model(
+        device=torch.device("cpu"),
+        dataset_cfg=cfg.dataset,
+        arch_cfg=cfg.architecture,
+        verbose=False,
+    )
 
     export_cfg = cfg.export  # guaranteed non-None (checked above)
     export_to_onnx(

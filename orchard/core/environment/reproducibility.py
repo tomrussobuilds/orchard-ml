@@ -7,22 +7,18 @@ algorithmic determinism enforcement.
 
 Two reproducibility levels are supported:
 
-    Standard (strict=False):
-        Seeds all PRNGs and disables cuDNN auto-tuner. Sufficient for
-        most experiments — results are reproducible across runs on the
-        same hardware, but non-deterministic kernels (e.g. atomicAdd
-        in cuBLAS) may cause minor floating-point variations.
+- **Standard** (``strict=False``): Seeds all PRNGs and disables cuDNN
+  auto-tuner. Sufficient for most experiments — results are reproducible
+  across runs on the same hardware, but non-deterministic kernels
+  (e.g. atomicAdd in cuBLAS) may cause minor floating-point variations.
+- **Strict** (``strict=True``): Enables
+  ``torch.use_deterministic_algorithms(True)`` on all backends (CUDA, MPS,
+  CPU) and configures ``CUBLAS_WORKSPACE_CONFIG`` when CUDA is available.
+  Forces ``num_workers=0`` via HardwareConfig to eliminate multiprocessing
+  non-determinism. Incurs a 5-30% performance penalty on GPU workloads.
 
-    Strict (strict=True):
-        Enables ``torch.use_deterministic_algorithms(True)`` on all backends
-        (CUDA, MPS, CPU) and configures ``CUBLAS_WORKSPACE_CONFIG`` when CUDA
-        is available. Forces ``num_workers=0`` via HardwareConfig to eliminate
-        multiprocessing non-determinism. Incurs a 5-30% performance penalty
-        on GPU workloads.
-
-Detection:
-    Strict mode is controlled by ``HardwareConfig.use_deterministic_algorithms``,
-    resolved from the recipe YAML or direct Config construction.
+Strict mode is controlled by ``HardwareConfig.use_deterministic_algorithms``,
+resolved from the recipe YAML or direct Config construction.
 """
 
 from __future__ import annotations

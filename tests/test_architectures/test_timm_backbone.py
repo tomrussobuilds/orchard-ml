@@ -95,7 +95,7 @@ class TestTimmFactoryRouting:
         cfg.dataset.num_classes = 10
         cfg.dataset.img_size = 224
 
-        model = get_model(device=device, cfg=cfg)
+        model = get_model(device=device, dataset_cfg=cfg.dataset, arch_cfg=cfg.architecture)
         assert isinstance(model, nn.Module)
 
     def test_factory_still_routes_builtin(self, device):
@@ -108,7 +108,7 @@ class TestTimmFactoryRouting:
         cfg.dataset.num_classes = 10
         cfg.dataset.img_size = 28
 
-        model = get_model(device=device, cfg=cfg)
+        model = get_model(device=device, dataset_cfg=cfg.dataset, arch_cfg=cfg.architecture)
         assert isinstance(model, nn.Module)
 
     def test_factory_rejects_unknown_builtin(self, device):
@@ -121,4 +121,4 @@ class TestTimmFactoryRouting:
         cfg.dataset.img_size = 224
 
         with pytest.raises(ValueError, match="not registered"):
-            get_model(device=device, cfg=cfg)
+            get_model(device=device, dataset_cfg=cfg.dataset, arch_cfg=cfg.architecture)

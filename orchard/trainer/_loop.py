@@ -16,51 +16,48 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import partial
-from typing import TYPE_CHECKING, Callable
+from typing import Callable
 
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import LRScheduler
 
+from ..core import TrainingConfig
 from ._scheduling import step_scheduler
 from .engine import mixup_data, train_one_epoch, validate_epoch
-
-if TYPE_CHECKING:  # pragma: no cover
-    from ..core import Config
-
 
 # ── Factory Functions ──────────────────────────────────────────────────────
 
 
-def create_amp_scaler(cfg: Config) -> torch.amp.GradScaler | None:
+def create_amp_scaler(training: TrainingConfig) -> torch.amp.GradScaler | None:
     """
     Create AMP GradScaler if mixed precision is enabled.
 
     Args:
-        cfg: Global configuration (reads ``cfg.training.use_amp``).
+        training: Training sub-config (reads ``use_amp``).
 
     Returns:
         GradScaler instance when AMP is enabled, None otherwise.
     """
-    return torch.amp.GradScaler() if cfg.training.use_amp else None
+    return torch.amp.GradScaler() if training.use_amp else None
 
 
-def create_mixup_fn(cfg: Config) -> Callable | None:
+def create_mixup_fn(training: TrainingConfig) -> Callable | None:
     """
     Create a seeded MixUp partial function if alpha > 0.
 
     Args:
-        cfg: Global configuration (reads ``cfg.training.mixup_alpha``
-             and ``cfg.training.seed``).
+        training: Training sub-config (reads ``mixup_alpha``
+            and ``seed``).
 
     Returns:
         Partial of ``mixup_data`` with fixed alpha and seeded RNG,
         or None when MixUp is disabled.
     """
-    if cfg.training.mixup_alpha > 0:
-        rng = np.random.default_rng(cfg.training.seed)
-        return partial(mixup_data, alpha=cfg.training.mixup_alpha, rng=rng)
+    if training.mixup_alpha > 0:
+        rng = np.random.default_rng(training.seed)
+        return partial(mixup_data, alpha=training.mixup_alpha, rng=rng)
     return None
 
 

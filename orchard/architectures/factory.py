@@ -12,12 +12,13 @@ Architecture:
 - Device Management: Automatic model transfer to target accelerator
 
 Key Components:
-    get_model: Factory function for architecture resolution and instantiation
-    _MODEL_REGISTRY: Internal mapping of architecture names to builders
+
+- ``get_model``: Factory function for architecture resolution and instantiation
+- ``_MODEL_REGISTRY``: Internal mapping of architecture names to builders
 
 Example:
     >>> from orchard.architectures.factory import get_model
-    >>> model = get_model(device=device, cfg=cfg)
+    >>> model = get_model(device, dataset_cfg=cfg.dataset, arch_cfg=cfg.architecture)
     >>> print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
 """
 
@@ -31,7 +32,7 @@ from typing import Callable, Iterator
 import torch
 import torch.nn as nn
 
-from ..core import LOGGER_NAME, Config, LogStyle
+from ..core import LOGGER_NAME, ArchitectureConfig, DatasetConfig, LogStyle
 from .convnext_tiny import build_convnext_tiny
 from .efficientnet_b0 import build_efficientnet_b0
 from .mini_cnn import build_mini_cnn
@@ -86,24 +87,23 @@ def _dispatch_builder(
     device: torch.device,
     num_classes: int,
     in_channels: int,
-    cfg: Config,
+    arch_cfg: ArchitectureConfig,
+    resolution: int,
 ) -> nn.Module:
     """
     Dispatch to the correct builder with narrowed parameters.
     """
-    arch = cfg.architecture
-
     if model_name_lower.startswith("timm/"):
         return build_timm_model(
             device,
             num_classes=num_classes,
             in_channels=in_channels,
-            arch_cfg=arch,
+            arch_cfg=arch_cfg,
         )
 
     builder = _MODEL_REGISTRY.get(model_name_lower)
     if builder is None:
-        error_msg = f"Architecture '{arch.name}' is not registered in the Factory."
+        error_msg = f"Architecture '{arch_cfg.name}' is not registered in the Factory."
         logger.error(f" {LogStyle.FAILURE} {error_msg}")
         raise ValueError(error_msg)
 
@@ -112,35 +112,40 @@ def _dispatch_builder(
             device,
             num_classes=num_classes,
             in_channels=in_channels,
-            dropout=arch.dropout,
+            dropout=arch_cfg.dropout,
         )
     if builder is build_resnet18:
         return build_resnet18(
             device,
             num_classes=num_classes,
             in_channels=in_channels,
-            pretrained=arch.pretrained,
-            resolution=cfg.dataset.resolution,
+            pretrained=arch_cfg.pretrained,
+            resolution=resolution,
         )
     if builder is build_vit_tiny:
         return build_vit_tiny(
             device,
             num_classes=num_classes,
             in_channels=in_channels,
-            pretrained=arch.pretrained,
-            weight_variant=arch.weight_variant,
+            pretrained=arch_cfg.pretrained,
+            weight_variant=arch_cfg.weight_variant,
         )
     # efficientnet_b0, convnext_tiny: pretrained only
     return builder(
         device,
         num_classes=num_classes,
         in_channels=in_channels,
-        pretrained=arch.pretrained,
+        pretrained=arch_cfg.pretrained,
     )
 
 
 # MODEL FACTORY LOGIC
-def get_model(device: torch.device, cfg: Config, verbose: bool = True) -> nn.Module:
+def get_model(
+    device: torch.device,
+    dataset_cfg: DatasetConfig,
+    arch_cfg: ArchitectureConfig,
+    verbose: bool = True,
+) -> nn.Module:
     """
     Factory function to resolve, instantiate, and prepare architectures.
 
@@ -151,31 +156,29 @@ def get_model(device: torch.device, cfg: Config, verbose: bool = True) -> nn.Mod
 
     Args:
         device: Hardware accelerator target.
-        cfg: Global configuration manifest with resolved metadata.
+        dataset_cfg: Dataset sub-config with resolved metadata.
+        arch_cfg: Architecture sub-config with model selection.
         verbose: Suppress builder-internal INFO logging.
 
     Returns:
         nn.Module: The instantiated model synchronized with the target device.
 
     Example:
-        >>> model = get_model(device=device, cfg=cfg)
-        >>> batch = torch.randn(8, cfg.dataset.effective_in_channels,
-        ...                     cfg.dataset.img_size, cfg.dataset.img_size).to(device)
-        >>> logits = model(batch)
+        >>> model = get_model(device, dataset_cfg=cfg.dataset, arch_cfg=cfg.architecture)
 
     Raises:
         ValueError: If the requested architecture is not found in the registry.
     """
-    # Resolve structural dimensions from Single Source of Truth (Config)
-    in_channels = cfg.dataset.effective_in_channels
-    num_classes = cfg.dataset.num_classes
-    model_name_lower = cfg.architecture.name.lower()
+    # Resolve structural dimensions from sub-configs
+    in_channels = dataset_cfg.effective_in_channels
+    num_classes = dataset_cfg.num_classes
+    model_name_lower = arch_cfg.name.lower()
 
     if verbose:
         logger.info(
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Architecture':<18}: "
-            f"{cfg.architecture.name} | "
-            f"Input: {cfg.dataset.img_size}x{cfg.dataset.img_size}x{in_channels} | "
+            f"{arch_cfg.name} | "
+            f"Input: {dataset_cfg.img_size}x{dataset_cfg.img_size}x{in_channels} | "
             f"Output: {num_classes} classes"
         )
 
@@ -187,7 +190,9 @@ def get_model(device: torch.device, cfg: Config, verbose: bool = True) -> nn.Mod
         logger.setLevel(logging.WARNING)
     try:
         with _suppress_download_noise():
-            model = _dispatch_builder(model_name_lower, device, num_classes, in_channels, cfg)
+            model = _dispatch_builder(
+                model_name_lower, device, num_classes, in_channels, arch_cfg, dataset_cfg.resolution
+            )
     finally:
         logger.setLevel(_prev_level)
 

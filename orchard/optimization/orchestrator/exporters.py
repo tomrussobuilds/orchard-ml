@@ -83,7 +83,8 @@ def export_study_summary(study: optuna.Study, paths: RunPaths) -> None:
         study: Optuna study (may contain failed/pruned trials)
         paths: RunPaths instance for output location
 
-    Output Structure:
+    Output structure::
+
         {
             "study_name": str,
             "direction": str,
@@ -94,7 +95,7 @@ def export_study_summary(study: optuna.Study, paths: RunPaths) -> None:
         }
 
     Example:
-        >>> export_study_summary(study, paths, "auc")
+        >>> export_study_summary(study, paths)
         # Creates: {paths.reports}/study_summary.json
     """
     completed = get_completed_trials(study)

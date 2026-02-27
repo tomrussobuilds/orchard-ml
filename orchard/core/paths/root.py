@@ -4,7 +4,7 @@ Project Root Discovery and Derived Path Constants.
 Dynamically locates the project root by searching for anchor files
 (.git, requirements.txt) and derives all core directory paths from it.
 
-Module Attributes:
+Attributes:
     PROJECT_ROOT: Dynamically resolved absolute path to the project root.
     DATASET_DIR: Absolute path to the raw datasets directory.
     OUTPUTS_ROOT: Default root directory for all experiment results.

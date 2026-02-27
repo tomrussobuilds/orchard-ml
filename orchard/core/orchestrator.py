@@ -13,14 +13,16 @@ Architecture:
 - Protocol-Based: type-safe abstractions for mockability
 
 Key Components:
-    RootOrchestrator: Main lifecycle controller
+
+- ``RootOrchestrator``: Main lifecycle controller
 
 Related Protocols (defined in their respective modules):
-    InfraManagerProtocol: config/infrastructure_config.py
-    ReporterProtocol: logger/reporter.py
-    TimeTrackerProtocol: environment/timing.py
 
-Typical Usage:
+- ``InfraManagerProtocol``: ``config/infrastructure_config.py``
+- ``ReporterProtocol``: ``logger/reporter.py``
+- ``TimeTrackerProtocol``: ``environment/timing.py``
+
+Example:
     >>> from orchard.core import Config, RootOrchestrator
     >>> cfg = Config.from_recipe(Path("recipes/config_mini_cnn.yaml"))
     >>> with RootOrchestrator(cfg) as orchestrator:

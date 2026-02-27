@@ -6,9 +6,10 @@ Uses PyTorch's weights_only=True for security hardening against arbitrary code
 execution attacks via malicious checkpoints.
 
 Key Features:
-    * Secure weight loading with weights_only=True
-    * Device-aware tensor mapping (CPU/CUDA/MPS)
-    * Existence validation before restoration
+
+- Secure weight loading with ``weights_only=True``
+- Device-aware tensor mapping (CPU/CUDA/MPS)
+- Existence validation before restoration
 """
 
 from __future__ import annotations

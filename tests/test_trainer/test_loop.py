@@ -67,7 +67,7 @@ def loop():
 def test_create_amp_scaler_disabled(mock_cfg):
     """AMP scaler is None when use_amp=False."""
     mock_cfg.training.use_amp = False
-    assert create_amp_scaler(mock_cfg) is None
+    assert create_amp_scaler(mock_cfg.training) is None
 
 
 @pytest.mark.filterwarnings("ignore:.*GradScaler is enabled, but CUDA is not available.*")
@@ -75,7 +75,7 @@ def test_create_amp_scaler_disabled(mock_cfg):
 def test_create_amp_scaler_enabled(mock_cfg):
     """AMP scaler is GradScaler when use_amp=True."""
     mock_cfg.training.use_amp = True
-    scaler = create_amp_scaler(mock_cfg)
+    scaler = create_amp_scaler(mock_cfg.training)
     assert isinstance(scaler, torch.amp.GradScaler)
 
 
@@ -83,14 +83,14 @@ def test_create_amp_scaler_enabled(mock_cfg):
 def test_create_mixup_fn_disabled(mock_cfg):
     """MixUp function is None when alpha=0."""
     mock_cfg.training.mixup_alpha = 0.0
-    assert create_mixup_fn(mock_cfg) is None
+    assert create_mixup_fn(mock_cfg.training) is None
 
 
 @pytest.mark.unit
 def test_create_mixup_fn_enabled(mock_cfg):
     """MixUp function is callable when alpha > 0."""
     mock_cfg.training.mixup_alpha = 0.4
-    fn = create_mixup_fn(mock_cfg)
+    fn = create_mixup_fn(mock_cfg.training)
     assert fn is not None
     assert callable(fn)
 
@@ -101,8 +101,8 @@ def test_create_mixup_fn_deterministic(mock_cfg):
     mock_cfg.training.mixup_alpha = 0.4
     mock_cfg.training.seed = 123
 
-    fn1 = create_mixup_fn(mock_cfg)
-    fn2 = create_mixup_fn(mock_cfg)
+    fn1 = create_mixup_fn(mock_cfg.training)
+    fn2 = create_mixup_fn(mock_cfg.training)
 
     x = torch.randn(4, 1, 28, 28)
     y = torch.randint(0, 10, (4,))

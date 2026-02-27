@@ -101,7 +101,13 @@ def test_build_loaders_with_weighted_sampler(mock_cfg, mock_metadata):
                     return 4
 
             with patch("orchard.data_handler.loader.VisionDataset", FakeDataset):
-                factory = DataLoaderFactory(mock_cfg, mock_metadata)
+                factory = DataLoaderFactory(
+                    mock_cfg.dataset,
+                    mock_cfg.training,
+                    mock_cfg.augmentation,
+                    mock_cfg.num_workers,
+                    mock_metadata,
+                )
                 train, val, test = factory.build()
 
                 # Check number of samples
@@ -146,7 +152,13 @@ def test_build_loaders_without_weighted_sampler(mock_cfg_no_sampler, mock_metada
                     return 4
 
             with patch("orchard.data_handler.loader.VisionDataset", FakeDataset):
-                factory = DataLoaderFactory(mock_cfg_no_sampler, mock_metadata)
+                factory = DataLoaderFactory(
+                    mock_cfg_no_sampler.dataset,
+                    mock_cfg_no_sampler.training,
+                    mock_cfg_no_sampler.augmentation,
+                    mock_cfg_no_sampler.num_workers,
+                    mock_metadata,
+                )
                 (
                     train,
                     _,
@@ -165,7 +177,13 @@ def test_infra_kwargs_optuna(mock_cfg, mock_metadata):
     mock_ds_meta = MagicMock(in_channels=1)
 
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
-        factory = DataLoaderFactory(mock_cfg, mock_metadata)
+        factory = DataLoaderFactory(
+            mock_cfg.dataset,
+            mock_cfg.training,
+            mock_cfg.augmentation,
+            mock_cfg.num_workers,
+            mock_metadata,
+        )
         infra = factory._get_infrastructure_kwargs(is_optuna=True)
         assert infra["num_workers"] <= 6
         assert infra["persistent_workers"] is False
@@ -177,7 +195,13 @@ def test_infra_kwargs_optuna_high_res(mock_cfg_high_res, mock_metadata):
     mock_ds_meta = MagicMock(in_channels=1)
 
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
-        factory = DataLoaderFactory(mock_cfg_high_res, mock_metadata)
+        factory = DataLoaderFactory(
+            mock_cfg_high_res.dataset,
+            mock_cfg_high_res.training,
+            mock_cfg_high_res.augmentation,
+            mock_cfg_high_res.num_workers,
+            mock_metadata,
+        )
         infra = factory._get_infrastructure_kwargs(is_optuna=True)
 
         assert infra["num_workers"] <= 4
@@ -190,7 +214,13 @@ def test_infra_kwargs_pin_memory(monkeypatch, mock_cfg, mock_metadata):
     mock_ds_meta = MagicMock(in_channels=1)
 
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
-        factory = DataLoaderFactory(mock_cfg, mock_metadata)
+        factory = DataLoaderFactory(
+            mock_cfg.dataset,
+            mock_cfg.training,
+            mock_cfg.augmentation,
+            mock_cfg.num_workers,
+            mock_metadata,
+        )
         monkeypatch.setattr(torch, "cuda", MagicMock(is_available=lambda: True))
         monkeypatch.setattr(torch.backends, "mps", MagicMock(is_available=lambda: False))
 
@@ -204,7 +234,13 @@ def test_infra_kwargs_no_pin_memory(monkeypatch, mock_cfg, mock_metadata):
     mock_ds_meta = MagicMock(in_channels=1)
 
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
-        factory = DataLoaderFactory(mock_cfg, mock_metadata)
+        factory = DataLoaderFactory(
+            mock_cfg.dataset,
+            mock_cfg.training,
+            mock_cfg.augmentation,
+            mock_cfg.num_workers,
+            mock_metadata,
+        )
         monkeypatch.setattr(torch, "cuda", MagicMock(is_available=lambda: False))
         monkeypatch.setattr(torch.backends, "mps", MagicMock(is_available=lambda: False))
 
@@ -332,8 +368,21 @@ def test_get_dataloaders_convenience_function(mock_cfg, mock_metadata):
         mock_factory.build.return_value = (mock_train, mock_val, mock_test)
         mock_factory_class.return_value = mock_factory
 
-        train, val, test = get_dataloaders(mock_metadata, mock_cfg, is_optuna=False)
-        mock_factory_class.assert_called_once_with(mock_cfg, mock_metadata)
+        train, val, test = get_dataloaders(
+            mock_metadata,
+            mock_cfg.dataset,
+            mock_cfg.training,
+            mock_cfg.augmentation,
+            mock_cfg.num_workers,
+            is_optuna=False,
+        )
+        mock_factory_class.assert_called_once_with(
+            mock_cfg.dataset,
+            mock_cfg.training,
+            mock_cfg.augmentation,
+            mock_cfg.num_workers,
+            mock_metadata,
+        )
         mock_factory.build.assert_called_once_with(is_optuna=False)
 
         assert train == mock_train
@@ -352,7 +401,14 @@ def test_get_dataloaders_with_optuna_mode(mock_cfg, mock_metadata):
         mock_factory.build.return_value = mock_loaders
         mock_factory_class.return_value = mock_factory
 
-        result = get_dataloaders(mock_metadata, mock_cfg, is_optuna=True)
+        result = get_dataloaders(
+            mock_metadata,
+            mock_cfg.dataset,
+            mock_cfg.training,
+            mock_cfg.augmentation,
+            mock_cfg.num_workers,
+            is_optuna=True,
+        )
 
         mock_factory.build.assert_called_once_with(is_optuna=True)
         assert result == mock_loaders
@@ -364,7 +420,13 @@ def test_balancing_sampler_missing_class_raises(mock_cfg, mock_metadata):
     mock_ds_meta = MagicMock(in_channels=1)
 
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
-        factory = DataLoaderFactory(mock_cfg, mock_metadata)
+        factory = DataLoaderFactory(
+            mock_cfg.dataset,
+            mock_cfg.training,
+            mock_cfg.augmentation,
+            mock_cfg.num_workers,
+            mock_metadata,
+        )
 
         dataset = MagicMock()
         dataset.labels = np.array([0, 1, 0, 1])  # only 2 of 3 classes
@@ -380,7 +442,13 @@ def test_balancing_sampler_all_classes_present(mock_cfg, mock_metadata):
     mock_ds_meta = MagicMock(in_channels=1)
 
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
-        factory = DataLoaderFactory(mock_cfg, mock_metadata)
+        factory = DataLoaderFactory(
+            mock_cfg.dataset,
+            mock_cfg.training,
+            mock_cfg.augmentation,
+            mock_cfg.num_workers,
+            mock_metadata,
+        )
 
         dataset = MagicMock()
         dataset.labels = np.array([0, 1, 0, 1])

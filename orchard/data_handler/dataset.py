@@ -11,7 +11,8 @@ It supports two loading strategies via classmethod factories:
 - ``lazy``: Memory-mapped loading for large datasets or lightweight health checks.
 
 Key Components:
-    VisionDataset: Full-featured dataset with eager and lazy loading modes.
+
+- ``VisionDataset``: Full-featured dataset with eager and lazy loading modes.
 """
 
 from __future__ import annotations

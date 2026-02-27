@@ -17,10 +17,11 @@ Features:
   NaN/Inf loss to prevent checkpointing corrupted weights.
 
 Key Functions:
-    compute_auc: Macro-averaged ROC-AUC with graceful fallback.
-    train_one_epoch: Single training pass with AMP, MixUp, and tqdm progress.
-    validate_epoch: No-grad evaluation returning loss, accuracy, macro AUC, and macro F1.
-    mixup_data: Convex sample blending for data augmentation.
+
+- ``compute_auc``: Macro-averaged ROC-AUC with graceful fallback.
+- ``train_one_epoch``: Single training pass with AMP, MixUp, and tqdm progress.
+- ``validate_epoch``: No-grad evaluation returning loss, accuracy, macro AUC, and macro F1.
+- ``mixup_data``: Convex sample blending for data augmentation.
 """
 
 from __future__ import annotations

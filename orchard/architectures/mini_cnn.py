@@ -12,7 +12,8 @@ Key Features:
 - Dropout Regularization: Configurable dropout for overfitting prevention
 - Efficient Design: ~50K parameters vs ~11M for ResNet-18
 
-Architecture:
+Architecture::
+
     Input [28×28×C] → Conv1 [14×14×32] → Conv2 [7×7×64] → Conv3 [7×7×128]
                    → AdaptiveAvgPool [1×1×128] → Dropout → FC [num_classes]
 """

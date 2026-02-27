@@ -88,11 +88,13 @@ def run_smoke_test(cfg: Config) -> None:
                 data = load_dataset(ds_meta)
 
             run_logger.info("[Stage 2/5] Initializing DataLoaders...")
-            train_loader, val_loader, test_loader = get_dataloaders(data, cfg)
+            train_loader, val_loader, test_loader = get_dataloaders(
+                data, cfg.dataset, cfg.training, cfg.augmentation, cfg.num_workers
+            )
 
             # MODEL TRAINING
             run_logger.info("[Stage 3/5] Testing Model & Optimizer Factories...")
-            model = get_model(device=device, cfg=cfg)
+            model = get_model(device=device, dataset_cfg=cfg.dataset, arch_cfg=cfg.architecture)
             criterion = get_criterion(cfg.training)
             optimizer = get_optimizer(model, cfg.training)
             scheduler = get_scheduler(optimizer, cfg.training)

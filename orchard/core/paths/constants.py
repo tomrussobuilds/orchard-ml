@@ -6,7 +6,7 @@ codebase: paths, environment, config, and logger.  Lives in the lowest-level
 package (``paths``) so that every other module can safely import from here
 without circular-dependency risks.
 
-Module Attributes:
+Attributes:
     SUPPORTED_RESOLUTIONS: Valid image resolutions across architectures.
     METRIC_*: Canonical metric key strings.
     LOGGER_NAME: Global logger identity for log synchronization.
