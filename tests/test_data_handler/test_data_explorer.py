@@ -182,7 +182,6 @@ def test_show_samples_for_dataset_basic(mock_show_images, tmp_path):
 
     show_samples_for_dataset(
         loader=mock_loader,
-        classes=["class0", "class1"],
         dataset_name="bloodmnist",
         run_paths=mock_run_paths,
         num_samples=16,
@@ -202,7 +201,6 @@ def test_show_samples_for_dataset_with_resolution(mock_show_images, tmp_path):
 
     show_samples_for_dataset(
         loader=mock_loader,
-        classes=["class0"],
         dataset_name="pathmnist",
         run_paths=mock_run_paths,
         num_samples=8,
@@ -225,7 +223,6 @@ def test_show_samples_for_dataset_creates_directory(mock_show_images, tmp_path):
 
     show_samples_for_dataset(
         loader=mock_loader,
-        classes=["class0"],
         dataset_name="test",
         run_paths=mock_run_paths,
         num_samples=4,

@@ -92,7 +92,6 @@ def health_check_single_dataset(ds_meta, orchestrator, resolution: int = 28) -> 
         # ---------------- Step 4: Visual confirmation ----------------
         show_samples_for_dataset(
             loader=loader,
-            classes=ds_meta.classes,
             dataset_name=ds_meta.name,
             run_paths=orchestrator.paths,
             resolution=resolution,

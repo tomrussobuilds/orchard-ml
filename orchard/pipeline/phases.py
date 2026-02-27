@@ -173,7 +173,6 @@ def run_training_phase(
 
     show_samples_for_dataset(
         loader=train_loader,
-        classes=ds_meta.classes,
         dataset_name=cfg.dataset.dataset_name,
         run_paths=paths,
         mean=cfg.dataset.mean,

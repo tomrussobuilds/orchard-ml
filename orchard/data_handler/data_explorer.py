@@ -100,7 +100,6 @@ def show_sample_images(
 
 def show_samples_for_dataset(
     loader: DataLoader,
-    classes: list[str],  # noqa: ARG001
     dataset_name: str,
     run_paths: RunPaths,
     *,
@@ -116,7 +115,6 @@ def show_samples_for_dataset(
 
     Args:
         loader: PyTorch DataLoader to sample images from.
-        classes: List of class names (reserved for future per-class grids; currently unused).
         dataset_name: Name of the dataset, used in the filename and title.
         run_paths: RunPaths instance to resolve figure saving path.
         mean: Per-channel mean for denormalization.

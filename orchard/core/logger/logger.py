@@ -78,32 +78,7 @@ class ColorFormatter(logging.Formatter):
 
         # Content-based coloring for INFO messages
         if record.levelno == logging.INFO:
-            stripped = msg.strip()
-
-            # Separator lines → dim
-            if stripped and all(c in _SEPARATOR_CHARS for c in stripped):
-                return self._color_message_only(formatted, msg, LogStyle.DIM)
-
-            # Centered headers (e.g. "ENVIRONMENT INITIALIZATION",
-            # "TRAINING PIPELINE - RESNET_18") → bold magenta
-            if (
-                stripped == stripped.upper()
-                and len(stripped) > 5
-                and any(c.isalpha() for c in stripped)
-            ):
-                return self._color_message_only(formatted, msg, LogStyle.BOLD + LogStyle.MAGENTA)
-
-            # Early stopping banner → green
-            if "EARLY STOPPING" in stripped:
-                return self._color_message_only(formatted, msg, LogStyle.GREEN)
-
-            # Success lines (✓, New best model) → green
-            if "✓" in msg or "New best model" in msg:
-                return self._color_message_only(formatted, msg, LogStyle.GREEN)
-
-            # Failure lines (✗) → red
-            if "✗" in msg:
-                return self._color_message_only(formatted, msg, LogStyle.RED)
+            return self._color_info(formatted, msg)
 
         # Warning-level content coloring
         if record.levelno == logging.WARNING:
@@ -112,6 +87,41 @@ class ColorFormatter(logging.Formatter):
         # Subtitle tags [Text] → bold magenta (within message portion only)
         if _SUBTITLE_RE.search(msg):
             formatted = self._color_subtitles(formatted, msg)
+
+        return formatted
+
+    def _color_info(self, formatted: str, msg: str) -> str:
+        """Apply content-based coloring for INFO-level messages."""
+        stripped = msg.strip()
+
+        # Separator lines → dim
+        if stripped and all(c in _SEPARATOR_CHARS for c in stripped):
+            return self._color_message_only(formatted, msg, LogStyle.DIM)
+
+        # Centered headers (e.g. "ENVIRONMENT INITIALIZATION",
+        # "TRAINING PIPELINE - RESNET_18") → bold magenta
+        if (
+            stripped == stripped.upper()
+            and len(stripped) > 5
+            and any(c.isalpha() for c in stripped)
+        ):
+            return self._color_message_only(formatted, msg, LogStyle.BOLD + LogStyle.MAGENTA)
+
+        # Early stopping banner → green
+        if "EARLY STOPPING" in stripped:
+            return self._color_message_only(formatted, msg, LogStyle.GREEN)
+
+        # Success lines (✓, New best model) → green
+        if "✓" in msg or "New best model" in msg:
+            return self._color_message_only(formatted, msg, LogStyle.GREEN)
+
+        # Failure lines (✗) → red
+        if "✗" in msg:
+            return self._color_message_only(formatted, msg, LogStyle.RED)
+
+        # Subtitle tags [Text] → bold magenta (within message portion only)
+        if _SUBTITLE_RE.search(msg):
+            return self._color_subtitles(formatted, msg)
 
         return formatted
 

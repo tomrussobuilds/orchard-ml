@@ -630,6 +630,26 @@ def test_color_formatter_subtitle_ignores_data_brackets():
 
 
 @pytest.mark.unit
+def test_color_formatter_subtitle_non_info_level():
+    """Test ColorFormatter applies subtitle coloring to non-INFO levels (e.g. DEBUG)."""
+    from orchard.core.logger.logger import ColorFormatter
+    from orchard.core.paths.constants import LogStyle
+
+    formatter = ColorFormatter("%(levelname)s - %(message)s")
+    record = logging.LogRecord(
+        name="test",
+        level=logging.DEBUG,
+        pathname="",
+        lineno=0,
+        msg="[Hardware] GPU memory: 8GB",
+        args=(),
+        exc_info=None,
+    )
+    output = formatter.format(record)
+    assert f"{LogStyle.BOLD}{LogStyle.MAGENTA}[Hardware]{LogStyle.RESET}" in output
+
+
+@pytest.mark.unit
 def test_color_message_only_fallback_when_msg_not_found():
     """Test _color_message_only returns formatted unchanged when msg is not found."""
     from orchard.core.logger.logger import ColorFormatter
