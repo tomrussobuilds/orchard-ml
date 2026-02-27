@@ -126,7 +126,9 @@ def test_create_structured_report(mock_config):
         train_losses=train_losses,
         best_path=Path("/models/best.pth"),
         log_path=Path("/logs/run.log"),
-        cfg=mock_config,
+        arch_name=mock_config.architecture.name,
+        dataset=mock_config.dataset,
+        training=mock_config.training,
         aug_info="HFlip(True), Rotation(15°)",
     )
 
@@ -227,7 +229,9 @@ def test_create_structured_report_handles_empty_val_metrics(mock_config):
         train_losses=train_losses,
         best_path=Path("/models/best.pth"),
         log_path=Path("/logs/run.log"),
-        cfg=mock_config,
+        arch_name=mock_config.architecture.name,
+        dataset=mock_config.dataset,
+        training=mock_config.training,
         aug_info="N/A",
     )
     assert isinstance(report, TrainingReport)
@@ -250,7 +254,9 @@ def test_create_structured_report_filters_nan_auc(mock_config):
         train_losses=[0.5, 0.4, 0.3],
         best_path=Path("/models/best.pth"),
         log_path=Path("/logs/run.log"),
-        cfg=mock_config,
+        arch_name=mock_config.architecture.name,
+        dataset=mock_config.dataset,
+        training=mock_config.training,
         aug_info="N/A",
     )
 
@@ -273,7 +279,9 @@ def test_create_structured_report_all_nan_auc(mock_config):
         train_losses=[0.5, 0.4],
         best_path=Path("/models/best.pth"),
         log_path=Path("/logs/run.log"),
-        cfg=mock_config,
+        arch_name=mock_config.architecture.name,
+        dataset=mock_config.dataset,
+        training=mock_config.training,
         aug_info="N/A",
     )
 

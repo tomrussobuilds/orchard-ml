@@ -19,14 +19,12 @@ echo "✓ Ruff passed"
 echo ""
 
 echo "🔒 Bandit (security linting)..."
-bandit -r orchard/ -l -q
+bandit -c pyproject.toml -r orchard/ -l -q
 echo "✓ Bandit passed"
 echo ""
 
 echo "🔍 MyPy (type checking)..."
-echo "  Installing type stubs..."
-pip install -q types-PyYAML types-requests 2>/dev/null || true
-mypy orchard/ --ignore-missing-imports --no-strict-optional
+mypy orchard/
 echo "✓ MyPy passed"
 echo ""
 

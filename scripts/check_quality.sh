@@ -19,8 +19,13 @@ echo "✓ Ruff passed"
 echo ""
 
 echo "🔒 Bandit (security linting)..."
-bandit -r orchard/ -l -q
+bandit -c pyproject.toml -r orchard/ -l -q
 echo "✓ Bandit passed"
+echo ""
+
+echo "🔍 MyPy (type checking)..."
+mypy orchard/
+echo "✓ MyPy passed"
 echo ""
 
 echo "📊 Radon (complexity analysis)..."

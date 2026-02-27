@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - config narrowing — decouple builders, transforms, TTA and visualization from Config
 - unify VisionDataset — eliminate LazyNPZDataset, add lazy mmap loading
 - relocate LogStyle to paths.constants — break circular imports, unify log symbols
+- config narrowing — decouple factories and loaders from Config
 
 ### Fixed
 

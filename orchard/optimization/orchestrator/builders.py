@@ -48,7 +48,7 @@ def build_sampler(optuna_cfg: OptunaConfig) -> optuna.samplers.BaseSampler:
             f"Unknown sampler: {optuna_cfg.sampler_type}. "
             f"Valid options: {list(SAMPLER_REGISTRY.keys())}"
         )
-    return sampler_cls()
+    return sampler_cls()  # type: ignore[no-any-return]
 
 
 def build_pruner(

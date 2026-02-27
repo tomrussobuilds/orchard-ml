@@ -242,7 +242,9 @@ def test_training_executor_should_prune_warmup():
         optimizer=MagicMock(),
         scheduler=MagicMock(),
         criterion=MagicMock(),
-        cfg=mock_cfg,
+        training=mock_cfg.training,
+        optuna=mock_cfg.optuna,
+        log_interval=5,
         device=torch.device("cpu"),
         metric_extractor=MetricExtractor("auc"),
     )
@@ -277,7 +279,9 @@ def test_training_executor_disabled_pruning():
         optimizer=MagicMock(),
         scheduler=MagicMock(),
         criterion=MagicMock(),
-        cfg=mock_cfg,
+        training=mock_cfg.training,
+        optuna=mock_cfg.optuna,
+        log_interval=5,
         device=torch.device("cpu"),
         metric_extractor=MetricExtractor("auc"),
     )
@@ -306,7 +310,9 @@ def test_training_executor_validate_epoch_error_handling():
         optimizer=MagicMock(),
         scheduler=MagicMock(),
         criterion=MagicMock(),
-        cfg=mock_cfg,
+        training=mock_cfg.training,
+        optuna=mock_cfg.optuna,
+        log_interval=5,
         device=torch.device("cpu"),
         metric_extractor=MetricExtractor("auc"),
     )

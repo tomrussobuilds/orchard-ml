@@ -248,7 +248,9 @@ class OptunaObjective:
                 optimizer=optimizer,
                 scheduler=scheduler,
                 criterion=criterion,
-                cfg=trial_cfg,
+                training=trial_cfg.training,
+                optuna=trial_cfg.optuna,
+                log_interval=trial_cfg.telemetry.log_interval,
                 device=self.device,
                 metric_extractor=self.metric_extractor,
             )
@@ -294,7 +296,7 @@ class OptunaObjective:
             Dictionary of sampled hyperparameters
         """
         if hasattr(self.search_space, "sample_params"):
-            return self.search_space.sample_params(trial)
+            return self.search_space.sample_params(trial)  # type: ignore[no-any-return]
         return {key: fn(trial) for key, fn in self.search_space.items()}
 
     def _worst_metric(self) -> float:

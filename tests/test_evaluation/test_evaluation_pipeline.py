@@ -65,7 +65,11 @@ def test_run_final_evaluation_returns_tuple(
         val_metrics_history=[{"accuracy": 0.8}, {"accuracy": 0.9}],
         class_names=["class0", "class1"],
         paths=mock_paths,
-        cfg=mock_cfg,
+        training=mock_cfg.training,
+        dataset=mock_cfg.dataset,
+        augmentation=mock_cfg.augmentation,
+        evaluation=mock_cfg.evaluation,
+        arch_name=mock_cfg.architecture.name,
     )
 
     assert isinstance(result, tuple)
@@ -116,7 +120,11 @@ def test_run_final_evaluation_calls_evaluate_model(
         val_metrics_history=[{"accuracy": 0.9}],
         class_names=["class0"],
         paths=mock_paths,
-        cfg=mock_cfg,
+        training=mock_cfg.training,
+        dataset=mock_cfg.dataset,
+        augmentation=mock_cfg.augmentation,
+        evaluation=mock_cfg.evaluation,
+        arch_name=mock_cfg.architecture.name,
     )
 
     mock_evaluate.assert_called_once()
@@ -166,7 +174,11 @@ def test_run_final_evaluation_calls_visualizations(
         val_metrics_history=[{"accuracy": 0.9}],
         class_names=["class0"],
         paths=mock_paths,
-        cfg=mock_cfg,
+        training=mock_cfg.training,
+        dataset=mock_cfg.dataset,
+        augmentation=mock_cfg.augmentation,
+        evaluation=mock_cfg.evaluation,
+        arch_name=mock_cfg.architecture.name,
     )
 
     mock_confusion.assert_called_once()
@@ -215,7 +227,11 @@ def test_run_final_evaluation_creates_report(
         val_metrics_history=[{"accuracy": 0.9}],
         class_names=["class0"],
         paths=mock_paths,
-        cfg=mock_cfg,
+        training=mock_cfg.training,
+        dataset=mock_cfg.dataset,
+        augmentation=mock_cfg.augmentation,
+        evaluation=mock_cfg.evaluation,
+        arch_name=mock_cfg.architecture.name,
     )
 
     mock_report.assert_called_once()

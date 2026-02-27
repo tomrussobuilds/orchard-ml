@@ -122,7 +122,7 @@ def load_config_from_yaml(yaml_path: Path) -> dict[str, Any]:
         raise FileNotFoundError(f"YAML configuration file not found at: {yaml_path}")
 
     with open(yaml_path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        return yaml.safe_load(f)  # type: ignore[no-any-return]
 
 
 def _sanitize_for_yaml(obj: Any) -> Any:

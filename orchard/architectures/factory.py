@@ -44,31 +44,6 @@ from .vit_tiny import build_vit_tiny
 logger = logging.getLogger(LOGGER_NAME)
 
 
-@contextmanager
-def _suppress_download_noise() -> Iterator[None]:
-    """
-    Suppress tqdm progress bars and download logging from torch.hub and huggingface_hub.
-    """
-    prev = os.environ.get("TQDM_DISABLE")
-    os.environ["TQDM_DISABLE"] = "1"
-    noisy_loggers = [
-        logging.getLogger("torch.hub"),
-        logging.getLogger("huggingface_hub.utils._http"),
-    ]
-    old_levels = [lg.level for lg in noisy_loggers]
-    for lg in noisy_loggers:
-        lg.setLevel(logging.ERROR)
-    try:
-        yield
-    finally:
-        if prev is None:
-            os.environ.pop("TQDM_DISABLE", None)
-        else:
-            os.environ["TQDM_DISABLE"] = prev
-        for lg, level in zip(noisy_loggers, old_levels):
-            lg.setLevel(level)
-
-
 _BuilderFn = Callable[..., nn.Module]
 
 _MODEL_REGISTRY: dict[str, _BuilderFn] = {
@@ -80,63 +55,6 @@ _MODEL_REGISTRY: dict[str, _BuilderFn] = {
     # Extension point: register your custom architecture here
     # "your_model": build_your_model,
 }
-
-
-def _dispatch_builder(
-    model_name_lower: str,
-    device: torch.device,
-    num_classes: int,
-    in_channels: int,
-    arch_cfg: ArchitectureConfig,
-    resolution: int,
-) -> nn.Module:
-    """
-    Dispatch to the correct builder with narrowed parameters.
-    """
-    if model_name_lower.startswith("timm/"):
-        return build_timm_model(
-            device,
-            num_classes=num_classes,
-            in_channels=in_channels,
-            arch_cfg=arch_cfg,
-        )
-
-    builder = _MODEL_REGISTRY.get(model_name_lower)
-    if builder is None:
-        error_msg = f"Architecture '{arch_cfg.name}' is not registered in the Factory."
-        logger.error(f" {LogStyle.FAILURE} {error_msg}")
-        raise ValueError(error_msg)
-
-    if builder is build_mini_cnn:
-        return build_mini_cnn(
-            device,
-            num_classes=num_classes,
-            in_channels=in_channels,
-            dropout=arch_cfg.dropout,
-        )
-    if builder is build_resnet18:
-        return build_resnet18(
-            device,
-            num_classes=num_classes,
-            in_channels=in_channels,
-            pretrained=arch_cfg.pretrained,
-            resolution=resolution,
-        )
-    if builder is build_vit_tiny:
-        return build_vit_tiny(
-            device,
-            num_classes=num_classes,
-            in_channels=in_channels,
-            pretrained=arch_cfg.pretrained,
-            weight_variant=arch_cfg.weight_variant,
-        )
-    # efficientnet_b0, convnext_tiny: pretrained only
-    return builder(
-        device,
-        num_classes=num_classes,
-        in_channels=in_channels,
-        pretrained=arch_cfg.pretrained,
-    )
 
 
 # MODEL FACTORY LOGIC
@@ -206,3 +124,104 @@ def get_model(
         logger.info("")
 
     return model
+
+
+# INTERNAL HELPERS
+@contextmanager
+def _suppress_download_noise() -> Iterator[None]:
+    """
+    Suppress tqdm progress bars and download logging from torch.hub and huggingface_hub.
+    """
+    prev = os.environ.get("TQDM_DISABLE")
+    os.environ["TQDM_DISABLE"] = "1"
+    noisy_loggers = [
+        logging.getLogger("torch.hub"),
+        logging.getLogger("huggingface_hub.utils._http"),
+    ]
+    old_levels = [lg.level for lg in noisy_loggers]
+    for lg in noisy_loggers:
+        lg.setLevel(logging.ERROR)
+    try:
+        yield
+    finally:
+        if prev is None:
+            os.environ.pop("TQDM_DISABLE", None)
+        else:
+            os.environ["TQDM_DISABLE"] = prev
+        for lg, level in zip(noisy_loggers, old_levels):
+            lg.setLevel(level)
+
+
+def _dispatch_builder(
+    model_name_lower: str,
+    device: torch.device,
+    num_classes: int,
+    in_channels: int,
+    arch_cfg: ArchitectureConfig,
+    resolution: int,
+) -> nn.Module:
+    """
+    Dispatch to the correct architecture builder with narrowed parameters.
+
+    Resolves ``model_name_lower`` against the ``_MODEL_REGISTRY`` (or the
+    ``timm/`` prefix convention) and forwards only the parameters each
+    builder actually needs.
+
+    Args:
+        model_name_lower: Lowercased architecture identifier.
+        device: Hardware accelerator target.
+        num_classes: Number of output classes.
+        in_channels: Number of input image channels.
+        arch_cfg: Architecture sub-config with model-specific options.
+        resolution: Input spatial resolution (e.g. 28, 64, 224).
+
+    Returns:
+        Instantiated model placed on *device*.
+
+    Raises:
+        ValueError: If the architecture is not found in the registry.
+    """
+    if model_name_lower.startswith("timm/"):
+        return build_timm_model(
+            device,
+            num_classes=num_classes,
+            in_channels=in_channels,
+            arch_cfg=arch_cfg,
+        )
+
+    builder = _MODEL_REGISTRY.get(model_name_lower)
+    if builder is None:
+        error_msg = f"Architecture '{arch_cfg.name}' is not registered in the Factory."
+        logger.error(f" {LogStyle.FAILURE} {error_msg}")
+        raise ValueError(error_msg)
+
+    if builder is build_mini_cnn:
+        return build_mini_cnn(
+            device,
+            num_classes=num_classes,
+            in_channels=in_channels,
+            dropout=arch_cfg.dropout,
+        )
+    if builder is build_resnet18:
+        return build_resnet18(
+            device,
+            num_classes=num_classes,
+            in_channels=in_channels,
+            pretrained=arch_cfg.pretrained,
+            resolution=resolution,
+        )
+    if builder is build_vit_tiny:
+        return build_vit_tiny(
+            device,
+            num_classes=num_classes,
+            in_channels=in_channels,
+            pretrained=arch_cfg.pretrained,
+            weight_variant=arch_cfg.weight_variant,
+        )
+    # efficientnet_b0, convnext_tiny: pretrained only
+    return builder(
+        device,
+        num_classes=num_classes,
+        in_channels=in_channels,
+        pretrained=arch_cfg.pretrained,
+    )

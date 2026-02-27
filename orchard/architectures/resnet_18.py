@@ -75,7 +75,7 @@ def build_resnet18(
     # --- Step 4: Device Placement ---
     model = model.to(device)
 
-    return model
+    return model  # type: ignore[no-any-return]
 
 
 # INTERNAL HELPERS

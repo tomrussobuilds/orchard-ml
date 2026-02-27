@@ -61,7 +61,9 @@ def executor(mock_cfg):
         optimizer=optimizer,
         scheduler=scheduler,
         criterion=nn.CrossEntropyLoss(),
-        cfg=mock_cfg,
+        training=mock_cfg.training,
+        optuna=mock_cfg.optuna,
+        log_interval=5,
         device=torch.device("cpu"),
         metric_extractor=metric_extractor,
     )
@@ -101,7 +103,9 @@ def test_executor_init_with_mixup():
         ),
         scheduler=MagicMock(),
         criterion=nn.CrossEntropyLoss(),
-        cfg=cfg,
+        training=cfg.training,
+        optuna=cfg.optuna,
+        log_interval=5,
         device=torch.device("cpu"),
         metric_extractor=MetricExtractor("auc"),
     )
@@ -170,10 +174,9 @@ def test_validate_epoch_returns_fallback_on_exception():
         ),
         scheduler=MagicMock(),
         criterion=nn.CrossEntropyLoss(),
-        cfg=MagicMock(
-            training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
-            optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
-        ),
+        training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
+        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        log_interval=5,
         device=torch.device("cpu"),
         metric_extractor=MetricExtractor("auc"),
     )
@@ -197,10 +200,9 @@ def test_validate_epoch_returns_fallback_on_invalid_type():
         ),
         scheduler=MagicMock(),
         criterion=nn.CrossEntropyLoss(),
-        cfg=MagicMock(
-            training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
-            optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
-        ),
+        training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
+        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        log_interval=5,
         device=torch.device("cpu"),
         metric_extractor=MetricExtractor("auc"),
     )
@@ -224,10 +226,9 @@ def test_validate_epoch_returns_fallback_on_none():
         ),
         scheduler=MagicMock(),
         criterion=nn.CrossEntropyLoss(),
-        cfg=MagicMock(
-            training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
-            optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
-        ),
+        training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
+        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        log_interval=5,
         device=torch.device("cpu"),
         metric_extractor=MetricExtractor("auc"),
     )

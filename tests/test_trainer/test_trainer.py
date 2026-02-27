@@ -101,7 +101,7 @@ def trainer(simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cf
             scheduler=scheduler,
             criterion=criterion,
             device=device,
-            cfg=mock_cfg,
+            training=mock_cfg.training,
             output_path=output_path,
         )
 
@@ -145,7 +145,7 @@ def test_trainer_creates_output_dir(
             scheduler=scheduler,
             criterion=criterion,
             device=torch.device("cpu"),
-            cfg=mock_cfg,
+            training=mock_cfg.training,
             output_path=output_path,
         )
 
@@ -177,7 +177,7 @@ def test_trainer_amp_scaler_enabled(simple_model, mock_loaders, optimizer, sched
         scheduler=scheduler,
         criterion=criterion,
         device=torch.device("cpu"),
-        cfg=cfg,
+        training=cfg.training,
     )
 
     assert trainer.scaler is not None
@@ -242,7 +242,7 @@ def test_step_scheduler_reduce_on_plateau(
         scheduler=scheduler,
         criterion=criterion,
         device=torch.device("cpu"),
-        cfg=mock_cfg,
+        training=mock_cfg.training,
     )
 
     step_scheduler(trainer.scheduler, 0.5)
@@ -330,7 +330,7 @@ def test_train_early_stopping(mock_validate, mock_train, trainer):
 
     # --- 5. Assertions ---
     assert len(train_losses) <= trainer.epochs
-    assert trainer.epochs_no_improve >= trainer.cfg.training.patience
+    assert trainer.epochs_no_improve >= trainer.patience
     assert best_path.exists()
     for vm in val_metrics:
         assert "loss" in vm
@@ -367,7 +367,7 @@ def test_train_mixup_cutoff(
             scheduler=scheduler,
             criterion=criterion,
             device=torch.device("cpu"),
-            cfg=cfg,
+            training=cfg.training,
             output_path=Path(tmpdir) / "best.pth",
         )
 
@@ -400,7 +400,7 @@ def test_step_scheduler_calls_step_for_non_plateau(
         scheduler=scheduler,
         criterion=criterion,
         device=torch.device("cpu"),
-        cfg=mock_cfg,
+        training=mock_cfg.training,
     )
 
     original_step = trainer.scheduler.step
@@ -444,7 +444,7 @@ def test_train_loads_existing_checkpoint_when_no_improvement(
             scheduler=scheduler,
             criterion=criterion,
             device=torch.device("cpu"),
-            cfg=mock_cfg,
+            training=mock_cfg.training,
             output_path=output_path,
         )
 

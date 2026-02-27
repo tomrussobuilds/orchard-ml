@@ -82,4 +82,4 @@ def build_convnext_tiny(
     # --- Step 5: Device Placement ---
     model = model.to(device)
 
-    return model
+    return model  # type: ignore[no-any-return]

@@ -281,7 +281,7 @@ class RootOrchestrator:
         logger.debug("Phase 2: Configuring runtime (workers=%d)", self.num_workers)
         applied_threads = self._thread_applier(self.num_workers)
         self._system_configurator()
-        return applied_threads
+        return applied_threads  # type: ignore[no-any-return]
 
     def _phase_3_filesystem_provisioning(self) -> None:
         """

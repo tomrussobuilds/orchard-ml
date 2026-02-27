@@ -23,7 +23,7 @@ import logging
 import optuna
 import torch
 
-from ...core import LOGGER_NAME, Config, LogStyle
+from ...core import LOGGER_NAME, LogStyle, OptunaConfig, TrainingConfig
 from ...core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS
 from ...trainer import validate_epoch
 from ...trainer._loop import (
@@ -59,26 +59,26 @@ class TrialTrainingExecutor:
     - Learning rate scheduling
     - Progress logging
 
-    All pruning and warmup parameters are read from cfg.optuna to enforce
-    single source of truth.
+    Pruning and warmup parameters are read from the ``optuna`` sub-config;
+    training hyperparameters from ``training``.
 
     Attributes:
-        model: PyTorch model to train
-        train_loader: Training data loader
-        val_loader: Validation data loader
-        optimizer: Optimizer instance
-        scheduler: Learning rate scheduler
-        criterion: Loss function
-        cfg: Complete trial configuration
-        device: Training device (CPU/CUDA/MPS)
-        metric_extractor: Handles metric extraction and best-value tracking
-        enable_pruning: Whether to enable trial pruning (from cfg.optuna.enable_pruning)
-        warmup_epochs: Epochs before pruning activates (from cfg.optuna.pruning_warmup_epochs)
-        scaler (GradScaler | None): AMP gradient scaler (None when use_amp is False)
-        mixup_fn (callable | None): Mixup augmentation function (None when alpha is 0)
-        epochs: Total training epochs
-        log_interval: Epoch interval for progress logging
-        _loop (TrainingLoop): Shared epoch kernel for training steps (train only, no validation)
+        model: PyTorch model to train.
+        train_loader: Training data loader.
+        val_loader: Validation data loader.
+        optimizer: Optimizer instance.
+        scheduler: Learning rate scheduler.
+        criterion: Loss function.
+        device: Training device (CPU/CUDA/MPS).
+        metric_extractor: Handles metric extraction and best-value tracking.
+        enable_pruning: Whether to enable trial pruning.
+        warmup_epochs: Epochs before pruning activates.
+        monitor_metric: Name of the metric driving scheduling.
+        scaler (GradScaler | None): AMP gradient scaler (None when use_amp is False).
+        mixup_fn (callable | None): Mixup augmentation function (None when alpha is 0).
+        epochs: Total training epochs.
+        log_interval: Epoch interval for progress logging.
+        _loop (TrainingLoop): Shared epoch kernel for training steps (train only, no validation).
 
     Example:
         >>> executor = TrialTrainingExecutor(
@@ -88,7 +88,9 @@ class TrialTrainingExecutor:
         ...     optimizer=optimizer,
         ...     scheduler=scheduler,
         ...     criterion=criterion,
-        ...     cfg=trial_cfg,
+        ...     training=trial_cfg.training,
+        ...     optuna=trial_cfg.optuna,
+        ...     log_interval=trial_cfg.telemetry.log_interval,
         ...     device=device,
         ...     metric_extractor=MetricExtractor("auc"),
         ... )
@@ -103,7 +105,9 @@ class TrialTrainingExecutor:
         optimizer,
         scheduler,
         criterion,
-        cfg: Config,
+        training: TrainingConfig,
+        optuna: OptunaConfig,
+        log_interval: int,
         device: torch.device,
         metric_extractor: MetricExtractor,
     ) -> None:
@@ -111,15 +115,17 @@ class TrialTrainingExecutor:
         Initialize training executor.
 
         Args:
-            model (torch.nn.Module): PyTorch model to train
-            train_loader (DataLoader): Training data loader
-            val_loader (DataLoader): Validation data loader
-            optimizer (torch.optim.Optimizer): Optimizer instance
-            scheduler (LRScheduler | None): Learning rate scheduler
-            criterion (torch.nn.Module): Loss function
-            cfg (Config): Trial configuration (reads optuna.* settings)
-            device (torch.device): Training device
-            metric_extractor (MetricExtractor): Metric extraction and tracking handler
+            model: PyTorch model to train.
+            train_loader: Training data loader.
+            val_loader: Validation data loader.
+            optimizer: Optimizer instance.
+            scheduler: Learning rate scheduler.
+            criterion: Loss function.
+            training: Training hyperparameters sub-config.
+            optuna: Optuna pruning/warmup sub-config.
+            log_interval: Epoch interval for progress logging.
+            device: Training device.
+            metric_extractor: Metric extraction and tracking handler.
         """
         self.model = model
         self.train_loader = train_loader
@@ -127,19 +133,19 @@ class TrialTrainingExecutor:
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.criterion = criterion
-        self.cfg = cfg
         self.device = device
         self.metric_extractor = metric_extractor
 
-        # Read pruning config from cfg.optuna (single source of truth)
-        self.enable_pruning = cfg.optuna.enable_pruning
-        self.warmup_epochs = cfg.optuna.pruning_warmup_epochs
+        # Pruning config
+        self.enable_pruning = optuna.enable_pruning
+        self.warmup_epochs = optuna.pruning_warmup_epochs
 
         # Training state
-        self.scaler = create_amp_scaler(cfg.training)
-        self.mixup_fn = create_mixup_fn(cfg.training)
-        self.epochs = cfg.training.epochs
-        self.log_interval = cfg.telemetry.log_interval
+        self.scaler = create_amp_scaler(training)
+        self.mixup_fn = create_mixup_fn(training)
+        self.epochs = training.epochs
+        self.monitor_metric = training.monitor_metric
+        self.log_interval = log_interval
 
         # Shared epoch kernel (train step only — validation is error-resilient here)
         self._loop = TrainingLoop(
@@ -153,11 +159,11 @@ class TrialTrainingExecutor:
             scaler=self.scaler,
             mixup_fn=self.mixup_fn,
             options=LoopOptions(
-                grad_clip=cfg.training.grad_clip,
+                grad_clip=training.grad_clip,
                 total_epochs=self.epochs,
-                mixup_epochs=cfg.training.mixup_epochs,
+                mixup_epochs=training.mixup_epochs,
                 use_tqdm=False,
-                monitor_metric=cfg.training.monitor_metric,
+                monitor_metric=self.monitor_metric,
             ),
         )
 
@@ -201,7 +207,7 @@ class TrialTrainingExecutor:
                 raise optuna.TrialPruned()
 
             # Scheduler step (uses monitor_metric, consistent with ModelTrainer)
-            step_scheduler(self.scheduler, val_metrics[self.cfg.training.monitor_metric])
+            step_scheduler(self.scheduler, val_metrics[self.monitor_metric])
 
             # Logging
             if epoch % self.log_interval == 0 or epoch == self.epochs:

@@ -30,7 +30,7 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 
-from ..core import LOGGER_NAME, Config, LogStyle, load_model_weights
+from ..core import LOGGER_NAME, LogStyle, TrainingConfig, load_model_weights
 from ..core.paths import METRIC_ACCURACY, METRIC_LOSS
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -68,7 +68,7 @@ class ModelTrainer:
         scheduler: Learning rate scheduler.
         criterion: Loss function (e.g., CrossEntropyLoss).
         device: Hardware target (CUDA/MPS/CPU).
-        cfg: Global configuration manifest (SSOT).
+        training: Training hyperparameters sub-config.
         epochs: Total number of training epochs.
         patience: Early stopping patience (epochs without improvement).
         best_acc: Best validation accuracy achieved.
@@ -92,7 +92,7 @@ class ModelTrainer:
         ...     scheduler=scheduler,
         ...     criterion=criterion,
         ...     device=device,
-        ...     cfg=cfg,
+        ...     training=cfg.training,
         ...     output_path=paths.checkpoints / "best_model.pth"
         ... )
         >>> checkpoint_path, losses, metrics = trainer.train()
@@ -108,7 +108,7 @@ class ModelTrainer:
         scheduler: LRScheduler,
         criterion: nn.Module,
         device: torch.device,
-        cfg: Config,
+        training: TrainingConfig,
         output_path: Path | None = None,
         tracker: TrackerProtocol | None = None,
     ) -> None:
@@ -123,7 +123,7 @@ class ModelTrainer:
             scheduler: Learning rate scheduler for training dynamics.
             criterion: Loss function for optimisation (e.g., CrossEntropyLoss).
             device: Compute device for training.
-            cfg: Validated global configuration containing training hyperparameters.
+            training: Training hyperparameters sub-config.
             output_path: Path for best model checkpoint (default: ``./best_model.pth``).
             tracker: Optional experiment tracker for MLflow metric logging.
         """
@@ -134,20 +134,20 @@ class ModelTrainer:
         self.scheduler = scheduler
         self.criterion = criterion
         self.device = device
-        self.cfg = cfg
+        self.training = training
         self.tracker = tracker
 
         # Hyperparameters
-        self.epochs = cfg.training.epochs
-        self.patience = cfg.training.patience
-        self.monitor_metric = cfg.training.monitor_metric
+        self.epochs = training.epochs
+        self.patience = training.patience
+        self.monitor_metric = training.monitor_metric
         self.best_acc = -1.0
         self.best_metric = -1.0
         self.epochs_no_improve = 0
 
         # AMP and MixUp (shared factories from _loop)
-        self.scaler = create_amp_scaler(cfg.training)
-        self.mixup_fn = create_mixup_fn(cfg.training)
+        self.scaler = create_amp_scaler(training)
+        self.mixup_fn = create_mixup_fn(training)
 
         # Output Management
         self.best_path = output_path or Path("./best_model.pth")
@@ -172,10 +172,10 @@ class ModelTrainer:
             scaler=self.scaler,
             mixup_fn=self.mixup_fn,
             options=LoopOptions(
-                grad_clip=cfg.training.grad_clip,
+                grad_clip=training.grad_clip,
                 total_epochs=self.epochs,
-                mixup_epochs=cfg.training.mixup_epochs,
-                use_tqdm=cfg.training.use_tqdm,
+                mixup_epochs=training.mixup_epochs,
+                use_tqdm=training.use_tqdm,
                 monitor_metric=self.monitor_metric,
             ),
         )
@@ -311,7 +311,7 @@ class ModelTrainer:
         else:
             self.epochs_no_improve += 1
 
-        return self.epochs_no_improve >= self.patience
+        return self.epochs_no_improve >= self.patience  # type: ignore[no-any-return]
 
     def _finalize_weights(self) -> None:
         """

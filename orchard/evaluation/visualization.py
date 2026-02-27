@@ -309,7 +309,7 @@ def _denormalize_image(img: np.ndarray, ctx: PlotContext) -> np.ndarray:
     mean = np.array(ctx.mean).reshape(-1, 1, 1)
     std = np.array(ctx.std).reshape(-1, 1, 1)
     img = (img * std) + mean
-    return np.clip(img, 0, 1)
+    return np.clip(img, 0, 1)  # type: ignore[no-any-return]
 
 
 def _prepare_for_plt(img: np.ndarray) -> np.ndarray:

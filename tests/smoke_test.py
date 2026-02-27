@@ -107,7 +107,7 @@ def run_smoke_test(cfg: Config) -> None:
                 scheduler=scheduler,
                 criterion=criterion,
                 device=device,
-                cfg=cfg,
+                training=cfg.training,
                 output_path=paths.best_model_path,
             )
 
@@ -131,7 +131,11 @@ def run_smoke_test(cfg: Config) -> None:
                 val_metrics_history=val_metrics_history,
                 class_names=ds_meta.classes,
                 paths=paths,
-                cfg=cfg,
+                training=cfg.training,
+                dataset=cfg.dataset,
+                augmentation=cfg.augmentation,
+                evaluation=cfg.evaluation,
+                arch_name=cfg.architecture.name,
                 aug_info=get_augmentations_description(
                     cfg.augmentation, cfg.dataset.img_size, cfg.training.mixup_alpha
                 ),

@@ -18,9 +18,8 @@ from typing import Sequence
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..core import LOGGER_NAME, Config, LogStyle
+from ..core import LOGGER_NAME, DatasetConfig, LogStyle, TrainingConfig
 from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1
-from ..data_handler import get_augmentations_description
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -192,7 +191,9 @@ def create_structured_report(
     train_losses: Sequence[float],
     best_path: Path,
     log_path: Path,
-    cfg: Config,
+    arch_name: str,
+    dataset: DatasetConfig,
+    training: TrainingConfig,
     aug_info: str | None = None,
 ) -> TrainingReport:
     """
@@ -208,16 +209,16 @@ def create_structured_report(
         train_losses: History of per-epoch training losses.
         best_path: Path to the saved model weights.
         log_path: Path to the run log file.
-        cfg: Validated global configuration.
+        arch_name: Architecture identifier (e.g. ``"resnet_18"``).
+        dataset: Dataset sub-config with metadata, name, and normalization info.
+        training: Training sub-config with hyperparameters and flags.
         aug_info: Pre-formatted augmentation string.
 
     Returns:
         TrainingReport: A validated Pydantic model ready for export.
     """
-    # Auto-generate augmentation info if not provided
-    aug_info = aug_info or get_augmentations_description(
-        cfg.augmentation, cfg.dataset.img_size, cfg.training.mixup_alpha
-    )
+    # Augmentation info is expected from caller; fallback to "N/A"
+    aug_info = aug_info or "N/A"
 
     def _safe_max(key: str) -> float:
         """Return the best non-NaN value for *key* across validation epochs."""
@@ -229,23 +230,23 @@ def create_structured_report(
     best_val_f1 = _safe_max(METRIC_F1)
 
     return TrainingReport(
-        architecture=cfg.architecture.name,
-        dataset=cfg.dataset.dataset_name,
+        architecture=arch_name,
+        dataset=dataset.dataset_name,
         best_val_accuracy=best_val_acc,
         best_val_auc=best_val_auc,
         best_val_f1=best_val_f1,
         test_accuracy=test_metrics[METRIC_ACCURACY],
         test_auc=test_metrics[METRIC_AUC],
         test_macro_f1=macro_f1,
-        is_texture_based=cfg.dataset.metadata.is_texture_based,
-        is_anatomical=cfg.dataset.metadata.is_anatomical,
-        use_tta=cfg.training.use_tta,
+        is_texture_based=dataset.metadata.is_texture_based,
+        is_anatomical=dataset.metadata.is_anatomical,
+        use_tta=training.use_tta,
         epochs_trained=len(train_losses),
-        learning_rate=cfg.training.learning_rate,
-        batch_size=cfg.training.batch_size,
+        learning_rate=training.learning_rate,
+        batch_size=training.batch_size,
         augmentations=aug_info,
-        normalization=cfg.dataset.metadata.normalization_info,
+        normalization=dataset.metadata.normalization_info,
         model_path=str(best_path.resolve()),
         log_path=str(log_path.resolve()),
-        seed=cfg.training.seed,
+        seed=training.seed,
     )

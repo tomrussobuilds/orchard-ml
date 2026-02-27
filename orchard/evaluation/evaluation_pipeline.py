@@ -22,7 +22,15 @@ from typing import TYPE_CHECKING
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from ..core import LOGGER_NAME, Config, LogStyle, RunPaths
+from ..core import (
+    LOGGER_NAME,
+    AugmentationConfig,
+    DatasetConfig,
+    EvaluationConfig,
+    LogStyle,
+    RunPaths,
+    TrainingConfig,
+)
 from ..core.paths import METRIC_ACCURACY, METRIC_AUC
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -45,7 +53,11 @@ def run_final_evaluation(
     val_metrics_history: list[dict],
     class_names: list[str],
     paths: RunPaths,
-    cfg: Config,
+    training: TrainingConfig,
+    dataset: DatasetConfig,
+    augmentation: AugmentationConfig,
+    evaluation: EvaluationConfig,
+    arch_name: str,
     aug_info: str = "N/A",
     log_path: Path | None = None,
     tracker: TrackerProtocol | None = None,
@@ -63,7 +75,11 @@ def run_final_evaluation(
         val_metrics_history: Validation metrics history per epoch.
         class_names: List of class label strings.
         paths: RunPaths for artifact output.
-        cfg: Global configuration manifest.
+        training: Training sub-config (use_tta, hyperparameters for report).
+        dataset: Dataset sub-config (resolution, metadata, normalization).
+        augmentation: Augmentation sub-config (TTA transforms).
+        evaluation: Evaluation sub-config (plot flags, report format).
+        arch_name: Architecture identifier (e.g. ``"resnet_18"``).
         aug_info: Augmentation description string for report.
         log_path: Path to session log file for report embedding.
         tracker: Optional experiment tracker for final metrics.
@@ -79,7 +95,7 @@ def run_final_evaluation(
     device = next(model.parameters()).device
 
     # Filesystem-safe architecture tag (e.g. "timm/model" → "timm_model")
-    arch_tag = cfg.architecture.name.replace("/", "_")
+    arch_tag = arch_name.replace("/", "_")
 
     # --- 1) Inference & Metrics ---
     # Performance on the full test set
@@ -87,25 +103,38 @@ def run_final_evaluation(
         model,
         test_loader,
         device=device,
-        use_tta=cfg.training.use_tta,
-        is_anatomical=cfg.dataset.metadata.is_anatomical,
-        is_texture_based=cfg.dataset.metadata.is_texture_based,
-        aug_cfg=cfg.augmentation,
-        resolution=cfg.dataset.resolution,
+        use_tta=training.use_tta,
+        is_anatomical=dataset.metadata.is_anatomical,
+        is_texture_based=dataset.metadata.is_texture_based,
+        aug_cfg=augmentation,
+        resolution=dataset.resolution,
     )
 
     # --- 2) Visualizations ---
-    ctx = PlotContext.from_config(cfg)
+    meta = dataset.metadata
+    ctx = PlotContext(
+        arch_name=arch_name,
+        resolution=dataset.resolution,
+        fig_dpi=evaluation.fig_dpi,
+        plot_style=evaluation.plot_style,
+        cmap_confusion=evaluation.cmap_confusion,
+        grid_cols=evaluation.grid_cols,
+        n_samples=evaluation.n_samples,
+        fig_size_predictions=evaluation.fig_size_predictions,
+        mean=dataset.mean,
+        std=dataset.std,
+        use_tta=training.use_tta,
+        is_anatomical=meta.is_anatomical if meta else False,
+        is_texture_based=meta.is_texture_based if meta else False,
+    )
 
     # Diagnostic Confusion Matrix
-    if cfg.evaluation.save_confusion_matrix:
+    if evaluation.save_confusion_matrix:
         plot_confusion_matrix(
             all_labels=all_labels,
             all_preds=all_preds,
             classes=class_names,
-            out_path=paths.get_fig_path(
-                f"confusion_matrix_{arch_tag}_{cfg.dataset.resolution}.png"
-            ),
+            out_path=paths.get_fig_path(f"confusion_matrix_{arch_tag}_{dataset.resolution}.png"),
             ctx=ctx,
         )
 
@@ -114,20 +143,18 @@ def run_final_evaluation(
     plot_training_curves(
         train_losses=train_losses,
         val_accuracies=val_acc_list,
-        out_path=paths.get_fig_path(f"training_curves_{arch_tag}_{cfg.dataset.resolution}.png"),
+        out_path=paths.get_fig_path(f"training_curves_{arch_tag}_{dataset.resolution}.png"),
         ctx=ctx,
     )
 
     # Lazy-loaded prediction grid (samples from loader)
-    if cfg.evaluation.save_predictions_grid:
+    if evaluation.save_predictions_grid:
         show_predictions(
             model=model,
             loader=test_loader,
             device=device,
             classes=class_names,
-            save_path=paths.get_fig_path(
-                f"sample_predictions_{arch_tag}_{cfg.dataset.resolution}.png"
-            ),
+            save_path=paths.get_fig_path(f"sample_predictions_{arch_tag}_{dataset.resolution}.png"),
             ctx=ctx,
         )
 
@@ -142,10 +169,12 @@ def run_final_evaluation(
         train_losses=train_losses,
         best_path=paths.best_model_path,
         log_path=final_log,
-        cfg=cfg,
+        arch_name=arch_name,
+        dataset=dataset,
+        training=training,
         aug_info=aug_info,
     )
-    report.save(paths.final_report_path, fmt=cfg.evaluation.report_format)
+    report.save(paths.final_report_path, fmt=evaluation.report_format)
 
     test_acc = test_metrics[METRIC_ACCURACY]
     test_auc = test_metrics.get(METRIC_AUC, float("nan"))

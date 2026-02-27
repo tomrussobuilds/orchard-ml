@@ -81,4 +81,4 @@ def build_efficientnet_b0(
     # --- Step 5: Device Placement ---
     model = model.to(device)
 
-    return model
+    return model  # type: ignore[no-any-return]

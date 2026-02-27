@@ -80,7 +80,7 @@ def test_trainer_calls_tracker_log_epoch(mock_cfg, mock_tracker):
             ),
             criterion=nn.CrossEntropyLoss(),
             device=device,
-            cfg=mock_cfg,
+            training=mock_cfg.training,
             output_path=Path(tmpdir) / "best.pth",
             tracker=mock_tracker,
         )
@@ -150,7 +150,11 @@ def test_evaluation_calls_tracker_log_test_metrics(mock_tracker):
             val_metrics_history=[{"accuracy": 0.8}, {"accuracy": 0.9}],
             class_names=["a", "b"],
             paths=mock_paths,
-            cfg=mock_cfg,
+            training=mock_cfg.training,
+            dataset=mock_cfg.dataset,
+            augmentation=mock_cfg.augmentation,
+            evaluation=mock_cfg.evaluation,
+            arch_name=mock_cfg.architecture.name,
             tracker=mock_tracker,
         )
 
