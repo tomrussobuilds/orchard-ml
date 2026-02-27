@@ -236,7 +236,6 @@ def run_training_phase(
             cfg.training.mixup_alpha,
             ds_meta=ds_meta,
         ),
-        log_path=paths.logs / "session.log",
         tracker=tracker,
     )
 

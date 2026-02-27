@@ -16,7 +16,6 @@ This module is the last stage of the training lifecycle, invoked by
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import torch.nn as nn
@@ -59,7 +58,6 @@ def run_final_evaluation(
     evaluation: EvaluationConfig,
     arch_name: str,
     aug_info: str = "N/A",
-    log_path: Path | None = None,
     tracker: TrackerProtocol | None = None,
 ) -> tuple[float, float, float]:
     """
@@ -81,7 +79,6 @@ def run_final_evaluation(
         evaluation: Evaluation sub-config (plot flags, report format).
         arch_name: Architecture identifier (e.g. ``"resnet_18"``).
         aug_info: Augmentation description string for report.
-        log_path: Path to session log file for report embedding.
         tracker: Optional experiment tracker for final metrics.
 
     Returns:
@@ -160,7 +157,7 @@ def run_final_evaluation(
 
     # --- 3) Structured Reporting ---
     # Aggregates everything into a formatted report (xlsx/csv/json)
-    final_log = log_path if log_path is not None else (paths.logs / "run.log")
+    final_log = paths.logs / "session.log"
 
     report = create_structured_report(
         val_metrics=val_metrics_history,

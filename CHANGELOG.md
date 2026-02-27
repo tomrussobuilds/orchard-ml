@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - unify VisionDataset — eliminate LazyNPZDataset, add lazy mmap loading
 - relocate LogStyle to paths.constants — break circular imports, unify log symbols
 - config narrowing — decouple factories and loaders from Config
+- config narrowing + mypy warn_return_any + quality scripts
 
 ### Fixed
 
