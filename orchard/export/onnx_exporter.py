@@ -30,17 +30,6 @@ from ..core import LOGGER_NAME, LogStyle
 logger = logging.getLogger(LOGGER_NAME)
 
 
-def _onnx_file_size_mb(path: Path) -> float:
-    """
-    Total size of an ONNX model including external data files (e.g. .data).
-    """
-    size = path.stat().st_size
-    external = path.parent / f"{path.name}.data"
-    if external.exists():
-        size += external.stat().st_size
-    return size / (1024 * 1024)
-
-
 def export_to_onnx(
     model: nn.Module,
     checkpoint_path: Path,
@@ -168,7 +157,7 @@ def export_to_onnx(
                 f"    {LogStyle.WARNING} onnx package not installed. Skipping validation."
             )
         except (ValueError, RuntimeError) as e:
-            logger.error(f"    {LogStyle.WARNING} ONNX validation failed: {e}")
+            logger.error(f"    {LogStyle.FAILURE} ONNX validation failed: {e}")
             raise
 
     logger.info("")
@@ -259,7 +248,7 @@ def quantize_model(
         return output_path
 
     except Exception as e:  # onnxruntime raises non-standard exceptions
-        logger.error(f"    {LogStyle.WARNING} Quantization failed: {e}")
+        logger.error(f"    {LogStyle.FAILURE} Quantization failed: {e}")
         return None
     finally:
         preprocessed_path.unlink(missing_ok=True)
@@ -327,3 +316,14 @@ def benchmark_onnx_inference(
     except Exception as e:  # onnxruntime raises non-standard exceptions
         logger.error(f"Benchmark failed: {e}")
         return -1.0
+
+
+def _onnx_file_size_mb(path: Path) -> float:
+    """
+    Total size of an ONNX model including external data files (e.g. .data).
+    """
+    size = path.stat().st_size
+    external = path.parent / f"{path.name}.data"
+    if external.exists():
+        size += external.stat().st_size
+    return size / (1024 * 1024)

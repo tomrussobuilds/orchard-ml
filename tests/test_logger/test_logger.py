@@ -475,6 +475,27 @@ def test_color_formatter_plain_info():
 
 
 @pytest.mark.unit
+def test_color_formatter_failure_symbol_red():
+    """Test ColorFormatter applies red to lines containing ✗ (FAILURE symbol)."""
+    from orchard.core.logger.logger import ColorFormatter
+    from orchard.core.paths.constants import LogStyle
+
+    formatter = ColorFormatter("%(levelname)s - %(message)s")
+    record = logging.LogRecord(
+        name="test",
+        level=logging.INFO,
+        pathname="",
+        lineno=0,
+        msg="  ✗ ONNX validation failed: shape mismatch",
+        args=(),
+        exc_info=None,
+    )
+    output = formatter.format(record)
+    assert LogStyle.RED in output
+    assert LogStyle.RESET in output
+
+
+@pytest.mark.unit
 def test_color_formatter_error_red():
     """Test ColorFormatter applies red to ERROR level prefix."""
     from orchard.core.logger.logger import ColorFormatter

@@ -63,8 +63,8 @@ class TrainingConfig(BaseModel):
         scheduler_type: LR scheduler type ('cosine', 'plateau', 'step', 'none').
         monitor_metric: Metric driving checkpointing and early stopping
             ('auc', 'accuracy', or 'f1').
-        scheduler_patience: ReduceLROnPlateau patience epochs.
-        scheduler_factor: LR reduction factor for plateau scheduler.
+        scheduler_patience: ReduceLROnPlateau patience epochs (ignored by other schedulers).
+        scheduler_factor: LR reduction factor (plateau ``factor`` and StepLR ``gamma``).
         step_size: StepLR decay period in epochs.
         use_amp: Enable Automatic Mixed Precision training.
         criterion_type: Loss function ('cross_entropy' or 'focal').

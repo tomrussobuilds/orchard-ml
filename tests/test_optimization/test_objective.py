@@ -643,6 +643,55 @@ def test_optuna_objective_call_returns_inf_on_failure_minimize():
 
 
 @pytest.mark.unit
+def test_optuna_objective_failed_trial_logs_worst_metric_to_tracker():
+    """Test tracker receives worst_metric when trial fails before validation."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    search_space = {}
+    mock_tracker = MagicMock()
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space=search_space,
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
+        model_factory=MagicMock(return_value=MagicMock()),
+        tracker=mock_tracker,
+    )
+    objective._cleanup = MagicMock()
+
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+
+    mock_trial = MagicMock()
+    mock_trial.number = 5
+
+    with (
+        patch("orchard.optimization.objective.objective.get_optimizer"),
+        patch("orchard.optimization.objective.objective.get_scheduler"),
+        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.log_trial_start"),
+    ):
+        with patch(
+            "orchard.optimization.objective.objective.TrialTrainingExecutor"
+        ) as mock_executor_cls:
+            mock_executor_cls.return_value.execute.side_effect = RuntimeError("OOM")
+
+            result = objective(mock_trial)
+
+    assert result == pytest.approx(0.0)
+    mock_tracker.start_optuna_trial.assert_called_once()
+    # Failed trial: tracker receives worst_metric (0.0 for maximize), not -inf
+    mock_tracker.end_optuna_trial.assert_called_once_with(0.0)
+
+
+@pytest.mark.unit
 def test_optuna_objective_call_reraises_trial_pruned():
     """Test OptunaObjective.__call__ re-raises TrialPruned (not caught)."""
     mock_cfg = MagicMock()

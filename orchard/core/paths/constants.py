@@ -62,6 +62,7 @@ class LogStyle:
     ARROW = "»"
     BULLET = "•"
     WARNING = "⚠"
+    FAILURE = "✗"
     SUCCESS = "✓"
 
     # Indentation

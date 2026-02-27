@@ -180,6 +180,29 @@ class TestCLIRun:
         assert result.exit_code == 0
         assert "orchard-ml" in result.output
 
+    @patch("orchard.RootOrchestrator")
+    @patch("orchard.Config")
+    def test_run_raises_when_orchestrator_returns_none(self, mock_cfg_cls, mock_orch_cls, tmp_path):
+        """Covers RuntimeError when orchestrator paths/logger are None."""
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        recipe = tmp_path / "recipe.yaml"
+        recipe.write_text("dataset:\n  name: test\n")
+
+        mock_cfg_cls.from_recipe.return_value = MagicMock()
+
+        mock_orch = MagicMock()
+        mock_orch.paths = None
+        mock_orch.run_logger = None
+        mock_orch_cls.return_value.__enter__.return_value = mock_orch
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["run", str(recipe)])
+
+        assert result.exit_code != 0
+
     @patch("orchard.create_tracker")
     @patch("orchard.log_pipeline_summary")
     @patch("orchard.run_training_phase")

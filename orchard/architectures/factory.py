@@ -104,7 +104,7 @@ def _dispatch_builder(
     builder = _MODEL_REGISTRY.get(model_name_lower)
     if builder is None:
         error_msg = f"Architecture '{arch.name}' is not registered in the Factory."
-        logger.error(f" {LogStyle.WARNING} {error_msg}")
+        logger.error(f" {LogStyle.FAILURE} {error_msg}")
         raise ValueError(error_msg)
 
     if builder is build_mini_cnn:

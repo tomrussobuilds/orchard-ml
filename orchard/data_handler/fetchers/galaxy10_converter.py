@@ -37,7 +37,7 @@ def download_galaxy10_h5(
         target_h5: Path to save HDF5 file
         retries: Number of download attempts
         timeout: Download timeout in seconds
-        chunk_size: Streaming chunk size in bytes (default: TelemetryConfig.io_chunk_size).
+        chunk_size: Streaming chunk size in bytes.
     """
     if target_h5.exists():
         logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'HDF5 Cache':<18}: {target_h5.name}")

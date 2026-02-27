@@ -26,7 +26,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..paths import PROJECT_ROOT
-from .types import LogFrequency, LogLevel, PositiveInt, ValidatedPath
+from .types import LogFrequency, LogLevel, ValidatedPath
 
 
 # TELEMETRY CONFIGURATION
@@ -41,8 +41,6 @@ class TelemetryConfig(BaseModel):
         data_dir: Validated absolute path to dataset directory.
         output_dir: Validated absolute path to outputs directory.
         log_level: Logging verbosity (DEBUG, INFO, WARNING, ERROR, CRITICAL).
-        io_chunk_size: Streaming chunk size in bytes for checksums and downloads
-            (hardcoded in data_io to avoid circular import).
     """
 
     model_config = ConfigDict(
@@ -60,9 +58,9 @@ class TelemetryConfig(BaseModel):
     log_interval: LogFrequency = Field(default=10)
     log_level: LogLevel = Field(default="INFO")
 
-    # I/O — io_chunk_size is hardcoded in data_io.py to avoid circular import;
-    # this field documents the canonical value but is not read at runtime.
-    io_chunk_size: PositiveInt = Field(default=8192, description="Streaming chunk size (bytes)")
+    # I/O streaming chunk size (8192 bytes) is defined as a default parameter
+    # in data_io.md5_checksum and galaxy10_converter, not here, to avoid
+    # circular imports.  Removed as a config field: it was never read at runtime.
 
     @model_validator(mode="before")
     @classmethod

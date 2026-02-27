@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 import optuna
 import torch
 
-from ...core import LOGGER_NAME, Config, log_trial_start
+from ...core import LOGGER_NAME, Config, LogStyle, log_trial_start
 
 if TYPE_CHECKING:  # pragma: no cover
     from ...tracking import TrackerProtocol
@@ -194,6 +194,7 @@ class OptunaObjective:
         if self.tracker is not None:
             self.tracker.start_optuna_trial(trial.number, log_params)
 
+        trial_succeeded = False
         try:
             # Setup training components
             train_loader, val_loader, _ = self._dataloader_factory(
@@ -225,21 +226,29 @@ class OptunaObjective:
             )
 
             best_metric = executor.execute(trial)
+            trial_succeeded = True
 
             return best_metric
 
         except optuna.TrialPruned:
+            trial_succeeded = True  # pruned trials have valid metrics
             raise
 
         except Exception as e:  # must not crash study
-            logger.error(f"Trial {trial.number} failed: {type(e).__name__}: {e}")
+            logger.error(
+                f"{LogStyle.INDENT}{LogStyle.FAILURE} "
+                f"Trial {trial.number} failed: {type(e).__name__}: {e}"
+            )
             return self._worst_metric()
 
         finally:
             # End nested MLflow run for this trial
             if self.tracker is not None:
-                best_metric_val = self.metric_extractor.best_metric
-                self.tracker.end_optuna_trial(best_metric_val)
+                if trial_succeeded:
+                    self.tracker.end_optuna_trial(self.metric_extractor.best_metric)
+                else:
+                    # Trial failed before any validation — close run without metric
+                    self.tracker.end_optuna_trial(self._worst_metric())
 
             # Cleanup GPU memory between trials
             self._cleanup()

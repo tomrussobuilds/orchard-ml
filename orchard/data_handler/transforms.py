@@ -68,7 +68,9 @@ def get_pipeline_transforms(
     Pipeline Logic:
         1. Convert to tensor format (ToImage + ToDtype)
         2. Promote 1-channel to 3-channel if needed (Grayscale → RGB)
-        3. Apply augmentations (training only)
+        3. Apply domain-aware augmentations (training only):
+           geometric transforms disabled for anatomical datasets,
+           color jitter reduced for texture-based datasets
         4. Normalize with dataset-specific statistics
 
     Args:

@@ -349,5 +349,5 @@ class ModelTrainer:
                 f"{LogStyle.INDENT}{LogStyle.ARROW} {'Checkpoint':<18}: {self.best_path.name}"
             )
         except (RuntimeError, FileNotFoundError) as e:
-            logger.error(f"{LogStyle.INDENT}{LogStyle.WARNING} Weight restoration failed: {e}")
+            logger.error(f"{LogStyle.INDENT}{LogStyle.FAILURE} Weight restoration failed: {e}")
             raise

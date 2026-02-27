@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - unify metric source — remove optuna.metric_name, use training.monitor_metric as SSOT
 - config narrowing — decouple builders, transforms, TTA and visualization from Config
 - unify VisionDataset — eliminate LazyNPZDataset, add lazy mmap loading
+- relocate LogStyle to paths.constants — break circular imports, unify log symbols
+
+### Fixed
+
+- false docstrings, dead field, sentinel logging, LogStyle.FAILURE
 
 ### Styling
 

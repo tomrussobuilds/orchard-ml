@@ -48,7 +48,7 @@ def md5_checksum(path: Path, chunk_size: int = 8192) -> str:
 
     Args:
         path (Path): Path to the file to verify.
-        chunk_size (int): Read buffer size in bytes (default: TelemetryConfig.io_chunk_size).
+        chunk_size (int): Read buffer size in bytes.
 
     Returns:
         str: The calculated hexadecimal MD5 hash.

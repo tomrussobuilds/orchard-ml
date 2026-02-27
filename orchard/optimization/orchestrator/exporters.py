@@ -15,7 +15,9 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 from pathlib import Path
+from typing import cast
 
 import optuna
 import pandas as pd
@@ -152,9 +154,15 @@ def export_top_trials(
         return
 
     reverse = study.direction == optuna.study.StudyDirection.MAXIMIZE
-    # Filter out trials with None values before sorting
-    valid_trials = [t for t in completed if t.value is not None]
-    sorted_trials = sorted(valid_trials, key=lambda t: t.value or 0.0, reverse=reverse)[:top_k]
+    # Filter out trials with None or NaN values before sorting
+    valid_trials = [
+        t
+        for t in completed
+        if t.value is not None and not (isinstance(t.value, float) and math.isnan(t.value))
+    ]
+    sorted_trials = sorted(valid_trials, key=lambda t: cast(float, t.value), reverse=reverse)[
+        :top_k
+    ]
 
     df = build_top_trials_dataframe(sorted_trials, metric_name)
 

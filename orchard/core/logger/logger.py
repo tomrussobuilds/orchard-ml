@@ -44,6 +44,7 @@ class ColorFormatter(logging.Formatter):
 
     - WARNING/ERROR/CRITICAL: yellow/red level prefix
     - Lines with ✓ or 'New best model': green
+    - Lines with ✗: red
     - Lines with 'EARLY STOPPING': green
     - Separator lines (━, ═, ─): dim
     - Centered UPPER CASE headers: bold magenta
@@ -99,6 +100,10 @@ class ColorFormatter(logging.Formatter):
             # Success lines (✓, New best model) → green
             if "✓" in msg or "New best model" in msg:
                 return self._color_message_only(formatted, msg, LogStyle.GREEN)
+
+            # Failure lines (✗) → red
+            if "✗" in msg:
+                return self._color_message_only(formatted, msg, LogStyle.RED)
 
         # Warning-level content coloring
         if record.levelno == logging.WARNING:

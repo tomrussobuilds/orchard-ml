@@ -70,13 +70,16 @@ class EvaluationConfig(BaseModel):
     @classmethod
     def validate_format(cls, v: str) -> str:
         """
-        Validate report format, defaulting to xlsx if unsupported.
+        Validate and normalize report format.
 
         Args:
             v: Requested report format string.
 
         Returns:
             Normalized format string (xlsx, csv, or json).
+
+        Raises:
+            ValueError: If format is not one of xlsx, csv, json.
         """
         supported = {"xlsx", "csv", "json"}
         normalized = v.lower()

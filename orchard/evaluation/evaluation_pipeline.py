@@ -73,7 +73,7 @@ def run_final_evaluation(
 
             - **macro_f1** -- Macro-averaged F1 score
             - **test_acc** -- Test set accuracy
-            - **test_auc** -- Test set AUC (0.0 if unavailable)
+            - **test_auc** -- Test set AUC (NaN if computation failed)
     """
     # Resolve device from model (already placed on the correct device by the trainer)
     device = next(model.parameters()).device
@@ -148,7 +148,7 @@ def run_final_evaluation(
     report.save(paths.final_report_path, fmt=cfg.evaluation.report_format)
 
     test_acc = test_metrics[METRIC_ACCURACY]
-    test_auc = test_metrics.get(METRIC_AUC, 0.0)
+    test_auc = test_metrics.get(METRIC_AUC, float("nan"))
 
     # Log test metrics to experiment tracker
     if tracker is not None:

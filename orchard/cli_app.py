@@ -125,7 +125,8 @@ def run(
     with RootOrchestrator(cfg) as orchestrator:
         paths = orchestrator.paths
         run_logger = orchestrator.run_logger
-        assert paths is not None and run_logger is not None  # nosec B101
+        if paths is None or run_logger is None:
+            raise RuntimeError("RootOrchestrator failed to initialize paths or logger")
 
         tracker = create_tracker(cfg)
         tracking_uri = f"sqlite:///{MLRUNS_DB}"
@@ -183,7 +184,7 @@ def run(
             raise SystemExit(1)
 
         except Exception as e:  # top-level catch-all for logging; re-raises
-            run_logger.error(f"{LogStyle.WARNING} Pipeline failed: {e}", exc_info=True)
+            run_logger.error(f"{LogStyle.FAILURE} Pipeline failed: {e}", exc_info=True)
             raise
 
         finally:
