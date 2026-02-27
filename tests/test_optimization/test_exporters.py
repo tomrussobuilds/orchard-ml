@@ -18,7 +18,11 @@ import pytest
 from pydantic import ValidationError
 
 from orchard.core import Config, RunPaths
-from orchard.optimization import export_best_config, export_study_summary, export_top_trials
+from orchard.optimization import (
+    export_best_config,
+    export_study_summary,
+    export_top_trials,
+)
 from orchard.optimization.orchestrator.exporters import (
     build_best_trial_data,
     build_top_trials_dataframe,

@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Final
 
 from ..paths import LOGGER_NAME
-from .styles import LogStyle
+from ..paths.constants import LogStyle
 
 # Separator characters used to detect decorative lines
 _SEPARATOR_CHARS = {"━", "═", "─"}

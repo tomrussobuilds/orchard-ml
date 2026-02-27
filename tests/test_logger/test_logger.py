@@ -312,7 +312,7 @@ def test_logger_multiple_names_independent():
 def test_color_formatter_success_symbol():
     """Test ColorFormatter applies green only to the message, not the prefix."""
     from orchard.core.logger.logger import ColorFormatter
-    from orchard.core.logger.styles import LogStyle
+    from orchard.core.paths.constants import LogStyle
 
     formatter = ColorFormatter("%(levelname)s - %(message)s")
     msg = "  ✓ Test Accuracy  : 92.34%"
@@ -339,7 +339,7 @@ def test_color_formatter_success_symbol():
 def test_color_formatter_new_best_model():
     """Test ColorFormatter applies green to 'New best model' lines."""
     from orchard.core.logger.logger import ColorFormatter
-    from orchard.core.logger.styles import LogStyle
+    from orchard.core.paths.constants import LogStyle
 
     formatter = ColorFormatter("%(levelname)s - %(message)s")
     record = logging.LogRecord(
@@ -359,7 +359,7 @@ def test_color_formatter_new_best_model():
 def test_color_formatter_separator_dim():
     """Test ColorFormatter dims separator lines."""
     from orchard.core.logger.logger import ColorFormatter
-    from orchard.core.logger.styles import LogStyle
+    from orchard.core.paths.constants import LogStyle
 
     formatter = ColorFormatter("%(levelname)s - %(message)s")
     record = logging.LogRecord(
@@ -379,7 +379,7 @@ def test_color_formatter_separator_dim():
 def test_color_formatter_header_bold_magenta():
     """Test ColorFormatter applies bold magenta only to the message, not the prefix."""
     from orchard.core.logger.logger import ColorFormatter
-    from orchard.core.logger.styles import LogStyle
+    from orchard.core.paths.constants import LogStyle
 
     formatter = ColorFormatter("%(levelname)s - %(message)s")
     msg = "ENVIRONMENT INITIALIZATION"
@@ -407,7 +407,7 @@ def test_color_formatter_header_bold_magenta():
 def test_color_formatter_warning_yellow():
     """Test ColorFormatter applies yellow only to the message, not the timestamp."""
     from orchard.core.logger.logger import ColorFormatter
-    from orchard.core.logger.styles import LogStyle
+    from orchard.core.paths.constants import LogStyle
 
     formatter = ColorFormatter("%(asctime)s - %(levelname)s - %(message)s", "%Y-%m-%d %H:%M:%S")
     msg = "Early stopping triggered at epoch 42."
@@ -434,7 +434,7 @@ def test_color_formatter_warning_yellow():
 def test_color_formatter_early_stopping_green():
     """Test ColorFormatter applies green to EARLY STOPPING banner."""
     from orchard.core.logger.logger import ColorFormatter
-    from orchard.core.logger.styles import LogStyle
+    from orchard.core.paths.constants import LogStyle
 
     formatter = ColorFormatter("%(levelname)s - %(message)s")
     msg = "EARLY STOPPING: Target performance achieved!"
@@ -456,7 +456,7 @@ def test_color_formatter_early_stopping_green():
 def test_color_formatter_plain_info():
     """Test ColorFormatter does not add color to plain INFO messages."""
     from orchard.core.logger.logger import ColorFormatter
-    from orchard.core.logger.styles import LogStyle
+    from orchard.core.paths.constants import LogStyle
 
     formatter = ColorFormatter("%(levelname)s - %(message)s")
     record = logging.LogRecord(
@@ -478,7 +478,7 @@ def test_color_formatter_plain_info():
 def test_color_formatter_error_red():
     """Test ColorFormatter applies red to ERROR level prefix."""
     from orchard.core.logger.logger import ColorFormatter
-    from orchard.core.logger.styles import LogStyle
+    from orchard.core.paths.constants import LogStyle
 
     formatter = ColorFormatter("%(levelname)s - %(message)s")
     record = logging.LogRecord(
@@ -549,7 +549,7 @@ def test_file_output_has_no_ansi_codes(tmp_path):
 def test_color_formatter_subtitle_bold_magenta():
     """Test ColorFormatter applies bold magenta to [Subtitle] tags."""
     from orchard.core.logger.logger import ColorFormatter
-    from orchard.core.logger.styles import LogStyle
+    from orchard.core.paths.constants import LogStyle
 
     formatter = ColorFormatter("%(levelname)s - %(message)s")
     record = logging.LogRecord(
@@ -572,7 +572,7 @@ def test_color_formatter_subtitle_bold_magenta():
 def test_color_formatter_subtitle_mixed_case():
     """Test ColorFormatter colors [Export Settings] style subtitles."""
     from orchard.core.logger.logger import ColorFormatter
-    from orchard.core.logger.styles import LogStyle
+    from orchard.core.paths.constants import LogStyle
 
     formatter = ColorFormatter("%(levelname)s - %(message)s")
     record = logging.LogRecord(
@@ -592,7 +592,7 @@ def test_color_formatter_subtitle_mixed_case():
 def test_color_formatter_subtitle_ignores_data_brackets():
     """Test ColorFormatter does NOT color data brackets like [T: 0.2131]."""
     from orchard.core.logger.logger import ColorFormatter
-    from orchard.core.logger.styles import LogStyle
+    from orchard.core.paths.constants import LogStyle
 
     formatter = ColorFormatter("%(levelname)s - %(message)s")
     record = logging.LogRecord(
@@ -612,7 +612,7 @@ def test_color_formatter_subtitle_ignores_data_brackets():
 def test_color_message_only_fallback_when_msg_not_found():
     """Test _color_message_only returns formatted unchanged when msg is not found."""
     from orchard.core.logger.logger import ColorFormatter
-    from orchard.core.logger.styles import LogStyle
+    from orchard.core.paths.constants import LogStyle
 
     formatter = ColorFormatter("%(levelname)s - %(message)s")
     result = formatter._color_message_only("INFO - hello", "nonexistent", LogStyle.GREEN)

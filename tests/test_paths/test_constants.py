@@ -69,7 +69,7 @@ def test_get_project_root_finds_git_marker(tmp_path):
     (project_root / ".git").mkdir()
 
     with patch.dict(os.environ, {"IN_DOCKER": "0"}, clear=True):
-        with patch("orchard.core.paths.constants.Path") as mock_path:
+        with patch("orchard.core.paths.root.Path") as mock_path:
             mock_path.return_value.resolve.return_value.parent = nested_dir
             mock_path.return_value.resolve.return_value.parents = [
                 nested_dir.parent,
@@ -113,7 +113,7 @@ def test_get_project_root_fallback_sufficient_parents(tmp_path):
     deep_path.mkdir(parents=True)
 
     with patch.dict(os.environ, {"IN_DOCKER": "0"}, clear=True):
-        with patch("orchard.core.paths.constants.Path") as mock_path:
+        with patch("orchard.core.paths.root.Path") as mock_path:
             mock_instance = mock_path.return_value.resolve.return_value
             mock_instance.parent = deep_path
             mock_instance.parents = list(deep_path.parents)
@@ -130,7 +130,7 @@ def test_get_project_root_fallback_no_markers(tmp_path):
     fake_file.touch()
 
     with patch.dict(os.environ, {}, clear=True):
-        with patch("orchard.core.paths.constants.__file__", str(fake_file)):
+        with patch("orchard.core.paths.root.__file__", str(fake_file)):
             root = get_project_root()
 
             expected = deep_path.parents[2]
@@ -203,7 +203,7 @@ def test_setup_static_directories_creates_dirs(tmp_path):
     assert not test_dataset.exists()
     assert not test_outputs.exists()
 
-    with patch("orchard.core.paths.constants.STATIC_DIRS", [test_dataset, test_outputs]):
+    with patch("orchard.core.paths.root.STATIC_DIRS", [test_dataset, test_outputs]):
         setup_static_directories()
 
     assert test_dataset.exists()
@@ -217,7 +217,7 @@ def test_setup_static_directories_idempotent(tmp_path):
     """Test setup_static_directories() is idempotent (safe to call multiple times)."""
     test_dir = tmp_path / "test_static"
 
-    with patch("orchard.core.paths.constants.STATIC_DIRS", [test_dir]):
+    with patch("orchard.core.paths.root.STATIC_DIRS", [test_dir]):
         setup_static_directories()
         assert test_dir.exists()
 
@@ -238,7 +238,7 @@ def test_setup_static_directories_creates_parents(tmp_path):
     assert not nested_dir.exists()
     assert not nested_dir.parent.exists()
 
-    with patch("orchard.core.paths.constants.STATIC_DIRS", [nested_dir]):
+    with patch("orchard.core.paths.root.STATIC_DIRS", [nested_dir]):
         setup_static_directories()
 
     assert nested_dir.exists()
@@ -249,7 +249,7 @@ def test_setup_static_directories_creates_parents(tmp_path):
 @pytest.mark.unit
 def test_setup_static_directories_empty_list():
     """Test setup_static_directories() handles empty STATIC_DIRS gracefully."""
-    with patch("orchard.core.paths.constants.STATIC_DIRS", []):
+    with patch("orchard.core.paths.root.STATIC_DIRS", []):
         setup_static_directories()
 
 
@@ -265,10 +265,10 @@ def test_all_constants_are_defined():
         "STATIC_DIRS",
     ]
 
-    import orchard.core.paths.constants as constants_module
+    import orchard.core.paths as paths_module
 
     for const_name in expected_constants:
-        assert hasattr(constants_module, const_name), f"Missing constant: {const_name}"
+        assert hasattr(paths_module, const_name), f"Missing constant: {const_name}"
 
 
 @pytest.mark.unit

@@ -14,7 +14,8 @@ from typing import TYPE_CHECKING, Any
 import optuna
 
 from ..paths import LOGGER_NAME
-from .styles import LogStyle
+from ..paths.constants import LogStyle
+from .reporter import Reporter
 
 if TYPE_CHECKING:  # pragma: no cover
     import torch
@@ -150,7 +151,7 @@ def log_optimization_summary(
     log = logger_instance or logger
     completed, pruned, failed = _count_trial_states(study)
 
-    LogStyle.log_phase_header(log, "OPTIMIZATION SUMMARY", LogStyle.DOUBLE)
+    Reporter.log_phase_header(log, "OPTIMIZATION SUMMARY", LogStyle.DOUBLE)
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset        : {cfg.dataset.dataset_name}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Search Space   : {cfg.optuna.search_space_preset}")
     log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Total Trials   : {len(study.trials)}")
@@ -211,7 +212,7 @@ def log_pipeline_summary(
     """
     log = logger_instance or logger
 
-    LogStyle.log_phase_header(log, "PIPELINE COMPLETE", LogStyle.DOUBLE)
+    Reporter.log_phase_header(log, "PIPELINE COMPLETE", LogStyle.DOUBLE)
     log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Test Accuracy  : {test_acc:>8.2%}")
     log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Macro F1       : {macro_f1:>8.4f}")
     if test_auc is not None:

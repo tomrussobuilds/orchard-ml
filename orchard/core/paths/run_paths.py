@@ -32,7 +32,7 @@ from typing import Any, ClassVar
 
 from pydantic import BaseModel, ConfigDict
 
-from .constants import OUTPUTS_ROOT
+from .root import OUTPUTS_ROOT
 
 
 # RUN MANAGEMENT

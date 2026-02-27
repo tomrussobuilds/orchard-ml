@@ -28,7 +28,7 @@ import logging
 from optuna.study import Study
 from optuna.trial import FrozenTrial, TrialState
 
-from ..core import LOGGER_NAME, LogStyle
+from ..core import LOGGER_NAME, LogStyle, Reporter
 from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -140,7 +140,7 @@ class StudyEarlyStoppingCallback:
             trials_saved = "N/A"
 
         # Use LogStyle for consistent formatting
-        LogStyle.log_phase_header(
+        Reporter.log_phase_header(
             logger, "EARLY STOPPING: Target performance achieved!", LogStyle.DOUBLE
         )
         logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Metric           : {value:.6f}")

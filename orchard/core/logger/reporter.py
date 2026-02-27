@@ -19,7 +19,7 @@ import torch
 from pydantic import BaseModel, ConfigDict
 
 from ..environment import determine_tta_mode, get_cuda_name, get_vram_info
-from .styles import LogStyle
+from ..paths.constants import LogStyle
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..config import Config
@@ -62,6 +62,26 @@ class Reporter(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    @staticmethod
+    def log_phase_header(
+        log: logging.Logger,
+        title: str,
+        style: str | None = None,
+    ) -> None:
+        """
+        Log a centered phase header with separator lines.
+
+        Args:
+            log: Logger instance to write to.
+            title: Header text (will be uppercased and centered).
+            style: Separator string (defaults to ``LogStyle.HEAVY``).
+        """
+        sep = style if style is not None else LogStyle.HEAVY
+        log.info("")
+        log.info(sep)
+        log.info(f"{title:^{LogStyle.HEADER_WIDTH}}")
+        log.info(sep)
+
     def log_initial_status(
         self,
         logger_instance: logging.Logger,
@@ -83,7 +103,7 @@ class Reporter(BaseModel):
             num_workers: Number of DataLoader workers
         """
         # Header Block
-        LogStyle.log_phase_header(logger_instance, "ENVIRONMENT INITIALIZATION")
+        Reporter.log_phase_header(logger_instance, "ENVIRONMENT INITIALIZATION")
 
         # Hardware Section
         self._log_hardware_section(logger_instance, cfg, device, applied_threads, num_workers)

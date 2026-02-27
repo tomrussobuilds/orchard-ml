@@ -34,6 +34,7 @@ except ImportError:  # pragma: no cover
 
 import psutil
 
+from ..paths.constants import LogStyle
 from .distributed import is_distributed, is_main_process
 
 # Global State
@@ -78,10 +79,12 @@ def ensure_single_instance(lock_file: Path, logger: logging.Logger) -> None:
             # Attempt to acquire an exclusive lock without blocking
             fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
             _lock_fd = f
-            logger.info("  » System lock acquired")
+            logger.info(f"  {LogStyle.ARROW} System lock acquired")
 
         except (IOError, BlockingIOError):
-            logger.error(" [!] CRITICAL: Another instance is already running. Aborting.")
+            logger.error(
+                f" {LogStyle.WARNING} CRITICAL: Another instance is already running. Aborting."
+            )
             sys.exit(1)
 
 
@@ -213,7 +216,7 @@ class DuplicateProcessCleaner:
                 continue
 
         if count and logger:
-            logger.info(f" » Cleaned {count} duplicate process(es). Cooling down...")
+            logger.info(f" {LogStyle.ARROW} Cleaned {count} duplicate process(es). Cooling down...")
             time.sleep(1.5)
 
         return count

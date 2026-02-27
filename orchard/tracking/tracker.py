@@ -11,7 +11,7 @@ import logging
 from pathlib import Path
 from typing import Any, Protocol
 
-from ..core import LOGGER_NAME
+from ..core import LOGGER_NAME, LogStyle
 from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -138,7 +138,7 @@ class MLflowTracker:  # pragma: no cover
         safe_params = {k: str(v)[:500] for k, v in flat_params.items() if v is not None}
         mlflow.log_params(safe_params)
 
-        logger.info("  » MLflow run started")
+        logger.info(f"  {LogStyle.ARROW} MLflow run started")
 
     def log_epoch(self, epoch: int, train_loss: float, val_metrics: dict, lr: float) -> None:
         """
@@ -221,7 +221,7 @@ class MLflowTracker:  # pragma: no cover
         """End the active MLflow run."""
         if mlflow.active_run():
             mlflow.end_run()
-            logger.info("  » MLflow run ended")
+            logger.info(f"  {LogStyle.ARROW} MLflow run ended")
 
     def __enter__(self) -> MLflowTracker:
         return self

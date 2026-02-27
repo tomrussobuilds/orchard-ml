@@ -15,9 +15,9 @@ import numpy as np
 import requests
 from PIL import Image
 
-from ...core.logger.styles import LogStyle
 from ...core.metadata import DatasetMetadata
 from ...core.paths import LOGGER_NAME
+from ...core.paths.constants import LogStyle
 
 logger = logging.getLogger(LOGGER_NAME)
 

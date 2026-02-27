@@ -13,7 +13,12 @@ import pytest
 import torch
 import torch.nn as nn
 
-from orchard.trainer._loop import LoopOptions, TrainingLoop, create_amp_scaler, create_mixup_fn
+from orchard.trainer._loop import (
+    LoopOptions,
+    TrainingLoop,
+    create_amp_scaler,
+    create_mixup_fn,
+)
 
 # ── FIXTURES ───────────────────────────────────────────────────────────────
 

@@ -1,23 +1,21 @@
 """
-Project-wide Path Constants and Static Directory Management.
+Project-wide Constants, Metric Keys, and Logging Style.
 
-Single source of truth for the physical filesystem layout. Handles dynamic
-project root discovery and defines static infrastructure (dataset and output
-directories) required for pipeline initialization.
+Single source of truth for static values used across all layers of the
+codebase: paths, environment, config, and logger.  Lives in the lowest-level
+package (``paths``) so that every other module can safely import from here
+without circular-dependency risks.
 
 Module Attributes:
-    LOGGER_NAME: Global logger identity used by all modules for log synchronization.
-    HEALTHCHECK_LOGGER_NAME: Logger identity for dataset validation utilities.
-    PROJECT_ROOT: Dynamically resolved absolute path to the project root.
-    DATASET_DIR: Absolute path to the raw datasets directory.
-    OUTPUTS_ROOT: Default root directory for all experiment results.
-    STATIC_DIRS: list of directories that must exist at startup.
+    SUPPORTED_RESOLUTIONS: Valid image resolutions across architectures.
+    METRIC_*: Canonical metric key strings.
+    LOGGER_NAME: Global logger identity for log synchronization.
+    HEALTHCHECK_LOGGER_NAME: Logger identity for dataset validation.
+    LogStyle: Unified logging style constants.
 """
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
 from typing import Final
 
 # GLOBAL CONSTANTS
@@ -37,74 +35,45 @@ LOGGER_NAME: Final[str] = "OrchardML"
 HEALTHCHECK_LOGGER_NAME: Final[str] = "healthcheck"
 
 
-# PATH CALCULATIONS
-def get_project_root() -> Path:
+class LogStyle:
     """
-    Dynamically locate the project root by searching for anchor files.
+    Unified logging style constants for consistent visual hierarchy.
 
-    Traverses upward from current file's directory until finding a marker
-    file (.git or requirements.txt). Supports Docker environments via
-    IN_DOCKER environment variable override.
-
-    Returns:
-        Resolved absolute Path to the project root directory.
-
-    Note:
-
-        - IN_DOCKER=1 or IN_DOCKER=TRUE returns /app
-        - Falls back to fixed parent traversal if no markers found
+    Provides separators, symbols, indentation, and ANSI color codes used
+    by all logging modules.  Placed here (in ``paths.constants``) rather
+    than in ``logger.styles`` so that low-level packages (``environment``,
+    ``config``) can reference the constants without triggering circular
+    imports.
     """
-    # Environment override for Docker setups
-    if str(os.getenv("IN_DOCKER")).upper() in ("1", "TRUE"):
-        return Path("/app").resolve()
 
-    # Start from the directory of this file
-    current_path = Path(__file__).resolve().parent
+    # Header centering width (matches separator length)
+    HEADER_WIDTH = 80
 
-    # Look for markers that define the project root
-    # Note: .git is most reliable; README.md alone can exist in subdirectories
-    root_markers = {".git", "requirements.txt"}
+    # Level 1: Session headers (80 chars)
+    HEAVY = "━" * HEADER_WIDTH
 
-    for parent in [current_path] + list(current_path.parents):
-        if any((parent / marker).exists() for marker in root_markers):
-            return parent
+    # Level 2: Major sections (80 chars)
+    DOUBLE = "═" * HEADER_WIDTH
 
-    # Fallback if no markers are found
-    try:
-        if len(current_path.parents) >= 3:
-            return current_path.parents[2]
-    except IndexError:  # pragma: no cover
-        pass
+    # Level 3: Subsections / Separators (80 chars)
+    LIGHT = "─" * HEADER_WIDTH
 
-    # Final fallback
-    return current_path.parent.parent  # pragma: no cover
+    # Symbols
+    ARROW = "»"
+    BULLET = "•"
+    WARNING = "⚠"
+    SUCCESS = "✓"
 
+    # Indentation
+    INDENT = "  "
+    DOUBLE_INDENT = "    "
 
-# Central Filesystem Authority
-PROJECT_ROOT: Final[Path] = get_project_root().resolve()
-
-# STATIC DIRECTORIES
-# Input: Where raw datasets are stored
-DATASET_DIR: Final[Path] = (PROJECT_ROOT / "dataset").resolve()
-
-# Output: Default root directory for all experiment results
-OUTPUTS_ROOT: Final[Path] = (PROJECT_ROOT / "outputs").resolve()
-
-# Tracking: SQLite database for MLflow experiment tracking
-MLRUNS_DB: Final[Path] = (PROJECT_ROOT / "mlruns.db").resolve()
-
-# Directories that must exist at startup
-STATIC_DIRS: Final[list[Path]] = [DATASET_DIR, OUTPUTS_ROOT]
-
-
-# INITIAL SETUP
-def setup_static_directories() -> None:
-    """
-    Ensure core project directories exist at startup.
-
-    Creates DATASET_DIR and OUTPUTS_ROOT if they do not exist, preventing
-    runtime errors during data fetching or artifact creation. Uses
-    mkdir(parents=True, exist_ok=True) for idempotent operation.
-    """
-    for directory in STATIC_DIRS:
-        directory.mkdir(parents=True, exist_ok=True)
+    # ANSI Colors (applied by ColorFormatter to console output only)
+    RESET = "\033[0m"
+    DIM = "\033[2m"
+    BOLD = "\033[1m"
+    GREEN = "\033[32m"
+    YELLOW = "\033[33m"
+    RED = "\033[31m"
+    CYAN = "\033[36m"
+    MAGENTA = "\033[35m"

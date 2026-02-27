@@ -50,7 +50,7 @@ training:
   step_size: 20
   
   # Performance
-  use_amp: false                # Not needed for small resolution
+  use_amp: true
   use_tta: false
   criterion_type: "cross_entropy"
   weighted_loss: false

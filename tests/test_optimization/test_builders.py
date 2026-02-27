@@ -11,7 +11,11 @@ import pytest
 from optuna.pruners import HyperbandPruner, MedianPruner, NopPruner, PercentilePruner
 from optuna.samplers import CmaEsSampler, RandomSampler, TPESampler
 
-from orchard.optimization.orchestrator.builders import build_callbacks, build_pruner, build_sampler
+from orchard.optimization.orchestrator.builders import (
+    build_callbacks,
+    build_pruner,
+    build_sampler,
+)
 
 
 @pytest.mark.unit

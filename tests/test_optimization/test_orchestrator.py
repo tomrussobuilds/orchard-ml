@@ -284,7 +284,9 @@ class TestOptunaOrchestrator:
         mock_orch.optimize.return_value = mock_study
         mock_orch_class.return_value = mock_orch
 
-        from orchard.optimization.orchestrator.orchestrator import run_optimization as run_opt
+        from orchard.optimization.orchestrator.orchestrator import (
+            run_optimization as run_opt,
+        )
 
         result = run_opt(cfg=mock_cfg, device="cpu", paths=mock_paths)
 

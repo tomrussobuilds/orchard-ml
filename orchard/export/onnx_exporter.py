@@ -25,8 +25,7 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
-from ..core import LOGGER_NAME
-from ..core.logger import LogStyle
+from ..core import LOGGER_NAME, LogStyle
 
 logger = logging.getLogger(LOGGER_NAME)
 

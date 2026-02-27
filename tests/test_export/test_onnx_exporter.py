@@ -19,7 +19,10 @@ import torch.nn as nn
 # Skip entire module if onnxscript not available (required by torch.onnx.export)
 pytest.importorskip("onnxscript")
 
-from orchard.export.onnx_exporter import benchmark_onnx_inference, export_to_onnx  # noqa: E402
+from orchard.export.onnx_exporter import (  # noqa: E402
+    benchmark_onnx_inference,
+    export_to_onnx,
+)
 
 
 # SIMPLE TEST MODEL

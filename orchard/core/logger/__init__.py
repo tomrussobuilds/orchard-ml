@@ -13,6 +13,7 @@ Available Components:
 - Progress functions: Optimization and training progress logging.
 """
 
+from ..paths.constants import LogStyle
 from .logger import Logger
 from .progress import (
     log_optimization_header,
@@ -21,7 +22,6 @@ from .progress import (
     log_trial_start,
 )
 from .reporter import Reporter, ReporterProtocol
-from .styles import LogStyle
 
 __all__ = [
     "Logger",

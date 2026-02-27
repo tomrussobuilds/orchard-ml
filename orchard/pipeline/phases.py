@@ -25,6 +25,7 @@ from ..core import (
     Config,
     DatasetRegistryWrapper,
     LogStyle,
+    Reporter,
     log_optimization_summary,
 )
 
@@ -106,7 +107,7 @@ def run_optimization_phase(
     assert run_logger is not None, _ERR_LOGGER_NOT_INIT  # nosec B101
     assert paths is not None, _ERR_PATHS_NOT_INIT  # nosec B101
 
-    LogStyle.log_phase_header(run_logger, "HYPERPARAMETER OPTIMIZATION", LogStyle.DOUBLE)
+    Reporter.log_phase_header(run_logger, "HYPERPARAMETER OPTIMIZATION", LogStyle.DOUBLE)
 
     # Execute Optuna study (includes post-processing: visualizations, best config export)
     study = run_optimization(cfg=cfg, device=device, paths=paths, tracker=tracker)
@@ -164,7 +165,7 @@ def run_training_phase(
     ds_meta = wrapper.get_dataset(cfg.dataset.dataset_name.lower())
 
     # DATA PREPARATION
-    LogStyle.log_phase_header(run_logger, "DATA PREPARATION")
+    Reporter.log_phase_header(run_logger, "DATA PREPARATION")
 
     data = load_dataset(ds_meta)
     loaders = get_dataloaders(data, cfg)
@@ -184,7 +185,7 @@ def run_training_phase(
     )
 
     # MODEL TRAINING
-    LogStyle.log_phase_header(
+    Reporter.log_phase_header(
         run_logger, "TRAINING PIPELINE - " + cfg.architecture.name.upper(), LogStyle.DOUBLE
     )
 
@@ -215,7 +216,7 @@ def run_training_phase(
     best_model_path, train_losses, val_metrics_history = trainer.train()
 
     # FINAL EVALUATION
-    LogStyle.log_phase_header(run_logger, "FINAL EVALUATION")
+    Reporter.log_phase_header(run_logger, "FINAL EVALUATION")
 
     macro_f1, test_acc, test_auc = run_final_evaluation(
         model=model,
@@ -283,7 +284,7 @@ def run_export_phase(
     assert run_logger is not None, _ERR_LOGGER_NOT_INIT  # nosec B101
     assert paths is not None, _ERR_PATHS_NOT_INIT  # nosec B101
 
-    LogStyle.log_phase_header(run_logger, "MODEL EXPORT")
+    Reporter.log_phase_header(run_logger, "MODEL EXPORT")
 
     # Determine input shape from config (must match get_model's channel resolution)
     resolution = cfg.dataset.resolution

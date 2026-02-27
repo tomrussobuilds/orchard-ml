@@ -10,7 +10,13 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from orchard.core import ArchitectureConfig, Config, DatasetConfig, HardwareConfig, TrainingConfig
+from orchard.core import (
+    ArchitectureConfig,
+    Config,
+    DatasetConfig,
+    HardwareConfig,
+    TrainingConfig,
+)
 
 
 # CONFIG: BASIC CONSTRUCTION
