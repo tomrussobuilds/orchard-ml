@@ -6,7 +6,7 @@ using the Dataset Registry to providing fully configured PyTorch DataLoaders.
 """
 
 from .data_explorer import show_sample_images, show_samples_for_dataset
-from .dataset import LazyNPZDataset, VisionDataset
+from .dataset import VisionDataset
 from .fetcher import DatasetData, ensure_dataset_npz, load_dataset
 from .loader import DataLoaderFactory, create_temp_loader, get_dataloaders
 from .synthetic import create_synthetic_dataset, create_synthetic_grayscale_dataset
@@ -18,7 +18,6 @@ __all__ = [
     "ensure_dataset_npz",
     "get_dataloaders",
     "DataLoaderFactory",
-    "LazyNPZDataset",
     "create_temp_loader",
     "show_sample_images",
     "show_samples_for_dataset",

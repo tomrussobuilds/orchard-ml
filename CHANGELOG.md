@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - extract LoopOptions dataclass, fix docstrings in trainer/
 - unify metric source — remove optuna.metric_name, use training.monitor_metric as SSOT
 - config narrowing — decouple builders, transforms, TTA and visualization from Config
+- unify VisionDataset — eliminate LazyNPZDataset, add lazy mmap loading
 
 ### Styling
 

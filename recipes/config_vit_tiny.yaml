@@ -8,9 +8,10 @@
 # Architecture: ViT-Tiny (5M parameters, patch-based attention)
 
 dataset:
-  name: "organcmnist"
+  name: "pathmnist"
   data_root: ./dataset
   resolution: 224
+  lazy_loading: true
   force_rgb: true
   use_weighted_sampler: true
   max_samples: null

@@ -7,6 +7,7 @@
 dataset:
   name: "cifar10"
   resolution: 32
+  lazy_loading: true
   force_rgb: true
 
 architecture:

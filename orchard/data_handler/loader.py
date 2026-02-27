@@ -34,7 +34,7 @@ import torch
 from torch.utils.data import DataLoader, WeightedRandomSampler
 
 from ..core import LOGGER_NAME, Config, DatasetRegistryWrapper, LogStyle, worker_init_fn
-from .dataset import LazyNPZDataset, VisionDataset
+from .dataset import VisionDataset
 from .fetcher import DatasetData
 from .transforms import get_pipeline_transforms
 
@@ -191,10 +191,11 @@ class DataLoaderFactory:
         # 1. Setup transforms
         train_trans, val_trans = self._get_transformation_pipelines()
 
-        # 2. Instantiate Dataset splits
+        # 2. Instantiate Dataset splits (lazy=mmap, eager=full RAM copy)
+        _build = VisionDataset.lazy if self.cfg.dataset.lazy_loading else VisionDataset.from_npz
         ds_params = {"path": self.metadata.path, "seed": self.cfg.training.seed}
 
-        train_ds = VisionDataset(
+        train_ds = _build(
             **ds_params,
             split="train",
             transform=train_trans,
@@ -209,12 +210,8 @@ class DataLoaderFactory:
                 int(self.cfg.dataset.max_samples * self.cfg.dataset.val_ratio),
             )
 
-        val_ds = VisionDataset(
-            **ds_params, split="val", transform=val_trans, max_samples=sub_samples
-        )
-        test_ds = VisionDataset(
-            **ds_params, split="test", transform=val_trans, max_samples=sub_samples
-        )
+        val_ds = _build(**ds_params, split="val", transform=val_trans, max_samples=sub_samples)
+        test_ds = _build(**ds_params, split="test", transform=val_trans, max_samples=sub_samples)
 
         # 3. Resolve Sampler and Infrastructure
         sampler = self._get_balancing_sampler(train_ds)
@@ -286,6 +283,6 @@ def create_temp_loader(
     This avoids loading the entire dataset into RAM at once, which is critical
     for large datasets (e.g., 224x224 images).
     """
-    dataset = LazyNPZDataset(dataset_path)
+    dataset = VisionDataset.lazy(dataset_path)
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
     return loader

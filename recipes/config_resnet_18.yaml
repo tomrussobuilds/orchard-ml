@@ -10,6 +10,7 @@ dataset:
   name: "pathmnist"
   data_root: ./dataset
   resolution: 28
+  lazy_loading: true
   force_rgb: false
   use_weighted_sampler: false
   max_samples: null

@@ -14,6 +14,7 @@ dataset:
   name: "bloodmnist"
   data_root: ./dataset
   resolution: 64
+  lazy_loading: true
   force_rgb: true
   use_weighted_sampler: true
   max_samples: null

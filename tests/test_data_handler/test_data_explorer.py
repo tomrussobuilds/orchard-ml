@@ -34,7 +34,6 @@ def test_show_sample_images_basic(mock_plt, tmp_path):
     show_sample_images(
         loader=mock_loader,
         save_path=save_path,
-        cfg=None,
         num_samples=16,
     )
 
@@ -45,24 +44,22 @@ def test_show_sample_images_basic(mock_plt, tmp_path):
 
 @pytest.mark.unit
 @patch("orchard.data_handler.data_explorer.plt")
-def test_show_sample_images_with_config(mock_plt, tmp_path):
-    """Test show_sample_images applies denormalization with config."""
+def test_show_sample_images_with_denorm(mock_plt, tmp_path):
+    """Test show_sample_images applies denormalization with explicit mean/std."""
     mock_loader = MagicMock()
     mock_images = torch.rand(8, 3, 28, 28)
     mock_labels = torch.zeros(8)
     mock_loader.__iter__ = MagicMock(return_value=iter([(mock_images, mock_labels)]))
-
-    mock_cfg = MagicMock()
-    mock_cfg.dataset.mean = [0.5, 0.5, 0.5]
-    mock_cfg.dataset.std = [0.5, 0.5, 0.5]
-    mock_cfg.architecture.name = "test_model"
 
     save_path = tmp_path / "test_grid.png"
 
     show_sample_images(
         loader=mock_loader,
         save_path=save_path,
-        cfg=mock_cfg,
+        mean=(0.5, 0.5, 0.5),
+        std=(0.5, 0.5, 0.5),
+        arch_name="test_model",
+        fig_dpi=150,
         num_samples=8,
     )
 
@@ -83,7 +80,6 @@ def test_show_sample_images_grayscale(mock_plt, tmp_path):
     show_sample_images(
         loader=mock_loader,
         save_path=save_path,
-        cfg=None,
         num_samples=4,
     )
 
@@ -103,7 +99,6 @@ def test_show_sample_images_empty_loader(mock_logger, mock_plt):
     show_sample_images(
         loader=mock_loader,
         save_path=save_path,
-        cfg=None,
         num_samples=16,
     )
 
@@ -125,7 +120,6 @@ def test_show_sample_images_fewer_samples_than_requested(mock_plt, tmp_path):
     show_sample_images(
         loader=mock_loader,
         save_path=save_path,
-        cfg=None,
         num_samples=16,
     )
 
@@ -146,7 +140,6 @@ def test_show_sample_images_with_title_prefix(mock_plt, tmp_path):
     show_sample_images(
         loader=mock_loader,
         save_path=save_path,
-        cfg=None,
         num_samples=4,
         title_prefix="Training Data",
     )
@@ -168,7 +161,6 @@ def test_show_sample_images_grayscale_line80(mock_plt, tmp_path):
     show_sample_images(
         loader=mock_loader,
         save_path=save_path,
-        cfg=None,
         num_samples=1,
     )
 

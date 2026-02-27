@@ -175,9 +175,12 @@ def run_training_phase(
         classes=ds_meta.classes,
         dataset_name=cfg.dataset.dataset_name,
         run_paths=paths,
+        mean=cfg.dataset.mean,
+        std=cfg.dataset.std,
+        arch_name=cfg.architecture.name,
+        fig_dpi=cfg.evaluation.fig_dpi,
         num_samples=cfg.evaluation.n_samples,
         resolution=cfg.dataset.resolution,
-        cfg=cfg,
     )
 
     # MODEL TRAINING

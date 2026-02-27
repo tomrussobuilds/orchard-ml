@@ -57,7 +57,7 @@ orchard/
 │   │   ├── medmnist_fetcher.py # MedMNIST NPZ download with retries & MD5
 │   │   ├── galaxy10_converter.py # Galaxy10 HDF5 download & NPZ conversion
 │   │   └── cifar_converter.py  # CIFAR-10/100 torchvision → NPZ conversion
-│   ├── dataset.py              # VisionDataset & LazyNPZDataset wrappers
+│   ├── dataset.py              # VisionDataset (eager/lazy loading)
 │   ├── loader.py               # DataLoaderFactory
 │   ├── transforms.py           # Augmentation pipelines (torchvision V2)
 │   ├── data_explorer.py        # Visualization utilities

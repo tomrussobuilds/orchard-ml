@@ -29,6 +29,7 @@ dataset:
   name: "breastmnist"
   data_root: ./dataset
   resolution: 28
+  lazy_loading: true
   force_rgb: true
   use_weighted_sampler: false
   max_samples: null

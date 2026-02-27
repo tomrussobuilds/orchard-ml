@@ -28,7 +28,7 @@ import timm
 import torch
 import torch.nn as nn
 
-from ..core import LOGGER_NAME
+from ..core import LOGGER_NAME, LogStyle
 from ._morphing import morph_conv_weights
 
 # LOGGER CONFIGURATION
@@ -71,10 +71,10 @@ def build_vit_tiny(
     _weight_variant = weight_variant or "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
 
     if pretrained:
-        logger.info(f"Loading ViT-Tiny with pretrained weights: {_weight_variant}")
+        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Weights':<18}: {_weight_variant}")
         pretrained_flag = True
     else:
-        logger.info("Initializing ViT-Tiny with random weights")
+        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Weights':<18}: random init")
         pretrained_flag = False
         _weight_variant = "vit_tiny_patch16_224"  # Use base architecture
 

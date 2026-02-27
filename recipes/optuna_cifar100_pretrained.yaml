@@ -33,6 +33,7 @@
 dataset:
   name: "cifar100"
   resolution: 32
+  lazy_loading: true
   force_rgb: true
   use_weighted_sampler: false
 

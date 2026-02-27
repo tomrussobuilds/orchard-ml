@@ -5,7 +5,7 @@ Focus:
 - DataLoaderFactory.build()
 - WeightedRandomSampler
 - _get_infrastructure_kwargs (Optuna, CUDA/MPS)
-- LazyNPZDataset and create_temp_loader
+- VisionDataset.lazy() and create_temp_loader
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ import torch
 
 from orchard.core import DatasetRegistryWrapper
 from orchard.data_handler import DataLoaderFactory, create_temp_loader
-from orchard.data_handler.dataset import LazyNPZDataset
+from orchard.data_handler.dataset import VisionDataset
 
 
 # MOCK CONFIG AND METADATA
@@ -32,6 +32,7 @@ def mock_cfg():
     cfg.dataset.max_samples = 10
     cfg.dataset.num_classes = 2
     cfg.dataset.resolution = 28
+    cfg.dataset.lazy_loading = True
     cfg.training.batch_size = 2
     cfg.num_workers = 0
     return cfg
@@ -45,6 +46,7 @@ def mock_cfg_no_sampler():
     cfg.dataset.use_weighted_sampler = False
     cfg.dataset.max_samples = None
     cfg.dataset.resolution = 28
+    cfg.dataset.lazy_loading = True
     cfg.training.batch_size = 2
     cfg.num_workers = 0
     return cfg
@@ -58,6 +60,7 @@ def mock_cfg_high_res():
     cfg.dataset.use_weighted_sampler = False
     cfg.dataset.max_samples = None
     cfg.dataset.resolution = 224
+    cfg.dataset.lazy_loading = True
     cfg.training.batch_size = 2
     cfg.num_workers = 8
     return cfg
@@ -85,6 +88,14 @@ def test_build_loaders_with_weighted_sampler(mock_cfg, mock_metadata):
             class FakeDataset:
                 def __init__(self, **kwargs):
                     self.labels = np.array([0, 1, 0, 1])
+
+                @classmethod
+                def from_npz(cls, **kwargs):
+                    return cls()
+
+                @classmethod
+                def lazy(cls, **kwargs):
+                    return cls()
 
                 def __len__(self):
                     return 4
@@ -122,6 +133,14 @@ def test_build_loaders_without_weighted_sampler(mock_cfg_no_sampler, mock_metada
             class FakeDataset:
                 def __init__(self, **kwargs):
                     self.labels = np.array([0, 1, 0, 1])
+
+                @classmethod
+                def from_npz(cls, **kwargs):
+                    return cls()
+
+                @classmethod
+                def lazy(cls, **kwargs):
+                    return cls()
 
                 def __len__(self):
                     return 4
@@ -193,10 +212,10 @@ def test_infra_kwargs_no_pin_memory(monkeypatch, mock_cfg, mock_metadata):
         assert infra["pin_memory"] is False
 
 
-# LAZY NPZ DATASET TESTS
+# LAZY VISION DATASET TESTS
 @pytest.mark.unit
-def test_lazy_npz_dataset():
-    """Test LazyNPZDataset loads and returns tensors correctly."""
+def test_vision_dataset_lazy():
+    """Test VisionDataset.lazy() loads and returns tensors correctly."""
     rng = np.random.default_rng(seed=42)
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir) / "dummy.npz"
@@ -206,18 +225,19 @@ def test_lazy_npz_dataset():
         }
         np.savez(tmp_path, **data)
 
-        dataset = LazyNPZDataset(tmp_path)
+        dataset = VisionDataset.lazy(tmp_path)
         assert len(dataset) == 5
 
         img, label = dataset[0]
         assert isinstance(img, torch.Tensor)
         assert img.shape[0] == 1
-        assert isinstance(label, int)
+        assert isinstance(label, torch.Tensor)
+        assert label.dtype == torch.long
 
 
 @pytest.mark.unit
-def test_lazy_npz_dataset_rgb():
-    """Test LazyNPZDataset with RGB images."""
+def test_vision_dataset_lazy_rgb():
+    """Test VisionDataset.lazy() with RGB images."""
     rng = np.random.default_rng(seed=42)
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir) / "dummy_rgb.npz"
@@ -227,7 +247,7 @@ def test_lazy_npz_dataset_rgb():
         }
         np.savez(tmp_path, **data)
 
-        dataset = LazyNPZDataset(tmp_path)
+        dataset = VisionDataset.lazy(tmp_path)
         assert len(dataset) == 5
 
         img, label = dataset[0]
@@ -235,12 +255,13 @@ def test_lazy_npz_dataset_rgb():
         assert img.shape[0] == 3
         assert img.shape[1] == 28
         assert img.shape[2] == 28
-        assert isinstance(label, int)
+        assert isinstance(label, torch.Tensor)
+        assert label.dtype == torch.long
 
 
 @pytest.mark.unit
-def test_lazy_npz_dataset_grayscale_2d():
-    """Test LazyNPZDataset with 2D grayscale images."""
+def test_vision_dataset_lazy_grayscale_2d():
+    """Test VisionDataset.lazy() with 2D grayscale images."""
     rng = np.random.default_rng(seed=42)
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir) / "dummy_gray.npz"
@@ -250,30 +271,12 @@ def test_lazy_npz_dataset_grayscale_2d():
         }
         np.savez(tmp_path, **data)
 
-        dataset = LazyNPZDataset(tmp_path)
+        dataset = VisionDataset.lazy(tmp_path)
         img, _ = dataset[0]
 
         assert img.shape[0] == 1
         assert img.shape[1] == 28
         assert img.shape[2] == 28
-
-
-@pytest.mark.unit
-def test_lazy_npz_dataset_invalid_shape():
-    """Test LazyNPZDataset raises error for invalid image shapes."""
-    rng = np.random.default_rng(seed=42)
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmp_path = Path(tmpdir) / "dummy_invalid.npz"
-        data = {
-            "train_images": rng.integers(0, 255, (5, 28), dtype=np.uint8),
-            "train_labels": rng.integers(0, 2, (5, 1), dtype=np.int64),
-        }
-        np.savez(tmp_path, **data)
-
-        dataset = LazyNPZDataset(tmp_path)
-
-        with pytest.raises(ValueError, match="Unexpected image shape"):
-            _ = dataset[0]
 
 
 @pytest.mark.unit

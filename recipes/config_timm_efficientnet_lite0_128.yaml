@@ -11,6 +11,7 @@ dataset:
   name: "organcmnist"
   data_root: ./dataset
   resolution: 128
+  lazy_loading: true
   force_rgb: true
   use_weighted_sampler: true
   max_samples: null

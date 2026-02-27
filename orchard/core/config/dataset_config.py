@@ -43,6 +43,7 @@ class DatasetConfig(BaseModel):
         img_size: Target square resolution for model input (auto-synced).
         force_rgb: Convert grayscale to RGB for pretrained ImageNet weights.
         resolution: Target resolution variant (28, 32, 64, 128, or 224).
+        lazy_loading: Use memory-mapped loading instead of eagerly loading into RAM.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid", arbitrary_types_allowed=True)
@@ -75,6 +76,10 @@ class DatasetConfig(BaseModel):
     resolution: int = Field(
         default=28,
         description=f"Target dataset resolution {sorted(SUPPORTED_RESOLUTIONS)}",
+    )
+    lazy_loading: bool = Field(
+        default=True,
+        description="Use memory-mapped loading (lazy) instead of eager RAM loading",
     )
 
     @field_validator("max_samples")
