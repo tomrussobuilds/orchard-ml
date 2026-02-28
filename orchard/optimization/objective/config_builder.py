@@ -43,6 +43,8 @@ class TrialConfigBuilder:
             "min_lr",
             "mixup_alpha",
             "label_smoothing",
+            "criterion_type",
+            "focal_gamma",
             "batch_size",
             "scheduler_type",
             "scheduler_patience",

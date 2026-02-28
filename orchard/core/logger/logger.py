@@ -32,8 +32,9 @@ from ..paths.constants import LogStyle
 _SEPARATOR_CHARS = {"━", "═", "─"}
 
 # Matches subtitle tags like [Hardware], [OPTIMIZATION], [Export Settings],
-# [Benchmark — ONNX] but NOT data brackets like [T: 0.2131 | V: 0.1196] or [!]
-_SUBTITLE_RE = re.compile(r"\[([A-Za-z][A-Za-z \u2014\-]*)\]")
+# [Benchmark — ONNX], [Trial 3 Hyperparameters]
+# but NOT data brackets like [T: 0.2131 | V: 0.1196] or [!]
+_SUBTITLE_RE = re.compile(r"\[([A-Za-z][A-Za-z0-9 \u2014\-]*)\]")
 
 
 class ColorFormatter(logging.Formatter):

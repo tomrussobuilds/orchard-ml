@@ -14,6 +14,14 @@ Key responsibilities:
 - Track and report metrics to Optuna
 - Handle scheduler stepping (plateau-aware)
 - Provide error-resilient validation with fallback metrics
+
+.. todo::
+   Unify ``TrialTrainingExecutor`` and ``ModelTrainer`` into a single
+   engine with pluggable epoch-end callbacks (early stopping,
+   checkpointing, Optuna pruning).  Both already share the full
+   training kernel (``TrainingLoop``, ``validate_epoch``,
+   ``step_scheduler``, AMP scaler, Mixup); the only divergence is
+   the epoch-level loop and post-validation actions.
 """
 
 from __future__ import annotations

@@ -108,6 +108,13 @@ class SearchSpaceOverrides(BaseModel):
     momentum: FloatRange = Field(default_factory=lambda: FloatRange(low=0.85, high=0.95))
     min_lr: FloatRange = Field(default_factory=lambda: FloatRange(low=1e-7, high=1e-5, log=True))
 
+    # ---- Loss ----
+    criterion_type: list[str] = Field(
+        default=["cross_entropy", "focal"],
+        description="Loss function types to explore",
+    )
+    focal_gamma: FloatRange = Field(default_factory=lambda: FloatRange(low=0.5, high=5.0))
+
     # ---- Regularization ----
     mixup_alpha: FloatRange = Field(default_factory=lambda: FloatRange(low=0.0, high=0.4))
     label_smoothing: FloatRange = Field(default_factory=lambda: FloatRange(low=0.0, high=0.2))

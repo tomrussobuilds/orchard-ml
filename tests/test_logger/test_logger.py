@@ -471,7 +471,7 @@ def test_color_formatter_plain_info():
     output = formatter.format(record)
     assert LogStyle.GREEN not in output
     assert LogStyle.DIM not in output
-    assert LogStyle.CYAN not in output
+    assert LogStyle.MAGENTA not in output
 
 
 @pytest.mark.unit

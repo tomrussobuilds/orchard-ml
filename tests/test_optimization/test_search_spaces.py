@@ -37,13 +37,50 @@ def test_get_optimization_space():
 
 
 @pytest.mark.unit
+def test_get_loss_space_cross_entropy():
+    """Test loss space samples label_smoothing for cross_entropy and defaults focal_gamma."""
+    registry = SearchSpaceRegistry()
+    space = registry.get_loss_space()
+
+    assert "criterion_type" in space
+    assert "focal_gamma" in space
+    assert "label_smoothing" in space
+
+    trial_mock = MagicMock(spec=Trial)
+    trial_mock.suggest_categorical = MagicMock(return_value="cross_entropy")
+    trial_mock.suggest_float = MagicMock(return_value=0.1)
+    trial_mock.params = {"criterion_type": "cross_entropy"}
+
+    assert space["criterion_type"](trial_mock) == "cross_entropy"
+    assert space["focal_gamma"](trial_mock) == 2.0  # default, not sampled
+    assert space["label_smoothing"](trial_mock) == 0.1  # sampled
+    trial_mock.suggest_float.assert_called_once()
+
+
+@pytest.mark.unit
+def test_get_loss_space_focal():
+    """Test loss space samples focal_gamma for focal and defaults label_smoothing."""
+    registry = SearchSpaceRegistry()
+    space = registry.get_loss_space()
+
+    trial_mock = MagicMock(spec=Trial)
+    trial_mock.suggest_categorical = MagicMock(return_value="focal")
+    trial_mock.suggest_float = MagicMock(return_value=3.0)
+    trial_mock.params = {"criterion_type": "focal"}
+
+    assert space["criterion_type"](trial_mock) == "focal"
+    assert space["focal_gamma"](trial_mock) == 3.0  # sampled
+    assert space["label_smoothing"](trial_mock) == 0.0  # default, not sampled
+    trial_mock.suggest_float.assert_called_once()
+
+
+@pytest.mark.unit
 def test_get_regularization_space():
     """Test retrieval of regularization strategies."""
     registry = SearchSpaceRegistry()
     space = registry.get_regularization_space()
 
     assert "mixup_alpha" in space
-    assert "label_smoothing" in space
     assert "dropout" in space
 
     trial_mock = MagicMock(spec=Trial)
@@ -82,6 +119,9 @@ def test_get_full_space():
     space = registry.get_full_space(resolution=28)
 
     assert "learning_rate" in space
+    assert "criterion_type" in space
+    assert "focal_gamma" in space
+    assert "label_smoothing" in space
     assert "mixup_alpha" in space
     assert "batch_size" in space
     assert "scheduler_patience" in space
@@ -262,6 +302,9 @@ def test_search_space_overrides_defaults():
     assert ov.batch_size_high_res == [8, 12, 16]
     assert ov.dropout.low == pytest.approx(0.1)
     assert ov.dropout.high == pytest.approx(0.5)
+    assert ov.criterion_type == ["cross_entropy", "focal"]
+    assert ov.focal_gamma.low == pytest.approx(0.5)
+    assert ov.focal_gamma.high == pytest.approx(5.0)
 
 
 @pytest.mark.unit
@@ -342,6 +385,28 @@ def test_get_search_space_model_pool_none_uses_defaults():
     assert "weight_variant" in space_224
     # 28 default does not include weight_variant
     assert "weight_variant" not in space_28
+
+
+@pytest.mark.unit
+def test_custom_criterion_type_overrides():
+    """Test custom criterion_type restricts to a single loss type."""
+    custom_ov = SearchSpaceOverrides(
+        criterion_type=["focal"],
+        focal_gamma=FloatRange(low=1.0, high=3.0),
+    )
+    registry = SearchSpaceRegistry(custom_ov)
+    space = registry.get_loss_space()
+
+    trial_mock = MagicMock(spec=Trial)
+    trial_mock.suggest_categorical = MagicMock(return_value="focal")
+    trial_mock.suggest_float = MagicMock(return_value=2.0)
+    trial_mock.params = {"criterion_type": "focal"}
+
+    space["criterion_type"](trial_mock)
+    trial_mock.suggest_categorical.assert_called_with("criterion_type", ["focal"])
+
+    space["focal_gamma"](trial_mock)
+    trial_mock.suggest_float.assert_called_with("focal_gamma", 1.0, 3.0)
 
 
 @pytest.mark.unit

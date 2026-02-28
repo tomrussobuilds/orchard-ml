@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - false docstrings, dead field, sentinel logging, LogStyle.FAILURE
 - remove unused `classes` param, reduce ColorFormatter complexity
+- reduce run_final_evaluation params from 14 to 13 (Sonar S107)
 
 ### Styling
 

@@ -26,7 +26,6 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 # type aliases for clarity
-SamplerFactory = Callable[[], object]
 PrunerFactory = Callable[[], object]
 
 # ==================== SAMPLER REGISTRY ====================
@@ -55,6 +54,8 @@ TRAINING_PARAMS: set[str] = {
     "weight_decay",
     "momentum",
     "min_lr",
+    "criterion_type",
+    "focal_gamma",
     "mixup_alpha",
     "label_smoothing",
     "batch_size",

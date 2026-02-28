@@ -36,7 +36,7 @@ def compute_classification_metrics(
             - ``f1`` -- Macro-averaged F1 score
     """
     accuracy = np.mean(preds == labels)
-    macro_f1 = f1_score(labels, preds, average="macro")
+    macro_f1 = f1_score(labels, preds, average="macro", zero_division=0.0)
     auc = compute_auc(labels, probs)
 
     return {METRIC_ACCURACY: float(accuracy), METRIC_AUC: float(auc), METRIC_F1: float(macro_f1)}

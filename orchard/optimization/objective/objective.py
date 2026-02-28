@@ -319,7 +319,9 @@ class OptunaObjective:
 
         Note: Orchestrator handles full resource cleanup. This only clears accelerator cache.
         """
-        # Per-trial cache flush (mirrors InfraManager.flush_compute_cache for session teardown)
+        # Per-trial cache flush — intentionally inlined (not calling InfraManager)
+        # to avoid a dependency on the orchestrator layer from within the objective.
+        # The 4-line cost is lower than the coupling cost of importing InfraManager.
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 

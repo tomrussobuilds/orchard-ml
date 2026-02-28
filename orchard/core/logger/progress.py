@@ -108,11 +108,12 @@ def log_trial_start(
     log = logger_instance or logger
 
     log.info(f"{LogStyle.LIGHT}")
-    log.info(f"Trial {trial_number} Hyperparameters:")
+    log.info(f"[Trial {trial_number} Hyperparameters]")
 
     categories = {
         "Optimization": ["learning_rate", "weight_decay", "momentum", "min_lr"],
-        "Regularization": ["mixup_alpha", "label_smoothing", "dropout"],
+        "Loss": ["criterion_type", "focal_gamma", "label_smoothing"],
+        "Regularization": ["mixup_alpha", "dropout"],
         "Scheduling": ["scheduler_type", "scheduler_patience", "batch_size"],
         "Augmentation": ["rotation_angle", "jitter_val", "min_scale"],
         "Architecture": ["model_name", "pretrained", "weight_variant"],

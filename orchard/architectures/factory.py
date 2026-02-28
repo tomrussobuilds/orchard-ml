@@ -181,6 +181,10 @@ def _dispatch_builder(
     Raises:
         ValueError: If the architecture is not found in the registry.
     """
+    # Explicit dispatch: each builder has a distinct signature (dropout,
+    # resolution, weight_variant …) so a single Callable protocol cannot
+    # unify them without an opaque **kwargs bag.  At 6 architectures the
+    # trade-off favours readability; for 20+ a BuildContext ABC would pay off.
     if model_name_lower.startswith("timm/"):
         return build_timm_model(
             device,

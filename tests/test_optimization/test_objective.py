@@ -135,6 +135,34 @@ def test_config_builder_handles_weight_variant():
 
 
 @pytest.mark.unit
+def test_config_builder_maps_criterion_and_focal_gamma():
+    """Test TrialConfigBuilder maps criterion_type and focal_gamma to training."""
+    mock_cfg = MagicMock()
+    config_dict = {
+        "dataset": {"resolution": 28, "metadata": None},
+        "training": {"epochs": 60, "criterion_type": "cross_entropy", "focal_gamma": 2.0},
+        "architecture": {"name": "mini_cnn", "dropout": 0.3},
+        "augmentation": {},
+    }
+    mock_cfg.model_dump.return_value = config_dict.copy()
+    mock_cfg.dataset.resolution = 28
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+    mock_cfg.optuna.epochs = 15
+
+    builder = TrialConfigBuilder(mock_cfg)
+
+    trial_params = {"criterion_type": "focal", "focal_gamma": 3.5}
+
+    test_dict = config_dict.copy()
+    test_dict["dataset"]["metadata"] = builder.base_metadata
+    test_dict["training"]["epochs"] = builder.optuna_epochs
+    builder._apply_param_overrides(test_dict, trial_params)
+
+    assert test_dict["training"]["criterion_type"] == "focal"
+    assert test_dict["training"]["focal_gamma"] == pytest.approx(3.5)
+
+
+@pytest.mark.unit
 def test_config_builder_skips_none_weight_variant():
     """Test TrialConfigBuilder skips None weight_variant (for non-ViT models)."""
     mock_cfg = MagicMock()

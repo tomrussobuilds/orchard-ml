@@ -93,9 +93,49 @@ class SearchSpaceRegistry:
             ),
         }
 
+    def get_loss_space(self) -> dict[str, Callable]:
+        """
+        Loss function parameters (criterion type, focal gamma, label smoothing).
+
+        ``focal_gamma`` is only sampled when ``criterion_type == "focal"``,
+        otherwise defaults to 2.0.  ``label_smoothing`` is only sampled
+        when ``criterion_type == "cross_entropy"``, otherwise defaults to 0.0.
+
+        Returns:
+            dict of loss-related parameter samplers
+        """
+        # label_smoothing lives here (not in regularization) because it is
+        # mutually exclusive with focal_gamma — only the active loss's param
+        # is sampled; the other gets a safe default via trial.params dispatch.
+        ov = self.ov
+        return {
+            "criterion_type": lambda trial: trial.suggest_categorical(
+                "criterion_type",
+                ov.criterion_type,
+            ),
+            "focal_gamma": lambda trial: (
+                trial.suggest_float(
+                    "focal_gamma",
+                    ov.focal_gamma.low,
+                    ov.focal_gamma.high,
+                )
+                if trial.params.get("criterion_type") == "focal"
+                else 2.0
+            ),
+            "label_smoothing": lambda trial: (
+                trial.suggest_float(
+                    "label_smoothing",
+                    ov.label_smoothing.low,
+                    ov.label_smoothing.high,
+                )
+                if trial.params.get("criterion_type") == "cross_entropy"
+                else 0.0
+            ),
+        }
+
     def get_regularization_space(self) -> dict[str, Callable]:
         """
-        Regularization strategies (mixup, label smoothing, dropout).
+        Regularization strategies (mixup, dropout).
 
         Returns:
             dict of regularization parameter samplers
@@ -106,11 +146,6 @@ class SearchSpaceRegistry:
                 "mixup_alpha",
                 ov.mixup_alpha.low,
                 ov.mixup_alpha.high,
-            ),
-            "label_smoothing": lambda trial: trial.suggest_float(
-                "label_smoothing",
-                ov.label_smoothing.low,
-                ov.label_smoothing.high,
             ),
             "dropout": lambda trial: trial.suggest_float(
                 "dropout",
@@ -196,6 +231,7 @@ class SearchSpaceRegistry:
         """
         full_space: dict[str, Callable] = {}
         full_space.update(self.get_optimization_space())
+        full_space.update(self.get_loss_space())
         full_space.update(self.get_regularization_space())
         full_space.update(self.get_batch_size_space(resolution))
         full_space.update(self.get_scheduler_space())
