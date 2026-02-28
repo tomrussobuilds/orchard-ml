@@ -248,7 +248,16 @@ def test_generate_visualizations_plotly_not_installed(mock_has_trials, completed
     with tempfile.TemporaryDirectory() as tmpdir:
         output_dir = Path(tmpdir)
 
-        with patch("builtins.__import__", side_effect=ImportError("No module named 'plotly'")):
+        original_import = (
+            __builtins__.__import__ if hasattr(__builtins__, "__import__") else __import__
+        )
+
+        def _selective_import(name, *args, **kwargs):
+            if name == "optuna.visualization" or name.startswith("optuna.visualization."):
+                raise ImportError("No module named 'plotly'")
+            return original_import(name, *args, **kwargs)
+
+        with patch("builtins.__import__", side_effect=_selective_import):
             generate_visualizations(study, output_dir)
 
 

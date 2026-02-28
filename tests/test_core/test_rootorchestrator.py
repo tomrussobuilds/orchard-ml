@@ -1044,5 +1044,224 @@ def test_non_main_rank_context_manager_lifecycle():
     mock_infra.release_resources.assert_not_called()
 
 
+# ORCHESTRATOR: INITIAL STATE AND KWARGS VERIFICATION
+@pytest.mark.unit
+def test_init_initialized_starts_false():
+    """Test _initialized flag starts as False."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.effective_num_workers = 4
+
+    orch = RootOrchestrator(cfg=mock_cfg)
+
+    assert orch._initialized is False
+
+
+@pytest.mark.unit
+def test_init_applied_threads_starts_zero():
+    """Test _applied_threads starts as 0."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.effective_num_workers = 4
+
+    orch = RootOrchestrator(cfg=mock_cfg)
+
+    assert orch._applied_threads == 0
+
+
+@pytest.mark.unit
+def test_phase_7_reporter_receives_all_kwargs():
+    """Test _phase_7_environment_report passes all kwargs to reporter.log_initial_status."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.effective_num_workers = 3
+    mock_reporter = MagicMock()
+    mock_logger = MagicMock()
+    mock_paths = MagicMock()
+
+    orch = RootOrchestrator(cfg=mock_cfg, reporter=mock_reporter)
+    orch._device_cache = torch.device("cpu")
+    orch.run_logger = mock_logger
+    orch.paths = mock_paths
+
+    orch._phase_7_environment_report(applied_threads=8)
+
+    kw = mock_reporter.log_initial_status.call_args.kwargs
+    assert kw["logger_instance"] is mock_logger
+    assert kw["cfg"] is mock_cfg
+    assert kw["paths"] is mock_paths
+    assert kw["device"] == torch.device("cpu")
+    assert kw["applied_threads"] == 8
+    assert kw["num_workers"] == 3
+
+
+@pytest.mark.unit
+def test_cleanup_error_message_content():
+    """Test cleanup logs specific error message when release fails."""
+    mock_cfg = MagicMock()
+    mock_infra = MagicMock()
+    mock_infra.release_resources.side_effect = OSError("disk full")
+    mock_logger = MagicMock()
+    mock_logger.handlers = []
+
+    orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra)
+    orch.run_logger = mock_logger
+
+    orch.cleanup()
+
+    mock_logger.error.assert_called_once()
+    assert "Failed to release system lock" in mock_logger.error.call_args[0][0]
+    assert "disk full" in mock_logger.error.call_args[0][0]
+
+
+@pytest.mark.unit
+def test_log_environment_report_noop_on_non_main_rank():
+    """Test log_environment_report is a no-op for non-main ranks."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.effective_num_workers = 2
+    mock_reporter = MagicMock()
+
+    orch = RootOrchestrator(cfg=mock_cfg, reporter=mock_reporter, rank=1)
+    orch.paths = MagicMock()
+    orch.run_logger = MagicMock()
+
+    orch.log_environment_report()
+
+    mock_reporter.log_initial_status.assert_not_called()
+
+
+@pytest.mark.unit
+def test_applied_threads_stored_from_phase_2(tmp_path):
+    """Test _applied_threads is set from phase 2 return value."""
+    mock_cfg = MagicMock()
+    mock_cfg.training.seed = 42
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.effective_num_workers = 2
+    mock_cfg.dataset.dataset_name = "ds"
+    mock_cfg.architecture.name = "arch"
+    mock_cfg.telemetry.output_dir = str(tmp_path)
+    mock_cfg.telemetry.log_level = "INFO"
+    mock_cfg.dump_serialized = MagicMock(return_value={})
+
+    mock_paths = MagicMock()
+    mock_paths.logs = str(tmp_path / "logs")
+    mock_paths.get_config_path = MagicMock(return_value=str(tmp_path / "cfg.yaml"))
+
+    mock_thread_applier = MagicMock(return_value=12)
+
+    with pytest.MonkeyPatch.context() as m:
+        m.setattr("orchard.core.orchestrator.RunPaths.create", lambda **kw: mock_paths)
+
+        orch = RootOrchestrator(
+            cfg=mock_cfg,
+            seed_setter=MagicMock(),
+            thread_applier=mock_thread_applier,
+            system_configurator=MagicMock(),
+            static_dir_setup=MagicMock(),
+            config_saver=MagicMock(),
+            requirements_dumper=MagicMock(),
+            log_initializer=MagicMock(return_value=MagicMock()),
+            infra_manager=MagicMock(),
+            rank=0,
+        )
+
+        orch.initialize_core_services()
+
+    assert orch._applied_threads == 12
+
+
+@pytest.mark.unit
+def test_applied_threads_stored_non_main_rank():
+    """Test _applied_threads is set even for non-main ranks."""
+    mock_cfg = MagicMock()
+    mock_cfg.training.seed = 42
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.effective_num_workers = 2
+
+    mock_thread_applier = MagicMock(return_value=6)
+
+    orch = RootOrchestrator(
+        cfg=mock_cfg,
+        seed_setter=MagicMock(),
+        thread_applier=mock_thread_applier,
+        system_configurator=MagicMock(),
+        rank=1,
+    )
+
+    orch.initialize_core_services()
+
+    assert orch._applied_threads == 6
+
+
+@pytest.mark.unit
+def test_phase_6_prepare_environment_receives_cfg_and_logger():
+    """Test _phase_6 passes cfg and logger to infra.prepare_environment."""
+    mock_cfg = MagicMock()
+    mock_infra = MagicMock()
+    mock_logger = MagicMock()
+
+    orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra)
+    orch.run_logger = mock_logger
+
+    orch._phase_6_infrastructure_guarding()
+
+    mock_infra.prepare_environment.assert_called_once_with(mock_cfg, logger=mock_logger)
+
+
+@pytest.mark.unit
+def test_cleanup_passes_cfg_and_logger_to_release():
+    """Test cleanup passes cfg and logger to infra.release_resources."""
+    mock_cfg = MagicMock()
+    mock_infra = MagicMock()
+    mock_logger = MagicMock()
+    mock_logger.handlers = []
+
+    orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra, rank=0)
+    orch.run_logger = mock_logger
+
+    orch.cleanup()
+
+    mock_infra.release_resources.assert_called_once_with(mock_cfg, logger=mock_logger)
+
+
+@pytest.mark.unit
+def test_initialized_flag_set_after_init():
+    """Test _initialized is True after initialize_core_services completes."""
+    mock_cfg = MagicMock()
+    mock_cfg.training.seed = 42
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.effective_num_workers = 2
+
+    orch = RootOrchestrator(
+        cfg=mock_cfg,
+        seed_setter=MagicMock(),
+        thread_applier=MagicMock(return_value=2),
+        system_configurator=MagicMock(),
+        rank=1,
+    )
+
+    assert orch._initialized is False
+    orch.initialize_core_services()
+    assert orch._initialized is True
+
+
+@pytest.mark.unit
+def test_phase_5_config_saver_receives_data_and_path():
+    """Test _phase_5 passes data= and yaml_path= to config_saver."""
+    mock_cfg = MagicMock()
+    mock_saver = MagicMock()
+    mock_dumper = MagicMock()
+    mock_paths = MagicMock()
+    mock_paths.get_config_path.return_value = "/mock/config.yaml"
+    mock_paths.reports = MagicMock()
+
+    orch = RootOrchestrator(cfg=mock_cfg, config_saver=mock_saver, requirements_dumper=mock_dumper)
+    orch.paths = mock_paths
+
+    orch._phase_5_run_manifest()
+
+    mock_saver.assert_called_once_with(data=mock_cfg, yaml_path="/mock/config.yaml")
+    mock_dumper.assert_called_once_with(mock_paths.reports / "requirements.txt")
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
