@@ -3,7 +3,7 @@ Test-Time Augmentation (TTA) Module.
 
 This module implements adaptive TTA strategies for robust inference.
 It provides an ensemble-based prediction mechanism that respects
-anatomical constraints and texture preservation requirements of medical imaging.
+anatomical constraints and texture preservation requirements.
 
 Transform selection is deterministic and hardware-independent: the same
 ``tta_mode`` config always produces the same ensemble regardless of whether

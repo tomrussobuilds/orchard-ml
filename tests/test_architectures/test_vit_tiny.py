@@ -41,7 +41,6 @@ class TestBuildViTTiny:
         in_channels = 3
 
         model = build_vit_tiny(
-            device,
             num_classes,
             in_channels,
             pretrained=True,
@@ -62,7 +61,6 @@ class TestBuildViTTiny:
         in_channels = 1
 
         model = build_vit_tiny(
-            device,
             num_classes,
             in_channels,
             pretrained=True,
@@ -75,7 +73,7 @@ class TestBuildViTTiny:
         output = model(x)
         assert output.shape == (1, num_classes)
 
-    def test_build_vit_tiny_no_pretrained(self, device):
+    def test_build_vit_tiny_no_pretrained(self):
         """Tests initialization with random weights when pretrained flag is False."""
         num_classes = 10
         in_channels = 3
@@ -83,26 +81,23 @@ class TestBuildViTTiny:
         with patch("orchard.architectures.vit_tiny.timm.create_model") as mock_timm:
             mock_model = MagicMock(spec=nn.Module)
             mock_timm.return_value = mock_model
-            mock_model.to.return_value = mock_model
 
-            model = build_vit_tiny(device, num_classes, in_channels, pretrained=False)
+            model = build_vit_tiny(num_classes, in_channels, pretrained=False)
 
             assert model == mock_model
 
             mock_timm.assert_called_once_with(
                 "vit_tiny_patch16_224", pretrained=False, num_classes=num_classes, in_chans=3
             )
-            mock_model.to.assert_called_once_with(device)
 
     def test_invalid_weight_variant_raises_error(self, device):
         """Verifies that an invalid timm variant triggers a descriptive ValueError."""
         with pytest.raises(ValueError, match="Invalid ViT weight variant"):
-            build_vit_tiny(device, 2, 3, pretrained=True, weight_variant="invalid_vit_model_name")
+            build_vit_tiny(2, 3, pretrained=True, weight_variant="invalid_vit_model_name")
 
     def test_weight_copy_consistency(self, device):
         """Confirms that bias is preserved during patch embedding adaptation."""
         model = build_vit_tiny(
-            device,
             2,
             1,
             pretrained=True,

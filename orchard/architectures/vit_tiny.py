@@ -1,8 +1,8 @@
 """
-Vision Transformer Tiny (ViT-Tiny) for 224×224 Medical Imaging.
+Vision Transformer Tiny (ViT-Tiny) for 224×224 Image Classification.
 
 Implements the Vision Transformer architecture via timm library with support for
-multiple pretrained weight variants. Designed for efficient medical image
+multiple pretrained weight variants. Designed for efficient image
 classification with transfer learning capabilities.
 
 Key Features:
@@ -25,7 +25,6 @@ import logging
 from typing import cast
 
 import timm
-import torch
 import torch.nn as nn
 
 from ..core import LOGGER_NAME, LogStyle
@@ -37,7 +36,6 @@ logger = logging.getLogger(LOGGER_NAME)
 
 # MODEL BUILDER
 def build_vit_tiny(
-    device: torch.device,
     num_classes: int,
     in_channels: int,
     *,
@@ -45,24 +43,22 @@ def build_vit_tiny(
     weight_variant: str | None = None,
 ) -> nn.Module:
     """
-    Constructs Vision Transformer Tiny adapted for medical imaging datasets.
+    Constructs Vision Transformer Tiny adapted for image classification datasets.
 
     Workflow:
         1. Resolve pretrained weight variant from config (if enabled)
         2. Load model via timm with automatic head replacement
         3. Modify patch embedding layer for custom input channels
         4. Apply weight morphing for channel compression (if grayscale)
-        5. Deploy model to target device (CUDA/MPS/CPU)
 
     Args:
-        device: Target hardware for model placement
         num_classes: Number of dataset classes for classification head
         in_channels: Input channels (1=Grayscale, 3=RGB)
         pretrained: Whether to load pretrained weights
         weight_variant: Specific timm weight variant identifier
 
     Returns:
-        Adapted ViT-Tiny model deployed to device
+        Adapted ViT-Tiny model (device placement handled by factory).
 
     Raises:
         ValueError: If weight variant is invalid or incompatible with pretrained flag
@@ -126,5 +122,4 @@ def build_vit_tiny(
         # Replace patch embedding projection
         model.patch_embed.proj = new_proj  # type: ignore[union-attr]
 
-    # --- Step 5: Device Placement ---
-    return model.to(device)
+    return model

@@ -37,8 +37,7 @@ def validate_npz_keys(data: np.lib.npyio.NpzFile) -> None:
     if missing:
         found = list(data.files)
         raise ValueError(
-            f"NPZ archive is corrupted or invalid. Missing keys: {missing}"
-            f" | Found keys: {found}"
+            f"NPZ archive is corrupted or invalid. Missing keys: {missing} | Found keys: {found}"
         )
 
 

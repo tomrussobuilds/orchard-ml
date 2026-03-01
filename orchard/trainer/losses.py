@@ -4,10 +4,12 @@ Custom Loss Functions Module.
 This module implements advanced objective functions for computer vision tasks,
 extending standard PyTorch criteria. It includes specialized losses like
 Focal Loss to handle extreme class imbalances and difficult samples
-often encountered in medical imaging and fine-grained classification.
+often encountered in imbalanced datasets and fine-grained classification.
 """
 
 from __future__ import annotations
+
+from typing import cast
 
 import torch
 import torch.nn as nn
@@ -40,7 +42,7 @@ class FocalLoss(nn.Module):
         super().__init__()
         self.gamma = gamma
         self.alpha = alpha
-        self.weight = weight
+        self.register_buffer("weight", weight)
 
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """
@@ -54,7 +56,8 @@ class FocalLoss(nn.Module):
             Scalar focal loss averaged over the batch.
         """
         # Calculate standard cross entropy without reduction
-        ce_loss = F.cross_entropy(inputs, targets, reduction="none", weight=self.weight)
+        weight = cast(torch.Tensor | None, self.weight)
+        ce_loss = F.cross_entropy(inputs, targets, reduction="none", weight=weight)
 
         # pt is the probability of the correct class
         pt = torch.exp(-ce_loss)

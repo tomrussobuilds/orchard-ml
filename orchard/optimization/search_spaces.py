@@ -8,7 +8,7 @@ preset search spaces (``quick`` or ``full``) for Optuna studies.
 All bounds are read from a ``SearchSpaceOverrides`` Pydantic V2 model,
 so ranges can be fully customized via YAML through
 ``OptunaConfig.search_space_overrides`` without code changes. Defaults
-are tuned for medical-imaging classification and respect the type
+are tuned for image classification and respect the type
 constraints defined in ``core/config/types.py``.
 
 Key Functions:

@@ -22,7 +22,6 @@ from __future__ import annotations
 
 from typing import cast
 
-import torch
 import torch.nn as nn
 from torchvision import models
 
@@ -31,7 +30,6 @@ from ._morphing import morph_conv_weights
 
 # MODEL BUILDER
 def build_resnet18(
-    device: torch.device,
     num_classes: int,
     in_channels: int,
     *,
@@ -48,17 +46,15 @@ def build_resnet18(
         1. Load ImageNet pretrained ResNet-18 (if enabled)
         2. Apply resolution-specific stem adaptation
         3. Replace classification head with dataset-specific linear layer
-        4. Deploy model to target device
 
     Args:
-        device: Target hardware for model placement
         num_classes: Number of dataset classes
         in_channels: Input channels (1=Grayscale, 3=RGB)
         pretrained: Whether to load ImageNet pretrained weights
         resolution: Input image resolution (28, 32, 64, or 224)
 
     Returns:
-        Adapted ResNet-18 deployed to device
+        Adapted ResNet-18 (device placement handled by factory).
     """
     # --- Step 1: Initialize with Optional Pretraining ---
     weights = models.ResNet18_Weights.IMAGENET1K_V1 if pretrained else None
@@ -71,9 +67,6 @@ def build_resnet18(
 
     # --- Step 3: Replace Classification Head ---
     model.fc = nn.Linear(model.fc.in_features, num_classes)
-
-    # --- Step 4: Device Placement ---
-    model = model.to(device)
 
     return model  # type: ignore[no-any-return]
 

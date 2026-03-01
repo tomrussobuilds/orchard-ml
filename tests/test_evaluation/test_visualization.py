@@ -545,8 +545,8 @@ def test_plot_context_from_config_no_metadata():
 
     ctx = PlotContext.from_config(mock_cfg)
 
-    assert ctx.is_anatomical is False
-    assert ctx.is_texture_based is False
+    assert ctx.is_anatomical is True  # conservative default when metadata absent
+    assert ctx.is_texture_based is True  # conservative default when metadata absent
     assert ctx.use_tta is True
 
 

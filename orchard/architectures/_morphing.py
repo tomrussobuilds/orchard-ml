@@ -2,7 +2,7 @@
 Weight Morphing Utilities for Pretrained Model Adaptation.
 
 Provides shared helpers for adapting pretrained ImageNet weights when
-input channels differ (e.g., 1-channel medical images vs 3-channel RGB).
+input channels differ (e.g., 1-channel grayscale images vs 3-channel RGB).
 """
 
 from __future__ import annotations

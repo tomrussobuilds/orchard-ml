@@ -182,8 +182,7 @@ class OptunaOrchestrator:
         """
         if not has_completed_trials(study):
             logger.warning(
-                "No completed trials. Skipping visualizations, best config, "
-                "and detailed exports."
+                "No completed trials. Skipping visualizations, best config, and detailed exports."
             )
             export_study_summary(study, self.paths)
             return

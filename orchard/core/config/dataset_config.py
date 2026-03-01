@@ -82,6 +82,18 @@ class DatasetConfig(BaseModel):
         description="Use memory-mapped loading (lazy) instead of eager RAM loading",
     )
 
+    @field_validator("resolution")
+    @classmethod
+    def validate_resolution(cls, v: int) -> int:
+        """
+        Enforce resolution against supported registry values.
+        """
+        if v not in SUPPORTED_RESOLUTIONS:
+            raise ValueError(
+                f"resolution={v} is not supported. Choose from {sorted(SUPPORTED_RESOLUTIONS)}."
+            )
+        return v
+
     @field_validator("max_samples")
     @classmethod
     def validate_min_samples(cls, v: int | None) -> int | None:

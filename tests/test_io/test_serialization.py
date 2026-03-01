@@ -173,7 +173,6 @@ def test_save_config_as_yaml_io_error(tmp_path):
         patch("orchard.core.io.serialization._persist_yaml_atomic") as mock_persist,
         patch("orchard.core.io.serialization.logging.getLogger") as mock_logger,
     ):
-
         mock_persist.side_effect = OSError("Disk is full")
         mock_logger.return_value = MagicMock()
 

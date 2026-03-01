@@ -6,13 +6,13 @@ geometric and photometric noise used during training with TTA perturbations
 for calibrated model robustness.
 
 Key Features:
-    * Geometric invariance: Horizontal flips and rotation for medical scan
-      orientation generalization
+    * Geometric invariance: Horizontal flips and rotation for orientation
+      generalization
     * Photometric consistency: Color jitter and scaling for acquisition variations
     * TTA ensemble strategy: Pixel shifts, scaling, and Gaussian blur for
       stable predictions through stochastic averaging
     * Validation guards: Domain-specific types ensuring physically plausible
-      ranges for medical imaging
+      ranges for image classification
 """
 
 from __future__ import annotations

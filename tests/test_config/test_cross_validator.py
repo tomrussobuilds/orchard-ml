@@ -118,9 +118,10 @@ class TestCheckArchitectureResolution:
         assert cfg.dataset.resolution == 224
 
     def test_resnet_18_rejects_112(self):
+        """Unsupported resolution is now caught by DatasetConfig.validate_resolution."""
         with pytest.raises(
             ValidationError,
-            match=r"'resnet_18' supports resolutions \[28, 32, 64, 128, 224\]",
+            match=r"resolution=112 is not supported",
         ):
             Config(
                 dataset=DatasetConfig(name="bloodmnist", resolution=112),

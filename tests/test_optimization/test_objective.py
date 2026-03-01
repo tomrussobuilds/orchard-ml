@@ -509,7 +509,6 @@ def test_optuna_objective_call_with_pruning():
         patch("orchard.optimization.objective.objective.get_criterion"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
     ):
-
         with patch(
             "orchard.optimization.objective.objective.TrialTrainingExecutor"
         ) as mock_executor_cls:
@@ -558,7 +557,6 @@ def test_optuna_objective_call_cleanup_on_success():
         patch("orchard.optimization.objective.objective.get_criterion"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
     ):
-
         with patch(
             "orchard.optimization.objective.objective.TrialTrainingExecutor"
         ) as mock_executor_cls:
@@ -610,7 +608,6 @@ def test_optuna_objective_call_returns_worst_metric_on_failure():
         patch("orchard.optimization.objective.objective.get_criterion"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
     ):
-
         with patch(
             "orchard.optimization.objective.objective.TrialTrainingExecutor"
         ) as mock_executor_cls:
@@ -662,7 +659,6 @@ def test_optuna_objective_call_returns_inf_on_failure_minimize():
         patch("orchard.optimization.objective.objective.get_criterion"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
     ):
-
         with patch(
             "orchard.optimization.objective.objective.TrialTrainingExecutor"
         ) as mock_executor_cls:
@@ -763,7 +759,6 @@ def test_optuna_objective_call_reraises_trial_pruned():
         patch("orchard.optimization.objective.objective.get_criterion"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
     ):
-
         with patch(
             "orchard.optimization.objective.objective.TrialTrainingExecutor"
         ) as mock_executor_cls:
@@ -817,7 +812,6 @@ def test_optuna_objective_call_builds_trial_config():
         patch("orchard.optimization.objective.objective.get_criterion"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
     ):
-
         with patch(
             "orchard.optimization.objective.objective.TrialTrainingExecutor"
         ) as mock_executor_cls:

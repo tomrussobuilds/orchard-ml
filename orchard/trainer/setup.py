@@ -106,7 +106,7 @@ def get_optimizer(model: nn.Module, training: TrainingConfig) -> optim.Optimizer
 
     else:
         raise ValueError(
-            f"Unknown optimizer type: '{opt_type}'. " "Available options: ['sgd', 'adamw']"
+            f"Unknown optimizer type: '{opt_type}'. Available options: ['sgd', 'adamw']"
         )
 
 

@@ -15,7 +15,6 @@ Key Features:
 
 from __future__ import annotations
 
-import torch
 import torch.nn as nn
 from torchvision import models
 
@@ -24,7 +23,6 @@ from ._morphing import morph_conv_weights
 
 # MODEL BUILDER
 def build_convnext_tiny(
-    device: torch.device,
     num_classes: int,
     in_channels: int,
     *,
@@ -38,16 +36,14 @@ def build_convnext_tiny(
         2. Modify first conv layer to accept custom input channels
         3. Apply weight morphing for channel compression (if grayscale)
         4. Replace classification head with dataset-specific linear layer
-        5. Deploy model to target device (CUDA/MPS/CPU)
 
     Args:
-        device: Target hardware for model placement
         num_classes: Number of dataset classes for classification head
         in_channels: Input channels (1=Grayscale, 3=RGB)
         pretrained: Whether to load ImageNet pretrained weights
 
     Returns:
-        Adapted ConvNeXt-Tiny model deployed to device
+        Adapted ConvNeXt-Tiny model (device placement handled by factory).
     """
     # --- Step 1: Initialize with Optional Pretraining ---
     weights = models.ConvNeXt_Tiny_Weights.IMAGENET1K_V1 if pretrained else None
@@ -78,8 +74,5 @@ def build_convnext_tiny(
     # Replace ImageNet 1000-class head with dataset-specific projection
     # model.classifier[2] is Linear(768, 1000)
     model.classifier[2] = nn.Linear(model.classifier[2].in_features, num_classes)
-
-    # --- Step 5: Device Placement ---
-    model = model.to(device)
 
     return model  # type: ignore[no-any-return]

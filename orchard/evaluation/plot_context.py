@@ -28,8 +28,8 @@ class PlotContext:
     mean: tuple[float, ...] | None = None
     std: tuple[float, ...] | None = None
     use_tta: bool = False
-    is_anatomical: bool = False
-    is_texture_based: bool = False
+    is_anatomical: bool = True
+    is_texture_based: bool = True
 
     @classmethod
     def from_config(cls, cfg: Config) -> PlotContext:
@@ -49,6 +49,6 @@ class PlotContext:
             mean=cfg.dataset.mean,
             std=cfg.dataset.std,
             use_tta=cfg.training.use_tta,
-            is_anatomical=meta.is_anatomical if meta else False,
-            is_texture_based=meta.is_texture_based if meta else False,
+            is_anatomical=meta.is_anatomical if meta else True,
+            is_texture_based=meta.is_texture_based if meta else True,
         )

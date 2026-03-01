@@ -27,7 +27,7 @@ from ..environment import (
     ensure_single_instance,
     release_single_instance,
 )
-from ..paths.constants import LogStyle
+from ..paths.constants import LOGGER_NAME, LogStyle
 
 
 # PROTOCOLS
@@ -110,7 +110,7 @@ class InfrastructureManager(BaseModel):
                 hardware.lock_file_path attributes.
             logger: Logger for status messages. Defaults to 'Infrastructure'.
         """
-        log = logger or logging.getLogger("Infrastructure")
+        log = logger or logging.getLogger(LOGGER_NAME)
 
         # Process sanitization
         if cfg.hardware.allow_process_kill:
@@ -160,7 +160,7 @@ class InfrastructureManager(BaseModel):
             Lock release failures are logged as warnings but do not raise,
             ensuring experiment completion even with cleanup issues.
         """
-        log = logger or logging.getLogger("Infrastructure")
+        log = logger or logging.getLogger(LOGGER_NAME)
 
         # Release lock
         try:
@@ -179,7 +179,7 @@ class InfrastructureManager(BaseModel):
         Args:
             log: Logger for debug output (defaults to 'Infrastructure' logger).
         """
-        log = log or logging.getLogger("Infrastructure")
+        log = log or logging.getLogger(LOGGER_NAME)
 
         # Full session teardown (see also OptunaObjective._cleanup for per-trial flush)
         if torch.cuda.is_available():

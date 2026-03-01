@@ -37,7 +37,6 @@ class TestResNet18Low:
     def test_output_shape_28(self, device, in_channels, num_classes, batch_size):
         """Verify output shape matches expected dimensions for 28x28 inputs."""
         model = build_resnet18(
-            device,
             num_classes=num_classes,
             in_channels=in_channels,
             pretrained=False,
@@ -54,9 +53,7 @@ class TestResNet18Low:
 
     def test_conv1_modified_to_3x3(self, device):
         """Verify conv1 layer is modified to 3x3 with stride 1."""
-        model = build_resnet18(
-            device, num_classes=10, in_channels=3, pretrained=False, resolution=28
-        )
+        model = build_resnet18(num_classes=10, in_channels=3, pretrained=False, resolution=28)
 
         assert model.conv1.kernel_size == (3, 3)
         assert model.conv1.stride == (1, 1)
@@ -64,17 +61,13 @@ class TestResNet18Low:
 
     def test_maxpool_removed(self, device):
         """Verify maxpool is replaced with Identity layer."""
-        model = build_resnet18(
-            device, num_classes=10, in_channels=3, pretrained=False, resolution=28
-        )
+        model = build_resnet18(num_classes=10, in_channels=3, pretrained=False, resolution=28)
 
         assert isinstance(model.maxpool, torch.nn.Identity)
 
     def test_grayscale_input_28(self, device):
         """Verify grayscale input channel adaptation."""
-        model = build_resnet18(
-            device, num_classes=10, in_channels=1, pretrained=False, resolution=28
-        )
+        model = build_resnet18(num_classes=10, in_channels=1, pretrained=False, resolution=28)
 
         assert model.conv1.in_channels == 1
         assert model.conv1.out_channels == 64
@@ -91,19 +84,16 @@ class TestResNet18Low:
             mock_model.fc = MagicMock()
             mock_model.fc.in_features = 512
             mock_model.maxpool = MagicMock()
-            mock_model.to = MagicMock(return_value=mock_model)
             mock_models.resnet18.return_value = mock_model
             mock_models.ResNet18_Weights.IMAGENET1K_V1 = "mock_weights"
 
-            _ = build_resnet18(device, num_classes=5, in_channels=1, pretrained=True, resolution=28)
+            _ = build_resnet18(num_classes=5, in_channels=1, pretrained=True, resolution=28)
 
             mock_models.resnet18.assert_called_once_with(weights="mock_weights")
 
     def test_spatial_preservation_28(self, device):
         """Verify spatial dimensions are preserved for 28x28 inputs."""
-        model = build_resnet18(
-            device, num_classes=10, in_channels=3, pretrained=False, resolution=28
-        )
+        model = build_resnet18(num_classes=10, in_channels=3, pretrained=False, resolution=28)
         model.eval()
 
         dummy_input = torch.randn(1, 3, 28, 28)
@@ -139,7 +129,6 @@ class TestResNet18At32:
     def test_output_shape_32(self, device, in_channels, num_classes, batch_size):
         """Verify output shape matches expected dimensions for 32x32 inputs."""
         model = build_resnet18(
-            device,
             num_classes=num_classes,
             in_channels=in_channels,
             pretrained=False,
@@ -156,9 +145,7 @@ class TestResNet18At32:
 
     def test_adapted_stem_at_32(self, device):
         """Verify 32x32 uses adapted 3x3 conv1 with stride 1 (same as 28x28)."""
-        model = build_resnet18(
-            device, num_classes=10, in_channels=3, pretrained=False, resolution=32
-        )
+        model = build_resnet18(num_classes=10, in_channels=3, pretrained=False, resolution=32)
 
         assert model.conv1.kernel_size == (3, 3)
         assert model.conv1.stride == (1, 1)
@@ -166,17 +153,13 @@ class TestResNet18At32:
 
     def test_maxpool_removed_at_32(self, device):
         """Verify maxpool is replaced with Identity at 32x32."""
-        model = build_resnet18(
-            device, num_classes=10, in_channels=3, pretrained=False, resolution=32
-        )
+        model = build_resnet18(num_classes=10, in_channels=3, pretrained=False, resolution=32)
 
         assert isinstance(model.maxpool, torch.nn.Identity)
 
     def test_spatial_preservation_32(self, device):
         """Verify spatial dimensions are preserved for 32x32 inputs after conv1."""
-        model = build_resnet18(
-            device, num_classes=10, in_channels=3, pretrained=False, resolution=32
-        )
+        model = build_resnet18(num_classes=10, in_channels=3, pretrained=False, resolution=32)
         model.eval()
 
         dummy_input = torch.randn(1, 3, 32, 32)
@@ -212,7 +195,6 @@ class TestResNet18Mid:
     def test_output_shape_64(self, device, in_channels, num_classes, batch_size):
         """Verify output shape matches expected dimensions for 64x64 inputs."""
         model = build_resnet18(
-            device,
             num_classes=num_classes,
             in_channels=in_channels,
             pretrained=False,
@@ -229,9 +211,7 @@ class TestResNet18Mid:
 
     def test_standard_stem_at_64(self, device):
         """Verify 64x64 uses standard 7x7 conv1 with stride 2 (same as 224)."""
-        model = build_resnet18(
-            device, num_classes=10, in_channels=3, pretrained=False, resolution=64
-        )
+        model = build_resnet18(num_classes=10, in_channels=3, pretrained=False, resolution=64)
 
         assert model.conv1.kernel_size == (7, 7)
         assert model.conv1.stride == (2, 2)
@@ -239,9 +219,7 @@ class TestResNet18Mid:
 
     def test_grayscale_input_64(self, device):
         """Verify grayscale channel adaptation at 64x64."""
-        model = build_resnet18(
-            device, num_classes=10, in_channels=1, pretrained=False, resolution=64
-        )
+        model = build_resnet18(num_classes=10, in_channels=1, pretrained=False, resolution=64)
 
         assert model.conv1.kernel_size == (7, 7)
         assert model.conv1.in_channels == 1
@@ -263,7 +241,6 @@ class TestResNet18High:
     def test_output_shape_224(self, device, in_channels, num_classes, batch_size):
         """Verify output shape matches expected dimensions for 224x224 inputs."""
         model = build_resnet18(
-            device,
             num_classes=num_classes,
             in_channels=in_channels,
             pretrained=False,
@@ -280,9 +257,7 @@ class TestResNet18High:
 
     def test_standard_stem_preserved(self, device):
         """Verify 224x224 uses standard 7x7 conv1 with stride 2."""
-        model = build_resnet18(
-            device, num_classes=10, in_channels=3, pretrained=False, resolution=224
-        )
+        model = build_resnet18(num_classes=10, in_channels=3, pretrained=False, resolution=224)
 
         assert model.conv1.kernel_size == (7, 7)
         assert model.conv1.stride == (2, 2)
@@ -290,9 +265,7 @@ class TestResNet18High:
 
     def test_grayscale_channel_compression_224(self, device):
         """Verify 224x224 grayscale only modifies channels, not kernel."""
-        model = build_resnet18(
-            device, num_classes=10, in_channels=1, pretrained=False, resolution=224
-        )
+        model = build_resnet18(num_classes=10, in_channels=1, pretrained=False, resolution=224)
 
         assert model.conv1.kernel_size == (7, 7)
         assert model.conv1.stride == (2, 2)
@@ -310,13 +283,10 @@ class TestResNet18High:
             mock_model.fc = MagicMock()
             mock_model.fc.in_features = 512
             mock_model.maxpool = MagicMock()
-            mock_model.to = MagicMock(return_value=mock_model)
             mock_models.resnet18.return_value = mock_model
             mock_models.ResNet18_Weights.IMAGENET1K_V1 = "mock_weights"
 
-            _ = build_resnet18(
-                device, num_classes=5, in_channels=1, pretrained=True, resolution=224
-            )
+            _ = build_resnet18(num_classes=5, in_channels=1, pretrained=True, resolution=224)
 
             mock_models.resnet18.assert_called_once_with(weights="mock_weights")
 
@@ -330,7 +300,7 @@ class TestResNet18Shared:
         """Verify classification head is replaced with correct output size."""
         num_classes = 7
         model = build_resnet18(
-            device, num_classes=num_classes, in_channels=3, pretrained=False, resolution=28
+            num_classes=num_classes, in_channels=3, pretrained=False, resolution=28
         )
 
         assert model.fc.out_features == num_classes
@@ -338,18 +308,14 @@ class TestResNet18Shared:
     def test_device_placement(self):
         """Verify model is placed on correct device."""
         device = torch.device("cpu")
-        model = build_resnet18(
-            device, num_classes=10, in_channels=3, pretrained=False, resolution=28
-        )
+        model = build_resnet18(num_classes=10, in_channels=3, pretrained=False, resolution=28)
 
         for param in model.parameters():
             assert param.device.type == "cpu"
 
     def test_rgb_input(self, device):
         """Verify RGB input channel configuration."""
-        model = build_resnet18(
-            device, num_classes=10, in_channels=3, pretrained=False, resolution=28
-        )
+        model = build_resnet18(num_classes=10, in_channels=3, pretrained=False, resolution=28)
 
         assert model.conv1.in_channels == 3
         assert model.conv1.out_channels == 64

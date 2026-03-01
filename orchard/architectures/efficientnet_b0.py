@@ -1,7 +1,7 @@
 """
-EfficientNet-B0 Architecture for 224x224 Medical Imaging.
+EfficientNet-B0 Architecture for 224x224 Image Classification.
 
-Adapts EfficientNet-B0 (compound scaling architecture) for medical image
+Adapts EfficientNet-B0 (compound scaling architecture) for image
 classification with transfer learning support. Handles both RGB and grayscale
 inputs through dynamic first-layer adaptation.
 
@@ -15,7 +15,6 @@ Key Features:
 
 from __future__ import annotations
 
-import torch
 import torch.nn as nn
 from torchvision import models
 
@@ -24,30 +23,27 @@ from ._morphing import morph_conv_weights
 
 # MODEL BUILDER
 def build_efficientnet_b0(
-    device: torch.device,
     num_classes: int,
     in_channels: int,
     *,
     pretrained: bool,
 ) -> nn.Module:
     """
-    Constructs EfficientNet-B0 adapted for medical imaging datasets.
+    Constructs EfficientNet-B0 adapted for image classification datasets.
 
     Workflow:
         1. Load pretrained weights from ImageNet (if enabled)
         2. Modify first conv layer to accept custom input channels
         3. Apply weight morphing for channel compression (if grayscale)
         4. Replace classification head with dataset-specific linear layer
-        5. Deploy model to target device (CUDA/MPS/CPU)
 
     Args:
-        device: Target hardware for model placement
         num_classes: Number of dataset classes for classification head
         in_channels: Input channels (1=Grayscale, 3=RGB)
         pretrained: Whether to load ImageNet pretrained weights
 
     Returns:
-        Adapted EfficientNet-B0 model deployed to device
+        Adapted EfficientNet-B0 model (device placement handled by factory).
     """
     # --- Step 1: Initialize with Optional Pretraining ---
     weights = models.EfficientNet_B0_Weights.IMAGENET1K_V1 if pretrained else None
@@ -77,8 +73,5 @@ def build_efficientnet_b0(
     # --- Step 4: Modify Classification Head ---
     # Replace ImageNet 1000-class head with dataset-specific projection
     model.classifier[1] = nn.Linear(model.classifier[1].in_features, num_classes)  # 1280 features
-
-    # --- Step 5: Device Placement ---
-    model = model.to(device)
 
     return model  # type: ignore[no-any-return]

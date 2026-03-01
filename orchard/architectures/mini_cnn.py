@@ -1,5 +1,5 @@
 """
-Lightweight CNN for 28×28 Low-Resolution Medical Imaging.
+Lightweight CNN for 28×28 Low-Resolution Image Classification.
 
 Custom compact architecture designed specifically for small-scale datasets
 like 28×28 low-resolution datasets. Provides a fast baseline alternative to adapted ResNet-18
@@ -78,24 +78,20 @@ class MiniCNN(nn.Module):
 
 
 def build_mini_cnn(
-    device: torch.device,
     num_classes: int,
     in_channels: int,
     *,
     dropout: float,
 ) -> nn.Module:
     """
-    Constructs MiniCNN for low-resolution medical imaging.
+    Constructs MiniCNN for low-resolution image classification.
 
     Args:
-        device: Target hardware for model placement
         num_classes: Number of dataset classes
         in_channels: Input channels (1=Grayscale, 3=RGB)
         dropout: Dropout probability before final FC layer
 
     Returns:
-        MiniCNN model deployed to device
+        MiniCNN model (device placement handled by factory).
     """
-    model = MiniCNN(in_channels=in_channels, num_classes=num_classes, dropout=dropout)
-
-    return model.to(device)
+    return MiniCNN(in_channels=in_channels, num_classes=num_classes, dropout=dropout)

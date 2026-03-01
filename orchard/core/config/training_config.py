@@ -8,7 +8,7 @@ precision policies (AMP).
 
 Key Features:
     * Optimization dynamics: LR schedules and momentum for loss landscape navigation
-    * Regularization suite: Label smoothing and Mixup for medical imaging generalization
+    * Regularization suite: Label smoothing and Mixup for generalization
     * Precision & stability: AMP and gradient clipping for hardware throughput and stability
     * Reproducibility: Global seeding for experiment replication (determinism in HardwareConfig)
 

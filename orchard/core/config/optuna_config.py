@@ -81,7 +81,7 @@ class SearchSpaceOverrides(BaseModel):
     """
     Configurable bounds for Optuna hyperparameter search ranges.
 
-    Provides domain-expert defaults for medical imaging while allowing
+    Provides sensible defaults for image classification while allowing
     full customization via YAML. Each field maps 1:1 to a parameter
     sampled by SearchSpaceRegistry.
 

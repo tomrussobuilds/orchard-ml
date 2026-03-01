@@ -203,8 +203,7 @@ def quantize_model(
         from onnxruntime.quantization import QuantType, quantize_dynamic
     except ImportError:
         logger.warning(
-            f"    {LogStyle.WARNING} onnxruntime.quantization not available. "
-            "Skipping quantization."
+            f"    {LogStyle.WARNING} onnxruntime.quantization not available. Skipping quantization."
         )
         return None
 

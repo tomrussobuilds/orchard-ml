@@ -109,10 +109,13 @@ def get_model(
     try:
         with _suppress_download_noise():
             model = _dispatch_builder(
-                model_name_lower, device, num_classes, in_channels, arch_cfg, dataset_cfg.resolution
+                model_name_lower, num_classes, in_channels, arch_cfg, dataset_cfg.resolution
             )
     finally:
         logger.setLevel(_prev_level)
+
+    # Centralised device placement (builders stay device-agnostic)
+    model = model.to(device)
 
     # Parameter telemetry
     if verbose:
@@ -154,7 +157,6 @@ def _suppress_download_noise() -> Iterator[None]:
 
 def _dispatch_builder(
     model_name_lower: str,
-    device: torch.device,
     num_classes: int,
     in_channels: int,
     arch_cfg: ArchitectureConfig,
@@ -165,18 +167,17 @@ def _dispatch_builder(
 
     Resolves ``model_name_lower`` against the ``_MODEL_REGISTRY`` (or the
     ``timm/`` prefix convention) and forwards only the parameters each
-    builder actually needs.
+    builder actually needs. Device placement is handled by ``get_model``.
 
     Args:
         model_name_lower: Lowercased architecture identifier.
-        device: Hardware accelerator target.
         num_classes: Number of output classes.
         in_channels: Number of input image channels.
         arch_cfg: Architecture sub-config with model-specific options.
         resolution: Input spatial resolution (e.g. 28, 64, 224).
 
     Returns:
-        Instantiated model placed on *device*.
+        Instantiated model on CPU.
 
     Raises:
         ValueError: If the architecture is not found in the registry.
@@ -187,7 +188,6 @@ def _dispatch_builder(
     # trade-off favours readability; for 20+ a BuildContext ABC would pay off.
     if model_name_lower.startswith("timm/"):
         return build_timm_model(
-            device,
             num_classes=num_classes,
             in_channels=in_channels,
             arch_cfg=arch_cfg,
@@ -201,14 +201,12 @@ def _dispatch_builder(
 
     if builder is build_mini_cnn:
         return build_mini_cnn(
-            device,
             num_classes=num_classes,
             in_channels=in_channels,
             dropout=arch_cfg.dropout,
         )
     if builder is build_resnet18:
         return build_resnet18(
-            device,
             num_classes=num_classes,
             in_channels=in_channels,
             pretrained=arch_cfg.pretrained,
@@ -216,7 +214,6 @@ def _dispatch_builder(
         )
     if builder is build_vit_tiny:
         return build_vit_tiny(
-            device,
             num_classes=num_classes,
             in_channels=in_channels,
             pretrained=arch_cfg.pretrained,
@@ -224,7 +221,6 @@ def _dispatch_builder(
         )
     # efficientnet_b0, convnext_tiny: pretrained only
     return builder(
-        device,
         num_classes=num_classes,
         in_channels=in_channels,
         pretrained=arch_cfg.pretrained,

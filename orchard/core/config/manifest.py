@@ -25,7 +25,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..io import load_config_from_yaml
 from ..metadata.wrapper import DatasetRegistryWrapper
-from ..paths import PROJECT_ROOT, SUPPORTED_RESOLUTIONS
+from ..paths import PROJECT_ROOT
 from .architecture_config import ArchitectureConfig
 from .augmentation_config import AugmentationConfig
 from .dataset_config import DatasetConfig
@@ -40,9 +40,8 @@ from .training_config import TrainingConfig
 # Architecture resolution constraints (add new architectures here)
 _MODELS_LOW_RES = frozenset({"mini_cnn"})
 _MODELS_224_ONLY = frozenset({"efficientnet_b0", "vit_tiny", "convnext_tiny"})
-_MODELS_MULTI_RES = frozenset({"resnet_18"})
 
-# Resolution constraints derived from SUPPORTED_RESOLUTIONS
+# Resolution constraints
 _RESOLUTIONS_LOW_RES: Final[frozenset[int]] = frozenset({28, 32, 64})
 _RESOLUTIONS_224_ONLY: Final[frozenset[int]] = frozenset({224})
 
@@ -300,12 +299,6 @@ class _CrossDomainValidator:
             raise ValueError(
                 f"'{config.architecture.name}' requires resolution=224, got {resolution}. "
                 f"Use resnet_18 or mini_cnn for low resolution."
-            )
-
-        if model_name in _MODELS_MULTI_RES and resolution not in SUPPORTED_RESOLUTIONS:
-            raise ValueError(
-                f"'{config.architecture.name}' supports resolutions "
-                f"{sorted(SUPPORTED_RESOLUTIONS)}, got {resolution}."
             )
 
     @classmethod

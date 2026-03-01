@@ -129,10 +129,10 @@ def test_resnet_18_accepts_32():
 
 @pytest.mark.unit
 def test_resnet_18_rejects_invalid_resolution():
-    """resnet_18 only supports SUPPORTED_RESOLUTIONS, not arbitrary resolutions."""
+    """Unsupported resolution is caught by DatasetConfig.validate_resolution."""
     with pytest.raises(
         ValidationError,
-        match=r"'resnet_18' supports resolutions \[28, 32, 64, 128, 224\]",
+        match=r"resolution=112 is not supported",
     ):
         Config(
             dataset=DatasetConfig(name="bloodmnist", resolution=112),

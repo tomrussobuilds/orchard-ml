@@ -18,14 +18,12 @@ The ``timm/`` prefix is stripped by the factory before reaching this builder.
 from __future__ import annotations
 
 import timm
-import torch
 import torch.nn as nn
 
 from ..core.config import ArchitectureConfig
 
 
 def build_timm_model(
-    device: torch.device,
     num_classes: int,
     in_channels: int,
     *,
@@ -42,13 +40,12 @@ def build_timm_model(
     - Dropout rate injection (drop_rate)
 
     Args:
-        device: Target hardware for model placement.
         num_classes: Number of output classes for the classification head.
         in_channels: Number of input channels (1=grayscale, 3=RGB).
         arch_cfg: Architecture sub-config with name, pretrained, dropout.
 
     Returns:
-        Adapted timm model deployed to device.
+        Adapted timm model (device placement handled by factory).
 
     Raises:
         ValueError: If the timm model identifier is not found in the registry.
@@ -70,4 +67,4 @@ def build_timm_model(
             f"Original error: {e}"
         ) from e
 
-    return model.to(device)
+    return model

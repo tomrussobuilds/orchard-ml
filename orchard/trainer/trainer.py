@@ -267,9 +267,7 @@ class ModelTrainer:
 
         logger.info(LogStyle.LIGHT)  # pragma: no mutant
         logger.info(  # pragma: no mutant
-            f"{I}Epoch {epoch} {B} "
-            f"Val {label}: {monitor_value:.4f} "
-            f"(Best: {self.best_metric:.4f})"
+            f"{I}Epoch {epoch} {B} Val {label}: {monitor_value:.4f} (Best: {self.best_metric:.4f})"
         )
         logger.info(f"{I}{A} Loss  : T {train_loss:.4f} / V {val_loss:.4f}")  # pragma: no mutant
         logger.info(  # pragma: no mutant

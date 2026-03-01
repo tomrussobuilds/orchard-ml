@@ -74,8 +74,7 @@ def log_optimization_header(cfg: "Config", logger_instance: logging.Logger | Non
     )
     if cfg.optuna.model_pool is not None:
         log.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} Model Pool   : "
-            f"{', '.join(cfg.optuna.model_pool)}"
+            f"{LogStyle.INDENT}{LogStyle.ARROW} Model Pool   : {', '.join(cfg.optuna.model_pool)}"
         )
     log.info(  # pragma: no mutant
         f"{LogStyle.INDENT}{LogStyle.ARROW} Search Space : {cfg.optuna.search_space_preset}"

@@ -31,7 +31,7 @@ class TrainingReport(BaseModel):
 
     This model serves as a Schema for the final experimental metadata. It stores
     hardware, hyperparameter, and performance states to ensure full reproducibility
-    and traceability of the medical imaging pipeline.
+    and traceability of the training pipeline.
 
     Attributes:
         timestamp (str): ISO formatted execution time.
