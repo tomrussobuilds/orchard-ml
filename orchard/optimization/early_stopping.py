@@ -119,7 +119,7 @@ class StudyEarlyStoppingCallback:
 
         # Threshold met
         self._count += 1
-        logger.info(
+        logger.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.SUCCESS} "
             f"Trial {trial.number} reached threshold "
             f"({value:.6f} "
@@ -143,12 +143,20 @@ class StudyEarlyStoppingCallback:
         Reporter.log_phase_header(
             logger, "EARLY STOPPING: Target performance achieved!", LogStyle.DOUBLE
         )
-        logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Metric           : {value:.6f}")
-        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Threshold        : {self.threshold:.6f}")
-        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Trials completed : {trial.number + 1}")
-        logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Trials saved     : {trials_saved}")
-        logger.info(LogStyle.DOUBLE)
-        logger.info("")
+        logger.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.SUCCESS} Metric           : {value:.6f}"
+        )
+        logger.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.ARROW} Threshold        : {self.threshold:.6f}"
+        )
+        logger.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.ARROW} Trials completed : {trial.number + 1}"
+        )
+        logger.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.SUCCESS} Trials saved     : {trials_saved}"
+        )
+        logger.info(LogStyle.DOUBLE)  # pragma: no mutant
+        logger.info("")  # pragma: no mutant
 
         study.stop()
 

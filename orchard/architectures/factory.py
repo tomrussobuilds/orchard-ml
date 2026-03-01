@@ -93,7 +93,7 @@ def get_model(
     model_name_lower = arch_cfg.name.lower()
 
     if verbose:
-        logger.info(
+        logger.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Architecture':<18}: "
             f"{arch_cfg.name} | "
             f"Input: {dataset_cfg.img_size}x{dataset_cfg.img_size}x{in_channels} | "
@@ -117,11 +117,11 @@ def get_model(
     # Parameter telemetry
     if verbose:
         total_params = sum(p.numel() for p in model.parameters())
-        logger.info(
+        logger.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Deployed':<18}: "
             f"{str(device).upper()} | Parameters: {total_params:,}"
         )
-        logger.info("")
+        logger.info("")  # pragma: no mutant
 
     return model
 

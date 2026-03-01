@@ -22,6 +22,7 @@ from orchard.core.paths import (
     get_project_root,
     setup_static_directories,
 )
+from tests.conftest import mutmut_safe_env
 
 
 # CONSTANTS: LOGGER NAME
@@ -52,7 +53,7 @@ def test_get_project_root_docker_env():
 @pytest.mark.unit
 def test_get_project_root_not_docker():
     """Test get_project_root() uses marker detection when not in Docker."""
-    with patch.dict(os.environ, {"IN_DOCKER": "0"}, clear=True):
+    with patch.dict(os.environ, mutmut_safe_env(IN_DOCKER="0"), clear=True):
         root = get_project_root()
         assert isinstance(root, Path)
         assert root.is_absolute()
@@ -68,7 +69,7 @@ def test_get_project_root_finds_git_marker(tmp_path):
 
     (project_root / ".git").mkdir()
 
-    with patch.dict(os.environ, {"IN_DOCKER": "0"}, clear=True):
+    with patch.dict(os.environ, mutmut_safe_env(IN_DOCKER="0"), clear=True):
         with patch("orchard.core.paths.root.Path") as mock_path:
             mock_path.return_value.resolve.return_value.parent = nested_dir
             mock_path.return_value.resolve.return_value.parents = [
@@ -88,7 +89,7 @@ def test_get_project_root_finds_requirements_marker(tmp_path):
 
     (project_root / "requirements.txt").touch()
 
-    with patch.dict(os.environ, {"IN_DOCKER": "0"}, clear=True):
+    with patch.dict(os.environ, mutmut_safe_env(IN_DOCKER="0"), clear=True):
         assert (project_root / "requirements.txt").exists()
 
 
@@ -101,7 +102,7 @@ def test_get_project_root_finds_readme_marker(tmp_path):
 
     (project_root / "README.md").touch()
 
-    with patch.dict(os.environ, {"IN_DOCKER": "0"}, clear=True):
+    with patch.dict(os.environ, mutmut_safe_env(IN_DOCKER="0"), clear=True):
         assert (project_root / "README.md").exists()
 
 
@@ -112,7 +113,7 @@ def test_get_project_root_fallback_sufficient_parents(tmp_path):
     deep_path = tmp_path / "a" / "b" / "c" / "d"
     deep_path.mkdir(parents=True)
 
-    with patch.dict(os.environ, {"IN_DOCKER": "0"}, clear=True):
+    with patch.dict(os.environ, mutmut_safe_env(IN_DOCKER="0"), clear=True):
         with patch("orchard.core.paths.root.Path") as mock_path:
             mock_instance = mock_path.return_value.resolve.return_value
             mock_instance.parent = deep_path
@@ -129,7 +130,7 @@ def test_get_project_root_fallback_no_markers(tmp_path):
     fake_file = deep_path / "constants.py"
     fake_file.touch()
 
-    with patch.dict(os.environ, {}, clear=True):
+    with patch.dict(os.environ, mutmut_safe_env(), clear=True):
         with patch("orchard.core.paths.root.__file__", str(fake_file)):
             root = get_project_root()
 

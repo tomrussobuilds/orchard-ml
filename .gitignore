@@ -295,5 +295,10 @@ target/.git-backup/
 target/
 .git-backup
 
+# Mutation testing (mutmut v3)
+/mutants/
+.mutmut-results/
+.mutmut-stats
+
 # Personal notes (non-tracked)
 /notes.txt

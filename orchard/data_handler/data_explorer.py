@@ -69,33 +69,35 @@ def show_sample_images(
     images = torch.clamp(images, 0, 1)
 
     # Create a grid
-    grid = make_grid(images, nrow=int(actual_samples**0.5), padding=2)
+    grid = make_grid(images, nrow=int(actual_samples**0.5), padding=2)  # pragma: no mutant
 
     # Convert to numpy HWC for matplotlib
-    plt.imshow(
+    plt.imshow(  # pragma: no mutant
         (
             grid.squeeze(0).cpu().numpy()
             if images.shape[1] == 1
             else grid.permute(1, 2, 0).cpu().numpy()
         ),
-        cmap="gray" if images.shape[1] == 1 else None,
+        cmap="gray" if images.shape[1] == 1 else None,  # pragma: no mutant
     )
 
     # Figure title
-    title_str = f"{arch_name} — {actual_samples} Samples"
+    title_str = f"{arch_name} — {actual_samples} Samples"  # pragma: no mutant
     if title_prefix:
-        title_str = f"{title_prefix} — {title_str}"
-    plt.title(title_str, fontsize=14)
+        title_str = f"{title_prefix} — {title_str}"  # pragma: no mutant
+    plt.title(title_str, fontsize=14)  # pragma: no mutant
 
-    plt.axis("off")
-    plt.tight_layout()
+    plt.axis("off")  # pragma: no mutant
+    plt.tight_layout()  # pragma: no mutant
 
     # Ensure target directory exists
     save_path.parent.mkdir(parents=True, exist_ok=True)
 
-    plt.savefig(save_path, dpi=fig_dpi, bbox_inches="tight")
-    plt.close()
-    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Sample Grid':<18}: {save_path.name}")
+    plt.savefig(save_path, dpi=fig_dpi, bbox_inches="tight")  # pragma: no mutant
+    plt.close()  # pragma: no mutant
+    logger.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Sample Grid':<18}: {save_path.name}"
+    )
 
 
 def show_samples_for_dataset(

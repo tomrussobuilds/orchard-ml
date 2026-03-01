@@ -71,10 +71,14 @@ def build_vit_tiny(
     _weight_variant = weight_variant or "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
 
     if pretrained:
-        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Weights':<18}: {_weight_variant}")
+        logger.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Weights':<18}: {_weight_variant}"
+        )
         pretrained_flag = True
     else:
-        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Weights':<18}: random init")
+        logger.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Weights':<18}: random init"
+        )
         pretrained_flag = False
         _weight_variant = "vit_tiny_patch16_224"  # Use base architecture
 
@@ -92,7 +96,9 @@ def build_vit_tiny(
 
     # --- Step 3: Adapt Patch Embedding Layer ---
     if in_channels != 3:
-        logger.info(f"Adapting patch embedding from 3 to {in_channels} channels")
+        logger.info(  # pragma: no mutant
+            f"Adapting patch embedding from 3 to {in_channels} channels"
+        )
 
         # type-narrow patch_embed.proj to Conv2d for mypy
         # Note: timm VisionTransformer.patch_embed has dynamic type, ignore for type checking

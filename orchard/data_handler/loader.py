@@ -151,7 +151,7 @@ class DataLoaderFactory:
             [weight_map[int(label)] for label in labels], dtype=torch.float
         )
 
-        self.logger.info(
+        self.logger.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Balancing':<18}: WeightedRandomSampler generated"
         )
         return WeightedRandomSampler(
@@ -183,7 +183,7 @@ class DataLoaderFactory:
             )
             num_workers = min(num_workers, cap)
 
-            self.logger.info(
+            self.logger.info(  # pragma: no mutant
                 f"{LogStyle.INDENT}{LogStyle.ARROW} {'Optuna Workers':<18}: "
                 f"{num_workers} (Resolution={self.dataset_cfg.resolution})"
             )
@@ -262,7 +262,7 @@ class DataLoaderFactory:
 
         mode_str = "RGB" if self.ds_meta.in_channels == 3 else "Grayscale"
         optuna_str = " (Optuna)" if is_optuna else ""
-        self.logger.info(
+        self.logger.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'DataLoaders':<18}: "
             f"({mode_str}){optuna_str} → "
             f"Train:[{len(train_ds)}] Val:[{len(val_ds)}] Test:[{len(test_ds)}]"

@@ -180,7 +180,9 @@ class ModelTrainer:
             ),
         )
 
-        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Checkpoint':<18}: {self.best_path.name}")
+        logger.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Checkpoint':<18}: {self.best_path.name}"
+        )
 
     def train(self) -> tuple[Path, list[float], list[dict]]:
         """
@@ -208,7 +210,7 @@ class ModelTrainer:
         - Early stopping triggers if no monitor_metric improvement for `patience` epochs
         """
         for epoch in range(1, self.epochs + 1):
-            logger.info(f" Epoch {epoch:02d}/{self.epochs} ".center(60, "-"))
+            logger.info(f" Epoch {epoch:02d}/{self.epochs} ".center(60, "-"))  # pragma: no mutant
 
             # --- 1. Train → Validate → Schedule (delegated to _loop) ---
             epoch_loss, val_metrics = self._loop.run_epoch(epoch)
@@ -257,32 +259,36 @@ class ModelTrainer:
         lr: float,
     ) -> None:
         """Log structured per-epoch metrics using project LogStyle."""
-        I = LogStyle.INDENT  # noqa: E741
-        A = LogStyle.ARROW
-        B = LogStyle.BULLET
-        remaining = self.patience - self.epochs_no_improve
-        label = self.monitor_metric.upper()
+        I = LogStyle.INDENT  # noqa: E741  # pragma: no mutant
+        A = LogStyle.ARROW  # pragma: no mutant
+        B = LogStyle.BULLET  # pragma: no mutant
+        remaining = self.patience - self.epochs_no_improve  # pragma: no mutant
+        label = self.monitor_metric.upper()  # pragma: no mutant
 
-        logger.info(LogStyle.LIGHT)
-        logger.info(
+        logger.info(LogStyle.LIGHT)  # pragma: no mutant
+        logger.info(  # pragma: no mutant
             f"{I}Epoch {epoch} {B} "
             f"Val {label}: {monitor_value:.4f} "
             f"(Best: {self.best_metric:.4f})"
         )
-        logger.info(f"{I}{A} Loss  : T {train_loss:.4f} / V {val_loss:.4f}")
-        logger.info(f"{I}{A} Acc   : {val_acc:.4f} (Best: {self.best_acc:.4f})")
-        logger.info(f"{I}{A} {label:<5} : {monitor_value:.4f} (Best: {self.best_metric:.4f})")
-        logger.info(f"{I}{A} LR    : {lr:.2e} {B} Patience: {remaining}")
+        logger.info(f"{I}{A} Loss  : T {train_loss:.4f} / V {val_loss:.4f}")  # pragma: no mutant
+        logger.info(  # pragma: no mutant
+            f"{I}{A} Acc   : {val_acc:.4f} (Best: {self.best_acc:.4f})"
+        )
+        logger.info(  # pragma: no mutant
+            f"{I}{A} {label:<5} : {monitor_value:.4f} (Best: {self.best_metric:.4f})"
+        )
+        logger.info(f"{I}{A} LR    : {lr:.2e} {B} Patience: {remaining}")  # pragma: no mutant
 
     def _log_training_complete(self) -> None:
         """Log final training summary banner."""
-        logger.info(LogStyle.DOUBLE)
-        logger.info(
+        logger.info(LogStyle.DOUBLE)  # pragma: no mutant
+        logger.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.SUCCESS} Training Complete "
             f"{LogStyle.BULLET} Best {self.monitor_metric.upper()}: {self.best_metric:.4f} "
             f"{LogStyle.BULLET} Best Acc: {self.best_acc:.4f}"
         )
-        logger.info(LogStyle.DOUBLE)
+        logger.info(LogStyle.DOUBLE)  # pragma: no mutant
 
     def _handle_checkpointing(self, val_metrics: dict) -> bool:
         """
@@ -300,7 +306,7 @@ class ModelTrainer:
         current_value = val_metrics[self.monitor_metric]
 
         if current_value > self.best_metric:
-            logger.info(
+            logger.info(  # pragma: no mutant
                 f"New best model! Val {self.monitor_metric}: "
                 f"{current_value:.4f} ↑ Checkpoint saved."
             )
@@ -344,8 +350,10 @@ class ModelTrainer:
         """
         try:
             load_model_weights(model=self.model, path=self.best_path, device=self.device)
-            logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Model state restored")
-            logger.info(
+            logger.info(  # pragma: no mutant
+                f"{LogStyle.INDENT}{LogStyle.SUCCESS} Model state restored"
+            )
+            logger.info(  # pragma: no mutant
                 f"{LogStyle.INDENT}{LogStyle.ARROW} {'Checkpoint':<18}: {self.best_path.name}"
             )
         except (RuntimeError, FileNotFoundError) as e:

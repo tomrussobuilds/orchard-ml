@@ -268,7 +268,9 @@ class RootOrchestrator:
 
     def _phase_1_determinism(self) -> None:
         """Enforces global RNG seeding and algorithmic determinism."""
-        logger.debug("Phase 1: Applying deterministic seeding (seed=%d)", self.cfg.training.seed)
+        logger.debug(  # pragma: no mutant
+            "Phase 1: Applying deterministic seeding (seed=%d)", self.cfg.training.seed
+        )
         self._seed_setter(self.cfg.training.seed, strict=self.repro_mode)
 
     def _phase_2_runtime_configuration(self) -> int:
@@ -278,7 +280,9 @@ class RootOrchestrator:
         Returns:
             Number of CPU threads applied to runtime
         """
-        logger.debug("Phase 2: Configuring runtime (workers=%d)", self.num_workers)
+        logger.debug(  # pragma: no mutant
+            "Phase 2: Configuring runtime (workers=%d)", self.num_workers
+        )
         applied_threads = self._thread_applier(self.num_workers)
         self._system_configurator()
         return applied_threads  # type: ignore[no-any-return]
@@ -289,7 +293,7 @@ class RootOrchestrator:
 
         Anchors relative paths to validated PROJECT_ROOT.
         """
-        logger.debug("Phase 3: Provisioning filesystem")
+        logger.debug("Phase 3: Provisioning filesystem")  # pragma: no mutant
         self._static_dir_setup()
         self.paths = RunPaths.create(
             dataset_slug=self.cfg.dataset.dataset_name,
@@ -304,7 +308,7 @@ class RootOrchestrator:
 
         Reconfigures handlers for file-based persistence in run directory.
         """
-        logger.debug("Phase 4: Initializing session logging")
+        logger.debug("Phase 4: Initializing session logging")  # pragma: no mutant
         assert self.paths is not None, "Paths must be initialized before logging"  # nosec B101
         self.run_logger = self._log_initializer(
             name=LOGGER_NAME, log_dir=self.paths.logs, level=self.cfg.telemetry.log_level
@@ -316,7 +320,9 @@ class RootOrchestrator:
 
         Ensures full reproducibility from artifacts alone.
         """
-        logger.debug("Phase 5: Persisting run manifest (config + requirements)")
+        logger.debug(  # pragma: no mutant
+            "Phase 5: Persisting run manifest (config + requirements)"
+        )
         assert (
             self.paths is not None
         ), "Paths must be initialized before config persistence"  # nosec B101
@@ -329,7 +335,7 @@ class RootOrchestrator:
 
         Prevents concurrent execution conflicts and manages cleanup.
         """
-        logger.debug("Phase 6: Acquiring infrastructure locks")
+        logger.debug("Phase 6: Acquiring infrastructure locks")  # pragma: no mutant
         phase_logger = self.run_logger or logging.getLogger(LOGGER_NAME)
         if self.infra is not None:
             try:
@@ -343,7 +349,7 @@ class RootOrchestrator:
 
         Summarizes hardware, dataset metadata, and execution policies.
         """
-        logger.debug("Phase 7: Generating environment report")
+        logger.debug("Phase 7: Generating environment report")  # pragma: no mutant
         assert self.paths is not None, "Paths must be initialized before reporting"  # nosec B101
         phase_logger = self.run_logger or logging.getLogger(LOGGER_NAME)
 
@@ -436,7 +442,9 @@ class RootOrchestrator:
             self._applied_threads = applied_threads
         else:
             self._applied_threads = applied_threads
-            logger.debug("Rank %d: skipping phases 3-7 (non-main process).", self.rank)
+            logger.debug(  # pragma: no mutant
+                "Rank %d: skipping phases 3-7 (non-main process).", self.rank
+            )
 
         self._initialized = True
         return self.paths

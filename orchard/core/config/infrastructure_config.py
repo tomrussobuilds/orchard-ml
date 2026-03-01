@@ -124,13 +124,19 @@ class InfrastructureManager(BaseModel):
 
             if not is_shared:
                 num_zombies = cleaner.terminate_duplicates(logger=log)
-                log.debug(f" {LogStyle.ARROW} Duplicate processes terminated: {num_zombies}.")
+                log.debug(  # pragma: no mutant
+                    f" {LogStyle.ARROW} Duplicate processes terminated: {num_zombies}."
+                )
             else:
-                log.debug(f" {LogStyle.ARROW} Shared environment detected: skipping process kill.")
+                log.debug(  # pragma: no mutant
+                    f" {LogStyle.ARROW} Shared environment detected: skipping process kill."
+                )
 
         # Concurrency guard
         ensure_single_instance(lock_file=cfg.hardware.lock_file_path, logger=log)
-        log.debug(f" {LogStyle.ARROW} Lock acquired at {cfg.hardware.lock_file_path}")
+        log.debug(  # pragma: no mutant
+            f" {LogStyle.ARROW} Lock acquired at {cfg.hardware.lock_file_path}"
+        )
 
     def release_resources(
         self, cfg: HardwareAwareConfig, logger: logging.Logger | None = None
@@ -159,7 +165,7 @@ class InfrastructureManager(BaseModel):
         # Release lock
         try:
             release_single_instance(cfg.hardware.lock_file_path)
-            log.info(f"  {LogStyle.ARROW} System lock released")
+            log.info(f"  {LogStyle.ARROW} System lock released")  # pragma: no mutant
         except OSError as e:
             log.warning(f" {LogStyle.ARROW} Failed to release lock: {e}")
 
@@ -178,11 +184,13 @@ class InfrastructureManager(BaseModel):
         # Full session teardown (see also OptunaObjective._cleanup for per-trial flush)
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-            log.debug(f" {LogStyle.ARROW} CUDA cache cleared.")
+            log.debug(f" {LogStyle.ARROW} CUDA cache cleared.")  # pragma: no mutant
 
         if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
             try:
                 torch.mps.empty_cache()
-                log.debug(f" {LogStyle.ARROW} MPS cache cleared.")
+                log.debug(f" {LogStyle.ARROW} MPS cache cleared.")  # pragma: no mutant
             except RuntimeError:
-                log.debug(f" {LogStyle.ARROW} MPS cache cleanup failed (non-fatal).")
+                log.debug(  # pragma: no mutant
+                    f" {LogStyle.ARROW} MPS cache cleanup failed (non-fatal)."
+                )

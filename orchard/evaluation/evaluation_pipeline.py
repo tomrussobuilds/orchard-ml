@@ -180,6 +180,8 @@ def run_final_evaluation(
     if tracker is not None:
         tracker.log_test_metrics(test_acc=test_acc, macro_f1=macro_f1)
 
-    logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Final Evaluation Phase Complete.")
+    logger.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.SUCCESS} Final Evaluation Phase Complete."
+    )
 
     return macro_f1, test_acc, test_auc

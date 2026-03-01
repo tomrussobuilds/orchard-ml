@@ -48,7 +48,7 @@ def ensure_medmnist_npz(
 
     # 1. Validation of existing file
     if _is_valid_npz(target_npz, metadata.md5_checksum):
-        logger.debug(
+        logger.debug(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Dataset':<18}: "
             f"'{metadata.name}' found at {target_npz.name}"
         )
@@ -60,7 +60,9 @@ def ensure_medmnist_npz(
         target_npz.unlink()
 
     # 3. Download logic with retries
-    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Downloading':<18}: {metadata.name}")
+    logger.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Downloading':<18}: {metadata.name}"
+    )
     target_npz.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = target_npz.with_suffix(".tmp")
 
@@ -75,7 +77,9 @@ def ensure_medmnist_npz(
 
             # Atomic move
             tmp_path.replace(target_npz)
-            logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} {'Verified':<18}: {metadata.name}")
+            logger.info(  # pragma: no mutant
+                f"{LogStyle.INDENT}{LogStyle.SUCCESS} {'Verified':<18}: {metadata.name}"
+            )
             return target_npz
 
         except (ValueError, OSError) as e:

@@ -77,10 +77,10 @@ class Reporter(BaseModel):
             style: Separator string (defaults to ``LogStyle.HEAVY``).
         """
         sep = style if style is not None else LogStyle.HEAVY
-        log.info("")
-        log.info(sep)
-        log.info(f"{title:^{LogStyle.HEADER_WIDTH}}")
-        log.info(sep)
+        log.info("")  # pragma: no mutant
+        log.info(sep)  # pragma: no mutant
+        log.info(f"{title:^{LogStyle.HEADER_WIDTH}}")  # pragma: no mutant
+        log.info(sep)  # pragma: no mutant
 
     def log_initial_status(
         self,
@@ -103,32 +103,36 @@ class Reporter(BaseModel):
             num_workers: Number of DataLoader workers
         """
         # Header Block
-        Reporter.log_phase_header(logger_instance, "ENVIRONMENT INITIALIZATION")
+        Reporter.log_phase_header(
+            logger_instance, "ENVIRONMENT INITIALIZATION"
+        )  # pragma: no mutant
 
         # Hardware Section
         self._log_hardware_section(logger_instance, cfg, device, applied_threads, num_workers)
-        logger_instance.info("")
+        logger_instance.info("")  # pragma: no mutant
 
         # Dataset Section
         self._log_dataset_section(logger_instance, cfg)
-        logger_instance.info("")
+        logger_instance.info("")  # pragma: no mutant
 
         # Strategy Section
         self._log_strategy_section(logger_instance, cfg, device)
-        logger_instance.info("")
+        logger_instance.info("")  # pragma: no mutant
 
         # Hyperparameters Section
-        logger_instance.info("[HYPERPARAMETERS]")
-        logger_instance.info(
+        logger_instance.info("[HYPERPARAMETERS]")  # pragma: no mutant
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Epochs':<18}: {cfg.training.epochs}"
         )
-        logger_instance.info(
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Batch Size':<18}: {cfg.training.batch_size}"
         )
         lr = cfg.training.learning_rate
         lr_str = f"{lr:.2e}" if isinstance(lr, (float, int)) else str(lr)
-        logger_instance.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Initial LR':<18}: {lr_str}")
-        logger_instance.info("")
+        logger_instance.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Initial LR':<18}: {lr_str}"
+        )
+        logger_instance.info("")  # pragma: no mutant
 
         # Tracking Section (only if configured)
         self._log_tracking_section(logger_instance, cfg)
@@ -140,17 +144,17 @@ class Reporter(BaseModel):
         self._log_export_section(logger_instance, cfg)
 
         # Filesystem Section
-        logger_instance.info("[FILESYSTEM]")
-        logger_instance.info(
+        logger_instance.info("[FILESYSTEM]")  # pragma: no mutant
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Run Root':<18}: {paths.root.name}"
         )
-        logger_instance.info(
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Manifest':<18}: config.yaml, requirements.txt"
         )
 
         # Closing separator
-        logger_instance.info(LogStyle.HEAVY)
-        logger_instance.info("")
+        logger_instance.info(LogStyle.HEAVY)  # pragma: no mutant
+        logger_instance.info("")  # pragma: no mutant
 
     def _log_hardware_section(
         self,
@@ -164,8 +168,8 @@ class Reporter(BaseModel):
         requested_device = cfg.hardware.device.lower()
         active_type = device.type
 
-        logger_instance.info("[HARDWARE]")
-        logger_instance.info(
+        logger_instance.info("[HARDWARE]")  # pragma: no mutant
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Active Device':<18}: {str(device).upper()}"
         )
 
@@ -176,18 +180,18 @@ class Reporter(BaseModel):
             )
 
         if active_type == "cuda":
-            logger_instance.info(
+            logger_instance.info(  # pragma: no mutant
                 f"{LogStyle.INDENT}{LogStyle.ARROW} {'GPU Model':<18}: {get_cuda_name()}"
             )
-            logger_instance.info(
+            logger_instance.info(  # pragma: no mutant
                 f"{LogStyle.INDENT}{LogStyle.ARROW} "
                 f"{'VRAM Available':<18}: {get_vram_info(device.index or 0)}"
             )
 
-        logger_instance.info(
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'DataLoader':<18}: {num_workers} workers"
         )
-        logger_instance.info(
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Compute Threads':<18}: {applied_threads} threads"
         )
 
@@ -196,22 +200,24 @@ class Reporter(BaseModel):
         ds = cfg.dataset
         meta = ds.metadata
 
-        logger_instance.info("[DATASET]")
-        logger_instance.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Name':<18}: {meta.display_name}")
-        logger_instance.info(
+        logger_instance.info("[DATASET]")  # pragma: no mutant
+        logger_instance.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Name':<18}: {meta.display_name}"
+        )
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Classes':<18}: {meta.num_classes} categories"
         )
-        logger_instance.info(
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} "
             f"{'Resolution':<18}: {ds.img_size}px (Native: {meta.resolution_str})"
         )
-        logger_instance.info(
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Channels':<18}: {meta.in_channels}"
         )
-        logger_instance.info(
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Anatomical':<18}: {meta.is_anatomical}"
         )
-        logger_instance.info(
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Texture-based':<18}: {meta.is_texture_based}"
         )
 
@@ -225,29 +231,35 @@ class Reporter(BaseModel):
 
         repro_mode = "Strict" if sys.use_deterministic_algorithms else "Standard"
 
-        logger_instance.info("[STRATEGY]")
-        logger_instance.info(
+        logger_instance.info("[STRATEGY]")  # pragma: no mutant
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Architecture':<18}: {cfg.architecture.name}"
         )
-        logger_instance.info(
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} "
             f"{'Weights':<18}: {'Pretrained' if cfg.architecture.pretrained else 'Random'}"
         )
 
         # Add weight variant if present (for ViT)
         if cfg.architecture.weight_variant:
-            logger_instance.info(
+            logger_instance.info(  # pragma: no mutant
                 f"{LogStyle.INDENT}{LogStyle.ARROW} "
                 f"{'Weight Variant':<18}: {cfg.architecture.weight_variant}"
             )
 
-        logger_instance.info(
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} "
             f"{'Precision':<18}: {'AMP (Mixed)' if train.use_amp else 'FP32'}"
         )
-        logger_instance.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'TTA Mode':<18}: {tta_status}")
-        logger_instance.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Repro. Mode':<18}: {repro_mode}")
-        logger_instance.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Global Seed':<18}: {train.seed}")
+        logger_instance.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'TTA Mode':<18}: {tta_status}"
+        )
+        logger_instance.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Repro. Mode':<18}: {repro_mode}"
+        )
+        logger_instance.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Global Seed':<18}: {train.seed}"
+        )
 
     def _log_tracking_section(self, logger_instance: logging.Logger, cfg: "Config") -> None:
         """Logs tracking configuration if enabled."""
@@ -255,15 +267,17 @@ class Reporter(BaseModel):
         if tracking_cfg is None:
             return
 
-        logger_instance.info("[TRACKING]")
+        logger_instance.info("[TRACKING]")  # pragma: no mutant
         status = "Active" if tracking_cfg.enabled else "Disabled"
-        logger_instance.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Status':<18}: {status}")
+        logger_instance.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Status':<18}: {status}"
+        )
         if tracking_cfg.enabled:
-            logger_instance.info(
+            logger_instance.info(  # pragma: no mutant
                 f"{LogStyle.INDENT}{LogStyle.ARROW} "
                 f"{'Experiment':<18}: {tracking_cfg.experiment_name}"
             )
-        logger_instance.info("")
+        logger_instance.info("")  # pragma: no mutant
 
     def _log_optimization_section(self, logger_instance: logging.Logger, cfg: "Config") -> None:
         """Logs optimization configuration if enabled."""
@@ -271,25 +285,25 @@ class Reporter(BaseModel):
         if optuna_cfg is None:
             return
 
-        logger_instance.info("[OPTIMIZATION]")
-        logger_instance.info(
+        logger_instance.info("[OPTIMIZATION]")  # pragma: no mutant
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Trials':<18}: {optuna_cfg.n_trials}"
         )
-        logger_instance.info(
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Epochs/Trial':<18}: {optuna_cfg.epochs}"
         )
-        logger_instance.info(
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} "
             f"{'Metric':<18}: {cfg.training.monitor_metric} ({optuna_cfg.direction})"
         )
-        logger_instance.info(
+        logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Sampler':<18}: {optuna_cfg.sampler_type.upper()}"
         )
         if optuna_cfg.enable_pruning:
-            logger_instance.info(
+            logger_instance.info(  # pragma: no mutant
                 f"{LogStyle.INDENT}{LogStyle.ARROW} {'Pruner':<18}: {optuna_cfg.pruner_type}"
             )
-        logger_instance.info("")
+        logger_instance.info("")  # pragma: no mutant
 
     def _log_export_section(self, logger_instance: logging.Logger, cfg: "Config") -> None:
         """Logs export configuration if enabled."""
@@ -297,13 +311,19 @@ class Reporter(BaseModel):
         if export_cfg is None:
             return
 
-        I, A = LogStyle.INDENT, LogStyle.ARROW  # noqa: E741
-        logger_instance.info("[EXPORT]")
-        logger_instance.info(f"{I}{A} {'Format':<18}: {export_cfg.format.upper()}")
-        logger_instance.info(f"{I}{A} {'Opset Version':<18}: {export_cfg.opset_version}")
-        logger_instance.info(f"{I}{A} {'Validate':<18}: {export_cfg.validate_export}")
+        I, A = LogStyle.INDENT, LogStyle.ARROW  # noqa: E741  # pragma: no mutant
+        logger_instance.info("[EXPORT]")  # pragma: no mutant
+        logger_instance.info(
+            f"{I}{A} {'Format':<18}: {export_cfg.format.upper()}"
+        )  # pragma: no mutant
+        logger_instance.info(
+            f"{I}{A} {'Opset Version':<18}: {export_cfg.opset_version}"
+        )  # pragma: no mutant
+        logger_instance.info(
+            f"{I}{A} {'Validate':<18}: {export_cfg.validate_export}"
+        )  # pragma: no mutant
         if export_cfg.quantize:
-            logger_instance.info(
+            logger_instance.info(  # pragma: no mutant
                 f"{I}{A} {'Quantize':<18}: INT8 ({export_cfg.quantization_backend})"
             )
-        logger_instance.info("")
+        logger_instance.info("")  # pragma: no mutant

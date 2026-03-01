@@ -23,6 +23,7 @@ from orchard.core.environment import (
     get_vram_info,
     to_device_obj,
 )
+from tests.conftest import mutmut_safe_env
 
 
 # SYSTEM CONFIGURATION
@@ -30,7 +31,7 @@ from orchard.core.environment import (
 @patch("platform.system", return_value="Linux")
 def test_configure_system_libraries_linux(mock_platform):
     """Test configure_system_libraries sets Agg backend on Linux."""
-    with patch.dict(os.environ, {}, clear=True):
+    with patch.dict(os.environ, mutmut_safe_env(), clear=True):
         configure_system_libraries()
 
         assert matplotlib.get_backend() == "Agg"
@@ -43,7 +44,7 @@ def test_configure_system_libraries_linux(mock_platform):
 @patch("os.path.exists", return_value=True)
 def test_configure_system_libraries_docker(mock_exists, mock_platform):
     """Test configure_system_libraries detects Docker environment."""
-    with patch.dict(os.environ, {}, clear=True):
+    with patch.dict(os.environ, mutmut_safe_env(), clear=True):
         configure_system_libraries()
 
         assert matplotlib.get_backend() == "Agg"
@@ -63,7 +64,7 @@ def test_configure_system_libraries_docker_env_var(mock_platform):
 @patch("platform.system", return_value="Windows")
 def test_configure_system_libraries_windows(mock_platform):
     """Test configure_system_libraries skips Agg backend on Windows."""
-    with patch.dict(os.environ, {}, clear=True):
+    with patch.dict(os.environ, mutmut_safe_env(), clear=True):
         original_backend = matplotlib.get_backend()
 
         configure_system_libraries()

@@ -355,9 +355,11 @@ def run_export_phase(
                 label="Quantized",
             )
 
-    logger.info(f"  {LogStyle.SUCCESS} Export completed")
-    logger.info(f"    {LogStyle.ARROW} Output            : {onnx_path.name}")
+    logger.info(f"  {LogStyle.SUCCESS} Export completed")  # pragma: no mutant
+    logger.info(f"    {LogStyle.ARROW} Output            : {onnx_path.name}")  # pragma: no mutant
     if quantized_path:
-        logger.info(f"    {LogStyle.ARROW} Quantized         : {quantized_path.name}")
+        logger.info(  # pragma: no mutant
+            f"    {LogStyle.ARROW} Quantized         : {quantized_path.name}"
+        )
 
     return onnx_path

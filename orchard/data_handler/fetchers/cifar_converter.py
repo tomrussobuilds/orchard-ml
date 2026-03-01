@@ -90,7 +90,9 @@ def _download_and_convert(metadata: DatasetMetadata, cifar_cls: type) -> Path:
     target_npz = metadata.path
     download_dir = target_npz.parent / f".{metadata.name}_raw"
 
-    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'Downloading':<18}: {metadata.display_name}")
+    logger.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Downloading':<18}: {metadata.display_name}"
+    )
 
     train_ds = cifar_cls(root=str(download_dir), train=True, download=True)
     test_ds = cifar_cls(root=str(download_dir), train=False, download=True)
@@ -101,7 +103,7 @@ def _download_and_convert(metadata: DatasetMetadata, cifar_cls: type) -> Path:
     test_images = np.array(test_ds.data)  # (10000, 32, 32, 3)
     test_targets = np.array(test_ds.targets)  # (10000,)
 
-    logger.info(
+    logger.info(  # pragma: no mutant
         f"{LogStyle.INDENT}{LogStyle.ARROW} {'Loaded':<18}: "
         f"{metadata.display_name} — {len(train_images)} train + {len(test_images)} test"
     )
@@ -131,7 +133,7 @@ def _download_and_convert(metadata: DatasetMetadata, cifar_cls: type) -> Path:
         test_labels=test_labels,
     )
 
-    logger.info(
+    logger.info(  # pragma: no mutant
         f"{LogStyle.INDENT}{LogStyle.ARROW} {'NPZ Created':<18}: "
         f"{target_npz.name} — Train: {len(train_imgs)}, Val: {len(val_imgs)}, "
         f"Test: {len(test_images)}"
@@ -155,7 +157,7 @@ def ensure_cifar_npz(metadata: DatasetMetadata) -> Path:
     target_npz = metadata.path
 
     if target_npz.exists():
-        logger.debug(
+        logger.debug(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Dataset':<18}: "
             f"{metadata.display_name} found at {target_npz.name}"
         )

@@ -40,7 +40,9 @@ def download_galaxy10_h5(
         chunk_size: Streaming chunk size in bytes.
     """
     if target_h5.exists():
-        logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'HDF5 Cache':<18}: {target_h5.name}")
+        logger.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'HDF5 Cache':<18}: {target_h5.name}"
+        )
         return
 
     target_h5.parent.mkdir(parents=True, exist_ok=True)
@@ -48,7 +50,7 @@ def download_galaxy10_h5(
 
     for attempt in range(1, retries + 1):
         try:
-            logger.info(
+            logger.info(  # pragma: no mutant
                 f"{LogStyle.INDENT}{LogStyle.ARROW} {'Downloading':<18}: "
                 f"Galaxy10 (attempt {attempt}/{retries})"
             )
@@ -62,7 +64,9 @@ def download_galaxy10_h5(
                             f.write(chunk)
 
             tmp_path.replace(target_h5)
-            logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} {'Downloaded':<18}: {target_h5.name}")
+            logger.info(  # pragma: no mutant
+                f"{LogStyle.INDENT}{LogStyle.SUCCESS} {'Downloaded':<18}: {target_h5.name}"
+            )
             return
 
         except OSError as e:
@@ -92,7 +96,7 @@ def convert_galaxy10_to_npz(
         target_size: Target image size (default 224)
         seed: Random seed for splits
     """
-    logger.info(
+    logger.info(  # pragma: no mutant
         f"{LogStyle.INDENT}{LogStyle.ARROW} {'Converting':<18}: "
         f"Galaxy10 → NPZ ({target_size}x{target_size})"
     )
@@ -101,14 +105,14 @@ def convert_galaxy10_to_npz(
         images = np.array(f["images"])
         labels = np.array(f["ans"])
 
-        logger.info(
+        logger.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Loaded':<18}: "
             f"{len(images)} images ({images.shape})"
         )
 
         # Resize if needed
         if images.shape[1] != target_size or images.shape[2] != target_size:
-            logger.info(
+            logger.info(  # pragma: no mutant
                 f"{LogStyle.INDENT}{LogStyle.ARROW} {'Resizing':<18}: "
                 f"{images.shape[1]}x{images.shape[2]} → {target_size}x{target_size}"
             )
@@ -141,8 +145,10 @@ def convert_galaxy10_to_npz(
             test_labels=test_labels,
         )
 
-        logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} {'NPZ Created':<18}: {output_npz.name}")
-        logger.info(
+        logger.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.SUCCESS} {'NPZ Created':<18}: {output_npz.name}"
+        )
+        logger.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Splits':<18}: "
             f"Train: {len(train_imgs)}, Val: {len(val_imgs)}, Test: {len(test_imgs)}"
         )
@@ -241,7 +247,7 @@ def ensure_galaxy10_npz(metadata: DatasetMetadata) -> Path:
             actual_md5 == metadata.md5_checksum
             or metadata.md5_checksum == "placeholder_will_be_calculated_after_conversion"
         ):
-            logger.debug(
+            logger.debug(  # pragma: no mutant
                 f"{LogStyle.INDENT}{LogStyle.ARROW} {'Dataset':<18}: "
                 f"Galaxy10 found at {target_npz.name}"
             )
@@ -264,10 +270,10 @@ def ensure_galaxy10_npz(metadata: DatasetMetadata) -> Path:
 
     # Report MD5
     actual_md5 = md5_checksum(target_npz)
-    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'MD5':<18}: {actual_md5}")
+    logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} {'MD5':<18}: {actual_md5}")  # pragma: no mutant
 
     if metadata.md5_checksum == "placeholder_will_be_calculated_after_conversion":
-        logger.info(
+        logger.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Action Required':<18}: "
             f'Update metadata.md5_checksum = "{actual_md5}"'
         )

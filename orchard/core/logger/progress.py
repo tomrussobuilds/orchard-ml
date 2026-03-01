@@ -64,34 +64,44 @@ def log_optimization_header(cfg: "Config", logger_instance: logging.Logger | Non
     log = logger_instance or logger
 
     # Search configuration (no duplicate header - phase header already shown)
-    log.info("")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset      : {cfg.dataset.dataset_name}")
-    log.info(
+    log.info("")  # pragma: no mutant
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset      : {cfg.dataset.dataset_name}"
+    )
+    log.info(  # pragma: no mutant
         f"{LogStyle.INDENT}{LogStyle.ARROW} Model Search : "
         f"{'Enabled' if cfg.optuna.enable_model_search else 'Disabled'}"
     )
     if cfg.optuna.model_pool is not None:
-        log.info(
+        log.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} Model Pool   : "
             f"{', '.join(cfg.optuna.model_pool)}"
         )
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Search Space : {cfg.optuna.search_space_preset}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Trials       : {cfg.optuna.n_trials}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Epochs/Trial : {cfg.optuna.epochs}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Metric       : {cfg.training.monitor_metric}")
-    log.info(
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Search Space : {cfg.optuna.search_space_preset}"
+    )
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Trials       : {cfg.optuna.n_trials}"
+    )
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Epochs/Trial : {cfg.optuna.epochs}"
+    )
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Metric       : {cfg.training.monitor_metric}"
+    )
+    log.info(  # pragma: no mutant
         f"{LogStyle.INDENT}{LogStyle.ARROW} Pruning      : "
         f"{'Enabled' if cfg.optuna.enable_pruning else 'Disabled'}"
     )
 
     if cfg.optuna.enable_early_stopping:
         threshold = cfg.optuna.early_stopping_threshold or "auto"
-        log.info(
+        log.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} Early Stop   : Enabled "
             f"(threshold={threshold}, patience={cfg.optuna.early_stopping_patience})"
         )
 
-    log.info("")
+    log.info("")  # pragma: no mutant
 
 
 def log_trial_start(
@@ -107,8 +117,8 @@ def log_trial_start(
     """
     log = logger_instance or logger
 
-    log.info(f"{LogStyle.LIGHT}")
-    log.info(f"[Trial {trial_number} Hyperparameters]")
+    log.info(f"{LogStyle.LIGHT}")  # pragma: no mutant
+    log.info(f"[Trial {trial_number} Hyperparameters]")  # pragma: no mutant
 
     categories = {
         "Optimization": ["learning_rate", "weight_decay", "momentum", "min_lr"],
@@ -122,14 +132,14 @@ def log_trial_start(
     for category_name, keys in categories.items():
         category_params = {k: params[k] for k in keys if k in params}
         if category_params:
-            log.info(f"{LogStyle.INDENT}[{category_name}]")
+            log.info(f"{LogStyle.INDENT}[{category_name}]")  # pragma: no mutant
             for key, value in category_params.items():
-                log.info(
+                log.info(  # pragma: no mutant
                     f"{LogStyle.DOUBLE_INDENT}{LogStyle.BULLET} "
                     f"{key:<20} : {_format_param_value(value)}"
                 )
 
-    log.info(LogStyle.LIGHT)
+    log.info(LogStyle.LIGHT)  # pragma: no mutant
 
 
 def log_optimization_summary(
@@ -152,23 +162,35 @@ def log_optimization_summary(
     log = logger_instance or logger
     completed, pruned, failed = _count_trial_states(study)
 
-    Reporter.log_phase_header(log, "OPTIMIZATION SUMMARY", LogStyle.DOUBLE)
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset        : {cfg.dataset.dataset_name}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Search Space   : {cfg.optuna.search_space_preset}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Total Trials   : {len(study.trials)}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Completed      : {len(completed)}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Pruned         : {len(pruned)}")
+    Reporter.log_phase_header(log, "OPTIMIZATION SUMMARY", LogStyle.DOUBLE)  # pragma: no mutant
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset        : {cfg.dataset.dataset_name}"
+    )
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Search Space   : {cfg.optuna.search_space_preset}"
+    )
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Total Trials   : {len(study.trials)}"
+    )
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.SUCCESS} Completed      : {len(completed)}"
+    )
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Pruned         : {len(pruned)}"
+    )
 
     if failed:
-        log.info(f"{LogStyle.INDENT}{LogStyle.WARNING} Failed         : {len(failed)}")
+        log.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.WARNING} Failed         : {len(failed)}"
+        )
 
     if completed:
         try:
-            log.info(
+            log.info(  # pragma: no mutant
                 f"{LogStyle.INDENT}{LogStyle.SUCCESS} "
                 f"Best {cfg.training.monitor_metric.upper():<9} : {study.best_value:.6f}"
             )
-            log.info(
+            log.info(  # pragma: no mutant
                 f"{LogStyle.INDENT}{LogStyle.SUCCESS} Best Trial     : {study.best_trial.number}"
             )
         except ValueError:  # pragma: no cover
@@ -179,10 +201,14 @@ def log_optimization_summary(
     else:
         log.warning(f"{LogStyle.INDENT}{LogStyle.WARNING} No trials completed")
 
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Device         : {str(device).upper()}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Artifacts      : {Path(paths.root).name}")
-    log.info(f"{LogStyle.DOUBLE}")
-    log.info("")
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Device         : {str(device).upper()}"
+    )
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Artifacts      : {Path(paths.root).name}"
+    )
+    log.info(f"{LogStyle.DOUBLE}")  # pragma: no mutant
+    log.info("")  # pragma: no mutant
 
 
 def log_pipeline_summary(
@@ -213,14 +239,26 @@ def log_pipeline_summary(
     """
     log = logger_instance or logger
 
-    Reporter.log_phase_header(log, "PIPELINE COMPLETE", LogStyle.DOUBLE)
-    log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Test Accuracy  : {test_acc:>8.2%}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Macro F1       : {macro_f1:>8.4f}")
+    Reporter.log_phase_header(log, "PIPELINE COMPLETE", LogStyle.DOUBLE)  # pragma: no mutant
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.SUCCESS} Test Accuracy  : {test_acc:>8.2%}"
+    )
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.SUCCESS} Macro F1       : {macro_f1:>8.4f}"
+    )
     if test_auc is not None:
-        log.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Test AUC       : {test_auc:>8.4f}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Best Model     : {Path(best_model_path).name}")
+        log.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.SUCCESS} Test AUC       : {test_auc:>8.4f}"
+        )
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Best Model     : {Path(best_model_path).name}"
+    )
     if onnx_path:
-        log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} ONNX Export    : {Path(onnx_path).name}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Run Directory  : {Path(run_dir).name}")
-    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Duration       : {duration}")
-    log.info(f"{LogStyle.DOUBLE}")
+        log.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.ARROW} ONNX Export    : {Path(onnx_path).name}"
+        )
+    log.info(  # pragma: no mutant
+        f"{LogStyle.INDENT}{LogStyle.ARROW} Run Directory  : {Path(run_dir).name}"
+    )
+    log.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Duration       : {duration}")  # pragma: no mutant
+    log.info(f"{LogStyle.DOUBLE}")  # pragma: no mutant
