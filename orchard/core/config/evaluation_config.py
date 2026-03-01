@@ -133,6 +133,6 @@ class EvaluationConfig(BaseModel):
 
         if v not in style.available:
             raise OrchardConfigError(
-                f"Unknown matplotlib style '{v}'. " f"Available: {sorted(style.available)}"
+                f"Unknown matplotlib style '{v}'. Available: {sorted(style.available)}"
             )
         return v

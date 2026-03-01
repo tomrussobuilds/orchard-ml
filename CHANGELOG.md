@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - centralise device placement, add resolution validator, cleanup naming
 - centralise device placement, add resolution validator, cleanup naming
 - introduce custom exception hierarchy and unify MPS accelerator support
+- dependency bounds, CI supply chain, Dockerfile rootless, config validators
 
 ## [0.1.8] - 2026-02-28
 
