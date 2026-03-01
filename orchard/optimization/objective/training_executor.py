@@ -239,18 +239,12 @@ class TrialTrainingExecutor:
             Returns fallback metrics on validation failure
         """
         try:
-            val_metrics = validate_epoch(
+            return validate_epoch(
                 model=self.model,
                 val_loader=self.val_loader,
                 criterion=self.criterion,
                 device=self.device,
             )
-
-            if val_metrics is None or not isinstance(val_metrics, dict):
-                logger.error(f"Invalid validation result: {val_metrics}")
-                return dict(_FALLBACK_METRICS)
-
-            return val_metrics
 
         except (RuntimeError, ValueError) as e:
             logger.error(f"Validation failed: {e}")

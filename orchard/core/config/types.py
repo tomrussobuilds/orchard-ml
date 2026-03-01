@@ -49,6 +49,7 @@ def _sanitize_path(v: str | Path) -> Path:
 # GENERIC PRIMITIVES
 PositiveInt = Annotated[int, Field(gt=0)]
 NonNegativeInt = Annotated[int, Field(ge=0)]
+PositiveFloat = Annotated[float, Field(gt=0.0)]
 NonNegativeFloat = Annotated[float, Field(ge=0.0)]
 Probability = Annotated[float, Field(ge=0.0, le=1.0)]
 

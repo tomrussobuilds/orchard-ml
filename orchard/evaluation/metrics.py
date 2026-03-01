@@ -32,7 +32,7 @@ def compute_classification_metrics(
         dict[str, float]: Metric dictionary with keys:
 
             - ``accuracy`` -- Overall classification accuracy
-            - ``auc`` -- Macro-averaged ROC-AUC (0.0 if computation fails)
+            - ``auc`` -- Macro-averaged ROC-AUC (NaN if computation fails)
             - ``f1`` -- Macro-averaged F1 score
     """
     accuracy = np.mean(preds == labels)

@@ -74,6 +74,7 @@ def ensure_single_instance(lock_file: Path, logger: logging.Logger) -> None:
 
     # Locking is currently only supported on Unix-like systems via fcntl
     if platform.system() in ("Linux", "Darwin") and HAS_FCNTL:
+        f: IO | None = None
         try:
             lock_file.parent.mkdir(parents=True, exist_ok=True)
             f = open(lock_file, "a")
@@ -84,6 +85,8 @@ def ensure_single_instance(lock_file: Path, logger: logging.Logger) -> None:
             logger.info(f"  {LogStyle.ARROW} System lock acquired")  # pragma: no mutant
 
         except (IOError, BlockingIOError):
+            if f is not None:
+                f.close()
             logger.error(
                 f" {LogStyle.WARNING} CRITICAL: Another instance is already running. Aborting."
             )

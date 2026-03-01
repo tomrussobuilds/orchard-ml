@@ -73,7 +73,7 @@ class Config(BaseModel):
         'mini_cnn'
     """
 
-    model_config = ConfigDict(extra="forbid", validate_assignment=True, frozen=True)
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     hardware: HardwareConfig = Field(default_factory=HardwareConfig)
     telemetry: TelemetryConfig = Field(default_factory=TelemetryConfig)

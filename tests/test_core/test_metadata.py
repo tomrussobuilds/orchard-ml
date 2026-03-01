@@ -183,6 +183,26 @@ def test_dataset_metadata_normalization_info_property():
 
 
 @pytest.mark.unit
+def test_dataset_metadata_resolution_str_none():
+    """Test resolution_str returns 'unknown' when native_resolution is None."""
+    metadata = DatasetMetadata(
+        name="testmnist",
+        display_name="Test Dataset",
+        md5_checksum="abc123",
+        url="https://example.com/test.npz",
+        path=Path("/data/test.npz"),
+        classes=["A", "B"],
+        in_channels=1,
+        native_resolution=None,
+        mean=(0.5,),
+        std=(0.2,),
+        is_anatomical=False,
+        is_texture_based=False,
+    )
+    assert metadata.resolution_str == "unknown"
+
+
+@pytest.mark.unit
 def test_registry_wrapper_empty_source_registry():
     """Test DatasetRegistryWrapper raises ValueError when source registry is empty."""
     empty_table = {28: ({},), 32: ({},), 64: ({},), 128: ({},), 224: ({}, {})}

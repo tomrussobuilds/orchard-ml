@@ -76,6 +76,8 @@ class DatasetMetadata(BaseModel):
     @property
     def resolution_str(self) -> str:
         """Formatted resolution string (e.g., '28x28', '224x224')."""
+        if self.native_resolution is None:
+            return "unknown"
         return f"{self.native_resolution}x{self.native_resolution}"
 
     @property

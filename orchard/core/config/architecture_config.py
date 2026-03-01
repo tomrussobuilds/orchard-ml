@@ -31,7 +31,7 @@ class ArchitectureConfig(BaseModel):
             with multiple options (e.g., ViT variants with different pretraining).
     """
 
-    model_config = ConfigDict(extra="forbid", frozen=True, arbitrary_types_allowed=True)
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     name: str = Field(
         default="mini_cnn",

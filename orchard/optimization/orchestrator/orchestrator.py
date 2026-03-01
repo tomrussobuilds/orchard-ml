@@ -35,6 +35,8 @@ import optuna
 from ...core import LOGGER_NAME, Config, RunPaths, log_optimization_header
 
 if TYPE_CHECKING:  # pragma: no cover
+    import torch
+
     from ...tracking import TrackerProtocol
 
 from ..objective.objective import OptunaObjective
@@ -75,7 +77,7 @@ class OptunaOrchestrator:
     def __init__(
         self,
         cfg: Config,
-        device,
+        device: torch.device,
         paths: RunPaths,
         tracker: TrackerProtocol | None = None,
     ) -> None:
@@ -199,7 +201,7 @@ class OptunaOrchestrator:
 
 def run_optimization(
     cfg: Config,
-    device,
+    device: torch.device,
     paths: RunPaths,
     tracker: TrackerProtocol | None = None,
 ) -> optuna.Study:

@@ -213,11 +213,11 @@ def log_optimization_summary(
 def log_pipeline_summary(
     test_acc: float,
     macro_f1: float,
-    best_model_path: Any,
-    run_dir: Any,
+    best_model_path: Path,
+    run_dir: Path,
     duration: str,
     test_auc: float | None = None,
-    onnx_path: Any = None,
+    onnx_path: Path | None = None,
     logger_instance: logging.Logger | None = None,
 ) -> None:
     """

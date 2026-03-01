@@ -15,7 +15,10 @@ Search Space Overrides:
 from __future__ import annotations
 
 import warnings
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ..paths import RunPaths
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -337,10 +340,10 @@ class OptunaConfig(BaseModel):
             Validated OptunaConfig instance (with warning if applicable).
         """
         if self.show_progress_bar and self.n_jobs != 1:
-            warnings.warn("show_progress_bar=True with n_jobs>1 may corrupt tqdm output.")
+            warnings.warn("show_progress_bar=True with n_jobs!=1 may corrupt tqdm output.")
         return self
 
-    def get_storage_url(self, paths) -> str | None:
+    def get_storage_url(self, paths: RunPaths) -> str | None:
         """
         Constructs storage URL for Optuna study.
 

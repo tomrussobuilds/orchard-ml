@@ -1,21 +1,9 @@
 """
-Telemetry & Filesystem Manifest.
+Telemetry & Filesystem Configuration.
 
-Declarative schema for filesystem orchestration, logging policy, and
-experiment identity. Resolves paths, configures logging, and exports
+Declarative schema for filesystem orchestration and logging policy.
+Resolves paths, configures logging cadence and verbosity, and exports
 environment-agnostic manifests.
-
-Single Source of Truth (SSOT) for:
-
-- Dataset and output directory resolution and anchoring
-- Logging cadence and verbosity
-- Experiment identity and run-level metadata
-- Portable, host-independent configuration serialization
-
-Attributes:
-    data_dir: Validated path to dataset directory (default: ./dataset).
-    output_dir: Validated path to outputs directory (default: ./outputs).
-    log_level: Logging verbosity (DEBUG, INFO, WARNING, ERROR, CRITICAL).
 """
 
 from __future__ import annotations
@@ -38,17 +26,13 @@ class TelemetryConfig(BaseModel):
     portability across environments. Frozen after creation for immutability.
 
     Attributes:
-        data_dir: Validated absolute path to dataset directory.
-        output_dir: Validated absolute path to outputs directory.
-        log_level: Logging verbosity (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+        data_dir (ValidatedPath): Validated absolute path to dataset directory.
+        output_dir (ValidatedPath): Validated absolute path to outputs directory.
+        log_interval (LogFrequency): Epoch logging cadence (default: 10).
+        log_level (LogLevel): Logging verbosity (DEBUG, INFO, WARNING, ERROR, CRITICAL).
     """
 
-    model_config = ConfigDict(
-        frozen=True,
-        extra="forbid",
-        arbitrary_types_allowed=True,
-        json_encoders={Path: lambda v: str(v)},
-    )
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     # Filesystem
     data_dir: ValidatedPath = Field(default="./dataset")  # type: ignore[assignment]

@@ -273,9 +273,6 @@ class ModelTrainer:
         logger.info(  # pragma: no mutant
             f"{I}{A} Acc   : {val_acc:.4f} (Best: {self.best_acc:.4f})"
         )
-        logger.info(  # pragma: no mutant
-            f"{I}{A} {label:<5} : {monitor_value:.4f} (Best: {self.best_metric:.4f})"
-        )
         logger.info(f"{I}{A} LR    : {lr:.2e} {B} Patience: {remaining}")  # pragma: no mutant
 
     def _log_training_complete(self) -> None:

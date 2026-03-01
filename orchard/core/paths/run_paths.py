@@ -48,7 +48,7 @@ class RunPaths(BaseModel):
     Attributes:
         run_id: Unique identifier in format YYYYMMDD_dataset_model_hash.
         dataset_slug: Normalized lowercase dataset name.
-        model_slug: Sanitized alphanumeric model identifier.
+        architecture_slug: Sanitized alphanumeric architecture identifier.
         root: Base directory for all run artifacts.
         figures: Directory for plots, confusion matrices, ROC curves.
         checkpoints: Directory for saved checkpoints (.pth files).
@@ -143,7 +143,9 @@ class RunPaths(BaseModel):
         ds_slug = dataset_slug.lower()
 
         if not isinstance(architecture_name, str):
-            raise ValueError(f"Expected string for model_name but got {type(architecture_name)}")
+            raise ValueError(
+                f"Expected string for architecture_name but got {type(architecture_name)}"
+            )
         a_slug = re.sub(r"[^a-zA-Z0-9]", "", architecture_name.lower())
 
         # Determine the unique run ID
@@ -226,7 +228,7 @@ class RunPaths(BaseModel):
         Path for the best-performing model checkpoint.
 
         Returns:
-            Path in format: checkpoints/best_{model_slug}.pth
+            Path in format: checkpoints/best_{architecture_slug}.pth
         """
         return self.checkpoints / f"best_{self.architecture_slug}.pth"
 

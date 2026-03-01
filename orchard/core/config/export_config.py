@@ -11,7 +11,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .types import PositiveInt
+from .types import PositiveFloat, PositiveInt
 
 
 # EXPORT CONFIGURATION
@@ -73,7 +73,7 @@ class ExportConfig(BaseModel):
         default=10, description="Number of samples for validation"
     )
 
-    max_deviation: float = Field(
+    max_deviation: PositiveFloat = Field(
         default=1e-4,
         description="Maximum allowed output deviation between PyTorch and exported model",
     )

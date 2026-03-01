@@ -46,7 +46,6 @@ __all__ = [
     "SearchSpaceOverrides",
     "ExportConfig",
     "TrackingConfig",
-    "_CrossDomainValidator",
 ]
 
 # LAZY IMPORTS MAPPING
@@ -72,7 +71,6 @@ _LAZY_IMPORTS: dict[str, str] = {
     "SearchSpaceOverrides": _OPTUNA_MOD,
     "ExportConfig": f"{_PKG}.export_config",
     "TrackingConfig": f"{_PKG}.tracking_config",
-    "_CrossDomainValidator": f"{_PKG}.manifest",
 }
 
 

@@ -111,10 +111,10 @@ def test_runpaths_create_invalid_dataset_type():
 
 @pytest.mark.unit
 def test_runpaths_create_invalid_model_type():
-    """Test RunPaths.create() raises ValueError for non-string model_name."""
+    """Test RunPaths.create() raises ValueError for non-string architecture_name."""
     training_cfg = {"batch_size": 32}
 
-    with pytest.raises(ValueError, match="Expected string for model_name"):
+    with pytest.raises(ValueError, match="Expected string for architecture_name"):
         RunPaths.create(
             dataset_slug="test",
             architecture_name=123,

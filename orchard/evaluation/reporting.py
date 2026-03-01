@@ -35,11 +35,13 @@ class TrainingReport(BaseModel):
 
     Attributes:
         timestamp (str): ISO formatted execution time.
-        model (str): Identifier of the architecture used.
+        architecture (str): Identifier of the architecture used.
         dataset (str): Name of the dataset.
         best_val_accuracy (float): Peak accuracy achieved on validation set.
+        best_val_auc (float): Peak ROC-AUC achieved on validation set.
         best_val_f1 (float): Peak macro-averaged F1 on validation set.
         test_accuracy (float): Final accuracy on the unseen test set.
+        test_auc (float): Final ROC-AUC on the unseen test set.
         test_macro_f1 (float): Macro-averaged F1 score (key for imbalanced data).
         is_texture_based (bool): Whether texture-preserving logic was applied.
         is_anatomical (bool): Whether anatomical orientation constraints were enforced.
@@ -47,11 +49,11 @@ class TrainingReport(BaseModel):
         epochs_trained (int): Total number of optimization cycles completed.
         learning_rate (float): Initial learning rate used by the optimizer.
         batch_size (int): Samples processed per iteration.
+        seed (int): Global RNG seed for experiment replication.
         augmentations (str): Descriptive string of the transformation pipeline.
         normalization (str): Mean/Std statistics applied to the input tensors.
         model_path (str): Absolute path to the best saved checkpoint.
         log_path (str): Absolute path to the session execution log.
-        seed (int): Global RNG seed for experiment replication.
     """
 
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)

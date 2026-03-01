@@ -23,7 +23,7 @@ import sys
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Final
+from typing import ClassVar, Final
 
 from ..paths import LOGGER_NAME
 from ..paths.constants import LogStyle
@@ -205,7 +205,7 @@ class Logger:
     - RotatingFileHandler prevents disk space exhaustion
     """
 
-    _configured_names: Final[dict[str, bool]] = {}
+    _configured_names: ClassVar[dict[str, bool]] = {}
     _active_log_file: Path | None = None
 
     def __init__(

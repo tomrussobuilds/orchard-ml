@@ -188,58 +188,6 @@ def test_validate_epoch_returns_fallback_on_exception():
         assert result == _FALLBACK_METRICS
 
 
-@pytest.mark.unit
-def test_validate_epoch_returns_fallback_on_invalid_type():
-    """Test _validate_epoch returns fallback when validate_epoch returns invalid type."""
-    executor = TrialTrainingExecutor(
-        model=nn.Linear(10, 2),
-        train_loader=MagicMock(),
-        val_loader=MagicMock(),
-        optimizer=torch.optim.SGD(
-            nn.Linear(10, 2).parameters(), lr=0.01, momentum=0.0, weight_decay=0.0
-        ),
-        scheduler=MagicMock(),
-        criterion=nn.CrossEntropyLoss(),
-        training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
-        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
-        log_interval=5,
-        device=torch.device("cpu"),
-        metric_extractor=MetricExtractor("auc"),
-    )
-
-    with patch("orchard.optimization.objective.training_executor.validate_epoch") as mock_validate:
-        mock_validate.return_value = "not_a_dict"
-        result = executor._validate_epoch()
-
-        assert result == _FALLBACK_METRICS
-
-
-@pytest.mark.unit
-def test_validate_epoch_returns_fallback_on_none():
-    """Test _validate_epoch returns fallback when validate_epoch returns None."""
-    executor = TrialTrainingExecutor(
-        model=nn.Linear(10, 2),
-        train_loader=MagicMock(),
-        val_loader=MagicMock(),
-        optimizer=torch.optim.SGD(
-            nn.Linear(10, 2).parameters(), lr=0.01, momentum=0.0, weight_decay=0.0
-        ),
-        scheduler=MagicMock(),
-        criterion=nn.CrossEntropyLoss(),
-        training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
-        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
-        log_interval=5,
-        device=torch.device("cpu"),
-        metric_extractor=MetricExtractor("auc"),
-    )
-
-    with patch("orchard.optimization.objective.training_executor.validate_epoch") as mock_validate:
-        mock_validate.return_value = None
-        result = executor._validate_epoch()
-
-        assert result == _FALLBACK_METRICS
-
-
 # TESTS: FULL EXECUTION LOOP
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
