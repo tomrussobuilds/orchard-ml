@@ -18,7 +18,7 @@ from orchard.core.environment import (
     apply_cpu_threads,
     configure_system_libraries,
     detect_best_device,
-    get_cuda_name,
+    get_accelerator_name,
     get_num_workers,
     get_vram_info,
     to_device_obj,
@@ -177,22 +177,37 @@ def test_to_device_obj_case_sensitivity():
         to_device_obj("CPU")
 
 
-# CUDA UTILITIES
+# ACCELERATOR NAME
 @pytest.mark.unit
 @patch("torch.cuda.is_available", return_value=False)
-def test_get_cuda_name_unavailable(mock_cuda):
-    """Test get_cuda_name returns empty string when CUDA unavailable."""
-    name = get_cuda_name()
-    assert name == ""
+def test_get_accelerator_name_cpu(mock_cuda):
+    """Test get_accelerator_name returns empty string when no accelerator."""
+    if hasattr(torch.backends, "mps"):
+        with patch.object(torch.backends.mps, "is_available", return_value=False):
+            name = get_accelerator_name()
+            assert name == ""
+    else:
+        name = get_accelerator_name()
+        assert name == ""
 
 
 @pytest.mark.unit
 @patch("torch.cuda.is_available", return_value=True)
 @patch("torch.cuda.get_device_name", return_value="NVIDIA GeForce RTX 3090")
-def test_get_cuda_name_available(mock_name, mock_cuda):
-    """Test get_cuda_name returns GPU model name when CUDA available."""
-    name = get_cuda_name()
+def test_get_accelerator_name_cuda(mock_name, mock_cuda):
+    """Test get_accelerator_name returns GPU model name when CUDA available."""
+    name = get_accelerator_name()
     assert name == "NVIDIA GeForce RTX 3090"
+
+
+@pytest.mark.unit
+@patch("torch.cuda.is_available", return_value=False)
+def test_get_accelerator_name_mps(mock_cuda):
+    """Test get_accelerator_name returns Apple Silicon string when MPS available."""
+    if hasattr(torch.backends, "mps"):
+        with patch.object(torch.backends.mps, "is_available", return_value=True):
+            name = get_accelerator_name()
+            assert "Apple Silicon" in name
 
 
 @pytest.mark.unit

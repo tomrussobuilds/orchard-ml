@@ -12,6 +12,8 @@ from pathlib import Path
 
 import numpy as np
 
+from ...exceptions import OrchardDatasetError
+
 
 # DATA VERIFICATION
 def validate_npz_keys(data: np.lib.npyio.NpzFile) -> None:
@@ -36,7 +38,7 @@ def validate_npz_keys(data: np.lib.npyio.NpzFile) -> None:
     missing = required_keys - set(data.files)
     if missing:
         found = list(data.files)
-        raise ValueError(
+        raise OrchardDatasetError(
             f"NPZ archive is corrupted or invalid. Missing keys: {missing} | Found keys: {found}"
         )
 

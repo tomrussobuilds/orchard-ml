@@ -134,7 +134,7 @@ class TestFromRecipe:
         recipe = tmp_path / "recipe.yaml"
         recipe.write_text(yaml.dump(yaml_content))
 
-        with pytest.raises(KeyError, match="nonexistent_dataset"):
+        with pytest.raises(ValueError, match="nonexistent_dataset"):
             Config.from_recipe(recipe)
 
     def test_none_overrides_ignored(self, tmp_path):

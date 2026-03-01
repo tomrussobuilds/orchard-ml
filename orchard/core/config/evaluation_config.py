@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from ...exceptions import OrchardConfigError
 from .types import PositiveInt
 
 
@@ -84,5 +85,7 @@ class EvaluationConfig(BaseModel):
         supported = {"xlsx", "csv", "json"}
         normalized = v.lower()
         if normalized not in supported:
-            raise ValueError(f"Unsupported report_format '{v}'. Choose from: {sorted(supported)}")
+            raise OrchardConfigError(
+                f"Unsupported report_format '{v}'. Choose from: {sorted(supported)}"
+            )
         return normalized

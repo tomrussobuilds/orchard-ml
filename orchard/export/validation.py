@@ -19,6 +19,7 @@ import torch
 import torch.nn as nn
 
 from ..core import LOGGER_NAME, LogStyle
+from ..exceptions import OrchardExportError
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -55,7 +56,7 @@ def validate_export(
     """
     # Check if ONNX file exists
     if not onnx_path.exists():
-        raise FileNotFoundError(f"ONNX model not found: {onnx_path}")
+        raise OrchardExportError(f"ONNX model not found: {onnx_path}")
 
     try:
         import onnxruntime as ort

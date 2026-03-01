@@ -15,6 +15,7 @@ import pytest
 import torch
 import torch.nn as nn
 
+from orchard.exceptions import OrchardExportError
 from orchard.trainer import ModelTrainer
 from orchard.trainer._scheduling import step_scheduler
 
@@ -279,7 +280,7 @@ def test_load_best_weights_file_not_found(trainer):
     if trainer.best_path.exists():
         trainer.best_path.unlink()
 
-    with pytest.raises(Exception):
+    with pytest.raises(OrchardExportError, match="checkpoint not found"):
         trainer.load_best_weights()
 
 

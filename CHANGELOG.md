@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - centralise device placement, add resolution validator, cleanup naming
+- centralise device placement, add resolution validator, cleanup naming
 
 ## [0.1.8] - 2026-02-28
 

@@ -353,6 +353,35 @@ class TestCLIRun:
 
         assert result.exit_code != 0
 
+    @patch("orchard.create_tracker")
+    @patch("orchard.run_training_phase")
+    @patch("orchard.RootOrchestrator")
+    @patch("orchard.Config")
+    def test_run_orchard_error_clean_exit(
+        self, mock_cfg_cls, mock_orch_cls, mock_train, mock_tracker_fn, tmp_path
+    ):
+        """OrchardError produces clean exit without traceback."""
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+        from orchard.exceptions import OrchardConfigError
+
+        recipe = tmp_path / "recipe.yaml"
+        recipe.write_text("dataset:\n  name: test\n")
+
+        mock_cfg = MagicMock()
+        mock_cfg.optuna = None
+        mock_cfg_cls.from_recipe.return_value = mock_cfg
+
+        mock_orch_cls.return_value.__enter__.return_value = MagicMock()
+        mock_train.side_effect = OrchardConfigError("bad config value")
+        mock_tracker_fn.return_value = MagicMock()
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["run", str(recipe)])
+
+        assert result.exit_code != 0
+
 
 # CLI INIT COMMAND
 @pytest.mark.unit

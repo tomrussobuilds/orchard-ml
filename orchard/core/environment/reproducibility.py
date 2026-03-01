@@ -77,6 +77,7 @@ def set_seed(seed: int, strict: bool = False) -> None:
         if strict:
             os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
+    # Inline MPS check: leaf module, no intra-package imports from hardware.py
     if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
         torch.mps.manual_seed(seed)
 

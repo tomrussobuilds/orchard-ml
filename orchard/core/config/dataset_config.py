@@ -19,6 +19,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from ...exceptions import OrchardConfigError
 from ..metadata import DatasetMetadata, DatasetRegistryWrapper
 from ..paths import DATASET_DIR, SUPPORTED_RESOLUTIONS
 from .types import ImageSize, PositiveInt, Probability, ValidatedPath
@@ -89,7 +90,7 @@ class DatasetConfig(BaseModel):
         Enforce resolution against supported registry values.
         """
         if v not in SUPPORTED_RESOLUTIONS:
-            raise ValueError(
+            raise OrchardConfigError(
                 f"resolution={v} is not supported. Choose from {sorted(SUPPORTED_RESOLUTIONS)}."
             )
         return v
@@ -101,7 +102,7 @@ class DatasetConfig(BaseModel):
         Enforce minimum sample count for meaningful train/val/test splits.
         """
         if v is not None and v < 20:
-            raise ValueError(
+            raise OrchardConfigError(
                 f"max_samples={v} is too small for meaningful train/val/test splits. "
                 f"Use max_samples >= 20 or None to load all samples."
             )

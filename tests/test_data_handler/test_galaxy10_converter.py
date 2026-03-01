@@ -18,6 +18,7 @@ from orchard.data_handler.fetchers.galaxy10_converter import (
     download_galaxy10_h5,
     ensure_galaxy10_npz,
 )
+from orchard.exceptions import OrchardDatasetError
 
 
 # DOWNLOAD TESTS
@@ -68,7 +69,9 @@ def test_download_galaxy10_h5_retry_on_error(tmp_path):
                 requests.ConnectionError("Network error"),
             ]
 
-            with pytest.raises(RuntimeError, match="Failed to download Galaxy10 after 2 attempts"):
+            with pytest.raises(
+                OrchardDatasetError, match="Failed to download Galaxy10 after 2 attempts"
+            ):
                 download_galaxy10_h5(url, target_h5, retries=2, timeout=60)
 
             assert mock_get.call_count == 2
@@ -93,7 +96,7 @@ def test_download_galaxy10_h5_cleans_tmp_on_failure(tmp_path):
     with patch("orchard.data_handler.fetchers.galaxy10_converter.requests.get") as mock_get:
         mock_get.return_value.__enter__.return_value = mock_response
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(OrchardDatasetError):
             download_galaxy10_h5(url, target_h5, retries=1, timeout=60)
 
         assert not tmp_file.exists()

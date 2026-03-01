@@ -21,6 +21,7 @@ import torch
 from orchard.core import DatasetRegistryWrapper
 from orchard.data_handler import DataLoaderFactory, create_temp_loader
 from orchard.data_handler.dataset import VisionDataset
+from orchard.exceptions import OrchardDatasetError
 
 
 # MOCK CONFIG AND METADATA
@@ -432,7 +433,7 @@ def test_balancing_sampler_missing_class_raises(mock_cfg, mock_metadata):
         dataset.labels = np.array([0, 1, 0, 1])  # only 2 of 3 classes
         mock_cfg.dataset.num_classes = 3
 
-        with pytest.raises(ValueError, match="missing 1 of 3 classes"):
+        with pytest.raises(OrchardDatasetError, match="missing 1 of 3 classes"):
             factory._get_balancing_sampler(dataset)
 
 

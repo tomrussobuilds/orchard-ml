@@ -15,6 +15,7 @@ import torch.nn as nn
 
 from orchard.core.io.checkpoints import load_model_weights
 from orchard.core.io.data_io import md5_checksum, validate_npz_keys
+from orchard.exceptions import OrchardDatasetError, OrchardExportError
 
 
 # VALIDATE NPZ KEYS
@@ -40,7 +41,7 @@ def test_validate_npz_keys_missing_keys():
     mock_npz = MagicMock()
     mock_npz.files = ["train_images", "train_labels"]
 
-    with pytest.raises(ValueError, match="Missing keys"):
+    with pytest.raises(OrchardDatasetError, match="Missing keys"):
         validate_npz_keys(mock_npz)
 
 
@@ -67,7 +68,7 @@ def test_validate_npz_keys_empty_file():
     mock_npz = MagicMock()
     mock_npz.files = []
 
-    with pytest.raises(ValueError, match="Missing keys"):
+    with pytest.raises(OrchardDatasetError, match="Missing keys"):
         validate_npz_keys(mock_npz)
 
 
@@ -134,7 +135,7 @@ def test_load_model_weights_file_not_found():
     nonexistent_path = Path("/nonexistent/model.pth")
     device = torch.device("cpu")
 
-    with pytest.raises(FileNotFoundError, match="not found"):
+    with pytest.raises(OrchardExportError, match="not found"):
         load_model_weights(mock_model, nonexistent_path, device)
 
 
@@ -211,7 +212,7 @@ def test_load_model_weights_architecture_mismatch(mock_torch_load, tmp_path):
 
     device = torch.device("cpu")
 
-    with pytest.raises(RuntimeError, match="architecture mismatch"):
+    with pytest.raises(OrchardExportError, match="architecture mismatch"):
         load_model_weights(model, checkpoint_path, device)
 
 
@@ -227,7 +228,7 @@ def test_load_model_weights_missing_keys(mock_torch_load, tmp_path):
     mock_torch_load.return_value = {"weight": torch.randn(5, 10)}
     device = torch.device("cpu")
 
-    with pytest.raises(RuntimeError, match="missing keys"):
+    with pytest.raises(OrchardExportError, match="missing keys"):
         load_model_weights(model, checkpoint_path, device)
 
 
@@ -244,7 +245,7 @@ def test_load_model_weights_extra_keys(mock_torch_load, tmp_path):
     mock_torch_load.return_value = state_dict
     device = torch.device("cpu")
 
-    with pytest.raises(RuntimeError, match="unexpected keys"):
+    with pytest.raises(OrchardExportError, match="unexpected keys"):
         load_model_weights(model, checkpoint_path, device)
 
 
@@ -259,7 +260,7 @@ def test_load_model_weights_empty_state_dict(mock_torch_load, tmp_path):
     mock_torch_load.return_value = {}
     device = torch.device("cpu")
 
-    with pytest.raises(RuntimeError, match="missing keys"):
+    with pytest.raises(OrchardExportError, match="missing keys"):
         load_model_weights(model, checkpoint_path, device)
 
 

@@ -32,6 +32,7 @@ from torch.utils.data import DataLoader
 
 from ..core import LOGGER_NAME, LogStyle, TrainingConfig, load_model_weights
 from ..core.paths import METRIC_ACCURACY, METRIC_LOSS
+from ..exceptions import OrchardExportError
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..tracking import TrackerProtocol
@@ -341,7 +342,7 @@ class ModelTrainer:
 
         Raises:
             RuntimeError: If the state-dict is incompatible with the model.
-            FileNotFoundError: If the checkpoint file does not exist.
+            OrchardExportError: If the checkpoint file does not exist.
         """
         try:
             load_model_weights(model=self.model, path=self.best_path, device=self.device)
@@ -351,6 +352,6 @@ class ModelTrainer:
             logger.info(  # pragma: no mutant
                 f"{LogStyle.INDENT}{LogStyle.ARROW} {'Checkpoint':<18}: {self.best_path.name}"
             )
-        except (RuntimeError, FileNotFoundError) as e:
+        except (RuntimeError, OrchardExportError) as e:
             logger.error(f"{LogStyle.INDENT}{LogStyle.FAILURE} Weight restoration failed: {e}")
             raise

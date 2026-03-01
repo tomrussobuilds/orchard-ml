@@ -18,6 +18,7 @@ from PIL import Image
 from ...core.metadata import DatasetMetadata
 from ...core.paths import LOGGER_NAME
 from ...core.paths.constants import LogStyle
+from ...exceptions import OrchardDatasetError
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -74,11 +75,13 @@ def download_galaxy10_h5(
                 tmp_path.unlink()
 
             if attempt == retries:
-                raise RuntimeError(f"Failed to download Galaxy10 after {retries} attempts") from e
+                raise OrchardDatasetError(
+                    f"Failed to download Galaxy10 after {retries} attempts"
+                ) from e
 
             logger.warning(f"Download attempt {attempt} failed: {e}")
 
-    raise RuntimeError("Unexpected error in Galaxy10 download")  # pragma: no cover
+    raise OrchardDatasetError("Unexpected error in Galaxy10 download")  # pragma: no cover
 
 
 def convert_galaxy10_to_npz(

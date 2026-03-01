@@ -14,6 +14,7 @@ import torch.nn as nn
 # Skip entire module if onnxscript not available (required by torch.onnx.export)
 pytest.importorskip("onnxscript")
 
+from orchard.exceptions import OrchardExportError  # noqa: E402
 from orchard.export.validation import validate_export  # noqa: E402
 
 
@@ -250,7 +251,7 @@ def test_validate_missing_onnx_file_raises_error(tmp_path):
     model = SimpleTestModel()
     onnx_path = tmp_path / "nonexistent.onnx"
 
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(OrchardExportError):
         validate_export(
             pytorch_model=model,
             onnx_path=onnx_path,

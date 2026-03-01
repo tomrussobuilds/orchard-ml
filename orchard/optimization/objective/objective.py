@@ -41,6 +41,7 @@ from ...core import (
     DatasetConfig,
     LogStyle,
     TrainingConfig,
+    has_mps_backend,
     log_trial_start,
 )
 
@@ -325,5 +326,5 @@ class OptunaObjective:
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        if has_mps_backend():
             torch.mps.empty_cache()

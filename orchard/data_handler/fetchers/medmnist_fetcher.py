@@ -16,6 +16,7 @@ import requests
 
 from ...core import DatasetMetadata, LogStyle, md5_checksum
 from ...core.paths import LOGGER_NAME
+from ...exceptions import OrchardDatasetError
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -73,7 +74,7 @@ def ensure_medmnist_npz(
             if not _is_valid_npz(tmp_path, metadata.md5_checksum):
                 actual_md5 = md5_checksum(tmp_path)
                 logger.error(f"MD5 mismatch: expected {metadata.md5_checksum}, got {actual_md5}")
-                raise ValueError("Downloaded file failed MD5 or header validation")
+                raise OrchardDatasetError("Downloaded file failed MD5 or header validation")
 
             # Atomic move
             tmp_path.replace(target_npz)
@@ -82,13 +83,13 @@ def ensure_medmnist_npz(
             )
             return target_npz
 
-        except (ValueError, OSError) as e:
+        except (OrchardDatasetError, OSError) as e:
             if tmp_path.exists():
                 tmp_path.unlink()
 
             if attempt == retries:
                 logger.error(f"Download failed after {retries} attempts")
-                raise RuntimeError(f"Could not download {metadata.name}") from e
+                raise OrchardDatasetError(f"Could not download {metadata.name}") from e
 
             actual_delay = _retry_delay(e, delay, attempt)
             logger.warning(
@@ -96,7 +97,7 @@ def ensure_medmnist_npz(
             )
             time.sleep(actual_delay)
 
-    raise RuntimeError("Unexpected error in dataset download logic.")  # pragma: no cover
+    raise OrchardDatasetError("Unexpected error in dataset download logic.")  # pragma: no cover
 
 
 # PRIVATE HELPERS
@@ -143,7 +144,7 @@ def _stream_download(url: str, tmp_path: Path, chunk_size: int = 8192) -> None:
 
         content_type = r.headers.get("Content-type", "")
         if "text/html" in content_type:
-            raise ValueError("Downloaded file is an HTML page, not the expected NPZ file.")
+            raise OrchardDatasetError("Downloaded file is an HTML page, not the expected NPZ file.")
 
         with open(tmp_path, "wb") as f:
             for chunk in r.iter_content(chunk_size=chunk_size):

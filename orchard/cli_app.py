@@ -20,6 +20,8 @@ from typing import Annotated, Any
 
 import typer
 
+from .exceptions import OrchardError
+
 app = typer.Typer(
     name="orchard",
     add_completion=True,
@@ -182,6 +184,10 @@ def run(
 
         except KeyboardInterrupt:
             run_logger.warning(f"{LogStyle.WARNING} Interrupted by user.")
+            raise SystemExit(1)
+
+        except OrchardError as e:
+            run_logger.error(f"{LogStyle.FAILURE} {e}")
             raise SystemExit(1)
 
         except Exception as e:  # top-level catch-all for logging; re-raises

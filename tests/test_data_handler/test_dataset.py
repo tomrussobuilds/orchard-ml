@@ -56,7 +56,7 @@ def grayscale_npz(tmp_path: Path):
 @pytest.mark.unit
 def test_from_npz_requires_existing_file(tmp_path):
     """from_npz should fail if NPZ does not exist."""
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(Exception, match="Dataset file not found"):
         VisionDataset.from_npz(path=tmp_path / "missing.npz")
 
 

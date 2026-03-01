@@ -43,8 +43,10 @@ from ..core import (
     DatasetRegistryWrapper,
     LogStyle,
     TrainingConfig,
+    has_mps_backend,
     worker_init_fn,
 )
+from ..exceptions import OrchardDatasetError
 from .dataset import VisionDataset
 from .fetcher import DatasetData
 from .transforms import get_pipeline_transforms
@@ -137,7 +139,7 @@ class DataLoaderFactory:
         expected_classes = self.dataset_cfg.num_classes
         if len(classes) < expected_classes:
             missing = sorted(set(range(expected_classes)) - set(classes))
-            raise ValueError(
+            raise OrchardDatasetError(
                 f"Training set is missing {len(missing)} of {expected_classes} classes "
                 f"{missing} after subsampling (max_samples={self.dataset_cfg.max_samples}). "
                 f"Increase max_samples or disable use_weighted_sampler."
@@ -190,7 +192,7 @@ class DataLoaderFactory:
 
         # Hardware acceleration: Pin memory for CUDA or MPS
         has_cuda = torch.cuda.is_available()
-        has_mps = hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
+        has_mps = has_mps_backend()
 
         return {
             "num_workers": num_workers,

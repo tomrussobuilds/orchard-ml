@@ -25,6 +25,8 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 
+from ..exceptions import OrchardDatasetError
+
 
 # DATASET CLASS
 class VisionDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
@@ -87,7 +89,7 @@ class VisionDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
             seed: Random seed for deterministic subsampling.
         """
         if not path.exists():
-            raise FileNotFoundError(f"Dataset file not found at: {path}")
+            raise OrchardDatasetError(f"Dataset file not found at: {path}")
 
         with np.load(path) as data:
             raw_images = data[f"{split}_images"]

@@ -22,6 +22,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from ...exceptions import OrchardConfigError
 from .types import NonNegativeInt, PositiveInt, ValidatedPath
 
 
@@ -48,7 +49,7 @@ class FloatRange(BaseModel):
         Validate low < high.
         """
         if self.low >= self.high:
-            raise ValueError(
+            raise OrchardConfigError(
                 f"FloatRange low ({self.low}) must be strictly less than high ({self.high})"
             )
         return self
@@ -74,7 +75,7 @@ class IntRange(BaseModel):
         Validate low < high.
         """
         if self.low >= self.high:
-            raise ValueError(
+            raise OrchardConfigError(
                 f"IntRange low ({self.low}) must be strictly less than high ({self.high})"
             )
         return self
@@ -291,9 +292,9 @@ class OptunaConfig(BaseModel):
         """
         if self.model_pool is not None:
             if not self.enable_model_search:
-                raise ValueError("model_pool requires enable_model_search=True")
+                raise OrchardConfigError("model_pool requires enable_model_search=True")
             if len(self.model_pool) < 2:
-                raise ValueError(
+                raise OrchardConfigError(
                     "model_pool must contain at least 2 architectures for meaningful search"
                 )
         return self
@@ -310,7 +311,9 @@ class OptunaConfig(BaseModel):
             Validated OptunaConfig instance.
         """
         if self.storage_type == "postgresql" and self.storage_path is None:
-            raise ValueError("PostgreSQL storage requires storage_path with connection string")
+            raise OrchardConfigError(
+                "PostgreSQL storage requires storage_path with connection string"
+            )
         return self
 
     @model_validator(mode="after")
@@ -325,7 +328,7 @@ class OptunaConfig(BaseModel):
             Validated OptunaConfig instance.
         """
         if self.enable_pruning and self.pruning_warmup_epochs >= self.epochs:
-            raise ValueError(
+            raise OrchardConfigError(
                 f"pruning_warmup_epochs ({self.pruning_warmup_epochs}) "
                 f"must be < epochs ({self.epochs})"
             )
@@ -367,4 +370,4 @@ class OptunaConfig(BaseModel):
         if self.storage_type == "postgresql":
             return str(self.storage_path)
 
-        raise ValueError(f"Unknown storage type: {self.storage_type}")
+        raise OrchardConfigError(f"Unknown storage type: {self.storage_type}")

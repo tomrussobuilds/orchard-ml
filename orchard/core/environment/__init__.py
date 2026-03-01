@@ -27,9 +27,10 @@ from .hardware import (
     apply_cpu_threads,
     configure_system_libraries,
     detect_best_device,
-    get_cuda_name,
+    get_accelerator_name,
     get_num_workers,
     get_vram_info,
+    has_mps_backend,
     to_device_obj,
 )
 from .policy import determine_tta_mode
@@ -47,7 +48,8 @@ __all__ = [
     "to_device_obj",
     "get_num_workers",
     "apply_cpu_threads",
-    "get_cuda_name",
+    "get_accelerator_name",
+    "has_mps_backend",
     "determine_tta_mode",
     "get_vram_info",
     # Reproducibility

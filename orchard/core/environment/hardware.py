@@ -15,6 +15,10 @@ import platform
 import matplotlib
 import torch
 
+# CPU worker bounds for DataLoader subprocesses
+_MIN_WORKERS = 2  # Floor: always at least 2 workers for I/O overlap
+_MAX_WORKERS = 8  # Ceiling: prevent RAM thrashing on high-core machines
+
 
 # SYSTEM CONFIGURATION
 def configure_system_libraries() -> None:
@@ -36,6 +40,11 @@ def configure_system_libraries() -> None:
 
 
 # HARDWARE DETECTION
+def has_mps_backend() -> bool:
+    """Check if MPS backend is available (macOS Apple Silicon)."""
+    return hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
+
+
 def detect_best_device() -> str:
     """
     Detects the most performant accelerator (CUDA > MPS > CPU).
@@ -45,7 +54,7 @@ def detect_best_device() -> str:
     """
     if torch.cuda.is_available():
         return "cuda"
-    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+    if has_mps_backend():
         return "mps"
     return "cpu"
 
@@ -75,14 +84,23 @@ def to_device_obj(device_str: str) -> torch.device:
     return torch.device(device_str)
 
 
-def get_cuda_name() -> str:
-    """Returns GPU model name or empty string if unavailable."""
-    return torch.cuda.get_device_name(0) if torch.cuda.is_available() else ""
+def get_accelerator_name() -> str:
+    """Returns accelerator model name (CUDA GPU or Apple Silicon) or empty string."""
+    if torch.cuda.is_available():
+        return torch.cuda.get_device_name(0)
+    if has_mps_backend():
+        return f"Apple Silicon ({platform.machine()})"
+    return ""
 
 
 def get_vram_info(device_idx: int = 0) -> str:
     """
     Retrieves VRAM availability for a CUDA device.
+
+    Note:
+        MPS (Apple Silicon) does not expose VRAM info via PyTorch —
+        ``torch.mps.mem_get_info()`` does not exist. Returns 'N/A' for
+        non-CUDA devices until Apple provides a public API.
 
     Args:
         device_idx: GPU index to query
@@ -105,10 +123,6 @@ def get_vram_info(device_idx: int = 0) -> str:
 
 
 # CPU MANAGEMENT
-_MIN_WORKERS = 2  # Floor: always at least 2 workers for I/O overlap
-_MAX_WORKERS = 8  # Ceiling: prevent RAM thrashing on high-core machines
-
-
 def get_num_workers() -> int:
     """
     Determines optimal DataLoader workers with RAM stability cap.

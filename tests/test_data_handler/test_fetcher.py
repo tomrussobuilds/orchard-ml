@@ -22,6 +22,7 @@ from orchard.data_handler.fetchers.medmnist_fetcher import (
     _is_valid_npz,
     _stream_download,
 )
+from orchard.exceptions import OrchardDatasetError
 
 
 # FIXTURES
@@ -224,7 +225,7 @@ def test_ensure_dataset_npz_md5_mismatch_raises_error(metadata, monkeypatch):
         lambda _: None,
     )
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(OrchardDatasetError):
         ensure_dataset_npz(metadata, retries=2, delay=0.01)
 
     assert call_count["count"] == 2
@@ -247,7 +248,7 @@ def test_ensure_dataset_npz_retries_and_fails(metadata, monkeypatch):
         lambda _: None,
     )
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(OrchardDatasetError):
         ensure_dataset_npz(metadata, retries=2, delay=0.01)
 
 
@@ -275,7 +276,7 @@ def test_ensure_dataset_npz_rate_limit_429(metadata, monkeypatch):
         fake_sleep,
     )
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(OrchardDatasetError):
         ensure_dataset_npz(metadata, retries=3, delay=1.0)
 
     assert call_count["count"] == 3
@@ -303,7 +304,7 @@ def test_ensure_dataset_npz_cleans_up_tmp_on_error(metadata, tmp_path, monkeypat
         lambda _: None,
     )
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(OrchardDatasetError):
         ensure_dataset_npz(metadata, retries=1, delay=0.01)
 
     assert not tmp_file_path.exists()
@@ -315,7 +316,7 @@ def test_ensure_dataset_npz_error_without_response_attribute(metadata, monkeypat
     sleep_calls = []
 
     def fake_stream_download(url, tmp_path):
-        raise ValueError("Some error without response")
+        raise OSError("Some error without response")
 
     def fake_sleep(delay):
         sleep_calls.append(delay)
@@ -329,7 +330,7 @@ def test_ensure_dataset_npz_error_without_response_attribute(metadata, monkeypat
         fake_sleep,
     )
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(OrchardDatasetError):
         ensure_dataset_npz(metadata, retries=2, delay=2.0)
 
     assert sleep_calls[0] == pytest.approx(2.0)
@@ -395,7 +396,7 @@ def test_stream_download_html_content_raises_error(tmp_path, monkeypatch):
 
     monkeypatch.setattr("requests.get", fake_get)
 
-    with pytest.raises(ValueError, match="HTML page"):
+    with pytest.raises(OrchardDatasetError, match="HTML page"):
         _stream_download("https://example.com/file.npz", output_path)
 
 

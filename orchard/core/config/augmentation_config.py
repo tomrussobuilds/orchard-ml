@@ -21,6 +21,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from ...exceptions import OrchardConfigError
 from .types import (
     BlurSigma,
     KernelSize,
@@ -77,5 +78,5 @@ class AugmentationConfig(BaseModel):
     @classmethod
     def _kernel_must_be_odd(cls, v: int) -> int:
         if v % 2 == 0:
-            raise ValueError(f"tta_blur_kernel_size must be odd, got {v}")
+            raise OrchardConfigError(f"tta_blur_kernel_size must be odd, got {v}")
         return v

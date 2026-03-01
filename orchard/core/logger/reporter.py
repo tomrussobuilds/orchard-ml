@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Protocol
 import torch
 from pydantic import BaseModel, ConfigDict
 
-from ..environment import determine_tta_mode, get_cuda_name, get_vram_info
+from ..environment import determine_tta_mode, get_accelerator_name, get_vram_info
 from ..paths.constants import LogStyle
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -179,14 +179,15 @@ class Reporter(BaseModel):
                 f"FALLBACK: Requested '{requested_device}' unavailable, using CPU"
             )
 
-        if active_type == "cuda":
+        if active_type in ("cuda", "mps"):
             logger_instance.info(  # pragma: no mutant
-                f"{LogStyle.INDENT}{LogStyle.ARROW} {'GPU Model':<18}: {get_cuda_name()}"
+                f"{LogStyle.INDENT}{LogStyle.ARROW} {'Accelerator':<18}: {get_accelerator_name()}"
             )
-            logger_instance.info(  # pragma: no mutant
-                f"{LogStyle.INDENT}{LogStyle.ARROW} "
-                f"{'VRAM Available':<18}: {get_vram_info(device.index or 0)}"
-            )
+            if active_type == "cuda":
+                logger_instance.info(  # pragma: no mutant
+                    f"{LogStyle.INDENT}{LogStyle.ARROW} "
+                    f"{'VRAM Available':<18}: {get_vram_info(device.index or 0)}"
+                )
 
         logger_instance.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'DataLoader':<18}: {num_workers} workers"
@@ -311,19 +312,19 @@ class Reporter(BaseModel):
         if export_cfg is None:
             return
 
-        I, A = LogStyle.INDENT, LogStyle.ARROW  # noqa: E741  # pragma: no mutant
+        IND, A = LogStyle.INDENT, LogStyle.ARROW  # pragma: no mutant
         logger_instance.info("[EXPORT]")  # pragma: no mutant
         logger_instance.info(
-            f"{I}{A} {'Format':<18}: {export_cfg.format.upper()}"
+            f"{IND}{A} {'Format':<18}: {export_cfg.format.upper()}"
         )  # pragma: no mutant
         logger_instance.info(
-            f"{I}{A} {'Opset Version':<18}: {export_cfg.opset_version}"
+            f"{IND}{A} {'Opset Version':<18}: {export_cfg.opset_version}"
         )  # pragma: no mutant
         logger_instance.info(
-            f"{I}{A} {'Validate':<18}: {export_cfg.validate_export}"
+            f"{IND}{A} {'Validate':<18}: {export_cfg.validate_export}"
         )  # pragma: no mutant
         if export_cfg.quantize:
             logger_instance.info(  # pragma: no mutant
-                f"{I}{A} {'Quantize':<18}: INT8 ({export_cfg.quantization_backend})"
+                f"{IND}{A} {'Quantize':<18}: INT8 ({export_cfg.quantization_backend})"
             )
         logger_instance.info("")  # pragma: no mutant

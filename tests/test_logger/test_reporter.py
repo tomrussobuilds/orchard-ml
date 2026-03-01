@@ -534,7 +534,7 @@ def test_reporter_log_hardware_section_cuda_device():
 
     mock_device = torch.device("cuda")
 
-    with patch("orchard.core.logger.reporter.get_cuda_name", return_value="NVIDIA RTX 5070"):
+    with patch("orchard.core.logger.reporter.get_accelerator_name", return_value="NVIDIA RTX 5070"):
         with patch("orchard.core.logger.reporter.get_vram_info", return_value="8 GB"):
             reporter._log_hardware_section(
                 logger_instance=mock_logger,

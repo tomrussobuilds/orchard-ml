@@ -25,6 +25,7 @@ from pydantic import BaseModel, ConfigDict
 from ..environment import (
     DuplicateProcessCleaner,
     ensure_single_instance,
+    has_mps_backend,
     release_single_instance,
 )
 from ..paths.constants import LOGGER_NAME, LogStyle
@@ -88,7 +89,7 @@ class InfrastructureManager(BaseModel):
         3. release_resources(): Release lock, flush caches
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True)
+    model_config = ConfigDict(arbitrary_types_allowed=True, frozen=True, extra="forbid")
 
     def prepare_environment(
         self, cfg: HardwareAwareConfig, logger: logging.Logger | None = None
@@ -186,7 +187,7 @@ class InfrastructureManager(BaseModel):
             torch.cuda.empty_cache()
             log.debug(f" {LogStyle.ARROW} CUDA cache cleared.")  # pragma: no mutant
 
-        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        if has_mps_backend():
             try:
                 torch.mps.empty_cache()
                 log.debug(f" {LogStyle.ARROW} MPS cache cleared.")  # pragma: no mutant

@@ -18,6 +18,8 @@ from pathlib import Path
 
 import torch
 
+from ...exceptions import OrchardExportError
+
 
 #  WEIGHT MANAGEMENT
 def load_model_weights(model: torch.nn.Module, path: Path, device: torch.device) -> None:
@@ -41,7 +43,7 @@ def load_model_weights(model: torch.nn.Module, path: Path, device: torch.device)
         >>> load_model_weights(model, checkpoint_path, device)
     """
     if not path.exists():
-        raise FileNotFoundError(f"Model checkpoint not found at: {path}")
+        raise OrchardExportError(f"Model checkpoint not found at: {path}")
 
     # weights_only=True is used for security (avoids arbitrary code execution)
     state_dict = torch.load(path, map_location=device, weights_only=True)
@@ -57,7 +59,7 @@ def load_model_weights(model: torch.nn.Module, path: Path, device: torch.device)
             parts.append(f"missing keys: {sorted(missing)[:5]}")
         if unexpected:
             parts.append(f"unexpected keys: {sorted(unexpected)[:5]}")
-        raise RuntimeError(
+        raise OrchardExportError(
             f"Checkpoint architecture mismatch ({', '.join(parts)}). "
             "Ensure the config matches the architecture used during training."
         )

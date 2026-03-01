@@ -22,6 +22,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from ...exceptions import OrchardConfigError
 from .types import (
     BatchSize,
     GradNorm,
@@ -130,5 +131,7 @@ class TrainingConfig(BaseModel):
             Validated TrainingConfig instance.
         """
         if self.use_amp and self.batch_size < 4:
-            raise ValueError("AMP enabled with very small batch size (<4) can cause NaN gradients.")
+            raise OrchardConfigError(
+                "AMP enabled with very small batch size (<4) can cause NaN gradients."
+            )
         return self

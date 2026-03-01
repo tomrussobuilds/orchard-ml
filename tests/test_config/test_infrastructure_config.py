@@ -184,6 +184,13 @@ def test_infrastructure_manager_frozen():
         manager.new_field = "should_fail"
 
 
+@pytest.mark.unit
+def test_infrastructure_manager_rejects_extra_fields():
+    """Test InfrastructureManager forbids extra fields."""
+    with pytest.raises(ValidationError):
+        InfrastructureManager(foo="bar")
+
+
 # INTEGRATION: WITH OPTUNA CONFIG
 @pytest.mark.integration
 def test_optuna_hardware_integration():

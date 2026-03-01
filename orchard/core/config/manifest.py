@@ -23,6 +23,7 @@ from typing import Any, Final
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from ...exceptions import OrchardConfigError
 from ..io import load_config_from_yaml
 from ..metadata.wrapper import DatasetRegistryWrapper
 from ..paths import PROJECT_ROOT
@@ -224,14 +225,14 @@ class Config(BaseModel):
         dataset_section = raw_data.get("dataset", {})
         ds_name = dataset_section.get("name")
         if not ds_name:
-            raise ValueError(f"Recipe '{recipe_path}' must specify 'dataset.name'")
+            raise OrchardConfigError(f"Recipe '{recipe_path}' must specify 'dataset.name'")
 
         resolution = dataset_section.get("resolution", 28)
         wrapper = DatasetRegistryWrapper(resolution=resolution)
 
         if ds_name not in wrapper.registry:
             available = list(wrapper.registry.keys())
-            raise KeyError(
+            raise OrchardConfigError(
                 f"Dataset '{ds_name}' not found at resolution {resolution}. "
                 f"Available at {resolution}px: {available}"
             )
@@ -288,7 +289,7 @@ class _CrossDomainValidator:
         resolution = config.dataset.resolution
 
         if model_name in _MODELS_LOW_RES and resolution not in _RESOLUTIONS_LOW_RES:
-            raise ValueError(
+            raise OrchardConfigError(
                 f"'{config.architecture.name}' requires resolution "
                 f"{sorted(_RESOLUTIONS_LOW_RES)}, got {resolution}. "
                 f"Use a 224x224 architecture "
@@ -296,7 +297,7 @@ class _CrossDomainValidator:
             )
 
         if model_name in _MODELS_224_ONLY and resolution not in _RESOLUTIONS_224_ONLY:
-            raise ValueError(
+            raise OrchardConfigError(
                 f"'{config.architecture.name}' requires resolution=224, got {resolution}. "
                 f"Use resnet_18 or mini_cnn for low resolution."
             )
@@ -310,7 +311,7 @@ class _CrossDomainValidator:
             ValueError: If mixup_epochs exceeds total epochs.
         """
         if config.training.mixup_epochs > config.training.epochs:
-            raise ValueError(
+            raise OrchardConfigError(
                 f"mixup_epochs ({config.training.mixup_epochs}) exceeds "
                 f"total epochs ({config.training.epochs})"
             )
@@ -352,7 +353,7 @@ class _CrossDomainValidator:
             ValueError: If pretrained model used with non-RGB input.
         """
         if config.architecture.pretrained and config.dataset.effective_in_channels != 3:
-            raise ValueError(
+            raise OrchardConfigError(
                 f"Pretrained {config.architecture.name} requires RGB (3 channels), "
                 f"but dataset will provide {config.dataset.effective_in_channels} channels. "
                 f"set 'force_rgb: true' in dataset config or disable pretraining"
@@ -367,7 +368,7 @@ class _CrossDomainValidator:
             ValueError: If min_lr >= learning_rate.
         """
         if config.training.min_lr >= config.training.learning_rate:
-            raise ValueError(
+            raise OrchardConfigError(
                 f"min_lr ({config.training.min_lr}) must be less than "
                 f"learning_rate ({config.training.learning_rate})"
             )
@@ -403,7 +404,7 @@ class _CrossDomainValidator:
             return
         num_classes = config.dataset.num_classes
         if config.dataset.max_samples < num_classes:
-            raise ValueError(
+            raise OrchardConfigError(
                 f"max_samples ({config.dataset.max_samples}) must be >= num_classes "
                 f"({num_classes}). Class balancing requires at least one sample per class."
             )
