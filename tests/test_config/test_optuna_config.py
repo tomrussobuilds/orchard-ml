@@ -162,28 +162,42 @@ def test_storage_type_options():
     """Test valid storage types are accepted."""
     for storage in ["memory", "sqlite", "postgresql"]:
         if storage == "postgresql":
-            config = OptunaConfig(storage_type=storage, storage_path="postgres://localhost")
+            config = OptunaConfig(storage_type=storage, postgresql_url="postgresql://localhost/db")
         else:
             config = OptunaConfig(storage_type=storage)
         assert config.storage_type == storage
 
 
 @pytest.mark.unit
-def test_postgresql_without_storage_path_rejected():
-    """Test PostgreSQL storage requires storage_path."""
-    with pytest.raises(ValidationError, match="PostgreSQL.*storage_path"):
-        OptunaConfig(storage_type="postgresql", storage_path=None)
+def test_postgresql_without_url_rejected():
+    """Test PostgreSQL storage requires postgresql_url."""
+    with pytest.raises(ValidationError, match="PostgreSQL.*postgresql_url"):
+        OptunaConfig(storage_type="postgresql")
 
 
 @pytest.mark.unit
-def test_postgresql_with_storage_path_valid():
-    """Test PostgreSQL with storage_path is valid."""
+def test_postgresql_with_url_valid():
+    """Test PostgreSQL with postgresql_url is valid."""
     config = OptunaConfig(
-        storage_type="postgresql", storage_path="postgresql://user:pass@localhost/db"
+        storage_type="postgresql", postgresql_url="postgresql://user:pass@localhost/db"
     )
 
     assert config.storage_type == "postgresql"
-    assert config.storage_path is not None
+    assert config.postgresql_url == "postgresql://user:pass@localhost/db"
+
+
+@pytest.mark.unit
+def test_postgresql_url_invalid_scheme_rejected():
+    """Test postgresql_url must start with postgresql:// or postgresql+."""
+    with pytest.raises(ValidationError, match="must start with"):
+        OptunaConfig(storage_type="postgresql", postgresql_url="mysql://localhost/db")
+
+
+@pytest.mark.unit
+def test_postgresql_url_without_postgresql_storage_rejected():
+    """Test postgresql_url cannot be set when storage_type is not postgresql."""
+    with pytest.raises(ValidationError, match="postgresql_url is set but"):
+        OptunaConfig(storage_type="sqlite", postgresql_url="postgresql://localhost/db")
 
 
 @pytest.mark.unit
@@ -216,15 +230,14 @@ def test_get_storage_url_sqlite():
 @pytest.mark.unit
 def test_get_storage_url_postgresql():
     """Test get_storage_url() for PostgreSQL backend."""
-    config = OptunaConfig(storage_type="postgresql", storage_path="postgresql://localhost/optuna")
+    config = OptunaConfig(storage_type="postgresql", postgresql_url="postgresql://localhost/optuna")
 
     class MockPaths:
         pass
 
     url = config.get_storage_url(MockPaths())
 
-    assert "localhost" in str(url)
-    assert "optuna" in str(url)
+    assert url == "postgresql://localhost/optuna"
 
 
 @pytest.mark.unit

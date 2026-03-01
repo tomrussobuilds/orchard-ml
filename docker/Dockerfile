@@ -1,26 +1,28 @@
 # =====================================================
 # CUDA-enabled image (works on GPU, falls back to CPU)
 # =====================================================
-FROM nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
+FROM nvidia/cuda:12.6.0-cudnn-runtime-ubuntu24.04
 
 # Avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
 
 # Reproducibility defaults (overridable at runtime with -e)
 ENV PYTHONHASHSEED=0
 ENV CUBLAS_WORKSPACE_CONFIG=:4096:8
 
+# Create non-root user for runtime (UID 1000 for host-mount compatibility).
+# Override at runtime with: docker run -u $(id -u):$(id -g) ...
+RUN groupadd -g 1000 appuser && useradd -m -u 1000 -g appuser appuser
+
 # Headless rendering and cache directories
-# When running with -u $(id -u):$(id -g), the host UID does not exist in
-# /etc/passwd. HOME and USER must be set explicitly so that PyTorch's
-# cache_dir() (which calls getpass.getuser()) and other libs work correctly.
-ENV HOME=/tmp
+ENV HOME=/home/appuser
 ENV USER=appuser
 ENV IN_DOCKER=TRUE
-ENV MPLCONFIGDIR=/tmp/matplotlib_cache
-ENV TORCH_HOME=/tmp/torch_cache
+ENV MPLCONFIGDIR=/home/appuser/.cache/matplotlib
+ENV TORCH_HOME=/home/appuser/.cache/torch
 
 # Merge system dependencies and pip upgrade in one RUN layer
 RUN apt-get update && apt-get install -y \
@@ -43,6 +45,11 @@ COPY . .
 
 # Install the package (editable for local dev, baked for production)
 RUN pip3 install -e .
+
+# Hand ownership to non-root user
+RUN chown -R appuser:appuser /app /home/appuser
+
+USER appuser
 
 # Default command
 ENTRYPOINT ["orchard", "run"]

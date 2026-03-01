@@ -89,3 +89,50 @@ class EvaluationConfig(BaseModel):
                 f"Unsupported report_format '{v}'. Choose from: {sorted(supported)}"
             )
         return normalized
+
+    @field_validator("cmap_confusion")
+    @classmethod
+    def validate_cmap(cls, v: str) -> str:
+        """
+        Validate colormap name against matplotlib registry.
+
+        Args:
+            v: Requested colormap name.
+
+        Returns:
+            Validated colormap name.
+
+        Raises:
+            OrchardConfigError: If colormap is not registered in matplotlib.
+        """
+        from matplotlib import colormaps
+
+        if v not in colormaps:
+            raise OrchardConfigError(
+                f"Unknown matplotlib colormap '{v}'. "
+                f"See matplotlib.org/stable/gallery/color/colormap_reference.html"
+            )
+        return v
+
+    @field_validator("plot_style")
+    @classmethod
+    def validate_style(cls, v: str) -> str:
+        """
+        Validate plot style against matplotlib available styles.
+
+        Args:
+            v: Requested style name.
+
+        Returns:
+            Validated style name.
+
+        Raises:
+            OrchardConfigError: If style is not available in matplotlib.
+        """
+        from matplotlib.pyplot import style
+
+        if v not in style.available:
+            raise OrchardConfigError(
+                f"Unknown matplotlib style '{v}'. " f"Available: {sorted(style.available)}"
+            )
+        return v

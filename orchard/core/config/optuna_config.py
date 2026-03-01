@@ -166,7 +166,8 @@ class OptunaConfig(BaseModel):
         pruner_type: Pruning algorithm ('median', 'percentile', 'hyperband').
         pruning_warmup_epochs: Minimum epochs before pruning can trigger.
         storage_type: Backend for study persistence ('sqlite', 'memory', 'postgresql').
-        storage_path: Path to database file or connection string.
+        storage_path: Path to SQLite database file (auto-generated if None).
+        postgresql_url: PostgreSQL connection string (required when storage_type='postgresql').
         n_jobs: Parallel trial execution (1=sequential, -1=all cores).
         load_if_exists: Resume existing study or create new.
         show_progress_bar: Display tqdm progress during optimization.
@@ -258,6 +259,11 @@ class OptunaConfig(BaseModel):
         default=None, description="Path to SQLite database (auto-generated if None)"
     )
 
+    postgresql_url: str | None = Field(
+        default=None,
+        description="PostgreSQL connection string (e.g. postgresql://user:pass@host/db)",
+    )
+
     # ==================== Execution Policy ====================
     n_jobs: int = Field(default=1, description="Parallel trials (1=sequential, -1=all cores)")
 
@@ -305,14 +311,28 @@ class OptunaConfig(BaseModel):
         Validate storage backend configuration.
 
         Raises:
-            ValueError: If PostgreSQL selected without connection string.
+            OrchardConfigError: If PostgreSQL selected without postgresql_url,
+                or if postgresql_url set with non-postgresql storage_type,
+                or if postgresql_url has an invalid scheme.
 
         Returns:
             Validated OptunaConfig instance.
         """
-        if self.storage_type == "postgresql" and self.storage_path is None:
+        if self.storage_type == "postgresql":
+            if self.postgresql_url is None:
+                raise OrchardConfigError(
+                    "PostgreSQL storage requires postgresql_url "
+                    "(e.g. postgresql://user:pass@host/db)"
+                )
+            if not self.postgresql_url.startswith(("postgresql://", "postgresql+")):
+                raise OrchardConfigError(
+                    f"postgresql_url must start with 'postgresql://' or 'postgresql+', "
+                    f"got: '{self.postgresql_url[:30]}...'"
+                )
+        elif self.postgresql_url is not None:
             raise OrchardConfigError(
-                "PostgreSQL storage requires storage_path with connection string"
+                f"postgresql_url is set but storage_type is '{self.storage_type}', "
+                f"not 'postgresql'"
             )
         return self
 
@@ -368,6 +388,6 @@ class OptunaConfig(BaseModel):
             return f"sqlite:///{db_path}"
 
         if self.storage_type == "postgresql":
-            return str(self.storage_path)
+            return self.postgresql_url
 
         raise OrchardConfigError(f"Unknown storage type: {self.storage_type}")

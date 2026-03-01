@@ -122,6 +122,13 @@ def test_colormap_string():
 
 
 @pytest.mark.unit
+def test_colormap_invalid_rejected():
+    """Test cmap_confusion rejects unknown colormap names."""
+    with pytest.raises(ValidationError, match="Unknown matplotlib colormap"):
+        EvaluationConfig(cmap_confusion="not_a_real_colormap_xyz")
+
+
+@pytest.mark.unit
 def test_plot_style_string():
     """Test plot_style accepts string values."""
     config = EvaluationConfig(plot_style="ggplot")
@@ -129,6 +136,13 @@ def test_plot_style_string():
 
     config = EvaluationConfig(plot_style="seaborn-v0_8-darkgrid")
     assert config.plot_style == "seaborn-v0_8-darkgrid"
+
+
+@pytest.mark.unit
+def test_plot_style_invalid_rejected():
+    """Test plot_style rejects unknown style names."""
+    with pytest.raises(ValidationError, match="Unknown matplotlib style"):
+        EvaluationConfig(plot_style="not_a_real_style_xyz")
 
 
 @pytest.mark.unit

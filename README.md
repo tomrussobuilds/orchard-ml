@@ -325,6 +325,7 @@ orchard run my_run.yaml
 
 | Guide | Covers |
 |-------|--------|
+| [**Documentation Hub**](https://tomrussobuilds.github.io/orchard-ml/) | Full online docs with searchable API reference, guides, and tutorials |
 | [Framework Guide](docs/guide/FRAMEWORK.md) | System architecture diagrams, design principles, component deep-dives |
 | [Architecture Guide](docs/guide/ARCHITECTURE.md) | Supported model architectures, weight transfer, grayscale adaptation, `MixUp` |
 | [Configuration Guide](docs/guide/CONFIGURATION.md) | Full parameter reference, usage patterns, adding new datasets |

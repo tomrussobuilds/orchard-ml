@@ -55,6 +55,28 @@ jobs:
       - name: Run mypy (type checking)
         run: mypy orchard/
 
+      - name: Check requirements.txt in sync with pyproject.toml
+        run: |
+          python -c "
+          import tomllib, pathlib, re
+          with open('pyproject.toml', 'rb') as f:
+              deps = tomllib.load(f)['project']['dependencies']
+          # Normalize: strip markers, whitespace, and compare package names + versions
+          def norm(d):
+              d = re.split(r';\s*', d)[0].strip()  # drop env markers
+              return d
+          expected = sorted(norm(d) for d in deps)
+          actual = [l.strip() for l in pathlib.Path('requirements.txt').read_text().splitlines()
+                    if l.strip() and not l.startswith('#')]
+          actual = sorted(norm(d) for d in actual)
+          if expected != actual:
+              print('requirements.txt is out of sync with pyproject.toml')
+              print(f'  pyproject.toml: {expected}')
+              print(f'  requirements.txt: {actual}')
+              raise SystemExit(1)
+          print('requirements.txt is in sync')
+          "
+
   # Job 2: Pytest Suite
   test-pytest:
     name: Pytest Suite (Python ${{ matrix.python-version }})
@@ -182,7 +204,7 @@ jobs:
         run: mkdocs build
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa  # v3
         with:
           path: site/
 
@@ -193,7 +215,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e  # v4
 
   # Job 5: Security Scan
   security:
