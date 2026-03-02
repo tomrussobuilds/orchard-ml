@@ -8,6 +8,7 @@ or evaluation workflows.
 
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -75,6 +76,9 @@ class MetricExtractor:
         Update and return best metric achieved within current trial.
 
         Direction-aware: uses max() for maximize, min() for minimize.
+        NaN values are ignored to prevent poisoning the best-metric state
+        (``max(-inf, NaN)`` returns NaN in Python, which would permanently
+        corrupt comparisons).
 
         Args:
             current_metric: Current metric value
@@ -82,6 +86,9 @@ class MetricExtractor:
         Returns:
             Best metric value achieved so far
         """
+        if math.isnan(current_metric):
+            return self.best_metric
+
         comparator = max if self._is_maximize else min
         self.best_metric = comparator(self.best_metric, current_metric)
 

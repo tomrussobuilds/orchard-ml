@@ -15,7 +15,8 @@ import torch
 import torch.nn as nn
 from torch.testing import assert_close
 
-from orchard.evaluation import _get_tta_transforms, adaptive_tta_predict
+from orchard.evaluation import adaptive_tta_predict
+from orchard.evaluation.tta import _get_tta_transforms
 
 
 # FIXTURES

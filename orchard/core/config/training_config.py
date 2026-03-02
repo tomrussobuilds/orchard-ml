@@ -125,7 +125,7 @@ class TrainingConfig(BaseModel):
         Validate AMP compatibility with batch size.
 
         Raises:
-            ValueError: If AMP enabled with batch_size < 4.
+            OrchardConfigError: If AMP enabled with batch_size < 4.
 
         Returns:
             Validated TrainingConfig instance.

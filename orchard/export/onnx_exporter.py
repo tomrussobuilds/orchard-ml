@@ -330,13 +330,13 @@ def _suppress_ort_warnings():
     ONNX graph to work around shape conflicts from the PyTorch dynamo
     exporter.
     """
-    root = logging.getLogger()
-    prev_level = root.level
-    root.setLevel(logging.ERROR)
+    ort_logger = logging.getLogger("onnxruntime")
+    prev_level = ort_logger.level
+    ort_logger.setLevel(logging.ERROR)
     try:
         yield
     finally:
-        root.setLevel(prev_level)
+        ort_logger.setLevel(prev_level)
 
 
 def _preprocess_onnx(onnx_path: Path, output_path: Path) -> None:

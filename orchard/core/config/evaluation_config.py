@@ -80,7 +80,7 @@ class EvaluationConfig(BaseModel):
             Normalized format string (xlsx, csv, or json).
 
         Raises:
-            ValueError: If format is not one of xlsx, csv, json.
+            OrchardConfigError: If format is not one of xlsx, csv, json.
         """
         supported = {"xlsx", "csv", "json"}
         normalized = v.lower()

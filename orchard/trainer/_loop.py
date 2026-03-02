@@ -79,7 +79,7 @@ class LoopOptions:
     keeping the ``TrainingLoop`` constructor lean.
 
     Attributes:
-        grad_clip (float): Max norm for gradient clipping (0 disables).
+        grad_clip (float | None): Max norm for gradient clipping (0 or None disables).
         total_epochs (int): Total number of epochs (for tqdm progress bar).
         mixup_epochs (int): Epoch cutoff after which MixUp is disabled.
         use_tqdm (bool): Whether to show tqdm progress bar.
@@ -87,7 +87,7 @@ class LoopOptions:
             (e.g. ``"auc"``, ``"accuracy"``).
     """
 
-    grad_clip: float
+    grad_clip: float | None
     total_epochs: int
     mixup_epochs: int
     use_tqdm: bool

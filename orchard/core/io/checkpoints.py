@@ -35,10 +35,10 @@ def load_model_weights(model: torch.nn.Module, path: Path, device: torch.device)
         device: Target device for mapping the loaded tensors
 
     Raises:
-        FileNotFoundError: If the checkpoint file does not exist at path
+        OrchardExportError: If the checkpoint file does not exist at path
 
     Example:
-        >>> model = build_resnet18_adapted(device, num_classes=10, in_channels=1, cfg)
+        >>> model = get_model(device, dataset_cfg=cfg.dataset, arch_cfg=cfg.architecture)
         >>> checkpoint_path = Path("outputs/run_123/checkpoints/best_model.pth")
         >>> load_model_weights(model, checkpoint_path, device)
     """

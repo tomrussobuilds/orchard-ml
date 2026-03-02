@@ -10,6 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from orchard.data_handler import (
     DatasetData,
@@ -19,6 +20,7 @@ from orchard.data_handler import (
 
 
 # TESTS
+@pytest.mark.unit
 def test_create_synthetic_dataset_returns_metadata():
     """Factory should return a valid DatasetData object."""
     data = create_synthetic_dataset()
@@ -31,6 +33,7 @@ def test_create_synthetic_dataset_returns_metadata():
     assert data.num_classes == 8
 
 
+@pytest.mark.unit
 def test_synthetic_npz_contains_all_required_keys():
     """Synthetic NPZ file should match MedMNIST format."""
     data = create_synthetic_dataset(samples=50)
@@ -48,6 +51,7 @@ def test_synthetic_npz_contains_all_required_keys():
     }
 
 
+@pytest.mark.unit
 def test_synthetic_dataset_shapes_rgb():
     """RGB synthetic dataset should have correct shapes."""
     samples = 40
@@ -84,6 +88,7 @@ def test_synthetic_dataset_shapes_rgb():
         )
 
 
+@pytest.mark.unit
 def test_synthetic_dataset_label_range():
     """Labels should be within [0, num_classes)."""
     num_classes = 5
@@ -96,6 +101,7 @@ def test_synthetic_dataset_label_range():
             assert labels.max() < num_classes
 
 
+@pytest.mark.unit
 def test_create_synthetic_grayscale_dataset():
     """Grayscale variant should generate single-channel data."""
     data = create_synthetic_grayscale_dataset(
@@ -113,6 +119,7 @@ def test_create_synthetic_grayscale_dataset():
         assert npz["train_images"].shape[-1] == 1
 
 
+@pytest.mark.unit
 def test_multiple_calls_create_distinct_files():
     """Each synthetic dataset call should create a unique file."""
     d1 = create_synthetic_dataset()

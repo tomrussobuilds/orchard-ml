@@ -12,6 +12,8 @@ inference runs on CPU, CUDA, or MPS, guaranteeing cross-platform reproducibility
 
 from __future__ import annotations
 
+from typing import Callable
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -28,7 +30,7 @@ def _get_tta_transforms(
     is_texture_based: bool,
     aug_cfg: AugmentationConfig,
     resolution: int,
-) -> list:
+) -> list[Callable[[torch.Tensor], torch.Tensor]]:
     """
     Internal factory to resolve the augmentation suite based on dataset constraints and config.
 

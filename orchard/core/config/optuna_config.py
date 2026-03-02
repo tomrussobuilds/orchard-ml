@@ -296,7 +296,7 @@ class OptunaConfig(BaseModel):
         Validate model_pool constraints.
 
         Raises:
-            ValueError: If model_pool set without enable_model_search,
+            OrchardConfigError: If model_pool set without enable_model_search,
                         or contains fewer than 2 entries.
 
         Returns:
@@ -348,7 +348,7 @@ class OptunaConfig(BaseModel):
         Validate pruning warmup is less than total epochs.
 
         Raises:
-            ValueError: If pruning_warmup_epochs >= epochs.
+            OrchardConfigError: If pruning_warmup_epochs >= epochs.
 
         Returns:
             Validated OptunaConfig instance.

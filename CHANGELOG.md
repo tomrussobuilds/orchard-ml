@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - dependency bounds, CI supply chain, Dockerfile rootless, config validators
 - wire unwired config fields, fix search spaces, harden CI
 - replace bare trial dicts with TrialData frozen dataclass
+- enforce runtime immutability with MappingProxyType, disambiguate export logs
 
 ### Fixed
 

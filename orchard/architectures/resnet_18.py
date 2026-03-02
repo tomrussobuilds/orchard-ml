@@ -29,7 +29,7 @@ from ._morphing import morph_conv_weights
 
 
 # MODEL BUILDER
-def build_resnet18(
+def build_resnet_18(
     num_classes: int,
     in_channels: int,
     *,
@@ -51,7 +51,7 @@ def build_resnet18(
         num_classes: Number of dataset classes
         in_channels: Input channels (1=Grayscale, 3=RGB)
         pretrained: Whether to load ImageNet pretrained weights
-        resolution: Input image resolution (28, 32, 64, or 224)
+        resolution: Input image resolution (28, 32, 64, 128, or 224)
 
     Returns:
         Adapted ResNet-18 (device placement handled by factory).
@@ -63,7 +63,7 @@ def build_resnet18(
     if resolution <= 32:  # 28, 32: small stem (3x3 stride-1, no MaxPool)
         _adapt_stem_28(model, in_channels, pretrained)
     else:  # 64, 224 — standard stem
-        _adapt_stem_224(model, in_channels, pretrained)
+        _adapt_stem_standard(model, in_channels, pretrained)
 
     # --- Step 3: Replace Classification Head ---
     model.fc = nn.Linear(model.fc.in_features, num_classes)
@@ -97,9 +97,9 @@ def _adapt_stem_28(model: nn.Module, in_channels: int, pretrained: bool) -> None
     model.maxpool = nn.Identity()
 
 
-def _adapt_stem_224(model: nn.Module, in_channels: int, pretrained: bool) -> None:
+def _adapt_stem_standard(model: nn.Module, in_channels: int, pretrained: bool) -> None:
     """
-    Adapts ResNet-18 stem for 224x224 grayscale inputs.
+    Adapts ResNet-18 standard stem (64x64, 128x128, 224x224) for grayscale inputs.
 
     Keeps the standard 7x7 conv1 and MaxPool, only modifying
     input channels via weight averaging when grayscale.

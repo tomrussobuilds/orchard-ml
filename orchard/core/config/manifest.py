@@ -38,11 +38,13 @@ from .telemetry_config import TelemetryConfig
 from .tracking_config import TrackingConfig
 from .training_config import TrainingConfig
 
-# Architecture resolution constraints (add new architectures here)
+# Architecture resolution constraints (add new architectures here).
+# These are semantic subsets of SUPPORTED_RESOLUTIONS (core.paths.constants);
+# keep in sync when adding new resolutions.
 _MODELS_LOW_RES = frozenset({"mini_cnn"})
 _MODELS_224_ONLY = frozenset({"efficientnet_b0", "vit_tiny", "convnext_tiny"})
 
-# Resolution constraints
+# Resolution constraints (subsets of core.paths.constants.SUPPORTED_RESOLUTIONS)
 _RESOLUTIONS_LOW_RES: Final[frozenset[int]] = frozenset({28, 32, 64})
 _RESOLUTIONS_224_ONLY: Final[frozenset[int]] = frozenset({224})
 
@@ -105,7 +107,7 @@ class Config(BaseModel):
             Validated Config instance with auto-corrections applied
 
         Raises:
-            ValueError: On irrecoverable validation failures
+            OrchardConfigError: On irrecoverable validation failures
         """
         return _CrossDomainValidator.validate(self)
 
@@ -279,7 +281,7 @@ class _CrossDomainValidator:
         support variable resolutions managed by the user.
 
         Raises:
-            ValueError: If architecture and resolution are incompatible.
+            OrchardConfigError: If architecture and resolution are incompatible.
         """
         model_name = config.architecture.name.lower()
 
@@ -309,7 +311,7 @@ class _CrossDomainValidator:
         Validate mixup scheduling within training bounds.
 
         Raises:
-            ValueError: If mixup_epochs exceeds total epochs.
+            OrchardConfigError: If mixup_epochs exceeds total epochs.
         """
         if config.training.mixup_epochs > config.training.epochs:
             raise OrchardConfigError(
@@ -351,7 +353,7 @@ class _CrossDomainValidator:
         must use force_rgb=True or disable pretraining.
 
         Raises:
-            ValueError: If pretrained model used with non-RGB input.
+            OrchardConfigError: If pretrained model used with non-RGB input.
         """
         if config.architecture.pretrained and config.dataset.effective_in_channels != 3:
             raise OrchardConfigError(
@@ -366,7 +368,7 @@ class _CrossDomainValidator:
         Validate learning rate bounds consistency.
 
         Raises:
-            ValueError: If min_lr >= learning_rate.
+            OrchardConfigError: If min_lr >= learning_rate.
         """
         if config.training.min_lr >= config.training.learning_rate:
             raise OrchardConfigError(

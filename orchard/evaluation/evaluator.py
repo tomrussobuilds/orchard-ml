@@ -47,7 +47,7 @@ def evaluate_model(
     is_texture_based: bool = False,
     aug_cfg: AugmentationConfig | None = None,
     resolution: int = 28,
-) -> tuple[np.ndarray, np.ndarray, dict, float]:
+) -> tuple[np.ndarray, np.ndarray, dict[str, float], float]:
     """
     Performs full-set evaluation and coordinates metric calculation.
 
@@ -66,7 +66,7 @@ def evaluate_model(
 
             - **all_preds** -- Predicted class indices, shape ``(N,)``
             - **all_labels** -- Ground truth labels, shape ``(N,)``
-            - **metrics** -- Dict with keys ``accuracy``, ``auc``, ``f1``
+            - **metrics** -- dict[str, float] with keys ``accuracy``, ``auc``, ``f1``
             - **macro_f1** -- Macro-averaged F1 score (convenience shortcut)
     """
     model.eval()

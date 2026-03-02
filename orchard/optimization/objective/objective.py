@@ -48,6 +48,9 @@ from ...core import (
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
 
+    from torch.utils.data import DataLoader
+
+    from ...core import DatasetMetadata
     from ...tracking import TrackerProtocol
 
 from ...architectures import get_model
@@ -71,7 +74,7 @@ logger = logging.getLogger(LOGGER_NAME)
 class DatasetLoaderProtocol(Protocol):
     """Protocol for dataset loading (enables dependency injection)."""
 
-    def __call__(self, metadata) -> DatasetData:
+    def __call__(self, metadata: DatasetMetadata) -> DatasetData:
         """Load dataset from metadata."""
         ...  # pragma: no cover
 
@@ -87,7 +90,7 @@ class DataloaderFactoryProtocol(Protocol):
         aug_cfg: AugmentationConfig,
         num_workers: int,
         is_optuna: bool = False,
-    ) -> tuple:
+    ) -> tuple[DataLoader, DataLoader, DataLoader]:
         """Create train/val/test dataloaders."""
         ...  # pragma: no cover
 
@@ -237,7 +240,7 @@ class OptunaObjective:
 
             class_weights = None
             if trial_cfg.training.weighted_loss:
-                train_labels = train_loader.dataset.labels.flatten()
+                train_labels = train_loader.dataset.labels.flatten()  # type: ignore[attr-defined]
                 num_classes = self.config_builder.base_metadata.num_classes
                 class_weights = compute_class_weights(train_labels, num_classes, self.device)
 

@@ -43,7 +43,7 @@ def ensure_medmnist_npz(
         Path: Path to the successfully validated .npz file.
 
     Raises:
-        RuntimeError: If all download attempts fail.
+        OrchardDatasetError: If all download attempts fail.
     """
     target_npz = metadata.path
 

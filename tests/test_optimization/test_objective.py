@@ -234,6 +234,18 @@ def test_metric_extractor_tracks_best():
 
 
 @pytest.mark.unit
+def test_metric_extractor_ignores_nan():
+    """NaN values should not poison the best-metric state."""
+    extractor = MetricExtractor(metric_name="auc")
+
+    extractor.update_best(0.85)
+    result = extractor.update_best(float("nan"))
+
+    assert result == pytest.approx(0.85)
+    assert extractor.best_metric == pytest.approx(0.85)
+
+
+@pytest.mark.unit
 def test_metric_extractor_reset():
     """Test MetricExtractor.reset() clears best metric between trials."""
     extractor = MetricExtractor(metric_name="auc")

@@ -248,12 +248,14 @@ class TrialTrainingExecutor:
             Returns fallback metrics on validation failure
         """
         try:
-            return validate_epoch(
+            metrics = validate_epoch(
                 model=self.model,
                 val_loader=self.val_loader,
                 criterion=self.criterion,
                 device=self.device,
             )
+            self._consecutive_val_failures = 0
+            return metrics
 
         except (RuntimeError, ValueError) as e:
             self._consecutive_val_failures += 1

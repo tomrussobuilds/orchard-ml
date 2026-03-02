@@ -19,7 +19,7 @@ from ..trainer.engine import (  # noqa: F401 (re-exported via evaluation/__init_
 # METRIC LOGIC
 def compute_classification_metrics(
     labels: np.ndarray, preds: np.ndarray, probs: np.ndarray
-) -> dict:
+) -> dict[str, float]:
     """
     Computes accuracy, macro-averaged F1, and macro-averaged ROC-AUC.
 

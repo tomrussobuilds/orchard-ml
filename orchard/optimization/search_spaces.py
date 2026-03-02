@@ -36,6 +36,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from ..core.config.optuna_config import SearchSpaceOverrides
 
+_SamplerFn = Callable[..., Any]
+
 
 def _default_overrides() -> SearchSpaceOverrides:
     """Lazy import to avoid circular dependency at module level."""
@@ -62,7 +64,7 @@ class SearchSpaceRegistry:
     def __init__(self, overrides: SearchSpaceOverrides | None = None) -> None:
         self.ov = overrides if overrides is not None else _default_overrides()
 
-    def get_optimization_space(self) -> Mapping[str, Callable]:
+    def get_optimization_space(self) -> Mapping[str, _SamplerFn]:
         """
         Core optimization hyperparameters (learning rate, weight decay, etc.).
 
@@ -102,7 +104,7 @@ class SearchSpaceRegistry:
             }
         )
 
-    def get_loss_space(self) -> Mapping[str, Callable]:
+    def get_loss_space(self) -> Mapping[str, _SamplerFn]:
         """
         Loss function parameters (criterion type, focal gamma, label smoothing).
 
@@ -144,7 +146,7 @@ class SearchSpaceRegistry:
             }
         )
 
-    def get_regularization_space(self) -> Mapping[str, Callable]:
+    def get_regularization_space(self) -> Mapping[str, _SamplerFn]:
         """
         Regularization strategies (mixup, dropout).
 
@@ -167,7 +169,7 @@ class SearchSpaceRegistry:
             }
         )
 
-    def get_batch_size_space(self, resolution: int = 28) -> Mapping[str, Callable]:
+    def get_batch_size_space(self, resolution: int = 28) -> Mapping[str, _SamplerFn]:
         """
         Batch size as categorical (resolution-aware).
 
@@ -188,7 +190,7 @@ class SearchSpaceRegistry:
             }
         )
 
-    def get_scheduler_space(self) -> Mapping[str, Callable]:
+    def get_scheduler_space(self) -> Mapping[str, _SamplerFn]:
         """
         Learning rate scheduler parameters.
 
@@ -210,7 +212,7 @@ class SearchSpaceRegistry:
             }
         )
 
-    def get_augmentation_space(self) -> Mapping[str, Callable]:
+    def get_augmentation_space(self) -> Mapping[str, _SamplerFn]:
         """
         Data augmentation intensity parameters.
 
@@ -238,7 +240,7 @@ class SearchSpaceRegistry:
             }
         )
 
-    def get_full_space(self, resolution: int = 28) -> Mapping[str, Callable]:
+    def get_full_space(self, resolution: int = 28) -> Mapping[str, _SamplerFn]:
         """
         Combined search space with all available parameters.
 
@@ -248,7 +250,7 @@ class SearchSpaceRegistry:
         Returns:
             Immutable unified mapping of all parameter samplers
         """
-        full_space: dict[str, Callable] = {}
+        full_space: dict[str, _SamplerFn] = {}
         full_space.update(self.get_optimization_space())
         full_space.update(self.get_loss_space())
         full_space.update(self.get_regularization_space())
@@ -257,7 +259,7 @@ class SearchSpaceRegistry:
         full_space.update(self.get_augmentation_space())
         return MappingProxyType(full_space)
 
-    def get_quick_space(self, resolution: int = 28) -> Mapping[str, Callable]:
+    def get_quick_space(self, resolution: int = 28) -> Mapping[str, _SamplerFn]:
         """
         Reduced search space for fast exploration (most impactful params).
 
@@ -274,7 +276,7 @@ class SearchSpaceRegistry:
         Returns:
             Immutable mapping of high-impact parameter samplers
         """
-        space: dict[str, Callable] = {}
+        space: dict[str, _SamplerFn] = {}
         space.update(self.get_optimization_space())
         space.update(
             {
@@ -285,7 +287,7 @@ class SearchSpaceRegistry:
         return MappingProxyType(space)
 
     @staticmethod
-    def get_model_space_224() -> Mapping[str, Callable]:
+    def get_model_space_224() -> Mapping[str, _SamplerFn]:
         """Search space for 224x224 architectures with weight variants."""
         return MappingProxyType(
             {
@@ -308,7 +310,7 @@ class SearchSpaceRegistry:
         )
 
     @staticmethod
-    def get_model_space_28() -> Mapping[str, Callable]:
+    def get_model_space_28() -> Mapping[str, _SamplerFn]:
         """Search space for 28x28 architectures."""
         return MappingProxyType(
             {
@@ -364,7 +366,7 @@ def get_search_space(
     return MappingProxyType(space)
 
 
-def _build_model_space_from_pool(pool: list[str]) -> Mapping[str, Callable]:
+def _build_model_space_from_pool(pool: list[str]) -> Mapping[str, _SamplerFn]:
     """
     Build model search space from a user-specified pool of architectures.
 
@@ -374,7 +376,7 @@ def _build_model_space_from_pool(pool: list[str]) -> Mapping[str, Callable]:
     Returns:
         Immutable mapping with model_name sampler (and weight_variant if vit_tiny is in pool).
     """
-    space: dict[str, Callable] = {
+    space: dict[str, _SamplerFn] = {
         "model_name": lambda trial, _p=pool: trial.suggest_categorical("model_name", _p),
     }
 

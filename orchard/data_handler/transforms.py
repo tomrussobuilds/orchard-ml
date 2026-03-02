@@ -34,8 +34,8 @@ def get_augmentations_description(
     Returns:
         Human-readable augmentation summary
     """
-    is_anatomical = ds_meta.is_anatomical if ds_meta else False
-    is_texture = ds_meta.is_texture_based if ds_meta else False
+    is_anatomical = ds_meta.is_anatomical if ds_meta else True
+    is_texture = ds_meta.is_texture_based if ds_meta else True
 
     params = {}
     if not is_anatomical:

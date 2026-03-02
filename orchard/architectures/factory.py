@@ -27,6 +27,7 @@ from __future__ import annotations
 import logging
 import os
 from contextlib import contextmanager
+from types import MappingProxyType
 from typing import Callable, Iterator
 
 import torch
@@ -36,7 +37,7 @@ from ..core import LOGGER_NAME, ArchitectureConfig, DatasetConfig, LogStyle
 from .convnext_tiny import build_convnext_tiny
 from .efficientnet_b0 import build_efficientnet_b0
 from .mini_cnn import build_mini_cnn
-from .resnet_18 import build_resnet18
+from .resnet_18 import build_resnet_18
 from .timm_backbone import build_timm_model
 from .vit_tiny import build_vit_tiny
 
@@ -46,15 +47,17 @@ logger = logging.getLogger(LOGGER_NAME)
 
 _BuilderFn = Callable[..., nn.Module]
 
-_MODEL_REGISTRY: dict[str, _BuilderFn] = {
-    "resnet_18": build_resnet18,
-    "efficientnet_b0": build_efficientnet_b0,
-    "convnext_tiny": build_convnext_tiny,
-    "vit_tiny": build_vit_tiny,
-    "mini_cnn": build_mini_cnn,
-    # Extension point: register your custom architecture here
-    # "your_model": build_your_model,
-}
+_MODEL_REGISTRY: MappingProxyType[str, _BuilderFn] = MappingProxyType(
+    {
+        "resnet_18": build_resnet_18,
+        "efficientnet_b0": build_efficientnet_b0,
+        "convnext_tiny": build_convnext_tiny,
+        "vit_tiny": build_vit_tiny,
+        "mini_cnn": build_mini_cnn,
+        # Extension point: register your custom architecture here
+        # "your_model": build_your_model,
+    }
+)
 
 
 # MODEL FACTORY LOGIC
@@ -204,8 +207,8 @@ def _dispatch_builder(
             in_channels=in_channels,
             dropout=arch_cfg.dropout,
         )
-    if builder is build_resnet18:
-        return build_resnet18(
+    if builder is build_resnet_18:
+        return build_resnet_18(
             num_classes=num_classes,
             in_channels=in_channels,
             pretrained=arch_cfg.pretrained,

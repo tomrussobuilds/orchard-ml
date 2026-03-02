@@ -79,9 +79,12 @@ def dummy_image_gray():
 
 
 # TEST: AUGMENTATION DESCRIPTION
-def test_get_augmentations_description_contains_all_fields(aug_cfg, img_size, mixup_alpha):
+@pytest.mark.unit
+def test_get_augmentations_description_contains_all_fields(
+    aug_cfg, img_size, mixup_alpha, rgb_metadata
+):
     """Augmentation description should include all configured operations."""
-    descr = get_augmentations_description(aug_cfg, img_size, mixup_alpha)
+    descr = get_augmentations_description(aug_cfg, img_size, mixup_alpha, ds_meta=rgb_metadata)
 
     assert "HFlip" in descr
     assert "Rotation" in descr
@@ -91,6 +94,18 @@ def test_get_augmentations_description_contains_all_fields(aug_cfg, img_size, mi
     assert "α=0.4" in descr
 
 
+@pytest.mark.unit
+def test_get_augmentations_description_conservative_fallback(aug_cfg, img_size, mixup_alpha):
+    """When ds_meta is None, fallback is conservative (skip geometric/photometric)."""
+    descr = get_augmentations_description(aug_cfg, img_size, mixup_alpha)
+
+    assert "HFlip" not in descr
+    assert "Jitter" not in descr
+    assert "ResizedCrop" in descr
+    assert "MixUp" in descr
+
+
+@pytest.mark.unit
 def test_get_augmentations_description_without_mixup(aug_cfg, img_size):
     """MixUp should be omitted when alpha <= 0."""
     descr = get_augmentations_description(aug_cfg, img_size, 0.0)
@@ -99,6 +114,7 @@ def test_get_augmentations_description_without_mixup(aug_cfg, img_size):
 
 
 # TEST: PIPELINE CONSTRUCTION
+@pytest.mark.unit
 def test_pipeline_returns_compose_objects(aug_cfg, img_size, rgb_metadata):
     """Pipeline factory should return torchvision v2 Compose objects."""
     train_tf, val_tf = get_pipeline_transforms(aug_cfg, img_size, rgb_metadata)
@@ -107,6 +123,7 @@ def test_pipeline_returns_compose_objects(aug_cfg, img_size, rgb_metadata):
     assert isinstance(val_tf, v2.Compose)
 
 
+@pytest.mark.unit
 def test_rgb_pipeline_does_not_include_grayscale(aug_cfg, img_size, rgb_metadata):
     """RGB datasets should not include Grayscale promotion."""
     train_tf, val_tf = get_pipeline_transforms(aug_cfg, img_size, rgb_metadata)
@@ -118,6 +135,7 @@ def test_rgb_pipeline_does_not_include_grayscale(aug_cfg, img_size, rgb_metadata
     assert v2.Grayscale not in val_types
 
 
+@pytest.mark.unit
 def test_grayscale_pipeline_includes_grayscale_promotion(aug_cfg, img_size, grayscale_metadata):
     """Grayscale datasets must be promoted to 3 channels."""
     train_tf, val_tf = get_pipeline_transforms(aug_cfg, img_size, grayscale_metadata)
@@ -129,6 +147,7 @@ def test_grayscale_pipeline_includes_grayscale_promotion(aug_cfg, img_size, gray
     assert v2.Grayscale in val_types
 
 
+@pytest.mark.unit
 def test_normalization_stats_replicated_for_grayscale(aug_cfg, img_size, grayscale_metadata):
     """Grayscale mean/std should be replicated to 3 channels."""
     train_tf, _ = get_pipeline_transforms(aug_cfg, img_size, grayscale_metadata)
@@ -159,6 +178,7 @@ def test_grayscale_no_promotion_when_force_rgb_false(aug_cfg, img_size, grayscal
 
 
 # TEST: PIPELINE EXECUTION (SMOKE TEST)
+@pytest.mark.unit
 def test_train_pipeline_executes_on_rgb_image(aug_cfg, img_size, rgb_metadata, dummy_image_rgb):
     """Training pipeline should run end-to-end on RGB input."""
     train_tf, _ = get_pipeline_transforms(aug_cfg, img_size, rgb_metadata)
@@ -170,6 +190,7 @@ def test_train_pipeline_executes_on_rgb_image(aug_cfg, img_size, rgb_metadata, d
     assert out.dtype == torch.float32
 
 
+@pytest.mark.unit
 def test_val_pipeline_executes_on_grayscale_image(
     aug_cfg, img_size, grayscale_metadata, dummy_image_gray
 ):
@@ -184,6 +205,7 @@ def test_val_pipeline_executes_on_grayscale_image(
 
 
 # TEST: DOMAIN-AWARE AUGMENTATION
+@pytest.mark.unit
 def test_anatomical_disables_flip_and_rotation(aug_cfg, img_size, rgb_metadata):
     """Anatomical datasets should not have RandomHorizontalFlip or RandomRotation."""
     rgb_metadata.is_anatomical = True
@@ -194,6 +216,7 @@ def test_anatomical_disables_flip_and_rotation(aug_cfg, img_size, rgb_metadata):
     assert v2.RandomRotation not in train_types
 
 
+@pytest.mark.unit
 def test_texture_based_disables_color_jitter(aug_cfg, img_size, rgb_metadata):
     """Texture-based datasets should not have ColorJitter."""
     rgb_metadata.is_texture_based = True
@@ -203,6 +226,7 @@ def test_texture_based_disables_color_jitter(aug_cfg, img_size, rgb_metadata):
     assert v2.ColorJitter not in train_types
 
 
+@pytest.mark.unit
 def test_standard_dataset_has_all_augmentations(aug_cfg, img_size, rgb_metadata):
     """Non-anatomical, non-texture datasets should have full augmentations."""
     train_tf, _ = get_pipeline_transforms(aug_cfg, img_size, rgb_metadata)
@@ -213,6 +237,7 @@ def test_standard_dataset_has_all_augmentations(aug_cfg, img_size, rgb_metadata)
     assert v2.ColorJitter in train_types
 
 
+@pytest.mark.unit
 def test_anatomical_texture_minimal_augmentation(aug_cfg, img_size, rgb_metadata):
     """Anatomical + texture datasets get minimal augmentation (crop + normalize only)."""
     rgb_metadata.is_anatomical = True
@@ -227,6 +252,7 @@ def test_anatomical_texture_minimal_augmentation(aug_cfg, img_size, rgb_metadata
     assert v2.Normalize in train_types
 
 
+@pytest.mark.unit
 def test_augmentation_description_anatomical(aug_cfg, img_size, mixup_alpha):
     """Anatomical datasets should omit HFlip and Rotation from description."""
     meta = SimpleNamespace(is_anatomical=True, is_texture_based=False)
@@ -237,6 +263,7 @@ def test_augmentation_description_anatomical(aug_cfg, img_size, mixup_alpha):
     assert "Jitter" in descr
 
 
+@pytest.mark.unit
 def test_augmentation_description_texture(aug_cfg, img_size, mixup_alpha):
     """Texture-based datasets should omit Jitter from description."""
     meta = SimpleNamespace(is_anatomical=False, is_texture_based=True)
