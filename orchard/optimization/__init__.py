@@ -18,6 +18,7 @@ from .objective import (
 )
 from .orchestrator import (
     OptunaOrchestrator,
+    TrialData,
     export_best_config,
     export_study_summary,
     export_top_trials,
@@ -34,6 +35,7 @@ __all__ = [
     "TrialConfigBuilder",
     "OptunaOrchestrator",
     "run_optimization",
+    "TrialData",
     "StudyEarlyStoppingCallback",
     "get_early_stopping_callback",
     "export_best_config",

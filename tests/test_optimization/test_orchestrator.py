@@ -24,8 +24,8 @@ from orchard.optimization.orchestrator.builders import (
     build_sampler,
 )
 from orchard.optimization.orchestrator.exporters import (
+    TrialData,
     build_best_config_dict,
-    build_trial_data,
 )
 from orchard.optimization.orchestrator.registries import (
     PRUNER_REGISTRY,
@@ -187,12 +187,12 @@ class TestUtils:
 class TestExporters:
     """Test exporter functions."""
 
-    def test_build_trial_data(self, completed_trial):
-        """Test building trial data dict."""
-        data = build_trial_data(completed_trial)
-        assert data["number"] == 1
-        assert data["value"] == pytest.approx(0.95)
-        assert data["state"] == "COMPLETE"
+    def test_trial_data_from_trial(self, completed_trial):
+        """Test building TrialData from trial."""
+        data = TrialData.from_trial(completed_trial)
+        assert data.number == 1
+        assert data.value == pytest.approx(0.95)
+        assert data.state == "COMPLETE"
 
     def test_build_best_config_dict(self, mock_cfg):
         """Test building config dict from params."""

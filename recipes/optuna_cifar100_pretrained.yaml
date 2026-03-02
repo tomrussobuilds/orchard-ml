@@ -51,10 +51,10 @@ training:
   min_lr: 1e-6
   mixup_alpha: 0.0
   label_smoothing: 0.0
-  epochs: 100
-  patience: 20
+  epochs: 50
+  patience: 12
   grad_clip: 1.0
-  mixup_epochs: 100             # Capped to optuna.epochs by config_builder
+  mixup_epochs: 50             # Capped to optuna.epochs by config_builder
   monitor_metric: "auc"
   scheduler_type: "cosine"
   scheduler_patience: 5

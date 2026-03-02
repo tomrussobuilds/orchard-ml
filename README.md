@@ -34,7 +34,7 @@
 </td>
 </tr>
 <tr>
-<td align="right"><strong>Code Style</strong></td>
+<td align="right"><strong>Code Quality</strong></td>
 <td align="center">
   <!-- Dynamic badges — updated by .github/workflows/badges.yml via Gist -->
   <a href="https://github.com/psf/black"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tomrussobuilds/7835190af6011e9051b673c8be974f8a/raw/black.json" alt="Black"></a>

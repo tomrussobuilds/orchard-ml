@@ -37,10 +37,10 @@ training:
   mixup_alpha: 0.0
   label_smoothing: 0.0
 
-  epochs: 60
-  patience: 15
+  epochs: 30
+  patience: 12
   grad_clip: 1.0
-  mixup_epochs: 60              # Capped to optuna.epochs by config_builder
+  mixup_epochs: 30              # Capped to optuna.epochs by config_builder
 
   monitor_metric: "auc"
   scheduler_type: "cosine"

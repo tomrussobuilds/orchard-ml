@@ -55,10 +55,10 @@ training:
   label_smoothing: 0.0
   
   # Training loop
-  epochs: 60                    # Final training only
-  patience: 15
+  epochs: 30                    # Final training only
+  patience: 12
   grad_clip: 1.0
-  mixup_epochs: 60              # Capped to optuna.epochs by config_builder
+  mixup_epochs: 30              # Capped to optuna.epochs by config_builder
   
   # Scheduler (PARTIALLY OPTIMIZED)
   monitor_metric: "auc"

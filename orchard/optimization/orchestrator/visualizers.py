@@ -15,7 +15,6 @@ failures gracefully with informative logging.
 from __future__ import annotations
 
 import logging
-import warnings
 from pathlib import Path
 from typing import Any, Callable
 
@@ -25,6 +24,21 @@ from ...core import LOGGER_NAME, LogStyle
 from .utils import has_completed_trials
 
 logger = logging.getLogger(LOGGER_NAME)
+
+
+class _MissingParamsFilter(logging.Filter):
+    """
+    Suppress Optuna's "trials with missing parameters" log noise.
+
+    Conditional search spaces (e.g. focal_gamma only when criterion_type=="focal")
+    cause expected missing-parameter warnings in parallel_coordinate plots.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "missing parameters" not in record.getMessage()
+
+
+_missing_params_filter = _MissingParamsFilter()
 
 
 # VISUALIZATION GENERATION
@@ -103,11 +117,17 @@ def save_plot(
     """
     try:
         # Conditional search spaces (e.g. focal_gamma only for criterion_type=="focal")
-        # cause Optuna to warn about "trials with missing parameters" in plots
+        # cause Optuna to log about "trials with missing parameters" in plots
         # like parallel_coordinate. This is expected and not actionable.
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", message=".*missing parameters.*")
+        # Optuna uses logging.warning() (not warnings.warn()), so we must
+        # filter the exact child logger that emits the message — filters on
+        # parent loggers do NOT propagate to children in Python's logging.
+        _optuna_pc_logger = logging.getLogger("optuna.visualization._parallel_coordinate")
+        _optuna_pc_logger.addFilter(_missing_params_filter)
+        try:
             fig = plot_fn(study)
+        finally:
+            _optuna_pc_logger.removeFilter(_missing_params_filter)
         output_path = output_dir / f"{plot_name}.html"
         fig.write_html(str(output_path))  # pragma: no mutant
         logger.info(  # pragma: no mutant

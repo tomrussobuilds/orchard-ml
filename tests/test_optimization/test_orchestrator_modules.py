@@ -22,8 +22,8 @@ from orchard.optimization.orchestrator.builders import (
     build_sampler,
 )
 from orchard.optimization.orchestrator.exporters import (
+    TrialData,
     build_best_config_dict,
-    build_trial_data,
 )
 from orchard.optimization.orchestrator.registries import (
     PRUNER_REGISTRY,
@@ -34,6 +34,7 @@ from orchard.optimization.orchestrator.utils import (
     has_completed_trials,
 )
 from orchard.optimization.orchestrator.visualizers import (
+    _missing_params_filter,
     save_plot,
 )
 
@@ -161,15 +162,15 @@ def test_has_completed_trials_false():
 
 # TESTS: exporters.py
 @pytest.mark.unit
-def test_build_trial_data(completed_trial):
-    """Test building trial data dict."""
-    data = build_trial_data(completed_trial)
+def test_trial_data_from_trial(completed_trial):
+    """Test building TrialData from trial."""
+    data = TrialData.from_trial(completed_trial)
 
-    assert data["number"] == 1
-    assert data["value"] == pytest.approx(0.95)
-    assert data["state"] == "COMPLETE"
-    assert "datetime_start" in data
-    assert "duration_seconds" in data
+    assert data.number == 1
+    assert data.value == pytest.approx(0.95)
+    assert data.state == "COMPLETE"
+    assert data.datetime_start is not None
+    assert data.duration_seconds is not None
 
 
 @pytest.mark.unit
@@ -297,6 +298,40 @@ def test_generate_visualizations_creates_all_plots(
             assert "param_importances" in plot_names
             assert "slice" in plot_names
             assert "parallel_coordinate" in plot_names
+
+
+@pytest.mark.unit
+def test_missing_params_filter_suppresses_matching():
+    """Test _MissingParamsFilter suppresses 'missing parameters' messages."""
+    import logging
+
+    record = logging.LogRecord(
+        name="optuna.visualization._parallel_coordinate",
+        level=logging.WARNING,
+        pathname="",
+        lineno=0,
+        msg="Your study has trials with missing parameters.",
+        args=(),
+        exc_info=None,
+    )
+    assert _missing_params_filter.filter(record) is False
+
+
+@pytest.mark.unit
+def test_missing_params_filter_passes_other_messages():
+    """Test _MissingParamsFilter passes unrelated messages through."""
+    import logging
+
+    record = logging.LogRecord(
+        name="optuna.visualization._parallel_coordinate",
+        level=logging.WARNING,
+        pathname="",
+        lineno=0,
+        msg="Some other warning message.",
+        args=(),
+        exc_info=None,
+    )
+    assert _missing_params_filter.filter(record) is True
 
 
 # TESTS: config.py

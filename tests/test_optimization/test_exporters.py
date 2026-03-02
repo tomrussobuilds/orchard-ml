@@ -24,9 +24,9 @@ from orchard.optimization import (
     export_top_trials,
 )
 from orchard.optimization.orchestrator.exporters import (
+    TrialData,
     build_best_trial_data,
     build_top_trials_dataframe,
-    build_trial_data,
 )
 
 
@@ -201,8 +201,8 @@ def test_build_best_trial_data_value_error_direct_call():
 
 
 @pytest.mark.unit
-def test_build_trial_data_without_timestamps():
-    """Test build_trial_data when datetime fields are None."""
+def test_trial_data_from_trial_without_timestamps():
+    """Test TrialData.from_trial when datetime fields are None."""
     trial = MagicMock(spec=optuna.trial.FrozenTrial)
     trial.number = 5
     trial.value = 0.95
@@ -211,20 +211,20 @@ def test_build_trial_data_without_timestamps():
     trial.datetime_start = None
     trial.datetime_complete = None
 
-    result = build_trial_data(trial)
+    result = TrialData.from_trial(trial)
 
-    assert result["number"] == 5
-    assert result["value"] == pytest.approx(0.95)
-    assert result["params"] == {"lr": 0.001}
-    assert result["state"] == "COMPLETE"
-    assert result["datetime_start"] is None
-    assert result["datetime_complete"] is None
-    assert result["duration_seconds"] is None
+    assert result.number == 5
+    assert result.value == pytest.approx(0.95)
+    assert result.params == {"lr": 0.001}
+    assert result.state == "COMPLETE"
+    assert result.datetime_start is None
+    assert result.datetime_complete is None
+    assert result.duration_seconds is None
 
 
 @pytest.mark.unit
-def test_build_trial_data_with_only_start_time():
-    """Test build_trial_data when only start time is available."""
+def test_trial_data_from_trial_with_only_start_time():
+    """Test TrialData.from_trial when only start time is available."""
     trial = MagicMock(spec=optuna.trial.FrozenTrial)
     trial.number = 5
     trial.value = 0.95
@@ -233,11 +233,11 @@ def test_build_trial_data_with_only_start_time():
     trial.datetime_start = datetime(2024, 1, 1, 12, 0, 0)
     trial.datetime_complete = None
 
-    result = build_trial_data(trial)
+    result = TrialData.from_trial(trial)
 
-    assert result["datetime_start"] is not None
-    assert result["datetime_complete"] is None
-    assert result["duration_seconds"] is None
+    assert result.datetime_start is not None
+    assert result.datetime_complete is None
+    assert result.duration_seconds is None
 
 
 @pytest.mark.unit

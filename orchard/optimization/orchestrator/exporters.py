@@ -16,8 +16,9 @@ from __future__ import annotations
 import json
 import logging
 import math
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import optuna
 import pandas as pd
@@ -30,6 +31,68 @@ from .._param_mapping import map_param_to_config_path
 from .utils import get_completed_trials, has_completed_trials
 
 logger = logging.getLogger(LOGGER_NAME)
+
+
+# ==================== DATA STRUCTURES ====================
+
+
+@dataclass(frozen=True)
+class TrialData:
+    """
+    Immutable snapshot of Optuna trial metadata for serialization.
+
+    Attributes:
+        number (int): Trial number within the study.
+        value (float | None): Objective value (None for incomplete trials).
+        params (dict[str, Any]): Hyperparameter values sampled for this trial.
+        datetime_start (str | None): ISO-formatted start timestamp.
+        datetime_complete (str | None): ISO-formatted completion timestamp.
+        state (str | None): Trial state name (COMPLETE, PRUNED, FAIL, etc.).
+        duration_seconds (float | None): Wall-clock duration in seconds.
+    """
+
+    number: int
+    value: float | None
+    params: dict[str, Any]
+    datetime_start: str | None = None
+    datetime_complete: str | None = None
+    state: str | None = None
+    duration_seconds: float | None = None
+
+    @classmethod
+    def from_trial(cls, trial: optuna.trial.FrozenTrial) -> TrialData:
+        """
+        Build from an Optuna FrozenTrial, computing duration if timestamps are available.
+
+        Args:
+            trial: Frozen trial from study.
+
+        Returns:
+            Immutable trial snapshot with computed duration.
+        """
+        duration = None
+        if trial.datetime_complete and trial.datetime_start:
+            duration = (trial.datetime_complete - trial.datetime_start).total_seconds()
+        return cls(
+            number=trial.number,
+            value=trial.value,
+            params=trial.params,
+            state=trial.state.name,
+            datetime_start=trial.datetime_start.isoformat() if trial.datetime_start else None,
+            datetime_complete=(
+                trial.datetime_complete.isoformat() if trial.datetime_complete else None
+            ),
+            duration_seconds=duration,
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Serialize to plain dictionary for JSON export.
+
+        Returns:
+            Dictionary representation with all fields.
+        """
+        return asdict(self)
 
 
 # CONFIG EXPORT
@@ -108,8 +171,8 @@ def export_study_summary(study: optuna.Study, paths: RunPaths) -> None:
         "direction": study.direction.name,
         "n_trials": len(study.trials),
         "n_completed": len(completed),
-        "best_trial": best_trial_data,
-        "trials": [build_trial_data(trial) for trial in study.trials],
+        "best_trial": best_trial_data.to_dict() if best_trial_data else None,
+        "trials": [TrialData.from_trial(trial).to_dict() for trial in study.trials],
     }
 
     output_path = paths.reports / "study_summary.json"
@@ -270,64 +333,25 @@ def build_best_config_dict(best_params: dict, cfg: Config) -> dict:
 
 def build_best_trial_data(
     study: optuna.Study, completed: list[optuna.trial.FrozenTrial]
-) -> dict | None:
+) -> TrialData | None:
     """
-    Build best trial metadata dictionary.
+    Build best trial metadata as an immutable snapshot.
 
     Args:
-        study: Optuna study instance
-        completed: list of completed trials
+        study: Optuna study instance.
+        completed: List of completed trials.
 
     Returns:
-        Dictionary with best trial info, or None if no completed trials
+        Immutable trial snapshot, or None if no completed trials.
     """
     if not completed:
         return None
 
     try:
-        best = study.best_trial
-        return {
-            "number": best.number,
-            "value": best.value,
-            "params": best.params,
-            "datetime_start": best.datetime_start.isoformat() if best.datetime_start else None,
-            "datetime_complete": (
-                best.datetime_complete.isoformat() if best.datetime_complete else None
-            ),
-        }
+        return TrialData.from_trial(study.best_trial)
     except ValueError:
         # No best trial available
         return None
-
-
-def build_trial_data(trial: optuna.trial.FrozenTrial) -> dict:
-    """
-    Build trial metadata dictionary.
-
-    Handles missing timestamps gracefully and computes duration
-    when both start and complete times are available.
-
-    Args:
-        trial: Frozen trial from study
-
-    Returns:
-        Dictionary with trial information
-    """
-    duration = None
-    if trial.datetime_complete and trial.datetime_start:
-        duration = (trial.datetime_complete - trial.datetime_start).total_seconds()
-
-    return {
-        "number": trial.number,
-        "value": trial.value,
-        "params": trial.params,
-        "state": trial.state.name,
-        "datetime_start": trial.datetime_start.isoformat() if trial.datetime_start else None,
-        "datetime_complete": (
-            trial.datetime_complete.isoformat() if trial.datetime_complete else None
-        ),
-        "duration_seconds": duration,
-    }
 
 
 def build_top_trials_dataframe(

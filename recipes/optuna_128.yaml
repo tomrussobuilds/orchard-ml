@@ -49,10 +49,10 @@ training:
   label_smoothing: 0.1
 
   # Training loop
-  epochs: 60
-  patience: 15
+  epochs: 30
+  patience: 12
   grad_clip: 1.0
-  mixup_epochs: 60
+  mixup_epochs: 30
 
   # Scheduler (PARTIALLY OPTIMIZED)
   monitor_metric: "auc"
