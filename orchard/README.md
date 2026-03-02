@@ -9,6 +9,7 @@
 ```
 orchard/
 ├── cli_app.py                  # Typer CLI entry point (orchard run / orchard init)
+├── exceptions.py               # Framework-wide custom exceptions
 ├── core/                       # Framework nucleus
 │   ├── config/                 # Pydantic V2 schemas (13 modules)
 │   │   ├── manifest.py         # Main Config (SSOT)
@@ -42,7 +43,8 @@ orchard/
 │   ├── metadata/               # Dataset registry
 │   │   ├── base.py             # DatasetMetadata schema
 │   │   ├── domains/            # Domain-specific registries
-│   │   │   ├── medical.py      # Medical imaging (MedMNIST)
+│   │   │   ├── medical.py      # Medical imaging (MedMNIST, YAML-driven)
+│   │   │   ├── medical.yaml    # MedMNIST dataset manifest (md5, urls, stats)
 │   │   │   ├── space.py        # Astronomical imaging
 │   │   │   └── benchmark.py    # Standard benchmarks (CIFAR-10/100)
 │   │   └── wrapper.py          # Multi-resolution registry wrapper
@@ -94,6 +96,7 @@ orchard/
 ├── tracking/                   # Experiment tracking
 │   └── tracker.py              # MLflow integration (optional, local SQLite)
 └── optimization/               # Optuna integration
+    ├── _param_mapping.py       # Shared PARAM_MAPPING / SPECIAL_PARAMS registries
     ├── objective/              # Trial execution logic
     │   ├── objective.py        # OptunaObjective
     │   ├── config_builder.py   # Trial config override
@@ -101,7 +104,7 @@ orchard/
     │   └── metric_extractor.py # Metric extraction
     ├── orchestrator/           # Study management
     │   ├── orchestrator.py     # OptunaOrchestrator
-    │   ├── config.py           # Study configuration
+    │   ├── registries.py       # Sampler/pruner registries (MappingProxyType)
     │   ├── builders.py         # Sampler/pruner builders
     │   ├── exporters.py        # Results export (YAML, Excel)
     │   ├── utils.py            # Utility helpers
@@ -153,16 +156,20 @@ class InfraManagerProtocol(Protocol):
 
 <h3>Adding New Datasets</h3>
 
-Register in the appropriate domain file (e.g., `orchard/core/metadata/domains/medical.py`):
+Create a new domain file (e.g., `orchard/core/metadata/domains/custom.py`):
 ```python
-REGISTRY_224: Final[Dict[str, DatasetMetadata]] = {
+REGISTRY_224: Final[dict[str, DatasetMetadata]] = {
     "custom_dataset": DatasetMetadata(
         name="custom_dataset",
-        num_classes=10,
+        display_name="Custom Dataset",
+        md5_checksum="abc123...",
+        url="https://example.com/dataset.npz",
+        path=DATASET_DIR / "custom_dataset_224.npz",
+        classes=["class_a", "class_b", "class_c"],
         in_channels=3,
+        native_resolution=224,
         mean=(0.5, 0.5, 0.5),
         std=(0.25, 0.25, 0.25),
-        native_resolution=224,
         is_anatomical=False,
         is_texture_based=True,
     ),
@@ -175,19 +182,23 @@ Export from `orchard/core/metadata/domains/__init__.py` to make it available.
 1. Create builder in `orchard/architectures/your_model.py`:
 ```python
 def build_your_model(
-    device: torch.device,
     num_classes: int,
     in_channels: int,
     *,
     pretrained: bool,
 ) -> nn.Module:
     model = ...  # Build your model
-    return model.to(device)
+    return model  # Device placement handled by get_model()
 ```
 
-2. Register in `orchard/architectures/factory.py`:
+2. Register in `orchard/architectures/factory.py` inside the `MappingProxyType` dict:
 ```python
-_MODEL_REGISTRY["your_model"] = build_your_model
+_MODEL_REGISTRY: MappingProxyType[str, _BuilderFn] = MappingProxyType(
+    {
+        ...
+        "your_model": build_your_model,
+    }
+)
 ```
 
 <h3>Adding New Optimizers</h3>
@@ -195,8 +206,8 @@ _MODEL_REGISTRY["your_model"] = build_your_model
 Extend `orchard/trainer/setup.py`:
 ```python
 def get_optimizer(model: nn.Module, training: TrainingConfig) -> optim.Optimizer:
-    if training.optimizer_type == "adam":
-        return torch.optim.Adam(...)
+    if training.optimizer_type == "adamw":
+        return torch.optim.AdamW(...)
     # Add new case
 
 def get_scheduler(optimizer: optim.Optimizer, training: TrainingConfig) -> LRScheduler:

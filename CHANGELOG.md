@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - wire unwired config fields, fix search spaces, harden CI
 - replace bare trial dicts with TrialData frozen dataclass
 - enforce runtime immutability with MappingProxyType, disambiguate export logs
+- harden types, fix NaN guard, add missing test markers
 
 ### Fixed
 

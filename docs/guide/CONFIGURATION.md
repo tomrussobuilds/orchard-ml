@@ -110,22 +110,23 @@ The framework is designed for zero-code dataset integration via the registry sys
 
 <h3>1. Add Dataset Metadata</h3>
 
-Edit the appropriate domain file in `orchard/core/metadata/domains/` (e.g., `medical.yaml` or `space.py`):
+Create a new domain file in `orchard/core/metadata/domains/` (e.g., `custom.py`):
 
 ```python
-DATASET_REGISTRY = {
+REGISTRY_28: Final[dict[str, DatasetMetadata]] = {
     "custom_dataset": DatasetMetadata(
         name="custom_dataset",
-        num_classes=10,
+        display_name="Custom Dataset",
+        md5_checksum="abc123...",
+        url="https://example.com/dataset.npz",
+        path=DATASET_DIR / "custom_dataset_28.npz",
+        classes=["class_a", "class_b", "class_c"],
         in_channels=3,
+        native_resolution=28,
         mean=(0.5, 0.5, 0.5),
         std=(0.25, 0.25, 0.25),
-        native_resolution=28,
-        class_names=["class0", "class1", ...],
-        url="https://example.com/dataset.npz",
-        md5="abc123...",
         is_anatomical=False,
-        is_texture_based=True
+        is_texture_based=True,
     ),
 }
 ```

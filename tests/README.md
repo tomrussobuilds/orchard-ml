@@ -10,9 +10,11 @@ Orchard ML's comprehensive testing infrastructure ensures reliability and mainta
 tests/                          # Test suite (100% coverage)
 ├── conftest.py                 # Shared pytest fixtures
 ├── smoke_test.py               # 1-epoch E2E verification (~30s)
+├── test_smoke_test.py          # Smoke test unit tests
 ├── health_check.py             # Dataset integrity validation
+├── test_cli_app.py             # CLI entry point tests (orchard run / orchard init)
 ├── test_config/                # Config engine tests (manifest, sub-configs, types)
-├── test_core/                  # Core utilities tests (CLI, orchestrator, metadata)
+├── test_core/                  # Core utilities tests (orchestrator, metadata)
 ├── test_data_handler/          # Data loading tests (fetcher, dataset, transforms)
 ├── test_environment/           # Environment tests (hardware, reproducibility, guards)
 ├── test_evaluation/            # Metrics & viz tests (evaluator, TTA, reporting)
