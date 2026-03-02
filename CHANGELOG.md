@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - merge implicit f-string concatenation in EvaluationConfig validator
+- restore per-epoch trainer logging and early-stop summary
 
 ## [0.1.8] - 2026-02-28
 

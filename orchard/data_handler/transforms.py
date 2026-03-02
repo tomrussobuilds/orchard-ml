@@ -95,9 +95,6 @@ def get_pipeline_transforms(
     if promote_to_rgb:
         mean = [ds_meta.mean[0]] * 3
         std = [ds_meta.std[0]] * 3
-    elif ds_meta.in_channels == 1:
-        mean = list(ds_meta.mean)
-        std = list(ds_meta.std)
     else:
         mean = list(ds_meta.mean)
         std = list(ds_meta.std)

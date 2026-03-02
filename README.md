@@ -7,7 +7,7 @@
 <table align="center">
 <tr>
 <td align="right"><strong>CI & Quality</strong></td>
-<td>
+<td align="center">
   <a href="https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml"><img src="https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml/badge.svg" alt="CI/CD Pipeline"></a>
   <a href="https://codecov.io/gh/tomrussobuilds/orchard-ml"><img src="https://codecov.io/gh/tomrussobuilds/orchard-ml/branch/main/graph/badge.svg" alt="Coverage"></a>
   <a href="https://sonarcloud.io/summary/new_code?id=tomrussobuilds_orchard-ml"><img src="https://sonarcloud.io/api/project_badges/measure?project=tomrussobuilds_orchard-ml&metric=alert_status" alt="Quality Gate"></a>
@@ -15,7 +15,7 @@
 </tr>
 <tr>
 <td align="right"><strong>Platform</strong></td>
-<td>
+<td align="center">
   <img src="https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12%20|%203.13%20|%203.14--dev-blue?logo=python&logoColor=white" alt="Python">
   <a href="https://pypi.org/project/orchard-ml/"><img src="https://img.shields.io/pypi/v/orchard-ml?color=blue&logo=pypi&logoColor=white&v=1" alt="PyPI"></a>
   <a href="docs/guide/DOCKER.md"><img src="https://img.shields.io/badge/Docker-CUDA%2012.1-2496ED?logo=docker&logoColor=white" alt="Docker"></a>
@@ -24,7 +24,7 @@
 </tr>
 <tr>
 <td align="right"><strong>Stack</strong></td>
-<td>
+<td align="center">
   <a href="https://pytorch.org/"><img src="https://img.shields.io/badge/PyTorch-2.0%2B-orange?logo=pytorch&logoColor=white" alt="PyTorch"></a>
   <a href="https://huggingface.co/docs/timm"><img src="https://img.shields.io/badge/timm-models-FF9D00?logo=huggingface&logoColor=white" alt="timm"></a>
   <a href="https://docs.pydantic.dev/"><img src="https://img.shields.io/badge/Pydantic-v2-e92063?logo=pydantic&logoColor=white" alt="Pydantic"></a>
@@ -35,7 +35,7 @@
 </tr>
 <tr>
 <td align="right"><strong>Code Style</strong></td>
-<td>
+<td align="center">
   <!-- Dynamic badges — updated by .github/workflows/badges.yml via Gist -->
   <a href="https://github.com/psf/black"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tomrussobuilds/7835190af6011e9051b673c8be974f8a/raw/black.json" alt="Black"></a>
   <a href="https://docs.astral.sh/ruff/"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tomrussobuilds/7835190af6011e9051b673c8be974f8a/raw/ruff.json" alt="Ruff"></a>
@@ -325,7 +325,7 @@ orchard run my_run.yaml
 
 | Guide | Covers |
 |-------|--------|
-| [**Documentation Hub**](https://tomrussobuilds.github.io/orchard-ml/) | Full online docs with searchable API reference, guides, and tutorials |
+| [**Documentation Hub**](https://tomrussobuilds.github.io/orchard-ml/) | Full online docs with searchable API reference and guides |
 | [Framework Guide](docs/guide/FRAMEWORK.md) | System architecture diagrams, design principles, component deep-dives |
 | [Architecture Guide](docs/guide/ARCHITECTURE.md) | Supported model architectures, weight transfer, grayscale adaptation, `MixUp` |
 | [Configuration Guide](docs/guide/CONFIGURATION.md) | Full parameter reference, usage patterns, adding new datasets |
