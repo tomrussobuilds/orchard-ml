@@ -8,6 +8,11 @@ or evaluation workflows.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
+
 
 # METRIC EXTRACTOR
 class MetricExtractor:
@@ -43,7 +48,7 @@ class MetricExtractor:
         self._is_maximize = direction == "maximize"
         self.best_metric = -float("inf") if self._is_maximize else float("inf")
 
-    def extract(self, val_metrics: dict[str, float]) -> float:
+    def extract(self, val_metrics: Mapping[str, float]) -> float:
         """
         Extract target metric from validation results.
 

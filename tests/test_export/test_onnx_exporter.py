@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -684,6 +684,81 @@ def test_quantize_model_without_onnxruntime(tmp_path, monkeypatch):
 
     result = quantize_model(onnx_path)
     assert result is None
+
+
+@pytest.mark.unit
+def test_quantize_model_cleans_up_on_failure(tmp_path, monkeypatch):
+    """Test quantize_model removes partial output file on failure."""
+    from orchard.export.onnx_exporter import quantize_model
+
+    onnx_path = tmp_path / "model.onnx"
+    onnx_path.write_text("dummy")
+    output_path = tmp_path / "model_quantized.onnx"
+
+    # Simulate a quantization failure that leaves a partial file
+    import builtins
+
+    real_import = builtins.__import__
+
+    def mock_import(name, *args, **kwargs):
+        if "onnxruntime.quantization" in name:
+            # Create partial output before failing
+            output_path.write_text("partial")
+            raise RuntimeError("quantization error")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", mock_import)
+
+    result = quantize_model(onnx_path, output_path=output_path)
+
+    assert result is None
+    assert not output_path.exists()
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(
+    not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
+    reason="Requires onnxruntime",
+)
+def test_quantize_4bit_warns_no_gemm_nodes(tmp_path):
+    """Test INT4 quantization warns when model has no Gemm/MatMul nodes."""
+    from onnxruntime.quantization import QuantType
+
+    if not hasattr(QuantType, "QInt4"):
+        pytest.skip("onnxruntime too old for INT4 quantization")
+
+    from orchard.export.onnx_exporter import export_to_onnx, quantize_model
+
+    # Build a purely-Conv model (no Linear → no Gemm/MatMul in ONNX)
+    class _ConvOnlyModel(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.conv = nn.Conv2d(3, 10, kernel_size=3, padding=1)
+            self.pool = nn.AdaptiveAvgPool2d(1)
+
+        def forward(self, x):
+            return self.pool(self.conv(x)).flatten(1)
+
+    model = _ConvOnlyModel()
+    checkpoint_path = tmp_path / "conv_only.pth"
+    onnx_path = tmp_path / "conv_only.onnx"
+    torch.save({"model_state_dict": model.state_dict()}, checkpoint_path)
+    export_to_onnx(
+        model=model,
+        checkpoint_path=checkpoint_path,
+        output_path=onnx_path,
+        input_shape=(3, 28, 28),
+        validate=False,
+    )
+
+    import logging
+
+    from orchard.core import LOGGER_NAME
+
+    with patch.object(logging.getLogger(LOGGER_NAME), "warning") as mock_warn:
+        quantize_model(onnx_path, weight_type="int4")
+        warning_calls = [str(c) for c in mock_warn.call_args_list]
+        assert any("no Gemm/MatMul nodes" in w for w in warning_calls)
 
 
 if __name__ == "__main__":

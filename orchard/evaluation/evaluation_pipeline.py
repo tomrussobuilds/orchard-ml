@@ -33,6 +33,8 @@ from ..core import (
 from ..core.paths import METRIC_ACCURACY, METRIC_AUC
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
+
     from ..tracking import TrackerProtocol
 
 from .evaluator import evaluate_model
@@ -49,7 +51,7 @@ def run_final_evaluation(
     model: nn.Module,
     test_loader: DataLoader,
     train_losses: list[float],
-    val_metrics_history: list[dict],
+    val_metrics_history: list[Mapping[str, float]],
     class_names: list[str],
     paths: RunPaths,
     training: TrainingConfig,

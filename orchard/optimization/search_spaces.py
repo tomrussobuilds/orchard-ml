@@ -28,9 +28,12 @@ Example:
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
+
     from ..core.config.optuna_config import SearchSpaceOverrides
 
 
@@ -59,45 +62,47 @@ class SearchSpaceRegistry:
     def __init__(self, overrides: SearchSpaceOverrides | None = None) -> None:
         self.ov = overrides if overrides is not None else _default_overrides()
 
-    def get_optimization_space(self) -> dict[str, Callable]:
+    def get_optimization_space(self) -> Mapping[str, Callable]:
         """
         Core optimization hyperparameters (learning rate, weight decay, etc.).
 
         Returns:
-            dict mapping parameter names to sampling functions
+            Immutable mapping of parameter names to sampling functions
         """
         ov = self.ov
-        return {
-            "optimizer_type": lambda trial: trial.suggest_categorical(
-                "optimizer_type",
-                ov.optimizer_type,
-            ),
-            "learning_rate": lambda trial: trial.suggest_float(
-                "learning_rate",
-                ov.learning_rate.low,
-                ov.learning_rate.high,
-                log=ov.learning_rate.log,
-            ),
-            "weight_decay": lambda trial: trial.suggest_float(
-                "weight_decay",
-                ov.weight_decay.low,
-                ov.weight_decay.high,
-                log=ov.weight_decay.log,
-            ),
-            "momentum": lambda trial: trial.suggest_float(
-                "momentum",
-                ov.momentum.low,
-                ov.momentum.high,
-            ),
-            "min_lr": lambda trial: trial.suggest_float(
-                "min_lr",
-                ov.min_lr.low,
-                ov.min_lr.high,
-                log=ov.min_lr.log,
-            ),
-        }
+        return MappingProxyType(
+            {
+                "optimizer_type": lambda trial: trial.suggest_categorical(
+                    "optimizer_type",
+                    ov.optimizer_type,
+                ),
+                "learning_rate": lambda trial: trial.suggest_float(
+                    "learning_rate",
+                    ov.learning_rate.low,
+                    ov.learning_rate.high,
+                    log=ov.learning_rate.log,
+                ),
+                "weight_decay": lambda trial: trial.suggest_float(
+                    "weight_decay",
+                    ov.weight_decay.low,
+                    ov.weight_decay.high,
+                    log=ov.weight_decay.log,
+                ),
+                "momentum": lambda trial: trial.suggest_float(
+                    "momentum",
+                    ov.momentum.low,
+                    ov.momentum.high,
+                ),
+                "min_lr": lambda trial: trial.suggest_float(
+                    "min_lr",
+                    ov.min_lr.low,
+                    ov.min_lr.high,
+                    log=ov.min_lr.log,
+                ),
+            }
+        )
 
-    def get_loss_space(self) -> dict[str, Callable]:
+    def get_loss_space(self) -> Mapping[str, Callable]:
         """
         Loss function parameters (criterion type, focal gamma, label smoothing).
 
@@ -106,59 +111,63 @@ class SearchSpaceRegistry:
         when ``criterion_type == "cross_entropy"``, otherwise defaults to 0.0.
 
         Returns:
-            dict of loss-related parameter samplers
+            Immutable mapping of loss-related parameter samplers
         """
         # label_smoothing lives here (not in regularization) because it is
         # mutually exclusive with focal_gamma — only the active loss's param
         # is sampled; the other gets a safe default via trial.params dispatch.
         ov = self.ov
-        return {
-            "criterion_type": lambda trial: trial.suggest_categorical(
-                "criterion_type",
-                ov.criterion_type,
-            ),
-            "focal_gamma": lambda trial: (
-                trial.suggest_float(
-                    "focal_gamma",
-                    ov.focal_gamma.low,
-                    ov.focal_gamma.high,
-                )
-                if trial.params.get("criterion_type") == "focal"
-                else 2.0
-            ),
-            "label_smoothing": lambda trial: (
-                trial.suggest_float(
-                    "label_smoothing",
-                    ov.label_smoothing.low,
-                    ov.label_smoothing.high,
-                )
-                if trial.params.get("criterion_type") == "cross_entropy"
-                else 0.0
-            ),
-        }
+        return MappingProxyType(
+            {
+                "criterion_type": lambda trial: trial.suggest_categorical(
+                    "criterion_type",
+                    ov.criterion_type,
+                ),
+                "focal_gamma": lambda trial: (
+                    trial.suggest_float(
+                        "focal_gamma",
+                        ov.focal_gamma.low,
+                        ov.focal_gamma.high,
+                    )
+                    if trial.params.get("criterion_type") == "focal"
+                    else 2.0
+                ),
+                "label_smoothing": lambda trial: (
+                    trial.suggest_float(
+                        "label_smoothing",
+                        ov.label_smoothing.low,
+                        ov.label_smoothing.high,
+                    )
+                    if trial.params.get("criterion_type") == "cross_entropy"
+                    else 0.0
+                ),
+            }
+        )
 
-    def get_regularization_space(self) -> dict[str, Callable]:
+    def get_regularization_space(self) -> Mapping[str, Callable]:
         """
         Regularization strategies (mixup, dropout).
 
         Returns:
-            dict of regularization parameter samplers
+            Immutable mapping of regularization parameter samplers
         """
         ov = self.ov
-        return {
-            "mixup_alpha": lambda trial: trial.suggest_float(
-                "mixup_alpha",
-                ov.mixup_alpha.low,
-                ov.mixup_alpha.high,
-            ),
-            "dropout": lambda trial: trial.suggest_float(
-                "dropout",
-                ov.dropout.low,
-                ov.dropout.high,
-            ),
-        }
+        return MappingProxyType(
+            {
+                "mixup_alpha": lambda trial: trial.suggest_float(
+                    "mixup_alpha",
+                    ov.mixup_alpha.low,
+                    ov.mixup_alpha.high,
+                ),
+                "dropout": lambda trial: trial.suggest_float(
+                    "dropout",
+                    ov.dropout.low,
+                    ov.dropout.high,
+                ),
+            }
+        )
 
-    def get_batch_size_space(self, resolution: int = 28) -> dict[str, Callable]:
+    def get_batch_size_space(self, resolution: int = 28) -> Mapping[str, Callable]:
         """
         Batch size as categorical (resolution-aware).
 
@@ -166,64 +175,70 @@ class SearchSpaceRegistry:
             resolution: Input image resolution (28 or 224)
 
         Returns:
-            dict with batch_size sampler
+            Immutable mapping with batch_size sampler
         """
         if resolution >= 224:
             batch_choices = list(self.ov.batch_size_high_res)
         else:
             batch_choices = list(self.ov.batch_size_low_res)
 
-        return {
-            "batch_size": lambda trial: trial.suggest_categorical("batch_size", batch_choices),
-        }
+        return MappingProxyType(
+            {
+                "batch_size": lambda trial: trial.suggest_categorical("batch_size", batch_choices),
+            }
+        )
 
-    def get_scheduler_space(self) -> dict[str, Callable]:
+    def get_scheduler_space(self) -> Mapping[str, Callable]:
         """
         Learning rate scheduler parameters.
 
         Returns:
-            dict of scheduler-related samplers
+            Immutable mapping of scheduler-related samplers
         """
         ov = self.ov
-        return {
-            "scheduler_type": lambda trial: trial.suggest_categorical(
-                "scheduler_type",
-                ov.scheduler_type,
-            ),
-            "scheduler_patience": lambda trial: trial.suggest_int(
-                "scheduler_patience",
-                ov.scheduler_patience.low,
-                ov.scheduler_patience.high,
-            ),
-        }
+        return MappingProxyType(
+            {
+                "scheduler_type": lambda trial: trial.suggest_categorical(
+                    "scheduler_type",
+                    ov.scheduler_type,
+                ),
+                "scheduler_patience": lambda trial: trial.suggest_int(
+                    "scheduler_patience",
+                    ov.scheduler_patience.low,
+                    ov.scheduler_patience.high,
+                ),
+            }
+        )
 
-    def get_augmentation_space(self) -> dict[str, Callable]:
+    def get_augmentation_space(self) -> Mapping[str, Callable]:
         """
         Data augmentation intensity parameters.
 
         Returns:
-            dict of augmentation samplers
+            Immutable mapping of augmentation samplers
         """
         ov = self.ov
-        return {
-            "rotation_angle": lambda trial: trial.suggest_int(
-                "rotation_angle",
-                ov.rotation_angle.low,
-                ov.rotation_angle.high,
-            ),
-            "jitter_val": lambda trial: trial.suggest_float(
-                "jitter_val",
-                ov.jitter_val.low,
-                ov.jitter_val.high,
-            ),
-            "min_scale": lambda trial: trial.suggest_float(
-                "min_scale",
-                ov.min_scale.low,
-                ov.min_scale.high,
-            ),
-        }
+        return MappingProxyType(
+            {
+                "rotation_angle": lambda trial: trial.suggest_int(
+                    "rotation_angle",
+                    ov.rotation_angle.low,
+                    ov.rotation_angle.high,
+                ),
+                "jitter_val": lambda trial: trial.suggest_float(
+                    "jitter_val",
+                    ov.jitter_val.low,
+                    ov.jitter_val.high,
+                ),
+                "min_scale": lambda trial: trial.suggest_float(
+                    "min_scale",
+                    ov.min_scale.low,
+                    ov.min_scale.high,
+                ),
+            }
+        )
 
-    def get_full_space(self, resolution: int = 28) -> dict[str, Callable]:
+    def get_full_space(self, resolution: int = 28) -> Mapping[str, Callable]:
         """
         Combined search space with all available parameters.
 
@@ -231,7 +246,7 @@ class SearchSpaceRegistry:
             resolution: Input image resolution for batch size calculation
 
         Returns:
-            Unified dict of all parameter samplers
+            Immutable unified mapping of all parameter samplers
         """
         full_space: dict[str, Callable] = {}
         full_space.update(self.get_optimization_space())
@@ -240,9 +255,9 @@ class SearchSpaceRegistry:
         full_space.update(self.get_batch_size_space(resolution))
         full_space.update(self.get_scheduler_space())
         full_space.update(self.get_augmentation_space())
-        return full_space
+        return MappingProxyType(full_space)
 
-    def get_quick_space(self, resolution: int = 28) -> dict[str, Callable]:
+    def get_quick_space(self, resolution: int = 28) -> Mapping[str, Callable]:
         """
         Reduced search space for fast exploration (most impactful params).
 
@@ -257,7 +272,7 @@ class SearchSpaceRegistry:
             resolution: Input image resolution for batch size calculation
 
         Returns:
-            dict of high-impact parameter samplers
+            Immutable mapping of high-impact parameter samplers
         """
         space: dict[str, Callable] = {}
         space.update(self.get_optimization_space())
@@ -267,37 +282,41 @@ class SearchSpaceRegistry:
                 "dropout": self.get_regularization_space()["dropout"],
             }
         )
-        return space
+        return MappingProxyType(space)
 
     @staticmethod
-    def get_model_space_224() -> dict[str, Callable]:
+    def get_model_space_224() -> Mapping[str, Callable]:
         """Search space for 224x224 architectures with weight variants."""
-        return {
-            "model_name": lambda trial: trial.suggest_categorical(
-                "model_name", ["resnet_18", "efficientnet_b0", "vit_tiny", "convnext_tiny"]
-            ),
-            "weight_variant": lambda trial: (
-                trial.suggest_categorical(
-                    "weight_variant",
-                    [
-                        None,  # Default variant
-                        "vit_tiny_patch16_224.augreg_in21k_ft_in1k",
-                        "vit_tiny_patch16_224.augreg_in21k",
-                    ],
-                )
-                if trial.params.get("model_name") == "vit_tiny"
-                else None
-            ),
-        }
+        return MappingProxyType(
+            {
+                "model_name": lambda trial: trial.suggest_categorical(
+                    "model_name", ["resnet_18", "efficientnet_b0", "vit_tiny", "convnext_tiny"]
+                ),
+                "weight_variant": lambda trial: (
+                    trial.suggest_categorical(
+                        "weight_variant",
+                        [
+                            None,  # Default variant
+                            "vit_tiny_patch16_224.augreg_in21k_ft_in1k",
+                            "vit_tiny_patch16_224.augreg_in21k",
+                        ],
+                    )
+                    if trial.params.get("model_name") == "vit_tiny"
+                    else None
+                ),
+            }
+        )
 
     @staticmethod
-    def get_model_space_28() -> dict[str, Callable]:
+    def get_model_space_28() -> Mapping[str, Callable]:
         """Search space for 28x28 architectures."""
-        return {
-            "model_name": lambda trial: trial.suggest_categorical(
-                "model_name", ["resnet_18", "mini_cnn"]
-            ),
-        }
+        return MappingProxyType(
+            {
+                "model_name": lambda trial: trial.suggest_categorical(
+                    "model_name", ["resnet_18", "mini_cnn"]
+                ),
+            }
+        )
 
 
 # PRESET CONFIGURATIONS
@@ -307,7 +326,7 @@ def get_search_space(
     include_models: bool = False,
     model_pool: list[str] | None = None,
     overrides: SearchSpaceOverrides | None = None,
-) -> dict[str, Any]:
+) -> Mapping[str, Any]:
     """
     Factory function to retrieve a search space preset.
 
@@ -320,7 +339,7 @@ def get_search_space(
         overrides: Configurable search range bounds (uses defaults if None)
 
     Returns:
-        dict[str, Any]: Dictionary of parameter samplers keyed by parameter name
+        Immutable mapping of parameter samplers keyed by parameter name
 
     Raises:
         ValueError: If preset name not recognized
@@ -328,9 +347,9 @@ def get_search_space(
     registry = SearchSpaceRegistry(overrides)
 
     if preset == "quick":
-        space = registry.get_quick_space(resolution)
+        space = dict(registry.get_quick_space(resolution))
     elif preset == "full":
-        space = registry.get_full_space(resolution)
+        space = dict(registry.get_full_space(resolution))
     else:
         raise ValueError(f"Unknown preset '{preset}'. Available: quick, full")
 
@@ -342,10 +361,10 @@ def get_search_space(
         else:
             space.update(registry.get_model_space_28())
 
-    return space
+    return MappingProxyType(space)
 
 
-def _build_model_space_from_pool(pool: list[str]) -> dict[str, Callable]:
+def _build_model_space_from_pool(pool: list[str]) -> Mapping[str, Callable]:
     """
     Build model search space from a user-specified pool of architectures.
 
@@ -353,7 +372,7 @@ def _build_model_space_from_pool(pool: list[str]) -> dict[str, Callable]:
         pool: list of model names to include in the search.
 
     Returns:
-        dict with model_name sampler (and weight_variant if vit_tiny is in pool).
+        Immutable mapping with model_name sampler (and weight_variant if vit_tiny is in pool).
     """
     space: dict[str, Callable] = {
         "model_name": lambda trial, _p=pool: trial.suggest_categorical("model_name", _p),
@@ -373,4 +392,4 @@ def _build_model_space_from_pool(pool: list[str]) -> dict[str, Callable]:
             else None
         )
 
-    return space
+    return MappingProxyType(space)

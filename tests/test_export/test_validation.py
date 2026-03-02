@@ -447,5 +447,51 @@ def test_validate_with_runtime_error(tmp_path, monkeypatch):
         )
 
 
+@pytest.mark.unit
+@pytest.mark.skipif(
+    not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
+    reason="Requires onnxruntime",
+)
+def test_validate_shape_mismatch_raises(tmp_path, monkeypatch):
+    """Test validation raises ValueError when output shapes differ."""
+
+    model = SimpleTestModel()
+    model.eval()
+    onnx_path = tmp_path / "model.onnx"
+
+    dummy_input = torch.randn(1, 3, 28, 28)
+    torch.onnx.export(
+        model,
+        dummy_input,
+        str(onnx_path),
+        opset_version=13,
+        input_names=["input"],
+        output_names=["output"],
+    )
+
+    import onnxruntime as ort
+
+    _OrigSession = ort.InferenceSession
+
+    class _ShapeMismatchSession(_OrigSession):
+        """Proxy that returns wrong-shaped output to trigger the shape guard."""
+
+        def run(self, *args, **kwargs):
+            result = super().run(*args, **kwargs)
+            import numpy as np
+
+            return [np.zeros((1, 99))]  # Wrong shape
+
+    monkeypatch.setattr(ort, "InferenceSession", _ShapeMismatchSession)
+
+    with pytest.raises(ValueError, match="Output shape mismatch"):
+        validate_export(
+            pytorch_model=model,
+            onnx_path=onnx_path,
+            input_shape=(3, 28, 28),
+            num_samples=1,
+        )
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

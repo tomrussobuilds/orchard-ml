@@ -30,6 +30,7 @@ def validate_export(
     input_shape: tuple[int, int, int],
     num_samples: int = 10,
     max_deviation: float = 1e-4,
+    label: str = "ONNX",
 ) -> bool | None:
     """
     Validate ONNX export against PyTorch model.
@@ -43,6 +44,7 @@ def validate_export(
         input_shape: Input tensor shape (C, H, W)
         num_samples: Number of random samples to test
         max_deviation: Maximum allowed absolute difference
+        label: Display label for log header (e.g. "ONNX", "Quantized")
 
     Returns:
         True if validation passes, False if outputs diverge,
@@ -61,7 +63,7 @@ def validate_export(
     try:
         import onnxruntime as ort
 
-        logger.info("  [Numerical Validation]")  # pragma: no mutant
+        logger.info(f"  [{label} Validation]")  # pragma: no mutant
         logger.info(f"    {LogStyle.BULLET} Samples           : {num_samples}")  # pragma: no mutant
         logger.info(  # pragma: no mutant
             f"    {LogStyle.BULLET} Max deviation     : {max_deviation:.0e}"
@@ -88,6 +90,12 @@ def validate_export(
 
                 # ONNX inference
                 y_onnx = session.run(None, {"input": x_numpy})[0]
+
+                # Shape guard: detect export shape mismatches early
+                if y_torch.shape != y_onnx.shape:
+                    raise ValueError(
+                        f"Output shape mismatch: PyTorch {y_torch.shape} vs ONNX {y_onnx.shape}"
+                    )
 
                 # Compare outputs
                 diff = np.abs(y_torch - y_onnx).max()

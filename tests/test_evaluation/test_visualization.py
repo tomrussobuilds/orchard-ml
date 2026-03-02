@@ -100,6 +100,10 @@ def test_plot_training_curves_empty_lists(mock_savez, mock_plt, tmp_path, ctx_gr
 
     plot_training_curves([], [], out_path, ctx_gray)
 
+    assert mock_plt.subplots.called
+    assert mock_plt.savefig.called
+    assert mock_plt.close.called
+
 
 # PLOT CONFUSION MATRIX
 @pytest.mark.unit

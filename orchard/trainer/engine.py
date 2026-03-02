@@ -27,7 +27,11 @@ Key Functions:
 from __future__ import annotations
 
 import logging
-from typing import Callable
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Callable
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
 
 import numpy as np
 import torch
@@ -146,14 +150,15 @@ def train_one_epoch(
         # Backward pass with optional AMP and gradient clipping
         _backward_step(loss, optimizer, model, scaler, grad_clip)
 
-        # Accumulate loss
+        # Accumulate loss (extract scalar once to avoid repeated GPU→CPU sync)
+        loss_val = loss.item()
         batch_size = inputs.size(0)
-        running_loss += loss.item() * batch_size
+        running_loss += loss_val * batch_size
         total_samples += batch_size
 
         # Update progress bar with current loss
         if use_tqdm:
-            iterator.set_postfix({"loss": f"{loss.item():.4f}"})
+            iterator.set_postfix({"loss": f"{loss_val:.4f}"})
 
     # Handle empty training set (defensive guard)
     if total_samples == 0:
@@ -169,7 +174,7 @@ def validate_epoch(
     val_loader: torch.utils.data.DataLoader,
     criterion: nn.Module,
     device: torch.device,
-) -> dict:
+) -> Mapping[str, float]:
     """
     Evaluates model performance on held-out validation set.
 
@@ -224,7 +229,9 @@ def validate_epoch(
     # Handle empty validation set (defensive guard)
     if total == 0 or len(all_targets) == 0:
         logger.warning("Empty validation set: no samples processed. Returning zero metrics.")
-        return {METRIC_LOSS: 0.0, METRIC_ACCURACY: 0.0, METRIC_AUC: 0.0, METRIC_F1: 0.0}
+        return MappingProxyType(
+            {METRIC_LOSS: 0.0, METRIC_ACCURACY: 0.0, METRIC_AUC: 0.0, METRIC_F1: 0.0}
+        )
 
     # Global metric computation
     y_true = torch.cat(all_targets).numpy()
@@ -234,12 +241,14 @@ def validate_epoch(
     auc = compute_auc(y_true, y_score)
     macro_f1 = float(f1_score(y_true, y_pred, average="macro", zero_division=0.0))
 
-    return {
-        METRIC_LOSS: val_loss / total,
-        METRIC_ACCURACY: correct / total,
-        METRIC_AUC: auc,
-        METRIC_F1: macro_f1,
-    }
+    return MappingProxyType(
+        {
+            METRIC_LOSS: val_loss / total,
+            METRIC_ACCURACY: correct / total,
+            METRIC_AUC: auc,
+            METRIC_F1: macro_f1,
+        }
+    )
 
 
 # MIXUP UTILITY

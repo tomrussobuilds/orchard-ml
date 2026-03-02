@@ -246,5 +246,36 @@ def test_execute_logs_completion(mock_val, mock_train, executor, mock_trial):
     assert best_metric == pytest.approx(0.92)
 
 
+@pytest.mark.unit
+def test_validate_epoch_reraises_after_consecutive_failures():
+    """Test _validate_epoch raises RuntimeError after 3 consecutive failures."""
+    executor = TrialTrainingExecutor(
+        model=nn.Linear(10, 2),
+        train_loader=MagicMock(),
+        val_loader=MagicMock(),
+        optimizer=torch.optim.SGD(
+            nn.Linear(10, 2).parameters(), lr=0.01, momentum=0.0, weight_decay=0.0
+        ),
+        scheduler=MagicMock(),
+        criterion=nn.CrossEntropyLoss(),
+        training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
+        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        log_interval=5,
+        device=torch.device("cpu"),
+        metric_extractor=MetricExtractor("auc"),
+    )
+
+    with patch("orchard.optimization.objective.training_executor.validate_epoch") as mock_validate:
+        mock_validate.side_effect = RuntimeError("Validation error")
+
+        # First two failures: returns fallback
+        executor._validate_epoch()
+        executor._validate_epoch()
+
+        # Third failure: re-raises
+        with pytest.raises(RuntimeError, match="3 consecutive times"):
+            executor._validate_epoch()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

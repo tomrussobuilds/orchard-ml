@@ -117,8 +117,11 @@ def test_early_stopping_threshold_bounds():
     config = OptunaConfig(early_stopping_threshold=0.999)
     assert config.early_stopping_threshold == pytest.approx(0.999)
 
-    config = OptunaConfig(early_stopping_threshold=1.5)
-    assert config.early_stopping_threshold == pytest.approx(1.5)
+    with pytest.raises(ValidationError):
+        OptunaConfig(early_stopping_threshold=1.5)
+
+    with pytest.raises(ValidationError):
+        OptunaConfig(early_stopping_threshold=-0.1)
 
 
 @pytest.mark.unit

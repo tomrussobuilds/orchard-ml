@@ -465,5 +465,45 @@ def test_train_loads_existing_checkpoint_when_no_improvement(
         assert best_path.exists()
 
 
+@pytest.mark.unit
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.trainer._loop.validate_epoch")
+def test_train_raises_on_missing_monitor_metric(
+    mock_validate, mock_train, simple_model, mock_loaders, optimizer, scheduler, criterion
+):
+    """Test training raises KeyError when monitor_metric is not in val_metrics."""
+    train_loader, val_loader = mock_loaders
+
+    cfg = MagicMock()
+    cfg.training.epochs = 1
+    cfg.training.patience = 3
+    cfg.training.use_amp = False
+    cfg.training.mixup_alpha = 0.0
+    cfg.training.mixup_epochs = 0
+    cfg.training.grad_clip = 0.0
+    cfg.training.use_tqdm = False
+    cfg.training.seed = 42
+    cfg.training.monitor_metric = "nonexistent_metric"
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        trainer = ModelTrainer(
+            model=simple_model,
+            train_loader=train_loader,
+            val_loader=val_loader,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            criterion=criterion,
+            device=torch.device("cpu"),
+            training=cfg.training,
+            output_path=Path(tmpdir) / "best.pth",
+        )
+
+        mock_train.return_value = 0.5
+        mock_validate.return_value = {"loss": 0.3, "accuracy": 0.9, "auc": 0.85}
+
+        with pytest.raises(KeyError, match="nonexistent_metric"):
+            trainer.train()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -30,6 +30,8 @@ from ..core import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
+
     from ..core import RootOrchestrator
     from ..tracking import TrackerProtocol
 
@@ -60,6 +62,7 @@ logger = logging.getLogger(LOGGER_NAME)
 
 _ERR_LOGGER_NOT_INIT = "Logger not initialized"
 _ERR_PATHS_NOT_INIT = "Paths not initialized"
+_QUANTIZED_TOLERANCE_FACTOR = 10
 
 
 class TrainingResult(NamedTuple):
@@ -67,7 +70,7 @@ class TrainingResult(NamedTuple):
 
     best_model_path: Path
     train_losses: list[float]
-    val_metrics: list[dict]
+    val_metrics: list[Mapping[str, float]]
     model: nn.Module
     macro_f1: float
     test_acc: float
@@ -331,12 +334,29 @@ def run_export_phase(
             input_shape=input_shape,
             num_samples=export_cfg.validation_samples,
             max_deviation=export_cfg.max_deviation,
+            label=export_cfg.format.upper(),
         )
         if is_valid is False:
             logger.warning(
                 f"  {LogStyle.WARNING} Numerical validation failed: "
                 "ONNX outputs diverge from PyTorch model"
             )
+
+        # Validate quantized model (expected larger deviations from quantization)
+        if quantized_path is not None:
+            q_valid = validate_export(
+                pytorch_model=export_model,
+                onnx_path=quantized_path,
+                input_shape=input_shape,
+                num_samples=export_cfg.validation_samples,
+                max_deviation=export_cfg.max_deviation * _QUANTIZED_TOLERANCE_FACTOR,
+                label=export_cfg.quantization_type.upper(),
+            )
+            if q_valid is False:
+                logger.error(
+                    f"  {LogStyle.FAILURE} Quantized model validation failed: "
+                    "outputs diverge beyond 10x tolerance"
+                )
 
     # Inference latency benchmark
     if export_cfg.benchmark:
@@ -345,7 +365,7 @@ def run_export_phase(
             input_shape=input_shape,
             num_runs=export_cfg.benchmark_runs,
             seed=cfg.training.seed,
-            label="ONNX",
+            label=export_cfg.format.upper(),
         )
         if quantized_path:
             benchmark_onnx_inference(
@@ -353,7 +373,7 @@ def run_export_phase(
                 input_shape=input_shape,
                 num_runs=export_cfg.benchmark_runs,
                 seed=cfg.training.seed,
-                label="Quantized",
+                label=export_cfg.quantization_type.upper(),
             )
 
     logger.info(f"  {LogStyle.SUCCESS} Export completed")  # pragma: no mutant

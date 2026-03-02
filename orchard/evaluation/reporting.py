@@ -13,7 +13,10 @@ import logging
 import math
 from datetime import datetime
 from pathlib import Path
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
@@ -191,7 +194,7 @@ class TrainingReport(BaseModel):
 
 
 def create_structured_report(
-    val_metrics: Sequence[dict],
+    val_metrics: Sequence[Mapping[str, float]],
     test_metrics: dict,
     macro_f1: float,
     train_losses: Sequence[float],

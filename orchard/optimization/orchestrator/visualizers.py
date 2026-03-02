@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Callable
 
 import optuna
@@ -79,12 +80,14 @@ def generate_visualizations(study: optuna.Study, output_dir: Path) -> None:
             plot_slice,
         )
 
-        plots = {
-            "optimization_history": plot_optimization_history,  # pragma: no mutant
-            "param_importances": plot_param_importances,  # pragma: no mutant
-            "slice": plot_slice,  # pragma: no mutant
-            "parallel_coordinate": plot_parallel_coordinate,  # pragma: no mutant
-        }
+        plots = MappingProxyType(
+            {
+                "optimization_history": plot_optimization_history,  # pragma: no mutant
+                "param_importances": plot_param_importances,  # pragma: no mutant
+                "slice": plot_slice,  # pragma: no mutant
+                "parallel_coordinate": plot_parallel_coordinate,  # pragma: no mutant
+            }
+        )
 
         for plot_name, plot_fn in plots.items():
             save_plot(study, plot_name, plot_fn, output_dir)  # type: ignore[arg-type]

@@ -235,6 +235,8 @@ class OptunaConfig(BaseModel):
     early_stopping_threshold: float | None = Field(
         default=None,
         description="Metric threshold for early stopping (None=auto from monitor_metric)",
+        ge=0.0,
+        le=1.0,
     )
 
     early_stopping_patience: PositiveInt = Field(

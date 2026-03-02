@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- add multi-format quantization (INT8/UINT8/INT4/UINT4)
+
 ### Changed
 
 - centralise device placement, add resolution validator, cleanup naming

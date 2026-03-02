@@ -16,7 +16,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import partial
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
 
 import numpy as np
 import torch
@@ -167,7 +170,7 @@ class TrainingLoop:
             use_tqdm=self.options.use_tqdm,
         )
 
-    def run_epoch(self, epoch: int) -> tuple[float, dict[str, float]]:
+    def run_epoch(self, epoch: int) -> tuple[float, Mapping[str, float]]:
         """
         Execute a full train → validate → schedule cycle for one epoch.
 
@@ -184,5 +187,11 @@ class TrainingLoop:
             criterion=self.criterion,
             device=self.device,
         )
-        step_scheduler(self.scheduler, val_metrics[self.options.monitor_metric])
+        monitor = self.options.monitor_metric
+        if monitor not in val_metrics:
+            raise KeyError(
+                f"Monitor metric '{monitor}' not found in validation results. "
+                f"Available: {list(val_metrics.keys())}"
+            )
+        step_scheduler(self.scheduler, val_metrics[monitor])
         return train_loss, val_metrics

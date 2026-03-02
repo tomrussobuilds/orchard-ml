@@ -9,7 +9,10 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
 
 from ..core import LOGGER_NAME, LogStyle
 from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS
@@ -46,7 +49,9 @@ class TrackerProtocol(Protocol):
 
     def start_run(self, cfg: Any, run_name: str, tracking_uri: str) -> None: ...
 
-    def log_epoch(self, epoch: int, train_loss: float, val_metrics: dict, lr: float) -> None: ...
+    def log_epoch(
+        self, epoch: int, train_loss: float, val_metrics: Mapping[str, float], lr: float
+    ) -> None: ...
 
     def log_test_metrics(self, test_acc: float, macro_f1: float) -> None: ...
 
@@ -73,7 +78,7 @@ class NoOpTracker:  # pragma: no cover
         """No-op: skip MLflow run initialization."""
 
     def log_epoch(  # noqa: ARG002
-        self, epoch: int, train_loss: float, val_metrics: dict, lr: float
+        self, epoch: int, train_loss: float, val_metrics: Mapping[str, float], lr: float
     ) -> None:
         """No-op: skip per-epoch metric logging."""
 
@@ -140,7 +145,9 @@ class MLflowTracker:  # pragma: no cover
 
         logger.info(f"  {LogStyle.ARROW} MLflow run started")  # pragma: no mutant
 
-    def log_epoch(self, epoch: int, train_loss: float, val_metrics: dict, lr: float) -> None:
+    def log_epoch(
+        self, epoch: int, train_loss: float, val_metrics: Mapping[str, float], lr: float
+    ) -> None:
         """
         Log per-epoch training metrics.
 

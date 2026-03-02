@@ -7,6 +7,7 @@ Quick tests to cover core training/validation functions and eliminate codecov wa
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -288,7 +289,7 @@ def test_validate_epoch_basic(simple_model, simple_loader, criterion):
         device=device,
     )
 
-    assert isinstance(metrics, dict)
+    assert isinstance(metrics, Mapping)
     assert "loss" in metrics
     assert "accuracy" in metrics
     assert "auc" in metrics
@@ -316,7 +317,7 @@ def test_validate_epoch_binary_classification(simple_model, criterion):
         device=device,
     )
 
-    assert isinstance(metrics, dict)
+    assert isinstance(metrics, Mapping)
     assert "auc" in metrics
 
 

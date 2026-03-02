@@ -31,6 +31,11 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
 
 import numpy as np
 import torch
@@ -167,7 +172,7 @@ class DataLoaderFactory:
             replacement=True,
         )
 
-    def _get_infrastructure_kwargs(self, is_optuna: bool = False) -> dict:
+    def _get_infrastructure_kwargs(self, is_optuna: bool = False) -> Mapping[str, Any]:
         """
         Determines hardware and process-level parameters for DataLoaders.
 
@@ -199,12 +204,14 @@ class DataLoaderFactory:
         has_cuda = torch.cuda.is_available()
         has_mps = has_mps_backend()
 
-        return {
-            "num_workers": num_workers,
-            "pin_memory": has_cuda or has_mps,
-            "worker_init_fn": worker_init_fn if num_workers > 0 else None,
-            "persistent_workers": (num_workers > 0) and (not is_optuna),
-        }
+        return MappingProxyType(
+            {
+                "num_workers": num_workers,
+                "pin_memory": has_cuda or has_mps,
+                "worker_init_fn": worker_init_fn if num_workers > 0 else None,
+                "persistent_workers": (num_workers > 0) and (not is_optuna),
+            }
+        )
 
     def build(self, is_optuna: bool = False) -> tuple[DataLoader, DataLoader, DataLoader]:
         """

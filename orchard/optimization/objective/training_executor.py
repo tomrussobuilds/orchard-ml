@@ -27,6 +27,11 @@ Key responsibilities:
 from __future__ import annotations
 
 import logging
+from types import MappingProxyType
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
 
 import optuna
 import torch
@@ -46,12 +51,15 @@ from .metric_extractor import MetricExtractor
 logger = logging.getLogger(LOGGER_NAME)
 
 # Module-level constants
-_FALLBACK_METRICS: dict[str, float] = {
-    METRIC_LOSS: 999.0,
-    METRIC_ACCURACY: 0.0,
-    METRIC_AUC: 0.0,
-    METRIC_F1: 0.0,
-}
+_FALLBACK_METRICS = MappingProxyType(
+    {
+        METRIC_LOSS: 999.0,
+        METRIC_ACCURACY: 0.0,
+        METRIC_AUC: 0.0,
+        METRIC_F1: 0.0,
+    }
+)
+_MAX_CONSECUTIVE_VAL_FAILURES: int = 3
 
 
 # TRAINING EXECUTOR
@@ -154,6 +162,7 @@ class TrialTrainingExecutor:
         self.epochs = training.epochs
         self.monitor_metric = training.monitor_metric
         self.log_interval = log_interval
+        self._consecutive_val_failures: int = 0
 
         # Shared epoch kernel (train step only — validation is error-resilient here)
         self._loop = TrainingLoop(
@@ -230,7 +239,7 @@ class TrialTrainingExecutor:
         self._log_trial_complete(trial, best_metric, epoch_loss)
         return best_metric
 
-    def _validate_epoch(self) -> dict[str, float]:
+    def _validate_epoch(self) -> Mapping[str, float]:
         """
         Validate single epoch with error handling.
 
@@ -247,7 +256,16 @@ class TrialTrainingExecutor:
             )
 
         except (RuntimeError, ValueError) as e:
-            logger.error(f"Validation failed: {e}")
+            self._consecutive_val_failures += 1
+            logger.error(
+                f"{LogStyle.INDENT}{LogStyle.FAILURE} Validation failed "
+                f"(x{self._consecutive_val_failures}): {e}"
+            )
+            if self._consecutive_val_failures >= _MAX_CONSECUTIVE_VAL_FAILURES:
+                raise RuntimeError(
+                    f"Validation failed {self._consecutive_val_failures} consecutive times, "
+                    "aborting trial"
+                ) from e
             return dict(_FALLBACK_METRICS)
 
     def _should_prune(self, trial: optuna.Trial, epoch: int) -> bool:

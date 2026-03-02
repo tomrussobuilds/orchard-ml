@@ -35,6 +35,8 @@ from ..core.paths import METRIC_ACCURACY, METRIC_LOSS
 from ..exceptions import OrchardExportError
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
+
     from ..tracking import TrackerProtocol
 
 from ._loop import LoopOptions, TrainingLoop, create_amp_scaler, create_mixup_fn
@@ -156,7 +158,7 @@ class ModelTrainer:
 
         # History tracking
         self.train_losses: list[float] = []
-        self.val_metrics_history: list[dict] = []
+        self.val_metrics_history: list[Mapping[str, float]] = []
 
         # Track if we saved at least one valid checkpoint during training
         self._checkpoint_saved: bool = False
@@ -186,7 +188,7 @@ class ModelTrainer:
         )
         logger.info("")  # pragma: no mutant
 
-    def train(self) -> tuple[Path, list[float], list[dict]]:
+    def train(self) -> tuple[Path, list[float], list[Mapping[str, float]]]:
         """
         Executes the main training loop with checkpointing and early stopping.
 
@@ -292,7 +294,7 @@ class ModelTrainer:
         )
         logger.info(LogStyle.DOUBLE)  # pragma: no mutant
 
-    def _handle_checkpointing(self, val_metrics: dict) -> bool:
+    def _handle_checkpointing(self, val_metrics: Mapping[str, float]) -> bool:
         """
         Manage model checkpointing and track early stopping progress.
 
@@ -332,6 +334,7 @@ class ModelTrainer:
         """
         if self._checkpoint_saved and self.best_path.exists():
             self.load_best_weights()
+            self.model.eval()
             return
 
         no_improve_msg = "No checkpoint was saved during training (model never improved)."
@@ -341,6 +344,8 @@ class ModelTrainer:
         else:
             logger.warning(f"{no_improve_msg} Saving current model state as fallback.")
             torch.save(self.model.state_dict(), self.best_path)
+
+        self.model.eval()
 
     def load_best_weights(self) -> None:
         """

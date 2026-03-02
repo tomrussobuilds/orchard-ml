@@ -24,6 +24,7 @@ Example:
 from __future__ import annotations
 
 import logging
+from types import MappingProxyType
 
 from optuna.study import Study
 from optuna.trial import FrozenTrial, TrialState
@@ -41,6 +42,25 @@ _THRESH_F1 = 0.98  # 98% F1 score
 _THRESH_LOSS = 0.01  # Very low cross-entropy loss
 _THRESH_MAE = 0.01  # Mean absolute error
 _THRESH_MSE = 0.001  # Mean squared error
+
+_DEFAULT_THRESHOLDS = MappingProxyType(
+    {
+        "maximize": MappingProxyType(
+            {
+                METRIC_AUC: _THRESH_AUC,
+                METRIC_ACCURACY: _THRESH_ACCURACY,
+                METRIC_F1: _THRESH_F1,
+            }
+        ),
+        "minimize": MappingProxyType(
+            {
+                METRIC_LOSS: _THRESH_LOSS,
+                "mae": _THRESH_MAE,
+                "mse": _THRESH_MSE,
+            }
+        ),
+    }
+)
 
 
 # EARLY STOPPING CALLBACK
@@ -187,23 +207,13 @@ def get_early_stopping_callback(
     if not enabled:
         return None
 
-    # Default thresholds for common metrics — intentionally aggressive
-    # to stop only when near-perfect performance is clearly achieved.
-    DEFAULT_THRESHOLDS = {
-        "maximize": {
-            METRIC_AUC: _THRESH_AUC,
-            METRIC_ACCURACY: _THRESH_ACCURACY,
-            METRIC_F1: _THRESH_F1,
-        },
-        "minimize": {
-            METRIC_LOSS: _THRESH_LOSS,
-            "mae": _THRESH_MAE,
-            "mse": _THRESH_MSE,
-        },
-    }
-
     if threshold is None:
-        threshold = DEFAULT_THRESHOLDS.get(direction, {}).get(metric_name.lower(), None)
+        direction_thresholds = _DEFAULT_THRESHOLDS.get(direction)
+        threshold = (
+            direction_thresholds.get(metric_name.lower())
+            if direction_thresholds is not None
+            else None
+        )
 
         if threshold is None:
             logger.warning(

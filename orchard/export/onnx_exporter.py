@@ -20,6 +20,8 @@ from __future__ import annotations
 import contextlib
 import io
 import logging
+import os
+import tempfile
 import warnings
 from pathlib import Path
 
@@ -224,6 +226,8 @@ def quantize_model(
         return None
     except Exception as e:  # onnxruntime raises non-standard exceptions
         logger.error(f"    {LogStyle.FAILURE} Quantization failed: {e}")
+        if output_path.exists():
+            output_path.unlink()
         return None
 
     original_mb = _onnx_file_size_mb(onnx_path)
@@ -242,6 +246,13 @@ def quantize_model(
     return output_path
 
 
+def _unique_preprocessed_path(onnx_path: Path) -> Path:
+    """Create a unique temporary path for preprocessing to avoid race conditions."""
+    fd, path = tempfile.mkstemp(suffix=".onnx", dir=onnx_path.parent, prefix="preproc_")
+    os.close(fd)
+    return Path(path)
+
+
 def _quantize_8bit(
     onnx_path: Path,
     output_path: Path,
@@ -255,7 +266,7 @@ def _quantize_8bit(
 
     quant_type = QuantType.QInt8 if weight_type == "int8" else QuantType.QUInt8
 
-    preprocessed_path = onnx_path.parent / "model_preprocessed.onnx"
+    preprocessed_path = _unique_preprocessed_path(onnx_path)
     try:
         _preprocess_onnx(onnx_path, preprocessed_path)
         with _suppress_ort_warnings():
@@ -281,13 +292,24 @@ def _quantize_4bit(
     (fully-connected layers).  This is the standard approach for
     edge-deployed vision models.
     """
+    import onnx
     from onnxruntime.quantization import QuantType, quantize_dynamic
 
     quant_type = QuantType.QInt4 if weight_type == "int4" else QuantType.QUInt4
 
-    preprocessed_path = onnx_path.parent / "model_preprocessed.onnx"
+    preprocessed_path = _unique_preprocessed_path(onnx_path)
     try:
         _preprocess_onnx(onnx_path, preprocessed_path)
+
+        # Warn if no Gemm/MatMul nodes exist (quantization will be a no-op)
+        model_proto = onnx.load(str(preprocessed_path))
+        gemm_nodes = [n for n in model_proto.graph.node if n.op_type in ("Gemm", "MatMul")]
+        if not gemm_nodes:
+            logger.warning(
+                f"    {LogStyle.WARNING} Model has no Gemm/MatMul nodes — "
+                f"{weight_type.upper()} quantization will have no effect"
+            )
+
         with _suppress_ort_warnings():
             quantize_dynamic(
                 model_input=str(preprocessed_path),
@@ -364,9 +386,9 @@ def benchmark_onnx_inference(
         # Create inference session
         session = ort.InferenceSession(str(onnx_path))
 
-        # Prepare dummy input using random Generator
+        # Prepare dummy input using N(0,1) (matches validation distribution)
         rng = np.random.default_rng(seed)
-        dummy_input = rng.random(size=(1, *input_shape), dtype=np.float32) * 255
+        dummy_input = rng.standard_normal(size=(1, *input_shape)).astype(np.float32)
 
         # Warmup
         for _ in range(10):

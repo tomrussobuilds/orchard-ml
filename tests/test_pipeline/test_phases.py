@@ -444,6 +444,35 @@ def test_run_export_phase_validation_failure_logs_warning(
     assert any("Numerical validation failed" in w for w in warning_calls)
 
 
+@pytest.mark.unit
+@patch("orchard.pipeline.phases.logger")
+@patch("orchard.pipeline.phases.quantize_model")
+@patch("orchard.pipeline.phases.validate_export")
+@patch("orchard.pipeline.phases.get_model")
+@patch("orchard.pipeline.phases.export_to_onnx")
+def test_run_export_phase_quantized_validation_failure_logs_error(
+    _mock_export, _mock_get_model, mock_validate, mock_quantize, mock_logger, mock_orchestrator
+):
+    """Test run_export_phase logs error when quantized validation fails."""
+    mock_orchestrator.cfg.export.quantize = True
+    mock_orchestrator.cfg.export.quantization_backend = "qnnpack"
+    mock_orchestrator.cfg.export.quantization_type = "int8"
+    mock_orchestrator.cfg.export.benchmark = False
+    mock_quantize.return_value = Path("/mock/test_exports/model_quantized.onnx")
+
+    # Base validation passes, quantized validation fails
+    mock_validate.side_effect = [True, False]
+
+    run_export_phase(
+        mock_orchestrator,
+        checkpoint_path=Path("/mock/model.pth"),
+    )
+
+    assert mock_validate.call_count == 2
+    error_calls = [str(c) for c in mock_logger.error.call_args_list]
+    assert any("Quantized model validation failed" in e for e in error_calls)
+
+
 # OPTIMIZATION PHASE: KWARGS AND GUARDS
 @pytest.mark.unit
 @patch("orchard.pipeline.phases.run_optimization")

@@ -46,6 +46,8 @@ from ...core import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
+
     from ...tracking import TrackerProtocol
 
 from ...architectures import get_model
@@ -142,7 +144,7 @@ class OptunaObjective:
     def __init__(
         self,
         cfg: Config,
-        search_space: dict[str, Any],
+        search_space: Mapping[str, Any],
         device: torch.device,
         dataset_loader: DatasetLoaderProtocol | None = None,
         dataloader_factory: DataloaderFactoryProtocol | None = None,
