@@ -24,6 +24,7 @@ def test_export_config_defaults():
     assert config.dynamic_axes is True
     assert config.do_constant_folding is True
     assert config.quantize is False
+    assert config.quantization_type == "int8"
     assert config.quantization_backend == "qnnpack"
     assert config.validate_export is True
     assert config.validation_samples == 10
@@ -129,6 +130,30 @@ def test_invalid_quantization_backend_rejected():
         ExportConfig(quantization_backend="invalid_backend")
 
 
+# EXPORT CONFIG: QUANTIZATION TYPE
+@pytest.mark.unit
+def test_quantization_type_default_is_int8():
+    """Test quantization_type defaults to int8."""
+    config = ExportConfig()
+    assert config.quantization_type == "int8"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("qtype", ["int8", "uint8", "int4", "uint4"])
+def test_valid_quantization_types(qtype):
+    """Test all valid quantization types are accepted."""
+    config = ExportConfig(quantization_type=qtype)
+    assert config.quantization_type == qtype
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("qtype", ["float16", "int16", "bfloat16", "invalid"])
+def test_invalid_quantization_type_rejected(qtype):
+    """Test invalid quantization types are rejected."""
+    with pytest.raises(ValidationError):
+        ExportConfig(quantization_type=qtype)
+
+
 # EXPORT CONFIG: VALIDATION PARAMETERS
 @pytest.mark.unit
 def test_validation_enabled_by_default():
@@ -217,6 +242,20 @@ def test_quantized_export_config():
     assert config.quantize is True
     assert config.quantization_backend == "fbgemm"
     assert config.max_deviation == pytest.approx(1e-3)
+
+
+@pytest.mark.unit
+def test_edge_quantized_export_config():
+    """Test edge deployment configuration with INT4 quantization."""
+    config = ExportConfig(
+        quantize=True,
+        quantization_type="int4",
+        quantization_backend="qnnpack",
+    )
+
+    assert config.quantize is True
+    assert config.quantization_type == "int4"
+    assert config.quantization_backend == "qnnpack"
 
 
 @pytest.mark.unit

@@ -331,6 +331,6 @@ class Reporter(BaseModel):
         )  # pragma: no mutant
         if export_cfg.quantize:
             logger_instance.info(  # pragma: no mutant
-                f"{IND}{A} {'Quantize':<18}: INT8 ({export_cfg.quantization_backend})"
+                f"{IND}{A} {'Quantize':<18}: {export_cfg.quantization_type.upper()} ({export_cfg.quantization_backend})"
             )
         logger_instance.info("")  # pragma: no mutant

@@ -604,6 +604,65 @@ def test_quantize_model_qnnpack_backend(tmp_path):
 
 
 @pytest.mark.unit
+@pytest.mark.skipif(
+    not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
+    reason="Requires onnxruntime",
+)
+def test_quantize_model_uint8(tmp_path):
+    """Test UINT8 quantization of exported ONNX model."""
+    from orchard.export.onnx_exporter import quantize_model
+
+    _, onnx_path = _export_simple_model(tmp_path)
+    quantized_path = quantize_model(onnx_path, weight_type="uint8")
+
+    assert quantized_path is not None
+    assert quantized_path.exists()
+    assert quantized_path.stat().st_size > 0
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(
+    not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
+    reason="Requires onnxruntime",
+)
+def test_quantize_model_int4(tmp_path):
+    """Test INT4 quantization of exported ONNX model (edge deployment)."""
+    from onnxruntime.quantization import QuantType
+
+    if not hasattr(QuantType, "QInt4"):
+        pytest.skip("onnxruntime too old for INT4 quantization")
+
+    from orchard.export.onnx_exporter import quantize_model
+
+    _, onnx_path = _export_simple_model(tmp_path)
+    quantized_path = quantize_model(onnx_path, weight_type="int4")
+
+    assert quantized_path is not None
+    assert quantized_path.exists()
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(
+    not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
+    reason="Requires onnxruntime",
+)
+def test_quantize_model_uint4(tmp_path):
+    """Test UINT4 quantization of exported ONNX model."""
+    from onnxruntime.quantization import QuantType
+
+    if not hasattr(QuantType, "QUInt4"):
+        pytest.skip("onnxruntime too old for UINT4 quantization")
+
+    from orchard.export.onnx_exporter import quantize_model
+
+    _, onnx_path = _export_simple_model(tmp_path)
+    quantized_path = quantize_model(onnx_path, weight_type="uint4")
+
+    assert quantized_path is not None
+    assert quantized_path.exists()
+
+
+@pytest.mark.unit
 def test_quantize_model_without_onnxruntime(tmp_path, monkeypatch):
     """Test quantize_model returns None when onnxruntime.quantization unavailable."""
     import builtins

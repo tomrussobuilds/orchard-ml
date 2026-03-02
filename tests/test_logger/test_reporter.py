@@ -763,6 +763,28 @@ def test_reporter_log_export_section_basic():
 
 
 @pytest.mark.unit
+@pytest.mark.parametrize("qtype", ["int8", "uint8", "int4", "uint4"])
+def test_reporter_log_export_section_quantize_type(qtype):
+    """Test _log_export_section shows the actual quantization_type."""
+    reporter = Reporter()
+    mock_logger = MagicMock()
+    mock_cfg = MagicMock()
+    mock_cfg.export.format = "onnx"
+    mock_cfg.export.opset_version = 18
+    mock_cfg.export.validate_export = True
+    mock_cfg.export.quantize = True
+    mock_cfg.export.quantization_type = qtype
+    mock_cfg.export.quantization_backend = "qnnpack"
+
+    reporter._log_export_section(mock_logger, mock_cfg)
+
+    calls = [str(call) for call in mock_logger.info.call_args_list]
+    log_output = " ".join(calls)
+    assert qtype.upper() in log_output
+    assert "qnnpack" in log_output
+
+
+@pytest.mark.unit
 def test_reporter_log_export_section_absent():
     """Test _log_export_section does nothing when export is not configured."""
     reporter = Reporter()

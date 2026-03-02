@@ -89,3 +89,6 @@ export:
   format: onnx
   opset_version: 18
   validate_export: true
+  quantize: true
+  quantization_type: int4
+  quantization_backend: qnnpack

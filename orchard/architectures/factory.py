@@ -124,7 +124,6 @@ def get_model(
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Deployed':<18}: "
             f"{str(device).upper()} | Parameters: {total_params:,}"
         )
-        logger.info("")  # pragma: no mutant
 
     return model
 

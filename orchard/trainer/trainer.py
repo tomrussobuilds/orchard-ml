@@ -184,6 +184,7 @@ class ModelTrainer:
         logger.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Checkpoint':<18}: {self.best_path.name}"
         )
+        logger.info("")  # pragma: no mutant
 
     def train(self) -> tuple[Path, list[float], list[dict]]:
         """

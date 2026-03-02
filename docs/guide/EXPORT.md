@@ -50,7 +50,8 @@ export:
   do_constant_folding: true       # fold constants at export time
 
   # Quantization
-  quantize: false                 # apply INT8 post-training quantization
+  quantize: false                 # apply post-training quantization
+  quantization_type: int8         # int8 | uint8 | int4 | uint4
   quantization_backend: qnnpack   # qnnpack (mobile/ARM) | fbgemm (x86)
 
   # Validation
@@ -68,7 +69,8 @@ export:
 | `opset_version` | `18` | ONNX opset version (18 recommended) |
 | `dynamic_axes` | `true` | Enable dynamic batch size for inference flexibility |
 | `do_constant_folding` | `true` | Optimize constant operations during export |
-| `quantize` | `false` | Apply INT8 post-training quantization |
+| `quantize` | `false` | Apply post-training quantization |
+| `quantization_type` | `int8` | Weight type: `int8`, `uint8` (server), `int4`, `uint4` (edge) |
 | `quantization_backend` | `qnnpack` | Quantization backend: `qnnpack` (mobile/ARM), `fbgemm` (x86) |
 | `validate_export` | `true` | Run numerical validation after export |
 | `validation_samples` | `10` | Number of random samples for validation |
@@ -77,16 +79,33 @@ export:
 
 <h2>Quantization</h2>
 
-Orchard ML supports INT8 dynamic post-training quantization via ONNX Runtime.
-Quantization reduces model size by 2-4x and can improve inference speed on compatible hardware.
+Orchard ML supports dynamic post-training quantization via ONNX Runtime with four weight types:
 
-**Enable quantization:**
+| Weight Type | Bits | Target | Notes |
+|-------------|------|--------|-------|
+| `int8` | 8 | Server / general | Default, all layers quantized |
+| `uint8` | 8 | Server / general | Unsigned variant |
+| `int4` | 4 | Edge / mobile | Only FC layers quantized (Conv stays FP32) |
+| `uint4` | 4 | Edge / mobile | Unsigned variant |
+
+**Server deployment (INT8):**
 
 ```yaml
 export:
   format: onnx
   quantize: true
+  quantization_type: int8
   quantization_backend: fbgemm   # x86 servers
+```
+
+**Edge deployment (INT4):**
+
+```yaml
+export:
+  format: onnx
+  quantize: true
+  quantization_type: int4
+  quantization_backend: qnnpack   # mobile / ARM
 ```
 
 | Backend | Target Hardware | Quantization Style |
@@ -99,13 +118,16 @@ After export, the output directory will contain both models:
 ```
 exports/
   model.onnx                  # Full-precision original
-  model_quantized.onnx        # INT8 quantized
+  model_quantized.onnx        # Quantized (INT8/INT4/...)
 ```
 
-> **Note:** INT8 quantization introduces small numerical deviations compared to the
-> full-precision model. The `validate_export` check runs against the original
-> (non-quantized) ONNX model. If `benchmark: true` is set, both models are benchmarked
-> for latency comparison.
+> **Note:** 4-bit quantization (INT4/UINT4) only quantizes Gemm nodes (fully-connected
+> layers). Conv layers remain at full precision because ONNX Runtime's 4-bit packing
+> does not support convolution weights. This is the standard approach for edge-deployed
+> vision models.
+>
+> The `validate_export` check runs against the original (non-quantized) ONNX model.
+> If `benchmark: true` is set, both models are benchmarked for latency comparison.
 
 <h2>Troubleshooting</h2>
 

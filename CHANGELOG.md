@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - introduce custom exception hierarchy and unify MPS accelerator support
 - dependency bounds, CI supply chain, Dockerfile rootless, config validators
 - wire unwired config fields, fix search spaces, harden CI
+- replace bare trial dicts with TrialData frozen dataclass
 
 ### Fixed
 

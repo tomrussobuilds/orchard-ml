@@ -1035,6 +1035,7 @@ def test_run_export_phase_quantize_passes_onnx_path(
     """Test run_export_phase passes onnx_path to quantize_model."""
     mock_orchestrator.cfg.export.quantize = True
     mock_orchestrator.cfg.export.quantization_backend = "fbgemm"
+    mock_orchestrator.cfg.export.quantization_type = "int4"
     mock_orchestrator.cfg.export.benchmark = False
     mock_quantize.return_value = Path("/mock/quantized.onnx")
 
@@ -1043,6 +1044,7 @@ def test_run_export_phase_quantize_passes_onnx_path(
     kw = mock_quantize.call_args.kwargs
     assert kw["onnx_path"] == mock_orchestrator.paths.exports / "model.onnx"
     assert kw["backend"] == "fbgemm"
+    assert kw["weight_type"] == "int4"
 
 
 @pytest.mark.unit

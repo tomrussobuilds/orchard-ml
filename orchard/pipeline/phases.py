@@ -320,6 +320,7 @@ def run_export_phase(
         quantized_path = quantize_model(
             onnx_path=onnx_path,
             backend=export_cfg.quantization_backend,
+            weight_type=export_cfg.quantization_type,
         )
 
     # Numerical validation: compare PyTorch vs ONNX outputs

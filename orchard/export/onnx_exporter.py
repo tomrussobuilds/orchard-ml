@@ -9,8 +9,8 @@ Key Functions:
 
 - ``export_to_onnx``: Trace-based export with dynamic batch axes, constant
   folding, and optional ``onnx.checker`` validation.
-- ``quantize_model``: INT8 dynamic post-training quantization via
-  onnxruntime (qnnpack for ARM, fbgemm for x86).
+- ``quantize_model``: Dynamic post-training quantization (INT8, UINT8,
+  INT4, UINT4) via onnxruntime (qnnpack for ARM, fbgemm for x86).
 - ``benchmark_onnx_inference``: Warm-up + timed inference loop returning
   average latency in milliseconds.
 """
@@ -181,18 +181,21 @@ def quantize_model(
     onnx_path: Path,
     output_path: Path | None = None,
     backend: str = "qnnpack",
+    weight_type: str = "int8",
 ) -> Path | None:
     """
-    Apply INT8 dynamic post-training quantization to an ONNX model.
+    Apply dynamic post-training quantization to an ONNX model.
 
-    Uses onnxruntime.quantization to reduce model size and improve
-    inference speed with minimal accuracy loss.
+    Dispatches to 8-bit or 4-bit ``quantize_dynamic`` based on
+    *weight_type*.  INT4/UINT4 quantize only Gemm/MatMul nodes (Linear
+    layers), leaving Conv layers at full precision.
 
     Args:
         onnx_path: Path to the exported ONNX model
         output_path: Path for quantized model (defaults to model_quantized.onnx
                      in the same directory)
         backend: Quantization backend ("qnnpack" for mobile/ARM, "fbgemm" for x86)
+        weight_type: Weight quantization type — "int8", "uint8", "int4", or "uint4"
 
     Returns:
         Path to the quantized ONNX model, or None if quantization failed
@@ -201,72 +204,129 @@ def quantize_model(
         >>> quantized = quantize_model(Path("exports/model.onnx"))
         >>> print(f"Quantized model: {quantized}")
     """
-    try:
-        import onnx
-        from onnxruntime.quantization import QuantType, quantize_dynamic
-    except ImportError:
-        logger.warning(
-            f"    {LogStyle.WARNING} onnxruntime.quantization not available. Skipping quantization."
-        )
-        return None
-
     if output_path is None:
         output_path = onnx_path.parent / "model_quantized.onnx"
 
     logger.info("  [Quantization]")  # pragma: no mutant
     logger.info(f"    {LogStyle.BULLET} Backend           : {backend}")  # pragma: no mutant
+    logger.info(f"    {LogStyle.BULLET} Weight type       : {weight_type}")  # pragma: no mutant
 
-    preprocessed_path = onnx_path.parent / "model_preprocessed.onnx"
     try:
-        # Clear intermediate value_info to avoid shape conflicts from dynamo exporter
-        model_proto = onnx.load(str(onnx_path))
-        while len(model_proto.graph.value_info) > 0:
-            model_proto.graph.value_info.pop()
-        onnx.save(model_proto, str(preprocessed_path))
-
-        per_channel = backend == "fbgemm"
-
-        # Suppress onnxruntime's "Please consider to run pre-processing before
-        # quantization" warning.  We already handle pre-processing ourselves by
-        # clearing value_info from the ONNX graph (see above) to work around
-        # shape conflicts produced by the PyTorch dynamo-based exporter.
-        # Running onnxruntime's own quant_pre_process() is unnecessary and would
-        # re-introduce the conflicting shape annotations we just removed.
-        import logging as _logging
-
-        _root = _logging.getLogger()
-        _prev_level = _root.level
-        _root.setLevel(_logging.ERROR)
-        try:
-            quantize_dynamic(
-                model_input=str(preprocessed_path),
-                model_output=str(output_path),
-                weight_type=QuantType.QInt8,
-                per_channel=per_channel,
-            )
-        finally:
-            _root.setLevel(_prev_level)
-
-        original_mb = _onnx_file_size_mb(onnx_path)
-        quantized_mb = _onnx_file_size_mb(output_path)
-        ratio = original_mb / quantized_mb if quantized_mb > 0 else 0
-
-        logger.info(  # pragma: no mutant
-            f"    {LogStyle.BULLET} Size              : "
-            f"{original_mb:.2f} MB → {quantized_mb:.2f} MB ({ratio:.1f}x)"
+        if weight_type in ("int4", "uint4"):
+            _quantize_4bit(onnx_path, output_path, weight_type)
+        else:
+            _quantize_8bit(onnx_path, output_path, backend, weight_type)
+    except ImportError:
+        logger.warning(
+            f"    {LogStyle.WARNING} onnxruntime.quantization not available. "
+            "Skipping quantization."
         )
-        logger.info(  # pragma: no mutant
-            f"    {LogStyle.BULLET} Status            : {LogStyle.SUCCESS} Done"
-        )
-        logger.info("")  # pragma: no mutant
-
-        return output_path
-
+        return None
     except Exception as e:  # onnxruntime raises non-standard exceptions
         logger.error(f"    {LogStyle.FAILURE} Quantization failed: {e}")
         return None
+
+    original_mb = _onnx_file_size_mb(onnx_path)
+    quantized_mb = _onnx_file_size_mb(output_path)
+    ratio = original_mb / quantized_mb if quantized_mb > 0 else 0
+
+    logger.info(  # pragma: no mutant
+        f"    {LogStyle.BULLET} Size              : "
+        f"{original_mb:.2f} MB → {quantized_mb:.2f} MB ({ratio:.1f}x)"
+    )
+    logger.info(  # pragma: no mutant
+        f"    {LogStyle.BULLET} Status            : {LogStyle.SUCCESS} Done"
+    )
+    logger.info("")  # pragma: no mutant
+
+    return output_path
+
+
+def _quantize_8bit(
+    onnx_path: Path,
+    output_path: Path,
+    backend: str,
+    weight_type: str,
+) -> None:
+    """
+    INT8/UINT8 dynamic quantization via ``quantize_dynamic``.
+    """
+    from onnxruntime.quantization import QuantType, quantize_dynamic
+
+    quant_type = QuantType.QInt8 if weight_type == "int8" else QuantType.QUInt8
+
+    preprocessed_path = onnx_path.parent / "model_preprocessed.onnx"
+    try:
+        _preprocess_onnx(onnx_path, preprocessed_path)
+        with _suppress_ort_warnings():
+            quantize_dynamic(
+                model_input=str(preprocessed_path),
+                model_output=str(output_path),
+                weight_type=quant_type,
+                per_channel=backend == "fbgemm",
+            )
     finally:
         preprocessed_path.unlink(missing_ok=True)
+
+
+def _quantize_4bit(
+    onnx_path: Path,
+    output_path: Path,
+    weight_type: str,
+) -> None:
+    """
+    INT4/UINT4 dynamic quantization restricted to linear layers.
+
+    Conv layers stay FP32 because 4-bit packing only supports Gemm nodes
+    (fully-connected layers).  This is the standard approach for
+    edge-deployed vision models.
+    """
+    from onnxruntime.quantization import QuantType, quantize_dynamic
+
+    quant_type = QuantType.QInt4 if weight_type == "int4" else QuantType.QUInt4
+
+    preprocessed_path = onnx_path.parent / "model_preprocessed.onnx"
+    try:
+        _preprocess_onnx(onnx_path, preprocessed_path)
+        with _suppress_ort_warnings():
+            quantize_dynamic(
+                model_input=str(preprocessed_path),
+                model_output=str(output_path),
+                weight_type=quant_type,
+                op_types_to_quantize=["Gemm"],
+            )
+    finally:
+        preprocessed_path.unlink(missing_ok=True)
+
+
+@contextlib.contextmanager
+def _suppress_ort_warnings():
+    """
+    Suppress onnxruntime's "Please consider to run pre-processing" warning.
+
+    We handle pre-processing ourselves by clearing ``value_info`` from the
+    ONNX graph to work around shape conflicts from the PyTorch dynamo
+    exporter.
+    """
+    root = logging.getLogger()
+    prev_level = root.level
+    root.setLevel(logging.ERROR)
+    try:
+        yield
+    finally:
+        root.setLevel(prev_level)
+
+
+def _preprocess_onnx(onnx_path: Path, output_path: Path) -> None:
+    """
+    Clear intermediate ``value_info`` to avoid shape conflicts from dynamo exporter.
+    """
+    import onnx
+
+    model_proto = onnx.load(str(onnx_path))
+    while len(model_proto.graph.value_info) > 0:
+        model_proto.graph.value_info.pop()
+    onnx.save(model_proto, str(output_path))
 
 
 def benchmark_onnx_inference(

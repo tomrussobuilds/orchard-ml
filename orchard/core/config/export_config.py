@@ -26,6 +26,9 @@ class ExportConfig(BaseModel):
         opset_version: ONNX opset version (18 recommended).
         dynamic_axes: Enable dynamic batch size for flexible inference.
         do_constant_folding: Optimize constant operations during export.
+        quantize: Enable post-training quantization.
+        quantization_type: Weight type — int8/uint8 for server, int4/uint4 for edge.
+        quantization_backend: Backend — qnnpack for ARM/mobile, fbgemm for x86.
         validate_export: Validate exported model matches PyTorch output.
         validation_samples: Number of samples for export validation.
         max_deviation: Maximum allowed output deviation for validation.
@@ -58,8 +61,13 @@ class ExportConfig(BaseModel):
         default=True, description="Optimize constant operations at export time"
     )
 
-    # ==================== Optimization ====================
-    quantize: bool = Field(default=False, description="Apply INT8 quantization")
+    # ==================== Quantization ====================
+    quantize: bool = Field(default=False, description="Apply post-training quantization")
+
+    quantization_type: Literal["int8", "uint8", "int4", "uint4"] = Field(
+        default="int8",
+        description="Weight quantization type (int4/uint4 for edge, int8/uint8 for server)",
+    )
 
     quantization_backend: Literal["qnnpack", "fbgemm"] = Field(
         default="qnnpack", description="Quantization backend (qnnpack=mobile, fbgemm=x86)"
