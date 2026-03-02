@@ -68,6 +68,10 @@ class SearchSpaceRegistry:
         """
         ov = self.ov
         return {
+            "optimizer_type": lambda trial: trial.suggest_categorical(
+                "optimizer_type",
+                ov.optimizer_type,
+            ),
             "learning_rate": lambda trial: trial.suggest_float(
                 "learning_rate",
                 ov.learning_rate.low,

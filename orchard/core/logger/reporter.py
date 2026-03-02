@@ -107,6 +107,12 @@ class Reporter(BaseModel):
             logger_instance, "ENVIRONMENT INITIALIZATION"
         )  # pragma: no mutant
 
+        # Experiment identifier
+        logger_instance.info(  # pragma: no mutant
+            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Experiment':<18}: {cfg.run_slug}"
+        )
+        logger_instance.info("")  # pragma: no mutant
+
         # Hardware Section
         self._log_hardware_section(logger_instance, cfg, device, applied_threads, num_workers)
         logger_instance.info("")  # pragma: no mutant

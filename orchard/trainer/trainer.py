@@ -112,6 +112,7 @@ class ModelTrainer:
         training: TrainingConfig,
         output_path: Path | None = None,
         tracker: TrackerProtocol | None = None,
+        log_interval: int = 1,
     ) -> None:
         """
         Initializes the ModelTrainer with all required training components.
@@ -127,6 +128,7 @@ class ModelTrainer:
             training: Training hyperparameters sub-config.
             output_path: Path for best model checkpoint (default: ``./best_model.pth``).
             tracker: Optional experiment tracker for MLflow metric logging.
+            log_interval: Epoch interval for progress logging (default: every epoch).
         """
         self.model = model
         self.train_loader = train_loader
@@ -137,6 +139,7 @@ class ModelTrainer:
         self.device = device
         self.training = training
         self.tracker = tracker
+        self.log_interval = log_interval
 
         # Hyperparameters
         self.epochs = training.epochs
@@ -147,7 +150,7 @@ class ModelTrainer:
         self.epochs_no_improve = 0
 
         # AMP and MixUp (shared factories from _loop)
-        self.scaler = create_amp_scaler(training)
+        self.scaler = create_amp_scaler(training, device=str(device))
         self.mixup_fn = create_mixup_fn(training)
 
         # Output Management
@@ -211,8 +214,6 @@ class ModelTrainer:
         - Early stopping triggers if no monitor_metric improvement for `patience` epochs
         """
         for epoch in range(1, self.epochs + 1):
-            logger.info(f" Epoch {epoch:02d}/{self.epochs} ".center(60, "-"))  # pragma: no mutant
-
             # --- 1. Train → Validate → Schedule (delegated to _loop) ---
             epoch_loss, val_metrics = self._loop.run_epoch(epoch)
             self.train_losses.append(epoch_loss)
@@ -230,16 +231,21 @@ class ModelTrainer:
                 logger.warning(f"Early stopping triggered at epoch {epoch}.")
                 break
 
-            # --- 3. Epoch Logging ---
+            # --- 3. Epoch Logging (respects log_interval) ---
+            should_log = epoch % self.log_interval == 0 or epoch == self.epochs
             current_lr = self.optimizer.param_groups[0]["lr"]
-            self._log_epoch_summary(
-                epoch,
-                epoch_loss,
-                val_loss,
-                val_acc,
-                monitor_value,
-                current_lr,
-            )
+            if should_log:
+                logger.info(  # pragma: no mutant
+                    f" Epoch {epoch:02d}/{self.epochs} ".center(60, "-")
+                )
+                self._log_epoch_summary(
+                    epoch,
+                    epoch_loss,
+                    val_loss,
+                    val_acc,
+                    monitor_value,
+                    current_lr,
+                )
 
             # --- 4. Experiment Tracking ---
             if self.tracker is not None:

@@ -165,11 +165,8 @@ class Logger:
         1. Bootstrap Phase: Console-only logging (no log_dir specified)
         2. Orchestration Phase: RootOrchestrator calls setup() with log_dir
         3. Reconfiguration: Existing handlers removed, file handler added
-        4. Audit Trail: Log file path stored in _active_log_file for reference
-
     Class Attributes:
         _configured_names (dict[str, bool]): Tracks which logger names have been configured
-        _active_log_file (Path | None): Current active log file path for auditing
 
     Attributes:
         name (str): Logger identifier (typically LOGGER_NAME constant)
@@ -193,10 +190,6 @@ class Logger:
         ... )
         >>> logger.info("Logging to file now")
 
-        >>> # Retrieve log file path
-        >>> log_path = Logger.get_log_file()
-        >>> print(f"Logs saved to: {log_path}")
-
     Notes:
 
     - Reconfiguration is idempotent: calling setup() multiple times is safe
@@ -206,7 +199,6 @@ class Logger:
     """
 
     _configured_names: ClassVar[dict[str, bool]] = {}
-    _active_log_file: Path | None = None
 
     def __init__(
         self,
@@ -289,8 +281,6 @@ class Logger:
             file_h.setFormatter(plain_formatter)
             self._log.addHandler(file_h)
 
-            Logger._active_log_file = filename
-
     def get_logger(self) -> logging.Logger:
         """
         Returns the configured logging.Logger instance.
@@ -299,16 +289,6 @@ class Logger:
             The underlying Python logging.Logger instance with configured handlers
         """
         return self._log
-
-    @classmethod
-    def get_log_file(cls) -> Path | None:
-        """
-        Returns the current active log file path for auditing.
-
-        Returns:
-            Path to the active log file, or None if file logging is not enabled
-        """
-        return cls._active_log_file
 
     @classmethod
     def setup(

@@ -22,7 +22,6 @@ def test_telemetry_config_defaults():
     """Test TelemetryConfig with default values."""
     config = TelemetryConfig()
 
-    assert str(config.data_dir) == "./dataset"
     assert str(config.output_dir) == "./outputs"
     assert config.log_interval == 10
     assert config.log_level == "INFO"
@@ -32,13 +31,11 @@ def test_telemetry_config_defaults():
 def test_telemetry_config_custom_values():
     """Test TelemetryConfig with custom parameters."""
     config = TelemetryConfig(
-        data_dir=Path("./custom_data"),
         output_dir=Path("./custom_out"),
         log_level="DEBUG",
         log_interval=5,
     )
 
-    assert config.data_dir == Path("./custom_data").resolve()
     assert config.output_dir == Path("./custom_out").resolve()
     assert config.log_level == "DEBUG"
     assert config.log_interval == 5
@@ -84,9 +81,8 @@ def test_log_level_invalid_value():
 @pytest.mark.unit
 def test_path_sanitization():
     """Test paths are resolved to absolute forms."""
-    config = TelemetryConfig(data_dir=Path("~/dataset"), output_dir=Path("./outputs"))
+    config = TelemetryConfig(output_dir=Path("./outputs"))
 
-    assert config.data_dir.is_absolute()
     assert config.output_dir.is_absolute()
 
 
@@ -94,23 +90,22 @@ def test_path_sanitization():
 @pytest.mark.unit
 def test_to_portable_dict():
     """Test to_portable_dict() converts to relative paths."""
-    config = TelemetryConfig(data_dir=PROJECT_ROOT / "dataset", output_dir=PROJECT_ROOT / "outputs")
+    config = TelemetryConfig(output_dir=PROJECT_ROOT / "outputs")
 
     portable = config.to_portable_dict()
 
-    assert portable["data_dir"] == "./dataset"
     assert portable["output_dir"] == "./outputs"
 
 
 @pytest.mark.unit
 def test_to_portable_dict_absolute_outside_project():
     """Test to_portable_dict() preserves absolute paths outside PROJECT_ROOT."""
-    external_path = Path("/mock/external_data")
-    config = TelemetryConfig(data_dir=external_path)
+    external_path = Path("/mock/external_out")
+    config = TelemetryConfig(output_dir=external_path)
 
     portable = config.to_portable_dict()
 
-    assert str(external_path) in portable["data_dir"]
+    assert str(external_path) in portable["output_dir"]
 
 
 @pytest.mark.unit
@@ -130,7 +125,6 @@ def test_handle_empty_config():
     """Test empty YAML section (None) is handled correctly."""
     config = TelemetryConfig(**TelemetryConfig.handle_empty_config(None))
 
-    assert str(config.data_dir) == "./dataset"
     assert config.log_level == "INFO"
 
 

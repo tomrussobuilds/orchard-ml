@@ -41,14 +41,15 @@ Select a preset via `search_space_preset`:
 
 | Preset | Parameters | Use case |
 |---|---|---|
-| **`full`** (default) | 13+ parameters | Comprehensive search |
-| **`quick`** | 4 parameters | Rapid exploration |
+| **`full`** (default) | 16 parameters | Comprehensive search |
+| **`quick`** | 7 parameters | Rapid exploration |
 | **`architectures`** | Full + model search | Best model-hyperparameter combo |
 
 **Full Space** parameters:
-- **Optimization**: `learning_rate`, `weight_decay`, `momentum`, `min_lr`
-- **Regularization**: `mixup_alpha`, `label_smoothing`, `dropout`
-- **Scheduling**: `cosine_fraction`, `scheduler_patience`
+- **Optimization**: `optimizer_type`, `learning_rate`, `weight_decay`, `momentum`, `min_lr`
+- **Loss**: `criterion_type`, `focal_gamma`, `label_smoothing`
+- **Regularization**: `mixup_alpha`, `dropout`
+- **Scheduling**: `scheduler_type`, `scheduler_patience`
 - **Augmentation**: `rotation_angle`, `jitter_val`, `min_scale`
 - **Batch Size**: Resolution-aware categorical choices
   - ≤64×64: `batch_size_low_res` — [16, 32, 48, 64]
@@ -63,7 +64,7 @@ Select a preset via `search_space_preset`:
   - `vit_tiny_patch16_224.augreg_in21k`
   - Default variant
 
-**Quick Space**: `learning_rate`, `weight_decay`, `batch_size`, `dropout`
+**Quick Space**: `learning_rate`, `weight_decay`, `momentum`, `min_lr`, `batch_size`, `dropout`
 
 <h3>Model Search</h3>
 

@@ -38,6 +38,7 @@ class ExportConfig(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     # ==================== Export Format ====================
+    # Reserved for future multi-format support (e.g., TorchScript, CoreML)
     format: Literal["onnx"] = Field(
         default="onnx", description="Export format (only ONNX supported)"
     )
@@ -81,4 +82,8 @@ class ExportConfig(BaseModel):
     # ==================== Benchmark ====================
     benchmark: bool = Field(
         default=False, description="Run ONNX inference latency benchmark after export"
+    )
+
+    benchmark_runs: PositiveInt = Field(
+        default=100, description="Number of inference runs for latency averaging"
     )

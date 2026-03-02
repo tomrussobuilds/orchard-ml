@@ -165,5 +165,5 @@ def minimal_config():
             "use_amp": False,
         },
         hardware={"device": "cpu", "project_name": "test-project"},
-        telemetry={"data_dir": "./dataset", "output_dir": "./outputs"},
+        telemetry={"output_dir": "./outputs"},
     )

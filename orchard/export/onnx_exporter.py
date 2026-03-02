@@ -169,6 +169,9 @@ def export_to_onnx(
             )
         except (ValueError, RuntimeError) as e:
             logger.error(f"    {LogStyle.FAILURE} ONNX validation failed: {e}")
+            if output_path.exists():
+                output_path.unlink()
+                logger.info(f"    {LogStyle.ARROW} Cleaned up invalid ONNX file")
             raise
 
     logger.info("")  # pragma: no mutant

@@ -1,7 +1,7 @@
 """
 ResNet-18 Multi-Resolution Architecture.
 
-Adaptive ResNet-18 supporting 28x28, 32x32, 64x64, and 224x224 resolutions
+Adaptive ResNet-18 supporting 28x28, 32x32, 64x64, 128x128, and 224x224 resolutions
 with resolution-specific architectural modifications.
 
 Resolution-Specific Adaptations:
@@ -12,7 +12,7 @@ Resolution-Specific Adaptations:
 - MaxPool removed (prevents excessive spatial loss)
 - Weight morphing via bicubic interpolation
 
-64x64 / 224x224:
+64x64 / 128x128 / 224x224:
 
 - Standard ResNet-18 stem (7x7 Conv1, stride 2, MaxPool)
 - Only channel adaptation for grayscale inputs
@@ -39,8 +39,8 @@ def build_resnet18(
     """
     Constructs ResNet-18 with resolution-aware architectural adaptation.
 
-    At 28x28, performs stem surgery to preserve spatial resolution.
-    At 64x64 and 224x224, uses the standard ResNet-18 architecture.
+    At 28x28/32x32, performs stem surgery to preserve spatial resolution.
+    At 64x64, 128x128, and 224x224, uses the standard ResNet-18 architecture.
 
     Workflow:
         1. Load ImageNet pretrained ResNet-18 (if enabled)

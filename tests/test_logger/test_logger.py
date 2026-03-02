@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import logging
 import os
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -176,32 +175,6 @@ def test_get_logger_returns_logger_instance():
 
     assert isinstance(log_instance, logging.Logger)
     assert log_instance.name == "test_get"
-
-
-@pytest.mark.unit
-def test_get_log_file_returns_path(tmp_path):
-    """Test get_log_file() returns active log file path."""
-    log_dir = tmp_path / "logs"
-
-    Logger(name="test_get_file", log_dir=log_dir, log_to_file=True)
-
-    log_file = Logger.get_log_file()
-
-    assert log_file is not None
-    assert isinstance(log_file, Path)
-    assert log_file.exists()
-
-
-@pytest.mark.unit
-def test_get_log_file_none_when_no_file():
-    """Test get_log_file() returns None when no file logging."""
-    Logger._active_log_file = None
-
-    Logger(name="test_no_file", log_dir=None, log_to_file=False)
-
-    log_file = Logger.get_log_file()
-
-    assert log_file is None
 
 
 @pytest.mark.unit

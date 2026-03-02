@@ -15,19 +15,19 @@ from unittest.mock import MagicMock, patch
 import optuna
 import pytest
 
+from orchard.optimization._param_mapping import map_param_to_config_path
 from orchard.optimization.orchestrator.builders import (
     build_callbacks,
     build_pruner,
     build_sampler,
 )
-from orchard.optimization.orchestrator.config import (
-    PRUNER_REGISTRY,
-    SAMPLER_REGISTRY,
-    map_param_to_config_path,
-)
 from orchard.optimization.orchestrator.exporters import (
     build_best_config_dict,
     build_trial_data,
+)
+from orchard.optimization.orchestrator.registries import (
+    PRUNER_REGISTRY,
+    SAMPLER_REGISTRY,
 )
 from orchard.optimization.orchestrator.utils import (
     get_completed_trials,

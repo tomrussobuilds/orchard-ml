@@ -30,17 +30,20 @@ from .engine import mixup_data, train_one_epoch, validate_epoch
 # ── Factory Functions ──────────────────────────────────────────────────────
 
 
-def create_amp_scaler(training: TrainingConfig) -> torch.amp.GradScaler | None:
+def create_amp_scaler(
+    training: TrainingConfig, device: str = "cuda"
+) -> torch.amp.GradScaler | None:
     """
     Create AMP GradScaler if mixed precision is enabled.
 
     Args:
         training: Training sub-config (reads ``use_amp``).
+        device: Target device string (``"cuda"`` or ``"mps"``).
 
     Returns:
         GradScaler instance when AMP is enabled, None otherwise.
     """
-    return torch.amp.GradScaler() if training.use_amp else None
+    return torch.amp.GradScaler(device=device) if training.use_amp else None
 
 
 def create_mixup_fn(training: TrainingConfig) -> Callable | None:

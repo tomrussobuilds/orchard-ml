@@ -15,6 +15,7 @@ failures gracefully with informative logging.
 from __future__ import annotations
 
 import logging
+import warnings
 from pathlib import Path
 from typing import Any, Callable
 
@@ -101,7 +102,12 @@ def save_plot(
         >>> save_plot(study, "history", plot_optimization_history, Path("./figures"))
     """
     try:
-        fig = plot_fn(study)
+        # Conditional search spaces (e.g. focal_gamma only for criterion_type=="focal")
+        # cause Optuna to warn about "trials with missing parameters" in plots
+        # like parallel_coordinate. This is expected and not actionable.
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message=".*missing parameters.*")
+            fig = plot_fn(study)
         output_path = output_dir / f"{plot_name}.html"
         fig.write_html(str(output_path))  # pragma: no mutant
         logger.info(  # pragma: no mutant

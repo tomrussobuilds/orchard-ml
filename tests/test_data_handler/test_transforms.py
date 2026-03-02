@@ -139,6 +139,25 @@ def test_normalization_stats_replicated_for_grayscale(aug_cfg, img_size, graysca
     assert normalize.std == [0.25, 0.25, 0.25]
 
 
+@pytest.mark.unit
+def test_grayscale_no_promotion_when_force_rgb_false(aug_cfg, img_size, grayscale_metadata):
+    """Grayscale with force_rgb=False keeps native 1-channel stats."""
+    train_tf, val_tf = get_pipeline_transforms(
+        aug_cfg, img_size, grayscale_metadata, force_rgb=False
+    )
+
+    # No Grayscale promotion step
+    train_types = [type(t) for t in train_tf.transforms]
+    val_types = [type(t) for t in val_tf.transforms]
+    assert v2.Grayscale not in train_types
+    assert v2.Grayscale not in val_types
+
+    # Normalization uses original single-channel stats
+    normalize = next(t for t in train_tf.transforms if isinstance(t, v2.Normalize))
+    assert normalize.mean == [0.5]
+    assert normalize.std == [0.25]
+
+
 # TEST: PIPELINE EXECUTION (SMOKE TEST)
 def test_train_pipeline_executes_on_rgb_image(aug_cfg, img_size, rgb_metadata, dummy_image_rgb):
     """Training pipeline should run end-to-end on RGB input."""

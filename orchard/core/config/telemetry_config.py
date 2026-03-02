@@ -26,7 +26,6 @@ class TelemetryConfig(BaseModel):
     portability across environments. Frozen after creation for immutability.
 
     Attributes:
-        data_dir (ValidatedPath): Validated absolute path to dataset directory.
         output_dir (ValidatedPath): Validated absolute path to outputs directory.
         log_interval (LogFrequency): Epoch logging cadence (default: 10).
         log_level (LogLevel): Logging verbosity (DEBUG, INFO, WARNING, ERROR, CRITICAL).
@@ -35,7 +34,6 @@ class TelemetryConfig(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     # Filesystem
-    data_dir: ValidatedPath = Field(default="./dataset")  # type: ignore[assignment]
     output_dir: ValidatedPath = Field(default="./outputs")  # type: ignore[assignment]
 
     # Telemetry
@@ -79,7 +77,7 @@ class TelemetryConfig(BaseModel):
         """
         data = self.model_dump()
 
-        for field in ("data_dir", "output_dir"):
+        for field in ("output_dir",):
             full_path = Path(data[field])
             if full_path.is_relative_to(PROJECT_ROOT):
                 relative_path = full_path.relative_to(PROJECT_ROOT)

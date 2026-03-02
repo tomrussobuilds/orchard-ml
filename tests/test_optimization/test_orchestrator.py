@@ -13,21 +13,23 @@ from unittest.mock import MagicMock, patch
 import optuna
 import pytest
 
+from orchard.optimization._param_mapping import (
+    PARAM_MAPPING,
+    map_param_to_config_path,
+)
 from orchard.optimization.orchestrator import OptunaOrchestrator
 from orchard.optimization.orchestrator.builders import (
     build_callbacks,
     build_pruner,
     build_sampler,
 )
-from orchard.optimization.orchestrator.config import (
-    PRUNER_REGISTRY,
-    SAMPLER_REGISTRY,
-    TRAINING_PARAMS,
-    map_param_to_config_path,
-)
 from orchard.optimization.orchestrator.exporters import (
     build_best_config_dict,
     build_trial_data,
+)
+from orchard.optimization.orchestrator.registries import (
+    PRUNER_REGISTRY,
+    SAMPLER_REGISTRY,
 )
 from orchard.optimization.orchestrator.utils import (
     get_completed_trials,
@@ -122,7 +124,7 @@ class TestConfig:
 
     def test_training_params_includes_lr(self):
         """Verify learning_rate is a training param."""
-        assert "learning_rate" in TRAINING_PARAMS
+        assert "learning_rate" in PARAM_MAPPING["training"]
 
     def test_map_param_to_training(self):
         """Test mapping learning_rate to training section."""

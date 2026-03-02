@@ -103,6 +103,10 @@ class SearchSpaceOverrides(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     # ---- Optimization ----
+    optimizer_type: list[str] = Field(
+        default=["sgd", "adamw"],
+        description="Optimizer algorithms to explore",
+    )
     learning_rate: FloatRange = Field(
         default_factory=lambda: FloatRange(low=1e-5, high=1e-2, log=True)
     )

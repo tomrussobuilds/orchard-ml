@@ -276,8 +276,10 @@ def mixup_data(
     lam: float = float(rng.beta(alpha, alpha))
     batch_size: int = x.size(0)
 
-    # Generate random permutation directly on the input device
-    index = torch.randperm(batch_size, device=x.device)
+    # Generate random permutation with a seeded generator for reproducibility
+    g = torch.Generator(device=x.device)
+    g.manual_seed(int(rng.integers(2**31)))
+    index = torch.randperm(batch_size, device=x.device, generator=g)
 
     # Create mixed input
     mixed_x: torch.Tensor = lam * x + (1 - lam) * x[index]

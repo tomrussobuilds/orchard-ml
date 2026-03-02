@@ -58,7 +58,7 @@ def _build_health_check_config(dataset: str, resolution: int) -> Config:
             "mixup_epochs": 0,
         },
         hardware={"device": "cpu", "project_name": "health-check", "reproducible": True},
-        telemetry={"data_dir": "./dataset", "output_dir": "./outputs"},
+        telemetry={"output_dir": "./outputs"},
     )
 
 

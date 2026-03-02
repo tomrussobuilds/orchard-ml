@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - introduce custom exception hierarchy and unify MPS accelerator support
 - dependency bounds, CI supply chain, Dockerfile rootless, config validators
 
+### Fixed
+
+- merge implicit f-string concatenation in EvaluationConfig validator
+
 ## [0.1.8] - 2026-02-28
 
 ### Added

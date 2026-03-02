@@ -83,7 +83,7 @@ def test_build_loaders_with_weighted_sampler(mock_cfg, mock_metadata):
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         with patch(
             "orchard.data_handler.loader.get_pipeline_transforms",
-            lambda aug_cfg, img_size, meta: (lambda x: x, lambda x: x),
+            lambda aug_cfg, img_size, meta, **kw: (lambda x: x, lambda x: x),
         ):
 
             class FakeDataset:
@@ -134,7 +134,7 @@ def test_build_loaders_without_weighted_sampler(mock_cfg_no_sampler, mock_metada
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         with patch(
             "orchard.data_handler.loader.get_pipeline_transforms",
-            lambda aug_cfg, img_size, meta: (lambda x: x, lambda x: x),
+            lambda aug_cfg, img_size, meta, **kw: (lambda x: x, lambda x: x),
         ):
 
             class FakeDataset:
@@ -618,7 +618,7 @@ def test_build_train_loader_shuffle_and_drop_last(mock_cfg_no_sampler, mock_meta
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         with patch(
             "orchard.data_handler.loader.get_pipeline_transforms",
-            lambda aug_cfg, img_size, meta: (lambda x: x, lambda x: x),
+            lambda aug_cfg, img_size, meta, **kw: (lambda x: x, lambda x: x),
         ):
 
             class FakeDS:
@@ -661,7 +661,7 @@ def test_build_train_loader_no_shuffle_with_sampler(mock_cfg, mock_metadata):
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         with patch(
             "orchard.data_handler.loader.get_pipeline_transforms",
-            lambda aug_cfg, img_size, meta: (lambda x: x, lambda x: x),
+            lambda aug_cfg, img_size, meta, **kw: (lambda x: x, lambda x: x),
         ):
 
             class FakeDS:
@@ -781,7 +781,7 @@ def test_build_sub_samples_calculation(mock_metadata):
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         with patch(
             "orchard.data_handler.loader.get_pipeline_transforms",
-            lambda aug_cfg, img_size, meta: (lambda x: x, lambda x: x),
+            lambda aug_cfg, img_size, meta, **kw: (lambda x: x, lambda x: x),
         ):
             build_calls = []
 
@@ -832,7 +832,7 @@ def test_build_sub_samples_floor(mock_metadata):
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         with patch(
             "orchard.data_handler.loader.get_pipeline_transforms",
-            lambda aug_cfg, img_size, meta: (lambda x: x, lambda x: x),
+            lambda aug_cfg, img_size, meta, **kw: (lambda x: x, lambda x: x),
         ):
             build_calls = []
 
@@ -870,7 +870,7 @@ def test_build_sub_samples_none_when_no_max_samples(mock_cfg_no_sampler, mock_me
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         with patch(
             "orchard.data_handler.loader.get_pipeline_transforms",
-            lambda aug_cfg, img_size, meta: (lambda x: x, lambda x: x),
+            lambda aug_cfg, img_size, meta, **kw: (lambda x: x, lambda x: x),
         ):
             build_calls = []
 
@@ -932,7 +932,7 @@ def test_build_uses_lazy_when_lazy_loading_true(mock_metadata):
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         with patch(
             "orchard.data_handler.loader.get_pipeline_transforms",
-            lambda aug_cfg, img_size, meta: (lambda x: x, lambda x: x),
+            lambda aug_cfg, img_size, meta, **kw: (lambda x: x, lambda x: x),
         ):
             lazy_called = []
             from_npz_called = []
@@ -980,7 +980,7 @@ def test_build_uses_from_npz_when_lazy_loading_false(mock_metadata):
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
         with patch(
             "orchard.data_handler.loader.get_pipeline_transforms",
-            lambda aug_cfg, img_size, meta: (lambda x: x, lambda x: x),
+            lambda aug_cfg, img_size, meta, **kw: (lambda x: x, lambda x: x),
         ):
             lazy_called = []
             from_npz_called = []

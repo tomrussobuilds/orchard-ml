@@ -156,15 +156,24 @@ class DatasetConfig(BaseModel):
         in tests or standalone usage.  Uses ``object.__setattr__``
         to bypass frozen restriction for one-time initialization.
 
+        When ``data_root`` differs from the default ``DATASET_DIR``,
+        the metadata path is rewritten to point inside ``data_root``
+        (idempotent: skipped if already overridden).
+
         Returns:
             DatasetMetadata object for this dataset.
         """
         if self.metadata is None:
             wrapper = DatasetRegistryWrapper(resolution=self.resolution)
-            ds_name = self.name
-            metadata = wrapper.get_dataset(ds_name)
+            metadata = wrapper.get_dataset(self.name)
             object.__setattr__(self, "metadata", metadata)
-        return self.metadata  # type: ignore[return-value]
+
+        meta = self.metadata
+        assert meta is not None  # nosec B101
+        if self.data_root != DATASET_DIR and meta.path.parent.resolve() == DATASET_DIR:
+            object.__setattr__(meta, "path", self.data_root / meta.path.name)
+
+        return meta
 
     @property
     def dataset_name(self) -> str:

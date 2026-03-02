@@ -24,7 +24,6 @@ import torch.nn as nn
 from ..core import (
     LOGGER_NAME,
     Config,
-    DatasetRegistryWrapper,
     LogStyle,
     Reporter,
     log_optimization_summary,
@@ -161,9 +160,8 @@ def run_training_phase(
     assert run_logger is not None, _ERR_LOGGER_NOT_INIT  # nosec B101
     assert paths is not None, _ERR_PATHS_NOT_INIT  # nosec B101
 
-    # Dataset metadata
-    wrapper = DatasetRegistryWrapper(resolution=cfg.dataset.resolution)
-    ds_meta = wrapper.get_dataset(cfg.dataset.dataset_name.lower())
+    # Dataset metadata (respects data_root override via _ensure_metadata)
+    ds_meta = cfg.dataset._ensure_metadata
 
     # DATA PREPARATION
     Reporter.log_phase_header(run_logger, "DATA PREPARATION")
@@ -211,6 +209,7 @@ def run_training_phase(
         training=cfg.training,
         output_path=paths.best_model_path,
         tracker=tracker,
+        log_interval=cfg.telemetry.log_interval,
     )
 
     best_model_path, train_losses, val_metrics_history = trainer.train()
@@ -344,6 +343,7 @@ def run_export_phase(
         benchmark_onnx_inference(
             onnx_path=onnx_path,
             input_shape=input_shape,
+            num_runs=export_cfg.benchmark_runs,
             seed=cfg.training.seed,
             label="ONNX",
         )
@@ -351,6 +351,7 @@ def run_export_phase(
             benchmark_onnx_inference(
                 onnx_path=quantized_path,
                 input_shape=input_shape,
+                num_runs=export_cfg.benchmark_runs,
                 seed=cfg.training.seed,
                 label="Quantized",
             )

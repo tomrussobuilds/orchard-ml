@@ -26,7 +26,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
 
 from ...core import LOGGER_NAME, Config, LogStyle, RunPaths, save_config_as_yaml
-from .config import map_param_to_config_path
+from .._param_mapping import map_param_to_config_path
 from .utils import get_completed_trials, has_completed_trials
 
 logger = logging.getLogger(LOGGER_NAME)

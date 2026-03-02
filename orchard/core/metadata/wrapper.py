@@ -2,7 +2,7 @@
 Pydantic Wrapper for Multi-Domain Dataset Registries.
 
 type-safe, validated access to multiple dataset domains (medical, space)
-and resolutions (28x28, 64x64, 128x128, 224x224). Merges domain registries based on
+and resolutions (28x28, 32x32, 64x64, 128x128, 224x224). Merges domain registries based on
 selected resolution while avoiding global metadata overwrites.
 """
 

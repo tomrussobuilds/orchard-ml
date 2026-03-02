@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from ...core import Config
+from .._param_mapping import PARAM_MAPPING, SPECIAL_PARAMS
 
 
 # CONFIG BUILDER
@@ -32,26 +33,6 @@ class TrialConfigBuilder:
         >>> trial_params = {"learning_rate": 0.001, "dropout": 0.3}
         >>> trial_cfg = builder.build(trial_params)
     """
-
-    # Mapping of parameter names to config sections
-    PARAM_MAPPING = {
-        "training": [
-            "optimizer_type",
-            "learning_rate",
-            "weight_decay",
-            "momentum",
-            "min_lr",
-            "mixup_alpha",
-            "label_smoothing",
-            "criterion_type",
-            "focal_gamma",
-            "batch_size",
-            "scheduler_type",
-            "scheduler_patience",
-        ],
-        "architecture": ["dropout", "weight_variant"],
-        "augmentation": ["rotation_angle", "jitter_val", "min_scale"],
-    }
 
     def __init__(self, base_cfg: Config) -> None:
         """
@@ -115,13 +96,14 @@ class TrialConfigBuilder:
             if param_name == "weight_variant" and value is None:
                 continue
 
-            # Special case: model_name maps to architecture.name
-            if param_name == "model_name":
-                config_dict["architecture"]["name"] = value
+            # Special-cased parameters (name differs between Optuna and Config)
+            if param_name in SPECIAL_PARAMS:
+                section, key = SPECIAL_PARAMS[param_name]
+                config_dict[section][key] = value
                 continue
 
             # Standard mapping
-            for section, params in self.PARAM_MAPPING.items():
+            for section, params in PARAM_MAPPING.items():
                 if param_name in params:
                     config_dict[section][param_name] = value
                     break

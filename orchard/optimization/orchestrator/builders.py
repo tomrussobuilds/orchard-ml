@@ -23,7 +23,7 @@ from optuna.pruners import HyperbandPruner, MedianPruner, NopPruner, PercentileP
 
 from ...core import LOGGER_NAME, OptunaConfig
 from ..early_stopping import get_early_stopping_callback
-from .config import PRUNER_REGISTRY, SAMPLER_REGISTRY
+from .registries import PRUNER_REGISTRY, SAMPLER_REGISTRY
 
 logger = logging.getLogger(LOGGER_NAME)
 

@@ -115,6 +115,17 @@ def test_ensure_metadata_lazy_loading():
 
 
 @pytest.mark.unit
+def test_ensure_metadata_rewrites_path_for_custom_data_root(tmp_path):
+    """_ensure_metadata rewrites metadata path when data_root differs from DATASET_DIR."""
+    config = DatasetConfig(name="bloodmnist", resolution=28, data_root=tmp_path)
+
+    meta = config._ensure_metadata
+
+    assert meta.path.parent == tmp_path
+    assert meta.path.name == "bloodmnist_28.npz"
+
+
+@pytest.mark.unit
 def test_processing_mode_classification(mock_grayscale_metadata, mock_metadata_28):
     """Test processing_mode property returns correct classification."""
     config_promoted = DatasetConfig(metadata=mock_grayscale_metadata, force_rgb=True)

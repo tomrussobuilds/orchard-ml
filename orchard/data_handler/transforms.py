@@ -57,17 +57,21 @@ def get_pipeline_transforms(
     aug_cfg: AugmentationConfig,
     img_size: int,
     ds_meta: DatasetMetadata,
+    *,
+    force_rgb: bool = True,
 ) -> tuple[v2.Compose, v2.Compose]:
     """
     Constructs training and validation transformation pipelines.
 
     Dynamically adapts to dataset characteristics (RGB vs Grayscale) and
-    ensures 3-channel output for ResNet/EfficientNet compatibility.
-    Uses torchvision v2 transforms for improved CPU/GPU performance.
+    optionally promotes grayscale to 3-channel for pretrained-weight
+    compatibility.  Uses torchvision v2 transforms for improved CPU/GPU
+    performance.
 
     Pipeline Logic:
         1. Convert to tensor format (ToImage + ToDtype)
-        2. Promote 1-channel to 3-channel if needed (Grayscale → RGB)
+        2. Promote 1-channel to 3-channel when ``force_rgb`` is True
+           and the dataset is native grayscale
         3. Apply domain-aware augmentations (training only):
            geometric transforms disabled for anatomical datasets,
            color jitter reduced for texture-based datasets
@@ -77,18 +81,23 @@ def get_pipeline_transforms(
         aug_cfg: Augmentation sub-configuration
         img_size: Target image size
         ds_meta: Dataset metadata (channels, normalization stats)
+        force_rgb: Promote grayscale datasets to 3-channel RGB
 
     Returns:
         tuple[v2.Compose, v2.Compose]: (train_transform, val_transform)
     """
     # Determine if dataset is native RGB or requires grayscale promotion
     is_rgb = ds_meta.in_channels == 3
+    promote_to_rgb = not is_rgb and force_rgb
 
     # Extract normalization statistics from registry
     # Replicate single-channel stats for grayscale → RGB promotion
-    if ds_meta.in_channels == 1:
+    if promote_to_rgb:
         mean = [ds_meta.mean[0]] * 3
         std = [ds_meta.std[0]] * 3
+    elif ds_meta.in_channels == 1:
+        mean = list(ds_meta.mean)
+        std = list(ds_meta.std)
     else:
         mean = list(ds_meta.mean)
         std = list(ds_meta.std)
@@ -106,7 +115,7 @@ def get_pipeline_transforms(
         ]
 
         # Promote 1-channel to 3-channel for architecture compatibility
-        if not is_rgb:
+        if promote_to_rgb:
             ops.append(v2.Grayscale(num_output_channels=3))
 
         return ops

@@ -74,11 +74,13 @@ def validate_export(
         pytorch_model.cpu()
 
         max_diff = 0.0
+        g = torch.Generator(device="cpu")
+        g.manual_seed(0)
 
         with torch.no_grad():
             for i in range(num_samples):
-                # Generate random input
-                x_torch = torch.randn(1, *input_shape)
+                # Generate deterministic random input for reproducible validation
+                x_torch = torch.randn(1, *input_shape, generator=g)
                 x_numpy = x_torch.numpy().astype(np.float32)
 
                 # PyTorch inference

@@ -46,7 +46,7 @@ def _build_smoke_config(dataset: str = "bloodmnist", architecture: str = "mini_c
             "mixup_epochs": 0,
         },
         hardware={"device": "cpu", "project_name": "smoke-test", "reproducible": True},
-        telemetry={"data_dir": "./dataset", "output_dir": "./outputs"},
+        telemetry={"output_dir": "./outputs"},
     )
 
 

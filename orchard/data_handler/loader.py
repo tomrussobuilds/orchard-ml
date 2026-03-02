@@ -114,7 +114,12 @@ class DataLoaderFactory:
         Returns:
             A tuple containing (train_transform, val_transform).
         """
-        return get_pipeline_transforms(self.aug_cfg, self.dataset_cfg.img_size, self.ds_meta)
+        return get_pipeline_transforms(
+            self.aug_cfg,
+            self.dataset_cfg.img_size,
+            self.ds_meta,
+            force_rgb=self.dataset_cfg.force_rgb,
+        )
 
     def _get_balancing_sampler(self, dataset: VisionDataset) -> WeightedRandomSampler | None:
         """
@@ -262,11 +267,10 @@ class DataLoaderFactory:
             test_ds, batch_size=self.training_cfg.batch_size, shuffle=False, **infra_kwargs
         )
 
-        mode_str = "RGB" if self.ds_meta.in_channels == 3 else "Grayscale"
         optuna_str = " (Optuna)" if is_optuna else ""
         self.logger.info(  # pragma: no mutant
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'DataLoaders':<18}: "
-            f"({mode_str}){optuna_str} → "
+            f"({self.dataset_cfg.processing_mode}){optuna_str} → "
             f"Train:[{len(train_ds)}] Val:[{len(val_ds)}] Test:[{len(test_ds)}]"
         )
 

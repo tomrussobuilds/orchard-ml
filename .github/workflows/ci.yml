@@ -19,8 +19,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
 
 jobs:
   # Job 1: Lint and Code Quality
@@ -233,7 +233,7 @@ jobs:
       - name: Run Bandit security scan
         run: |
           pip install bandit
-          bandit -r orchard/ -l -s B101
+          bandit -r orchard/ -l
 
       - name: Run pip-audit (dependency vulnerability scan)
         # Advisory-only: pip-audit may flag transitive deps outside our control.

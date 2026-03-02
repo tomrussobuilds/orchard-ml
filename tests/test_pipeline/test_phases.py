@@ -31,6 +31,7 @@ def mock_orchestrator():
     orch.cfg.dataset.dataset_name = "organcmnist"
     orch.cfg.architecture.name = "mini_cnn"
     orch.cfg.evaluation.n_samples = 16
+    orch.cfg.dataset._ensure_metadata = MagicMock(classes=["a", "b"], num_classes=2)
 
     orch.paths = MagicMock()
     orch.paths.exports = Path("/mock/test_exports")
@@ -129,7 +130,6 @@ def test_run_optimization_phase_handles_none_config_path(
 
 # TRAINING PHASE TESTS
 @pytest.mark.unit
-@patch("orchard.pipeline.phases.DatasetRegistryWrapper")
 @patch("orchard.pipeline.phases.load_dataset")
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
@@ -151,11 +151,9 @@ def test_run_training_phase_returns_expected_tuple(
     _mock_show_samples,
     mock_get_loaders,
     _mock_load_dataset,
-    mock_registry,
     mock_orchestrator,
 ):
     """Test run_training_phase returns all expected components."""
-    mock_registry.return_value.get_dataset.return_value = MagicMock(classes=["a", "b"])
     mock_get_loaders.return_value = (MagicMock(), MagicMock(), MagicMock())
     mock_model = MagicMock()
     mock_get_model.return_value = mock_model
@@ -179,7 +177,6 @@ def test_run_training_phase_returns_expected_tuple(
 
 
 @pytest.mark.unit
-@patch("orchard.pipeline.phases.DatasetRegistryWrapper")
 @patch("orchard.pipeline.phases.load_dataset")
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
@@ -200,8 +197,7 @@ def test_run_training_phase_with_custom_config(
     mock_get_model,
     _mock_show_samples,
     mock_get_loaders,
-    _mock_load_dataset,
-    mock_registry,
+    mock_load_dataset,
     mock_orchestrator,
 ):
     """Test run_training_phase uses provided config override."""
@@ -211,8 +207,8 @@ def test_run_training_phase_with_custom_config(
     custom_cfg.dataset.dataset_name = "bloodmnist"
     custom_cfg.architecture.name = "resnet"
     custom_cfg.evaluation.n_samples = 8
+    custom_cfg.dataset._ensure_metadata = MagicMock(classes=["a", "b"])
 
-    mock_registry.return_value.get_dataset.return_value = MagicMock(classes=["a", "b"])
     mock_get_loaders.return_value = (MagicMock(), MagicMock(), MagicMock())
     mock_get_model.return_value = MagicMock()
 
@@ -225,8 +221,8 @@ def test_run_training_phase_with_custom_config(
 
     run_training_phase(mock_orchestrator, cfg=custom_cfg)
 
-    # Verify custom config was used
-    mock_registry.assert_called_with(resolution=224)
+    # Verify custom config was used — load_dataset receives _ensure_metadata
+    mock_load_dataset.assert_called_with(custom_cfg.dataset._ensure_metadata)
 
 
 # EXPORT PHASE TESTS
@@ -522,12 +518,11 @@ _TRAINING_PATCHES = [
     "orchard.pipeline.phases.show_samples_for_dataset",
     "orchard.pipeline.phases.get_dataloaders",
     "orchard.pipeline.phases.load_dataset",
-    "orchard.pipeline.phases.DatasetRegistryWrapper",
 ]
 
 
 def _setup_training_mocks(
-    mock_registry,
+    mock_orchestrator,
     mock_load_dataset,
     mock_get_loaders,
     mock_show_samples,
@@ -541,7 +536,7 @@ def _setup_training_mocks(
 ):
     """Configure mocks for run_training_phase tests."""
     ds_meta = MagicMock(classes=["a", "b"], num_classes=2)
-    mock_registry.return_value.get_dataset.return_value = ds_meta
+    mock_orchestrator.cfg.dataset._ensure_metadata = ds_meta
 
     train_loader = MagicMock()
     val_loader = MagicMock()
@@ -581,7 +576,6 @@ def _setup_training_mocks(
 
 
 @pytest.mark.unit
-@patch("orchard.pipeline.phases.DatasetRegistryWrapper")
 @patch("orchard.pipeline.phases.load_dataset")
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
@@ -603,7 +597,6 @@ def test_run_training_phase_asserts_run_logger(
     _m8,
     _m9,
     _m10,
-    _m11,
     mock_orchestrator,
 ):
     """Test run_training_phase raises when run_logger is None."""
@@ -614,7 +607,6 @@ def test_run_training_phase_asserts_run_logger(
 
 
 @pytest.mark.unit
-@patch("orchard.pipeline.phases.DatasetRegistryWrapper")
 @patch("orchard.pipeline.phases.load_dataset")
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
@@ -636,7 +628,6 @@ def test_run_training_phase_asserts_paths(
     _m8,
     _m9,
     _m10,
-    _m11,
     mock_orchestrator,
 ):
     """Test run_training_phase raises when paths is None."""
@@ -647,7 +638,6 @@ def test_run_training_phase_asserts_paths(
 
 
 @pytest.mark.unit
-@patch("orchard.pipeline.phases.DatasetRegistryWrapper")
 @patch("orchard.pipeline.phases.load_dataset")
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
@@ -669,12 +659,11 @@ def test_run_training_phase_verifies_all_kwargs(
     mock_show_samples,
     mock_get_loaders,
     mock_load_dataset,
-    mock_registry,
     mock_orchestrator,
 ):
     """Test run_training_phase passes correct kwargs to every dependency."""
     refs = _setup_training_mocks(
-        mock_registry,
+        mock_orchestrator,
         mock_load_dataset,
         mock_get_loaders,
         mock_show_samples,
@@ -690,10 +679,6 @@ def test_run_training_phase_verifies_all_kwargs(
     cfg.training.weighted_loss = False
 
     result = run_training_phase(mock_orchestrator)
-
-    # DatasetRegistryWrapper
-    mock_registry.assert_called_once_with(resolution=cfg.dataset.resolution)
-    mock_registry.return_value.get_dataset.assert_called_once_with(cfg.dataset.dataset_name.lower())
 
     # load_dataset
     mock_load_dataset.assert_called_once_with(refs["ds_meta"])
@@ -778,7 +763,6 @@ def test_run_training_phase_verifies_all_kwargs(
 
 @pytest.mark.unit
 @patch("orchard.pipeline.phases.compute_class_weights")
-@patch("orchard.pipeline.phases.DatasetRegistryWrapper")
 @patch("orchard.pipeline.phases.load_dataset")
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
@@ -800,7 +784,6 @@ def test_run_training_phase_weighted_loss(
     mock_show_samples,
     mock_get_loaders,
     mock_load_dataset,
-    mock_registry,
     mock_compute_weights,
     mock_orchestrator,
 ):
@@ -808,7 +791,7 @@ def test_run_training_phase_weighted_loss(
     import numpy as np
 
     ds_meta = MagicMock(classes=["a", "b"], num_classes=2)
-    mock_registry.return_value.get_dataset.return_value = ds_meta
+    mock_orchestrator.cfg.dataset._ensure_metadata = ds_meta
 
     train_loader = MagicMock()
     train_labels = np.array([0, 1, 0, 1])
@@ -840,7 +823,6 @@ def test_run_training_phase_weighted_loss(
 
 
 @pytest.mark.unit
-@patch("orchard.pipeline.phases.DatasetRegistryWrapper")
 @patch("orchard.pipeline.phases.load_dataset")
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
@@ -862,12 +844,11 @@ def test_run_training_phase_passes_tracker(
     mock_show_samples,
     mock_get_loaders,
     mock_load_dataset,
-    mock_registry,
     mock_orchestrator,
 ):
     """Test run_training_phase forwards tracker to ModelTrainer and run_final_evaluation."""
     refs = _setup_training_mocks(
-        mock_registry,
+        mock_orchestrator,
         mock_load_dataset,
         mock_get_loaders,
         mock_show_samples,

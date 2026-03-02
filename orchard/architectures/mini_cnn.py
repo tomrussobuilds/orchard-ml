@@ -1,8 +1,8 @@
 """
-Lightweight CNN for 28×28 Low-Resolution Image Classification.
+Lightweight CNN for Low-Resolution Image Classification.
 
-Custom compact architecture designed specifically for small-scale datasets
-like 28×28 low-resolution datasets. Provides a fast baseline alternative to adapted ResNet-18
+Custom compact architecture designed for low-resolution datasets
+(28×28, 32×32, 64×64). Provides a fast baseline alternative to adapted ResNet-18
 with reduced parameter count and computational overhead.
 
 Key Features:
@@ -26,7 +26,7 @@ import torch.nn as nn
 
 # MODEL DEFINITION
 class MiniCNN(nn.Module):
-    """Compact CNN optimized for 28×28 resolution datasets."""
+    """Compact CNN optimized for low-resolution datasets (28×28, 32×32, 64×64)."""
 
     def __init__(self, in_channels: int, num_classes: int, dropout: float = 0.0) -> None:
         """

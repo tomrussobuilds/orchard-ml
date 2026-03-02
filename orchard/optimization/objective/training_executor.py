@@ -108,11 +108,11 @@ class TrialTrainingExecutor:
     def __init__(
         self,
         model: torch.nn.Module,
-        train_loader,
-        val_loader,
-        optimizer,
-        scheduler,
-        criterion,
+        train_loader: torch.utils.data.DataLoader,
+        val_loader: torch.utils.data.DataLoader,
+        optimizer: torch.optim.Optimizer,
+        scheduler: torch.optim.lr_scheduler.LRScheduler,
+        criterion: torch.nn.Module,
         training: TrainingConfig,
         optuna: OptunaConfig,
         log_interval: int,
@@ -149,7 +149,7 @@ class TrialTrainingExecutor:
         self.warmup_epochs = optuna.pruning_warmup_epochs
 
         # Training state
-        self.scaler = create_amp_scaler(training)
+        self.scaler = create_amp_scaler(training, device=str(device))
         self.mixup_fn = create_mixup_fn(training)
         self.epochs = training.epochs
         self.monitor_metric = training.monitor_metric

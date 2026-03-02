@@ -66,6 +66,7 @@ class Config(BaseModel):
         architecture: Architecture selection, pretrained weights
         optuna: Hyperparameter optimization configuration (optional)
         export: Model export configuration for ONNX (optional)
+        tracking: Experiment tracking configuration for MLflow (optional)
 
     Example:
         >>> from orchard.core import Config
@@ -331,7 +332,7 @@ class _CrossDomainValidator:
             UX convenience that must happen after device resolution,
             which occurs during model validation (post-freeze).
         """
-        if config.hardware.device.lower().startswith("cpu") and config.training.use_amp:
+        if not config.hardware.supports_amp and config.training.use_amp:
             import warnings
 
             warnings.warn(

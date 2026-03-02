@@ -297,7 +297,6 @@ def _build_init_dict() -> dict[str, Any]:
     hw["device"] = "auto"
 
     tel = dump(TelemetryConfig())
-    tel["data_dir"] = "./dataset"
     tel["output_dir"] = "./outputs"
 
     return {

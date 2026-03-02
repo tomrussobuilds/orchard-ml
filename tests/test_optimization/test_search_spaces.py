@@ -639,12 +639,20 @@ def test_model_space_28_exact_model_list():
 
 
 @pytest.mark.unit
-def test_quick_space_has_exactly_six_params():
+def test_quick_space_has_exactly_seven_params():
     """Verify quick space contains exactly the expected high-impact params."""
     registry = SearchSpaceRegistry()
     space = registry.get_quick_space(resolution=28)
 
-    expected = {"learning_rate", "weight_decay", "momentum", "min_lr", "batch_size", "dropout"}
+    expected = {
+        "optimizer_type",
+        "learning_rate",
+        "weight_decay",
+        "momentum",
+        "min_lr",
+        "batch_size",
+        "dropout",
+    }
     assert set(space.keys()) == expected
 
 
@@ -655,6 +663,7 @@ def test_full_space_has_all_params():
     space = registry.get_full_space(resolution=28)
 
     expected = {
+        "optimizer_type",
         "learning_rate",
         "weight_decay",
         "momentum",

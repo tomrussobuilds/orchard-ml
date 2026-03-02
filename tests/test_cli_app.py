@@ -498,7 +498,6 @@ class TestCLIInit:
         runner.invoke(app, ["init", str(target)])
         data = load_config_from_yaml(target)
         assert data["dataset"]["data_root"] == "./dataset"
-        assert data["telemetry"]["data_dir"] == "./dataset"
         assert data["telemetry"]["output_dir"] == "./outputs"
 
     def test_init_help(self):
