@@ -74,7 +74,7 @@ dev = [
     "black>=26.1.0",
     "ruff>=0.11.0",
     "mypy==1.19.1",
-    "bandit>=1.8.0",
+    "bandit[toml]>=1.8.0",
     "radon>=6.0.0",
     "mutmut>=3.2.0",
     "types-PyYAML>=6.0.0",

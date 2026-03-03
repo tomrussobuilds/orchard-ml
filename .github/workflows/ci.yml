@@ -232,8 +232,8 @@ jobs:
 
       - name: Run Bandit security scan
         run: |
-          pip install bandit
-          bandit -r orchard/ -l
+          pip install "bandit[toml]"
+          bandit -c pyproject.toml -r orchard/ -l
 
       - name: Run pip-audit (dependency vulnerability scan)
         # Advisory-only: pip-audit may flag transitive deps outside our control.

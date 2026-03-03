@@ -111,44 +111,6 @@ def mock_metadata_many_classes(tmp_path):
     )
 
 
-# YAML CONFIGURATION FIXTURES
-@pytest.fixture
-def temp_yaml_config(tmp_path):
-    """Valid YAML configuration file for integration testing."""
-    yaml_content = """
-dataset:
-  name: bloodmnist
-  resolution: 28
-model:
-  name: resnet_18
-  pretrained: true
-training:
-  epochs: 60
-  batch_size: 128
-  learning_rate: 0.008
-optuna:
-  study_name: yaml_test_study
-  n_trials: 20
-"""
-    yaml_file = tmp_path / "test_config.yaml"
-    yaml_file.write_text(yaml_content)
-    return yaml_file
-
-
-@pytest.fixture
-def temp_invalid_yaml(tmp_path):
-    """Invalid YAML configuration for validation error testing."""
-    yaml_content = """
-training:
-  epochs: 60
-  min_lr: 10.0  # Invalid: min_lr must be < learning_rate
-  learning_rate: 0.001
-"""
-    yaml_file = tmp_path / "invalid.yaml"
-    yaml_file.write_text(yaml_content)
-    return yaml_file
-
-
 # MINIMAL CONFIG
 @pytest.fixture
 def minimal_config():

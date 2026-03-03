@@ -3,7 +3,7 @@
 # Lightweight CNN Training Configuration (28x28)
 # ==============================================================================
 # Usage: orchard run recipes/config_mini_cnn.yaml
-# Estimated Time: ~2-3 min GPU / ~30 min CPU (60 epochs, RTX 5070)
+# Estimated Time: ~2-3 min GPU / ~5-10 min CPU 16 cores (60 epochs, RTX 5070)
 # Memory Usage: ~500MB VRAM
 # Architecture: MiniCNN (~95K parameters, compact baseline)
 

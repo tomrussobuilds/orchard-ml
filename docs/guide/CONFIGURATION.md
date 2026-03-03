@@ -70,6 +70,7 @@ orchard run recipes/config_resnet_18.yaml --set augmentation.mixup_alpha=0
 | `label_smoothing` | float | 0.0 | [0, 0.3] | Label smoothing factor |
 | `seed` | int | 42 | - | Global random seed |
 | `reproducible` | bool | False | - | Enable strict determinism |
+| `use_tta` | bool | True | - | Enable test-time augmentation |
 
 <h3>Augmentation Parameters</h3>
 
@@ -80,8 +81,12 @@ orchard run recipes/config_resnet_18.yaml --set augmentation.mixup_alpha=0
 | `jitter_val` | float | 0.2 | ColorJitter intensity |
 | `min_scale` | float | 0.9 | Minimum RandomResizedCrop scale |
 | `tta_mode` | str | "full" | TTA strategy: `full` or `light` |
+| `tta_translate` | float | 2.0 | Pixel translation range for TTA ensemble |
+| `tta_scale` | float | 1.1 | Scale factor for TTA zoom augmentation |
+| `tta_blur_sigma` | float | 0.4 | Gaussian blur sigma for TTA smoothing |
+| `tta_blur_kernel_size` | int | 3 | Gaussian blur kernel size for TTA (must be odd) |
 
-<h3>Model Parameters</h3>
+<h3>Architecture Parameters</h3>
 
 | Parameter | Type | Default | Options |
 |-----------|------|---------|---------|
@@ -89,9 +94,6 @@ orchard run recipes/config_resnet_18.yaml --set augmentation.mixup_alpha=0
 | `pretrained` | bool | False | Use ImageNet weights (N/A for MiniCNN) |
 | `dropout` | float | 0.2 | [0, 0.9] · Dropout probability (wired for mini_cnn, timm) |
 | `weight_variant` | str | None | ViT-specific pretrained variant (e.g., `augreg_in21k_ft_in1k`) |
-| `force_rgb` | bool | True | Convert grayscale to 3-channel |
-| `resolution` | int | 28 | {28, 32, 64, 128, 224} |
-| `use_tta` | bool | True | Enable test-time augmentation |
 
 <h3>Dataset Parameters</h3>
 
@@ -99,8 +101,12 @@ orchard run recipes/config_resnet_18.yaml --set augmentation.mixup_alpha=0
 |-----------|------|---------|-------------|
 | `dataset` | str | "bloodmnist" | Dataset identifier (MedMNIST, CIFAR-10/100, Galaxy10) |
 | `data_root` | Path | `./dataset` | Dataset directory |
+| `resolution` | int | 28 | Target resolution: {28, 32, 64, 128, 224} |
+| `force_rgb` | bool | True | Convert grayscale to 3-channel |
 | `max_samples` | int | None | Cap training samples (debugging) |
 | `use_weighted_sampler` | bool | True | Balance class distribution |
+| `val_ratio` | float | 0.10 | Validation/test split ratio |
+| `lazy_loading` | bool | True | Memory-map NPZ files instead of loading into RAM |
 
 ---
 

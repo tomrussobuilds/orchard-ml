@@ -78,6 +78,7 @@ def create_synthetic_dataset(
         suffix=".npz", delete=False, prefix="synthetic_dataset_"
     )
     temp_path = Path(temp_file.name)
+    temp_file.close()
 
     # Save in NPZ format with correct key names
     np.savez(

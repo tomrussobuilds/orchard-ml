@@ -22,11 +22,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - enforce runtime immutability with MappingProxyType, disambiguate export logs
 - harden types, fix NaN guard, add missing test markers
 
+### Documentation
+
+- fix inaccuracies across README and guide files
+
 ### Fixed
 
 - merge implicit f-string concatenation in EvaluationConfig validator
 - restore per-epoch trainer logging and early-stop summary
 - remove duplicated branch in transforms, tidy README badges
+- close leaked fd in synthetic.py, align bandit CI config, update docs
 
 ## [0.1.8] - 2026-02-28
 
