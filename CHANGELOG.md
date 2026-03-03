@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - enable mypy --strict across codebase, CI, and badge workflows
+- add CodeQL SAST workflow, uv.lock for reproducible builds
 
 ### Fixed
 
