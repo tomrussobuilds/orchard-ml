@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - use npt.NDArray[Any] for cross-version mypy --strict compatibility
+- resolve all CodeQL code scanning alerts in test suite
 
 ## [0.1.9] - 2026-03-03
 

@@ -13,7 +13,6 @@ from unittest.mock import patch
 
 import pytest
 
-import orchard.core.paths as paths_module
 from orchard.core.paths import (
     DATASET_DIR,
     LOGGER_NAME,
@@ -259,6 +258,8 @@ def test_setup_static_directories_empty_list():
 @pytest.mark.unit
 def test_all_constants_are_defined():
     """Test all expected module-level constants are defined."""
+    from orchard.core import paths
+
     expected_constants = [
         "LOGGER_NAME",
         "PROJECT_ROOT",
@@ -268,7 +269,7 @@ def test_all_constants_are_defined():
     ]
 
     for const_name in expected_constants:
-        assert hasattr(paths_module, const_name), f"Missing constant: {const_name}"
+        assert hasattr(paths, const_name), f"Missing constant: {const_name}"
 
 
 @pytest.mark.unit
