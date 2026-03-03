@@ -307,7 +307,6 @@ class TestResNet18Shared:
 
     def test_device_placement(self):
         """Verify model is placed on correct device."""
-        device = torch.device("cpu")
         model = build_resnet_18(num_classes=10, in_channels=3, pretrained=False, resolution=28)
 
         for param in model.parameters():

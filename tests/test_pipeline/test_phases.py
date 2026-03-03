@@ -85,7 +85,7 @@ def test_run_optimization_phase_with_custom_config(
     reports_dir.mkdir()
     mock_orchestrator.paths.reports = reports_dir
 
-    _study, _config_path = run_optimization_phase(mock_orchestrator, cfg=custom_cfg)
+    _, _ = run_optimization_phase(mock_orchestrator, cfg=custom_cfg)
 
     call_args = mock_run_opt.call_args
     assert call_args.kwargs["cfg"] is custom_cfg
@@ -876,7 +876,7 @@ def test_run_training_phase_passes_tracker(
     mock_orchestrator,
 ):
     """Test run_training_phase forwards tracker to ModelTrainer and run_final_evaluation."""
-    refs = _setup_training_mocks(
+    _setup_training_mocks(
         mock_orchestrator,
         mock_load_dataset,
         mock_get_loaders,

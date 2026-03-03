@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - enable mypy --strict across codebase, CI, and badge workflows
 - add CodeQL SAST workflow, uv.lock for reproducible builds
 
+### Documentation
+
+- add SECURITY.md with disclosure policy and supported versions
+
 ### Fixed
 
 - use npt.NDArray[Any] for cross-version mypy --strict compatibility

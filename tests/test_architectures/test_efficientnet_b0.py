@@ -96,7 +96,6 @@ class TestEfficientNetB0:
 
     def test_efficientnet_b0_device_placement(self):
         """Verify model is placed on correct device."""
-        device = torch.device("cpu")
         model = build_efficientnet_b0(num_classes=10, in_channels=3, pretrained=False)
 
         for param in model.parameters():

@@ -423,11 +423,11 @@ def test_release_single_instance_unlock_ioerror_real(tmp_path):
     """Test release_single_instance handles IOError during unlock."""
     lock_file = tmp_path / "test.lock"
     lock_file.touch()
-    mock_fd = open(lock_file, "a")
 
-    with patch("orchard.core.environment.guards._lock_fd", mock_fd):
-        with patch("fcntl.flock", side_effect=IOError("Unlock IO failed")):
-            release_single_instance(lock_file)
+    with open(lock_file, "a") as mock_fd:
+        with patch("orchard.core.environment.guards._lock_fd", mock_fd):
+            with patch("fcntl.flock", side_effect=IOError("Unlock IO failed")):
+                release_single_instance(lock_file)
 
     assert not lock_file.exists()
 

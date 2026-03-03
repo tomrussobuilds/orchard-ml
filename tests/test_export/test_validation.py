@@ -477,7 +477,7 @@ def test_validate_shape_mismatch_raises(tmp_path, monkeypatch):
         """Proxy that returns wrong-shaped output to trigger the shape guard."""
 
         def run(self, *args, **kwargs):
-            result = super().run(*args, **kwargs)
+            super().run(*args, **kwargs)
             import numpy as np
 
             return [np.zeros((1, 99))]  # Wrong shape

@@ -97,7 +97,6 @@ class TestConvNeXtTiny:
 
     def test_convnext_tiny_device_placement(self):
         """Verify model is placed on correct device."""
-        device = torch.device("cpu")
         model = build_convnext_tiny(num_classes=10, in_channels=3, pretrained=False)
 
         for param in model.parameters():
