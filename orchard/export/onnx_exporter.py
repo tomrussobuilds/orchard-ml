@@ -236,8 +236,7 @@ def quantize_model(
     ratio = original_mb / quantized_mb if quantized_mb > 0 else 0
 
     logger.info(  # pragma: no mutant
-        f"    {LogStyle.BULLET} Size              : "
-        f"{original_mb:.2f} MB → {quantized_mb:.2f} MB ({ratio:.1f}x)"
+        f"    {LogStyle.BULLET} Size              : {original_mb:.2f} MB → {quantized_mb:.2f} MB ({ratio:.1f}x)"
     )
     logger.info(  # pragma: no mutant
         f"    {LogStyle.BULLET} Status            : {LogStyle.SUCCESS} Done"
@@ -307,7 +306,7 @@ def _quantize_4bit(
         gemm_nodes = [n for n in model_proto.graph.node if n.op_type in ("Gemm", "MatMul")]
         if not gemm_nodes:
             logger.warning(
-                "    %s Model has no Gemm/MatMul nodes — " "%s quantization will have no effect",
+                "    %s Model has no Gemm/MatMul nodes — %s quantization will have no effect",
                 LogStyle.WARNING,
                 weight_type.upper(),
             )

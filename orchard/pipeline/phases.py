@@ -338,7 +338,7 @@ def run_export_phase(
         )
         if is_valid is False:
             logger.warning(
-                "  %s Numerical validation failed: " "ONNX outputs diverge from PyTorch model",
+                "  %s Numerical validation failed: ONNX outputs diverge from PyTorch model",
                 LogStyle.WARNING,
             )
 
