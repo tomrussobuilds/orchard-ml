@@ -152,7 +152,11 @@ def test_prepare_environment_with_logger(tmp_path):
     class MockConfig:
         hardware = MockHardware()
 
-    mock_logger = SimpleNamespace(info=lambda _: None, warning=lambda _: None, debug=lambda _: None)
+    mock_logger = SimpleNamespace(
+        info=lambda *a, **kw: None,
+        warning=lambda *a, **kw: None,
+        debug=lambda *a, **kw: None,
+    )
 
     manager.prepare_environment(MockConfig(), logger=mock_logger)
     manager.release_resources(MockConfig())
@@ -167,7 +171,7 @@ def test_release_resources_with_logger(tmp_path):
         allow_process_kill = False
         lock_file_path = tmp_path / "test.lock"
 
-    mock_logger = SimpleNamespace(info=lambda _: None, debug=lambda _: None)
+    mock_logger = SimpleNamespace(info=lambda *a, **kw: None, debug=lambda *a, **kw: None)
 
     config = SimpleNamespace(hardware=MockHardware())
     manager.prepare_environment(config)
@@ -226,14 +230,14 @@ def test_prepare_environment_with_process_kill_enabled(tmp_path, monkeypatch):
         def __init__(self):
             self.messages = []
 
-        def info(self, msg):
-            self.messages.append(("info", msg))
+        def info(self, msg, *args):
+            self.messages.append(("info", msg % args if args else msg))
 
-        def warning(self, msg):
-            self.messages.append(("warning", msg))
+        def warning(self, msg, *args):
+            self.messages.append(("warning", msg % args if args else msg))
 
-        def debug(self, msg):
-            self.messages.append(("debug", msg))
+        def debug(self, msg, *args):
+            self.messages.append(("debug", msg % args if args else msg))
 
     logger = MockLogger()
     config = SimpleNamespace(hardware=MockHardware())
@@ -261,14 +265,14 @@ def test_prepare_environment_skips_process_kill_on_shared_env(tmp_path, monkeypa
         def __init__(self):
             self.messages = []
 
-        def info(self, msg):
-            self.messages.append(("info", msg))
+        def info(self, msg, *args):
+            self.messages.append(("info", msg % args if args else msg))
 
-        def debug(self, msg):
-            self.messages.append(("debug", msg))
+        def debug(self, msg, *args):
+            self.messages.append(("debug", msg % args if args else msg))
 
-        def warning(self, msg):
-            self.messages.append(("warning", msg))
+        def warning(self, msg, *args):
+            self.messages.append(("warning", msg % args if args else msg))
 
     logger = MockLogger()
     config = SimpleNamespace(hardware=MockHardware())
@@ -296,7 +300,9 @@ def test_prepare_environment_with_pbs_environment(tmp_path, monkeypatch):
     debug_calls = []
 
     mock_logger = SimpleNamespace(
-        info=lambda msg: None, debug=lambda msg: debug_calls.append(msg), warning=lambda msg: None
+        info=lambda msg, *a: None,
+        debug=lambda msg, *a: debug_calls.append(msg % a if a else msg),
+        warning=lambda msg, *a: None,
     )
 
     config = SimpleNamespace(hardware=MockHardware())
@@ -326,8 +332,8 @@ def test_flush_compute_cache_with_cuda(monkeypatch):
         def __init__(self):
             self.debug_messages = []
 
-        def debug(self, msg):
-            self.debug_messages.append(msg)
+        def debug(self, msg, *args):
+            self.debug_messages.append(msg % args if args else msg)
 
     logger = MockLogger()
     manager._flush_compute_cache(log=logger)
@@ -369,8 +375,8 @@ def test_flush_compute_cache_with_mps(monkeypatch):
         def __init__(self):
             self.debug_messages = []
 
-        def debug(self, msg):
-            self.debug_messages.append(msg)
+        def debug(self, msg, *args):
+            self.debug_messages.append(msg % args if args else msg)
 
     logger = MockLogger()
     manager._flush_compute_cache(log=logger)
@@ -409,8 +415,8 @@ def test_flush_compute_cache_mps_failure(monkeypatch):
         def __init__(self):
             self.debug_messages = []
 
-        def debug(self, msg):
-            self.debug_messages.append(msg)
+        def debug(self, msg, *args):
+            self.debug_messages.append(msg % args if args else msg)
 
     logger = MockLogger()
     manager._flush_compute_cache(log=logger)
@@ -438,9 +444,9 @@ def test_release_resources_lock_failure(tmp_path):
     warnings = []
 
     mock_logger = SimpleNamespace(
-        info=lambda msg: None,
-        debug=lambda msg: None,
-        warning=lambda msg: warnings.append(msg),
+        info=lambda msg, *a: None,
+        debug=lambda msg, *a: None,
+        warning=lambda msg, *a: warnings.append(msg % a if a else msg),
     )
 
     config = SimpleNamespace(hardware=MockHardware())

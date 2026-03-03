@@ -94,12 +94,12 @@ def export_to_onnx(
 
     logger.info("  [Export Settings]")  # pragma: no mutant
     logger.info(  # pragma: no mutant
-        f"    {LogStyle.BULLET} Format            : ONNX (opset {opset_version})"
+        "    %s Format            : ONNX (opset %s)", LogStyle.BULLET, opset_version
     )
     logger.info(  # pragma: no mutant
-        f"    {LogStyle.BULLET} Input shape       : {tuple(dummy_input.shape)}"
+        "    %s Input shape       : %s", LogStyle.BULLET, tuple(dummy_input.shape)
     )
-    logger.info(f"    {LogStyle.BULLET} Dynamic axes      : {dynamic_axes}")  # pragma: no mutant
+    logger.info("    %s Dynamic axes      : %s", LogStyle.BULLET, dynamic_axes)  # pragma: no mutant
     logger.info("")  # pragma: no mutant
 
     # Prepare dynamic axes configuration
@@ -168,13 +168,13 @@ def export_to_onnx(
 
         except ImportError:
             logger.warning(
-                f"    {LogStyle.WARNING} onnx package not installed. Skipping validation."
+                "    %s onnx package not installed. Skipping validation.", LogStyle.WARNING
             )
         except (ValueError, RuntimeError) as e:
-            logger.error(f"    {LogStyle.FAILURE} ONNX validation failed: {e}")
+            logger.error("    %s ONNX validation failed: %s", LogStyle.FAILURE, e)
             if output_path.exists():
                 output_path.unlink()
-                logger.info(f"    {LogStyle.ARROW} Cleaned up invalid ONNX file")
+                logger.info("    %s Cleaned up invalid ONNX file", LogStyle.ARROW)
             raise
 
     logger.info("")  # pragma: no mutant
@@ -211,8 +211,8 @@ def quantize_model(
         output_path = onnx_path.parent / "model_quantized.onnx"
 
     logger.info("  [Quantization]")  # pragma: no mutant
-    logger.info(f"    {LogStyle.BULLET} Backend           : {backend}")  # pragma: no mutant
-    logger.info(f"    {LogStyle.BULLET} Weight type       : {weight_type}")  # pragma: no mutant
+    logger.info("    %s Backend           : %s", LogStyle.BULLET, backend)  # pragma: no mutant
+    logger.info("    %s Weight type       : %s", LogStyle.BULLET, weight_type)  # pragma: no mutant
 
     try:
         if weight_type in ("int4", "uint4"):
@@ -221,12 +221,12 @@ def quantize_model(
             _quantize_8bit(onnx_path, output_path, backend, weight_type)
     except ImportError:
         logger.warning(
-            f"    {LogStyle.WARNING} onnxruntime.quantization not available. "
-            "Skipping quantization."
+            "    %s onnxruntime.quantization not available. Skipping quantization.",
+            LogStyle.WARNING,
         )
         return None
     except Exception as e:  # onnxruntime raises non-standard exceptions
-        logger.error(f"    {LogStyle.FAILURE} Quantization failed: {e}")
+        logger.error("    %s Quantization failed: %s", LogStyle.FAILURE, e)
         if output_path.exists():
             output_path.unlink()
         return None
@@ -307,8 +307,9 @@ def _quantize_4bit(
         gemm_nodes = [n for n in model_proto.graph.node if n.op_type in ("Gemm", "MatMul")]
         if not gemm_nodes:
             logger.warning(
-                f"    {LogStyle.WARNING} Model has no Gemm/MatMul nodes — "
-                f"{weight_type.upper()} quantization will have no effect"
+                "    %s Model has no Gemm/MatMul nodes — " "%s quantization will have no effect",
+                LogStyle.WARNING,
+                weight_type.upper(),
             )
 
         with _suppress_ort_warnings():
@@ -332,12 +333,23 @@ def _suppress_ort_warnings() -> Generator[None, None, None]:
     exporter.
     """
     ort_logger = logging.getLogger("onnxruntime")
+    root_logger = logging.getLogger()
     prev_level = ort_logger.level
     ort_logger.setLevel(logging.ERROR)
+
+    # onnxruntime.quantization logs via the root logger — install a
+    # targeted filter to suppress only the pre-processing advisory.
+    class _PreprocessFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            return "pre-processing before quantization" not in record.getMessage()
+
+    flt = _PreprocessFilter()
+    root_logger.addFilter(flt)
     try:
         yield
     finally:
         ort_logger.setLevel(prev_level)
+        root_logger.removeFilter(flt)
 
 
 def _preprocess_onnx(onnx_path: Path, output_path: Path) -> None:
@@ -382,7 +394,7 @@ def benchmark_onnx_inference(
         import numpy as np
         import onnxruntime as ort
 
-        logger.info(f"  [Benchmark — {label}]")  # pragma: no mutant
+        logger.info("  [Benchmark — %s]", label)  # pragma: no mutant
 
         # Create inference session
         session = ort.InferenceSession(str(onnx_path))
@@ -402,9 +414,9 @@ def benchmark_onnx_inference(
         elapsed = time.time() - start
 
         avg_latency_ms = (elapsed / num_runs) * 1000
-        logger.info(f"    {LogStyle.BULLET} Runs              : {num_runs}")  # pragma: no mutant
+        logger.info("    %s Runs              : %s", LogStyle.BULLET, num_runs)  # pragma: no mutant
         logger.info(  # pragma: no mutant
-            f"    {LogStyle.BULLET} Avg latency       : {avg_latency_ms:.2f}ms"
+            "    %s Avg latency       : %.2fms", LogStyle.BULLET, avg_latency_ms
         )
         logger.info("")  # pragma: no mutant
 
@@ -414,7 +426,7 @@ def benchmark_onnx_inference(
         logger.warning("onnxruntime not installed. Skipping benchmark.")
         return -1.0
     except Exception as e:  # onnxruntime raises non-standard exceptions
-        logger.error(f"Benchmark failed: {e}")
+        logger.error("Benchmark failed: %s", e)
         return -1.0
 
 

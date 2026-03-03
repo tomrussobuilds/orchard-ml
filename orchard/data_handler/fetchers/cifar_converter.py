@@ -93,7 +93,7 @@ def _download_and_convert(metadata: DatasetMetadata, cifar_cls: type) -> Path:
     download_dir = target_npz.parent / f".{metadata.name}_raw"
 
     logger.info(  # pragma: no mutant
-        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Downloading':<18}: {metadata.display_name}"
+        "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Downloading", metadata.display_name
     )
 
     train_ds = cifar_cls(root=str(download_dir), train=True, download=True)
@@ -106,8 +106,13 @@ def _download_and_convert(metadata: DatasetMetadata, cifar_cls: type) -> Path:
     test_targets = np.array(test_ds.targets)  # (10000,)
 
     logger.info(  # pragma: no mutant
-        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Loaded':<18}: "
-        f"{metadata.display_name} — {len(train_images)} train + {len(test_images)} test"
+        "%s%s %-18s: %s — %d train + %d test",
+        LogStyle.INDENT,
+        LogStyle.ARROW,
+        "Loaded",
+        metadata.display_name,
+        len(train_images),
+        len(test_images),
     )
 
     # Create stratified train/val split
@@ -136,9 +141,14 @@ def _download_and_convert(metadata: DatasetMetadata, cifar_cls: type) -> Path:
     )
 
     logger.info(  # pragma: no mutant
-        f"{LogStyle.INDENT}{LogStyle.ARROW} {'NPZ Created':<18}: "
-        f"{target_npz.name} — Train: {len(train_imgs)}, Val: {len(val_imgs)}, "
-        f"Test: {len(test_images)}"
+        "%s%s %-18s: %s — Train: %d, Val: %d, Test: %d",
+        LogStyle.INDENT,
+        LogStyle.ARROW,
+        "NPZ Created",
+        target_npz.name,
+        len(train_imgs),
+        len(val_imgs),
+        len(test_images),
     )
 
     return target_npz
@@ -160,8 +170,12 @@ def ensure_cifar_npz(metadata: DatasetMetadata) -> Path:
 
     if target_npz.exists():
         logger.debug(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Dataset':<18}: "
-            f"{metadata.display_name} found at {target_npz.name}"
+            "%s%s %-18s: %s found at %s",
+            LogStyle.INDENT,
+            LogStyle.ARROW,
+            "Dataset",
+            metadata.display_name,
+            target_npz.name,
         )
         return target_npz
 

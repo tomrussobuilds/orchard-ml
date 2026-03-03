@@ -70,7 +70,7 @@ def compute_auc(y_true: npt.NDArray[Any], y_score: npt.NDArray[Any]) -> float:
         else:
             auc = roc_auc_score(y_true, y_score, multi_class="ovr", average="macro")
     except (ValueError, TypeError, IndexError) as e:
-        logger.warning(f"ROC-AUC calculation failed: {e}. Returning NaN.")
+        logger.warning("ROC-AUC calculation failed: %s. Returning NaN.", e)
         return float("nan")
 
     if np.isnan(auc):

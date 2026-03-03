@@ -272,8 +272,12 @@ class OptunaObjective:
 
         except Exception as e:  # must not crash study
             logger.error(
-                f"{LogStyle.INDENT}{LogStyle.FAILURE} "
-                f"Trial {trial.number} failed: {type(e).__name__}: {e}"
+                "%s%s Trial %d failed: %s: %s",
+                LogStyle.INDENT,
+                LogStyle.FAILURE,
+                trial.number,
+                type(e).__name__,
+                e,
             )
             return self._worst_metric()
 

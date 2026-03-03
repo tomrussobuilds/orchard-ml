@@ -181,7 +181,11 @@ def export_study_summary(study: optuna.Study, paths: RunPaths) -> None:
         json.dump(summary, f, indent=2)
 
     logger.info(  # pragma: no mutant
-        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Study Summary':<22}: {Path(output_path).name}"
+        "%s%s %-22s: %s",
+        LogStyle.INDENT,
+        LogStyle.ARROW,
+        "Study Summary",
+        Path(output_path).name,
     )
 
 
@@ -242,8 +246,12 @@ def export_top_trials(
 
     wb.save(output_path)
     logger.info(  # pragma: no mutant
-        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Top Trials':<22}: {Path(output_path).name} "
-        f"({len(sorted_trials)} trials)"
+        "%s%s %-22s: %s (%d trials)",
+        LogStyle.INDENT,
+        LogStyle.ARROW,
+        "Top Trials",
+        Path(output_path).name,
+        len(sorted_trials),
     )
 
 

@@ -97,10 +97,15 @@ def get_model(
 
     if verbose:
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Architecture':<18}: "
-            f"{arch_cfg.name} | "
-            f"Input: {dataset_cfg.img_size}x{dataset_cfg.img_size}x{in_channels} | "
-            f"Output: {num_classes} classes"
+            "%s%s %-18s: %s | Input: %dx%dx%d | Output: %d classes",
+            LogStyle.INDENT,
+            LogStyle.ARROW,
+            "Architecture",
+            arch_cfg.name,
+            dataset_cfg.img_size,
+            dataset_cfg.img_size,
+            in_channels,
+            num_classes,
         )
 
     # Instance construction and adaptation.
@@ -124,8 +129,12 @@ def get_model(
     if verbose:
         total_params = sum(p.numel() for p in model.parameters())
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Deployed':<18}: "
-            f"{str(device).upper()} | Parameters: {total_params:,}"
+            "%s%s %-18s: %s | Parameters: %s",
+            LogStyle.INDENT,
+            LogStyle.ARROW,
+            "Deployed",
+            str(device).upper(),
+            f"{total_params:,}",
         )
 
     return model
@@ -198,7 +207,7 @@ def _dispatch_builder(
     builder = _MODEL_REGISTRY.get(model_name_lower)
     if builder is None:
         error_msg = f"Architecture '{arch_cfg.name}' is not registered in the Factory."
-        logger.error(f" {LogStyle.FAILURE} {error_msg}")
+        logger.error(" %s %s", LogStyle.FAILURE, error_msg)
         raise ValueError(error_msg)
 
     if builder is build_mini_cnn:

@@ -63,10 +63,12 @@ def validate_export(
     try:
         import onnxruntime as ort
 
-        logger.info(f"  [{label} Validation]")  # pragma: no mutant
-        logger.info(f"    {LogStyle.BULLET} Samples           : {num_samples}")  # pragma: no mutant
+        logger.info("  [%s Validation]", label)  # pragma: no mutant
+        logger.info(
+            "    %s Samples           : %s", LogStyle.BULLET, num_samples
+        )  # pragma: no mutant
         logger.info(  # pragma: no mutant
-            f"    {LogStyle.BULLET} Max deviation     : {max_deviation:.0e}"
+            "    %s Max deviation     : %.0e", LogStyle.BULLET, max_deviation
         )
 
         # Load ONNX model (force CPU to match export conditions)
@@ -103,22 +105,27 @@ def validate_export(
 
                 if diff > max_deviation:
                     logger.error(
-                        f"    {LogStyle.BULLET} Result            : "
-                        f"{LogStyle.WARNING} FAILED sample {i + 1} "
-                        f"(diff: {diff:.2e}, threshold: {max_deviation:.2e})"
+                        "    %s Result            : %s FAILED sample %d (diff: %.2e, threshold: %.2e)",
+                        LogStyle.BULLET,
+                        LogStyle.WARNING,
+                        i + 1,
+                        diff,
+                        max_deviation,
                     )
                     return False
 
         logger.info(  # pragma: no mutant
-            f"    {LogStyle.BULLET} Result            : "
-            f"{LogStyle.SUCCESS} Passed (max diff: {max_diff:.2e})"
+            "    %s Result            : %s Passed (max diff: %.2e)",
+            LogStyle.BULLET,
+            LogStyle.SUCCESS,
+            max_diff,
         )
         logger.info("")  # pragma: no mutant
         return True
 
     except ImportError as e:
-        logger.warning(f"onnxruntime not installed. Skipping validation: {e}")
+        logger.warning("onnxruntime not installed. Skipping validation: %s", e)
         return None
     except (RuntimeError, ValueError) as e:
-        logger.error(f"Validation failed: {e}", exc_info=True)
+        logger.error("Validation failed: %s", e, exc_info=True)
         raise

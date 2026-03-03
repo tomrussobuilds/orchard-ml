@@ -50,19 +50,23 @@ def ensure_medmnist_npz(
     # 1. Validation of existing file
     if _is_valid_npz(target_npz, metadata.md5_checksum):
         logger.debug(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Dataset':<18}: "
-            f"'{metadata.name}' found at {target_npz.name}"
+            "%s%s %-18s: '%s' found at %s",
+            LogStyle.INDENT,
+            LogStyle.ARROW,
+            "Dataset",
+            metadata.name,
+            target_npz.name,
         )
         return target_npz
 
     # 2. Cleanup corrupted file
     if target_npz.exists():
-        logger.warning(f"Corrupted dataset found, deleting: {target_npz}")
+        logger.warning("Corrupted dataset found, deleting: %s", target_npz)
         target_npz.unlink()
 
     # 3. Download logic with retries
     logger.info(  # pragma: no mutant
-        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Downloading':<18}: {metadata.name}"
+        "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Downloading", metadata.name
     )
     target_npz.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = target_npz.with_suffix(".tmp")
@@ -73,13 +77,13 @@ def ensure_medmnist_npz(
 
             if not _is_valid_npz(tmp_path, metadata.md5_checksum):
                 actual_md5 = md5_checksum(tmp_path)
-                logger.error(f"MD5 mismatch: expected {metadata.md5_checksum}, got {actual_md5}")
+                logger.error("MD5 mismatch: expected %s, got %s", metadata.md5_checksum, actual_md5)
                 raise OrchardDatasetError("Downloaded file failed MD5 or header validation")
 
             # Atomic move
             tmp_path.replace(target_npz)
             logger.info(  # pragma: no mutant
-                f"{LogStyle.INDENT}{LogStyle.SUCCESS} {'Verified':<18}: {metadata.name}"
+                "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.SUCCESS, "Verified", metadata.name
             )
             return target_npz
 
@@ -88,12 +92,12 @@ def ensure_medmnist_npz(
                 tmp_path.unlink()
 
             if attempt == retries:
-                logger.error(f"Download failed after {retries} attempts")
+                logger.error("Download failed after %d attempts", retries)
                 raise OrchardDatasetError(f"Could not download {metadata.name}") from e
 
             actual_delay = _retry_delay(e, delay, attempt)
             logger.warning(
-                f"Attempt {attempt}/{retries} failed: {e}. Retrying in {actual_delay}s..."
+                "Attempt %d/%d failed: %s. Retrying in %ss...", attempt, retries, e, actual_delay
             )
             time.sleep(actual_delay)
 
@@ -107,7 +111,7 @@ def _retry_delay(exc: Exception, base_delay: float, attempt: int) -> float:
     """
     if hasattr(exc, "response") and exc.response is not None and exc.response.status_code == 429:
         delay = base_delay * (attempt**2)
-        logger.warning(f"Rate limited (429). Waiting {delay}s before retrying...")
+        logger.warning("Rate limited (429). Waiting %ss before retrying...", delay)
         return delay
     return base_delay
 

@@ -62,17 +62,17 @@ def save_config_as_yaml(data: Any, yaml_path: Path) -> Path:
         final_data = _sanitize_for_yaml(raw_dict)
 
     except Exception as e:
-        logger.error(f"Serialization failed: object structure is incompatible. Error: {e}")
+        logger.error("Serialization failed: object structure is incompatible. Error: %s", e)
         raise ValueError(f"Could not serialize configuration object: {e}") from e
 
     # 2. Persistence Phase (Atomic Write)
     try:
         _persist_yaml_atomic(final_data, yaml_path)
-        logger.debug(f"Configuration frozen at → {yaml_path.name}")  # pragma: no mutant
+        logger.debug("Configuration frozen at → %s", yaml_path.name)  # pragma: no mutant
         return yaml_path
 
     except OSError as e:
-        logger.error(f"IO Error: Could not write YAML to {yaml_path}. Error: {e}")
+        logger.error("IO Error: Could not write YAML to %s. Error: %s", yaml_path, e)
         raise
 
 
@@ -102,7 +102,7 @@ def dump_requirements(output_path: Path) -> None:
         header = f"# Python {sys.version.split()[0]}\n"
         output_path.write_text(header + result.stdout, encoding="utf-8")
     except (subprocess.TimeoutExpired, OSError) as e:
-        logger.warning(f"Failed to dump requirements: {e}")
+        logger.warning("Failed to dump requirements: %s", e)
 
 
 def load_config_from_yaml(yaml_path: Path) -> dict[str, Any]:

@@ -570,7 +570,7 @@ def test_log_pipeline_summary_basic():
     log_output = " ".join(calls)
 
     assert "PIPELINE COMPLETE" in log_output
-    assert "92.34%" in log_output
+    assert "92.34" in log_output
     assert "0.8765" in log_output
     assert "5m 30s" in log_output
 

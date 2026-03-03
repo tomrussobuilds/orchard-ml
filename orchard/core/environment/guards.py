@@ -82,13 +82,14 @@ def ensure_single_instance(lock_file: Path, logger: logging.Logger) -> None:
             # Attempt to acquire an exclusive lock without blocking
             fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
             _lock_fd = f
-            logger.info(f"  {LogStyle.ARROW} System lock acquired")  # pragma: no mutant
+            logger.info("  %s System lock acquired", LogStyle.ARROW)  # pragma: no mutant
 
         except (IOError, BlockingIOError):
             if f is not None:
                 f.close()
             logger.error(
-                f" {LogStyle.WARNING} CRITICAL: Another instance is already running. Aborting."
+                " %s CRITICAL: Another instance is already running. Aborting.",
+                LogStyle.WARNING,
             )
             sys.exit(1)
 

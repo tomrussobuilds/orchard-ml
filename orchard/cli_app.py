@@ -146,12 +146,17 @@ def run(
                 if best_config_path and best_config_path.exists():
                     training_cfg = Config.from_recipe(best_config_path)
                     run_logger.info(  # pragma: no mutant
-                        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Optimized Config':<18}: "
-                        f"{best_config_path.name}"
+                        "%s%s %-18s: %s",
+                        LogStyle.INDENT,
+                        LogStyle.ARROW,
+                        "Optimized Config",
+                        best_config_path.name,
                     )
             else:
                 run_logger.info(  # pragma: no mutant
-                    f"{LogStyle.INDENT}{LogStyle.ARROW} Skipping optimization (no optuna config)"
+                    "%s%s Skipping optimization (no optuna config)",
+                    LogStyle.INDENT,
+                    LogStyle.ARROW,
                 )
 
             # Phase 2: Training
@@ -183,15 +188,15 @@ def run(
             )
 
         except KeyboardInterrupt:
-            run_logger.warning(f"{LogStyle.WARNING} Interrupted by user.")
+            run_logger.warning("%s Interrupted by user.", LogStyle.WARNING)
             raise SystemExit(1)
 
         except OrchardError as e:
-            run_logger.error(f"{LogStyle.FAILURE} {e}")
+            run_logger.error("%s %s", LogStyle.FAILURE, e)
             raise SystemExit(1)
 
         except Exception as e:  # top-level catch-all for logging; re-raises
-            run_logger.error(f"{LogStyle.FAILURE} Pipeline failed: {e}", exc_info=True)
+            run_logger.error("%s Pipeline failed: %s", LogStyle.FAILURE, e, exc_info=True)
             raise
 
         finally:

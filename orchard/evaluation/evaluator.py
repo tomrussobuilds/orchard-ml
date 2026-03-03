@@ -102,14 +102,17 @@ def evaluate_model(
     metrics = compute_classification_metrics(all_labels, all_preds, all_probs)
 
     # Performance logging
-    log_msg = (
-        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Test Metrics':<18}: "
-        f"Acc: {metrics[METRIC_ACCURACY]:.4f} | "
-        f"AUC: {metrics[METRIC_AUC]:.4f} | F1: {metrics[METRIC_F1]:.4f}"
+    log_msg = "%s%s %-18s: Acc: %.4f | AUC: %.4f | F1: %.4f" % (
+        LogStyle.INDENT,
+        LogStyle.ARROW,
+        "Test Metrics",
+        metrics[METRIC_ACCURACY],
+        metrics[METRIC_AUC],
+        metrics[METRIC_F1],
     )
     if actual_tta and aug_cfg is not None:
         mode = aug_cfg.tta_mode.upper()
-        log_msg += f" | TTA ENABLED (Mode: {mode})"
+        log_msg += " | TTA ENABLED (Mode: %s)" % mode
 
     logger.info(log_msg)  # pragma: no mutant
 

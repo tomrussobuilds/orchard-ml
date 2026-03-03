@@ -123,7 +123,7 @@ def plot_training_curves(
 
         plt.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")  # pragma: no mutant
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Training Curves':<18}: {out_path.name}"
+            "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Training Curves", out_path.name
         )
 
         # Export raw data for post-run analysis
@@ -172,7 +172,7 @@ def plot_confusion_matrix(
         fig.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")  # pragma: no mutant
         plt.close()
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Confusion Matrix':<18}: {out_path.name}"
+            "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Confusion Matrix", out_path.name
         )
 
 
@@ -300,7 +300,7 @@ def _finalize_figure(plt_obj: Any, save_path: Path | None, ctx: PlotContext | No
             save_path, dpi=dpi, bbox_inches="tight", facecolor="white"
         )  # pragma: no mutant
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Predictions Grid':<18}: {save_path.name}"
+            "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Predictions Grid", save_path.name
         )
     else:
         plt_obj.show()

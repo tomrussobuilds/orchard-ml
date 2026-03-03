@@ -77,5 +77,5 @@ def map_param_to_config_path(param_name: str) -> tuple[str, str]:
     if section is not None:
         return (section, param_name)
     # Fallback: assume it's a training parameter
-    logger.warning(f"Unknown parameter '{param_name}', defaulting to training section")
+    logger.warning("Unknown parameter '%s', defaulting to training section", param_name)
     return ("training", param_name)

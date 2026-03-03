@@ -338,8 +338,8 @@ def run_export_phase(
         )
         if is_valid is False:
             logger.warning(
-                f"  {LogStyle.WARNING} Numerical validation failed: "
-                "ONNX outputs diverge from PyTorch model"
+                "  %s Numerical validation failed: " "ONNX outputs diverge from PyTorch model",
+                LogStyle.WARNING,
             )
 
         # Validate quantized model (expected larger deviations from quantization)
@@ -354,8 +354,9 @@ def run_export_phase(
             )
             if q_valid is False:
                 logger.error(
-                    f"  {LogStyle.FAILURE} Quantized model validation failed: "
-                    "outputs diverge beyond 10x tolerance"
+                    "  %s Quantized model validation failed: "
+                    "outputs diverge beyond 10x tolerance",
+                    LogStyle.FAILURE,
                 )
 
     # Inference latency benchmark
@@ -376,11 +377,13 @@ def run_export_phase(
                 label=export_cfg.quantization_type.upper(),
             )
 
-    logger.info(f"  {LogStyle.SUCCESS} Export completed")  # pragma: no mutant
-    logger.info(f"    {LogStyle.ARROW} Output            : {onnx_path.name}")  # pragma: no mutant
+    logger.info("  %s Export completed", LogStyle.SUCCESS)  # pragma: no mutant
+    logger.info(
+        "    %s Output            : %s", LogStyle.ARROW, onnx_path.name
+    )  # pragma: no mutant
     if quantized_path:
         logger.info(  # pragma: no mutant
-            f"    {LogStyle.ARROW} Quantized         : {quantized_path.name}"
+            "    %s Quantized         : %s", LogStyle.ARROW, quantized_path.name
         )
 
     return onnx_path

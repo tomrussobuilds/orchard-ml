@@ -139,13 +139,17 @@ class StudyEarlyStoppingCallback:
 
         # Threshold met
         self._count += 1
+        cmp = "≥" if self.direction == "maximize" else "≤"
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.SUCCESS} "
-            f"Trial {trial.number} reached threshold "
-            f"({value:.6f} "
-            f"{'≥' if self.direction == 'maximize' else '≤'} "
-            f"{self.threshold:.6f}) "
-            f"[{self._count}/{self.patience}]"
+            "%s%s Trial %d reached threshold (%.6f %s %.6f) [%d/%d]",
+            LogStyle.INDENT,
+            LogStyle.SUCCESS,
+            trial.number,
+            value,
+            cmp,
+            self.threshold,
+            self._count,
+            self.patience,
         )
 
         if self._count < self.patience:
@@ -164,16 +168,28 @@ class StudyEarlyStoppingCallback:
             logger, "EARLY STOPPING: Target performance achieved!", LogStyle.DOUBLE
         )
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.SUCCESS} Metric           : {value:.6f}"
+            "%s%s Metric           : %.6f",
+            LogStyle.INDENT,
+            LogStyle.SUCCESS,
+            value,
         )
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} Threshold        : {self.threshold:.6f}"
+            "%s%s Threshold        : %.6f",
+            LogStyle.INDENT,
+            LogStyle.ARROW,
+            self.threshold,
         )
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} Trials completed : {trial.number + 1}"
+            "%s%s Trials completed : %d",
+            LogStyle.INDENT,
+            LogStyle.ARROW,
+            trial.number + 1,
         )
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.SUCCESS} Trials saved     : {trials_saved}"
+            "%s%s Trials saved     : %s",
+            LogStyle.INDENT,
+            LogStyle.SUCCESS,
+            trials_saved,
         )
         logger.info(LogStyle.DOUBLE)  # pragma: no mutant
         logger.info("")  # pragma: no mutant
@@ -217,8 +233,9 @@ def get_early_stopping_callback(
 
         if threshold is None:
             logger.warning(
-                f"No default threshold for metric '{metric_name}'. "
-                f"Early stopping disabled. set threshold manually to enable."
+                "No default threshold for metric '%s'. "
+                "Early stopping disabled. set threshold manually to enable.",
+                metric_name,
             )
             return None
 

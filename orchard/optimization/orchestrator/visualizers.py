@@ -134,7 +134,7 @@ def save_plot(
         output_path = output_dir / f"{plot_name}.html"
         fig.write_html(str(output_path))  # pragma: no mutant
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {plot_name:<22}: {output_path.name}"
+            "%s%s %-22s: %s", LogStyle.INDENT, LogStyle.ARROW, plot_name, output_path.name
         )
     except (ValueError, RuntimeError) as e:
-        logger.warning(f"Failed to generate {plot_name}: {e}")
+        logger.warning("Failed to generate %s: %s", plot_name, e)

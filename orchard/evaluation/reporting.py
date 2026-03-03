@@ -137,10 +137,10 @@ class TrainingReport(BaseModel):
                     self._apply_excel_formatting(writer, df)
 
             logger.info(  # pragma: no mutant
-                f"{LogStyle.INDENT}{LogStyle.ARROW} {'Summary Report':<18}: {path.name}"
+                "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Summary Report", path.name
             )
         except Exception as e:  # xlsxwriter raises non-standard exceptions
-            logger.error(f"Failed to generate report: {e}")
+            logger.error("Failed to generate report: %s", e)
 
     def _apply_excel_formatting(self, writer: pd.ExcelWriter, df: pd.DataFrame) -> None:
         """Internal helper to apply styles, formats and column widths to the worksheet."""

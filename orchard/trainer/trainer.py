@@ -184,7 +184,11 @@ class ModelTrainer:
         )
 
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Checkpoint':<18}: {self.best_path.name}"
+            "%s%s %-18s: %s",
+            LogStyle.INDENT,
+            LogStyle.ARROW,
+            "Checkpoint",
+            self.best_path.name,
         )
         logger.info("")  # pragma: no mutant
 
@@ -214,9 +218,8 @@ class ModelTrainer:
         - Early stopping triggers if no monitor_metric improvement for `patience` epochs
         """
         for epoch in range(1, self.epochs + 1):
-            logger.info(  # pragma: no mutant
-                f" Epoch {epoch:02d}/{self.epochs} ".center(LogStyle.HEADER_WIDTH, "-")
-            )
+            header = " Epoch %02d/%d " % (epoch, self.epochs)
+            logger.info(header.center(LogStyle.HEADER_WIDTH, "-"))  # pragma: no mutant
 
             # --- 1. Train → Validate → Schedule (delegated to _loop) ---
             epoch_loss, val_metrics = self._loop.run_epoch(epoch)
@@ -250,7 +253,7 @@ class ModelTrainer:
 
             # --- 5. Early Stopping ---
             if early_stop:
-                logger.warning(f"Early stopping triggered at epoch {epoch}.")
+                logger.warning("Early stopping triggered at epoch %d.", epoch)
                 break
 
         self._log_training_complete()
@@ -276,21 +279,34 @@ class ModelTrainer:
 
         logger.info(LogStyle.LIGHT)  # pragma: no mutant
         logger.info(  # pragma: no mutant
-            f"{I}Epoch {epoch} {B} Val {label}: {monitor_value:.4f} (Best: {self.best_metric:.4f})"
+            "%sEpoch %d %s Val %s: %.4f (Best: %.4f)",
+            I,
+            epoch,
+            B,
+            label,
+            monitor_value,
+            self.best_metric,
         )
-        logger.info(f"{I}{A} Loss  : T {train_loss:.4f} / V {val_loss:.4f}")  # pragma: no mutant
+        logger.info("%s%s Loss  : T %.4f / V %.4f", I, A, train_loss, val_loss)  # pragma: no mutant
         logger.info(  # pragma: no mutant
-            f"{I}{A} Acc   : {val_acc:.4f} (Best: {self.best_acc:.4f})"
+            "%s%s Acc   : %.4f (Best: %.4f)", I, A, val_acc, self.best_acc
         )
-        logger.info(f"{I}{A} LR    : {lr:.2e} {B} Patience: {remaining}")  # pragma: no mutant
+        logger.info(
+            "%s%s LR    : %.2e %s Patience: %d", I, A, lr, B, remaining
+        )  # pragma: no mutant
 
     def _log_training_complete(self) -> None:
         """Log final training summary banner."""
         logger.info(LogStyle.DOUBLE)  # pragma: no mutant
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.SUCCESS} Training Complete "
-            f"{LogStyle.BULLET} Best {self.monitor_metric.upper()}: {self.best_metric:.4f} "
-            f"{LogStyle.BULLET} Best Acc: {self.best_acc:.4f}"
+            "%s%s Training Complete %s Best %s: %.4f %s Best Acc: %.4f",
+            LogStyle.INDENT,
+            LogStyle.SUCCESS,
+            LogStyle.BULLET,
+            self.monitor_metric.upper(),
+            self.best_metric,
+            LogStyle.BULLET,
+            self.best_acc,
         )
         logger.info(LogStyle.DOUBLE)  # pragma: no mutant
 
@@ -311,8 +327,9 @@ class ModelTrainer:
 
         if current_value > self.best_metric:
             logger.info(  # pragma: no mutant
-                f"New best model! Val {self.monitor_metric}: "
-                f"{current_value:.4f} ↑ Checkpoint saved."
+                "New best model! Val %s: %.4f ↑ Checkpoint saved.",
+                self.monitor_metric,
+                current_value,
             )
             self.best_metric = current_value
             self.epochs_no_improve = 0
@@ -339,10 +356,10 @@ class ModelTrainer:
 
         no_improve_msg = "No checkpoint was saved during training (model never improved)."
         if self.best_path.exists():
-            logger.warning(f"{no_improve_msg} Loading existing checkpoint file.")
+            logger.warning("%s Loading existing checkpoint file.", no_improve_msg)
             self.load_best_weights()
         else:
-            logger.warning(f"{no_improve_msg} Saving current model state as fallback.")
+            logger.warning("%s Saving current model state as fallback.", no_improve_msg)
             torch.save(self.model.state_dict(), self.best_path)
 
         self.model.eval()
@@ -358,11 +375,11 @@ class ModelTrainer:
         try:
             load_model_weights(model=self.model, path=self.best_path, device=self.device)
             logger.info(  # pragma: no mutant
-                f"{LogStyle.INDENT}{LogStyle.SUCCESS} Model state restored"
+                "%s%s Model state restored", LogStyle.INDENT, LogStyle.SUCCESS
             )
             logger.info(  # pragma: no mutant
-                f"{LogStyle.INDENT}{LogStyle.ARROW} {'Checkpoint':<18}: {self.best_path.name}"
+                "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Checkpoint", self.best_path.name
             )
         except (RuntimeError, OrchardExportError) as e:
-            logger.error(f"{LogStyle.INDENT}{LogStyle.FAILURE} Weight restoration failed: {e}")
+            logger.error("%s%s Weight restoration failed: %s", LogStyle.INDENT, LogStyle.FAILURE, e)
             raise

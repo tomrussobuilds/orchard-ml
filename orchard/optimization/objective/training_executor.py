@@ -217,9 +217,13 @@ class TrialTrainingExecutor:
             # Check pruning
             if self._should_prune(trial, epoch):
                 logger.info(  # pragma: no mutant
-                    f"{LogStyle.INDENT}{LogStyle.ARROW} "
-                    f"Trial {trial.number} pruned at epoch {epoch} "
-                    f"({self.metric_extractor.metric_name}={current_metric:.4f})"
+                    "%s%s Trial %d pruned at epoch %d (%s=%.4f)",
+                    LogStyle.INDENT,
+                    LogStyle.ARROW,
+                    trial.number,
+                    epoch,
+                    self.metric_extractor.metric_name,
+                    current_metric,
                 )
                 raise optuna.TrialPruned()
 
@@ -229,11 +233,15 @@ class TrialTrainingExecutor:
             # Logging
             if epoch % self.log_interval == 0 or epoch == self.epochs:
                 logger.info(  # pragma: no mutant
-                    f"{LogStyle.DOUBLE_INDENT}T{trial.number} "
-                    f"E{epoch}/{self.epochs} | "
-                    f"Loss:{epoch_loss:.4f} | "
-                    f"{self.metric_extractor.metric_name}:{current_metric:.4f} "
-                    f"(Best:{best_metric:.4f})"
+                    "%sT%d E%d/%d | Loss:%.4f | %s:%.4f (Best:%.4f)",
+                    LogStyle.DOUBLE_INDENT,
+                    trial.number,
+                    epoch,
+                    self.epochs,
+                    epoch_loss,
+                    self.metric_extractor.metric_name,
+                    current_metric,
+                    best_metric,
                 )
 
         self._log_trial_complete(trial, best_metric, epoch_loss)
@@ -260,8 +268,11 @@ class TrialTrainingExecutor:
         except (RuntimeError, ValueError) as e:
             self._consecutive_val_failures += 1
             logger.error(
-                f"{LogStyle.INDENT}{LogStyle.FAILURE} Validation failed "
-                f"(x{self._consecutive_val_failures}): {e}"
+                "%s%s Validation failed (x%d): %s",
+                LogStyle.INDENT,
+                LogStyle.FAILURE,
+                self._consecutive_val_failures,
+                e,
             )
             if self._consecutive_val_failures >= _MAX_CONSECUTIVE_VAL_FAILURES:
                 raise RuntimeError(
@@ -306,13 +317,13 @@ class TrialTrainingExecutor:
         """
         logger.info("")  # pragma: no mutant
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.SUCCESS} Trial {trial.number} completed"
+            "%s%s Trial %d completed", LogStyle.INDENT, LogStyle.SUCCESS, trial.number
         )
-        best_label = f"Best {self.metric_extractor.metric_name.upper()}"
+        best_label = "Best %s" % self.metric_extractor.metric_name.upper()
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {best_label:<18}: {best_metric:.6f}"
+            "%s%s %-18s: %.6f", LogStyle.INDENT, LogStyle.ARROW, best_label, best_metric
         )
         logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Final Loss':<18}: {final_loss:.4f}"
+            "%s%s %-18s: %.4f", LogStyle.INDENT, LogStyle.ARROW, "Final Loss", final_loss
         )
         logger.info("")  # pragma: no mutant

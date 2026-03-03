@@ -164,7 +164,10 @@ class DataLoaderFactory:
         )
 
         self.logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'Balancing':<18}: WeightedRandomSampler generated"
+            "%s%s %-18s: WeightedRandomSampler generated",
+            LogStyle.INDENT,
+            LogStyle.ARROW,
+            "Balancing",
         )
         return WeightedRandomSampler(
             weights=sample_weights.tolist(),
@@ -196,8 +199,12 @@ class DataLoaderFactory:
             num_workers = min(num_workers, cap)
 
             self.logger.info(  # pragma: no mutant
-                f"{LogStyle.INDENT}{LogStyle.ARROW} {'Optuna Workers':<18}: "
-                f"{num_workers} (Resolution={self.dataset_cfg.resolution})"
+                "%s%s %-18s: %d (Resolution=%d)",
+                LogStyle.INDENT,
+                LogStyle.ARROW,
+                "Optuna Workers",
+                num_workers,
+                self.dataset_cfg.resolution,
             )
 
         # Hardware acceleration: Pin memory for CUDA or MPS
@@ -278,9 +285,15 @@ class DataLoaderFactory:
 
         optuna_str = " (Optuna)" if is_optuna else ""
         self.logger.info(  # pragma: no mutant
-            f"{LogStyle.INDENT}{LogStyle.ARROW} {'DataLoaders':<18}: "
-            f"({self.dataset_cfg.processing_mode}){optuna_str} → "
-            f"Train:[{len(train_ds)}] Val:[{len(val_ds)}] Test:[{len(test_ds)}]"
+            "%s%s %-18s: (%s)%s → Train:[%d] Val:[%d] Test:[%d]",
+            LogStyle.INDENT,
+            LogStyle.ARROW,
+            "DataLoaders",
+            self.dataset_cfg.processing_mode,
+            optuna_str,
+            len(train_ds),
+            len(val_ds),
+            len(test_ds),
         )
 
         return train_loader, val_loader, test_loader

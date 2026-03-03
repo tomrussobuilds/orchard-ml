@@ -97,7 +97,11 @@ def show_sample_images(
     plt.savefig(save_path, dpi=fig_dpi, bbox_inches="tight")  # pragma: no mutant
     plt.close()  # pragma: no mutant
     logger.info(  # pragma: no mutant
-        f"{LogStyle.INDENT}{LogStyle.ARROW} {'Sample Grid':<18}: {save_path.name}"
+        "%s%s %-18s: %s",
+        LogStyle.INDENT,
+        LogStyle.ARROW,
+        "Sample Grid",
+        save_path.name,
     )
 
 

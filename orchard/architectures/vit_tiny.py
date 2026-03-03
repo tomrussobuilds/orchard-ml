@@ -87,7 +87,7 @@ def build_vit_tiny(
             in_chans=3,  # Initially load for 3 channels (will adapt below)
         )
     except (RuntimeError, ValueError) as e:
-        logger.error(f"Failed to load ViT variant '{_weight_variant}': {e}")
+        logger.error("Failed to load ViT variant '%s': %s", _weight_variant, e)
         raise ValueError(f"Invalid ViT weight variant: {_weight_variant}") from e
 
     # --- Step 3: Adapt Patch Embedding Layer ---
