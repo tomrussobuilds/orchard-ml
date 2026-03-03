@@ -407,8 +407,8 @@ def test_phase_5_run_manifest_saves_config(tmp_path):
 
 
 @pytest.mark.unit
-def test_phase_6_infra_prepare_raises_warning_no_logger(caplog):
-    """Test _phase_6_infrastructure_guarding logs warning to logging if no logger."""
+def test_phase_6_infra_prepare_logs_error_no_logger(caplog):
+    """Test _phase_6_infrastructure_guarding logs error to logging if no logger."""
     import logging
 
     mock_cfg = MagicMock()
@@ -423,19 +423,21 @@ def test_phase_6_infra_prepare_raises_warning_no_logger(caplog):
     fallback_logger = logging.getLogger("OrchardML")
     fallback_logger.propagate = True
 
-    with caplog.at_level(logging.WARNING, logger="OrchardML"):
+    with caplog.at_level(logging.ERROR, logger="OrchardML"):
         orch._phase_6_infrastructure_guarding()
 
     assert any("fail" in rec.message for rec in caplog.records)
+    assert orch._infra_lock_acquired is False
 
 
 @pytest.mark.unit
-def test_phase_7_device_resolver_fails_fallback_to_cpu(caplog):
-    """Test _phase_7_environment_report falls back to CPU if device resolver fails."""
-    import logging
+def test_phase_7_device_resolver_fails_raises_device_error():
+    """Test _phase_7_environment_report raises OrchardDeviceError if device resolver fails."""
+    from orchard.exceptions import OrchardDeviceError
 
     mock_cfg = MagicMock()
     mock_cfg.hardware.effective_num_workers = 2
+    mock_cfg.hardware.device = "cuda"
     mock_reporter = MagicMock()
 
     def failing_resolver(device_str):
@@ -446,15 +448,8 @@ def test_phase_7_device_resolver_fails_fallback_to_cpu(caplog):
     orch.run_logger = None
     orch.paths = MagicMock()
 
-    # Enable propagate for caplog to capture fallback logger
-    fallback_logger = logging.getLogger("OrchardML")
-    fallback_logger.propagate = True
-
-    with caplog.at_level(logging.WARNING, logger="OrchardML"):
+    with pytest.raises(OrchardDeviceError, match="Device resolution failed at runtime"):
         orch._phase_7_environment_report(applied_threads=1)
-
-    assert orch._device_cache.type == "cpu"
-    assert any("fallback to CPU" in rec.message for rec in caplog.records)
 
 
 # CLEANUP: EDGE CASES
@@ -576,9 +571,12 @@ def test_phase_7_device_already_cached_with_logger(caplog):
 
 @pytest.mark.unit
 def test_phase_7_device_resolution_fails_with_logger():
-    """Test _phase_7 device resolution failure with logger present."""
+    """Test _phase_7 device resolution failure raises OrchardDeviceError with logger present."""
+    from orchard.exceptions import OrchardDeviceError
+
     mock_cfg = MagicMock()
     mock_cfg.hardware.effective_num_workers = 2
+    mock_cfg.hardware.device = "cuda"
     mock_reporter = MagicMock()
     mock_logger = MagicMock()
 
@@ -590,11 +588,8 @@ def test_phase_7_device_resolution_fails_with_logger():
     orch.run_logger = mock_logger
     orch.paths = MagicMock()
 
-    orch._phase_7_environment_report(applied_threads=1)
-
-    assert orch._device_cache.type == "cpu"
-    mock_logger.warning.assert_called_once()
-    assert "fallback to CPU" in mock_logger.warning.call_args[0][0]
+    with pytest.raises(OrchardDeviceError, match="device unavailable"):
+        orch._phase_7_environment_report(applied_threads=1)
 
 
 @pytest.mark.unit
@@ -627,12 +622,14 @@ def test_phase_6_with_no_infra_manager():
     mock_cfg = MagicMock()
     mock_logger = MagicMock()
 
-    orch = RootOrchestrator(cfg=mock_cfg, infra_manager=None)
+    orch = RootOrchestrator(cfg=mock_cfg)
+    orch.infra = None
     orch.run_logger = mock_logger
 
     orch._phase_6_infrastructure_guarding()
 
-    mock_logger.warning.assert_not_called()
+    mock_logger.error.assert_not_called()
+    assert orch._infra_lock_acquired is False
 
 
 @pytest.mark.unit
@@ -648,9 +645,10 @@ def test_phase_6_prepare_fails_with_logger():
 
     orch._phase_6_infrastructure_guarding()
 
-    mock_logger.warning.assert_called_once()
-    assert "Infra guard failed" in mock_logger.warning.call_args[0][0]
-    assert "lock failed" in mock_logger.warning.call_args[0][0]
+    mock_logger.error.assert_called_once()
+    assert "Infra guard failed" in str(mock_logger.error.call_args)
+    assert "lock failed" in str(mock_logger.error.call_args)
+    assert orch._infra_lock_acquired is False
 
 
 # INTEGRATION: FULL LIFECYCLE
@@ -1110,7 +1108,7 @@ def test_cleanup_error_message_content():
 
     mock_logger.error.assert_called_once()
     assert "Failed to release system lock" in mock_logger.error.call_args[0][0]
-    assert "disk full" in mock_logger.error.call_args[0][0]
+    assert "disk full" in str(mock_logger.error.call_args[0][1])
 
 
 @pytest.mark.unit
@@ -1261,6 +1259,119 @@ def test_phase_5_config_saver_receives_data_and_path():
 
     mock_saver.assert_called_once_with(data=mock_cfg, yaml_path="/mock/config.yaml")
     mock_dumper.assert_called_once_with(mock_paths.reports / "requirements.txt")
+
+
+# GUARD: log_environment_report no-op when not initialized
+@pytest.mark.unit
+def test_log_environment_report_noop_when_not_initialized():
+    """Test log_environment_report is a no-op when _initialized is False."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.effective_num_workers = 2
+    mock_reporter = MagicMock()
+
+    orch = RootOrchestrator(cfg=mock_cfg, reporter=mock_reporter, rank=0)
+    orch.paths = MagicMock()
+    orch.run_logger = MagicMock()
+    # _initialized is False by default
+
+    orch.log_environment_report()
+
+    mock_reporter.log_initial_status.assert_not_called()
+
+
+# GUARD: _cleaned_up blocks re-initialization
+@pytest.mark.unit
+def test_cleaned_up_blocks_reinitialize():
+    """Test initialize_core_services raises RuntimeError after cleanup."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.effective_num_workers = 2
+
+    orch = RootOrchestrator(cfg=mock_cfg, rank=0)
+    orch._cleaned_up = True
+
+    with pytest.raises(RuntimeError, match="Cannot re-initialize after cleanup"):
+        orch.initialize_core_services()
+
+
+@pytest.mark.unit
+def test_cleanup_sets_cleaned_up_flag():
+    """Test cleanup sets _cleaned_up to True."""
+    mock_cfg = MagicMock()
+    mock_infra = MagicMock()
+    mock_logger = MagicMock()
+    mock_logger.handlers = []
+
+    orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra, rank=0)
+    orch.run_logger = mock_logger
+
+    assert orch._cleaned_up is False
+    orch.cleanup()
+    assert orch._cleaned_up is True
+
+
+# GUARD: run_logger nulled after cleanup
+@pytest.mark.unit
+def test_cleanup_nulls_run_logger():
+    """Test cleanup sets run_logger to None after closing handlers."""
+    mock_cfg = MagicMock()
+    mock_infra = MagicMock()
+    mock_handler = MagicMock()
+    mock_logger = MagicMock()
+    mock_logger.handlers = [mock_handler]
+
+    orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra, rank=0)
+    orch.run_logger = mock_logger
+
+    orch.cleanup()
+
+    assert orch.run_logger is None
+    mock_handler.close.assert_called_once()
+
+
+# GUARD: _infra_lock_acquired flag
+@pytest.mark.unit
+def test_infra_lock_acquired_true_on_success():
+    """Test _infra_lock_acquired is True when prepare_environment succeeds."""
+    mock_cfg = MagicMock()
+    mock_infra = MagicMock()
+    mock_logger = MagicMock()
+
+    orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra)
+    orch.run_logger = mock_logger
+
+    orch._phase_6_infrastructure_guarding()
+
+    assert orch._infra_lock_acquired is True
+
+
+@pytest.mark.unit
+def test_infra_lock_acquired_false_on_failure():
+    """Test _infra_lock_acquired stays False when prepare_environment fails."""
+    mock_cfg = MagicMock()
+    mock_infra = MagicMock()
+    mock_infra.prepare_environment.side_effect = OSError("permission denied")
+    mock_logger = MagicMock()
+
+    orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra)
+    orch.run_logger = mock_logger
+
+    orch._phase_6_infrastructure_guarding()
+
+    assert orch._infra_lock_acquired is False
+    mock_logger.error.assert_called_once()
+
+
+@pytest.mark.unit
+def test_infra_lock_acquired_false_by_default():
+    """Test _infra_lock_acquired starts as False."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.effective_num_workers = 4
+
+    orch = RootOrchestrator(cfg=mock_cfg)
+
+    assert orch._infra_lock_acquired is False
 
 
 if __name__ == "__main__":

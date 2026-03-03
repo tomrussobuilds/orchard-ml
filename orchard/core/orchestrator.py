@@ -39,6 +39,7 @@ from typing import TYPE_CHECKING, Any, Callable, Literal, TypeVar
 
 import torch
 
+from ..exceptions import OrchardDeviceError
 from .config.infrastructure_config import InfraManagerProtocol, InfrastructureManager
 from .environment import (
     apply_cpu_threads,
@@ -51,7 +52,7 @@ from .environment.timing import TimeTracker, TimeTrackerProtocol
 from .io import dump_requirements, save_config_as_yaml
 from .logger import Logger, Reporter
 from .logger.reporter import ReporterProtocol
-from .paths import LOGGER_NAME, RunPaths, setup_static_directories
+from .paths import LOGGER_NAME, LogStyle, RunPaths, setup_static_directories
 
 if TYPE_CHECKING:  # pragma: no cover
     from .config.manifest import Config
@@ -203,6 +204,8 @@ class RootOrchestrator:
 
         # Lazy initialization
         self._initialized: bool = False
+        self._cleaned_up: bool = False
+        self._infra_lock_acquired: bool = False
         self._applied_threads: int = 0
         self.paths: RunPaths | None = None
         self.run_logger: logging.Logger | None = None
@@ -346,8 +349,13 @@ class RootOrchestrator:
         if self.infra is not None:
             try:
                 self.infra.prepare_environment(self.cfg, logger=phase_logger)
+                self._infra_lock_acquired = True
             except (OSError, RuntimeError) as e:
-                phase_logger.warning(f"Infra guard failed: {e}")
+                phase_logger.error(
+                    "%s Infra guard failed (no single-instance lock): %s",
+                    LogStyle.FAILURE,
+                    e,
+                )
 
     def _phase_7_environment_report(self, applied_threads: int) -> None:
         """
@@ -363,12 +371,16 @@ class RootOrchestrator:
             try:
                 self._device_cache = self.get_device()
             except RuntimeError as e:
-                # Last-resort safety net: resolve_device in HardwareConfig already
-                # warns at config-time when GPU is unavailable. This catch handles
-                # the unlikely case where to_device_obj() fails at runtime despite
-                # a valid config (e.g. driver crash after config was built).
-                self._device_cache = torch.device("cpu")
-                phase_logger.warning(f"Device detection failed, fallback to CPU: {e}")
+                # resolve_device in HardwareConfig already handles GPU-unavailable
+                # at config-time. If we reach here with device="cuda" in config,
+                # CUDA was available then — a runtime failure (e.g. driver crash)
+                # is unrecoverable. Silently falling back to CPU would waste hours
+                # of compute with GPU-tuned hyperparameters (batch size, mixed
+                # precision, etc.). Fail fast so the user can fix the environment.
+                raise OrchardDeviceError(
+                    f"{LogStyle.FAILURE} Device resolution failed at runtime "
+                    f"(config requested '{self.cfg.hardware.device}'): {e}"
+                ) from e
 
         self.reporter.log_initial_status(
             logger_instance=phase_logger,
@@ -404,6 +416,7 @@ class RootOrchestrator:
             for handler in self.run_logger.handlers[:]:
                 handler.close()
                 self.run_logger.removeHandler(handler)
+            self.run_logger = None
 
     # --- Public Interface ---
 
@@ -427,6 +440,11 @@ class RootOrchestrator:
         Returns:
             Provisioned directory structure for rank 0, None for non-main ranks.
         """
+        if self._cleaned_up:
+            raise RuntimeError(
+                "Cannot re-initialize after cleanup — "
+                "RootOrchestrator is a single-use context manager"
+            )
         if self._initialized:
             return self.paths
 
@@ -463,7 +481,7 @@ class RootOrchestrator:
         (e.g. MLflow tracker) have been started, so that all enter/exit log
         messages appear in the correct chronological order.
         """
-        if self.is_main_process:
+        if self._initialized and self.is_main_process:
             self._phase_7_environment_report(self._applied_threads)
 
     def cleanup(self) -> None:
@@ -480,12 +498,13 @@ class RootOrchestrator:
 
         cleanup_logger = self.run_logger or logging.getLogger(LOGGER_NAME)
         try:
-            if self.infra:
+            if self.infra is not None:
                 self.infra.release_resources(self.cfg, logger=cleanup_logger)
         except (OSError, RuntimeError) as e:
-            cleanup_logger.error(f"Failed to release system lock: {e}")
+            cleanup_logger.error("Failed to release system lock: %s", e)
 
         self._close_logging_handlers()
+        self._cleaned_up = True
 
     def get_device(self) -> torch.device:
         """

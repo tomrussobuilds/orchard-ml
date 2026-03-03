@@ -17,6 +17,7 @@ from .core.paths import MLRUNS_DB
 from .exceptions import (
     OrchardConfigError,
     OrchardDatasetError,
+    OrchardDeviceError,
     OrchardError,
     OrchardExportError,
 )
@@ -44,5 +45,6 @@ __all__ = [
     "OrchardError",
     "OrchardConfigError",
     "OrchardDatasetError",
+    "OrchardDeviceError",
     "OrchardExportError",
 ]
