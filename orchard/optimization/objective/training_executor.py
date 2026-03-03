@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import logging
 from types import MappingProxyType
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
@@ -116,8 +116,8 @@ class TrialTrainingExecutor:
     def __init__(
         self,
         model: torch.nn.Module,
-        train_loader: torch.utils.data.DataLoader,
-        val_loader: torch.utils.data.DataLoader,
+        train_loader: torch.utils.data.DataLoader[Any],
+        val_loader: torch.utils.data.DataLoader[Any],
         optimizer: torch.optim.Optimizer,
         scheduler: torch.optim.lr_scheduler.LRScheduler,
         criterion: torch.nn.Module,

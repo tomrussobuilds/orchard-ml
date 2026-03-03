@@ -16,7 +16,7 @@ Functions:
 from __future__ import annotations
 
 import logging
-from typing import cast
+from typing import Any, cast
 
 import optuna
 from optuna.pruners import HyperbandPruner, MedianPruner, NopPruner, PercentilePruner
@@ -79,7 +79,7 @@ def build_pruner(
     return cast(MedianPruner | PercentilePruner | HyperbandPruner | NopPruner, pruner_factory())
 
 
-def build_callbacks(optuna_cfg: OptunaConfig, monitor_metric: str) -> list:
+def build_callbacks(optuna_cfg: OptunaConfig, monitor_metric: str) -> list[Any]:
     """
     Construct list of optimization callbacks from configuration.
 

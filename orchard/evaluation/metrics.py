@@ -11,9 +11,7 @@ import numpy as np
 from sklearn.metrics import f1_score
 
 from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1
-from ..trainer.engine import (  # noqa: F401 (re-exported via evaluation/__init__.py)
-    compute_auc,
-)
+from ..trainer.engine import compute_auc as compute_auc  # re-exported via evaluation/__init__.py
 
 
 # METRIC LOGIC

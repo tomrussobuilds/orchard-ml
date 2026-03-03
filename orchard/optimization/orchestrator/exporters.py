@@ -25,6 +25,7 @@ import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.worksheet.worksheet import Worksheet
 
 from ...core import LOGGER_NAME, Config, LogStyle, RunPaths, save_config_as_yaml
 from .._param_mapping import map_param_to_config_path
@@ -246,7 +247,7 @@ def export_top_trials(
     )
 
 
-def _write_styled_rows(ws, df: pd.DataFrame) -> None:
+def _write_styled_rows(ws: Worksheet, df: pd.DataFrame) -> None:
     """
     Write DataFrame rows to worksheet with professional formatting.
 
@@ -286,7 +287,7 @@ def _write_styled_rows(ws, df: pd.DataFrame) -> None:
                     cell.number_format = "0"
 
 
-def _auto_adjust_column_widths(ws) -> None:
+def _auto_adjust_column_widths(ws: Worksheet) -> None:
     """
     Auto-adjust column widths based on cell content length.
 
@@ -305,7 +306,7 @@ def _auto_adjust_column_widths(ws) -> None:
 # ==================== HELPER FUNCTIONS ====================
 
 
-def build_best_config_dict(best_params: dict, cfg: Config) -> dict:
+def build_best_config_dict(best_params: dict[str, Any], cfg: Config) -> dict[str, Any]:
     """
     Construct config dictionary from best trial parameters.
 

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import partial
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
@@ -35,7 +35,7 @@ from .engine import mixup_data, train_one_epoch, validate_epoch
 
 def create_amp_scaler(
     training: TrainingConfig, device: str = "cuda"
-) -> torch.amp.GradScaler | None:
+) -> torch.amp.grad_scaler.GradScaler | None:
     """
     Create AMP GradScaler if mixed precision is enabled.
 
@@ -46,10 +46,10 @@ def create_amp_scaler(
     Returns:
         GradScaler instance when AMP is enabled, None otherwise.
     """
-    return torch.amp.GradScaler(device=device) if training.use_amp else None
+    return torch.amp.grad_scaler.GradScaler(device=device) if training.use_amp else None
 
 
-def create_mixup_fn(training: TrainingConfig) -> Callable | None:
+def create_mixup_fn(training: TrainingConfig) -> Callable[..., Any] | None:
     """
     Create a seeded MixUp partial function if alpha > 0.
 
@@ -121,14 +121,14 @@ class TrainingLoop:
     def __init__(
         self,
         model: nn.Module,
-        train_loader: torch.utils.data.DataLoader,
-        val_loader: torch.utils.data.DataLoader,
+        train_loader: torch.utils.data.DataLoader[Any],
+        val_loader: torch.utils.data.DataLoader[Any],
         optimizer: torch.optim.Optimizer,
         scheduler: LRScheduler | None,
         criterion: nn.Module,
         device: torch.device,
-        scaler: torch.amp.GradScaler | None,
-        mixup_fn: Callable | None,
+        scaler: torch.amp.grad_scaler.GradScaler | None,
+        mixup_fn: Callable[..., Any] | None,
         options: LoopOptions,
     ) -> None:
         self.model = model

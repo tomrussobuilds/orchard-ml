@@ -23,7 +23,7 @@ import sys
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import ClassVar, Final
+from typing import Any, ClassVar, Final
 
 from ..paths import LOGGER_NAME
 from ..paths.constants import LogStyle
@@ -292,7 +292,7 @@ class Logger:
 
     @classmethod
     def setup(
-        cls, name: str, log_dir: Path | None = None, level: str = "INFO", **kwargs
+        cls, name: str, log_dir: Path | None = None, level: str = "INFO", **kwargs: Any
     ) -> logging.Logger:
         """
         Main entry point for configuring the logger, called by RootOrchestrator.

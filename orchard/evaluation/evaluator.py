@@ -22,6 +22,7 @@ Example:
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import numpy as np
 import torch
@@ -40,7 +41,7 @@ logger = logging.getLogger(LOGGER_NAME)
 
 def evaluate_model(
     model: nn.Module,
-    test_loader: DataLoader,
+    test_loader: DataLoader[Any],
     device: torch.device,
     use_tta: bool = False,
     is_anatomical: bool = False,

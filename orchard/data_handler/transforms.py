@@ -99,7 +99,7 @@ def get_pipeline_transforms(
         mean = list(ds_meta.mean)
         std = list(ds_meta.std)
 
-    def get_base_ops():
+    def get_base_ops() -> list[v2.Transform]:
         """
         Foundational operations common to all pipelines.
 

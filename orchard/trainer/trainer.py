@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import torch
 import torch.nn as nn
@@ -105,8 +105,8 @@ class ModelTrainer:
     def __init__(
         self,
         model: nn.Module,
-        train_loader: DataLoader,
-        val_loader: DataLoader,
+        train_loader: DataLoader[Any],
+        val_loader: DataLoader[Any],
         optimizer: torch.optim.Optimizer,
         scheduler: LRScheduler,
         criterion: nn.Module,

@@ -16,7 +16,7 @@ This module is the last stage of the training lifecycle, invoked by
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -49,7 +49,7 @@ logger = logging.getLogger(LOGGER_NAME)
 # EVALUATION PIPELINE
 def run_final_evaluation(
     model: nn.Module,
-    test_loader: DataLoader,
+    test_loader: DataLoader[Any],
     train_losses: list[float],
     val_metrics_history: list[Mapping[str, float]],
     class_names: list[str],

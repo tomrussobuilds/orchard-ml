@@ -213,7 +213,9 @@ class DataLoaderFactory:
             }
         )
 
-    def build(self, is_optuna: bool = False) -> tuple[DataLoader, DataLoader, DataLoader]:
+    def build(
+        self, is_optuna: bool = False
+    ) -> tuple[DataLoader[Any], DataLoader[Any], DataLoader[Any]]:
         """
         Constructs and returns the full suite of DataLoaders.
 
@@ -291,7 +293,7 @@ def get_dataloaders(
     aug_cfg: AugmentationConfig,
     num_workers: int,
     is_optuna: bool = False,
-) -> tuple[DataLoader, DataLoader, DataLoader]:
+) -> tuple[DataLoader[Any], DataLoader[Any], DataLoader[Any]]:
     """
     Convenience function for creating train/val/test DataLoaders.
 
@@ -323,7 +325,7 @@ def get_dataloaders(
 # HEALTH UTILITIES
 def create_temp_loader(
     dataset_path: Path, batch_size: int = _DEFAULT_HEALTHCHECK_BATCH_SIZE
-) -> DataLoader:
+) -> DataLoader[Any]:
     """
     Load a NPZ dataset lazily and return a DataLoader for health checks.
 

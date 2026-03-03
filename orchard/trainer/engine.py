@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import logging
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
@@ -80,11 +80,11 @@ def compute_auc(y_true: np.ndarray, y_score: np.ndarray) -> float:
 # TRAINING ENGINE
 def train_one_epoch(
     model: nn.Module,
-    loader: torch.utils.data.DataLoader,
+    loader: torch.utils.data.DataLoader[Any],
     criterion: nn.Module,
     optimizer: torch.optim.Optimizer,
     device: torch.device,
-    mixup_fn: Callable | None = None,
+    mixup_fn: Callable[..., Any] | None = None,
     scaler: torch.amp.grad_scaler.GradScaler | None = None,
     grad_clip: float | None = 0.0,
     epoch: int = 0,
@@ -171,7 +171,7 @@ def train_one_epoch(
 # VALIDATION ENGINE
 def validate_epoch(
     model: nn.Module,
-    val_loader: torch.utils.data.DataLoader,
+    val_loader: torch.utils.data.DataLoader[Any],
     criterion: nn.Module,
     device: torch.device,
 ) -> Mapping[str, float]:
@@ -324,7 +324,7 @@ def _backward_step(
     """
     if scaler:
         # Mixed precision backward pass
-        scaler.scale(loss).backward()
+        scaler.scale(loss).backward()  # type: ignore[no-untyped-call]
         if grad_clip is not None and grad_clip > 0:
             scaler.unscale_(optimizer)
             torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
@@ -332,7 +332,7 @@ def _backward_step(
         scaler.update()
     else:
         # Standard backward pass
-        loss.backward()
+        loss.backward()  # type: ignore[no-untyped-call]
         if grad_clip is not None and grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
         optimizer.step()

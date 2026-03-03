@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.9] - 2026-03-03
 
 ### Added
 
@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - restore per-epoch trainer logging and early-stop summary
 - remove duplicated branch in transforms, tidy README badges
 - close leaked fd in synthetic.py, align bandit CI config, update docs
+- update Docker badge to CUDA 12.6, remove stale notebook config fields
 
 ## [0.1.8] - 2026-02-28
 

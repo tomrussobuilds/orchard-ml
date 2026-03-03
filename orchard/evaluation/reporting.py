@@ -195,7 +195,7 @@ class TrainingReport(BaseModel):
 
 def create_structured_report(
     val_metrics: Sequence[Mapping[str, float]],
-    test_metrics: dict,
+    test_metrics: dict[str, float],
     macro_f1: float,
     train_losses: Sequence[float],
     best_path: Path,

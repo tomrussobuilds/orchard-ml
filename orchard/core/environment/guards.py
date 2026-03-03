@@ -39,7 +39,7 @@ from .distributed import is_distributed, is_main_process
 
 # Global State
 # Persistent file descriptor to prevent garbage collection from releasing locks
-_lock_fd: IO | None = None
+_lock_fd: IO[str] | None = None
 
 
 # PROCESS MANAGEMENT
@@ -74,7 +74,7 @@ def ensure_single_instance(lock_file: Path, logger: logging.Logger) -> None:
 
     # Locking is currently only supported on Unix-like systems via fcntl
     if platform.system() in ("Linux", "Darwin") and HAS_FCNTL:
-        f: IO | None = None
+        f: IO[str] | None = None
         try:
             lock_file.parent.mkdir(parents=True, exist_ok=True)
             f = open(lock_file, "a")

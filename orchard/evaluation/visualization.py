@@ -10,12 +10,13 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
+from matplotlib.figure import Figure
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 from torch.utils.data import DataLoader
 
@@ -29,7 +30,7 @@ logger = logging.getLogger(LOGGER_NAME)
 # PUBLIC INTERFACE
 def show_predictions(
     model: nn.Module,
-    loader: DataLoader,
+    loader: DataLoader[Any],
     device: torch.device,
     classes: list[str],
     save_path: Path | None = None,
@@ -175,7 +176,7 @@ def plot_confusion_matrix(
 
 
 def _plot_single_prediction(
-    ax,
+    ax: Any,
     image: np.ndarray,
     label: int,
     pred: int,
@@ -233,7 +234,7 @@ def _build_suptitle(ctx: PlotContext) -> str:
 
 
 def _get_predictions_batch(
-    model: nn.Module, loader: DataLoader, device: torch.device, n: int
+    model: nn.Module, loader: DataLoader[Any], device: torch.device, n: int
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Extract a sample batch and run model inference.
@@ -260,7 +261,7 @@ def _get_predictions_batch(
 
 def _setup_prediction_grid(
     num_samples: int, cols: int, ctx: PlotContext | None
-) -> tuple[plt.Figure, np.ndarray]:
+) -> tuple[Figure, np.ndarray]:
     """
     Calculate grid dimensions and initialize matplotlib subplots.
 
@@ -282,7 +283,7 @@ def _setup_prediction_grid(
     return fig, np.atleast_1d(axes).flatten()
 
 
-def _finalize_figure(plt_obj, save_path: Path | None, ctx: PlotContext | None) -> None:
+def _finalize_figure(plt_obj: Any, save_path: Path | None, ctx: PlotContext | None) -> None:
     """
     Save the current figure to disk or display interactively, then close.
 

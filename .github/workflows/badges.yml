@@ -83,11 +83,11 @@ jobs:
           namedLogo: python
           logoColor: white
 
-      # --- mypy ---
-      - name: Run mypy
+      # --- mypy --strict ---
+      - name: Run mypy --strict
         id: mypy
         run: |
-          if mypy orchard/ 2>/dev/null; then
+          if mypy --strict orchard/ 2>/dev/null; then
             echo "status=passing" >> "$GITHUB_OUTPUT"
             echo "color=2a6db2" >> "$GITHUB_OUTPUT"
           else
@@ -101,7 +101,7 @@ jobs:
           auth: "${{ env.GIST_AUTH }}"
           gistID: "7835190af6011e9051b673c8be974f8a"
           filename: mypy.json
-          label: mypy
+          label: mypy strict
           message: "${{ steps.mypy.outputs.status }}"
           color: "${{ steps.mypy.outputs.color }}"
           namedLogo: python

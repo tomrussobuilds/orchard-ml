@@ -23,6 +23,7 @@ import logging
 import os
 import tempfile
 import warnings
+from collections.abc import Generator
 from pathlib import Path
 
 import torch
@@ -322,7 +323,7 @@ def _quantize_4bit(
 
 
 @contextlib.contextmanager
-def _suppress_ort_warnings():
+def _suppress_ort_warnings() -> Generator[None, None, None]:
     """
     Suppress onnxruntime's "Please consider to run pre-processing" warning.
 

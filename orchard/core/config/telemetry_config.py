@@ -64,7 +64,7 @@ class TelemetryConfig(BaseModel):
             return {}
         return data
 
-    def to_portable_dict(self) -> dict:
+    def to_portable_dict(self) -> dict[str, Any]:
         """
         Convert to portable dictionary with environment-agnostic paths.
 

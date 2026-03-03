@@ -273,6 +273,8 @@ def _build_init_dict() -> dict[str, Any]:
         Ordered dict with every config section dumped via ``model_dump(mode="json")``,
         paths sanitized to portable relative strings, and device reset to ``"auto"``.
     """
+    from pydantic import BaseModel
+
     from orchard.core.config import (
         ArchitectureConfig,
         AugmentationConfig,
@@ -286,7 +288,9 @@ def _build_init_dict() -> dict[str, Any]:
         TrainingConfig,
     )
 
-    dump = lambda m: m.model_dump(mode="json")  # noqa: E731
+    def dump(m: BaseModel) -> dict[str, Any]:
+        """Serialize a config sub-model to a JSON-compatible dict."""
+        return m.model_dump(mode="json")
 
     ds = dump(DatasetConfig())
     ds.pop("metadata", None)

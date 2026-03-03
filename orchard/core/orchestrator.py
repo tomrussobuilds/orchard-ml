@@ -34,7 +34,8 @@ Example:
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Callable, Literal, TypeVar
+from types import TracebackType
+from typing import TYPE_CHECKING, Any, Callable, Literal, TypeVar
 
 import torch
 
@@ -153,14 +154,14 @@ class RootOrchestrator:
         infra_manager: InfraManagerProtocol | None = None,
         reporter: ReporterProtocol | None = None,
         time_tracker: TimeTrackerProtocol | None = None,
-        log_initializer: Callable | None = None,
-        seed_setter: Callable | None = None,
-        thread_applier: Callable | None = None,
-        system_configurator: Callable | None = None,
-        static_dir_setup: Callable | None = None,
-        config_saver: Callable | None = None,
-        requirements_dumper: Callable | None = None,
-        device_resolver: Callable | None = None,
+        log_initializer: Callable[..., Any] | None = None,
+        seed_setter: Callable[..., Any] | None = None,
+        thread_applier: Callable[..., Any] | None = None,
+        system_configurator: Callable[..., Any] | None = None,
+        static_dir_setup: Callable[..., Any] | None = None,
+        config_saver: Callable[..., Any] | None = None,
+        requirements_dumper: Callable[..., Any] | None = None,
+        device_resolver: Callable[..., Any] | None = None,
         rank: int | None = None,
     ) -> None:
         """
@@ -236,7 +237,12 @@ class RootOrchestrator:
             self.cleanup()
             raise
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> Literal[False]:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> Literal[False]:
         """
         Context Manager exit — logs duration and guarantees resource teardown.
 
@@ -285,7 +291,7 @@ class RootOrchestrator:
         )
         applied_threads = self._thread_applier(self.num_workers)
         self._system_configurator()
-        return applied_threads  # type: ignore[no-any-return]
+        return applied_threads
 
     def _phase_3_filesystem_provisioning(self) -> None:
         """

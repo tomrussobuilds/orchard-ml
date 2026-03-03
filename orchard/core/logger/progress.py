@@ -35,7 +35,13 @@ def _format_param_value(value: Any) -> str:
     return str(value)
 
 
-def _count_trial_states(study: "optuna.Study") -> tuple[list, list, list]:
+def _count_trial_states(
+    study: "optuna.Study",
+) -> tuple[
+    list[optuna.trial.FrozenTrial],
+    list[optuna.trial.FrozenTrial],
+    list[optuna.trial.FrozenTrial],
+]:
     """
     Count trials by state.
 

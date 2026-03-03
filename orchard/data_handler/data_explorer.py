@@ -11,13 +11,14 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 import matplotlib.pyplot as plt
 import torch
+from torch.utils.data import DataLoader
 from torchvision.utils import make_grid
 
 from ..core import LOGGER_NAME, LogStyle, RunPaths
-from .loader import DataLoader
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -26,7 +27,7 @@ _DEFAULT_DPI = 200
 
 # VISUALIZATION UTILITIES
 def show_sample_images(
-    loader: DataLoader,
+    loader: DataLoader[Any],
     save_path: Path,
     *,
     mean: tuple[float, ...] | None = None,
@@ -101,7 +102,7 @@ def show_sample_images(
 
 
 def show_samples_for_dataset(
-    loader: DataLoader,
+    loader: DataLoader[Any],
     dataset_name: str,
     run_paths: RunPaths,
     *,

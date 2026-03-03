@@ -90,7 +90,7 @@ class DataloaderFactoryProtocol(Protocol):
         aug_cfg: AugmentationConfig,
         num_workers: int,
         is_optuna: bool = False,
-    ) -> tuple[DataLoader, DataLoader, DataLoader]:
+    ) -> tuple[DataLoader[Any], DataLoader[Any], DataLoader[Any]]:
         """Create train/val/test dataloaders."""
         ...  # pragma: no cover
 

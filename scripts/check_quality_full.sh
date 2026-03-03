@@ -23,9 +23,9 @@ bandit -c pyproject.toml -r orchard/ -l -q
 echo "✓ Bandit passed"
 echo ""
 
-echo "🔍 MyPy (type checking)..."
-mypy orchard/
-echo "✓ MyPy passed"
+echo "🔍 MyPy --strict (type checking)..."
+mypy --strict orchard/
+echo "✓ MyPy --strict passed"
 echo ""
 
 echo "📊 Radon (complexity analysis)..."
