@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - enable mypy --strict across codebase, CI, and badge workflows
 
+### Fixed
+
+- use npt.NDArray[Any] for cross-version mypy --strict compatibility
+
 ## [0.1.9] - 2026-03-03
 
 ### Added

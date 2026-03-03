@@ -42,6 +42,7 @@
   <a href="https://mypy-lang.org/"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tomrussobuilds/7835190af6011e9051b673c8be974f8a/raw/mypy.json" alt="mypy"></a>
   <a href="https://bandit.readthedocs.io/"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tomrussobuilds/7835190af6011e9051b673c8be974f8a/raw/bandit.json" alt="Bandit"></a>
   <a href="https://radon.readthedocs.io/"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tomrussobuilds/7835190af6011e9051b673c8be974f8a/raw/radon.json" alt="Radon"></a>
+  <a href="https://github.com/tomrussobuilds/orchard-ml/actions/workflows/codeql.yml"><img src="https://github.com/tomrussobuilds/orchard-ml/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"></a>
 </td>
 </tr>
 </table>

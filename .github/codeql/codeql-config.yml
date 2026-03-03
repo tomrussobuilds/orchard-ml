@@ -1,0 +1,20 @@
+name: "Orchard ML CodeQL Configuration"
+
+# Use the default security-and-quality suite as baseline
+queries:
+  - uses: security-and-quality
+
+# Suppress false positives caused by standard Python patterns:
+#   py/ineffectual-statement  — Ellipsis (...) in Protocol method stubs (PEP 544)
+#   py/undefined-export       — PEP 562 lazy-loaded __all__ entries via __getattr__
+#   py/call/wrong-named-argument — cross-module resolution miss on create_amp_scaler(device=)
+#   py/unused-global-variable — intentional global cleanup (_lock_fd = None in finally)
+query-filters:
+  - exclude:
+      id: py/ineffectual-statement
+  - exclude:
+      id: py/undefined-export
+  - exclude:
+      id: py/call/wrong-named-argument
+  - exclude:
+      id: py/unused-global-variable

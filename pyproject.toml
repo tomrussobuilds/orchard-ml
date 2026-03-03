@@ -62,7 +62,8 @@ tracking = [
     "mlflow>=3.9.0",
 ]
 notebooks = [
-    "ipython>=9.0.0",
+    "ipython>=9.0.0; python_version >= '3.11'",
+    "ipython>=8.0.0,<9; python_version < '3.11'",
 ]
 test = [
     "pytest>=9.0.0",

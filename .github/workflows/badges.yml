@@ -101,7 +101,7 @@ jobs:
           auth: "${{ env.GIST_AUTH }}"
           gistID: "7835190af6011e9051b673c8be974f8a"
           filename: mypy.json
-          label: mypy strict
+          label: mypy
           message: "${{ steps.mypy.outputs.status }}"
           color: "${{ steps.mypy.outputs.color }}"
           namedLogo: python

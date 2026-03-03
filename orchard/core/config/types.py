@@ -57,7 +57,7 @@ Probability = Annotated[float, Field(ge=0.0, le=1.0)]
 ValidatedPath = Annotated[
     Path,
     AfterValidator(_sanitize_path),
-    PlainSerializer(lambda v: str(v), when_used="json", return_type=str),
+    PlainSerializer(str, when_used="json", return_type=str),
 ]
 
 # TRAINING

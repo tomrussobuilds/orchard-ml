@@ -247,8 +247,9 @@ archive/
 # =========================================================================== #
 #                           MISCELLANEOUS                                     #
 # =========================================================================== #
-# Lock files
+# Lock files (keep uv.lock for reproducible builds)
 *.lock
+!uv.lock
 .lock
 *.pid
 
