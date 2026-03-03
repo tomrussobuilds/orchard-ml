@@ -34,6 +34,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
 
 import numpy as np
+import numpy.typing as npt
 import torch
 import torch.nn as nn
 from sklearn.metrics import f1_score, roc_auc_score
@@ -47,7 +48,7 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 # AUC COMPUTATION (shared by trainer.engine and evaluation.metrics)
-def compute_auc(y_true: np.ndarray, y_score: np.ndarray) -> float:
+def compute_auc(y_true: npt.NDArray[Any], y_score: npt.NDArray[Any]) -> float:
     """
     Compute macro-averaged ROC-AUC with graceful fallback.
 

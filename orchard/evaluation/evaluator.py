@@ -25,6 +25,7 @@ import logging
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -48,7 +49,7 @@ def evaluate_model(
     is_texture_based: bool = False,
     aug_cfg: AugmentationConfig | None = None,
     resolution: int = 28,
-) -> tuple[np.ndarray, np.ndarray, dict[str, float], float]:
+) -> tuple[npt.NDArray[Any], npt.NDArray[Any], dict[str, float], float]:
     """
     Performs full-set evaluation and coordinates metric calculation.
 
@@ -71,8 +72,8 @@ def evaluate_model(
             - **macro_f1** -- Macro-averaged F1 score (convenience shortcut)
     """
     model.eval()
-    all_probs_list: list[np.ndarray] = []
-    all_labels_list: list[np.ndarray] = []
+    all_probs_list: list[npt.NDArray[Any]] = []
+    all_labels_list: list[npt.NDArray[Any]] = []
 
     actual_tta = use_tta and (aug_cfg is not None)
 

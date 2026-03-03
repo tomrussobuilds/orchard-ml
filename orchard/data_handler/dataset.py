@@ -18,8 +18,10 @@ Key Components:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
@@ -42,8 +44,8 @@ class VisionDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
 
     def __init__(
         self,
-        images: np.ndarray,
-        labels: np.ndarray,
+        images: npt.NDArray[Any],
+        labels: npt.NDArray[Any],
         *,
         transform: transforms.Compose | None = None,
     ) -> None:
@@ -60,13 +62,13 @@ class VisionDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
             images = np.expand_dims(images, axis=-1)
 
         self.images = images
-        self.labels: np.ndarray = labels.ravel().astype(np.int64)
+        self.labels: npt.NDArray[Any] = labels.ravel().astype(np.int64)
         self.transform = transform
 
         # Kept alive to prevent GC of mmap arrays (set by .lazy())
         self._npz_handle: np.lib.npyio.NpzFile | None = None
         # Index mapping for lazy subsampling (None = use all)
-        self._indices: np.ndarray | None = None
+        self._indices: npt.NDArray[Any] | None = None
 
     @classmethod
     def from_npz(

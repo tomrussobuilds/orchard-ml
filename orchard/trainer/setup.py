@@ -8,7 +8,10 @@ training configuration sub-model.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
+import numpy.typing as npt
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -20,7 +23,7 @@ from .losses import FocalLoss
 
 # CLASS WEIGHTS
 def compute_class_weights(
-    labels: np.ndarray, num_classes: int, device: torch.device
+    labels: npt.NDArray[Any], num_classes: int, device: torch.device
 ) -> torch.Tensor:
     """
     Compute balanced class weights (sklearn formula: N / (n_classes * count_c)).

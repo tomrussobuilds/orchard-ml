@@ -9,9 +9,11 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 import h5py
 import numpy as np
+import numpy.typing as npt
 import requests
 from PIL import Image
 
@@ -158,12 +160,19 @@ def convert_galaxy10_to_npz(
 
 
 def _create_splits(
-    images: np.ndarray,
-    labels: np.ndarray,
+    images: npt.NDArray[Any],
+    labels: npt.NDArray[Any],
     seed: int = 42,
     train_ratio: float = 0.7,
     val_ratio: float = 0.15,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[
+    npt.NDArray[Any],
+    npt.NDArray[Any],
+    npt.NDArray[Any],
+    npt.NDArray[Any],
+    npt.NDArray[Any],
+    npt.NDArray[Any],
+]:
     """
     Creates stratified train/val/test splits.
 

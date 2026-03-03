@@ -14,6 +14,7 @@ from typing import Any, Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 import torch
 import torch.nn as nn
 from matplotlib.figure import Figure
@@ -132,8 +133,8 @@ def plot_training_curves(
 
 
 def plot_confusion_matrix(
-    all_labels: np.ndarray,
-    all_preds: np.ndarray,
+    all_labels: npt.NDArray[Any],
+    all_preds: npt.NDArray[Any],
     classes: list[str],
     out_path: Path,
     ctx: PlotContext,
@@ -177,7 +178,7 @@ def plot_confusion_matrix(
 
 def _plot_single_prediction(
     ax: Any,
-    image: np.ndarray,
+    image: npt.NDArray[Any],
     label: int,
     pred: int,
     classes: list[str],
@@ -235,7 +236,7 @@ def _build_suptitle(ctx: PlotContext) -> str:
 
 def _get_predictions_batch(
     model: nn.Module, loader: DataLoader[Any], device: torch.device, n: int
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any]]:
     """
     Extract a sample batch and run model inference.
 
@@ -261,7 +262,7 @@ def _get_predictions_batch(
 
 def _setup_prediction_grid(
     num_samples: int, cols: int, ctx: PlotContext | None
-) -> tuple[Figure, np.ndarray]:
+) -> tuple[Figure, npt.NDArray[Any]]:
     """
     Calculate grid dimensions and initialize matplotlib subplots.
 
@@ -308,7 +309,7 @@ def _finalize_figure(plt_obj: Any, save_path: Path | None, ctx: PlotContext | No
     plt_obj.close()
 
 
-def _denormalize_image(img: np.ndarray, ctx: PlotContext) -> np.ndarray:
+def _denormalize_image(img: npt.NDArray[Any], ctx: PlotContext) -> npt.NDArray[Any]:
     """
     Reverse channel-wise normalization using dataset-specific statistics.
 
@@ -322,10 +323,11 @@ def _denormalize_image(img: np.ndarray, ctx: PlotContext) -> np.ndarray:
     mean = np.array(ctx.mean).reshape(-1, 1, 1)
     std = np.array(ctx.std).reshape(-1, 1, 1)
     img = (img * std) + mean
-    return np.clip(img, 0, 1)  # type: ignore[no-any-return]
+    result: npt.NDArray[Any] = np.clip(img, 0, 1)
+    return result
 
 
-def _prepare_for_plt(img: np.ndarray) -> np.ndarray:
+def _prepare_for_plt(img: npt.NDArray[Any]) -> npt.NDArray[Any]:
     """
     Convert a deep-learning tensor layout to matplotlib-compatible format.
 

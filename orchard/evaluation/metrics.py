@@ -7,7 +7,10 @@ metrics from model outputs. Isolates statistical logic from inference loops.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
+import numpy.typing as npt
 from sklearn.metrics import f1_score
 
 from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1
@@ -16,7 +19,7 @@ from ..trainer.engine import compute_auc as compute_auc  # re-exported via evalu
 
 # METRIC LOGIC
 def compute_classification_metrics(
-    labels: np.ndarray, preds: np.ndarray, probs: np.ndarray
+    labels: npt.NDArray[Any], preds: npt.NDArray[Any], probs: npt.NDArray[Any]
 ) -> dict[str, float]:
     """
     Computes accuracy, macro-averaged F1, and macro-averaged ROC-AUC.

@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 from ...core.metadata import DatasetMetadata
 from ...core.paths import LOGGER_NAME
@@ -21,11 +23,11 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 def _create_stratified_split(
-    images: np.ndarray,
-    labels: np.ndarray,
+    images: npt.NDArray[Any],
+    labels: npt.NDArray[Any],
     val_ratio: float = 0.15,
     seed: int = 42,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any]]:
     """
     Splits training data into train and validation sets using stratified sampling.
 
