@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 import yaml
 
@@ -123,6 +123,69 @@ def load_config_from_yaml(yaml_path: Path) -> dict[str, Any]:
 
     with open(yaml_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)  # type: ignore[no-any-return]
+
+
+class AuditSaverProtocol(Protocol):
+    """
+    Protocol for run-manifest persistence (config YAML + dependency snapshot).
+
+    Enables dependency injection of auditability operations in
+    ``RootOrchestrator``, keeping the constructor signature lean while
+    allowing full mocking in tests.
+    """
+
+    def save_config(self, data: Any, yaml_path: Path) -> Path:
+        """
+        Persist configuration to a YAML file.
+
+        Args:
+            data: Configuration object to serialize.
+            yaml_path: Destination filesystem path.
+
+        Returns:
+            Confirmed path where the YAML was written.
+        """
+        ...  # pragma: no cover
+
+    def dump_requirements(self, output_path: Path) -> None:
+        """
+        Freeze installed packages for reproducibility.
+
+        Args:
+            output_path: Filesystem path for the requirements snapshot.
+        """
+        ...  # pragma: no cover
+
+
+class AuditSaver:
+    """
+    Default ``AuditSaverProtocol`` implementation.
+
+    Delegates to the module-level ``save_config_as_yaml`` and
+    ``dump_requirements`` functions — no logic duplication.
+    """
+
+    def save_config(self, data: Any, yaml_path: Path) -> Path:
+        """
+        Persist configuration to a YAML file.
+
+        Args:
+            data: Configuration object to serialize.
+            yaml_path: Destination filesystem path.
+
+        Returns:
+            Confirmed path where the YAML was written.
+        """
+        return save_config_as_yaml(data, yaml_path)
+
+    def dump_requirements(self, output_path: Path) -> None:
+        """
+        Freeze installed packages for reproducibility.
+
+        Args:
+            output_path: Filesystem path for the requirements snapshot.
+        """
+        dump_requirements(output_path)
 
 
 def _sanitize_for_yaml(obj: Any) -> Any:

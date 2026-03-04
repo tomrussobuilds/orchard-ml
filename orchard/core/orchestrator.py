@@ -21,6 +21,7 @@ Related Protocols (defined in their respective modules):
 - ``InfraManagerProtocol``: ``config/infrastructure_config.py``
 - ``ReporterProtocol``: ``logger/reporter.py``
 - ``TimeTrackerProtocol``: ``environment/timing.py``
+- ``AuditSaverProtocol``: ``io/serialization.py``
 
 Example:
     >>> from orchard.core import Config, RootOrchestrator
@@ -50,7 +51,8 @@ from .environment import (
     to_device_obj,
 )
 from .environment.timing import TimeTracker, TimeTrackerProtocol
-from .io import dump_requirements, save_config_as_yaml
+from .io import AuditSaver
+from .io.serialization import AuditSaverProtocol
 from .logger import Logger, Reporter
 from .logger.reporter import ReporterProtocol
 from .paths import LOGGER_NAME, LogStyle, RunPaths, setup_static_directories
@@ -139,7 +141,7 @@ class RootOrchestrator:
     - thread_applier: CPU thread configuration
     - system_configurator: System library setup (matplotlib, etc)
     - static_dir_setup: Static directory creation
-    - config_saver: YAML persistence function
+    - audit_saver: Config YAML + requirements snapshot persistence
     - device_resolver: Hardware device detection
 
     Attributes:
@@ -179,13 +181,12 @@ class RootOrchestrator:
         infra_manager: InfraManagerProtocol | None = None,
         reporter: ReporterProtocol | None = None,
         time_tracker: TimeTrackerProtocol | None = None,
+        audit_saver: AuditSaverProtocol | None = None,
         log_initializer: Callable[..., Any] | None = None,
         seed_setter: Callable[..., Any] | None = None,
         thread_applier: Callable[..., Any] | None = None,
         system_configurator: Callable[..., Any] | None = None,
         static_dir_setup: Callable[..., Any] | None = None,
-        config_saver: Callable[..., Any] | None = None,
-        requirements_dumper: Callable[..., Any] | None = None,
         device_resolver: Callable[..., Any] | None = None,
         rank: int | None = None,
         local_rank: int | None = None,
@@ -198,13 +199,13 @@ class RootOrchestrator:
             infra_manager: Infrastructure management handler (default: InfrastructureManager())
             reporter: Environment reporting engine (default: Reporter())
             time_tracker: Pipeline duration tracker (default: TimeTracker())
+            audit_saver: Run-manifest persistence — config YAML + dependency
+                snapshot (default: AuditSaver())
             log_initializer: Logging setup function (default: Logger.setup)
             seed_setter: RNG seeding function (default: set_seed)
             thread_applier: CPU thread configuration (default: apply_cpu_threads)
             system_configurator: System library setup (default: configure_system_libraries)
             static_dir_setup: Static directory creation (default: setup_static_directories)
-            config_saver: Config persistence (default: save_config_as_yaml)
-            requirements_dumper: Dependency snapshot (default: dump_requirements)
             device_resolver: Device resolution (default: to_device_obj)
             rank: Global rank of this process (default: auto-detected from RANK env var).
                 Rank 0 executes all phases; rank N skips filesystem, logging,
@@ -222,6 +223,7 @@ class RootOrchestrator:
         self.infra = _resolve(infra_manager, InfrastructureManager)
         self.reporter = _resolve(reporter, Reporter)
         self.time_tracker = _resolve(time_tracker, TimeTracker)
+        self._audit_saver = _resolve(audit_saver, AuditSaver)
         self._log_initializer = _resolve_callable(log_initializer, Logger.setup)
         self._seed_setter = _resolve_callable(seed_setter, set_seed)
         self._thread_applier = _resolve_callable(thread_applier, apply_cpu_threads)
@@ -229,8 +231,6 @@ class RootOrchestrator:
             system_configurator, configure_system_libraries
         )
         self._static_dir_setup = _resolve_callable(static_dir_setup, setup_static_directories)
-        self._config_saver = _resolve_callable(config_saver, save_config_as_yaml)
-        self._requirements_dumper = _resolve_callable(requirements_dumper, dump_requirements)
         self._device_resolver = _resolve_callable(device_resolver, to_device_obj)
 
         # Lazy initialization
@@ -375,8 +375,8 @@ class RootOrchestrator:
         assert (
             self.paths is not None
         ), "Paths must be initialized before config persistence"  # nosec B101
-        self._config_saver(data=self.cfg, yaml_path=self.paths.get_config_path())
-        self._requirements_dumper(self.paths.reports / "requirements.txt")
+        self._audit_saver.save_config(data=self.cfg, yaml_path=self.paths.get_config_path())
+        self._audit_saver.dump_requirements(self.paths.reports / "requirements.txt")
 
     def _phase_6_infrastructure_guarding(self) -> None:
         """

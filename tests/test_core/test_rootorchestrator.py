@@ -410,16 +410,15 @@ def test_phase_4_logging_initialization_sets_logger():
 @pytest.mark.unit
 def test_phase_5_run_manifest_saves_config(tmp_path):
     mock_cfg = MagicMock()
-    mock_saver = MagicMock()
-    mock_dumper = MagicMock()
-    orch = RootOrchestrator(cfg=mock_cfg, config_saver=mock_saver, requirements_dumper=mock_dumper)
+    mock_audit = MagicMock()
+    orch = RootOrchestrator(cfg=mock_cfg, audit_saver=mock_audit)
     orch.paths = MagicMock()
     orch.paths.get_config_path = MagicMock(return_value="/mock/config.yaml")
     orch.paths.reports = tmp_path
 
     orch._phase_5_run_manifest()
-    mock_saver.assert_called_once_with(data=mock_cfg, yaml_path="/mock/config.yaml")
-    mock_dumper.assert_called_once_with(tmp_path / "requirements.txt")
+    mock_audit.save_config.assert_called_once_with(data=mock_cfg, yaml_path="/mock/config.yaml")
+    mock_audit.dump_requirements.assert_called_once_with(tmp_path / "requirements.txt")
 
 
 @pytest.mark.unit
@@ -466,8 +465,7 @@ def test_device_resolver_fails_raises_device_error_during_init():
             system_configurator=MagicMock(),
             static_dir_setup=MagicMock(),
             log_initializer=MagicMock(return_value=MagicMock()),
-            config_saver=MagicMock(),
-            requirements_dumper=MagicMock(),
+            audit_saver=MagicMock(),
             infra_manager=MagicMock(),
         )
 
@@ -688,7 +686,7 @@ def test_full_lifecycle_with_all_phases(tmp_path):
             thread_applier=mock_thread_applier,
             system_configurator=mock_system_configurator,
             static_dir_setup=mock_static_setup,
-            config_saver=MagicMock(),
+            audit_saver=MagicMock(),
             device_resolver=mock_device_resolver,
         )
 
@@ -757,7 +755,7 @@ def test_initialize_core_services_idempotent_returns_cached_paths(tmp_path):
     mock_infra = MagicMock()
     mock_reporter = MagicMock()
     mock_log_initializer = MagicMock(return_value=MagicMock())
-    mock_config_saver = MagicMock()
+    mock_audit_saver = MagicMock()
 
     with pytest.MonkeyPatch.context() as m:
         m.setattr("orchard.core.orchestrator.RunPaths.create", lambda **kwargs: mock_paths)
@@ -771,7 +769,7 @@ def test_initialize_core_services_idempotent_returns_cached_paths(tmp_path):
             thread_applier=mock_thread_applier,
             system_configurator=MagicMock(),
             static_dir_setup=MagicMock(),
-            config_saver=mock_config_saver,
+            audit_saver=mock_audit_saver,
             device_resolver=MagicMock(return_value=torch.device("cpu")),
         )
 
@@ -784,7 +782,7 @@ def test_initialize_core_services_idempotent_returns_cached_paths(tmp_path):
         mock_infra.reset_mock()
         mock_reporter.reset_mock()
         mock_log_initializer.reset_mock()
-        mock_config_saver.reset_mock()
+        mock_audit_saver.reset_mock()
 
         # Second call: should return cached paths
         paths2 = orch.initialize_core_services()
@@ -798,7 +796,7 @@ def test_initialize_core_services_idempotent_returns_cached_paths(tmp_path):
         mock_infra.prepare_environment.assert_not_called()
         mock_reporter.log_initial_status.assert_not_called()
         mock_log_initializer.assert_not_called()
-        mock_config_saver.assert_not_called()
+        mock_audit_saver.save_config.assert_not_called()
 
 
 @pytest.mark.unit
@@ -892,7 +890,7 @@ def test_rank_zero_executes_all_phases(tmp_path):
     mock_infra = MagicMock()
     mock_reporter = MagicMock()
     mock_log_initializer = MagicMock(return_value=MagicMock())
-    mock_config_saver = MagicMock()
+    mock_audit_saver = MagicMock()
 
     with pytest.MonkeyPatch.context() as m:
         m.setattr("orchard.core.orchestrator.RunPaths.create", lambda **kwargs: mock_paths)
@@ -906,7 +904,7 @@ def test_rank_zero_executes_all_phases(tmp_path):
             thread_applier=mock_thread_applier,
             system_configurator=MagicMock(),
             static_dir_setup=MagicMock(),
-            config_saver=mock_config_saver,
+            audit_saver=mock_audit_saver,
             device_resolver=MagicMock(return_value=torch.device("cpu")),
             rank=0,
         )
@@ -918,7 +916,7 @@ def test_rank_zero_executes_all_phases(tmp_path):
     mock_seed_setter.assert_called_once()
     mock_thread_applier.assert_called_once()
     mock_log_initializer.assert_called_once()
-    mock_config_saver.assert_called_once()
+    mock_audit_saver.save_config.assert_called_once()
     mock_infra.prepare_environment.assert_called_once()
     mock_reporter.log_initial_status.assert_called_once()
     assert paths is mock_paths
@@ -938,19 +936,19 @@ def test_non_main_rank_skips_phases_3_through_7():
     mock_infra = MagicMock()
     mock_reporter = MagicMock()
     mock_log_initializer = MagicMock()
-    mock_config_saver = MagicMock()
+    mock_audit_saver = MagicMock()
     mock_static_dir_setup = MagicMock()
 
     orch = RootOrchestrator(
         cfg=mock_cfg,
         infra_manager=mock_infra,
         reporter=mock_reporter,
+        audit_saver=mock_audit_saver,
         log_initializer=mock_log_initializer,
         seed_setter=mock_seed_setter,
         thread_applier=mock_thread_applier,
         system_configurator=MagicMock(),
         static_dir_setup=mock_static_dir_setup,
-        config_saver=mock_config_saver,
         device_resolver=MagicMock(return_value=torch.device("cpu")),
         rank=1,
     )
@@ -964,7 +962,7 @@ def test_non_main_rank_skips_phases_3_through_7():
     # Phases 3-6 skipped
     mock_static_dir_setup.assert_not_called()
     mock_log_initializer.assert_not_called()
-    mock_config_saver.assert_not_called()
+    mock_audit_saver.save_config.assert_not_called()
     mock_infra.prepare_environment.assert_not_called()
     mock_reporter.log_initial_status.assert_not_called()
 
@@ -1165,8 +1163,7 @@ def test_applied_threads_stored_from_phase_2(tmp_path):
             thread_applier=mock_thread_applier,
             system_configurator=MagicMock(),
             static_dir_setup=MagicMock(),
-            config_saver=MagicMock(),
-            requirements_dumper=MagicMock(),
+            audit_saver=MagicMock(),
             log_initializer=MagicMock(return_value=MagicMock()),
             infra_manager=MagicMock(),
             device_resolver=MagicMock(return_value=torch.device("cpu")),
@@ -1259,22 +1256,21 @@ def test_initialized_flag_set_after_init():
 
 
 @pytest.mark.unit
-def test_phase_5_config_saver_receives_data_and_path():
-    """Test _phase_5 passes data= and yaml_path= to config_saver."""
+def test_phase_5_audit_saver_receives_data_and_path():
+    """Test _phase_5 passes data= and yaml_path= to audit_saver."""
     mock_cfg = MagicMock()
-    mock_saver = MagicMock()
-    mock_dumper = MagicMock()
+    mock_audit = MagicMock()
     mock_paths = MagicMock()
     mock_paths.get_config_path.return_value = "/mock/config.yaml"
     mock_paths.reports = MagicMock()
 
-    orch = RootOrchestrator(cfg=mock_cfg, config_saver=mock_saver, requirements_dumper=mock_dumper)
+    orch = RootOrchestrator(cfg=mock_cfg, audit_saver=mock_audit)
     orch.paths = mock_paths
 
     orch._phase_5_run_manifest()
 
-    mock_saver.assert_called_once_with(data=mock_cfg, yaml_path="/mock/config.yaml")
-    mock_dumper.assert_called_once_with(mock_paths.reports / "requirements.txt")
+    mock_audit.save_config.assert_called_once_with(data=mock_cfg, yaml_path="/mock/config.yaml")
+    mock_audit.dump_requirements.assert_called_once_with(mock_paths.reports / "requirements.txt")
 
 
 # GUARD: log_environment_report no-op when not initialized

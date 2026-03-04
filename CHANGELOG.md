@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - enable mypy --strict across codebase, CI, and badge workflows
 - add CodeQL SAST workflow, uv.lock for reproducible builds
 - generate annotated YAML recipes with inline field documentation
+- add strict warn_only mode, MPS determinism warning, and DDP-ready local_rank
 
 ### Changed
 

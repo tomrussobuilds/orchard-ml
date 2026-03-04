@@ -275,5 +275,35 @@ def test_dump_requirements_handles_subprocess_failure(tmp_path):
     assert not output.exists()
 
 
+# AUDIT SAVER
+@pytest.mark.unit
+def test_audit_saver_delegates_to_free_functions(tmp_path):
+    """Test AuditSaver.save_config delegates to save_config_as_yaml."""
+    from orchard.core.io.serialization import AuditSaver
+
+    saver = AuditSaver()
+    yaml_path = tmp_path / "config.yaml"
+    data = {"key": "value"}
+
+    result = saver.save_config(data=data, yaml_path=yaml_path)
+
+    assert result == yaml_path
+    assert yaml_path.exists()
+    assert yaml.safe_load(yaml_path.read_text()) == {"key": "value"}
+
+
+@pytest.mark.unit
+def test_audit_saver_dump_requirements_delegates(tmp_path):
+    """Test AuditSaver.dump_requirements delegates to dump_requirements."""
+    from orchard.core.io.serialization import AuditSaver
+
+    saver = AuditSaver()
+    output = tmp_path / "requirements.txt"
+
+    with patch("orchard.core.io.serialization.dump_requirements") as mock_dump:
+        saver.dump_requirements(output)
+        mock_dump.assert_called_once_with(output)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
