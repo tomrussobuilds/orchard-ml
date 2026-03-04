@@ -20,6 +20,7 @@ from .exceptions import (
     OrchardDeviceError,
     OrchardError,
     OrchardExportError,
+    OrchardInfrastructureError,
 )
 from .pipeline import run_export_phase, run_optimization_phase, run_training_phase
 from .tracking import create_tracker
@@ -47,4 +48,5 @@ __all__ = [
     "OrchardDatasetError",
     "OrchardDeviceError",
     "OrchardExportError",
+    "OrchardInfrastructureError",
 ]

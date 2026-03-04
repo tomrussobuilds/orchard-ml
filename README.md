@@ -69,7 +69,7 @@
 
 **Key Differentiators:**
 - **Type-Safe Configuration Engine**: `Pydantic V2`-based declarative manifests eliminate runtime errors
-- **Idempotent Lifecycle Orchestration**: `RootOrchestrator` coordinates a 7-phase initialization sequence (seeding, filesystem, logging, infrastructure locks, telemetry) via Context Manager with full dependency injection
+- **Idempotent Lifecycle Orchestration**: `RootOrchestrator` coordinates a 7-phase initialization sequence (seeding, runtime config, filesystem, logging, config persistence, infrastructure locks, environment reporting) via Context Manager with full dependency injection
 - **Zero-Conflict Execution**: Kernel-level file locking (`fcntl`) prevents concurrent runs from corrupting shared resources
 - **Intelligent Hyperparameter Search**: `Optuna` integration with TPE sampling and Median Pruning
 - **Hardware-Agnostic**: Auto-detection and optimization for `CPU`/`CUDA`/`MPS` backends

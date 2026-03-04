@@ -8,7 +8,7 @@ resource cleanup, ensuring deterministic and reproducible ML experiments.
 Architecture:
 
 - Dependency Injection: All external dependencies are injectable for testability
-- 7-Phase Initialization: Sequential setup from seeding to environment reporting
+- 7-Phase Initialization: Phases 1-6 at construction, phase 7 deferred to CLI
 - Context Manager: Automatic resource acquisition and cleanup
 - Protocol-Based: type-safe abstractions for mockability
 
@@ -39,7 +39,7 @@ from typing import TYPE_CHECKING, Any, Callable, Literal, TypeVar
 
 import torch
 
-from ..exceptions import OrchardDeviceError
+from ..exceptions import OrchardDeviceError, OrchardInfrastructureError
 from .config.infrastructure_config import InfraManagerProtocol, InfrastructureManager
 from .environment import (
     apply_cpu_threads,
@@ -83,6 +83,26 @@ def _resolve(value: T | None, default_factory: Callable[[], T]) -> T:
     return value if value is not None else default_factory()
 
 
+def _resolve_callable(
+    value: Callable[..., Any] | None, default: Callable[..., Any]
+) -> Callable[..., Any]:
+    """
+    Resolve optional callable dependency with a direct default.
+
+    Unlike ``_resolve`` (which invokes a factory), this returns the default
+    as-is — appropriate for injectable functions that need no construction
+    (e.g., ``set_seed``, ``Logger.setup``).
+
+    Args:
+        value: Caller-supplied callable, or None to use the default.
+        default: The production-default callable to use when value is None.
+
+    Returns:
+        The resolved callable — either the provided value or the default.
+    """
+    return value if value is not None else default
+
+
 # ROOT ORCHESTRATOR
 class RootOrchestrator:
     """
@@ -90,7 +110,8 @@ class RootOrchestrator:
 
     Orchestrates the complete initialization sequence from configuration validation
     through resource provisioning to execution readiness. Implements a 7-phase
-    initialization protocol with dependency injection for maximum testability.
+    initialization protocol (phases 1-6 eager, phase 7 deferred) with
+    dependency injection for maximum testability.
 
     The orchestrator follows the Single Responsibility Principle by delegating
     specialized tasks to injected dependencies while maintaining overall coordination.
@@ -187,20 +208,22 @@ class RootOrchestrator:
         """
         self.cfg = cfg
 
-        # Dependency injection with defaults (using _resolve for uniform None-handling)
+        # Dependency injection: _resolve for objects, _resolve_callable for functions
         self.rank = _resolve(rank, get_rank)
         self.is_main_process = self.rank == 0
         self.infra = _resolve(infra_manager, InfrastructureManager)
         self.reporter = _resolve(reporter, Reporter)
         self.time_tracker = _resolve(time_tracker, TimeTracker)
-        self._log_initializer = log_initializer or Logger.setup
-        self._seed_setter = seed_setter or set_seed
-        self._thread_applier = thread_applier or apply_cpu_threads
-        self._system_configurator = system_configurator or configure_system_libraries
-        self._static_dir_setup = static_dir_setup or setup_static_directories
-        self._config_saver = config_saver or save_config_as_yaml
-        self._requirements_dumper = requirements_dumper or dump_requirements
-        self._device_resolver = device_resolver or to_device_obj
+        self._log_initializer = _resolve_callable(log_initializer, Logger.setup)
+        self._seed_setter = _resolve_callable(seed_setter, set_seed)
+        self._thread_applier = _resolve_callable(thread_applier, apply_cpu_threads)
+        self._system_configurator = _resolve_callable(
+            system_configurator, configure_system_libraries
+        )
+        self._static_dir_setup = _resolve_callable(static_dir_setup, setup_static_directories)
+        self._config_saver = _resolve_callable(config_saver, save_config_as_yaml)
+        self._requirements_dumper = _resolve_callable(requirements_dumper, dump_requirements)
+        self._device_resolver = _resolve_callable(device_resolver, to_device_obj)
 
         # Lazy initialization
         self._initialized: bool = False
@@ -217,26 +240,28 @@ class RootOrchestrator:
 
     def __enter__(self) -> "RootOrchestrator":
         """
-        Context Manager entry — triggers the 7-phase initialization sequence.
+        Context Manager entry — triggers the initialization sequence.
 
         Starts the pipeline timer and delegates to initialize_core_services()
-        for deterministic seeding, filesystem provisioning, logging setup,
-        config persistence, infrastructure locking, and environment reporting.
+        for phases 1-6 (seeding, runtime config, filesystem, logging,
+        config persistence, infrastructure locking, and device resolution).
+        Phase 7 (environment reporting) is deferred to log_environment_report().
 
-        If any phase raises, cleanup() is called before re-raising to ensure
-        partial resources (locks, file handles) are released even on failure.
+        If any phase raises (including KeyboardInterrupt / SystemExit),
+        cleanup() is called before re-raising to ensure partial resources
+        (locks, file handles) are released even on failure.
 
         Returns:
             Fully initialized RootOrchestrator ready for pipeline execution.
 
         Raises:
-            Exception: Re-raises any initialization error after cleanup.
+            BaseException: Re-raises any initialization error after cleanup.
         """
         try:
             self.time_tracker.start()
             self.initialize_core_services()
             return self
-        except Exception:
+        except BaseException:
             self.cleanup()
             raise
 
@@ -247,20 +272,22 @@ class RootOrchestrator:
         exc_tb: TracebackType | None,
     ) -> Literal[False]:
         """
-        Context Manager exit — logs duration and guarantees resource teardown.
+        Context Manager exit — stops timer and guarantees resource teardown.
 
         Invoked automatically when leaving the ``with`` block, whether the
         pipeline completed normally or raised an exception. Stops the timer,
-        emits the total pipeline duration to the active logger, then delegates
-        to cleanup() for infrastructure lock release and logging handler closure.
+        then delegates to cleanup() for infrastructure lock release and
+        logging handler closure.
 
-        Returns False so that any exception propagates to the caller unchanged;
-        The CLI's top-level handler is responsible for user-facing error reporting.
+        Error reporting is intentionally left to the caller (CLI layer),
+        which has the user-facing context to log appropriate messages.
+
+        Returns False so that any exception propagates to the caller unchanged.
 
         Args:
-            exc_type (type[BaseException] | None): Exception class if the block raised, else None.
-            exc_val (BaseException | None): Exception instance if the block raised, else None.
-            exc_tb (TracebackType | None): Traceback object if the block raised, else None.
+            exc_type: Exception class if the block raised, else None.
+            exc_val: Exception instance if the block raised, else None.
+            exc_tb: Traceback object if the block raised, else None.
 
         Returns:
             Always False — exceptions are never suppressed.
@@ -292,7 +319,7 @@ class RootOrchestrator:
         logger.debug(  # pragma: no mutant
             "Phase 2: Configuring runtime (workers=%d)", self.num_workers
         )
-        applied_threads = self._thread_applier(self.num_workers)
+        applied_threads: int = self._thread_applier(self.num_workers)
         self._system_configurator()
         return applied_threads
 
@@ -342,45 +369,32 @@ class RootOrchestrator:
         """
         Secures system-level resource locks via InfrastructureManager.
 
-        Prevents concurrent execution conflicts and manages cleanup.
+        Prevents concurrent execution conflicts. Failure is fatal —
+        running without a lock risks data corruption from concurrent runs.
         """
         logger.debug("Phase 6: Acquiring infrastructure locks")  # pragma: no mutant
-        phase_logger = self.run_logger or logging.getLogger(LOGGER_NAME)
-        if self.infra is not None:
-            try:
-                self.infra.prepare_environment(self.cfg, logger=phase_logger)
-                self._infra_lock_acquired = True
-            except (OSError, RuntimeError) as e:
-                phase_logger.error(
-                    "%s Infra guard failed (no single-instance lock): %s",
-                    LogStyle.FAILURE,
-                    e,
-                )
+        try:
+            phase_logger = self.run_logger or logging.getLogger(LOGGER_NAME)
+            self.infra.prepare_environment(self.cfg, logger=phase_logger)
+            self._infra_lock_acquired = True
+        except (OSError, RuntimeError) as e:
+            raise OrchardInfrastructureError(
+                f"{LogStyle.FAILURE} Failed to acquire infrastructure lock: {e}"
+            ) from e
 
     def _phase_7_environment_report(self, applied_threads: int) -> None:
         """
         Emits baseline environment report to active logging streams.
 
         Summarizes hardware, dataset metadata, and execution policies.
+        Device must already be resolved (cached during initialization).
         """
         logger.debug("Phase 7: Generating environment report")  # pragma: no mutant
         assert self.paths is not None, "Paths must be initialized before reporting"  # nosec B101
+        assert (
+            self._device_cache is not None
+        ), "Device must be resolved before environment report"  # nosec B101
         phase_logger = self.run_logger or logging.getLogger(LOGGER_NAME)
-
-        if self._device_cache is None:
-            try:
-                self._device_cache = self.get_device()
-            except RuntimeError as e:
-                # resolve_device in HardwareConfig already handles GPU-unavailable
-                # at config-time. If we reach here with device="cuda" in config,
-                # CUDA was available then — a runtime failure (e.g. driver crash)
-                # is unrecoverable. Silently falling back to CPU would waste hours
-                # of compute with GPU-tuned hyperparameters (batch size, mixed
-                # precision, etc.). Fail fast so the user can fix the environment.
-                raise OrchardDeviceError(
-                    f"{LogStyle.FAILURE} Device resolution failed at runtime "
-                    f"(config requested '{self.cfg.hardware.device}'): {e}"
-                ) from e
 
         self.reporter.log_initial_status(
             logger_instance=phase_logger,
@@ -424,13 +438,14 @@ class RootOrchestrator:
         """
         Executes linear sequence of environment initialization phases.
 
-        Synchronizes global state through 7 phases, progressing from
-        deterministic seeding to full environment reporting.
+        Synchronizes global state through phases 1-6, progressing from
+        deterministic seeding to device resolution. Phase 7 (environment
+        reporting) is deferred to log_environment_report().
 
         In distributed mode (torchrun / DDP), only the main process (rank 0)
-        executes phases 3-7 (filesystem, logging, config persistence, infra
-        locking, reporting).  All ranks execute phases 1-2 (seeding, threads)
-        to ensure identical RNG state and thread affinity.
+        executes phases 3-6 plus device resolution (filesystem, logging,
+        config persistence, infra locking).  All ranks execute phases 1-2
+        (seeding, threads) to ensure identical RNG state and thread affinity.
 
         Idempotent: guarded by ``_initialized`` flag. If already initialized,
         returns existing RunPaths without re-executing any phase. This prevents
@@ -463,13 +478,27 @@ class RootOrchestrator:
 
             self._phase_5_run_manifest()
             self._phase_6_infrastructure_guarding()
-            self._applied_threads = applied_threads
+
+            try:
+                self._device_cache = self.get_device()
+            except RuntimeError as e:
+                # resolve_device in HardwareConfig already handles GPU-unavailable
+                # at config-time. If we reach here with device="cuda" in config,
+                # CUDA was available then — a runtime failure (e.g. driver crash)
+                # is unrecoverable. Silently falling back to CPU would waste hours
+                # of compute with GPU-tuned hyperparameters (batch size, mixed
+                # precision, etc.). Fail fast so the user can fix the environment.
+                raise OrchardDeviceError(
+                    f"{LogStyle.FAILURE} Device resolution failed at runtime "
+                    f"(config requested '{self.cfg.hardware.device}'): {e}"
+                ) from e
+
         else:
-            self._applied_threads = applied_threads
             logger.debug(  # pragma: no mutant
-                "Rank %d: skipping phases 3-7 (non-main process).", self.rank
+                "Rank %d: skipping phases 3-6 (non-main process).", self.rank
             )
 
+        self._applied_threads = applied_threads
         self._initialized = True
         return self.paths
 
@@ -477,9 +506,9 @@ class RootOrchestrator:
         """
         Emit the environment initialization report (phase 7).
 
-        Designed to be called explicitly by the CLI after external services
-        (e.g. MLflow tracker) have been started, so that all enter/exit log
-        messages appear in the correct chronological order.
+        Designed to be called explicitly by the CLI app after external
+        services (e.g. MLflow tracker) have been started, so that all
+        enter/exit log messages appear in the correct chronological order.
         """
         if self._initialized and self.is_main_process:
             self._phase_7_environment_report(self._applied_threads)
@@ -494,12 +523,14 @@ class RootOrchestrator:
         or opened file-based log handlers).
         """
         if not self.is_main_process:
+            self._cleaned_up = True
             return
 
         cleanup_logger = self.run_logger or logging.getLogger(LOGGER_NAME)
         try:
-            if self.infra is not None:
+            if self._infra_lock_acquired:
                 self.infra.release_resources(self.cfg, logger=cleanup_logger)
+                self._infra_lock_acquired = False
         except (OSError, RuntimeError) as e:
             cleanup_logger.error("Failed to release system lock: %s", e)
 

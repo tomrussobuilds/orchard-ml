@@ -202,6 +202,9 @@ tracking:
 export:
   format: onnx
   opset_version: 18
-  quantize: true
+  # INT8 quantization is not recommended for small models like MiniCNN:
+  # few parameters make each weight more sensitive to precision loss,
+  # causing validation to fail (typical diff ~3e-2 vs 1e-3 threshold).
+  quantize: false
   validate_export: true
   benchmark: true

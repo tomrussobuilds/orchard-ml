@@ -5,7 +5,8 @@ OrchardError (base, Exception)
 ├── OrchardConfigError(OrchardError, ValueError)     ← config validation
 ├── OrchardDatasetError(OrchardError)                ← data I/O and fetching
 ├── OrchardDeviceError(OrchardError, RuntimeError)   ← runtime device failure
-└── OrchardExportError(OrchardError)                 ← model export failures
+├── OrchardExportError(OrchardError)                 ← model export failures
+└── OrchardInfrastructureError(OrchardError)         ← OS-level resource locks
 
 OrchardConfigError multi-inherits from ValueError to preserve
 backward compatibility with existing ``except ValueError`` blocks.
@@ -30,3 +31,7 @@ class OrchardDeviceError(OrchardError, RuntimeError):
 
 class OrchardExportError(OrchardError):
     """Model export (ONNX) or checkpoint loading error."""
+
+
+class OrchardInfrastructureError(OrchardError):
+    """OS-level resource lock acquisition or release failure."""

@@ -1,6 +1,6 @@
 """
 Tests suite for RootOrchestrator and TimeTracker.
-Tests all 7 phases, __enter__, __exit__, and edge cases.
+Tests all phases, __enter__, __exit__, and edge cases.
 Achieves high coverage through dependency injection and mocking.
 """
 
@@ -299,6 +299,7 @@ def test_cleanup_release_resources_fails_no_logger(caplog):
 
     orch = RootOrchestrator(cfg=mock_cfg)
     orch.infra = mock_infra
+    orch._infra_lock_acquired = True
     orch.run_logger = None
 
     # Enable propagate for caplog to capture fallback logger
@@ -407,9 +408,9 @@ def test_phase_5_run_manifest_saves_config(tmp_path):
 
 
 @pytest.mark.unit
-def test_phase_6_infra_prepare_logs_error_no_logger(caplog):
-    """Test _phase_6_infrastructure_guarding logs error to logging if no logger."""
-    import logging
+def test_phase_6_infra_prepare_raises_on_failure_no_logger():
+    """Test _phase_6_infrastructure_guarding raises OrchardInfrastructureError on failure."""
+    from orchard.exceptions import OrchardInfrastructureError
 
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -419,37 +420,43 @@ def test_phase_6_infra_prepare_logs_error_no_logger(caplog):
     orch.infra = mock_infra
     orch.run_logger = None
 
-    # Enable propagate for caplog to capture fallback logger
-    fallback_logger = logging.getLogger("OrchardML")
-    fallback_logger.propagate = True
-
-    with caplog.at_level(logging.ERROR, logger="OrchardML"):
+    with pytest.raises(OrchardInfrastructureError, match="fail"):
         orch._phase_6_infrastructure_guarding()
 
-    assert any("fail" in rec.message for rec in caplog.records)
     assert orch._infra_lock_acquired is False
 
 
 @pytest.mark.unit
-def test_phase_7_device_resolver_fails_raises_device_error():
-    """Test _phase_7_environment_report raises OrchardDeviceError if device resolver fails."""
+def test_device_resolver_fails_raises_device_error_during_init():
+    """Test initialize_core_services raises OrchardDeviceError if device resolver fails."""
     from orchard.exceptions import OrchardDeviceError
 
     mock_cfg = MagicMock()
     mock_cfg.hardware.effective_num_workers = 2
     mock_cfg.hardware.device = "cuda"
-    mock_reporter = MagicMock()
+    mock_paths = MagicMock()
 
     def failing_resolver(device_str):
         raise RuntimeError("device fail")
 
-    orch = RootOrchestrator(cfg=mock_cfg, reporter=mock_reporter, device_resolver=failing_resolver)
-    orch._device_cache = None
-    orch.run_logger = None
-    orch.paths = MagicMock()
+    with pytest.MonkeyPatch.context() as m:
+        m.setattr("orchard.core.orchestrator.RunPaths.create", lambda **kw: mock_paths)
 
-    with pytest.raises(OrchardDeviceError, match="Device resolution failed at runtime"):
-        orch._phase_7_environment_report(applied_threads=1)
+        orch = RootOrchestrator(
+            cfg=mock_cfg,
+            device_resolver=failing_resolver,
+            seed_setter=MagicMock(),
+            thread_applier=MagicMock(return_value=4),
+            system_configurator=MagicMock(),
+            static_dir_setup=MagicMock(),
+            log_initializer=MagicMock(return_value=MagicMock()),
+            config_saver=MagicMock(),
+            requirements_dumper=MagicMock(),
+            infra_manager=MagicMock(),
+        )
+
+        with pytest.raises(OrchardDeviceError, match="Device resolution failed at runtime"):
+            orch.initialize_core_services()
 
 
 # CLEANUP: EDGE CASES
@@ -481,6 +488,7 @@ def test_cleanup_closes_logger_handlers_on_infra_failure():
     mock_logger.handlers = [mock_handler1, mock_handler2]
 
     orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra)
+    orch._infra_lock_acquired = True
     orch.run_logger = mock_logger
 
     orch.cleanup()
@@ -504,6 +512,7 @@ def test_cleanup_with_empty_handlers_list():
     mock_logger.handlers = []
 
     orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra)
+    orch._infra_lock_acquired = True
     orch.run_logger = mock_logger
 
     orch.cleanup()
@@ -570,71 +579,32 @@ def test_phase_7_device_already_cached_with_logger(caplog):
 
 
 @pytest.mark.unit
-def test_phase_7_device_resolution_fails_with_logger():
-    """Test _phase_7 device resolution failure raises OrchardDeviceError with logger present."""
-    from orchard.exceptions import OrchardDeviceError
-
+def test_phase_7_uses_cached_device():
+    """Test _phase_7 uses pre-resolved device cache for reporting."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.effective_num_workers = 2
-    mock_cfg.hardware.device = "cuda"
     mock_reporter = MagicMock()
     mock_logger = MagicMock()
 
-    def failing_resolver(device_str):
-        raise RuntimeError("device unavailable")
-
-    orch = RootOrchestrator(cfg=mock_cfg, reporter=mock_reporter, device_resolver=failing_resolver)
-    orch._device_cache = None
-    orch.run_logger = mock_logger
-    orch.paths = MagicMock()
-
-    with pytest.raises(OrchardDeviceError, match="device unavailable"):
-        orch._phase_7_environment_report(applied_threads=1)
-
-
-@pytest.mark.unit
-def test_phase_7_device_resolution_succeeds():
-    """Test _phase_7 when device resolution succeeds normally."""
-    mock_cfg = MagicMock()
-    mock_cfg.hardware.effective_num_workers = 2
-    mock_cfg.hardware.device = "cuda"
-    mock_reporter = MagicMock()
-    mock_logger = MagicMock()
-
-    mock_resolver = MagicMock(return_value=torch.device("cuda"))
-
-    orch = RootOrchestrator(cfg=mock_cfg, reporter=mock_reporter, device_resolver=mock_resolver)
-    orch._device_cache = None
+    orch = RootOrchestrator(cfg=mock_cfg, reporter=mock_reporter)
+    orch._device_cache = torch.device("cuda")
     orch.run_logger = mock_logger
     orch.paths = MagicMock()
 
     orch._phase_7_environment_report(applied_threads=4)
 
-    assert orch._device_cache.type == "cuda"
-    mock_resolver.assert_called_once()
-    mock_logger.warning.assert_not_called()
+    mock_reporter.log_initial_status.assert_called_once()
+    call_kwargs = mock_reporter.log_initial_status.call_args[1]
+    assert call_kwargs["device"] == torch.device("cuda")
+    assert call_kwargs["applied_threads"] == 4
 
 
 # PHASE 6: INFRASTRUCTURE GUARDING EDGE CASES
 @pytest.mark.unit
-def test_phase_6_with_no_infra_manager():
-    """Test _phase_6 when infra manager is None."""
-    mock_cfg = MagicMock()
-    mock_logger = MagicMock()
-
-    orch = RootOrchestrator(cfg=mock_cfg)
-    orch.infra = None
-    orch.run_logger = mock_logger
-
-    orch._phase_6_infrastructure_guarding()
-
-    mock_logger.error.assert_not_called()
-    assert orch._infra_lock_acquired is False
-
-
-@pytest.mark.unit
 def test_phase_6_prepare_fails_with_logger():
-    """Test _phase_6 when prepare_environment fails with logger present."""
+    """Test _phase_6 raises OrchardInfrastructureError when prepare_environment fails."""
+    from orchard.exceptions import OrchardInfrastructureError
+
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
     mock_infra.prepare_environment.side_effect = RuntimeError("lock failed")
@@ -643,18 +613,16 @@ def test_phase_6_prepare_fails_with_logger():
     orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra)
     orch.run_logger = mock_logger
 
-    orch._phase_6_infrastructure_guarding()
+    with pytest.raises(OrchardInfrastructureError, match="lock failed"):
+        orch._phase_6_infrastructure_guarding()
 
-    mock_logger.error.assert_called_once()
-    assert "Infra guard failed" in str(mock_logger.error.call_args)
-    assert "lock failed" in str(mock_logger.error.call_args)
     assert orch._infra_lock_acquired is False
 
 
 # INTEGRATION: FULL LIFECYCLE
 @pytest.mark.integration
 def test_full_lifecycle_with_all_phases(tmp_path):
-    """Test complete initialization through all 7 phases."""
+    """Test complete initialization through all phases."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
     mock_cfg.hardware.use_deterministic_algorithms = True
@@ -733,6 +701,7 @@ def test_context_manager_full_lifecycle():
 
     orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra)
     orch.initialize_core_services = MagicMock(return_value=MagicMock())
+    orch._infra_lock_acquired = True
 
     with orch as orchestrator:
         assert orchestrator == orch
@@ -874,7 +843,7 @@ def test_orchestrator_rank_injectable():
 # RANK-AWARENESS: PHASE GATING
 @pytest.mark.unit
 def test_rank_zero_executes_all_phases(tmp_path):
-    """Test rank 0 executes all 7 phases."""
+    """Test rank 0 executes all phases."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -963,7 +932,7 @@ def test_non_main_rank_skips_phases_3_through_7():
     mock_seed_setter.assert_called_once_with(42, strict=False)
     mock_thread_applier.assert_called_once_with(2)
 
-    # Phases 3-7 skipped
+    # Phases 3-6 skipped
     mock_static_dir_setup.assert_not_called()
     mock_log_initializer.assert_not_called()
     mock_config_saver.assert_not_called()
@@ -1004,6 +973,7 @@ def test_rank_zero_cleanup_releases_resources():
     mock_logger.handlers = [mock_handler]
 
     orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra, rank=0)
+    orch._infra_lock_acquired = True
     orch.run_logger = mock_logger
 
     orch.cleanup()
@@ -1102,6 +1072,7 @@ def test_cleanup_error_message_content():
     mock_logger.handlers = []
 
     orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra)
+    orch._infra_lock_acquired = True
     orch.run_logger = mock_logger
 
     orch.cleanup()
@@ -1159,6 +1130,7 @@ def test_applied_threads_stored_from_phase_2(tmp_path):
             requirements_dumper=MagicMock(),
             log_initializer=MagicMock(return_value=MagicMock()),
             infra_manager=MagicMock(),
+            device_resolver=MagicMock(return_value=torch.device("cpu")),
             rank=0,
         )
 
@@ -1214,6 +1186,7 @@ def test_cleanup_passes_cfg_and_logger_to_release():
     mock_logger.handlers = []
 
     orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra, rank=0)
+    orch._infra_lock_acquired = True
     orch.run_logger = mock_logger
 
     orch.cleanup()
@@ -1348,6 +1321,8 @@ def test_infra_lock_acquired_true_on_success():
 @pytest.mark.unit
 def test_infra_lock_acquired_false_on_failure():
     """Test _infra_lock_acquired stays False when prepare_environment fails."""
+    from orchard.exceptions import OrchardInfrastructureError
+
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
     mock_infra.prepare_environment.side_effect = OSError("permission denied")
@@ -1356,10 +1331,10 @@ def test_infra_lock_acquired_false_on_failure():
     orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra)
     orch.run_logger = mock_logger
 
-    orch._phase_6_infrastructure_guarding()
+    with pytest.raises(OrchardInfrastructureError, match="permission denied"):
+        orch._phase_6_infrastructure_guarding()
 
     assert orch._infra_lock_acquired is False
-    mock_logger.error.assert_called_once()
 
 
 @pytest.mark.unit

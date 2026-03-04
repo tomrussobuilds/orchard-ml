@@ -230,7 +230,7 @@ def log_pipeline_summary(
     S = LogStyle.SUCCESS
 
     Reporter.log_phase_header(log, "PIPELINE COMPLETE", LogStyle.DOUBLE)  # pragma: no mutant
-    log.info("%s%s Test Accuracy  : %8.2f%%", I, S, test_acc * 100)  # pragma: no mutant
+    log.info("%s%s Test Accuracy  : %7.2f%%", I, S, test_acc * 100)  # pragma: no mutant
     log.info("%s%s Macro F1       : %8.4f", I, S, macro_f1)  # pragma: no mutant
     if test_auc is not None:
         log.info("%s%s Test AUC       : %8.4f", I, S, test_auc)  # pragma: no mutant

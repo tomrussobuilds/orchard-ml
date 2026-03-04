@@ -25,7 +25,7 @@ orchard run recipes/config_mini_cnn.yaml
 
 <h3>RootOrchestrator -- Lifecycle Management</h3>
 
-The `RootOrchestrator` (`orchard/core/orchestrator.py`) is the central coordinator for every ML experiment. It implements a **7-phase initialization protocol** inside a Context Manager, guaranteeing deterministic setup and automatic resource cleanup:
+The `RootOrchestrator` (`orchard/core/orchestrator.py`) is the central coordinator for every ML experiment. It implements a **7-phase initialization protocol** (phases 1-6 eager, phase 7 deferred to CLI) inside a Context Manager, guaranteeing deterministic setup and automatic resource cleanup:
 
 | Phase | Responsibility | Key Detail |
 |-------|---------------|------------|
@@ -43,7 +43,7 @@ The `RootOrchestrator` (`orchard/core/orchestrator.py`) is the central coordinat
 - **Protocol-Based Abstractions**: `InfraManagerProtocol`, `ReporterProtocol`, `TimeTrackerProtocol` provide type-safe interfaces for mocking
 - **Idempotent Initialization**: Guarded by `_initialized` flag -- safe to call multiple times without orphaned directories or lock leaks
 - **Device Caching**: `get_device()` resolves and caches the optimal compute device (CUDA/CPU/MPS) once, avoiding repeated detection overhead
-- **Rank-Aware Phase Gating**: Injectable `rank` parameter enables DDP/torchrun awareness -- rank 0 executes all 7 phases, non-main ranks execute only phases 1-2 (seeding + threads), skipping filesystem provisioning, logging, and infrastructure locks
+- **Rank-Aware Phase Gating**: Injectable `rank` parameter enables DDP/torchrun awareness -- rank 0 executes phases 1-6 plus device resolution, non-main ranks execute only phases 1-2 (seeding + threads), skipping filesystem provisioning, logging, and infrastructure locks
 
 ```python
 from pathlib import Path
