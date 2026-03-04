@@ -31,6 +31,8 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Callable
 
+from ..exceptions import OrchardConfigError
+
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
 
@@ -347,7 +349,7 @@ def get_search_space(
         Immutable mapping of parameter samplers keyed by parameter name
 
     Raises:
-        ValueError: If preset name not recognized
+        OrchardConfigError: If preset name not recognized
     """
     registry = SearchSpaceRegistry(overrides)
 
@@ -356,7 +358,7 @@ def get_search_space(
     elif preset == "full":
         space = dict(registry.get_full_space(resolution))
     else:
-        raise ValueError(f"Unknown preset '{preset}'. Available: quick, full")
+        raise OrchardConfigError(f"Unknown preset '{preset}'. Available: quick, full")
 
     if include_models:
         if model_pool is not None:

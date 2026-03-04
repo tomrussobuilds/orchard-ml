@@ -14,6 +14,7 @@ from optuna.trial import Trial
 from pydantic import ValidationError
 
 from orchard.core.config.optuna_config import FloatRange, IntRange, SearchSpaceOverrides
+from orchard.exceptions import OrchardConfigError
 from orchard.optimization import SearchSpaceRegistry, get_search_space
 
 
@@ -174,7 +175,7 @@ def test_get_model_space_28():
 @pytest.mark.unit
 def test_get_search_space_invalid_preset():
     """Test behavior when an invalid preset is passed to get_search_space."""
-    with pytest.raises(ValueError):
+    with pytest.raises(OrchardConfigError):
         get_search_space(preset="invalid_preset", resolution=28)
 
 
@@ -777,7 +778,7 @@ def test_get_search_space_default_include_models_is_false():
 @pytest.mark.unit
 def test_get_search_space_invalid_preset_error_message():
     """ValueError message must mention the bad preset name."""
-    with pytest.raises(ValueError, match="bogus"):
+    with pytest.raises(OrchardConfigError, match="bogus"):
         get_search_space(preset="bogus")
 
 

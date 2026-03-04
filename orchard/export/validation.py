@@ -98,7 +98,7 @@ def validate_export(
 
                 # Shape guard: detect export shape mismatches early
                 if y_torch.shape != y_onnx.shape:
-                    raise ValueError(
+                    raise OrchardExportError(
                         f"Output shape mismatch: PyTorch {y_torch.shape} vs ONNX {y_onnx.shape}"
                     )
 

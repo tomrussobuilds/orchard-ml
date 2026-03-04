@@ -18,6 +18,7 @@ import torch.optim as optim
 from torch.optim import lr_scheduler
 
 from ..core import TrainingConfig
+from ..exceptions import OrchardConfigError
 from .losses import FocalLoss
 
 
@@ -56,7 +57,7 @@ def get_criterion(training: TrainingConfig, class_weights: torch.Tensor | None =
         Loss module (CrossEntropyLoss or FocalLoss).
 
     Raises:
-        ValueError: If ``training.criterion_type`` is not recognised.
+        OrchardConfigError: If ``training.criterion_type`` is not recognised.
     """
     c_type = training.criterion_type.lower()
     weights = class_weights if training.weighted_loss else None
@@ -68,7 +69,7 @@ def get_criterion(training: TrainingConfig, class_weights: torch.Tensor | None =
         return FocalLoss(gamma=training.focal_gamma, weight=weights)
 
     else:
-        raise ValueError(f"Unknown criterion type: {c_type}")
+        raise OrchardConfigError(f"Unknown criterion type: {c_type}")
 
 
 def get_optimizer(model: nn.Module, training: TrainingConfig) -> optim.Optimizer:
@@ -88,7 +89,7 @@ def get_optimizer(model: nn.Module, training: TrainingConfig) -> optim.Optimizer
         Configured optimizer instance.
 
     Raises:
-        ValueError: If ``training.optimizer_type`` is not recognised.
+        OrchardConfigError: If ``training.optimizer_type`` is not recognised.
     """
     opt_type = training.optimizer_type.lower()
 
@@ -108,7 +109,7 @@ def get_optimizer(model: nn.Module, training: TrainingConfig) -> optim.Optimizer
         )
 
     else:
-        raise ValueError(
+        raise OrchardConfigError(
             f"Unknown optimizer type: '{opt_type}'. Available options: ['sgd', 'adamw']"
         )
 
@@ -139,7 +140,7 @@ def get_scheduler(
         Configured learning rate scheduler instance.
 
     Raises:
-        ValueError: If ``training.scheduler_type`` is not recognised.
+        OrchardConfigError: If ``training.scheduler_type`` is not recognised.
     """
     sched_type = training.scheduler_type.lower()
 
@@ -168,7 +169,7 @@ def get_scheduler(
         return lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda _epoch: 1.0)
 
     else:
-        raise ValueError(
+        raise OrchardConfigError(
             f"Unsupported scheduler_type: '{sched_type}'. "
             "Available options: ['cosine', 'plateau', 'step', 'none']"
         )

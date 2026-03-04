@@ -13,6 +13,7 @@ import torch
 import torch.nn as nn
 
 from orchard.architectures.vit_tiny import build_vit_tiny
+from orchard.exceptions import OrchardConfigError
 
 
 # FIXTURES
@@ -92,7 +93,7 @@ class TestBuildViTTiny:
 
     def test_invalid_weight_variant_raises_error(self, device):
         """Verifies that an invalid timm variant triggers a descriptive ValueError."""
-        with pytest.raises(ValueError, match="Invalid ViT weight variant"):
+        with pytest.raises(OrchardConfigError, match="Invalid ViT weight variant"):
             build_vit_tiny(2, 3, pretrained=True, weight_variant="invalid_vit_model_name")
 
     def test_weight_copy_consistency(self, device):

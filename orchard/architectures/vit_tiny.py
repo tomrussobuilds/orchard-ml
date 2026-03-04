@@ -28,6 +28,7 @@ import timm
 import torch.nn as nn
 
 from ..core import LOGGER_NAME, LogStyle
+from ..exceptions import OrchardConfigError
 from ._morphing import morph_conv_weights
 
 # LOGGER CONFIGURATION
@@ -88,7 +89,7 @@ def build_vit_tiny(
         )
     except (RuntimeError, ValueError) as e:
         logger.error("Failed to load ViT variant '%s': %s", _weight_variant, e)
-        raise ValueError(f"Invalid ViT weight variant: {_weight_variant}") from e
+        raise OrchardConfigError(f"Invalid ViT weight variant: {_weight_variant}") from e
 
     # --- Step 3: Adapt Patch Embedding Layer ---
     if in_channels != 3:

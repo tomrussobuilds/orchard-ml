@@ -97,6 +97,10 @@ class HardwareConfig(BaseModel):
 
         requested = v.lower()
 
+        # Warn-and-fallback, not raise: configs may be built on a CPU-only
+        # machine (CI, laptops) to validate recipes or dispatch to remote
+        # GPU nodes.  The orchestrator raises OrchardDeviceError if the
+        # resolved device disappears at actual training time.
         if requested == "cuda" and not torch.cuda.is_available():
             import warnings
 

@@ -34,6 +34,7 @@ import torch
 import torch.nn as nn
 
 from ..core import LOGGER_NAME, ArchitectureConfig, DatasetConfig, LogStyle
+from ..exceptions import OrchardConfigError
 from .convnext_tiny import build_convnext_tiny
 from .efficientnet_b0 import build_efficientnet_b0
 from .mini_cnn import build_mini_cnn
@@ -208,7 +209,7 @@ def _dispatch_builder(
     if builder is None:
         error_msg = f"Architecture '{arch_cfg.name}' is not registered in the Factory."
         logger.error(" %s %s", LogStyle.FAILURE, error_msg)
-        raise ValueError(error_msg)
+        raise OrchardConfigError(error_msg)
 
     if builder is build_mini_cnn:
         return build_mini_cnn(

@@ -453,7 +453,7 @@ def test_validate_with_runtime_error(tmp_path, monkeypatch):
     reason="Requires onnxruntime",
 )
 def test_validate_shape_mismatch_raises(tmp_path, monkeypatch):
-    """Test validation raises ValueError when output shapes differ."""
+    """Test validation raises OrchardExportError when output shapes differ."""
 
     model = SimpleTestModel()
     model.eval()
@@ -484,7 +484,7 @@ def test_validate_shape_mismatch_raises(tmp_path, monkeypatch):
 
     monkeypatch.setattr(ort, "InferenceSession", _ShapeMismatchSession)
 
-    with pytest.raises(ValueError, match="Output shape mismatch"):
+    with pytest.raises(OrchardExportError, match="Output shape mismatch"):
         validate_export(
             pytorch_model=model,
             onnx_path=onnx_path,

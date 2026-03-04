@@ -15,6 +15,7 @@ import torch.nn as nn
 
 from orchard.architectures.timm_backbone import build_timm_model
 from orchard.core.config import ArchitectureConfig
+from orchard.exceptions import OrchardConfigError
 
 
 # FIXTURES
@@ -121,5 +122,5 @@ class TestTimmFactoryRouting:
         cfg.dataset.num_classes = 10
         cfg.dataset.img_size = 224
 
-        with pytest.raises(ValueError, match="not registered"):
+        with pytest.raises(OrchardConfigError, match="not registered"):
             get_model(device=device, dataset_cfg=cfg.dataset, arch_cfg=cfg.architecture)

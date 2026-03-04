@@ -13,6 +13,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 
+from orchard.exceptions import OrchardConfigError
 from orchard.trainer import setup
 
 
@@ -62,7 +63,7 @@ def test_get_criterion_types(base_cfg, crit_type):
 def test_get_criterion_invalid_type(base_cfg):
     """Test unknown criterion type raises ValueError."""
     base_cfg.training.criterion_type = "unknown_type"
-    with pytest.raises(ValueError, match="Unknown criterion type"):
+    with pytest.raises(OrchardConfigError, match="Unknown criterion type"):
         setup.get_criterion(base_cfg.training)
 
 
@@ -96,7 +97,7 @@ def test_get_optimizer_adamw_with_resnet_name(base_cfg, simple_model):
 def test_get_optimizer_invalid_type(base_cfg, simple_model):
     """Test unknown optimizer type raises ValueError."""
     base_cfg.training.optimizer_type = "invalid_opt"
-    with pytest.raises(ValueError, match="Unknown optimizer type"):
+    with pytest.raises(OrchardConfigError, match="Unknown optimizer type"):
         setup.get_optimizer(simple_model, base_cfg.training)
 
 
@@ -124,5 +125,5 @@ def test_get_scheduler_invalid_type(base_cfg, simple_model):
     """Test invalid scheduler type raises ValueError."""
     base_cfg.training.scheduler_type = "invalid_sched"
     optimizer = setup.get_optimizer(simple_model, base_cfg.training)
-    with pytest.raises(ValueError, match="Unsupported scheduler_type"):
+    with pytest.raises(OrchardConfigError, match="Unsupported scheduler_type"):
         setup.get_scheduler(optimizer, base_cfg.training)

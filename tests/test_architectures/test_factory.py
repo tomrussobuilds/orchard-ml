@@ -15,6 +15,7 @@ import torch
 import torch.nn as nn
 
 from orchard.architectures.factory import _suppress_download_noise, get_model
+from orchard.exceptions import OrchardConfigError
 
 
 # FACTORY: BASIC INSTANTIATION
@@ -60,7 +61,7 @@ def test_get_model_invalid_architecture():
     mock_cfg.dataset.num_classes = 10
     mock_cfg.dataset.img_size = 28
 
-    with pytest.raises(ValueError, match="not registered"):
+    with pytest.raises(OrchardConfigError, match="not registered"):
         get_model(device=device, dataset_cfg=mock_cfg.dataset, arch_cfg=mock_cfg.architecture)
 
 
