@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from orchard.core.paths import OUTPUTS_ROOT, RunPaths
+from orchard.core.paths import RunPaths
 
 
 # RUNPATHS: CLASS CONSTANTS
@@ -46,7 +46,7 @@ def test_runpaths_create_basic(tmp_path):
 
 
 @pytest.mark.unit
-def test_runpaths_create_uses_default_base_dir():
+def test_runpaths_create_uses_default_base_dir(safe_outputs_root):
     """Test RunPaths.create() uses OUTPUTS_ROOT when base_dir not provided."""
     training_cfg = {"batch_size": 32}
 
@@ -56,7 +56,7 @@ def test_runpaths_create_uses_default_base_dir():
         training_cfg=training_cfg,
     )
 
-    assert run_paths.root.parent == OUTPUTS_ROOT
+    assert run_paths.root.parent == safe_outputs_root
 
 
 @pytest.mark.unit

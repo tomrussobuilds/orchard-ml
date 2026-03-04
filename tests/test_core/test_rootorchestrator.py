@@ -7,12 +7,12 @@ Achieves high coverage through dependency injection and mocking.
 from __future__ import annotations
 
 import time
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
 
-from orchard.core import LOGGER_NAME, RootOrchestrator, TimeTracker
+from orchard.core import LOGGER_NAME, Config, RootOrchestrator, TimeTracker
 
 
 # TIMETRACKER TESTS
@@ -728,6 +728,142 @@ def test_context_manager_full_lifecycle():
         orch.initialize_core_services.assert_called_once()
 
     mock_infra.release_resources.assert_called_once()
+
+
+# INTEGRATION: REAL DEPENDENCIES
+def _make_integration_cfg(tmp_path):
+    """Build a minimal real Config rooted at tmp_path."""
+    return Config(
+        dataset={"name": "bloodmnist", "resolution": 28},
+        architecture={"name": "mini_cnn", "pretrained": False},
+        training={"epochs": 1, "mixup_epochs": 0, "use_amp": False},
+        hardware={"device": "cpu", "project_name": "test-integration"},
+        telemetry={"output_dir": str(tmp_path)},
+    )
+
+
+@pytest.mark.integration
+def test_integration_phases_1_through_4_real_filesystem(tmp_path):
+    """Phases 1-4 with real set_seed, RunPaths.create, Logger.setup."""
+    cfg = _make_integration_cfg(tmp_path)
+    mock_infra = MagicMock()
+
+    orch = RootOrchestrator(
+        cfg=cfg,
+        infra_manager=mock_infra,
+        audit_saver=MagicMock(),
+        reporter=MagicMock(),
+        static_dir_setup=lambda: None,
+    )
+    paths = orch.initialize_core_services()
+
+    assert paths is not None
+    assert paths.root.exists()
+    assert paths.logs.exists()
+    assert paths.checkpoints.exists()
+    assert paths.reports.exists()
+    assert list(paths.logs.glob("*.log"))
+    assert orch.run_logger is not None
+    assert orch._initialized is True
+    mock_infra.prepare_environment.assert_called_once()
+
+    orch.cleanup()
+
+
+@pytest.mark.integration
+def test_integration_context_manager_lifecycle(tmp_path):
+    """Context manager creates real dirs and cleans up logging on exit."""
+    cfg = _make_integration_cfg(tmp_path)
+    mock_infra = MagicMock()
+
+    with RootOrchestrator(
+        cfg=cfg,
+        infra_manager=mock_infra,
+        audit_saver=MagicMock(),
+        reporter=MagicMock(),
+        static_dir_setup=lambda: None,
+    ) as orch:
+        assert orch.paths is not None
+        assert orch.paths.root.exists()
+        assert orch.run_logger is not None
+
+    assert orch._cleaned_up is True
+    assert orch.run_logger is None
+    mock_infra.release_resources.assert_called_once()
+
+
+@pytest.mark.integration
+def test_integration_phase_5_writes_real_config_yaml(tmp_path):
+    """Real AuditSaver.save_config writes a parseable config.yaml."""
+    from orchard.core.io import load_config_from_yaml
+    from orchard.core.io.serialization import AuditSaver
+
+    cfg = _make_integration_cfg(tmp_path)
+    audit = AuditSaver()
+
+    with patch.object(audit, "dump_requirements"):
+        orch = RootOrchestrator(
+            cfg=cfg,
+            infra_manager=MagicMock(),
+            audit_saver=audit,
+            reporter=MagicMock(),
+            static_dir_setup=lambda: None,
+        )
+        orch.initialize_core_services()
+
+    config_yaml = orch.paths.get_config_path()
+    assert config_yaml.exists()
+    loaded = load_config_from_yaml(config_yaml)
+    assert loaded["dataset"]["name"] == "bloodmnist"
+
+    orch.cleanup()
+
+
+@pytest.mark.integration
+def test_integration_phase_7_deferred_report(tmp_path):
+    """Reporter called only after explicit log_environment_report()."""
+    cfg = _make_integration_cfg(tmp_path)
+    mock_reporter = MagicMock()
+
+    orch = RootOrchestrator(
+        cfg=cfg,
+        infra_manager=MagicMock(),
+        audit_saver=MagicMock(),
+        reporter=mock_reporter,
+        static_dir_setup=lambda: None,
+    )
+    orch.initialize_core_services()
+
+    mock_reporter.log_initial_status.assert_not_called()
+    orch.log_environment_report()
+    mock_reporter.log_initial_status.assert_called_once()
+
+    call_kwargs = mock_reporter.log_initial_status.call_args
+    assert call_kwargs.kwargs["device"] == torch.device("cpu")
+
+    orch.cleanup()
+
+
+@pytest.mark.integration
+def test_integration_idempotent_single_run_dir(tmp_path):
+    """Two initialize_core_services() calls create only one run directory."""
+    cfg = _make_integration_cfg(tmp_path)
+
+    orch = RootOrchestrator(
+        cfg=cfg,
+        infra_manager=MagicMock(),
+        audit_saver=MagicMock(),
+        reporter=MagicMock(),
+        static_dir_setup=lambda: None,
+    )
+    paths1 = orch.initialize_core_services()
+    paths2 = orch.initialize_core_services()
+
+    assert paths1 is paths2
+    run_dirs = [d for d in tmp_path.iterdir() if d.is_dir()]
+    assert len(run_dirs) == 1
+
+    orch.cleanup()
 
 
 # IDEMPOTENCY

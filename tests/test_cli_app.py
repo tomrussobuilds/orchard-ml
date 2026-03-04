@@ -756,5 +756,126 @@ class TestYamlHelpers:
         assert "baz: 42" in result
 
 
+# INTEGRATION: CLI + REAL CONFIG + REAL ORCHESTRATOR
+@pytest.mark.integration
+class TestCLIIntegration:
+    """Integration tests that exercise real Config.from_recipe and RootOrchestrator phases."""
+
+    @staticmethod
+    def _write_recipe(tmp_path, overrides=None):
+        import yaml
+
+        content = {
+            "dataset": {"name": "bloodmnist", "resolution": 28, "force_rgb": True},
+            "architecture": {"name": "mini_cnn", "pretrained": False},
+            "training": {"epochs": 1, "mixup_epochs": 0, "use_amp": False, "seed": 42},
+            "hardware": {"device": "cpu", "project_name": "cli-integration"},
+            "telemetry": {"output_dir": str(tmp_path)},
+        }
+        if overrides:
+            for k, v in overrides.items():
+                section, field = k.split(".", 1)
+                content[section][field] = v
+        recipe = tmp_path / "recipe.yaml"
+        recipe.write_text(yaml.dump(content), encoding="utf-8")
+        return recipe
+
+    @patch("orchard.core.io.serialization.dump_requirements")
+    @patch("orchard.core.orchestrator.InfrastructureManager")
+    @patch("orchard.log_pipeline_summary")
+    @patch("orchard.create_tracker")
+    @patch("orchard.run_training_phase")
+    def test_run_real_config_creates_workspace(
+        self, mock_train, mock_tracker_fn, mock_summary, mock_infra_cls, _mock_dump_req, tmp_path
+    ):
+        """Real Config + RootOrchestrator creates workspace, writes config.yaml."""
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        recipe = self._write_recipe(tmp_path)
+
+        mock_infra_cls.return_value = MagicMock()
+        mock_result = MagicMock()
+        mock_result.best_model_path = tmp_path / "model.pt"
+        mock_result.test_acc = 0.90
+        mock_result.macro_f1 = 0.88
+        mock_result.test_auc = 0.91
+        mock_train.return_value = mock_result
+        mock_tracker = MagicMock()
+        mock_tracker_fn.return_value = mock_tracker
+
+        result = CliRunner().invoke(app, ["run", str(recipe)])
+        assert result.exit_code == 0, result.output
+
+        # Real RunPaths created a directory tree under tmp_path
+        run_dirs = [d for d in tmp_path.iterdir() if d.is_dir()]
+        assert len(run_dirs) >= 1
+        run_dir = run_dirs[0]
+        assert (run_dir / "reports" / "config.yaml").exists()
+
+        mock_train.assert_called_once()
+        mock_tracker.start_run.assert_called_once()
+        mock_tracker.end_run.assert_called_once()
+        mock_infra_cls.return_value.prepare_environment.assert_called_once()
+
+    @patch("orchard.core.io.serialization.dump_requirements")
+    @patch("orchard.core.orchestrator.InfrastructureManager")
+    @patch("orchard.log_pipeline_summary")
+    @patch("orchard.create_tracker")
+    @patch("orchard.run_training_phase")
+    def test_run_set_override_reaches_config(
+        self, mock_train, mock_tracker_fn, mock_summary, mock_infra_cls, _mock_dump_req, tmp_path
+    ):
+        """--set training.seed=99 overrides the recipe value (42) end-to-end."""
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        recipe = self._write_recipe(tmp_path)
+
+        mock_infra_cls.return_value = MagicMock()
+        mock_result = MagicMock()
+        mock_result.best_model_path = tmp_path / "model.pt"
+        mock_result.test_acc = 0.9
+        mock_result.macro_f1 = 0.9
+        mock_result.test_auc = 0.9
+        mock_train.return_value = mock_result
+        mock_tracker_fn.return_value = MagicMock()
+
+        result = CliRunner().invoke(app, ["run", str(recipe), "--set", "training.seed=99"])
+        assert result.exit_code == 0, result.output
+
+        call_kwargs = mock_train.call_args
+        passed_cfg = call_kwargs.kwargs.get("cfg") or call_kwargs[1]
+        assert passed_cfg.training.seed == 99
+
+    def test_run_missing_recipe_exits_clean(self, tmp_path):
+        """Missing recipe exits with code 1, no filesystem side effects."""
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        result = CliRunner().invoke(app, ["run", str(tmp_path / "nonexistent.yaml")])
+        assert result.exit_code == 1
+        assert "not found" in result.output
+
+    def test_init_produces_loadable_recipe(self, tmp_path):
+        """orchard init generates a YAML parseable by Config.from_recipe."""
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+        from orchard.core import Config
+
+        recipe = tmp_path / "starter.yaml"
+        result = CliRunner().invoke(app, ["init", str(recipe)])
+        assert result.exit_code == 0
+        assert recipe.exists()
+
+        cfg = Config.from_recipe(recipe)
+        assert cfg.dataset.dataset_name is not None
+        assert cfg.architecture.name is not None
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

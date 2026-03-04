@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - replace f-string logger calls with lazy % formatting
 - extract helpers from cli_app to reduce cyclomatic complexity
+- introduce AuditSaverProtocol to reduce RootOrchestrator params
 
 ### Documentation
 

@@ -12,6 +12,7 @@ Fixtures are automatically discovered by pytest across all test modules.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
 
@@ -129,3 +130,14 @@ def minimal_config():
         hardware={"device": "cpu", "project_name": "test-project"},
         telemetry={"output_dir": "./outputs"},
     )
+
+
+# FILESYSTEM ISOLATION
+@pytest.fixture()
+def safe_outputs_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """
+    Redirect OUTPUTS_ROOT to tmp_path so RunPaths.create() without
+    an explicit base_dir never writes to the real filesystem.
+    """
+    monkeypatch.setattr("orchard.core.paths.run_paths.OUTPUTS_ROOT", tmp_path)
+    return tmp_path
