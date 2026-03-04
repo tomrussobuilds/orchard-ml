@@ -24,7 +24,7 @@ def validate_npz_keys(data: np.lib.npyio.NpzFile) -> None:
         data (np.lib.npyio.NpzFile): The loaded NPZ file object.
 
     Raises:
-        ValueError: If any required key (images/labels) is missing.
+        OrchardDatasetError: If any required key (images/labels) is missing.
     """
     required_keys = {
         "train_images",

@@ -253,6 +253,24 @@ def test_anatomical_texture_minimal_augmentation(aug_cfg, img_size, rgb_metadata
 
 
 @pytest.mark.unit
+def test_norm_mean_std_override(aug_cfg, img_size, grayscale_metadata):
+    """Pre-computed norm_mean/norm_std override local computation."""
+    custom_mean = (0.1, 0.2, 0.3)
+    custom_std = (0.4, 0.5, 0.6)
+    _, val_tf = get_pipeline_transforms(
+        aug_cfg,
+        img_size,
+        grayscale_metadata,
+        force_rgb=True,
+        norm_mean=custom_mean,
+        norm_std=custom_std,
+    )
+    normalize = [t for t in val_tf.transforms if isinstance(t, v2.Normalize)][0]
+    assert list(normalize.mean) == list(custom_mean)
+    assert list(normalize.std) == list(custom_std)
+
+
+@pytest.mark.unit
 def test_augmentation_description_anatomical(aug_cfg, img_size, mixup_alpha):
     """Anatomical datasets should omit HFlip and Rotation from description."""
     meta = SimpleNamespace(is_anatomical=True, is_texture_based=False)

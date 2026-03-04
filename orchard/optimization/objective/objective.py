@@ -317,11 +317,11 @@ class OptunaObjective:
         the study continues without being biased by the failed trial.
 
         Returns:
-            float("inf") for minimize, 0.0 for maximize.
+            float("inf") for minimize, -float("inf") for maximize.
         """
         if self.cfg.optuna.direction == "minimize":
             return float("inf")
-        return 0.0
+        return -float("inf")
 
     def _cleanup(self) -> None:
         """

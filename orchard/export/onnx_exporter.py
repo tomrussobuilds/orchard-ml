@@ -52,7 +52,7 @@ def export_to_onnx(
         checkpoint_path: Path to trained .pth checkpoint
         output_path: Output path for .onnx file
         input_shape: Input tensor shape (C, H, W)
-        opset_version: ONNX opset version (18=latest, clean export with no warnings)
+        opset_version: ONNX opset version (default: 18)
         dynamic_axes: Enable dynamic batch size (required for production)
         do_constant_folding: Optimize constant operations at export
         validate: Validate exported model with ONNX checker
@@ -67,6 +67,7 @@ def export_to_onnx(
         ...     model=EfficientNet(),
         ...     checkpoint_path=Path("outputs/best_model.pth"),
         ...     output_path=Path("exports/model.onnx"),
+        ...     input_shape=(3, 224, 224),
         ... )
     """
     logger.info("  [Source]")  # pragma: no mutant
@@ -289,8 +290,8 @@ def _quantize_4bit(
     INT4/UINT4 dynamic quantization restricted to linear layers.
 
     Conv layers stay FP32 because 4-bit packing only supports Gemm nodes
-    (fully-connected layers).  This is the standard approach for
-    edge-deployed vision models.
+    (fully-connected layers).  MatMul nodes (attention layers in ViT)
+    require 8-bit quantization instead.
     """
     import onnx
     from onnxruntime.quantization import QuantType, quantize_dynamic
@@ -301,12 +302,15 @@ def _quantize_4bit(
     try:
         _preprocess_onnx(onnx_path, preprocessed_path)
 
-        # Warn if no Gemm/MatMul nodes exist (quantization will be a no-op)
+        # After preprocessing, Gemm nodes may be decomposed into MatMul+Add.
+        # 4-bit packing in onnxruntime only supports Gemm; MatMul nodes are
+        # skipped.  Warn when no quantizable nodes remain.
         model_proto = onnx.load(str(preprocessed_path))
-        gemm_nodes = [n for n in model_proto.graph.node if n.op_type in ("Gemm", "MatMul")]
+        gemm_nodes = [n for n in model_proto.graph.node if n.op_type == "Gemm"]
         if not gemm_nodes:
             logger.warning(
-                "    %s Model has no Gemm/MatMul nodes — %s quantization will have no effect",
+                "    %s No Gemm nodes after preprocessing — %s quantization will be a no-op "
+                "(MatMul nodes require 8-bit quantization)",
                 LogStyle.WARNING,
                 weight_type.upper(),
             )

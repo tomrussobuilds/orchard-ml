@@ -10,7 +10,7 @@ Key Features:
 - Efficient Scaling: Balances depth, width, and resolution
 - Transfer Learning: Leverages ImageNet pretrained weights
 - Adaptive Input: Customizes first layer for grayscale datasets
-- Channel Compression: Weight morphing for 1→3 channel promotion
+- Channel Compression: Weight morphing for RGB→grayscale (3→1) adaptation
 """
 
 from __future__ import annotations

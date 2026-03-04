@@ -520,6 +520,8 @@ def test_plot_context_from_config():
     mock_cfg.training.use_tta = False
     mock_cfg.dataset.metadata.is_anatomical = True
     mock_cfg.dataset.metadata.is_texture_based = False
+    mock_cfg.dataset.effective_is_anatomical = True
+    mock_cfg.dataset.effective_is_texture_based = False
 
     ctx = PlotContext.from_config(mock_cfg)
 
@@ -546,6 +548,8 @@ def test_plot_context_from_config_no_metadata():
     mock_cfg.evaluation.fig_size_predictions = (9, 6)
     mock_cfg.training.use_tta = True
     mock_cfg.dataset.metadata = None
+    mock_cfg.dataset.effective_is_anatomical = True
+    mock_cfg.dataset.effective_is_texture_based = True
 
     ctx = PlotContext.from_config(mock_cfg)
 

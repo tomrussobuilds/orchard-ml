@@ -46,6 +46,20 @@ def _default_overrides() -> SearchSpaceOverrides:
     return SearchSpaceOverrides()
 
 
+_VIT_WEIGHT_VARIANTS: list[str | None] = [
+    None,  # Default variant
+    "vit_tiny_patch16_224.augreg_in21k_ft_in1k",
+    "vit_tiny_patch16_224.augreg_in21k",
+]
+
+
+def _vit_weight_variant_sampler(trial: Any) -> str | None:
+    """Conditionally sample ViT weight variant (only active when model_name is vit_tiny)."""
+    if trial.params.get("model_name") == "vit_tiny":
+        return trial.suggest_categorical("weight_variant", _VIT_WEIGHT_VARIANTS)  # type: ignore[no-any-return]
+    return None
+
+
 # SEARCH SPACE DEFINITIONS
 class SearchSpaceRegistry:
     """
@@ -174,7 +188,7 @@ class SearchSpaceRegistry:
         Batch size as categorical (resolution-aware).
 
         Args:
-            resolution: Input image resolution (28 or 224)
+            resolution: Input image resolution (e.g. 28, 32, 64, 128, 224)
 
         Returns:
             Immutable mapping with batch_size sampler
@@ -294,18 +308,7 @@ class SearchSpaceRegistry:
                 "model_name": lambda trial: trial.suggest_categorical(
                     "model_name", ["resnet_18", "efficientnet_b0", "vit_tiny", "convnext_tiny"]
                 ),
-                "weight_variant": lambda trial: (
-                    trial.suggest_categorical(
-                        "weight_variant",
-                        [
-                            None,  # Default variant
-                            "vit_tiny_patch16_224.augreg_in21k_ft_in1k",
-                            "vit_tiny_patch16_224.augreg_in21k",
-                        ],
-                    )
-                    if trial.params.get("model_name") == "vit_tiny"
-                    else None
-                ),
+                "weight_variant": _vit_weight_variant_sampler,
             }
         )
 
@@ -381,17 +384,6 @@ def _build_model_space_from_pool(pool: list[str]) -> Mapping[str, _SamplerFn]:
     }
 
     if "vit_tiny" in pool:
-        space["weight_variant"] = lambda trial: (
-            trial.suggest_categorical(
-                "weight_variant",
-                [
-                    None,
-                    "vit_tiny_patch16_224.augreg_in21k_ft_in1k",
-                    "vit_tiny_patch16_224.augreg_in21k",
-                ],
-            )
-            if trial.params.get("model_name") == "vit_tiny"
-            else None
-        )
+        space["weight_variant"] = _vit_weight_variant_sampler
 
     return MappingProxyType(space)

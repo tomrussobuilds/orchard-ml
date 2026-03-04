@@ -103,14 +103,13 @@ def run_final_evaluation(
         test_loader,
         device=device,
         use_tta=training.use_tta,
-        is_anatomical=dataset.metadata.is_anatomical if dataset.metadata else True,
-        is_texture_based=dataset.metadata.is_texture_based if dataset.metadata else True,
+        is_anatomical=dataset.effective_is_anatomical,
+        is_texture_based=dataset.effective_is_texture_based,
         aug_cfg=augmentation,
         resolution=dataset.resolution,
     )
 
     # --- 2) Visualizations ---
-    meta = dataset.metadata
     ctx = PlotContext(
         arch_name=arch_name,
         resolution=dataset.resolution,
@@ -123,8 +122,8 @@ def run_final_evaluation(
         mean=dataset.mean,
         std=dataset.std,
         use_tta=training.use_tta,
-        is_anatomical=meta.is_anatomical if meta else True,
-        is_texture_based=meta.is_texture_based if meta else True,
+        is_anatomical=dataset.effective_is_anatomical,
+        is_texture_based=dataset.effective_is_texture_based,
     )
 
     # Diagnostic Confusion Matrix

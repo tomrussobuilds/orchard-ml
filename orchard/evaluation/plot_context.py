@@ -36,7 +36,6 @@ class PlotContext:
         """
         Build a PlotContext from the full Config object.
         """
-        meta = cfg.dataset.metadata
         return cls(
             arch_name=cfg.architecture.name,
             resolution=cfg.dataset.resolution,
@@ -49,6 +48,6 @@ class PlotContext:
             mean=cfg.dataset.mean,
             std=cfg.dataset.std,
             use_tta=cfg.training.use_tta,
-            is_anatomical=meta.is_anatomical if meta else True,
-            is_texture_based=meta.is_texture_based if meta else True,
+            is_anatomical=cfg.dataset.effective_is_anatomical,
+            is_texture_based=cfg.dataset.effective_is_texture_based,
         )

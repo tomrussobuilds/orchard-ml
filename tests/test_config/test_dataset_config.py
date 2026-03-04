@@ -138,6 +138,34 @@ def test_processing_mode_classification(mock_grayscale_metadata, mock_metadata_2
     assert config_rgb.processing_mode == "NATIVE-RGB"
 
 
+@pytest.mark.unit
+def test_effective_is_anatomical_with_metadata(mock_metadata_28):
+    """Test effective_is_anatomical returns metadata flag when present."""
+    config = DatasetConfig(metadata=mock_metadata_28)
+    assert config.effective_is_anatomical == mock_metadata_28.is_anatomical
+
+
+@pytest.mark.unit
+def test_effective_is_anatomical_without_metadata():
+    """Test effective_is_anatomical defaults to True when metadata is None."""
+    config = DatasetConfig()
+    assert config.effective_is_anatomical is True
+
+
+@pytest.mark.unit
+def test_effective_is_texture_based_with_metadata(mock_metadata_28):
+    """Test effective_is_texture_based returns metadata flag when present."""
+    config = DatasetConfig(metadata=mock_metadata_28)
+    assert config.effective_is_texture_based == mock_metadata_28.is_texture_based
+
+
+@pytest.mark.unit
+def test_effective_is_texture_based_without_metadata():
+    """Test effective_is_texture_based defaults to True when metadata is None."""
+    config = DatasetConfig()
+    assert config.effective_is_texture_based is True
+
+
 # EDGE CASES & REGRESSION TESTS
 @pytest.mark.unit
 def test_frozen_immutability():

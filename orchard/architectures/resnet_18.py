@@ -74,7 +74,7 @@ def build_resnet_18(
 # INTERNAL HELPERS
 def _adapt_stem_28(model: nn.Module, in_channels: int, pretrained: bool) -> None:
     """
-    Adapts ResNet-18 stem for 28x28 inputs.
+    Adapts ResNet-18 stem for small-resolution inputs (<=32px).
 
     Replaces 7x7 conv1 with 3x3 stride-1, removes MaxPool, and applies
     bicubic weight interpolation from pretrained 7x7 kernels.

@@ -119,7 +119,7 @@ def test_trainer_init(trainer):
     assert trainer.epochs == 5
     assert trainer.patience == 3
     assert trainer.best_acc == -1.0
-    assert trainer.best_metric == -1.0
+    assert trainer.best_metric == -float("inf")
     assert trainer.epochs_no_improve == 0
     assert len(trainer.train_losses) == 0
     assert len(trainer.val_metrics_history) == 0

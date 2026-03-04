@@ -218,7 +218,7 @@ def run_optimization(
         Completed Optuna study with trial results
 
     Example:
-        >>> study = run_optimization(cfg=config, device="cuda", paths=paths)
+        >>> study = run_optimization(cfg=config, device=torch.device("cuda"), paths=paths)
         >>> print(f"Best AUC: {study.best_value:.3f}")
     """
     orchestrator = OptunaOrchestrator(cfg=cfg, device=device, paths=paths, tracker=tracker)

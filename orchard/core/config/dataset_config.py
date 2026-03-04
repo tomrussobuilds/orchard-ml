@@ -246,6 +246,26 @@ class DatasetConfig(BaseModel):
         return (s[0],) * 3 if self.force_rgb and self.in_channels == 1 else s
 
     @property
+    def effective_is_anatomical(self) -> bool:
+        """
+        Whether the dataset is anatomical (conservative default: True).
+
+        Returns:
+            Metadata flag if available, else True (safest for augmentation).
+        """
+        return self.metadata.is_anatomical if self.metadata else True
+
+    @property
+    def effective_is_texture_based(self) -> bool:
+        """
+        Whether the dataset is texture-based (conservative default: True).
+
+        Returns:
+            Metadata flag if available, else True (safest for augmentation).
+        """
+        return self.metadata.is_texture_based if self.metadata else True
+
+    @property
     def processing_mode(self) -> str:
         """
         Get description of channel processing mode.

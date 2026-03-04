@@ -15,7 +15,6 @@ from pydantic import BaseModel, ValidationError
 from orchard.core.config.types import (
     BatchSize,
     BlurSigma,
-    Channels,
     DeviceType,
     DropoutRate,
     GradNorm,
@@ -192,24 +191,6 @@ def test_image_size_bounds():
 
     with pytest.raises(ValidationError):
         Model(size=2048)
-
-
-@pytest.mark.unit
-def test_channels_bounds():
-    """Test Channels must be in [1, 4]."""
-
-    class Model(BaseModel):
-        ch: Channels
-
-    assert Model(ch=1).ch == 1
-    assert Model(ch=3).ch == 3
-    assert Model(ch=4).ch == 4
-
-    with pytest.raises(ValidationError):
-        Model(ch=0)
-
-    with pytest.raises(ValidationError):
-        Model(ch=5)
 
 
 @pytest.mark.unit

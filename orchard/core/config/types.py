@@ -65,7 +65,6 @@ BatchSize = Annotated[int, Field(ge=1, le=128)]
 
 # MODEL GEOMETRY
 ImageSize = Annotated[int, Field(ge=28, le=1024)]
-Channels = Annotated[int, Field(ge=1, le=4)]  # Reserved: not yet used in any config field
 DropoutRate = Annotated[float, Field(ge=0.0, le=0.9)]
 
 # OPTIMIZATION

@@ -27,6 +27,7 @@ Key responsibilities:
 from __future__ import annotations
 
 import logging
+import math
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
@@ -211,8 +212,9 @@ class TrialTrainingExecutor:
             current_metric = self.metric_extractor.extract(val_metrics)
             best_metric = self.metric_extractor.update_best(current_metric)
 
-            # Report to Optuna
-            trial.report(current_metric, epoch)
+            # Report to Optuna (skip NaN to avoid poisoning the pruner)
+            if not math.isnan(current_metric):
+                trial.report(current_metric, epoch)
 
             # Check pruning
             if self._should_prune(trial, epoch):

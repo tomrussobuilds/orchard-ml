@@ -79,7 +79,7 @@ def get_model(
         device: Hardware accelerator target.
         dataset_cfg: Dataset sub-config with resolved metadata.
         arch_cfg: Architecture sub-config with model selection.
-        verbose: Suppress builder-internal INFO logging.
+        verbose: If True, emit builder-internal INFO logging.
 
     Returns:
         nn.Module: The instantiated model synchronized with the target device.

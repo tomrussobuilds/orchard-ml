@@ -115,8 +115,8 @@ class StudyEarlyStoppingCallback:
             study: Optuna study instance
             trial: Completed trial
 
-        Raises:
-            optuna.TrialPruned: Signals study termination
+        Side Effects:
+            Calls ``study.stop()`` when early stopping criteria are met.
         """
         if not self.enabled:
             return

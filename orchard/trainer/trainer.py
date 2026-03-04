@@ -145,7 +145,7 @@ class ModelTrainer:
         self.patience = training.patience
         self.monitor_metric = training.monitor_metric
         self.best_acc = -1.0
-        self.best_metric = -1.0
+        self.best_metric = -float("inf")
         self.epochs_no_improve = 0
 
         # AMP and MixUp (shared factories from _loop)

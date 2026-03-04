@@ -55,6 +55,8 @@ def test_run_final_evaluation_returns_tuple(
     mock_cfg.training.use_tta = False
     mock_cfg.dataset.metadata.is_anatomical = True
     mock_cfg.dataset.metadata.is_texture_based = False
+    mock_cfg.dataset.effective_is_anatomical = True
+    mock_cfg.dataset.effective_is_texture_based = False
     mock_cfg.architecture.name = "test_architecture"
     mock_cfg.dataset.resolution = 28
 
@@ -110,6 +112,8 @@ def test_run_final_evaluation_calls_evaluate_model(
     mock_cfg.training.use_tta = True
     mock_cfg.dataset.metadata.is_anatomical = False
     mock_cfg.dataset.metadata.is_texture_based = True
+    mock_cfg.dataset.effective_is_anatomical = False
+    mock_cfg.dataset.effective_is_texture_based = True
     mock_cfg.architecture.name = "test"
     mock_cfg.dataset.resolution = 28
 
@@ -164,6 +168,8 @@ def test_run_final_evaluation_calls_visualizations(
     mock_cfg.training.use_tta = False
     mock_cfg.dataset.metadata.is_anatomical = True
     mock_cfg.dataset.metadata.is_texture_based = False
+    mock_cfg.dataset.effective_is_anatomical = True
+    mock_cfg.dataset.effective_is_texture_based = False
     mock_cfg.architecture.name = "test"
     mock_cfg.dataset.resolution = 28
 
@@ -217,6 +223,8 @@ def test_run_final_evaluation_creates_report(
     mock_cfg.training.use_tta = False
     mock_cfg.dataset.metadata.is_anatomical = True
     mock_cfg.dataset.metadata.is_texture_based = False
+    mock_cfg.dataset.effective_is_anatomical = True
+    mock_cfg.dataset.effective_is_texture_based = False
     mock_cfg.architecture.name = "test_architecture"
     mock_cfg.dataset.resolution = 28
 

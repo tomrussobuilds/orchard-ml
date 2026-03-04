@@ -124,6 +124,8 @@ class DataLoaderFactory:
             self.dataset_cfg.img_size,
             self.ds_meta,
             force_rgb=self.dataset_cfg.force_rgb,
+            norm_mean=self.dataset_cfg.mean,
+            norm_std=self.dataset_cfg.std,
         )
 
     def _get_balancing_sampler(self, dataset: VisionDataset) -> WeightedRandomSampler | None:

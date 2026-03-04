@@ -629,7 +629,7 @@ def test_optuna_objective_call_returns_worst_metric_on_failure():
 
             result = objective(mock_trial)
 
-            assert result == pytest.approx(0.0)
+            assert result == -float("inf")
             objective._cleanup.assert_called_once()
 
 
@@ -727,10 +727,9 @@ def test_optuna_objective_failed_trial_logs_worst_metric_to_tracker():
 
             result = objective(mock_trial)
 
-    assert result == pytest.approx(0.0)
+    assert result == -float("inf")
     mock_tracker.start_optuna_trial.assert_called_once()
-    # Failed trial: tracker receives worst_metric (0.0 for maximize), not -inf
-    mock_tracker.end_optuna_trial.assert_called_once_with(0.0)
+    mock_tracker.end_optuna_trial.assert_called_once_with(-float("inf"))
 
 
 @pytest.mark.unit

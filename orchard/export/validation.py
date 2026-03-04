@@ -50,9 +50,12 @@ def validate_export(
         True if validation passes, False if outputs diverge,
         None if skipped (onnxruntime not installed).
 
+    Raises:
+        OrchardExportError: If the ONNX file does not exist.
+
     Example:
         >>> model.load_state_dict(torch.load("checkpoint.pth"))
-        >>> valid = validate_export(model, Path("model.onnx"))
+        >>> valid = validate_export(model, Path("model.onnx"), input_shape=(3, 224, 224))
         >>> if valid:
         ...     print("Export validated successfully!")
     """

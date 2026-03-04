@@ -59,6 +59,8 @@ def get_pipeline_transforms(
     ds_meta: DatasetMetadata,
     *,
     force_rgb: bool = True,
+    norm_mean: tuple[float, ...] | None = None,
+    norm_std: tuple[float, ...] | None = None,
 ) -> tuple[v2.Compose, v2.Compose]:
     """
     Constructs training and validation transformation pipelines.
@@ -80,8 +82,12 @@ def get_pipeline_transforms(
     Args:
         aug_cfg: Augmentation sub-configuration
         img_size: Target image size
-        ds_meta: Dataset metadata (channels, normalization stats)
+        ds_meta: Dataset metadata (channels, domain flags)
         force_rgb: Promote grayscale datasets to 3-channel RGB
+        norm_mean: Pre-computed normalization mean (from DatasetConfig).
+            When None, computed from ds_meta + force_rgb.
+        norm_std: Pre-computed normalization std (from DatasetConfig).
+            When None, computed from ds_meta + force_rgb.
 
     Returns:
         tuple[v2.Compose, v2.Compose]: (train_transform, val_transform)
@@ -90,9 +96,12 @@ def get_pipeline_transforms(
     is_rgb = ds_meta.in_channels == 3
     promote_to_rgb = not is_rgb and force_rgb
 
-    # Extract normalization statistics from registry
-    # Replicate single-channel stats for grayscale → RGB promotion
-    if promote_to_rgb:
+    # Normalization statistics: prefer caller-provided (single source of truth
+    # via DatasetConfig.mean/std), fall back to local computation.
+    if norm_mean is not None and norm_std is not None:
+        mean = list(norm_mean)
+        std = list(norm_std)
+    elif promote_to_rgb:
         mean = [ds_meta.mean[0]] * 3
         std = [ds_meta.std[0]] * 3
     else:

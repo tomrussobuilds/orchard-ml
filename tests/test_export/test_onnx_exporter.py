@@ -758,7 +758,7 @@ def test_quantize_4bit_warns_no_gemm_nodes(tmp_path):
     with patch.object(logging.getLogger(LOGGER_NAME), "warning") as mock_warn:
         quantize_model(onnx_path, weight_type="int4")
         warning_calls = [str(c) for c in mock_warn.call_args_list]
-        assert any("no Gemm/MatMul nodes" in w for w in warning_calls)
+        assert any("No Gemm nodes after preprocessing" in w for w in warning_calls)
 
 
 if __name__ == "__main__":
