@@ -123,6 +123,9 @@ hardware:
     allow_process_kill: true
     # Enable strict deterministic mode
     reproducible: false
+    # Warn-only mode for deterministic algorithms (logs warnings
+    # instead of crashing on non-deterministic ops)
+    deterministic_warn_only: false
 
 telemetry:
     # Root directory for experiment outputs

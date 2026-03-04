@@ -59,12 +59,18 @@ def detect_best_device() -> str:
     return "cpu"
 
 
-def to_device_obj(device_str: str) -> torch.device:
+def to_device_obj(device_str: str, local_rank: int = 0) -> torch.device:
     """
     Converts device string to PyTorch device object.
 
+    In distributed multi-GPU setups, uses ``local_rank`` to select the
+    correct GPU and calls ``torch.cuda.set_device()`` for CUDA affinity.
+
     Args:
         device_str: 'cuda', 'cpu', or 'auto' (auto-selects best available)
+        local_rank: Node-local process rank for GPU assignment (default 0).
+            Used to select ``cuda:{local_rank}`` in multi-GPU setups.
+            Ignored for non-CUDA devices.
 
     Returns:
         torch.device object
@@ -80,6 +86,10 @@ def to_device_obj(device_str: str) -> torch.device:
 
     if device_str not in ("cuda", "cpu", "mps"):
         raise ValueError(f"Unsupported device: {device_str}")
+
+    if device_str == "cuda" and local_rank > 0:
+        torch.cuda.set_device(local_rank)
+        return torch.device(f"cuda:{local_rank}")
 
     return torch.device(device_str)
 

@@ -261,5 +261,30 @@ def test_config_forbids_extra_fields():
         HardwareConfig(unknown_field="value")
 
 
+# HARDWARE CONFIG: DETERMINISTIC WARN-ONLY
+@pytest.mark.unit
+def test_deterministic_warn_only_default_false():
+    """Test deterministic_warn_only defaults to False."""
+    config = HardwareConfig(device="cpu")
+
+    assert config.deterministic_warn_only is False
+
+
+@pytest.mark.unit
+def test_deterministic_warn_only_requires_reproducible():
+    """Test deterministic_warn_only=True without reproducible=True raises."""
+    with pytest.raises(ValidationError, match="requires reproducible=True"):
+        HardwareConfig(device="cpu", deterministic_warn_only=True, reproducible=False)
+
+
+@pytest.mark.unit
+def test_deterministic_warn_only_with_reproducible_valid():
+    """Test deterministic_warn_only=True with reproducible=True is valid."""
+    config = HardwareConfig(device="cpu", deterministic_warn_only=True, reproducible=True)
+
+    assert config.deterministic_warn_only is True
+    assert config.reproducible is True
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

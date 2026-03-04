@@ -44,6 +44,7 @@ from .config.infrastructure_config import InfraManagerProtocol, InfrastructureMa
 from .environment import (
     apply_cpu_threads,
     configure_system_libraries,
+    get_local_rank,
     get_rank,
     set_seed,
     to_device_obj,
@@ -144,6 +145,7 @@ class RootOrchestrator:
     Attributes:
         cfg (Config): Validated global configuration (Single Source of Truth)
         rank (int): Global rank of this process (0 in single-process mode)
+        local_rank (int): Node-local rank for GPU assignment (0 in single-process mode)
         is_main_process (bool): True for rank 0, False for non-main ranks
         infra (InfraManagerProtocol): Infrastructure resource manager
         reporter (ReporterProtocol): Environment telemetry engine
@@ -151,6 +153,7 @@ class RootOrchestrator:
         paths (RunPaths | None): Session-specific directory structure (None on non-main ranks)
         run_logger (logging.Logger | None): Active logger instance (None on non-main ranks)
         repro_mode (bool): Strict determinism flag
+        warn_only_mode (bool): Warn-only mode for strict determinism
         num_workers (int): DataLoader worker processes
 
     Example:
@@ -185,6 +188,7 @@ class RootOrchestrator:
         requirements_dumper: Callable[..., Any] | None = None,
         device_resolver: Callable[..., Any] | None = None,
         rank: int | None = None,
+        local_rank: int | None = None,
     ) -> None:
         """
         Initializes orchestrator with dependency injection.
@@ -205,11 +209,15 @@ class RootOrchestrator:
             rank: Global rank of this process (default: auto-detected from RANK env var).
                 Rank 0 executes all phases; rank N skips filesystem, logging,
                 config persistence, infrastructure locking, and reporting.
+            local_rank: Node-local rank for GPU assignment (default: auto-detected
+                from LOCAL_RANK env var). Used by device_resolver to select the
+                correct GPU in multi-GPU distributed setups.
         """
         self.cfg = cfg
 
         # Dependency injection: _resolve for objects, _resolve_callable for functions
         self.rank = _resolve(rank, get_rank)
+        self.local_rank = _resolve(local_rank, get_local_rank)
         self.is_main_process = self.rank == 0
         self.infra = _resolve(infra_manager, InfrastructureManager)
         self.reporter = _resolve(reporter, Reporter)
@@ -236,6 +244,7 @@ class RootOrchestrator:
 
         # Policy extraction from SSOT
         self.repro_mode = self.cfg.hardware.use_deterministic_algorithms
+        self.warn_only_mode = self.cfg.hardware.deterministic_warn_only
         self.num_workers = self.cfg.hardware.effective_num_workers
 
     def __enter__(self) -> "RootOrchestrator":
@@ -307,7 +316,11 @@ class RootOrchestrator:
         logger.debug(  # pragma: no mutant
             "Phase 1: Applying deterministic seeding (seed=%d)", self.cfg.training.seed
         )
-        self._seed_setter(self.cfg.training.seed, strict=self.repro_mode)
+        self._seed_setter(
+            self.cfg.training.seed,
+            strict=self.repro_mode,
+            warn_only=self.warn_only_mode,
+        )
 
     def _phase_2_runtime_configuration(self) -> int:
         """
@@ -443,9 +456,10 @@ class RootOrchestrator:
         reporting) is deferred to log_environment_report().
 
         In distributed mode (torchrun / DDP), only the main process (rank 0)
-        executes phases 3-6 plus device resolution (filesystem, logging,
-        config persistence, infra locking).  All ranks execute phases 1-2
-        (seeding, threads) to ensure identical RNG state and thread affinity.
+        executes phases 3-6 (filesystem, logging, config persistence, infra
+        locking).  All ranks execute phases 1-2 (seeding, threads) for
+        identical RNG state and thread affinity, plus device resolution
+        for DDP readiness (each rank binds to ``cuda:{local_rank}``).
 
         Idempotent: guarded by ``_initialized`` flag. If already initialized,
         returns existing RunPaths without re-executing any phase. This prevents
@@ -454,6 +468,10 @@ class RootOrchestrator:
 
         Returns:
             Provisioned directory structure for rank 0, None for non-main ranks.
+
+        Raises:
+            RuntimeError: If called after cleanup (single-use guard).
+            OrchardDeviceError: If device resolution fails at runtime.
         """
         if self._cleaned_up:
             raise RuntimeError(
@@ -497,6 +515,14 @@ class RootOrchestrator:
             logger.debug(  # pragma: no mutant
                 "Rank %d: skipping phases 3-6 (non-main process).", self.rank
             )
+            # Non-main ranks still need their device for DDP readiness
+            try:
+                self._device_cache = self.get_device()
+            except RuntimeError as e:
+                raise OrchardDeviceError(
+                    f"{LogStyle.FAILURE} Device resolution failed at runtime "
+                    f"(config requested '{self.cfg.hardware.device}'): {e}"
+                ) from e
 
         self._applied_threads = applied_threads
         self._initialized = True
@@ -545,5 +571,8 @@ class RootOrchestrator:
             PyTorch device object for model execution
         """
         if self._device_cache is None:
-            self._device_cache = self._device_resolver(device_str=self.cfg.hardware.device)
+            self._device_cache = self._device_resolver(
+                device_str=self.cfg.hardware.device,
+                local_rank=self.local_rank,
+            )
         return self._device_cache

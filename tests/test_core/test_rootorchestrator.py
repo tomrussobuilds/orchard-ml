@@ -95,12 +95,14 @@ def test_orchestrator_init_with_defaults():
     """Test RootOrchestrator initializes with default dependencies."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
 
     assert orch.cfg == mock_cfg
     assert orch.repro_mode is False
+    assert orch.warn_only_mode is False
     assert orch.num_workers == 4
     assert orch.paths is None
     assert orch.run_logger is None
@@ -111,11 +113,13 @@ def test_orchestrator_init_extracts_policies():
     """Test RootOrchestrator extracts policies from config."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = True
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 8
 
     orch = RootOrchestrator(cfg=mock_cfg)
 
     assert orch.repro_mode is True
+    assert orch.warn_only_mode is False
     assert orch.num_workers == 8
 
 
@@ -124,6 +128,7 @@ def test_init_lazy_attributes_and_policy_extraction():
     """Test __init__ sets lazy attributes and extracts policy flags."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = True
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 5
 
     orch = RootOrchestrator(cfg=mock_cfg)
@@ -132,6 +137,7 @@ def test_init_lazy_attributes_and_policy_extraction():
     assert orch.run_logger is None
     assert orch._device_cache is None
     assert orch.repro_mode is True
+    assert orch.warn_only_mode is False
     assert orch.num_workers == 5
 
 
@@ -141,6 +147,7 @@ def test_context_manager_enter():
     """Test __enter__ calls initialize_core_services."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
@@ -157,6 +164,7 @@ def test_context_manager_enter_exception_cleanup():
     """Test __enter__ calls cleanup on exception."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
@@ -175,6 +183,7 @@ def test_context_manager_exit_calls_cleanup():
     """Test __exit__ calls cleanup."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
@@ -191,6 +200,7 @@ def test_context_manager_exit_propagates_exception():
     """Test __exit__ returns False to propagate exceptions."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
@@ -206,6 +216,7 @@ def test_context_manager_exit_stops_timer():
     """Test __exit__ stops the time tracker and runs cleanup."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     mock_time_tracker = MagicMock()
@@ -226,6 +237,7 @@ def test_get_device_returns_cpu():
     mock_cfg = MagicMock()
     mock_cfg.hardware.device = "cpu"
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
@@ -241,6 +253,7 @@ def test_get_device_caches_result():
     mock_cfg = MagicMock()
     mock_cfg.hardware.device = "cpu"
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
@@ -256,6 +269,7 @@ def test_get_device_calls_resolver_when_cache_none():
     """Test get_device calls device resolver when _device_cache is None."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.device = "cpu"
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 1
     mock_resolver = MagicMock(return_value=torch.device("cpu"))
 
@@ -264,7 +278,7 @@ def test_get_device_calls_resolver_when_cache_none():
 
     device = orch.get_device()
 
-    mock_resolver.assert_called_once_with(device_str="cpu")
+    mock_resolver.assert_called_once_with(device_str="cpu", local_rank=0)
     assert device.type == "cpu"
 
 
@@ -319,11 +333,12 @@ def test_phase_1_determinism_always_calls_seed_setter():
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 123
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_seed_setter = MagicMock()
     orch = RootOrchestrator(cfg=mock_cfg, seed_setter=mock_seed_setter)
 
     orch._phase_1_determinism()
-    mock_seed_setter.assert_called_once_with(123, strict=False)
+    mock_seed_setter.assert_called_once_with(123, strict=False, warn_only=False)
 
 
 @pytest.mark.unit
@@ -433,10 +448,11 @@ def test_device_resolver_fails_raises_device_error_during_init():
 
     mock_cfg = MagicMock()
     mock_cfg.hardware.effective_num_workers = 2
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.device = "cuda"
     mock_paths = MagicMock()
 
-    def failing_resolver(device_str):
+    def failing_resolver(**kwargs):
         raise RuntimeError("device fail")
 
     with pytest.MonkeyPatch.context() as m:
@@ -525,6 +541,7 @@ def test_get_device_with_cuda_string():
     mock_cfg = MagicMock()
     mock_cfg.hardware.device = "cuda"
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     mock_resolver = MagicMock(return_value=torch.device("cuda"))
@@ -533,7 +550,7 @@ def test_get_device_with_cuda_string():
 
     device = orch.get_device()
 
-    mock_resolver.assert_called_once_with(device_str="cuda")
+    mock_resolver.assert_called_once_with(device_str="cuda", local_rank=0)
     assert device.type == "cuda"
 
 
@@ -543,6 +560,7 @@ def test_get_device_with_mps_string():
     mock_cfg = MagicMock()
     mock_cfg.hardware.device = "mps"
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     mock_resolver = MagicMock(return_value=torch.device("mps"))
@@ -551,7 +569,7 @@ def test_get_device_with_mps_string():
 
     device = orch.get_device()
 
-    mock_resolver.assert_called_once_with(device_str="mps")
+    mock_resolver.assert_called_once_with(device_str="mps", local_rank=0)
     assert device.type == "mps"
 
 
@@ -562,6 +580,7 @@ def test_phase_7_device_already_cached_with_logger(caplog):
     import logging
 
     mock_cfg = MagicMock()
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 2
     mock_reporter = MagicMock()
     mock_logger = MagicMock()
@@ -582,6 +601,7 @@ def test_phase_7_device_already_cached_with_logger(caplog):
 def test_phase_7_uses_cached_device():
     """Test _phase_7 uses pre-resolved device cache for reporting."""
     mock_cfg = MagicMock()
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 2
     mock_reporter = MagicMock()
     mock_logger = MagicMock()
@@ -626,6 +646,7 @@ def test_full_lifecycle_with_all_phases(tmp_path):
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
     mock_cfg.hardware.use_deterministic_algorithms = True
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 2
     mock_cfg.hardware.device = "cpu"
     mock_cfg.dataset.dataset_name = "test_dataset"
@@ -678,7 +699,7 @@ def test_full_lifecycle_with_all_phases(tmp_path):
         orch.log_environment_report()
 
         # Verify all phases were executed
-        mock_seed_setter.assert_called_once_with(42, strict=True)
+        mock_seed_setter.assert_called_once_with(42, strict=True, warn_only=False)
         mock_thread_applier.assert_called_once_with(2)
         mock_system_configurator.assert_called_once()
         mock_static_setup.assert_called_once()
@@ -695,6 +716,7 @@ def test_context_manager_full_lifecycle():
     """Test full lifecycle using context manager."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 1
 
     mock_infra = MagicMock()
@@ -717,6 +739,7 @@ def test_initialize_core_services_idempotent_returns_cached_paths(tmp_path):
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 2
     mock_cfg.hardware.device = "cpu"
     mock_cfg.dataset.dataset_name = "ds"
@@ -783,6 +806,7 @@ def test_initialize_core_services_skips_when_already_initialized():
     """Test that initialize_core_services returns immediately when _initialized is True."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 2
 
     existing_paths = MagicMock()
@@ -805,6 +829,7 @@ def test_orchestrator_rank_defaults_to_zero(monkeypatch):
     monkeypatch.delenv("RANK", raising=False)
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
@@ -819,6 +844,7 @@ def test_orchestrator_rank_from_env(monkeypatch):
     monkeypatch.setenv("RANK", "3")
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
@@ -832,6 +858,7 @@ def test_orchestrator_rank_injectable():
     """Test rank can be injected directly, overriding env var."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg, rank=2)
@@ -847,6 +874,7 @@ def test_rank_zero_executes_all_phases(tmp_path):
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 2
     mock_cfg.hardware.device = "cpu"
     mock_cfg.dataset.dataset_name = "ds"
@@ -902,6 +930,7 @@ def test_non_main_rank_skips_phases_3_through_7():
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 2
 
     mock_seed_setter = MagicMock()
@@ -929,7 +958,7 @@ def test_non_main_rank_skips_phases_3_through_7():
     result = orch.initialize_core_services()
 
     # Phases 1-2 executed
-    mock_seed_setter.assert_called_once_with(42, strict=False)
+    mock_seed_setter.assert_called_once_with(42, strict=False, warn_only=False)
     mock_thread_applier.assert_called_once_with(2)
 
     # Phases 3-6 skipped
@@ -938,6 +967,9 @@ def test_non_main_rank_skips_phases_3_through_7():
     mock_config_saver.assert_not_called()
     mock_infra.prepare_environment.assert_not_called()
     mock_reporter.log_initial_status.assert_not_called()
+
+    # Device still resolved for DDP readiness
+    assert orch._device_cache is not None
 
     # paths and run_logger remain None
     assert result is None
@@ -988,6 +1020,7 @@ def test_non_main_rank_context_manager_lifecycle():
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 2
 
     mock_infra = MagicMock()
@@ -1000,6 +1033,7 @@ def test_non_main_rank_context_manager_lifecycle():
         seed_setter=mock_seed_setter,
         thread_applier=mock_thread_applier,
         system_configurator=MagicMock(),
+        device_resolver=MagicMock(return_value=torch.device("cpu")),
         rank=1,
     )
 
@@ -1018,6 +1052,7 @@ def test_init_initialized_starts_false():
     """Test _initialized flag starts as False."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
@@ -1030,6 +1065,7 @@ def test_init_applied_threads_starts_zero():
     """Test _applied_threads starts as 0."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
@@ -1041,6 +1077,7 @@ def test_init_applied_threads_starts_zero():
 def test_phase_7_reporter_receives_all_kwargs():
     """Test _phase_7_environment_report passes all kwargs to reporter.log_initial_status."""
     mock_cfg = MagicMock()
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 3
     mock_reporter = MagicMock()
     mock_logger = MagicMock()
@@ -1086,6 +1123,7 @@ def test_cleanup_error_message_content():
 def test_log_environment_report_noop_on_non_main_rank():
     """Test log_environment_report is a no-op for non-main ranks."""
     mock_cfg = MagicMock()
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 2
     mock_reporter = MagicMock()
 
@@ -1104,6 +1142,7 @@ def test_applied_threads_stored_from_phase_2(tmp_path):
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 2
     mock_cfg.dataset.dataset_name = "ds"
     mock_cfg.architecture.name = "arch"
@@ -1145,6 +1184,7 @@ def test_applied_threads_stored_non_main_rank():
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 2
 
     mock_thread_applier = MagicMock(return_value=6)
@@ -1154,6 +1194,7 @@ def test_applied_threads_stored_non_main_rank():
         seed_setter=MagicMock(),
         thread_applier=mock_thread_applier,
         system_configurator=MagicMock(),
+        device_resolver=MagicMock(return_value=torch.device("cpu")),
         rank=1,
     )
 
@@ -1200,6 +1241,7 @@ def test_initialized_flag_set_after_init():
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 2
 
     orch = RootOrchestrator(
@@ -1207,6 +1249,7 @@ def test_initialized_flag_set_after_init():
         seed_setter=MagicMock(),
         thread_applier=MagicMock(return_value=2),
         system_configurator=MagicMock(),
+        device_resolver=MagicMock(return_value=torch.device("cpu")),
         rank=1,
     )
 
@@ -1239,6 +1282,7 @@ def test_phase_5_config_saver_receives_data_and_path():
 def test_log_environment_report_noop_when_not_initialized():
     """Test log_environment_report is a no-op when _initialized is False."""
     mock_cfg = MagicMock()
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 2
     mock_reporter = MagicMock()
 
@@ -1258,6 +1302,7 @@ def test_cleaned_up_blocks_reinitialize():
     """Test initialize_core_services raises RuntimeError after cleanup."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 2
 
     orch = RootOrchestrator(cfg=mock_cfg, rank=0)
@@ -1342,11 +1387,155 @@ def test_infra_lock_acquired_false_by_default():
     """Test _infra_lock_acquired starts as False."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
 
     assert orch._infra_lock_acquired is False
+
+
+# LOCAL_RANK AND WARN_ONLY SUPPORT
+@pytest.mark.unit
+def test_orchestrator_local_rank_defaults_to_zero():
+    """Test local_rank defaults to 0 when LOCAL_RANK env var is not set."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 4
+
+    orch = RootOrchestrator(cfg=mock_cfg)
+
+    assert orch.local_rank == 0
+
+
+@pytest.mark.unit
+def test_orchestrator_local_rank_from_env(monkeypatch):
+    """Test local_rank is read from LOCAL_RANK env var."""
+    monkeypatch.setenv("LOCAL_RANK", "2")
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 4
+
+    orch = RootOrchestrator(cfg=mock_cfg)
+
+    assert orch.local_rank == 2
+
+
+@pytest.mark.unit
+def test_orchestrator_local_rank_injectable():
+    """Test local_rank can be injected directly."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 4
+
+    orch = RootOrchestrator(cfg=mock_cfg, local_rank=3)
+
+    assert orch.local_rank == 3
+
+
+@pytest.mark.unit
+def test_orchestrator_stores_warn_only_mode():
+    """Test warn_only_mode is extracted from config."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = True
+    mock_cfg.hardware.deterministic_warn_only = True
+    mock_cfg.hardware.effective_num_workers = 0
+
+    orch = RootOrchestrator(cfg=mock_cfg)
+
+    assert orch.warn_only_mode is True
+
+
+@pytest.mark.unit
+def test_phase_1_passes_warn_only_true():
+    """Test _phase_1_determinism passes warn_only=True to seed setter."""
+    mock_cfg = MagicMock()
+    mock_cfg.training.seed = 42
+    mock_cfg.hardware.use_deterministic_algorithms = True
+    mock_cfg.hardware.deterministic_warn_only = True
+    mock_cfg.hardware.effective_num_workers = 0
+    mock_seed_setter = MagicMock()
+
+    orch = RootOrchestrator(cfg=mock_cfg, seed_setter=mock_seed_setter)
+    orch._phase_1_determinism()
+
+    mock_seed_setter.assert_called_once_with(42, strict=True, warn_only=True)
+
+
+@pytest.mark.unit
+def test_get_device_passes_local_rank():
+    """Test get_device passes local_rank to device resolver."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.device = "cuda"
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 4
+    mock_resolver = MagicMock(return_value=torch.device("cuda:1"))
+
+    orch = RootOrchestrator(cfg=mock_cfg, device_resolver=mock_resolver, local_rank=1)
+    device = orch.get_device()
+
+    mock_resolver.assert_called_once_with(device_str="cuda", local_rank=1)
+    assert device == torch.device("cuda:1")
+
+
+@pytest.mark.unit
+def test_non_main_rank_resolves_device():
+    """Test non-main ranks resolve their device during initialization."""
+    mock_cfg = MagicMock()
+    mock_cfg.training.seed = 42
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 2
+    mock_cfg.hardware.device = "cpu"
+    mock_resolver = MagicMock(return_value=torch.device("cpu"))
+
+    orch = RootOrchestrator(
+        cfg=mock_cfg,
+        seed_setter=MagicMock(),
+        thread_applier=MagicMock(return_value=2),
+        system_configurator=MagicMock(),
+        device_resolver=mock_resolver,
+        rank=1,
+        local_rank=1,
+    )
+
+    orch.initialize_core_services()
+
+    mock_resolver.assert_called_once_with(device_str="cpu", local_rank=1)
+    assert orch._device_cache == torch.device("cpu")
+
+
+@pytest.mark.unit
+def test_non_main_rank_device_failure_raises():
+    """Test non-main rank device resolution failure raises OrchardDeviceError."""
+    from orchard.exceptions import OrchardDeviceError
+
+    mock_cfg = MagicMock()
+    mock_cfg.training.seed = 42
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 2
+    mock_cfg.hardware.device = "cuda"
+
+    def failing_resolver(**kwargs):
+        raise RuntimeError("GPU gone")
+
+    orch = RootOrchestrator(
+        cfg=mock_cfg,
+        seed_setter=MagicMock(),
+        thread_applier=MagicMock(return_value=2),
+        system_configurator=MagicMock(),
+        device_resolver=failing_resolver,
+        rank=1,
+        local_rank=1,
+    )
+
+    with pytest.raises(OrchardDeviceError, match="Device resolution failed"):
+        orch.initialize_core_services()
 
 
 if __name__ == "__main__":

@@ -358,5 +358,34 @@ def test_full_hardware_workflow(mock_cpu_count):
     assert threads >= 2
 
 
+# DEVICE OBJECT: LOCAL_RANK SUPPORT
+@pytest.mark.unit
+@patch("torch.cuda.is_available", return_value=True)
+@patch("torch.cuda.set_device")
+def test_to_device_obj_cuda_with_local_rank(mock_set_device, mock_cuda):
+    """to_device_obj assigns correct GPU for local_rank > 0."""
+    device = to_device_obj("cuda", local_rank=1)
+
+    mock_set_device.assert_called_once_with(1)
+    assert device == torch.device("cuda:1")
+
+
+@pytest.mark.unit
+@patch("torch.cuda.is_available", return_value=True)
+def test_to_device_obj_cuda_local_rank_zero(mock_cuda):
+    """to_device_obj returns standard cuda device for local_rank=0."""
+    device = to_device_obj("cuda", local_rank=0)
+
+    assert device == torch.device("cuda")
+
+
+@pytest.mark.unit
+def test_to_device_obj_cpu_ignores_local_rank():
+    """to_device_obj ignores local_rank for CPU device."""
+    device = to_device_obj("cpu", local_rank=3)
+
+    assert device == torch.device("cpu")
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -68,6 +68,7 @@ augmentation:
 hardware:
   device: "auto"
   reproducible: false
+  deterministic_warn_only: false
 
 telemetry:
   output_dir: ./outputs

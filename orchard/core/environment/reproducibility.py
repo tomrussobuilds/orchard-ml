@@ -5,7 +5,7 @@ Ensures deterministic behavior across Python, NumPy, and PyTorch by
 centralizing RNG seeding, DataLoader worker initialization, and strict
 algorithmic determinism enforcement.
 
-Two reproducibility levels are supported:
+Three reproducibility levels are supported:
 
 - **Standard** (``strict=False``): Seeds all PRNGs and disables cuDNN
   auto-tuner. Sufficient for most experiments — results are reproducible
@@ -16,6 +16,10 @@ Two reproducibility levels are supported:
   CPU) and configures ``CUBLAS_WORKSPACE_CONFIG`` when CUDA is available.
   Forces ``num_workers=0`` via HardwareConfig to eliminate multiprocessing
   non-determinism. Incurs a 5-30% performance penalty on GPU workloads.
+- **Strict warn-only** (``strict=True, warn_only=True``): Same as strict,
+  but non-deterministic operations emit warnings instead of raising errors.
+  Useful for discovering which operations lack deterministic kernels without
+  crashing the experiment.
 
 Strict mode is controlled by ``HardwareConfig.use_deterministic_algorithms``,
 resolved from the recipe YAML or direct Config construction.
@@ -32,7 +36,7 @@ import torch
 
 
 # REPRODUCIBILITY LOGIC
-def set_seed(seed: int, strict: bool = False) -> None:
+def set_seed(seed: int, strict: bool = False, warn_only: bool = False) -> None:
     """
     Seed all PRNGs and optionally enforce deterministic algorithms.
 
@@ -52,6 +56,10 @@ def set_seed(seed: int, strict: bool = False) -> None:
     Args:
         seed: The seed value to set across all PRNGs.
         strict: If True, enforces deterministic algorithms (5-30% perf penalty).
+        warn_only: If True (and strict=True), uses warn-only mode for
+            ``torch.use_deterministic_algorithms`` — logs warnings instead of
+            raising errors for non-deterministic ops. Ignored when strict
+            is False.
     """
     random.seed(seed)
 
@@ -69,7 +77,10 @@ def set_seed(seed: int, strict: bool = False) -> None:
     np.random.seed(seed)
     torch.manual_seed(seed)
 
-    if torch.cuda.is_available():
+    has_cuda = torch.cuda.is_available()
+    has_mps = hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
+
+    if has_cuda:
         torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
@@ -77,12 +88,18 @@ def set_seed(seed: int, strict: bool = False) -> None:
         if strict:
             os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
-    # Inline MPS check: leaf module, no intra-package imports from hardware.py
-    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+    if has_mps:
         torch.mps.manual_seed(seed)
 
     if strict:
-        torch.use_deterministic_algorithms(True)
+        if has_mps:
+            warnings.warn(
+                "MPS backend has partial determinism support in PyTorch. "
+                "Some operations may not have deterministic implementations. "
+                "Consider using CPU for fully deterministic experiments.",
+                stacklevel=2,
+            )
+        torch.use_deterministic_algorithms(True, warn_only=warn_only)
 
 
 def worker_init_fn(worker_id: int) -> None:

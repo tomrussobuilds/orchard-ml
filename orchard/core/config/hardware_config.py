@@ -19,8 +19,9 @@ from pathlib import Path
 from typing import cast
 
 import torch
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from ...exceptions import OrchardConfigError
 from ..environment import detect_best_device, get_num_workers
 from .types import DeviceType, ProjectSlug
 
@@ -40,6 +41,8 @@ class HardwareConfig(BaseModel):
         allow_process_kill: Allow terminating duplicate/zombie processes.
         reproducible: Enable strict deterministic mode (disables workers,
             enables deterministic algorithms).
+        deterministic_warn_only: Use warn-only mode for deterministic algorithms.
+            Requires reproducible=True.
     """
 
     model_config = ConfigDict(
@@ -60,6 +63,19 @@ class HardwareConfig(BaseModel):
     )
 
     reproducible: bool = Field(default=False, description="Enable strict deterministic mode")
+    deterministic_warn_only: bool = Field(
+        default=False,
+        description="Use warn-only mode for deterministic algorithms "
+        "(logs warnings instead of crashing on non-deterministic ops). "
+        "Requires reproducible=True.",
+    )
+
+    @model_validator(mode="after")
+    def _validate_warn_only_requires_reproducible(self) -> "HardwareConfig":
+        """Ensure deterministic_warn_only is only set with reproducible mode."""
+        if self.deterministic_warn_only and not self.reproducible:
+            raise OrchardConfigError("deterministic_warn_only=True requires reproducible=True")
+        return self
 
     @field_validator("device")
     @classmethod

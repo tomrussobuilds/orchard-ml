@@ -56,7 +56,7 @@ def test_set_seed_strict_mode_with_cuda_available():
         patch("torch.use_deterministic_algorithms") as mock_deterministic,
     ):
         set_seed(42, strict=True)
-        mock_deterministic.assert_called_once_with(True)
+        mock_deterministic.assert_called_once_with(True, warn_only=False)
 
         assert torch.backends.cudnn.deterministic is True
         assert torch.backends.cudnn.benchmark is False
@@ -85,7 +85,7 @@ def test_set_seed_strict_mode_without_cuda():
         patch("torch.use_deterministic_algorithms") as mock_deterministic,
     ):
         set_seed(42, strict=True)
-        mock_deterministic.assert_called_once_with(True)
+        mock_deterministic.assert_called_once_with(True, warn_only=False)
 
 
 @pytest.mark.unit
@@ -148,9 +148,10 @@ def test_set_seed_strict_mode_with_mps_available():
         patch("torch.mps", mock_mps),
         patch("torch.use_deterministic_algorithms") as mock_deterministic,
     ):
-        set_seed(42, strict=True)
+        with pytest.warns(UserWarning, match="MPS backend has partial determinism"):
+            set_seed(42, strict=True)
         mock_mps.manual_seed.assert_called_once_with(42)
-        mock_deterministic.assert_called_once_with(True)
+        mock_deterministic.assert_called_once_with(True, warn_only=False)
 
 
 @pytest.mark.unit
@@ -244,3 +245,55 @@ def test_set_seed_strict_mode_real_mps():
 def test_set_seed_non_strict_mode_real_mps():
     """Integration test: non-strict mode with real MPS hardware."""
     set_seed(42, strict=False)
+
+
+# TESTS: warn_only mode
+@pytest.mark.unit
+def test_set_seed_strict_warn_only_mode():
+    """Strict mode with warn_only passes warn_only=True to PyTorch."""
+    with (
+        patch("torch.cuda.is_available", return_value=False),
+        patch("torch.use_deterministic_algorithms") as mock_deterministic,
+    ):
+        set_seed(42, strict=True, warn_only=True)
+        mock_deterministic.assert_called_once_with(True, warn_only=True)
+
+
+@pytest.mark.unit
+def test_set_seed_strict_warn_only_false_by_default():
+    """Strict mode defaults to warn_only=False."""
+    with (
+        patch("torch.cuda.is_available", return_value=False),
+        patch("torch.use_deterministic_algorithms") as mock_deterministic,
+    ):
+        set_seed(42, strict=True)
+        mock_deterministic.assert_called_once_with(True, warn_only=False)
+
+
+@pytest.mark.unit
+def test_set_seed_warn_only_ignored_when_not_strict():
+    """warn_only is ignored when strict=False."""
+    with (
+        patch("torch.cuda.is_available", return_value=False),
+        patch("torch.use_deterministic_algorithms") as mock_deterministic,
+    ):
+        set_seed(42, strict=False, warn_only=True)
+        mock_deterministic.assert_not_called()
+
+
+# TESTS: MPS strict mode warning
+@pytest.mark.unit
+def test_set_seed_strict_mps_partial_determinism_warning():
+    """Strict mode with MPS warns about partial determinism support."""
+    mock_mps_backend = MagicMock()
+    mock_mps_backend.is_available.return_value = True
+    mock_mps = MagicMock()
+
+    with (
+        patch("torch.cuda.is_available", return_value=False),
+        patch("torch.backends.mps", mock_mps_backend),
+        patch("torch.mps", mock_mps),
+        patch("torch.use_deterministic_algorithms"),
+        pytest.warns(UserWarning, match="MPS backend has partial determinism"),
+    ):
+        set_seed(42, strict=True)
