@@ -320,6 +320,9 @@ cp recipes/config_efficientnet_b0.yaml my_run.yaml
 orchard run my_run.yaml
 ```
 
+> [!TIP]
+> **Annotated starter recipe**: Run `orchard init` to generate a self-documented recipe with inline comments describing every field, its valid range, and accepted values. See [`recipes/starter.yaml`](recipes/starter.yaml) for a reference example.
+
 ---
 
 <h2>Documentation</h2>

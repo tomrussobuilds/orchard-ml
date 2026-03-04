@@ -521,8 +521,239 @@ class TestCLIInit:
         target = tmp_path / "recipe.yaml"
         runner.invoke(app, ["init", str(target)])
         content = target.read_text()
-        assert content.startswith("# =")
+        assert content.startswith("# yaml-language-server:")
+        assert "# =" in content
         assert "orchard run" in content
+
+
+class TestCommentedYaml:
+    """Tests for commented YAML generation in init command."""
+
+    @pytest.fixture()
+    def recipe_content(self, tmp_path):
+        """Generate a recipe and return its content."""
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        runner = CliRunner()
+        target = tmp_path / "recipe.yaml"
+        runner.invoke(app, ["init", str(target)])
+        return target.read_text()
+
+    def test_comments_present(self, recipe_content):
+        """Generated recipe contains field description comments."""
+        assert "# Dataset identifier" in recipe_content
+        assert "# Samples per batch" in recipe_content
+        assert "# Optimizer algorithm" in recipe_content
+        assert "# Initial learning rate" in recipe_content
+        assert "# Enable MLflow tracking" in recipe_content
+
+    def test_constraint_ranges(self, recipe_content):
+        """Comments include constraint ranges with en-dash."""
+        assert "(1\u2013128)" in recipe_content  # batch_size
+        assert "(0.0\u20130.2)" in recipe_content  # weight_decay
+
+    def test_enum_options(self, recipe_content):
+        """Comments include enum values in brackets."""
+        assert "[sgd, adamw]" in recipe_content
+        assert "[auc, accuracy, f1]" in recipe_content
+        assert "[cosine, plateau, step, none]" in recipe_content
+
+    def test_one_sided_constraints(self, recipe_content):
+        """Comments include one-sided constraints."""
+        assert "(\u2265 0)" in recipe_content  # patience
+        assert "(> 0)" in recipe_content  # epochs
+
+    def test_roundtrip_values(self, tmp_path):
+        """Commented YAML parses to correct values."""
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+        from orchard.core.io import load_config_from_yaml
+
+        runner = CliRunner()
+        target = tmp_path / "recipe.yaml"
+        runner.invoke(app, ["init", str(target)])
+        data = load_config_from_yaml(target)
+
+        assert set(data.keys()) == {
+            "dataset",
+            "architecture",
+            "training",
+            "augmentation",
+            "hardware",
+            "telemetry",
+            "evaluation",
+            "tracking",
+            "export",
+            "optuna",
+        }
+        assert data["training"]["learning_rate"] == pytest.approx(0.008)
+        assert data["training"]["min_lr"] == pytest.approx(1e-6)
+        assert data["dataset"]["max_samples"] is None
+        assert data["evaluation"]["fig_size_predictions"] == [12, 8]
+
+    def test_nested_search_space(self, tmp_path):
+        """Nested search_space_overrides renders correctly."""
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+        from orchard.core.io import load_config_from_yaml
+
+        runner = CliRunner()
+        target = tmp_path / "recipe.yaml"
+        runner.invoke(app, ["init", str(target)])
+        data = load_config_from_yaml(target)
+        sso = data["optuna"]["search_space_overrides"]
+        assert sso["learning_rate"]["log"] is True
+        assert sso["batch_size_low_res"] == [16, 32, 48, 64]
+        assert sso["optimizer_type"] == ["sgd", "adamw"]
+
+    def test_no_floatrange_docstrings(self, recipe_content):
+        """FloatRange/IntRange type docstrings must not leak as comments."""
+        assert "Typed bounds for" not in recipe_content
+        assert "Lower bound (inclusive)" not in recipe_content
+
+    def test_comments_above_fields(self, recipe_content):
+        """Comments appear on the line immediately above the field."""
+        lines = recipe_content.split("\n")
+        for i, line in enumerate(lines):
+            if "    batch_size: " in line and i > 0:
+                assert lines[i - 1].strip().startswith("# Samples per batch")
+                break
+
+
+class TestYamlHelpers:
+    """Unit tests for YAML builder helper functions."""
+
+    def test_format_none(self):
+        from orchard.cli_app import _format_yaml_value
+
+        assert _format_yaml_value(None) == "null"
+
+    def test_format_bool(self):
+        from orchard.cli_app import _format_yaml_value
+
+        assert _format_yaml_value(True) == "true"
+        assert _format_yaml_value(False) == "false"
+
+    def test_format_int(self):
+        from orchard.cli_app import _format_yaml_value
+
+        assert _format_yaml_value(42) == "42"
+
+    def test_format_float(self):
+        from orchard.cli_app import _format_yaml_value
+
+        assert _format_yaml_value(0.5) == "0.5"
+
+    def test_format_small_float(self):
+        from orchard.cli_app import _format_yaml_value
+
+        result = _format_yaml_value(1e-6)
+        assert "1" in result
+        assert "e" in result.lower()
+        # Must not contain YAML document-end marker
+        assert "..." not in result
+
+    def test_format_string_keyword(self):
+        from orchard.cli_app import _format_yaml_value
+
+        assert _format_yaml_value("true") == "'true'"
+        assert _format_yaml_value("null") == "'null'"
+
+    def test_format_plain_string(self):
+        from orchard.cli_app import _format_yaml_value
+
+        assert _format_yaml_value("bloodmnist") == "bloodmnist"
+
+    def test_build_comment_description_only(self):
+        from orchard.cli_app import _build_comment
+
+        assert _build_comment({"description": "Enable tracking"}) == "Enable tracking"
+
+    def test_build_comment_enum(self):
+        from orchard.cli_app import _build_comment
+
+        result = _build_comment({"description": "Optimizer", "enum": ["sgd", "adamw"]})
+        assert result == "Optimizer [sgd, adamw]"
+
+    def test_build_comment_range(self):
+        from orchard.cli_app import _build_comment
+
+        result = _build_comment({"description": "Batch size", "minimum": 1, "maximum": 128})
+        assert "Batch size" in result
+        assert "1" in result
+        assert "128" in result
+
+    def test_build_comment_no_description(self):
+        from orchard.cli_app import _build_comment
+
+        assert _build_comment({"minimum": 0, "type": "integer"}) is None
+        assert _build_comment({}) is None
+
+    def test_build_comment_exclusive_range(self):
+        from orchard.cli_app import _build_comment
+
+        result = _build_comment(
+            {"description": "LR", "exclusiveMinimum": 1e-8, "exclusiveMaximum": 1.0}
+        )
+        assert "LR" in result  # type: ignore[operator]
+        assert "1e-08" in result  # type: ignore[operator]
+
+    def test_build_comment_upper_only(self):
+        from orchard.cli_app import _build_comment
+
+        assert _build_comment({"description": "Cap", "maximum": 100}) == "Cap (\u2264 100)"
+        assert _build_comment({"description": "Lim", "exclusiveMaximum": 5}) == "Lim (< 5)"
+
+    def test_format_string_with_special_chars(self):
+        from orchard.cli_app import _format_yaml_value
+
+        assert _format_yaml_value("a:b") == "'a:b'"
+        assert _format_yaml_value("") == "''"
+
+    def test_format_large_float(self):
+        from orchard.cli_app import _format_yaml_value
+
+        result = _format_yaml_value(1e8)
+        assert "..." not in result
+
+    def test_format_zero_float(self):
+        from orchard.cli_app import _format_yaml_value
+
+        assert _format_yaml_value(0.0) == "0.0"
+
+    def test_render_list_of_dicts(self, tmp_path):
+        """list-of-dicts branch in _render_fields."""
+        from orchard.cli_app import _render_fields
+
+        lines: list[str] = []
+        _render_fields(lines, {"items": [{"a": 1}]}, {}, indent=0, defs={})
+        text = "\n".join(lines)
+        assert "items:" in text
+        assert "a: 1" in text
+
+    def test_format_non_scalar_falls_back_to_yaml_dump(self):
+        """yaml.dump fallback for non-scalar types (tuple, custom objects)."""
+        from orchard.cli_app import _format_yaml_value
+
+        result = _format_yaml_value((1, 2, 3))
+        # yaml.dump renders tuples as flow sequences: [1, 2, 3]
+        assert "1" in result
+        assert "2" in result
+        assert "..." not in result
+
+    def test_build_commented_yaml_unknown_section(self):
+        """Sections with no matching Pydantic model still render fields."""
+        from orchard.cli_app import _build_commented_yaml
+
+        data = {"unknown_section": {"foo": "bar", "baz": 42}}
+        result = _build_commented_yaml(data)
+        assert "unknown_section:" in result
+        assert "foo: bar" in result
+        assert "baz: 42" in result
 
 
 if __name__ == "__main__":

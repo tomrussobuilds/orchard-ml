@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - enable mypy --strict across codebase, CI, and badge workflows
 - add CodeQL SAST workflow, uv.lock for reproducible builds
+- generate annotated YAML recipes with inline field documentation
 
 ### Changed
 
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - resolve all CodeQL code scanning alerts in test suite
 - resolve CodeQL alert #13 — remove dual import of orchard.core.paths
 - harden RootOrchestrator lifecycle guards and error handling
+- merge implicit string concatenations in logger calls
 
 ## [0.1.9] - 2026-03-03
 

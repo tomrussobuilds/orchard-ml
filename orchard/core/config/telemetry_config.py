@@ -34,11 +34,11 @@ class TelemetryConfig(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     # Filesystem
-    output_dir: ValidatedPath = Field(default="./outputs")  # type: ignore[assignment]
+    output_dir: ValidatedPath = Field(default="./outputs", description="Root directory for experiment outputs")  # type: ignore[assignment]
 
     # Telemetry
-    log_interval: LogFrequency = Field(default=10)
-    log_level: LogLevel = Field(default="INFO")
+    log_interval: LogFrequency = Field(default=10, description="Epoch logging cadence")
+    log_level: LogLevel = Field(default="INFO", description="Logging verbosity level")
 
     # I/O streaming chunk size (8192 bytes) is defined as a default parameter
     # in data_io.md5_checksum and galaxy10_converter, not here, to avoid

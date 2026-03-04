@@ -61,10 +61,12 @@ class DatasetConfig(BaseModel):
     use_weighted_sampler: bool = Field(
         default=True, description="Use class-weighted sampler to handle imbalanced datasets"
     )
-    max_samples: PositiveInt | None = Field(default=None)
+    max_samples: PositiveInt | None = Field(
+        default=None, description="Maximum samples to load (null = all)"
+    )
     val_ratio: Probability = Field(
         default=0.10,
-        description="Fraction of max_samples used for val/test splits (0.0-1.0)",
+        description="Fraction of max_samples used for val/test splits",
     )
 
     img_size: ImageSize | None = Field(
