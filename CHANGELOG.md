@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - harden RootOrchestrator lifecycle guards and error handling
 - merge implicit string concatenations in logger calls
 - harden RootOrchestrator phase 6 fail-fast and fix mypy callable inference
+- harden quantization, Optuna reporting, and fix misleading docs
 
 ## [0.1.9] - 2026-03-03
 

@@ -6,7 +6,7 @@
 <!-- Badges Section -->
 <table align="center">
 <tr>
-<td align="right"><strong>CI & Quality</strong></td>
+<td align="right"><strong>CI / CD</strong></td>
 <td align="center">
   <a href="https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml"><img src="https://github.com/tomrussobuilds/orchard-ml/actions/workflows/ci.yml/badge.svg" alt="CI/CD Pipeline"></a>
   <a href="https://codecov.io/gh/tomrussobuilds/orchard-ml"><img src="https://codecov.io/gh/tomrussobuilds/orchard-ml/branch/main/graph/badge.svg" alt="Coverage"></a>
@@ -34,7 +34,7 @@
 </td>
 </tr>
 <tr>
-<td align="right"><strong>Code Quality</strong></td>
+<td align="right"><strong>Static Analysis</strong></td>
 <td align="center">
   <!-- Dynamic badges — updated by .github/workflows/badges.yml via Gist -->
   <a href="https://github.com/psf/black"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/tomrussobuilds/7835190af6011e9051b673c8be974f8a/raw/black.json" alt="Black"></a>
