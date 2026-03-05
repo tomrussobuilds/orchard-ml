@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- add --set override safety guards for Optuna and export configs
+
 ### Changed
 
 - use domain-specific exceptions instead of bare ValueError
