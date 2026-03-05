@@ -53,7 +53,7 @@ def save_config_as_yaml(data: Any, yaml_path: Path) -> Path:
                 raw_dict = data.model_dump(mode="json")
             except (TypeError, ValueError):  # pragma: no cover
                 # Fallback for older Pydantic V2 versions or complex types
-                raw_dict = data.model_dump()
+                raw_dict = data.model_dump()  # pragma: no mutate
 
         # Priority 3: Raw dictionary or other types
         else:
@@ -102,7 +102,7 @@ def dump_requirements(output_path: Path) -> None:
         header = f"# Python {sys.version.split()[0]}\n"
         output_path.write_text(header + result.stdout, encoding="utf-8")
     except (subprocess.TimeoutExpired, OSError) as e:
-        logger.warning("Failed to dump requirements: %s", e)
+        logger.error("Failed to dump requirements: %s", e)
 
 
 def load_config_from_yaml(yaml_path: Path) -> dict[str, Any]:

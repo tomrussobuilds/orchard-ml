@@ -177,6 +177,30 @@ mutants survive. To kill mutants effectively:
 
 ---
 
+<h2>Known Issue: `set_start_method` Crash</h2>
+
+mutmut 3.5 calls `multiprocessing.set_start_method('fork')` at module level
+in `mutmut/__main__.py` (line 1152). When the trampoline re-imports this
+module during stats collection, the call fails with:
+
+```
+RuntimeError: context has already been set
+```
+
+**Fix:** patch your local mutmut installation:
+
+```bash
+# In your mutmut venv
+sed -i "s/set_start_method('fork')/set_start_method('fork', force=True)/" \
+    venv/lib/python3.12/site-packages/mutmut/__main__.py
+```
+
+This is safe — `force=True` simply allows resetting the already-set context.
+The bug is masked when stats are cached; it surfaces whenever mutmut needs
+to re-collect stats (new tests added, cache cleaned).
+
+---
+
 <h2>conftest Helper</h2>
 
 When tests use `patch.dict(os.environ, ..., clear=True)`, mutmut v3

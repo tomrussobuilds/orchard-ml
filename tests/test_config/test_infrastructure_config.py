@@ -461,5 +461,275 @@ def test_release_resources_lock_failure(tmp_path):
     assert any("Failed to release lock" in msg for msg in warnings)
 
 
+# INFRASTRUCTURE MANAGER: SHARED ENV VAR DETECTION (per-variable)
+@pytest.mark.integration
+def test_prepare_environment_detects_lsb_jobid(tmp_path, monkeypatch):
+    """Test prepare_environment() detects LSF (LSB_JOBID) environment."""
+    manager = InfrastructureManager()
+
+    monkeypatch.delenv("SLURM_JOB_ID", raising=False)
+    monkeypatch.delenv("PBS_JOBID", raising=False)
+    monkeypatch.delenv("RANK", raising=False)
+    monkeypatch.delenv("LOCAL_RANK", raising=False)
+    monkeypatch.setenv("LSB_JOBID", "99999")
+
+    class MockHardware:
+        allow_process_kill = True
+        lock_file_path = tmp_path / "test.lock"
+
+    debug_calls: list[str] = []
+    mock_logger = SimpleNamespace(
+        info=lambda msg, *a: None,
+        debug=lambda msg, *a: debug_calls.append(msg % a if a else msg),
+        warning=lambda msg, *a: None,
+    )
+    config = SimpleNamespace(hardware=MockHardware())
+    manager.prepare_environment(config, logger=mock_logger)
+
+    assert any("Shared environment detected" in msg for msg in debug_calls)
+    manager.release_resources(config, logger=mock_logger)
+
+
+@pytest.mark.integration
+def test_prepare_environment_detects_rank_env(tmp_path, monkeypatch):
+    """Test prepare_environment() detects distributed RANK environment."""
+    manager = InfrastructureManager()
+
+    monkeypatch.delenv("SLURM_JOB_ID", raising=False)
+    monkeypatch.delenv("PBS_JOBID", raising=False)
+    monkeypatch.delenv("LSB_JOBID", raising=False)
+    monkeypatch.delenv("LOCAL_RANK", raising=False)
+    monkeypatch.setenv("RANK", "0")
+
+    class MockHardware:
+        allow_process_kill = True
+        lock_file_path = tmp_path / "test.lock"
+
+    debug_calls: list[str] = []
+    mock_logger = SimpleNamespace(
+        info=lambda msg, *a: None,
+        debug=lambda msg, *a: debug_calls.append(msg % a if a else msg),
+        warning=lambda msg, *a: None,
+    )
+    config = SimpleNamespace(hardware=MockHardware())
+    manager.prepare_environment(config, logger=mock_logger)
+
+    assert any("Shared environment detected" in msg for msg in debug_calls)
+    manager.release_resources(config, logger=mock_logger)
+
+
+@pytest.mark.integration
+def test_prepare_environment_detects_local_rank_env(tmp_path, monkeypatch):
+    """Test prepare_environment() detects distributed LOCAL_RANK environment."""
+    manager = InfrastructureManager()
+
+    monkeypatch.delenv("SLURM_JOB_ID", raising=False)
+    monkeypatch.delenv("PBS_JOBID", raising=False)
+    monkeypatch.delenv("LSB_JOBID", raising=False)
+    monkeypatch.delenv("RANK", raising=False)
+    monkeypatch.setenv("LOCAL_RANK", "0")
+
+    class MockHardware:
+        allow_process_kill = True
+        lock_file_path = tmp_path / "test.lock"
+
+    debug_calls: list[str] = []
+    mock_logger = SimpleNamespace(
+        info=lambda msg, *a: None,
+        debug=lambda msg, *a: debug_calls.append(msg % a if a else msg),
+        warning=lambda msg, *a: None,
+    )
+    config = SimpleNamespace(hardware=MockHardware())
+    manager.prepare_environment(config, logger=mock_logger)
+
+    assert any("Shared environment detected" in msg for msg in debug_calls)
+    manager.release_resources(config, logger=mock_logger)
+
+
+# INFRASTRUCTURE MANAGER: VERIFY FUNCTION CALL ARGUMENTS
+@pytest.mark.integration
+def test_prepare_environment_calls_ensure_single_instance_with_correct_kwargs(tmp_path):
+    """Test that ensure_single_instance receives lock_file and logger kwargs."""
+    manager = InfrastructureManager()
+
+    class MockHardware:
+        allow_process_kill = False
+        lock_file_path = tmp_path / "test.lock"
+
+    config = SimpleNamespace(hardware=MockHardware())
+
+    with patch("orchard.core.config.infrastructure_config.ensure_single_instance") as mock_ensure:
+        manager.prepare_environment(config)
+
+        mock_ensure.assert_called_once()
+        call_kwargs = mock_ensure.call_args
+        assert call_kwargs.kwargs["lock_file"] == tmp_path / "test.lock"
+        assert call_kwargs.kwargs["logger"] is not None
+
+
+@pytest.mark.integration
+def test_release_resources_calls_release_single_instance_with_lock_path(tmp_path):
+    """Test that release_single_instance receives the correct lock path."""
+    manager = InfrastructureManager()
+
+    class MockHardware:
+        allow_process_kill = False
+        lock_file_path = tmp_path / "test.lock"
+
+    config = SimpleNamespace(hardware=MockHardware())
+
+    with patch("orchard.core.config.infrastructure_config.release_single_instance") as mock_release:
+        manager.release_resources(config)
+
+        mock_release.assert_called_once_with(tmp_path / "test.lock")
+
+
+@pytest.mark.unit
+def test_release_resources_calls_flush_compute_cache(tmp_path, monkeypatch):
+    """Test that release_resources delegates to _flush_compute_cache with log."""
+    manager = InfrastructureManager()
+
+    class MockHardware:
+        allow_process_kill = False
+        lock_file_path = tmp_path / "test.lock"
+
+    config = SimpleNamespace(hardware=MockHardware())
+
+    flush_calls: list[dict] = []
+    original_flush = InfrastructureManager._flush_compute_cache
+
+    def tracking_flush(self, **kwargs):
+        flush_calls.append(kwargs)
+
+    with patch("orchard.core.config.infrastructure_config.release_single_instance"):
+        monkeypatch.setattr(InfrastructureManager, "_flush_compute_cache", tracking_flush)
+        manager.release_resources(config)
+
+    assert len(flush_calls) == 1
+    assert flush_calls[0]["log"] is not None
+
+
+@pytest.mark.unit
+def test_prepare_environment_default_logger_fallback(tmp_path):
+    """Test prepare_environment uses default logger when none is passed."""
+    manager = InfrastructureManager()
+
+    class MockHardware:
+        allow_process_kill = False
+        lock_file_path = tmp_path / "test.lock"
+
+    config = SimpleNamespace(hardware=MockHardware())
+
+    with patch("orchard.core.config.infrastructure_config.ensure_single_instance") as mock_ensure:
+        # No logger passed → should use logging.getLogger(LOGGER_NAME)
+        manager.prepare_environment(config)
+        _, kwargs = mock_ensure.call_args
+        assert kwargs["logger"] is not None
+
+
+@pytest.mark.unit
+def test_release_resources_default_logger_fallback(tmp_path, monkeypatch):
+    """Test release_resources uses default logger when none is passed."""
+    manager = InfrastructureManager()
+
+    class MockHardware:
+        allow_process_kill = False
+        lock_file_path = tmp_path / "test.lock"
+
+    config = SimpleNamespace(hardware=MockHardware())
+
+    flush_calls: list[dict] = []
+
+    def tracking_flush(self, **kwargs):
+        flush_calls.append(kwargs)
+
+    with patch("orchard.core.config.infrastructure_config.release_single_instance"):
+        monkeypatch.setattr(InfrastructureManager, "_flush_compute_cache", tracking_flush)
+        # No logger passed
+        manager.release_resources(config)
+
+    assert len(flush_calls) == 1
+    assert flush_calls[0]["log"] is not None
+
+
+@pytest.mark.unit
+def test_flush_compute_cache_default_logger_fallback(monkeypatch):
+    """Test _flush_compute_cache uses default logger when None is passed."""
+    manager = InfrastructureManager()
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+
+    cache_cleared = False
+
+    def mock_empty():
+        nonlocal cache_cleared
+        cache_cleared = True
+
+    monkeypatch.setattr(torch.cuda, "empty_cache", mock_empty)
+
+    # Pass log=None → should fallback to getLogger and not crash
+    manager._flush_compute_cache(log=None)
+    assert cache_cleared
+
+
+@pytest.mark.integration
+def test_prepare_environment_process_kill_calls_terminate_duplicates(tmp_path, monkeypatch):
+    """Test that terminate_duplicates is actually called on non-shared env."""
+    manager = InfrastructureManager()
+
+    monkeypatch.delenv("SLURM_JOB_ID", raising=False)
+    monkeypatch.delenv("PBS_JOBID", raising=False)
+    monkeypatch.delenv("LSB_JOBID", raising=False)
+    monkeypatch.delenv("RANK", raising=False)
+    monkeypatch.delenv("LOCAL_RANK", raising=False)
+
+    class MockHardware:
+        allow_process_kill = True
+        lock_file_path = tmp_path / "test.lock"
+
+    config = SimpleNamespace(hardware=MockHardware())
+
+    with (
+        patch("orchard.core.config.infrastructure_config.DuplicateProcessCleaner") as mock_cls,
+        patch("orchard.core.config.infrastructure_config.ensure_single_instance"),
+    ):
+        mock_instance = mock_cls.return_value
+        mock_instance.terminate_duplicates.return_value = 0
+
+        manager.prepare_environment(config)
+
+        mock_instance.terminate_duplicates.assert_called_once()
+
+
+@pytest.mark.integration
+def test_prepare_environment_any_shared_env_skips_kill(tmp_path, monkeypatch):
+    """Test that ANY single shared env var is enough to skip process kill (any vs all)."""
+    manager = InfrastructureManager()
+
+    # Only set ONE env var — if mutmut changes any() to all(), this would fail
+    monkeypatch.delenv("SLURM_JOB_ID", raising=False)
+    monkeypatch.delenv("PBS_JOBID", raising=False)
+    monkeypatch.delenv("LSB_JOBID", raising=False)
+    monkeypatch.delenv("LOCAL_RANK", raising=False)
+    monkeypatch.setenv("RANK", "0")
+
+    class MockHardware:
+        allow_process_kill = True
+        lock_file_path = tmp_path / "test.lock"
+
+    config = SimpleNamespace(hardware=MockHardware())
+
+    with (
+        patch("orchard.core.config.infrastructure_config.DuplicateProcessCleaner") as mock_cls,
+        patch("orchard.core.config.infrastructure_config.ensure_single_instance"),
+    ):
+        mock_instance = mock_cls.return_value
+
+        manager.prepare_environment(config)
+
+        # terminate_duplicates should NOT have been called (shared env detected)
+        mock_instance.terminate_duplicates.assert_not_called()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

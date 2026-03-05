@@ -62,12 +62,12 @@ orchard/cli_app.py:
   not_checked: 0
   score: 81.0
 orchard/core/config/infrastructure_config.py:
-  last_run: '2026-03-05T09:43:34Z'
+  last_run: '2026-03-05T12:58:51Z'
   total: 53
-  killed: 34
-  survived: 19
+  killed: 41
+  survived: 12
   not_checked: 0
-  score: 64.2
+  score: 77.4
 orchard/core/config/manifest.py:
   last_run: '2026-03-05T10:57:03Z'
   total: 45
@@ -153,12 +153,12 @@ orchard/core/io/data_io.py:
   not_checked: 0
   score: 85.3
 orchard/core/io/serialization.py:
-  last_run: '2026-03-05T09:45:48Z'
-  total: 136
-  killed: 70
-  survived: 66
+  last_run: '2026-03-05T12:57:45Z'
+  total: 135
+  killed: 132
+  survived: 3
   not_checked: 0
-  score: 51.5
+  score: 97.8
 orchard/core/logger/logger.py:
   last_run: '2026-03-05T09:46:42Z'
   total: 181
