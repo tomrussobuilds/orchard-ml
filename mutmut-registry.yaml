@@ -125,12 +125,12 @@ orchard/core/environment/policy.py:
   not_checked: 0
   score: 100.0
 orchard/core/environment/reproducibility.py:
-  last_run: '2026-03-05T09:44:57Z'
-  total: 75
-  killed: 41
-  survived: 34
+  last_run: '2026-03-05T11:42:38Z'
+  total: 59
+  killed: 57
+  survived: 2
   not_checked: 0
-  score: 54.7
+  score: 96.6
 orchard/core/environment/timing.py:
   last_run: '2026-03-05T09:45:04Z'
   total: 5

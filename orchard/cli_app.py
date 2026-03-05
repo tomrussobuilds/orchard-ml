@@ -53,6 +53,18 @@ _YAML_INDENT = "    "
 _YAML_KEYWORDS = frozenset({"true", "false", "null", "yes", "no", "on", "off", ""})
 
 
+# ── Version callback ──────────────────────────────────────────────────────
+
+
+def _version_callback(value: bool) -> None:
+    """Print version and exit."""
+    if value:
+        from importlib.metadata import version as pkg_version
+
+        typer.echo(f"orchard-ml {pkg_version('orchard-ml')}")
+        raise typer.Exit()
+
+
 # ── Commands ───────────────────────────────────────────────────────────────
 
 
@@ -211,15 +223,6 @@ def run(
 
 
 # ── CLI override helpers ───────────────────────────────────────────────────
-
-
-def _version_callback(value: bool) -> None:
-    """Print version and exit."""
-    if value:
-        from importlib.metadata import version as pkg_version
-
-        typer.echo(f"orchard-ml {pkg_version('orchard-ml')}")
-        raise typer.Exit()
 
 
 def _auto_cast(value: str) -> Any:
