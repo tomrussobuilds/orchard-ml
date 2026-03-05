@@ -52,6 +52,7 @@ def _source_files(target: str) -> list[Path]:
     if p.is_dir():
         return sorted(f for f in p.rglob("*.py") if f.name != "__pycache__")
     sys.exit(f"Target not found: {target}")
+    return []  # unreachable — satisfies static analysis
 
 
 def _to_mutmut_glob(source: Path) -> str:

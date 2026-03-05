@@ -596,7 +596,6 @@ def test_release_resources_calls_flush_compute_cache(tmp_path, monkeypatch):
     config = SimpleNamespace(hardware=MockHardware())
 
     flush_calls: list[dict] = []
-    original_flush = InfrastructureManager._flush_compute_cache
 
     def tracking_flush(self, **kwargs):
         flush_calls.append(kwargs)
