@@ -43,7 +43,7 @@ def download_galaxy10_h5(
         chunk_size: Streaming chunk size in bytes.
     """
     if target_h5.exists():
-        logger.info(  # pragma: no mutant
+        logger.info(  # pragma: no mutate
             "%s%s %-18s: %s",
             LogStyle.INDENT,
             LogStyle.ARROW,
@@ -57,7 +57,7 @@ def download_galaxy10_h5(
 
     for attempt in range(1, retries + 1):
         try:
-            logger.info(  # pragma: no mutant
+            logger.info(  # pragma: no mutate
                 "%s%s %-18s: Galaxy10 (attempt %d/%d)",
                 LogStyle.INDENT,
                 LogStyle.ARROW,
@@ -75,7 +75,7 @@ def download_galaxy10_h5(
                             f.write(chunk)
 
             tmp_path.replace(target_h5)
-            logger.info(  # pragma: no mutant
+            logger.info(  # pragma: no mutate
                 "%s%s %-18s: %s",
                 LogStyle.INDENT,
                 LogStyle.SUCCESS,
@@ -113,7 +113,7 @@ def convert_galaxy10_to_npz(
         target_size: Target image size (default 224)
         seed: Random seed for splits
     """
-    logger.info(  # pragma: no mutant
+    logger.info(  # pragma: no mutate
         "%s%s %-18s: Galaxy10 → NPZ (%dx%d)",
         LogStyle.INDENT,
         LogStyle.ARROW,
@@ -126,7 +126,7 @@ def convert_galaxy10_to_npz(
         images = np.array(f["images"])
         labels = np.array(f["ans"])
 
-        logger.info(  # pragma: no mutant
+        logger.info(  # pragma: no mutate
             "%s%s %-18s: %d images (%s)",
             LogStyle.INDENT,
             LogStyle.ARROW,
@@ -137,7 +137,7 @@ def convert_galaxy10_to_npz(
 
         # Resize if needed
         if images.shape[1] != target_size or images.shape[2] != target_size:
-            logger.info(  # pragma: no mutant
+            logger.info(  # pragma: no mutate
                 "%s%s %-18s: %dx%d → %dx%d",
                 LogStyle.INDENT,
                 LogStyle.ARROW,
@@ -176,14 +176,14 @@ def convert_galaxy10_to_npz(
             test_labels=test_labels,
         )
 
-        logger.info(  # pragma: no mutant
+        logger.info(  # pragma: no mutate
             "%s%s %-18s: %s",
             LogStyle.INDENT,
             LogStyle.SUCCESS,
             "NPZ Created",
             output_npz.name,
         )
-        logger.info(  # pragma: no mutant
+        logger.info(  # pragma: no mutate
             "%s%s %-18s: Train: %d, Val: %d, Test: %d",
             LogStyle.INDENT,
             LogStyle.ARROW,
@@ -294,7 +294,7 @@ def ensure_galaxy10_npz(metadata: DatasetMetadata) -> Path:
             actual_md5 == metadata.md5_checksum
             or metadata.md5_checksum == "placeholder_will_be_calculated_after_conversion"
         ):
-            logger.debug(  # pragma: no mutant
+            logger.debug(  # pragma: no mutate
                 "%s%s %-18s: Galaxy10 found at %s",
                 LogStyle.INDENT,
                 LogStyle.ARROW,
@@ -320,12 +320,12 @@ def ensure_galaxy10_npz(metadata: DatasetMetadata) -> Path:
 
     # Report MD5
     actual_md5 = md5_checksum(target_npz)
-    logger.info(  # pragma: no mutant
+    logger.info(  # pragma: no mutate
         "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "MD5", actual_md5
     )
 
     if metadata.md5_checksum == "placeholder_will_be_calculated_after_conversion":
-        logger.info(  # pragma: no mutant
+        logger.info(  # pragma: no mutate
             '%s%s %-18s: Update metadata.md5_checksum = "%s"',
             LogStyle.INDENT,
             LogStyle.ARROW,

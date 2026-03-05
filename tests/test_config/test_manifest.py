@@ -7,6 +7,8 @@ serialization, and from_recipe factory.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
@@ -17,6 +19,14 @@ from orchard.core import (
     HardwareConfig,
     TrainingConfig,
 )
+from orchard.core.config.manifest import (
+    _MODELS_224_ONLY,
+    _MODELS_LOW_RES,
+    _RESOLUTIONS_224_ONLY,
+    _RESOLUTIONS_LOW_RES,
+    _deep_set,
+)
+from orchard.exceptions import OrchardConfigError
 
 
 # CONFIG: BASIC CONSTRUCTION
@@ -304,6 +314,178 @@ def test_min_lr_boundary_condition_line_106(mock_metadata_28):
             ),
             hardware=HardwareConfig(device="cpu"),
         )
+
+
+# ---------------------------------------------------------------------------
+# Mutation-killing tests
+# ---------------------------------------------------------------------------
+@pytest.mark.unit
+def test_models_low_res_exact_contents():
+    """Assert _MODELS_LOW_RES contains exactly mini_cnn."""
+    assert _MODELS_LOW_RES == frozenset({"mini_cnn"})
+    assert len(_MODELS_LOW_RES) == 1
+
+
+@pytest.mark.unit
+def test_models_224_only_exact_contents():
+    """Assert _MODELS_224_ONLY contains exactly the 3 expected models."""
+    assert _MODELS_224_ONLY == frozenset({"efficientnet_b0", "vit_tiny", "convnext_tiny"})
+    assert len(_MODELS_224_ONLY) == 3
+
+
+@pytest.mark.unit
+def test_resolutions_low_res_exact_contents():
+    """Assert _RESOLUTIONS_LOW_RES contains exactly {28, 32, 64}."""
+    assert _RESOLUTIONS_LOW_RES == frozenset({28, 32, 64})
+    assert 28 in _RESOLUTIONS_LOW_RES
+    assert 32 in _RESOLUTIONS_LOW_RES
+    assert 64 in _RESOLUTIONS_LOW_RES
+    assert 224 not in _RESOLUTIONS_LOW_RES
+
+
+@pytest.mark.unit
+def test_resolutions_224_only_exact_contents():
+    """Assert _RESOLUTIONS_224_ONLY contains exactly {224}."""
+    assert _RESOLUTIONS_224_ONLY == frozenset({224})
+    assert 28 not in _RESOLUTIONS_224_ONLY
+
+
+@pytest.mark.unit
+def test_deep_set_nested_path():
+    """Test _deep_set creates intermediate dicts for nested dot paths."""
+    data: dict = {}
+    _deep_set(data, "a.b.c", 42)
+    assert data == {"a": {"b": {"c": 42}}}
+
+
+@pytest.mark.unit
+def test_deep_set_single_key():
+    """Test _deep_set with a single key (no dots)."""
+    data: dict = {}
+    _deep_set(data, "key", "value")
+    assert data == {"key": "value"}
+
+
+@pytest.mark.unit
+def test_deep_set_overwrites_existing():
+    """Test _deep_set overwrites existing value at path."""
+    data = {"a": {"b": 10}}
+    _deep_set(data, "a.b", 20)
+    assert data["a"]["b"] == 20
+
+
+@pytest.mark.unit
+def test_deep_set_preserves_siblings():
+    """Test _deep_set preserves sibling keys in intermediate dicts."""
+    data = {"a": {"existing": 99}}
+    _deep_set(data, "a.new_key", 42)
+    assert data["a"]["existing"] == 99
+    assert data["a"]["new_key"] == 42
+
+
+@pytest.mark.unit
+def test_dump_portable_relative_data_root():
+    """Test dump_portable converts data_root inside PROJECT_ROOT to relative."""
+    from orchard.core.config import manifest as manifest_mod
+
+    original_root = manifest_mod.PROJECT_ROOT
+    cfg = Config(
+        dataset=DatasetConfig(
+            name="bloodmnist",
+            resolution=28,
+            data_root=str(original_root / "data" / "bloodmnist"),
+        ),
+        hardware=HardwareConfig(device="cpu"),
+    )
+    portable = cfg.dump_portable()
+    ds = portable.get("dataset", {})
+    dr = ds.get("data_root")
+    if dr is not None:
+        assert dr.startswith("./") or not Path(dr).is_absolute()
+
+
+@pytest.mark.unit
+def test_dump_portable_no_data_root():
+    """Test dump_portable handles None data_root without crashing."""
+    cfg = Config(hardware=HardwareConfig(device="cpu"))
+    portable = cfg.dump_portable()
+    assert "dataset" in portable
+
+
+@pytest.mark.unit
+def test_dump_serialized_returns_dict():
+    """Test dump_serialized produces JSON-compatible dict with mode='json'."""
+    cfg = Config(hardware=HardwareConfig(device="cpu"))
+    serialized = cfg.dump_serialized()
+    assert isinstance(serialized, dict)
+    for key in ("hardware", "training", "dataset"):
+        assert key in serialized
+
+
+@pytest.mark.unit
+def test_run_slug_exact_format():
+    """Test run_slug produces '{dataset}_{model}' format."""
+    cfg = Config(
+        dataset=DatasetConfig(name="bloodmnist", resolution=28),
+        architecture=ArchitectureConfig(name="mini_cnn", pretrained=False),
+        hardware=HardwareConfig(device="cpu"),
+    )
+    assert cfg.run_slug == "bloodmnist_mini_cnn"
+
+
+@pytest.mark.unit
+def test_num_workers_delegates_to_hardware():
+    """Test num_workers property delegates to hardware.effective_num_workers."""
+    cfg = Config(
+        hardware=HardwareConfig(device="cpu", reproducible=True),
+    )
+    assert cfg.num_workers == cfg.hardware.effective_num_workers
+    assert cfg.num_workers == 0  # reproducible forces 0
+
+
+@pytest.mark.unit
+def test_from_recipe_missing_dataset_name(tmp_path):
+    """Test from_recipe raises OrchardConfigError when dataset.name is missing."""
+    recipe = tmp_path / "recipe.yaml"
+    recipe.write_text("dataset:\n  resolution: 28\n")
+    with pytest.raises(OrchardConfigError, match="must specify 'dataset.name'"):
+        Config.from_recipe(recipe)
+
+
+@pytest.mark.unit
+def test_from_recipe_unknown_dataset(tmp_path):
+    """Test from_recipe raises OrchardConfigError for unknown dataset."""
+    recipe = tmp_path / "recipe.yaml"
+    recipe.write_text("dataset:\n  name: nonexistent_dataset_xyz\n  resolution: 28\n")
+    with pytest.raises(OrchardConfigError, match="not found at resolution"):
+        Config.from_recipe(recipe)
+
+
+@pytest.mark.unit
+def test_from_recipe_with_overrides(tmp_path):
+    """Test from_recipe applies dot-notation overrides."""
+    recipe = tmp_path / "recipe.yaml"
+    recipe.write_text(
+        "dataset:\n  name: bloodmnist\n  resolution: 28\n"
+        "training:\n  epochs: 50\n  mixup_epochs: 0\n"
+        "architecture:\n  name: mini_cnn\n  pretrained: false\n"
+        "hardware:\n  device: cpu\n"
+    )
+    cfg = Config.from_recipe(recipe, overrides={"training.epochs": 10})
+    assert cfg.training.epochs == 10
+
+
+@pytest.mark.unit
+def test_from_recipe_default_resolution_28(tmp_path):
+    """Test from_recipe uses resolution=28 as default."""
+    recipe = tmp_path / "recipe.yaml"
+    recipe.write_text(
+        "dataset:\n  name: bloodmnist\n"
+        "architecture:\n  name: mini_cnn\n  pretrained: false\n"
+        "hardware:\n  device: cpu\n"
+    )
+    cfg = Config.from_recipe(recipe)
+    assert cfg.dataset.resolution == 28
 
 
 if __name__ == "__main__":

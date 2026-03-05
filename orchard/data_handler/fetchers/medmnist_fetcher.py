@@ -49,7 +49,7 @@ def ensure_medmnist_npz(
 
     # 1. Validation of existing file
     if _is_valid_npz(target_npz, metadata.md5_checksum):
-        logger.debug(  # pragma: no mutant
+        logger.debug(  # pragma: no mutate
             "%s%s %-18s: '%s' found at %s",
             LogStyle.INDENT,
             LogStyle.ARROW,
@@ -65,7 +65,7 @@ def ensure_medmnist_npz(
         target_npz.unlink()
 
     # 3. Download logic with retries
-    logger.info(  # pragma: no mutant
+    logger.info(  # pragma: no mutate
         "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Downloading", metadata.name
     )
     target_npz.parent.mkdir(parents=True, exist_ok=True)
@@ -82,7 +82,7 @@ def ensure_medmnist_npz(
 
             # Atomic move
             tmp_path.replace(target_npz)
-            logger.info(  # pragma: no mutant
+            logger.info(  # pragma: no mutate
                 "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.SUCCESS, "Verified", metadata.name
             )
             return target_npz

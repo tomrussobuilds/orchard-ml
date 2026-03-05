@@ -139,9 +139,9 @@ class StudyEarlyStoppingCallback:
 
         # Threshold met
         self._count += 1
-        cmp = "≥" if self.direction == "maximize" else "≤"
-        logger.info(  # pragma: no mutant
-            "%s%s Trial %d reached threshold (%.6f %s %.6f) [%d/%d]",
+        cmp = "≥" if self.direction == "maximize" else "≤"  # pragma: no mutate
+        logger.info(  # pragma: no mutate
+            "%s%s Trial %d reached threshold (%.6f %s %.6f) [%d/%d]",  # pragma: no mutate
             LogStyle.INDENT,
             LogStyle.SUCCESS,
             trial.number,
@@ -164,35 +164,37 @@ class StudyEarlyStoppingCallback:
             trials_saved = "N/A"
 
         # Use LogStyle for consistent formatting
-        Reporter.log_phase_header(
-            logger, "EARLY STOPPING: Target performance achieved!", LogStyle.DOUBLE
+        Reporter.log_phase_header(  # pragma: no mutate
+            logger,
+            "EARLY STOPPING: Target performance achieved!",
+            LogStyle.DOUBLE,  # pragma: no mutate
         )
-        logger.info(  # pragma: no mutant
-            "%s%s Metric           : %.6f",
+        logger.info(  # pragma: no mutate
+            "%s%s Metric           : %.6f",  # pragma: no mutate
             LogStyle.INDENT,
             LogStyle.SUCCESS,
             value,
         )
-        logger.info(  # pragma: no mutant
-            "%s%s Threshold        : %.6f",
+        logger.info(  # pragma: no mutate
+            "%s%s Threshold        : %.6f",  # pragma: no mutate
             LogStyle.INDENT,
             LogStyle.ARROW,
             self.threshold,
         )
-        logger.info(  # pragma: no mutant
-            "%s%s Trials completed : %d",
+        logger.info(  # pragma: no mutate
+            "%s%s Trials completed : %d",  # pragma: no mutate
             LogStyle.INDENT,
             LogStyle.ARROW,
             trial.number + 1,
         )
-        logger.info(  # pragma: no mutant
-            "%s%s Trials saved     : %s",
+        logger.info(  # pragma: no mutate
+            "%s%s Trials saved     : %s",  # pragma: no mutate
             LogStyle.INDENT,
             LogStyle.SUCCESS,
             trials_saved,
         )
-        logger.info(LogStyle.DOUBLE)  # pragma: no mutant
-        logger.info("")  # pragma: no mutant
+        logger.info(LogStyle.DOUBLE)  # pragma: no mutate
+        logger.info("")  # pragma: no mutate
 
         study.stop()
 

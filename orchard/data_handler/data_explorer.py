@@ -70,33 +70,33 @@ def show_sample_images(
     images = torch.clamp(images, 0, 1)
 
     # Create a grid
-    grid = make_grid(images, nrow=int(actual_samples**0.5), padding=2)  # pragma: no mutant
+    grid = make_grid(images, nrow=int(actual_samples**0.5), padding=2)  # pragma: no mutate
 
     # Convert to numpy HWC for matplotlib
-    plt.imshow(  # pragma: no mutant
+    plt.imshow(  # pragma: no mutate
         (
             grid.squeeze(0).cpu().numpy()
             if images.shape[1] == 1
             else grid.permute(1, 2, 0).cpu().numpy()
         ),
-        cmap="gray" if images.shape[1] == 1 else None,  # pragma: no mutant
+        cmap="gray" if images.shape[1] == 1 else None,  # pragma: no mutate
     )
 
     # Figure title
-    title_str = f"{arch_name} — {actual_samples} Samples"  # pragma: no mutant
+    title_str = f"{arch_name} — {actual_samples} Samples"  # pragma: no mutate
     if title_prefix:
-        title_str = f"{title_prefix} — {title_str}"  # pragma: no mutant
-    plt.title(title_str, fontsize=14)  # pragma: no mutant
+        title_str = f"{title_prefix} — {title_str}"  # pragma: no mutate
+    plt.title(title_str, fontsize=14)  # pragma: no mutate
 
-    plt.axis("off")  # pragma: no mutant
-    plt.tight_layout()  # pragma: no mutant
+    plt.axis("off")  # pragma: no mutate
+    plt.tight_layout()  # pragma: no mutate
 
     # Ensure target directory exists
     save_path.parent.mkdir(parents=True, exist_ok=True)
 
-    plt.savefig(save_path, dpi=fig_dpi, bbox_inches="tight")  # pragma: no mutant
-    plt.close()  # pragma: no mutant
-    logger.info(  # pragma: no mutant
+    plt.savefig(save_path, dpi=fig_dpi, bbox_inches="tight")  # pragma: no mutate
+    plt.close()  # pragma: no mutate
+    logger.info(  # pragma: no mutate
         "%s%s %-18s: %s",
         LogStyle.INDENT,
         LogStyle.ARROW,

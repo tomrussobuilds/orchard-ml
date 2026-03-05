@@ -70,11 +70,11 @@ def export_to_onnx(
         ...     input_shape=(3, 224, 224),
         ... )
     """
-    logger.info("  [Source]")  # pragma: no mutant
-    logger.info(  # pragma: no mutant
+    logger.info("  [Source]")  # pragma: no mutate
+    logger.info(  # pragma: no mutate
         f"    {LogStyle.BULLET} Checkpoint        : {checkpoint_path.name}"
     )
-    logger.info("")  # pragma: no mutant
+    logger.info("")  # pragma: no mutate
 
     # Create output directory if needed
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -93,15 +93,15 @@ def export_to_onnx(
     # Create dummy input (batch_size=1 for tracing)
     dummy_input = torch.randn(1, *input_shape)
 
-    logger.info("  [Export Settings]")  # pragma: no mutant
-    logger.info(  # pragma: no mutant
+    logger.info("  [Export Settings]")  # pragma: no mutate
+    logger.info(  # pragma: no mutate
         "    %s Format            : ONNX (opset %s)", LogStyle.BULLET, opset_version
     )
-    logger.info(  # pragma: no mutant
+    logger.info(  # pragma: no mutate
         "    %s Input shape       : %s", LogStyle.BULLET, tuple(dummy_input.shape)
     )
-    logger.info("    %s Dynamic axes      : %s", LogStyle.BULLET, dynamic_axes)  # pragma: no mutant
-    logger.info("")  # pragma: no mutant
+    logger.info("    %s Dynamic axes      : %s", LogStyle.BULLET, dynamic_axes)  # pragma: no mutate
+    logger.info("")  # pragma: no mutate
 
     # Prepare dynamic axes configuration
     if dynamic_axes:
@@ -158,12 +158,12 @@ def export_to_onnx(
             onnx_model = onnx.load(str(output_path))
             onnx.checker.check_model(onnx_model)
 
-            logger.info("  [Validation]")  # pragma: no mutant
-            logger.info(  # pragma: no mutant
+            logger.info("  [Validation]")  # pragma: no mutate
+            logger.info(  # pragma: no mutate
                 f"    {LogStyle.BULLET} ONNX check        : {LogStyle.SUCCESS} Valid"
             )
             size_mb = _onnx_file_size_mb(output_path)
-            logger.info(  # pragma: no mutant
+            logger.info(  # pragma: no mutate
                 f"    {LogStyle.BULLET} Model size        : {size_mb:.2f} MB"
             )
 
@@ -178,7 +178,7 @@ def export_to_onnx(
                 logger.info("    %s Cleaned up invalid ONNX file", LogStyle.ARROW)
             raise
 
-    logger.info("")  # pragma: no mutant
+    logger.info("")  # pragma: no mutate
 
 
 def quantize_model(
@@ -211,9 +211,9 @@ def quantize_model(
     if output_path is None:
         output_path = onnx_path.parent / "model_quantized.onnx"
 
-    logger.info("  [Quantization]")  # pragma: no mutant
-    logger.info("    %s Backend           : %s", LogStyle.BULLET, backend)  # pragma: no mutant
-    logger.info("    %s Weight type       : %s", LogStyle.BULLET, weight_type)  # pragma: no mutant
+    logger.info("  [Quantization]")  # pragma: no mutate
+    logger.info("    %s Backend           : %s", LogStyle.BULLET, backend)  # pragma: no mutate
+    logger.info("    %s Weight type       : %s", LogStyle.BULLET, weight_type)  # pragma: no mutate
 
     try:
         if weight_type in ("int4", "uint4"):
@@ -236,13 +236,13 @@ def quantize_model(
     quantized_mb = _onnx_file_size_mb(output_path)
     ratio = original_mb / quantized_mb if quantized_mb > 0 else 0
 
-    logger.info(  # pragma: no mutant
+    logger.info(  # pragma: no mutate
         f"    {LogStyle.BULLET} Size              : {original_mb:.2f} MB → {quantized_mb:.2f} MB ({ratio:.1f}x)"
     )
-    logger.info(  # pragma: no mutant
+    logger.info(  # pragma: no mutate
         f"    {LogStyle.BULLET} Status            : {LogStyle.SUCCESS} Done"
     )
-    logger.info("")  # pragma: no mutant
+    logger.info("")  # pragma: no mutate
 
     return output_path
 
@@ -397,7 +397,7 @@ def benchmark_onnx_inference(
         import numpy as np
         import onnxruntime as ort
 
-        logger.info("  [Benchmark — %s]", label)  # pragma: no mutant
+        logger.info("  [Benchmark — %s]", label)  # pragma: no mutate
 
         # Create inference session
         session = ort.InferenceSession(str(onnx_path))
@@ -417,11 +417,11 @@ def benchmark_onnx_inference(
         elapsed = time.time() - start
 
         avg_latency_ms = (elapsed / num_runs) * 1000
-        logger.info("    %s Runs              : %s", LogStyle.BULLET, num_runs)  # pragma: no mutant
-        logger.info(  # pragma: no mutant
+        logger.info("    %s Runs              : %s", LogStyle.BULLET, num_runs)  # pragma: no mutate
+        logger.info(  # pragma: no mutate
             "    %s Avg latency       : %.2fms", LogStyle.BULLET, avg_latency_ms
         )
-        logger.info("")  # pragma: no mutant
+        logger.info("")  # pragma: no mutate
 
         return avg_latency_ms
 

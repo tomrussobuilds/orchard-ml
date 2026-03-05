@@ -183,14 +183,14 @@ class ModelTrainer:
             ),
         )
 
-        logger.info(  # pragma: no mutant
-            "%s%s %-18s: %s",
-            LogStyle.INDENT,
-            LogStyle.ARROW,
-            "Checkpoint",
-            self.best_path.name,
+        logger.info(  # pragma: no mutate
+            "%s%s %-18s: %s",  # pragma: no mutate
+            LogStyle.INDENT,  # pragma: no mutate
+            LogStyle.ARROW,  # pragma: no mutate
+            "Checkpoint",  # pragma: no mutate
+            self.best_path.name,  # pragma: no mutate
         )
-        logger.info("")  # pragma: no mutant
+        logger.info("")  # pragma: no mutate
 
     def train(self) -> tuple[Path, list[float], list[Mapping[str, float]]]:
         """
@@ -218,8 +218,8 @@ class ModelTrainer:
         - Early stopping triggers if no monitor_metric improvement for `patience` epochs
         """
         for epoch in range(1, self.epochs + 1):
-            header = " Epoch %02d/%d " % (epoch, self.epochs)
-            logger.info(header.center(LogStyle.HEADER_WIDTH, "-"))  # pragma: no mutant
+            header = " Epoch %02d/%d " % (epoch, self.epochs)  # pragma: no mutate
+            logger.info(header.center(LogStyle.HEADER_WIDTH, "-"))  # pragma: no mutate
 
             # --- 1. Train → Validate → Schedule (delegated to _loop) ---
             epoch_loss, val_metrics = self._loop.run_epoch(epoch)
@@ -261,7 +261,7 @@ class ModelTrainer:
 
         return self.best_path, self.train_losses, self.val_metrics_history
 
-    def _log_epoch_summary(
+    def _log_epoch_summary(  # pragma: no mutate
         self,
         epoch: int,
         train_loss: float,
@@ -271,44 +271,44 @@ class ModelTrainer:
         lr: float,
     ) -> None:
         """Log structured per-epoch metrics using project LogStyle."""
-        I = LogStyle.INDENT  # noqa: E741  # pragma: no mutant
-        A = LogStyle.ARROW  # pragma: no mutant
-        B = LogStyle.BULLET  # pragma: no mutant
-        remaining = self.patience - self.epochs_no_improve  # pragma: no mutant
-        label = self.monitor_metric.upper()  # pragma: no mutant
+        I = LogStyle.INDENT  # noqa: E741  # pragma: no mutate
+        A = LogStyle.ARROW  # pragma: no mutate
+        B = LogStyle.BULLET  # pragma: no mutate
+        remaining = self.patience - self.epochs_no_improve  # pragma: no mutate
+        label = self.monitor_metric.upper()  # pragma: no mutate
 
-        logger.info(LogStyle.LIGHT)  # pragma: no mutant
-        logger.info(  # pragma: no mutant
-            "%sEpoch %d %s Val %s: %.4f (Best: %.4f)",
-            I,
-            epoch,
-            B,
-            label,
-            monitor_value,
-            self.best_metric,
+        logger.info(LogStyle.LIGHT)  # pragma: no mutate
+        logger.info(  # pragma: no mutate
+            "%sEpoch %d %s Val %s: %.4f (Best: %.4f)",  # pragma: no mutate
+            I,  # pragma: no mutate
+            epoch,  # pragma: no mutate
+            B,  # pragma: no mutate
+            label,  # pragma: no mutate
+            monitor_value,  # pragma: no mutate
+            self.best_metric,  # pragma: no mutate
         )
-        logger.info("%s%s Loss  : T %.4f / V %.4f", I, A, train_loss, val_loss)  # pragma: no mutant
-        logger.info(  # pragma: no mutant
-            "%s%s Acc   : %.4f (Best: %.4f)", I, A, val_acc, self.best_acc
+        logger.info("%s%s Loss  : T %.4f / V %.4f", I, A, train_loss, val_loss)  # pragma: no mutate
+        logger.info(  # pragma: no mutate
+            "%s%s Acc   : %.4f (Best: %.4f)", I, A, val_acc, self.best_acc  # pragma: no mutate
         )
-        logger.info(
-            "%s%s LR    : %.2e %s Patience: %d", I, A, lr, B, remaining
-        )  # pragma: no mutant
+        logger.info(  # pragma: no mutate
+            "%s%s LR    : %.2e %s Patience: %d", I, A, lr, B, remaining  # pragma: no mutate
+        )
 
-    def _log_training_complete(self) -> None:
+    def _log_training_complete(self) -> None:  # pragma: no mutate
         """Log final training summary banner."""
-        logger.info(LogStyle.DOUBLE)  # pragma: no mutant
-        logger.info(  # pragma: no mutant
-            "%s%s Training Complete %s Best %s: %.4f %s Best Acc: %.4f",
-            LogStyle.INDENT,
-            LogStyle.SUCCESS,
-            LogStyle.BULLET,
-            self.monitor_metric.upper(),
-            self.best_metric,
-            LogStyle.BULLET,
-            self.best_acc,
+        logger.info(LogStyle.DOUBLE)  # pragma: no mutate
+        logger.info(  # pragma: no mutate
+            "%s%s Training Complete %s Best %s: %.4f %s Best Acc: %.4f",  # pragma: no mutate
+            LogStyle.INDENT,  # pragma: no mutate
+            LogStyle.SUCCESS,  # pragma: no mutate
+            LogStyle.BULLET,  # pragma: no mutate
+            self.monitor_metric.upper(),  # pragma: no mutate
+            self.best_metric,  # pragma: no mutate
+            LogStyle.BULLET,  # pragma: no mutate
+            self.best_acc,  # pragma: no mutate
         )
-        logger.info(LogStyle.DOUBLE)  # pragma: no mutant
+        logger.info(LogStyle.DOUBLE)  # pragma: no mutate
 
     def _handle_checkpointing(self, val_metrics: Mapping[str, float]) -> bool:
         """
@@ -326,10 +326,10 @@ class ModelTrainer:
         current_value = val_metrics[self.monitor_metric]
 
         if current_value > self.best_metric:
-            logger.info(  # pragma: no mutant
-                "New best model! Val %s: %.4f ↑ Checkpoint saved.",
-                self.monitor_metric,
-                current_value,
+            logger.info(  # pragma: no mutate
+                "New best model! Val %s: %.4f ↑ Checkpoint saved.",  # pragma: no mutate
+                self.monitor_metric,  # pragma: no mutate
+                current_value,  # pragma: no mutate
             )
             self.best_metric = current_value
             self.epochs_no_improve = 0
@@ -374,11 +374,15 @@ class ModelTrainer:
         """
         try:
             load_model_weights(model=self.model, path=self.best_path, device=self.device)
-            logger.info(  # pragma: no mutant
-                "%s%s Model state restored", LogStyle.INDENT, LogStyle.SUCCESS
+            logger.info(  # pragma: no mutate
+                "%s%s Model state restored", LogStyle.INDENT, LogStyle.SUCCESS  # pragma: no mutate
             )
-            logger.info(  # pragma: no mutant
-                "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Checkpoint", self.best_path.name
+            logger.info(  # pragma: no mutate
+                "%s%s %-18s: %s",
+                LogStyle.INDENT,
+                LogStyle.ARROW,
+                "Checkpoint",
+                self.best_path.name,  # pragma: no mutate
             )
         except (RuntimeError, OrchardExportError) as e:
             logger.error("%s%s Weight restoration failed: %s", LogStyle.INDENT, LogStyle.FAILURE, e)

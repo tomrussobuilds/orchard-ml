@@ -114,15 +114,46 @@ def trainer(simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cf
 
 # TESTS: INITIALIZATION
 @pytest.mark.unit
-def test_trainer_init(trainer):
-    """Test ModelTrainer initializes correctly."""
+def test_trainer_init(
+    trainer, simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cfg
+):
+    """Test ModelTrainer initializes all attributes correctly."""
+    train_loader, val_loader = mock_loaders
+
+    # Core components stored as-is
+    assert trainer.model is simple_model
+    assert trainer.train_loader is train_loader
+    assert trainer.val_loader is val_loader
+    assert trainer.optimizer is optimizer
+    assert trainer.scheduler is scheduler
+    assert trainer.criterion is criterion
+    assert trainer.device == torch.device("cpu")
+    assert trainer.training is mock_cfg.training
+    assert trainer.tracker is None
+
+    # Hyperparameters from config
     assert trainer.epochs == 5
     assert trainer.patience == 3
+    assert trainer.monitor_metric == "auc"
     assert trainer.best_acc == -1.0
     assert trainer.best_metric == -float("inf")
     assert trainer.epochs_no_improve == 0
-    assert len(trainer.train_losses) == 0
-    assert len(trainer.val_metrics_history) == 0
+
+    # AMP/Mixup
+    assert trainer.scaler is None  # use_amp=False
+    assert trainer.mixup_fn is None  # mixup_alpha=0.0
+
+    # Output
+    assert trainer.best_path.name == "best_model.pth"
+    assert trainer.best_path.parent.is_dir()
+
+    # History
+    assert trainer.train_losses == []
+    assert trainer.val_metrics_history == []
+    assert trainer._checkpoint_saved is False
+
+    # Loop kernel
+    assert trainer._loop is not None
 
 
 @pytest.mark.unit
@@ -196,6 +227,25 @@ def test_handle_checkpointing_improves(trainer):
     assert trainer.epochs_no_improve == 0
     assert should_stop is False
     assert trainer.best_path.exists()
+    assert trainer._checkpoint_saved is True
+
+    # Verify the saved checkpoint is loadable
+    state = torch.load(trainer.best_path, weights_only=True)
+    assert isinstance(state, dict)
+
+
+@pytest.mark.unit
+def test_handle_checkpointing_strict_greater(trainer):
+    """Test checkpointing requires strictly greater, not equal."""
+    trainer.best_metric = 0.85
+    val_metrics = {"accuracy": 0.9, "auc": 0.85}
+
+    should_stop = trainer._handle_checkpointing(val_metrics)
+
+    # Equal value should NOT trigger checkpoint (> not >=)
+    assert trainer.best_metric == pytest.approx(0.85)
+    assert trainer.epochs_no_improve == 1
+    assert should_stop is False
 
 
 @pytest.mark.unit
@@ -271,6 +321,28 @@ def test_load_best_weights_success(trainer):
     first_param = next(trainer.model.parameters())
     target_tensor = torch.full_like(first_param, 999.0)
     assert not torch.all(torch.isclose(first_param.detach(), target_tensor))
+
+
+@pytest.mark.unit
+def test_load_best_weights_restores_device(trainer):
+    """Test load_best_weights passes correct device to load_model_weights."""
+    torch.save(trainer.model.state_dict(), trainer.best_path)
+
+    with patch("orchard.trainer.trainer.load_model_weights") as mock_load:
+        trainer.load_best_weights()
+        mock_load.assert_called_once_with(
+            model=trainer.model, path=trainer.best_path, device=trainer.device
+        )
+
+
+@pytest.mark.unit
+def test_load_best_weights_reraises_runtime_error(trainer):
+    """Test load_best_weights re-raises RuntimeError from incompatible state dict."""
+    torch.save(trainer.model.state_dict(), trainer.best_path)
+
+    with patch("orchard.trainer.trainer.load_model_weights", side_effect=RuntimeError("bad keys")):
+        with pytest.raises(RuntimeError, match="bad keys"):
+            trainer.load_best_weights()
 
 
 @pytest.mark.unit
@@ -503,6 +575,155 @@ def test_train_raises_on_missing_monitor_metric(
 
         with pytest.raises(KeyError, match="nonexistent_metric"):
             trainer.train()
+
+
+@pytest.mark.unit
+def test_finalize_weights_loads_best_when_checkpoint_saved(trainer):
+    """Test _finalize_weights loads best weights when checkpoint was saved."""
+    torch.save(trainer.model.state_dict(), trainer.best_path)
+    trainer._checkpoint_saved = True
+
+    with patch.object(trainer, "load_best_weights") as mock_load:
+        trainer._finalize_weights()
+        mock_load.assert_called_once()
+
+    # Model should be in eval mode
+    assert not trainer.model.training
+
+
+@pytest.mark.unit
+def test_finalize_weights_loads_existing_when_no_improvement(trainer):
+    """Test _finalize_weights loads existing checkpoint when no improvement."""
+    torch.save(trainer.model.state_dict(), trainer.best_path)
+    trainer._checkpoint_saved = False
+
+    with patch.object(trainer, "load_best_weights") as mock_load:
+        trainer._finalize_weights()
+        mock_load.assert_called_once()
+
+    assert not trainer.model.training
+
+
+@pytest.mark.unit
+def test_finalize_weights_saves_fallback_when_no_checkpoint(trainer):
+    """Test _finalize_weights saves current state when no checkpoint exists."""
+    if trainer.best_path.exists():
+        trainer.best_path.unlink()
+    trainer._checkpoint_saved = False
+
+    trainer._finalize_weights()
+
+    assert trainer.best_path.exists()
+    assert not trainer.model.training
+
+
+@pytest.mark.unit
+def test_finalize_requires_both_saved_and_exists(trainer):
+    """Test _finalize_weights requires BOTH _checkpoint_saved AND best_path.exists().
+
+    When _checkpoint_saved=True but file doesn't exist, should NOT take the
+    first branch (load best). This kills the and->or mutant.
+    """
+    trainer._checkpoint_saved = True
+    if trainer.best_path.exists():
+        trainer.best_path.unlink()
+
+    # Should fall through to the "save fallback" branch
+    trainer._finalize_weights()
+    assert trainer.best_path.exists()
+    assert not trainer.model.training
+
+
+@pytest.mark.integration
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.trainer._loop.validate_epoch")
+def test_train_tracks_best_acc(mock_validate, mock_train, trainer):
+    """Test train() updates best_acc correctly."""
+    mock_train.return_value = 0.5
+    mock_validate.side_effect = [
+        {"loss": 0.3, "accuracy": 0.85, "auc": 0.80},
+        {"loss": 0.3, "accuracy": 0.90, "auc": 0.81},
+        {"loss": 0.3, "accuracy": 0.88, "auc": 0.82},
+        {"loss": 0.3, "accuracy": 0.92, "auc": 0.83},
+        {"loss": 0.3, "accuracy": 0.91, "auc": 0.84},
+    ]
+    trainer.optimizer.step = MagicMock()
+
+    trainer.train()
+
+    assert trainer.best_acc == pytest.approx(0.92)
+
+
+@pytest.mark.integration
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.trainer._loop.validate_epoch")
+def test_train_records_val_loss_and_monitor(mock_validate, mock_train, trainer):
+    """Test train() correctly reads val_loss and monitor_value from metrics."""
+    mock_train.return_value = 0.5
+    mock_validate.side_effect = [
+        {"loss": 0.4, "accuracy": 0.85, "auc": 0.80},
+        {"loss": 0.3, "accuracy": 0.90, "auc": 0.85},
+        {"loss": 0.2, "accuracy": 0.92, "auc": 0.90},
+        {"loss": 0.2, "accuracy": 0.93, "auc": 0.91},
+        {"loss": 0.2, "accuracy": 0.93, "auc": 0.92},
+    ]
+    trainer.optimizer.step = MagicMock()
+
+    _, train_losses, val_metrics = trainer.train()
+
+    # val_loss was correctly extracted (not None)
+    for vm in val_metrics:
+        assert isinstance(vm["loss"], float)
+        assert isinstance(vm["accuracy"], float)
+        assert isinstance(vm["auc"], float)
+
+    # train losses recorded
+    assert all(loss == pytest.approx(0.5) for loss in train_losses)
+
+
+@pytest.mark.integration
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.trainer._loop.validate_epoch")
+def test_train_calls_tracker(mock_validate, mock_train, trainer):
+    """Test train() calls tracker.log_epoch when tracker is set."""
+    mock_train.return_value = 0.5
+    # Increasing AUC so no early stopping
+    mock_validate.side_effect = [
+        {"loss": 0.3, "accuracy": 0.9, "auc": 0.80 + i * 0.01} for i in range(trainer.epochs)
+    ]
+    trainer.optimizer.step = MagicMock()
+
+    mock_tracker = MagicMock()
+    trainer.tracker = mock_tracker
+
+    trainer.train()
+
+    assert mock_tracker.log_epoch.call_count == trainer.epochs
+    # Verify args of first call
+    first_call = mock_tracker.log_epoch.call_args_list[0]
+    assert first_call[0][0] == 1  # epoch
+    assert first_call[0][1] == pytest.approx(0.5)  # train_loss
+
+
+@pytest.mark.integration
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.trainer._loop.validate_epoch")
+def test_train_early_stop_warning(mock_validate, mock_train, trainer):
+    """Test train() logs warning on early stopping."""
+    mock_train.return_value = 0.5
+    mock_validate.return_value = {"loss": 0.5, "accuracy": 0.5, "auc": 0.5}
+    trainer.best_metric = 0.95
+    trainer.optimizer.step = MagicMock()
+
+    with patch("orchard.trainer.trainer.logger") as mock_logger:
+        trainer.train()
+        # Should have called logger.warning with early stopping message
+        warning_calls = [
+            c
+            for c in mock_logger.warning.call_args_list
+            if c[0][0] and "Early stopping" in str(c[0][0])
+        ]
+        assert len(warning_calls) == 1
 
 
 if __name__ == "__main__":

@@ -82,10 +82,10 @@ def generate_visualizations(study: optuna.Study, output_dir: Path) -> None:
 
         plots = MappingProxyType(
             {
-                "optimization_history": plot_optimization_history,  # pragma: no mutant
-                "param_importances": plot_param_importances,  # pragma: no mutant
-                "slice": plot_slice,  # pragma: no mutant
-                "parallel_coordinate": plot_parallel_coordinate,  # pragma: no mutant
+                "optimization_history": plot_optimization_history,  # pragma: no mutate
+                "param_importances": plot_param_importances,  # pragma: no mutate
+                "slice": plot_slice,  # pragma: no mutate
+                "parallel_coordinate": plot_parallel_coordinate,  # pragma: no mutate
             }
         )
 
@@ -132,8 +132,8 @@ def save_plot(
         finally:
             _optuna_pc_logger.removeFilter(_missing_params_filter)
         output_path = output_dir / f"{plot_name}.html"
-        fig.write_html(str(output_path))  # pragma: no mutant
-        logger.info(  # pragma: no mutant
+        fig.write_html(str(output_path))  # pragma: no mutate
+        logger.info(  # pragma: no mutate
             "%s%s %-22s: %s", LogStyle.INDENT, LogStyle.ARROW, plot_name, output_path.name
         )
     except (ValueError, RuntimeError) as e:

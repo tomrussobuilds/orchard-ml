@@ -68,12 +68,12 @@ def build_vit_tiny(
     _weight_variant = weight_variant or "vit_tiny_patch16_224.augreg_in21k_ft_in1k"
 
     if pretrained:
-        logger.info(  # pragma: no mutant
+        logger.info(  # pragma: no mutate
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Weights':<18}: {_weight_variant}"
         )
         pretrained_flag = True
     else:
-        logger.info(  # pragma: no mutant
+        logger.info(  # pragma: no mutate
             f"{LogStyle.INDENT}{LogStyle.ARROW} {'Weights':<18}: random init"
         )
         pretrained_flag = False
@@ -93,7 +93,7 @@ def build_vit_tiny(
 
     # --- Step 3: Adapt Patch Embedding Layer ---
     if in_channels != 3:
-        logger.info(  # pragma: no mutant
+        logger.info(  # pragma: no mutate
             f"Adapting patch embedding from 3 to {in_channels} channels"
         )
 

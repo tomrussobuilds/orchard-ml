@@ -114,6 +114,6 @@ def evaluate_model(
         mode = aug_cfg.tta_mode.upper()
         log_msg += " | TTA ENABLED (Mode: %s)" % mode
 
-    logger.info(log_msg)  # pragma: no mutant
+    logger.info(log_msg)  # pragma: no mutate
 
     return all_preds, all_labels, metrics, metrics[METRIC_F1]

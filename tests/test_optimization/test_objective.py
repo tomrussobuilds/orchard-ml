@@ -1003,5 +1003,539 @@ def test_trial_config_builder_keeps_existing_resolution():
         assert call_args["dataset"]["resolution"] == 28
 
 
+# ---------------------------------------------------------------------------
+# Mutation-killing tests: init attrs, tracker flow, log_params, weighted_loss
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_objective_init_stores_all_attributes():
+    """Assert all __init__ attributes are stored correctly."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    search_space = {"lr": MagicMock()}
+    device = torch.device("cpu")
+    mock_tracker = MagicMock()
+    mock_loader = MagicMock(return_value=MagicMock())
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space=search_space,
+        device=device,
+        dataset_loader=mock_loader,
+        tracker=mock_tracker,
+    )
+
+    assert objective.cfg is mock_cfg
+    assert objective.search_space is search_space
+    assert objective.device == device
+    assert objective.tracker is mock_tracker
+
+
+@pytest.mark.unit
+def test_objective_init_tracker_default_none():
+    """Assert tracker defaults to None."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+    )
+
+    assert objective.tracker is None
+
+
+@pytest.mark.unit
+def test_objective_init_metric_extractor_config():
+    """Assert metric_extractor uses correct metric_name and direction."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.optuna.direction = "minimize"
+    mock_cfg.training.monitor_metric = "loss"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+    )
+
+    assert objective.metric_extractor.metric_name == "loss"
+    assert objective.metric_extractor.direction == "minimize"
+
+
+@pytest.mark.unit
+def test_objective_call_resets_metric_extractor():
+    """Verify metric_extractor.reset() is called at start of __call__."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+    mock_cfg.architecture.pretrained = True
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
+        model_factory=MagicMock(return_value=MagicMock()),
+    )
+    objective._cleanup = MagicMock()
+    objective.metric_extractor = MagicMock()
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+
+    mock_trial = MagicMock()
+    mock_trial.number = 0
+
+    with (
+        patch("orchard.optimization.objective.objective.get_optimizer"),
+        patch("orchard.optimization.objective.objective.get_scheduler"),
+        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.log_trial_start"),
+        patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec_cls,
+    ):
+        mock_exec_cls.return_value.execute.return_value = 0.9
+        objective(mock_trial)
+
+    objective.metric_extractor.reset.assert_called_once()
+
+
+@pytest.mark.unit
+def test_objective_call_log_params_includes_pretrained():
+    """Assert log_trial_start receives params with 'pretrained' key."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+    mock_cfg.architecture.pretrained = True
+
+    mock_suggest = MagicMock(return_value=0.001)
+    search_space = {"learning_rate": mock_suggest}
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space=search_space,
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
+        model_factory=MagicMock(return_value=MagicMock()),
+    )
+    objective._cleanup = MagicMock()
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+
+    mock_trial = MagicMock()
+    mock_trial.number = 1
+
+    with (
+        patch("orchard.optimization.objective.objective.get_optimizer"),
+        patch("orchard.optimization.objective.objective.get_scheduler"),
+        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.log_trial_start") as mock_log,
+        patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec,
+    ):
+        mock_exec.return_value.execute.return_value = 0.9
+        objective(mock_trial)
+
+    log_params = mock_log.call_args[0][1]
+    assert "pretrained" in log_params
+    assert log_params["pretrained"] is True
+
+
+@pytest.mark.unit
+def test_objective_tracker_end_with_best_metric_on_success():
+    """Verify tracker.end_optuna_trial receives best_metric on success."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    mock_tracker = MagicMock()
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
+        model_factory=MagicMock(return_value=MagicMock()),
+        tracker=mock_tracker,
+    )
+    objective._cleanup = MagicMock()
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    mock_trial = MagicMock()
+    mock_trial.number = 0
+
+    def _fake_execute(trial):
+        # Simulate what real executor does: update best_metric on the shared extractor
+        objective.metric_extractor.update_best(0.95)
+        return 0.95
+
+    with (
+        patch("orchard.optimization.objective.objective.get_optimizer"),
+        patch("orchard.optimization.objective.objective.get_scheduler"),
+        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.log_trial_start"),
+        patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec,
+    ):
+        mock_exec.return_value.execute.side_effect = _fake_execute
+        objective(mock_trial)
+
+    mock_tracker.end_optuna_trial.assert_called_once_with(0.95)
+
+
+@pytest.mark.unit
+def test_objective_worst_metric_maximize():
+    """Assert _worst_metric returns -inf for maximize direction."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+    )
+
+    assert objective._worst_metric() == -float("inf")
+
+
+@pytest.mark.unit
+def test_objective_worst_metric_minimize():
+    """Assert _worst_metric returns +inf for minimize direction."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.optuna.direction = "minimize"
+    mock_cfg.training.monitor_metric = "loss"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+    )
+
+    assert objective._worst_metric() == float("inf")
+
+
+@pytest.mark.unit
+def test_objective_weighted_loss_calls_compute_class_weights():
+    """Verify compute_class_weights is called when weighted_loss=True."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+    mock_cfg.dataset._ensure_metadata.num_classes = 5
+
+    import numpy as np
+
+    mock_train_loader = MagicMock()
+    mock_train_loader.dataset.labels.flatten.return_value = np.array([0, 1, 2, 3, 4])
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(return_value=(mock_train_loader, MagicMock(), MagicMock())),
+        model_factory=MagicMock(return_value=MagicMock()),
+    )
+    objective._cleanup = MagicMock()
+
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = True
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+
+    mock_trial = MagicMock()
+    mock_trial.number = 0
+
+    with (
+        patch("orchard.optimization.objective.objective.get_optimizer"),
+        patch("orchard.optimization.objective.objective.get_scheduler"),
+        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.log_trial_start"),
+        patch("orchard.optimization.objective.objective.compute_class_weights") as mock_cw,
+        patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec,
+    ):
+        mock_exec.return_value.execute.return_value = 0.9
+        objective(mock_trial)
+
+    mock_cw.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Mutation-killing: _sample_params dispatch, TrialTrainingExecutor wiring,
+# trial_succeeded state, log_trial_start args
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_sample_params_uses_sample_params_attr():
+    """Verify _sample_params dispatches to obj.sample_params when attr exists."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    search_space = MagicMock()
+    search_space.sample_params.return_value = {"lr": 0.01}
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space=search_space,
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+    )
+
+    trial = MagicMock()
+    result = objective._sample_params(trial)
+
+    search_space.sample_params.assert_called_once_with(trial)
+    assert result == {"lr": 0.01}
+
+
+@pytest.mark.unit
+def test_sample_params_dict_fallback():
+    """Verify _sample_params iterates dict items when no sample_params attr."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    trial = MagicMock()
+    fn = MagicMock(return_value=0.001)
+    search_space = {"lr": fn}
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space=search_space,
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+    )
+
+    result = objective._sample_params(trial)
+    fn.assert_called_once_with(trial)
+    assert result == {"lr": 0.001}
+
+
+@pytest.mark.unit
+def test_call_passes_correct_kwargs_to_executor():
+    """Verify TrialTrainingExecutor receives correct wired kwargs."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    mock_model = MagicMock()
+    mock_train_loader = MagicMock()
+    mock_val_loader = MagicMock()
+    mock_optimizer = MagicMock()
+    mock_scheduler = MagicMock()
+    mock_criterion = MagicMock()
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(
+            return_value=(mock_train_loader, mock_val_loader, MagicMock())
+        ),
+        model_factory=MagicMock(return_value=mock_model),
+    )
+    objective._cleanup = MagicMock()
+
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+
+    mock_trial = MagicMock()
+    mock_trial.number = 0
+
+    with (
+        patch(
+            "orchard.optimization.objective.objective.get_optimizer", return_value=mock_optimizer
+        ),
+        patch(
+            "orchard.optimization.objective.objective.get_scheduler", return_value=mock_scheduler
+        ),
+        patch(
+            "orchard.optimization.objective.objective.get_criterion", return_value=mock_criterion
+        ),
+        patch("orchard.optimization.objective.objective.log_trial_start"),
+        patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec_cls,
+    ):
+        mock_exec_cls.return_value.execute.return_value = 0.9
+        objective(mock_trial)
+
+    # Verify TrialTrainingExecutor was constructed with correct kwargs
+    call_kwargs = mock_exec_cls.call_args[1]
+    assert call_kwargs["model"] is mock_model
+    assert call_kwargs["train_loader"] is mock_train_loader
+    assert call_kwargs["val_loader"] is mock_val_loader
+    assert call_kwargs["optimizer"] is mock_optimizer
+    assert call_kwargs["scheduler"] is mock_scheduler
+    assert call_kwargs["criterion"] is mock_criterion
+    assert call_kwargs["device"] == torch.device("cpu")
+    assert call_kwargs["metric_extractor"] is objective.metric_extractor
+    assert call_kwargs["training"] is _mock_trial_cfg.training
+    assert call_kwargs["optuna"] is _mock_trial_cfg.optuna
+
+
+@pytest.mark.unit
+def test_call_log_trial_start_receives_correct_args():
+    """Verify log_trial_start is called with trial.number and log_params including pretrained."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.architecture.pretrained = True
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={"lr": MagicMock(return_value=0.01)},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
+        model_factory=MagicMock(return_value=MagicMock()),
+    )
+    objective._cleanup = MagicMock()
+
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+
+    mock_trial = MagicMock()
+    mock_trial.number = 7
+
+    with (
+        patch("orchard.optimization.objective.objective.get_optimizer"),
+        patch("orchard.optimization.objective.objective.get_scheduler"),
+        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.log_trial_start") as mock_log,
+        patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec,
+    ):
+        mock_exec.return_value.execute.return_value = 0.9
+        objective(mock_trial)
+
+    mock_log.assert_called_once()
+    call_args = mock_log.call_args[0]
+    assert call_args[0] == 7  # trial.number
+    assert call_args[1]["pretrained"] is True
+    assert call_args[1]["lr"] == 0.01
+
+
+@pytest.mark.unit
+def test_call_tracker_not_called_on_failure():
+    """Verify tracker.end_optuna_trial gets worst metric when trial fails."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    mock_tracker = MagicMock()
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(side_effect=RuntimeError("boom")),
+        model_factory=MagicMock(),
+        tracker=mock_tracker,
+    )
+    objective._cleanup = MagicMock()
+
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+
+    mock_trial = MagicMock()
+    mock_trial.number = 0
+
+    with patch("orchard.optimization.objective.objective.log_trial_start"):
+        result = objective(mock_trial)
+
+    # Failed trial returns worst metric
+    assert result == -float("inf")
+    # Tracker gets worst metric (not best)
+    mock_tracker.end_optuna_trial.assert_called_once_with(-float("inf"))
+
+
+@pytest.mark.unit
+def test_call_dataloader_factory_receives_is_optuna():
+    """Verify dataloader_factory is called with is_optuna=True."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    mock_factory = MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock()))
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=mock_factory,
+        model_factory=MagicMock(return_value=MagicMock()),
+    )
+    objective._cleanup = MagicMock()
+
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+
+    mock_trial = MagicMock()
+    mock_trial.number = 0
+
+    with (
+        patch("orchard.optimization.objective.objective.get_optimizer"),
+        patch("orchard.optimization.objective.objective.get_scheduler"),
+        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.log_trial_start"),
+        patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec,
+    ):
+        mock_exec.return_value.execute.return_value = 0.9
+        objective(mock_trial)
+
+    # Verify is_optuna=True was passed
+    call_kwargs = mock_factory.call_args
+    assert (
+        call_kwargs[0][4] == _mock_trial_cfg.num_workers or call_kwargs[1].get("is_optuna") is True
+    )
+    # More direct check: 6th positional arg or keyword
+    args, kwargs = call_kwargs
+    if "is_optuna" in kwargs:
+        assert kwargs["is_optuna"] is True
+    else:
+        assert args[5] is True  # is_optuna is the 6th positional arg
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

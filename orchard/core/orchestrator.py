@@ -313,7 +313,7 @@ class RootOrchestrator:
 
     def _phase_1_determinism(self) -> None:
         """Enforces global RNG seeding and algorithmic determinism."""
-        logger.debug(  # pragma: no mutant
+        logger.debug(  # pragma: no mutate
             "Phase 1: Applying deterministic seeding (seed=%d)", self.cfg.training.seed
         )
         self._seed_setter(
@@ -329,7 +329,7 @@ class RootOrchestrator:
         Returns:
             Number of CPU threads applied to runtime
         """
-        logger.debug(  # pragma: no mutant
+        logger.debug(  # pragma: no mutate
             "Phase 2: Configuring runtime (workers=%d)", self.num_workers
         )
         applied_threads: int = self._thread_applier(self.num_workers)
@@ -342,7 +342,7 @@ class RootOrchestrator:
 
         Anchors relative paths to validated PROJECT_ROOT.
         """
-        logger.debug("Phase 3: Provisioning filesystem")  # pragma: no mutant
+        logger.debug("Phase 3: Provisioning filesystem")  # pragma: no mutate
         self._static_dir_setup()
         self.paths = RunPaths.create(
             dataset_slug=self.cfg.dataset.dataset_name,
@@ -357,7 +357,7 @@ class RootOrchestrator:
 
         Reconfigures handlers for file-based persistence in run directory.
         """
-        logger.debug("Phase 4: Initializing session logging")  # pragma: no mutant
+        logger.debug("Phase 4: Initializing session logging")  # pragma: no mutate
         assert self.paths is not None, "Paths must be initialized before logging"  # nosec B101
         self.run_logger = self._log_initializer(
             name=LOGGER_NAME, log_dir=self.paths.logs, level=self.cfg.telemetry.log_level
@@ -369,7 +369,7 @@ class RootOrchestrator:
 
         Ensures full reproducibility from artifacts alone.
         """
-        logger.debug(  # pragma: no mutant
+        logger.debug(  # pragma: no mutate
             "Phase 5: Persisting run manifest (config + requirements)"
         )
         assert (
@@ -385,7 +385,7 @@ class RootOrchestrator:
         Prevents concurrent execution conflicts. Failure is fatal —
         running without a lock risks data corruption from concurrent runs.
         """
-        logger.debug("Phase 6: Acquiring infrastructure locks")  # pragma: no mutant
+        logger.debug("Phase 6: Acquiring infrastructure locks")  # pragma: no mutate
         try:
             phase_logger = self.run_logger or logging.getLogger(LOGGER_NAME)
             self.infra.prepare_environment(self.cfg, logger=phase_logger)
@@ -402,7 +402,7 @@ class RootOrchestrator:
         Summarizes hardware, dataset metadata, and execution policies.
         Device must already be resolved (cached during initialization).
         """
-        logger.debug("Phase 7: Generating environment report")  # pragma: no mutant
+        logger.debug("Phase 7: Generating environment report")  # pragma: no mutate
         assert self.paths is not None, "Paths must be initialized before reporting"  # nosec B101
         assert (
             self._device_cache is not None
@@ -512,7 +512,7 @@ class RootOrchestrator:
                 ) from e
 
         else:
-            logger.debug(  # pragma: no mutant
+            logger.debug(  # pragma: no mutate
                 "Rank %d: skipping phases 3-6 (non-main process).", self.rank
             )
             # Non-main ranks still need their device for DDP readiness

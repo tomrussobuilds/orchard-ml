@@ -125,17 +125,17 @@ class InfrastructureManager(BaseModel):
 
             if not is_shared:
                 num_zombies = cleaner.terminate_duplicates(logger=log)
-                log.debug(  # pragma: no mutant
+                log.debug(  # pragma: no mutate
                     " %s Duplicate processes terminated: %d.", LogStyle.ARROW, num_zombies
                 )
             else:
-                log.debug(  # pragma: no mutant
+                log.debug(  # pragma: no mutate
                     " %s Shared environment detected: skipping process kill.", LogStyle.ARROW
                 )
 
         # Concurrency guard
         ensure_single_instance(lock_file=cfg.hardware.lock_file_path, logger=log)
-        log.debug(  # pragma: no mutant
+        log.debug(  # pragma: no mutate
             " %s Lock acquired at %s", LogStyle.ARROW, cfg.hardware.lock_file_path
         )
 
@@ -166,7 +166,7 @@ class InfrastructureManager(BaseModel):
         # Release lock
         try:
             release_single_instance(cfg.hardware.lock_file_path)
-            log.info("  %s System lock released", LogStyle.ARROW)  # pragma: no mutant
+            log.info("  %s System lock released", LogStyle.ARROW)  # pragma: no mutate
         except OSError as e:
             log.warning(" %s Failed to release lock: %s", LogStyle.ARROW, e)
 
@@ -185,13 +185,13 @@ class InfrastructureManager(BaseModel):
         # Full session teardown (see also OptunaObjective._cleanup for per-trial flush)
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
-            log.debug(" %s CUDA cache cleared.", LogStyle.ARROW)  # pragma: no mutant
+            log.debug(" %s CUDA cache cleared.", LogStyle.ARROW)  # pragma: no mutate
 
         if has_mps_backend():
             try:
                 torch.mps.empty_cache()
-                log.debug(" %s MPS cache cleared.", LogStyle.ARROW)  # pragma: no mutant
+                log.debug(" %s MPS cache cleared.", LogStyle.ARROW)  # pragma: no mutate
             except RuntimeError:
-                log.debug(  # pragma: no mutant
+                log.debug(  # pragma: no mutate
                     " %s MPS cache cleanup failed (non-fatal).", LogStyle.ARROW
                 )

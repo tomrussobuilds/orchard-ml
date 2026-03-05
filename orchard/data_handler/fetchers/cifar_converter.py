@@ -92,7 +92,7 @@ def _download_and_convert(metadata: DatasetMetadata, cifar_cls: type) -> Path:
     target_npz = metadata.path
     download_dir = target_npz.parent / f".{metadata.name}_raw"
 
-    logger.info(  # pragma: no mutant
+    logger.info(  # pragma: no mutate
         "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Downloading", metadata.display_name
     )
 
@@ -105,7 +105,7 @@ def _download_and_convert(metadata: DatasetMetadata, cifar_cls: type) -> Path:
     test_images = np.array(test_ds.data)  # (10000, 32, 32, 3)
     test_targets = np.array(test_ds.targets)  # (10000,)
 
-    logger.info(  # pragma: no mutant
+    logger.info(  # pragma: no mutate
         "%s%s %-18s: %s — %d train + %d test",
         LogStyle.INDENT,
         LogStyle.ARROW,
@@ -140,7 +140,7 @@ def _download_and_convert(metadata: DatasetMetadata, cifar_cls: type) -> Path:
         test_labels=test_labels,
     )
 
-    logger.info(  # pragma: no mutant
+    logger.info(  # pragma: no mutate
         "%s%s %-18s: %s — Train: %d, Val: %d, Test: %d",
         LogStyle.INDENT,
         LogStyle.ARROW,
@@ -169,7 +169,7 @@ def ensure_cifar_npz(metadata: DatasetMetadata) -> Path:
     target_npz = metadata.path
 
     if target_npz.exists():
-        logger.debug(  # pragma: no mutant
+        logger.debug(  # pragma: no mutate
             "%s%s %-18s: %s found at %s",
             LogStyle.INDENT,
             LogStyle.ARROW,

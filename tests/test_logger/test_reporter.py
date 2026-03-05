@@ -896,5 +896,204 @@ def test_count_trial_states_empty():
     assert len(failed) == 0
 
 
+# ---------------------------------------------------------------------------
+# Mutation-killing: exact category names + keys in log_trial_start,
+# log.warning calls in summary
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_log_trial_start_exact_category_names():
+    """Verify all 6 exact category names appear in logger output."""
+    mock_logger = MagicMock()
+    # Provide at least one param per category
+    params = {
+        "learning_rate": 0.01,  # Optimization
+        "criterion_type": "cross_entropy",  # Loss
+        "mixup_alpha": 0.2,  # Regularization
+        "scheduler_type": "cosine",  # Scheduling
+        "rotation_angle": 15,  # Augmentation
+        "model_name": "resnet18",  # Architecture
+    }
+
+    log_trial_start(trial_number=0, params=params, logger_instance=mock_logger)
+
+    calls = [str(call) for call in mock_logger.info.call_args_list]
+    log_output = " ".join(calls)
+
+    for category in [
+        "Optimization",
+        "Loss",
+        "Regularization",
+        "Scheduling",
+        "Augmentation",
+        "Architecture",
+    ]:
+        assert category in log_output, f"Category '{category}' missing from output"
+
+
+@pytest.mark.unit
+def test_log_trial_start_optimization_keys():
+    """Verify Optimization category includes all 4 expected keys."""
+    mock_logger = MagicMock()
+    params = {
+        "learning_rate": 0.01,
+        "weight_decay": 0.001,
+        "momentum": 0.9,
+        "min_lr": 0.0001,
+    }
+
+    log_trial_start(trial_number=0, params=params, logger_instance=mock_logger)
+
+    calls = [str(call) for call in mock_logger.info.call_args_list]
+    log_output = " ".join(calls)
+
+    assert "Optimization" in log_output
+    for key in ["learning_rate", "weight_decay", "momentum", "min_lr"]:
+        assert key in log_output, f"Key '{key}' missing from Optimization category"
+
+
+@pytest.mark.unit
+def test_log_trial_start_loss_keys():
+    """Verify Loss category includes all 3 expected keys."""
+    mock_logger = MagicMock()
+    params = {
+        "criterion_type": "focal",
+        "focal_gamma": 2.0,
+        "label_smoothing": 0.1,
+    }
+
+    log_trial_start(trial_number=0, params=params, logger_instance=mock_logger)
+
+    calls = [str(call) for call in mock_logger.info.call_args_list]
+    log_output = " ".join(calls)
+
+    assert "Loss" in log_output
+    for key in ["criterion_type", "focal_gamma", "label_smoothing"]:
+        assert key in log_output, f"Key '{key}' missing from Loss category"
+
+
+@pytest.mark.unit
+def test_log_trial_start_regularization_keys():
+    """Verify Regularization category includes mixup_alpha and dropout."""
+    mock_logger = MagicMock()
+    params = {"mixup_alpha": 0.2, "dropout": 0.3}
+
+    log_trial_start(trial_number=0, params=params, logger_instance=mock_logger)
+
+    calls = [str(call) for call in mock_logger.info.call_args_list]
+    log_output = " ".join(calls)
+
+    assert "Regularization" in log_output
+    for key in ["mixup_alpha", "dropout"]:
+        assert key in log_output
+
+
+@pytest.mark.unit
+def test_log_trial_start_scheduling_keys():
+    """Verify Scheduling category includes all 3 expected keys."""
+    mock_logger = MagicMock()
+    params = {"scheduler_type": "cosine", "scheduler_patience": 5, "batch_size": 32}
+
+    log_trial_start(trial_number=0, params=params, logger_instance=mock_logger)
+
+    calls = [str(call) for call in mock_logger.info.call_args_list]
+    log_output = " ".join(calls)
+
+    assert "Scheduling" in log_output
+    for key in ["scheduler_type", "scheduler_patience", "batch_size"]:
+        assert key in log_output
+
+
+@pytest.mark.unit
+def test_log_trial_start_augmentation_keys():
+    """Verify Augmentation category includes all 3 expected keys."""
+    mock_logger = MagicMock()
+    params = {"rotation_angle": 15, "jitter_val": 0.1, "min_scale": 0.8}
+
+    log_trial_start(trial_number=0, params=params, logger_instance=mock_logger)
+
+    calls = [str(call) for call in mock_logger.info.call_args_list]
+    log_output = " ".join(calls)
+
+    assert "Augmentation" in log_output
+    for key in ["rotation_angle", "jitter_val", "min_scale"]:
+        assert key in log_output
+
+
+@pytest.mark.unit
+def test_log_trial_start_architecture_keys():
+    """Verify Architecture category includes all 3 expected keys."""
+    mock_logger = MagicMock()
+    params = {"model_name": "vit_tiny", "pretrained": True, "weight_variant": "DEFAULT"}
+
+    log_trial_start(trial_number=0, params=params, logger_instance=mock_logger)
+
+    calls = [str(call) for call in mock_logger.info.call_args_list]
+    log_output = " ".join(calls)
+
+    assert "Architecture" in log_output
+    for key in ["model_name", "pretrained", "weight_variant"]:
+        assert key in log_output
+
+
+@pytest.mark.unit
+def test_log_trial_start_empty_category_not_shown():
+    """Category with no matching params should not appear."""
+    mock_logger = MagicMock()
+    params = {"learning_rate": 0.01}  # Only Optimization
+
+    log_trial_start(trial_number=0, params=params, logger_instance=mock_logger)
+
+    calls = [str(call) for call in mock_logger.info.call_args_list]
+    log_output = " ".join(calls)
+
+    assert "Optimization" in log_output
+    assert "Loss" not in log_output
+    assert "Regularization" not in log_output
+    assert "Augmentation" not in log_output
+    assert "Architecture" not in log_output
+
+
+@pytest.mark.unit
+def test_log_trial_start_format_string_uses_key_and_value():
+    """Verify each param is logged with key and formatted value."""
+    mock_logger = MagicMock()
+    params = {"learning_rate": 0.5}
+
+    log_trial_start(trial_number=0, params=params, logger_instance=mock_logger)
+
+    calls = [str(call) for call in mock_logger.info.call_args_list]
+    log_output = " ".join(calls)
+
+    assert "learning_rate" in log_output
+    assert "0.5000" in log_output  # _format_param_value(0.5) == "0.5000"
+
+
+@pytest.mark.unit
+def test_log_optimization_summary_warning_no_completed():
+    """log.warning called with 'No trials completed' when no completed trials."""
+    mock_logger = MagicMock()
+    mock_study = MagicMock()
+    mock_study.trials = [MagicMock(state=optuna.trial.TrialState.PRUNED)]
+
+    mock_cfg = MagicMock()
+    mock_cfg.dataset.dataset_name = "test"
+    mock_cfg.optuna.search_space_preset = "default"
+    mock_cfg.training.monitor_metric = "auc"
+
+    log_optimization_summary(
+        study=mock_study,
+        cfg=mock_cfg,
+        device=MagicMock(__str__=lambda _: "cpu"),
+        paths=MagicMock(root="/tmp/test"),
+        logger_instance=mock_logger,
+    )
+
+    mock_logger.warning.assert_called()
+    warning_calls = [str(c) for c in mock_logger.warning.call_args_list]
+    assert any("No trials completed" in c for c in warning_calls)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -15,7 +15,10 @@ import torch
 import torch.nn as nn
 
 from orchard.optimization import MetricExtractor, TrialTrainingExecutor
-from orchard.optimization.objective.training_executor import _FALLBACK_METRICS
+from orchard.optimization.objective.training_executor import (
+    _FALLBACK_METRICS,
+    _MAX_CONSECUTIVE_VAL_FAILURES,
+)
 from orchard.trainer._scheduling import step_scheduler
 
 
@@ -275,6 +278,344 @@ def test_validate_epoch_reraises_after_consecutive_failures():
         # Third failure: re-raises
         with pytest.raises(RuntimeError, match="3 consecutive times"):
             executor._validate_epoch()
+
+
+# ---------------------------------------------------------------------------
+# Mutation-killing tests: init attrs, constants, NaN, val failures reset
+# ---------------------------------------------------------------------------
+@pytest.mark.unit
+def test_max_consecutive_val_failures_constant():
+    """Assert _MAX_CONSECUTIVE_VAL_FAILURES is exactly 3."""
+    assert _MAX_CONSECUTIVE_VAL_FAILURES == 3
+
+
+@pytest.mark.unit
+def test_fallback_metrics_exact_values():
+    """Assert _FALLBACK_METRICS has exact expected values."""
+    assert _FALLBACK_METRICS["loss"] == 999.0
+    assert _FALLBACK_METRICS["accuracy"] == 0.0
+    assert _FALLBACK_METRICS["auc"] == 0.0
+    assert _FALLBACK_METRICS["f1"] == 0.0
+
+
+@pytest.mark.unit
+def test_executor_init_all_attributes(executor, mock_cfg):
+    """Assert all init attributes are stored correctly."""
+    assert executor.epochs == 5
+    assert executor.enable_pruning is True
+    assert executor.warmup_epochs == 2
+    assert executor.monitor_metric == "auc"
+    assert executor.log_interval == 5
+    assert executor._consecutive_val_failures == 0
+    assert executor.device == torch.device("cpu")
+    assert executor.scaler is None
+    assert executor.mixup_fn is None
+
+
+@pytest.mark.unit
+def test_executor_loop_use_tqdm_false(executor):
+    """Assert the _loop options have use_tqdm=False."""
+    assert executor._loop.options.use_tqdm is False
+
+
+@pytest.mark.unit
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.optimization.objective.training_executor.validate_epoch")
+def test_nan_metric_skips_trial_report(mock_val, mock_train, executor, mock_trial):
+    """Verify trial.report is NOT called when metric is NaN."""
+    mock_train.return_value = 0.4
+    mock_val.return_value = {"loss": 0.3, "accuracy": 0.8, "auc": float("nan")}
+
+    executor.epochs = 1
+    executor.enable_pruning = False
+
+    with patch.object(executor.scheduler, "step"):
+        executor.execute(mock_trial)
+
+    mock_trial.report.assert_not_called()
+
+
+@pytest.mark.unit
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.optimization.objective.training_executor.validate_epoch")
+def test_non_nan_metric_calls_trial_report(mock_val, mock_train, executor, mock_trial):
+    """Verify trial.report IS called when metric is valid."""
+    mock_train.return_value = 0.4
+    mock_val.return_value = {"loss": 0.3, "accuracy": 0.8, "auc": 0.85}
+
+    executor.epochs = 1
+    executor.enable_pruning = False
+
+    with patch.object(executor.scheduler, "step"):
+        executor.execute(mock_trial)
+
+    mock_trial.report.assert_called_once_with(0.85, 1)
+
+
+@pytest.mark.unit
+def test_consecutive_val_failures_reset_on_success():
+    """Assert _consecutive_val_failures resets to 0 after a successful validation."""
+    executor = TrialTrainingExecutor(
+        model=nn.Linear(10, 2),
+        train_loader=MagicMock(),
+        val_loader=MagicMock(),
+        optimizer=torch.optim.SGD(
+            nn.Linear(10, 2).parameters(), lr=0.01, momentum=0.0, weight_decay=0.0
+        ),
+        scheduler=MagicMock(),
+        criterion=nn.CrossEntropyLoss(),
+        training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
+        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        log_interval=5,
+        device=torch.device("cpu"),
+        metric_extractor=MetricExtractor("auc"),
+    )
+
+    # Simulate prior failures
+    executor._consecutive_val_failures = 2
+
+    with patch("orchard.optimization.objective.training_executor.validate_epoch") as mock_val:
+        mock_val.return_value = {"loss": 0.3, "accuracy": 0.8, "auc": 0.85, "f1": 0.82}
+        executor._validate_epoch()
+
+    assert executor._consecutive_val_failures == 0
+
+
+@pytest.mark.integration
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.optimization.objective.training_executor.validate_epoch")
+def test_execute_returns_best_metric_with_increasing(mock_val, mock_train, executor, mock_trial):
+    """Verify execute returns the best (highest) metric across epochs."""
+    call_count = [0]
+
+    def val_side_effect(*args, **kwargs):
+        call_count[0] += 1
+        auc = 0.7 + call_count[0] * 0.05  # 0.75, 0.80, 0.85
+        return {"loss": 0.3, "accuracy": 0.8, "auc": auc}
+
+    mock_train.return_value = 0.4
+    mock_val.side_effect = val_side_effect
+    executor.epochs = 3
+    executor.enable_pruning = False
+
+    with patch.object(executor.scheduler, "step"):
+        best = executor.execute(mock_trial)
+
+    assert best == pytest.approx(0.85)
+
+
+@pytest.mark.integration
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.optimization.objective.training_executor.validate_epoch")
+def test_scheduler_receives_monitor_metric_value(mock_val, mock_train, executor, mock_trial):
+    """Verify step_scheduler receives val_metrics[monitor_metric]."""
+    mock_train.return_value = 0.4
+    mock_val.return_value = {"loss": 0.3, "accuracy": 0.8, "auc": 0.85}
+    executor.epochs = 1
+    executor.enable_pruning = False
+
+    with patch("orchard.optimization.objective.training_executor.step_scheduler") as mock_step:
+        executor.execute(mock_trial)
+
+    mock_step.assert_called_once_with(executor.scheduler, 0.85)
+
+
+# ---------------------------------------------------------------------------
+# Mutation-killing: attribute identity, _validate_epoch kwargs, log interval
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_executor_stores_model_identity(executor):
+    """Assert model attribute is the exact object passed, not None."""
+    assert executor.model is not None
+    assert isinstance(executor.model, nn.Linear)
+
+
+@pytest.mark.unit
+def test_executor_stores_loader_identities():
+    """Assert train_loader and val_loader are stored as-is (not None)."""
+    train_loader = MagicMock()
+    val_loader = MagicMock()
+    model = nn.Linear(10, 2)
+
+    executor = TrialTrainingExecutor(
+        model=model,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        optimizer=torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0),
+        scheduler=MagicMock(),
+        criterion=nn.CrossEntropyLoss(),
+        training=MagicMock(
+            use_amp=False,
+            epochs=5,
+            mixup_alpha=0,
+            grad_clip=1.0,
+            mixup_epochs=0,
+            scheduler_type="step",
+            monitor_metric="auc",
+        ),
+        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        log_interval=5,
+        device=torch.device("cpu"),
+        metric_extractor=MetricExtractor("auc"),
+    )
+
+    assert executor.train_loader is train_loader
+    assert executor.val_loader is val_loader
+    assert executor.criterion is not None
+    assert executor.model is model
+
+
+@pytest.mark.unit
+def test_validate_epoch_passes_correct_kwargs():
+    """Assert _validate_epoch passes self.model, self.val_loader etc. to validate_epoch."""
+    model = nn.Linear(10, 2)
+    val_loader = MagicMock()
+    criterion = nn.CrossEntropyLoss()
+    device = torch.device("cpu")
+
+    executor = TrialTrainingExecutor(
+        model=model,
+        train_loader=MagicMock(),
+        val_loader=val_loader,
+        optimizer=torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0),
+        scheduler=MagicMock(),
+        criterion=criterion,
+        training=MagicMock(
+            use_amp=False,
+            epochs=5,
+            mixup_alpha=0,
+            grad_clip=1.0,
+            mixup_epochs=0,
+            scheduler_type="step",
+            monitor_metric="auc",
+        ),
+        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        log_interval=5,
+        device=device,
+        metric_extractor=MetricExtractor("auc"),
+    )
+
+    with patch("orchard.optimization.objective.training_executor.validate_epoch") as mock_val:
+        mock_val.return_value = {"loss": 0.3, "accuracy": 0.8, "auc": 0.85, "f1": 0.82}
+        executor._validate_epoch()
+
+    mock_val.assert_called_once_with(
+        model=model,
+        val_loader=val_loader,
+        criterion=criterion,
+        device=device,
+    )
+
+
+@pytest.mark.unit
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.optimization.objective.training_executor.validate_epoch")
+def test_log_interval_controls_logging(mock_val, mock_train, mock_trial):
+    """Verify log_interval logic: epoch % log_interval == 0 OR epoch == epochs."""
+    model = nn.Linear(10, 2)
+    executor = TrialTrainingExecutor(
+        model=model,
+        train_loader=MagicMock(),
+        val_loader=MagicMock(),
+        optimizer=torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0),
+        scheduler=MagicMock(),
+        criterion=nn.CrossEntropyLoss(),
+        training=MagicMock(
+            use_amp=False,
+            epochs=5,
+            mixup_alpha=0,
+            grad_clip=1.0,
+            mixup_epochs=0,
+            scheduler_type="step",
+            monitor_metric="auc",
+        ),
+        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        log_interval=2,
+        device=torch.device("cpu"),
+        metric_extractor=MetricExtractor("auc"),
+    )
+
+    mock_train.return_value = 0.4
+    mock_val.return_value = {"loss": 0.3, "accuracy": 0.8, "auc": 0.85}
+    mock_trial.should_prune.return_value = False
+
+    with patch("orchard.optimization.objective.training_executor.logger") as mock_logger:
+        with patch.object(executor.scheduler, "step"):
+            executor.execute(mock_trial)
+
+    # Epochs 1-5 with log_interval=2:
+    # epoch 2: 2%2==0 → log
+    # epoch 4: 4%2==0 → log
+    # epoch 5: 5==5 → log
+    # Total: 3 epoch-progress calls
+    info_calls = mock_logger.info.call_args_list
+    progress_calls = [
+        c for c in info_calls if c[0] and isinstance(c[0][0], str) and "E%d/%d" in c[0][0]
+    ]
+    assert len(progress_calls) == 3
+
+
+@pytest.mark.unit
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.optimization.objective.training_executor.validate_epoch")
+def test_log_interval_only_last_epoch(mock_val, mock_train, mock_trial):
+    """With log_interval=10 and epochs=3, only last epoch logs (epoch==epochs)."""
+    model = nn.Linear(10, 2)
+    executor = TrialTrainingExecutor(
+        model=model,
+        train_loader=MagicMock(),
+        val_loader=MagicMock(),
+        optimizer=torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0),
+        scheduler=MagicMock(),
+        criterion=nn.CrossEntropyLoss(),
+        training=MagicMock(
+            use_amp=False,
+            epochs=3,
+            mixup_alpha=0,
+            grad_clip=1.0,
+            mixup_epochs=0,
+            scheduler_type="step",
+            monitor_metric="auc",
+        ),
+        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        log_interval=10,
+        device=torch.device("cpu"),
+        metric_extractor=MetricExtractor("auc"),
+    )
+
+    mock_train.return_value = 0.4
+    mock_val.return_value = {"loss": 0.3, "accuracy": 0.8, "auc": 0.85}
+    mock_trial.should_prune.return_value = False
+
+    with patch("orchard.optimization.objective.training_executor.logger") as mock_logger:
+        with patch.object(executor.scheduler, "step"):
+            executor.execute(mock_trial)
+
+    info_calls = mock_logger.info.call_args_list
+    progress_calls = [
+        c for c in info_calls if c[0] and isinstance(c[0][0], str) and "E%d/%d" in c[0][0]
+    ]
+    assert len(progress_calls) == 1
+
+
+@pytest.mark.unit
+def test_loop_options_grad_clip(executor):
+    """Assert LoopOptions.grad_clip matches training config."""
+    assert executor._loop.options.grad_clip == 1.0
+
+
+@pytest.mark.unit
+def test_loop_options_monitor_metric(executor):
+    """Assert LoopOptions.monitor_metric matches training config."""
+    assert executor._loop.options.monitor_metric == "auc"
+
+
+@pytest.mark.unit
+def test_loop_options_total_epochs(executor):
+    """Assert LoopOptions.total_epochs matches executor.epochs."""
+    assert executor._loop.options.total_epochs == executor.epochs
 
 
 if __name__ == "__main__":

@@ -656,5 +656,322 @@ def test_evaluate_model_receives_resolution(
     assert call_kwargs["resolution"] == 224
 
 
+# ---------------------------------------------------------------------------
+# Mutation-killing tests: PlotContext, exact kwargs, return order
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+@patch("orchard.evaluation.evaluation_pipeline.evaluate_model")
+@patch("orchard.evaluation.evaluation_pipeline.plot_confusion_matrix")
+@patch("orchard.evaluation.evaluation_pipeline.plot_training_curves")
+@patch("orchard.evaluation.evaluation_pipeline.show_predictions")
+@patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
+@patch("orchard.evaluation.evaluation_pipeline.PlotContext")
+def test_plot_context_receives_exact_kwargs(
+    mock_ctx_cls,
+    mock_report,
+    _mock_show_pred,
+    _mock_curves,
+    _mock_confusion,
+    mock_evaluate,
+):
+    """Verify PlotContext is constructed with ALL exact kwargs from config."""
+    mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
+    mock_report.return_value = MagicMock()
+    mock_ctx_cls.return_value = MagicMock()
+
+    mock_paths = MagicMock()
+    mock_paths.get_fig_path = MagicMock(return_value=Path("/mock/fig.png"))
+    mock_paths.best_model_path = Path("/mock/model.pth")
+    mock_paths.logs = Path("/mock/logs")
+    mock_paths.final_report_path = Path("/mock/report.xlsx")
+
+    mock_cfg = MagicMock()
+    mock_cfg.dataset.resolution = 28
+    mock_cfg.dataset.mean = (0.5,)
+    mock_cfg.dataset.std = (0.2,)
+    mock_cfg.dataset.effective_is_anatomical = True
+    mock_cfg.dataset.effective_is_texture_based = False
+    mock_cfg.training.use_tta = False
+    mock_cfg.evaluation.fig_dpi = 150
+    mock_cfg.evaluation.plot_style = "seaborn"
+    mock_cfg.evaluation.cmap_confusion = "Blues"
+    mock_cfg.evaluation.grid_cols = 4
+    mock_cfg.evaluation.n_samples = 16
+    mock_cfg.evaluation.fig_size_predictions = (10, 8)
+
+    run_final_evaluation(
+        model=MagicMock(),
+        test_loader=MagicMock(),
+        train_losses=[0.1],
+        val_metrics_history=[{"accuracy": 0.9}],
+        class_names=["a"],
+        paths=mock_paths,
+        training=mock_cfg.training,
+        dataset=mock_cfg.dataset,
+        augmentation=mock_cfg.augmentation,
+        evaluation=mock_cfg.evaluation,
+        arch_name="resnet_18",
+    )
+
+    ctx_kwargs = mock_ctx_cls.call_args.kwargs
+    assert ctx_kwargs["arch_name"] == "resnet_18"
+    assert ctx_kwargs["resolution"] == 28
+    assert ctx_kwargs["fig_dpi"] == 150
+    assert ctx_kwargs["plot_style"] == "seaborn"
+    assert ctx_kwargs["cmap_confusion"] == "Blues"
+    assert ctx_kwargs["grid_cols"] == 4
+    assert ctx_kwargs["n_samples"] == 16
+    assert ctx_kwargs["fig_size_predictions"] == (10, 8)
+    assert ctx_kwargs["mean"] == (0.5,)
+    assert ctx_kwargs["std"] == (0.2,)
+    assert ctx_kwargs["use_tta"] is False
+    assert ctx_kwargs["is_anatomical"] is True
+    assert ctx_kwargs["is_texture_based"] is False
+
+
+@pytest.mark.unit
+@patch("orchard.evaluation.evaluation_pipeline.evaluate_model")
+@patch("orchard.evaluation.evaluation_pipeline.plot_confusion_matrix")
+@patch("orchard.evaluation.evaluation_pipeline.plot_training_curves")
+@patch("orchard.evaluation.evaluation_pipeline.show_predictions")
+@patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
+def test_exact_figure_path_strings(
+    mock_report,
+    _mock_show_pred,
+    _mock_curves,
+    _mock_confusion,
+    mock_evaluate,
+):
+    """Verify get_fig_path is called with exact f-string values."""
+    mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
+    mock_report.return_value = MagicMock()
+
+    mock_paths = MagicMock()
+    mock_paths.get_fig_path = MagicMock(return_value=Path("/mock/fig.png"))
+    mock_paths.best_model_path = Path("/mock/model.pth")
+    mock_paths.logs = Path("/mock/logs")
+    mock_paths.final_report_path = Path("/mock/report.xlsx")
+
+    mock_cfg = MagicMock()
+    mock_cfg.dataset.resolution = 28
+    mock_cfg.evaluation.save_confusion_matrix = True
+    mock_cfg.evaluation.save_predictions_grid = True
+
+    run_final_evaluation(
+        model=MagicMock(),
+        test_loader=MagicMock(),
+        train_losses=[0.1],
+        val_metrics_history=[{"accuracy": 0.9}],
+        class_names=["a"],
+        paths=mock_paths,
+        training=mock_cfg.training,
+        dataset=mock_cfg.dataset,
+        augmentation=mock_cfg.augmentation,
+        evaluation=mock_cfg.evaluation,
+        arch_name="mini_cnn",
+    )
+
+    fig_calls = [c[0][0] for c in mock_paths.get_fig_path.call_args_list]
+    assert "confusion_matrix_mini_cnn_28.png" in fig_calls
+    assert "training_curves_mini_cnn_28.png" in fig_calls
+    assert "sample_predictions_mini_cnn_28.png" in fig_calls
+
+
+@pytest.mark.unit
+@patch("orchard.evaluation.evaluation_pipeline.evaluate_model")
+@patch("orchard.evaluation.evaluation_pipeline.plot_confusion_matrix")
+@patch("orchard.evaluation.evaluation_pipeline.plot_training_curves")
+@patch("orchard.evaluation.evaluation_pipeline.show_predictions")
+@patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
+def test_evaluate_model_exact_kwargs(
+    mock_report,
+    _mock_show_pred,
+    _mock_curves,
+    _mock_confusion,
+    mock_evaluate,
+):
+    """Verify evaluate_model is called with ALL expected kwargs."""
+    mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
+    mock_report.return_value = MagicMock()
+
+    mock_paths = MagicMock()
+    mock_paths.get_fig_path = MagicMock(return_value=Path("/mock/fig.png"))
+    mock_paths.best_model_path = Path("/mock/model.pth")
+    mock_paths.logs = Path("/mock/logs")
+    mock_paths.final_report_path = Path("/mock/report.xlsx")
+
+    mock_cfg = MagicMock()
+    mock_cfg.dataset.resolution = 224
+    mock_cfg.dataset.effective_is_anatomical = True
+    mock_cfg.dataset.effective_is_texture_based = False
+    mock_cfg.training.use_tta = True
+
+    run_final_evaluation(
+        model=MagicMock(),
+        test_loader=MagicMock(),
+        train_losses=[0.1],
+        val_metrics_history=[{"accuracy": 0.9}],
+        class_names=["a"],
+        paths=mock_paths,
+        training=mock_cfg.training,
+        dataset=mock_cfg.dataset,
+        augmentation=mock_cfg.augmentation,
+        evaluation=mock_cfg.evaluation,
+        arch_name="test",
+    )
+
+    kw = mock_evaluate.call_args.kwargs
+    assert kw["use_tta"] is True
+    assert kw["is_anatomical"] is True
+    assert kw["is_texture_based"] is False
+    assert kw["aug_cfg"] is mock_cfg.augmentation
+    assert kw["resolution"] == 224
+
+
+@pytest.mark.unit
+@patch("orchard.evaluation.evaluation_pipeline.evaluate_model")
+@patch("orchard.evaluation.evaluation_pipeline.plot_confusion_matrix")
+@patch("orchard.evaluation.evaluation_pipeline.plot_training_curves")
+@patch("orchard.evaluation.evaluation_pipeline.show_predictions")
+@patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
+def test_create_report_exact_kwargs(
+    mock_report,
+    _mock_show_pred,
+    _mock_curves,
+    _mock_confusion,
+    mock_evaluate,
+):
+    """Verify create_structured_report receives ALL expected kwargs."""
+    mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
+    mock_report_obj = MagicMock()
+    mock_report.return_value = mock_report_obj
+
+    mock_paths = MagicMock()
+    mock_paths.get_fig_path = MagicMock(return_value=Path("/mock/fig.png"))
+    mock_paths.best_model_path = Path("/mock/model.pth")
+    mock_paths.logs = Path("/mock/logs")
+    mock_paths.final_report_path = Path("/mock/report.xlsx")
+
+    mock_cfg = MagicMock()
+    mock_cfg.dataset.resolution = 28
+
+    run_final_evaluation(
+        model=MagicMock(),
+        test_loader=MagicMock(),
+        train_losses=[0.5, 0.3],
+        val_metrics_history=[{"accuracy": 0.8}, {"accuracy": 0.9}],
+        class_names=["a"],
+        paths=mock_paths,
+        training=mock_cfg.training,
+        dataset=mock_cfg.dataset,
+        augmentation=mock_cfg.augmentation,
+        evaluation=mock_cfg.evaluation,
+        arch_name="test_arch",
+        aug_info="custom_aug",
+    )
+
+    kw = mock_report.call_args.kwargs
+    assert kw["val_metrics"] == [{"accuracy": 0.8}, {"accuracy": 0.9}]
+    assert kw["test_metrics"] == {"accuracy": 0.9, "auc": 0.95}
+    assert kw["macro_f1"] == pytest.approx(0.88)
+    assert kw["train_losses"] == [0.5, 0.3]
+    assert kw["best_path"] == Path("/mock/model.pth")
+    assert kw["log_path"] == Path("/mock/logs/session.log")
+    assert kw["arch_name"] == "test_arch"
+    assert kw["dataset"] is mock_cfg.dataset
+    assert kw["training"] is mock_cfg.training
+    assert kw["aug_info"] == "custom_aug"
+
+
+@pytest.mark.unit
+@patch("orchard.evaluation.evaluation_pipeline.evaluate_model")
+@patch("orchard.evaluation.evaluation_pipeline.plot_confusion_matrix")
+@patch("orchard.evaluation.evaluation_pipeline.plot_training_curves")
+@patch("orchard.evaluation.evaluation_pipeline.show_predictions")
+@patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
+def test_aug_info_default_is_na(
+    mock_report,
+    _mock_show_pred,
+    _mock_curves,
+    _mock_confusion,
+    mock_evaluate,
+):
+    """Verify aug_info defaults to 'N/A' when not specified."""
+    mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
+    mock_report.return_value = MagicMock()
+
+    mock_paths = MagicMock()
+    mock_paths.get_fig_path = MagicMock(return_value=Path("/mock/fig.png"))
+    mock_paths.best_model_path = Path("/mock/model.pth")
+    mock_paths.logs = Path("/mock/logs")
+    mock_paths.final_report_path = Path("/mock/report.xlsx")
+
+    mock_cfg = MagicMock()
+
+    run_final_evaluation(
+        model=MagicMock(),
+        test_loader=MagicMock(),
+        train_losses=[0.1],
+        val_metrics_history=[{"accuracy": 0.9}],
+        class_names=["a"],
+        paths=mock_paths,
+        training=mock_cfg.training,
+        dataset=mock_cfg.dataset,
+        augmentation=mock_cfg.augmentation,
+        evaluation=mock_cfg.evaluation,
+        arch_name="test",
+    )
+
+    kw = mock_report.call_args.kwargs
+    assert kw["aug_info"] == "N/A"
+
+
+@pytest.mark.unit
+@patch("orchard.evaluation.evaluation_pipeline.evaluate_model")
+@patch("orchard.evaluation.evaluation_pipeline.plot_confusion_matrix")
+@patch("orchard.evaluation.evaluation_pipeline.plot_training_curves")
+@patch("orchard.evaluation.evaluation_pipeline.show_predictions")
+@patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
+def test_return_tuple_order(
+    mock_report,
+    _mock_show_pred,
+    _mock_curves,
+    _mock_confusion,
+    mock_evaluate,
+):
+    """Verify return order is (macro_f1, test_acc, test_auc)."""
+    mock_evaluate.return_value = ([0], [0], {"accuracy": 0.85, "auc": 0.91}, 0.82)
+    mock_report.return_value = MagicMock()
+
+    mock_paths = MagicMock()
+    mock_paths.get_fig_path = MagicMock(return_value=Path("/mock/fig.png"))
+    mock_paths.best_model_path = Path("/mock/model.pth")
+    mock_paths.logs = Path("/mock/logs")
+    mock_paths.final_report_path = Path("/mock/report.xlsx")
+
+    mock_cfg = MagicMock()
+
+    result = run_final_evaluation(
+        model=MagicMock(),
+        test_loader=MagicMock(),
+        train_losses=[0.1],
+        val_metrics_history=[{"accuracy": 0.9}],
+        class_names=["a"],
+        paths=mock_paths,
+        training=mock_cfg.training,
+        dataset=mock_cfg.dataset,
+        augmentation=mock_cfg.augmentation,
+        evaluation=mock_cfg.evaluation,
+        arch_name="test",
+    )
+
+    # Return is (macro_f1, test_acc, test_auc)
+    assert result[0] == pytest.approx(0.82)  # macro_f1
+    assert result[1] == pytest.approx(0.85)  # test_acc
+    assert result[2] == pytest.approx(0.91)  # test_auc
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

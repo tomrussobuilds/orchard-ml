@@ -55,9 +55,9 @@ def show_predictions(
         n: Number of samples to display. Defaults to ``ctx.n_samples``.
     """
     model.eval()
-    style = ctx.plot_style if ctx else "seaborn-v0_8-muted"  # pragma: no mutant
+    style = ctx.plot_style if ctx else "seaborn-v0_8-muted"  # pragma: no mutate
 
-    with plt.style.context(style):  # pragma: no mutant
+    with plt.style.context(style):  # pragma: no mutate
         # 1. Parameter Resolution & Batch Inference
         num_samples = n or (ctx.n_samples if ctx else 12)
         images, labels, preds = _get_predictions_batch(model, loader, device, num_samples)
@@ -70,11 +70,11 @@ def show_predictions(
         for i, ax in enumerate(axes):
             if i < len(images):
                 _plot_single_prediction(ax, images[i], labels[i], preds[i], classes, ctx)
-            ax.axis("off")  # pragma: no mutant
+            ax.axis("off")  # pragma: no mutate
 
         # 4. Suptitle
         if ctx:
-            plt.suptitle(_build_suptitle(ctx), fontsize=14)  # pragma: no mutant
+            plt.suptitle(_build_suptitle(ctx), fontsize=14)  # pragma: no mutate
 
         # 5. Export and Cleanup
         _finalize_figure(plt, save_path, ctx)
@@ -95,34 +95,34 @@ def plot_training_curves(
         out_path: Destination file path for the saved figure.
         ctx: PlotContext with architecture and evaluation settings.
     """
-    with plt.style.context(ctx.plot_style):  # pragma: no mutant
-        fig, ax1 = plt.subplots(figsize=(9, 6))  # pragma: no mutant
+    with plt.style.context(ctx.plot_style):  # pragma: no mutate
+        fig, ax1 = plt.subplots(figsize=(9, 6))  # pragma: no mutate
 
         # Left Axis: Training Loss
-        ax1.plot(train_losses, color="#e74c3c", lw=2, label="Training Loss")  # pragma: no mutant
-        ax1.set_xlabel("Epoch")  # pragma: no mutant
-        ax1.set_ylabel("Loss", color="#e74c3c", fontweight="bold")  # pragma: no mutant
-        ax1.tick_params(axis="y", labelcolor="#e74c3c")  # pragma: no mutant
-        ax1.grid(True, linestyle="--", alpha=0.4)  # pragma: no mutant
+        ax1.plot(train_losses, color="#e74c3c", lw=2, label="Training Loss")  # pragma: no mutate
+        ax1.set_xlabel("Epoch")  # pragma: no mutate
+        ax1.set_ylabel("Loss", color="#e74c3c", fontweight="bold")  # pragma: no mutate
+        ax1.tick_params(axis="y", labelcolor="#e74c3c")  # pragma: no mutate
+        ax1.grid(True, linestyle="--", alpha=0.4)  # pragma: no mutate
 
         # Right Axis: Validation Accuracy
-        ax2 = ax1.twinx()  # pragma: no mutant
+        ax2 = ax1.twinx()  # pragma: no mutate
         ax2.plot(
             val_accuracies, color="#3498db", lw=2, label="Validation Accuracy"
-        )  # pragma: no mutant
-        ax2.set_ylabel("Accuracy", color="#3498db", fontweight="bold")  # pragma: no mutant
-        ax2.tick_params(axis="y", labelcolor="#3498db")  # pragma: no mutant
+        )  # pragma: no mutate
+        ax2.set_ylabel("Accuracy", color="#3498db", fontweight="bold")  # pragma: no mutate
+        ax2.tick_params(axis="y", labelcolor="#3498db")  # pragma: no mutate
 
-        fig.suptitle(  # pragma: no mutant
+        fig.suptitle(  # pragma: no mutate
             f"Training Metrics — {ctx.arch_name} | Resolution — {ctx.resolution}",
-            fontsize=14,  # pragma: no mutant
-            y=1.02,  # pragma: no mutant
+            fontsize=14,  # pragma: no mutate
+            y=1.02,  # pragma: no mutate
         )
 
-        fig.tight_layout()  # pragma: no mutant
+        fig.tight_layout()  # pragma: no mutate
 
-        plt.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")  # pragma: no mutant
-        logger.info(  # pragma: no mutant
+        plt.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")  # pragma: no mutate
+        logger.info(  # pragma: no mutate
             "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Training Curves", out_path.name
         )
 
@@ -149,29 +149,29 @@ def plot_confusion_matrix(
         out_path: Destination file path for the saved figure.
         ctx: PlotContext with architecture and evaluation settings.
     """
-    with plt.style.context(ctx.plot_style):  # pragma: no mutant
+    with plt.style.context(ctx.plot_style):  # pragma: no mutate
         cm = confusion_matrix(
             all_labels, all_preds, labels=np.arange(len(classes)), normalize="true"
         )
         cm = np.nan_to_num(cm)
 
         disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=classes)
-        fig, ax = plt.subplots(figsize=(11, 9))  # pragma: no mutant
+        fig, ax = plt.subplots(figsize=(11, 9))  # pragma: no mutate
 
         disp.plot(
             ax=ax, cmap=ctx.cmap_confusion, xticks_rotation=45, values_format=".3f"
-        )  # pragma: no mutant
-        plt.title(  # pragma: no mutant
+        )  # pragma: no mutate
+        plt.title(  # pragma: no mutate
             f"Confusion Matrix — {ctx.arch_name} | Resolution — {ctx.resolution}",
-            fontsize=12,  # pragma: no mutant
-            pad=20,  # pragma: no mutant
+            fontsize=12,  # pragma: no mutate
+            pad=20,  # pragma: no mutate
         )
 
-        plt.tight_layout()  # pragma: no mutant
+        plt.tight_layout()  # pragma: no mutate
 
-        fig.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")  # pragma: no mutant
+        fig.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")  # pragma: no mutate
         plt.close()
-        logger.info(  # pragma: no mutant
+        logger.info(  # pragma: no mutate
             "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Confusion Matrix", out_path.name
         )
 
@@ -198,13 +198,13 @@ def _plot_single_prediction(
     img = _denormalize_image(image, ctx) if ctx else image
     display_img = _prepare_for_plt(img)
 
-    ax.imshow(display_img, cmap="gray" if display_img.ndim == 2 else None)  # pragma: no mutant
+    ax.imshow(display_img, cmap="gray" if display_img.ndim == 2 else None)  # pragma: no mutate
 
     is_correct = label == pred
-    ax.set_title(  # pragma: no mutant
+    ax.set_title(  # pragma: no mutate
         f"T:{classes[label]}\nP:{classes[pred]}",
         color="green" if is_correct else "red",
-        fontsize=9,  # pragma: no mutant
+        fontsize=9,  # pragma: no mutate
     )
 
 
@@ -218,17 +218,17 @@ def _build_suptitle(ctx: PlotContext) -> str:
     Returns:
         Formatted suptitle string.
     """
-    tta_info = f" | TTA: {'ON' if ctx.use_tta else 'OFF'}"  # pragma: no mutant
+    tta_info = f" | TTA: {'ON' if ctx.use_tta else 'OFF'}"  # pragma: no mutate
 
     if ctx.is_texture_based:
-        domain_info = " | Mode: Texture"  # pragma: no mutant
+        domain_info = " | Mode: Texture"  # pragma: no mutate
     elif ctx.is_anatomical:
-        domain_info = " | Mode: Anatomical"  # pragma: no mutant
+        domain_info = " | Mode: Anatomical"  # pragma: no mutate
     else:
-        domain_info = " | Mode: Standard"  # pragma: no mutant
+        domain_info = " | Mode: Standard"  # pragma: no mutate
 
     return (
-        f"Sample Predictions — {ctx.arch_name} | "  # pragma: no mutant
+        f"Sample Predictions — {ctx.arch_name} | "  # pragma: no mutate
         f"Resolution: {ctx.resolution}"
         f"{domain_info}{tta_info}"
     )
@@ -275,9 +275,9 @@ def _setup_prediction_grid(
         tuple of ``(fig, axes)`` where axes is a flat 1-D array.
     """
     rows = int(np.ceil(num_samples / cols))
-    base_w, base_h = ctx.fig_size_predictions if ctx else (12, 8)  # pragma: no mutant
+    base_w, base_h = ctx.fig_size_predictions if ctx else (12, 8)  # pragma: no mutate
 
-    fig, axes = plt.subplots(  # pragma: no mutant
+    fig, axes = plt.subplots(  # pragma: no mutate
         rows, cols, figsize=(base_w, (base_h / 3) * rows), constrained_layout=True
     )
     # Ensure axes is always an array even for 1x1 grids
@@ -298,13 +298,13 @@ def _finalize_figure(plt_obj: Any, save_path: Path | None, ctx: PlotContext | No
         dpi = ctx.fig_dpi if ctx else 200
         plt_obj.savefig(
             save_path, dpi=dpi, bbox_inches="tight", facecolor="white"
-        )  # pragma: no mutant
-        logger.info(  # pragma: no mutant
+        )  # pragma: no mutate
+        logger.info(  # pragma: no mutate
             "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Predictions Grid", save_path.name
         )
     else:
         plt_obj.show()
-        logger.debug("Displaying figure interactive mode")  # pragma: no mutant
+        logger.debug("Displaying figure interactive mode")  # pragma: no mutate
 
     plt_obj.close()
 

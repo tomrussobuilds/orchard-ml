@@ -1,0 +1,476 @@
+orchard/architectures/_morphing.py:
+  last_run: '2026-03-05T09:35:52Z'
+  total: 28
+  killed: 28
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/architectures/convnext_tiny.py:
+  last_run: '2026-03-05T09:36:39Z'
+  total: 43
+  killed: 43
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/architectures/efficientnet_b0.py:
+  last_run: '2026-03-05T09:37:05Z'
+  total: 43
+  killed: 43
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/architectures/factory.py:
+  last_run: '2026-03-05T09:37:57Z'
+  total: 91
+  killed: 91
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/architectures/mini_cnn.py:
+  last_run: '2026-03-05T09:39:08Z'
+  total: 123
+  killed: 123
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/architectures/resnet_18.py:
+  last_run: '2026-03-05T09:39:32Z'
+  total: 89
+  killed: 89
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/architectures/timm_backbone.py:
+  last_run: '2026-03-05T09:40:08Z'
+  total: 21
+  killed: 21
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/architectures/vit_tiny.py:
+  last_run: '2026-03-05T09:42:33Z'
+  total: 86
+  killed: 86
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/cli_app.py:
+  last_run: '2026-03-05T09:42:48Z'
+  total: 401
+  killed: 325
+  survived: 76
+  not_checked: 0
+  score: 81.0
+orchard/core/config/infrastructure_config.py:
+  last_run: '2026-03-05T09:43:34Z'
+  total: 53
+  killed: 34
+  survived: 19
+  not_checked: 0
+  score: 64.2
+orchard/core/config/manifest.py:
+  last_run: '2026-03-05T10:57:03Z'
+  total: 45
+  killed: 32
+  survived: 13
+  not_checked: 0
+  score: 71.1
+orchard/core/config/optuna_config.py:
+  last_run: '2026-03-05T09:43:47Z'
+  total: 12
+  killed: 12
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/core/config/telemetry_config.py:
+  last_run: '2026-03-05T09:43:53Z'
+  total: 11
+  killed: 11
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/core/config/types.py:
+  last_run: '2026-03-05T09:44:10Z'
+  total: 1
+  killed: 1
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/core/environment/distributed.py:
+  last_run: '2026-03-05T09:44:23Z'
+  total: 33
+  killed: 33
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/core/environment/guards.py:
+  last_run: '2026-03-05T09:44:35Z'
+  total: 110
+  killed: 83
+  survived: 27
+  not_checked: 0
+  score: 75.5
+orchard/core/environment/hardware.py:
+  last_run: '2026-03-05T09:44:43Z'
+  total: 130
+  killed: 104
+  survived: 26
+  not_checked: 0
+  score: 80.0
+orchard/core/environment/policy.py:
+  last_run: '2026-03-05T09:44:49Z'
+  total: 8
+  killed: 8
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/core/environment/reproducibility.py:
+  last_run: '2026-03-05T09:44:57Z'
+  total: 75
+  killed: 41
+  survived: 34
+  not_checked: 0
+  score: 54.7
+orchard/core/environment/timing.py:
+  last_run: '2026-03-05T09:45:04Z'
+  total: 5
+  killed: 4
+  survived: 1
+  not_checked: 0
+  score: 80.0
+orchard/core/io/checkpoints.py:
+  last_run: '2026-03-05T09:45:15Z'
+  total: 33
+  killed: 27
+  survived: 6
+  not_checked: 0
+  score: 81.8
+orchard/core/io/data_io.py:
+  last_run: '2026-03-05T09:45:38Z'
+  total: 34
+  killed: 29
+  survived: 5
+  not_checked: 0
+  score: 85.3
+orchard/core/io/serialization.py:
+  last_run: '2026-03-05T09:45:48Z'
+  total: 136
+  killed: 70
+  survived: 66
+  not_checked: 0
+  score: 51.5
+orchard/core/logger/logger.py:
+  last_run: '2026-03-05T09:46:42Z'
+  total: 181
+  killed: 172
+  survived: 9
+  not_checked: 0
+  score: 95.0
+orchard/core/logger/progress.py:
+  last_run: '2026-03-05T10:57:03Z'
+  total: 99
+  killed: 77
+  survived: 22
+  not_checked: 0
+  score: 77.8
+orchard/core/logger/reporter.py:
+  last_run: '2026-03-05T09:47:02Z'
+  total: 311
+  killed: 311
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/core/metadata/domains/medical.py:
+  last_run: '2026-03-05T09:48:32Z'
+  total: 61
+  killed: 61
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/core/metadata/wrapper.py:
+  last_run: '2026-03-05T09:48:44Z'
+  total: 6
+  killed: 4
+  survived: 2
+  not_checked: 0
+  score: 66.7
+orchard/core/orchestrator.py:
+  last_run: '2026-03-05T09:48:54Z'
+  total: 220
+  killed: 177
+  survived: 43
+  not_checked: 0
+  score: 80.5
+orchard/core/paths/root.py:
+  last_run: '2026-03-05T09:49:32Z'
+  total: 32
+  killed: 32
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/core/paths/run_paths.py:
+  last_run: '2026-03-05T09:49:39Z'
+  total: 14
+  killed: 11
+  survived: 3
+  not_checked: 0
+  score: 78.6
+orchard/data_handler/data_explorer.py:
+  last_run: '2026-03-05T09:50:22Z'
+  total: 111
+  killed: 87
+  survived: 24
+  not_checked: 0
+  score: 78.4
+orchard/data_handler/dataset.py:
+  last_run: '2026-03-05T09:50:29Z'
+  total: 33
+  killed: 29
+  survived: 4
+  not_checked: 0
+  score: 87.9
+orchard/data_handler/fetcher.py:
+  last_run: '2026-03-05T09:50:54Z'
+  total: 51
+  killed: 46
+  survived: 5
+  not_checked: 0
+  score: 90.2
+orchard/data_handler/fetchers/cifar_converter.py:
+  last_run: '2026-03-05T09:51:07Z'
+  total: 153
+  killed: 113
+  survived: 40
+  not_checked: 0
+  score: 73.9
+orchard/data_handler/fetchers/galaxy10_converter.py:
+  last_run: '2026-03-05T09:51:18Z'
+  total: 301
+  killed: 155
+  survived: 146
+  not_checked: 0
+  score: 51.5
+orchard/data_handler/fetchers/medmnist_fetcher.py:
+  last_run: '2026-03-05T09:51:40Z'
+  total: 199
+  killed: 85
+  survived: 114
+  not_checked: 0
+  score: 42.7
+orchard/data_handler/loader.py:
+  last_run: '2026-03-05T09:51:49Z'
+  total: 220
+  killed: 136
+  survived: 84
+  not_checked: 0
+  score: 61.8
+orchard/data_handler/synthetic.py:
+  last_run: '2026-03-05T09:51:57Z'
+  total: 140
+  killed: 97
+  survived: 43
+  not_checked: 0
+  score: 69.3
+orchard/data_handler/transforms.py:
+  last_run: '2026-03-05T09:52:20Z'
+  total: 107
+  killed: 98
+  survived: 9
+  not_checked: 0
+  score: 91.6
+orchard/evaluation/evaluation_pipeline.py:
+  last_run: '2026-03-05T10:57:03Z'
+  total: 135
+  killed: 102
+  survived: 33
+  not_checked: 0
+  score: 75.6
+orchard/evaluation/evaluator.py:
+  last_run: '2026-03-05T09:53:28Z'
+  total: 68
+  killed: 68
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/evaluation/metrics.py:
+  last_run: '2026-03-05T09:53:34Z'
+  total: 23
+  killed: 21
+  survived: 2
+  not_checked: 0
+  score: 91.3
+orchard/evaluation/reporting.py:
+  last_run: '2026-03-05T09:53:48Z'
+  total: 220
+  killed: 103
+  survived: 117
+  not_checked: 0
+  score: 46.8
+orchard/evaluation/tta.py:
+  last_run: '2026-03-05T09:54:42Z'
+  total: 145
+  killed: 145
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/evaluation/visualization.py:
+  last_run: '2026-03-05T09:54:51Z'
+  total: 222
+  killed: 113
+  survived: 109
+  not_checked: 0
+  score: 50.9
+orchard/export/onnx_exporter.py:
+  last_run: '2026-03-05T09:55:28Z'
+  total: 335
+  killed: 335
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/export/validation.py:
+  last_run: '2026-03-05T09:55:45Z'
+  total: 104
+  killed: 104
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/optimization/_param_mapping.py:
+  last_run: '2026-03-05T09:56:18Z'
+  total: 13
+  killed: 13
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/optimization/early_stopping.py:
+  last_run: '2026-03-05T10:57:03Z'
+  total: 79
+  killed: 66
+  survived: 13
+  not_checked: 0
+  score: 83.5
+orchard/optimization/objective/config_builder.py:
+  last_run: '2026-03-05T09:56:38Z'
+  total: 55
+  killed: 44
+  survived: 11
+  not_checked: 0
+  score: 80.0
+orchard/optimization/objective/metric_extractor.py:
+  last_run: '2026-03-05T09:56:44Z'
+  total: 35
+  killed: 27
+  survived: 8
+  not_checked: 0
+  score: 77.1
+orchard/optimization/objective/objective.py:
+  last_run: '2026-03-05T10:57:03Z'
+  total: 134
+  killed: 95
+  survived: 39
+  not_checked: 0
+  score: 70.9
+orchard/optimization/objective/training_executor.py:
+  last_run: '2026-03-05T10:57:03Z'
+  total: 115
+  killed: 102
+  survived: 13
+  not_checked: 0
+  score: 88.7
+orchard/optimization/orchestrator/builders.py:
+  last_run: '2026-03-05T09:57:27Z'
+  total: 29
+  killed: 23
+  survived: 6
+  not_checked: 0
+  score: 79.3
+orchard/optimization/orchestrator/exporters.py:
+  last_run: '2026-03-05T09:57:37Z'
+  total: 273
+  killed: 170
+  survived: 103
+  not_checked: 0
+  score: 62.3
+orchard/optimization/orchestrator/orchestrator.py:
+  last_run: '2026-03-05T09:57:49Z'
+  total: 123
+  killed: 45
+  survived: 78
+  not_checked: 0
+  score: 36.6
+orchard/optimization/orchestrator/utils.py:
+  last_run: '2026-03-05T09:58:00Z'
+  total: 3
+  killed: 3
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/optimization/orchestrator/visualizers.py:
+  last_run: '2026-03-05T09:58:07Z'
+  total: 47
+  killed: 15
+  survived: 32
+  not_checked: 0
+  score: 31.9
+orchard/optimization/search_spaces.py:
+  last_run: '2026-03-05T09:58:16Z'
+  total: 288
+  killed: 274
+  survived: 14
+  not_checked: 0
+  score: 95.1
+orchard/pipeline/phases.py:
+  last_run: '2026-03-05T09:58:33Z'
+  total: 342
+  killed: 278
+  survived: 64
+  not_checked: 0
+  score: 81.3
+orchard/tracking/tracker.py:
+  last_run: '2026-03-05T09:58:44Z'
+  total: 103
+  killed: 91
+  survived: 12
+  not_checked: 0
+  score: 88.3
+orchard/trainer/_loop.py:
+  last_run: '2026-03-05T09:59:12Z'
+  total: 66
+  killed: 53
+  survived: 13
+  not_checked: 0
+  score: 80.3
+orchard/trainer/_scheduling.py:
+  last_run: '2026-03-05T09:59:18Z'
+  total: 2
+  killed: 2
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/trainer/engine.py:
+  last_run: '2026-03-05T10:01:49Z'
+  total: 285
+  killed: 285
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/trainer/losses.py:
+  last_run: '2026-03-05T10:02:12Z'
+  total: 36
+  killed: 36
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/trainer/setup.py:
+  last_run: '2026-03-05T10:02:20Z'
+  total: 116
+  killed: 75
+  survived: 41
+  not_checked: 0
+  score: 64.7
+orchard/trainer/trainer.py:
+  last_run: '2026-03-05T10:02:29Z'
+  total: 182
+  killed: 120
+  survived: 62
+  not_checked: 0
+  score: 65.9

@@ -271,13 +271,13 @@ class OptunaObjective:
             raise
 
         except Exception as e:  # must not crash study
-            logger.error(
-                "%s%s Trial %d failed: %s: %s",
-                LogStyle.INDENT,
-                LogStyle.FAILURE,
-                trial.number,
-                type(e).__name__,
-                e,
+            logger.error(  # pragma: no mutate
+                "%s%s Trial %d failed: %s: %s",  # pragma: no mutate
+                LogStyle.INDENT,  # pragma: no mutate
+                LogStyle.FAILURE,  # pragma: no mutate
+                trial.number,  # pragma: no mutate
+                type(e).__name__,  # pragma: no mutate
+                e,  # pragma: no mutate
             )
             return self._worst_metric()
 

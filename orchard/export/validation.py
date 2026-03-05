@@ -66,11 +66,11 @@ def validate_export(
     try:
         import onnxruntime as ort
 
-        logger.info("  [%s Validation]", label)  # pragma: no mutant
+        logger.info("  [%s Validation]", label)  # pragma: no mutate
         logger.info(
             "    %s Samples           : %s", LogStyle.BULLET, num_samples
-        )  # pragma: no mutant
-        logger.info(  # pragma: no mutant
+        )  # pragma: no mutate
+        logger.info(  # pragma: no mutate
             "    %s Max deviation     : %.0e", LogStyle.BULLET, max_deviation
         )
 
@@ -117,13 +117,13 @@ def validate_export(
                     )
                     return False
 
-        logger.info(  # pragma: no mutant
+        logger.info(  # pragma: no mutate
             "    %s Result            : %s Passed (max diff: %.2e)",
             LogStyle.BULLET,
             LogStyle.SUCCESS,
             max_diff,
         )
-        logger.info("")  # pragma: no mutant
+        logger.info("")  # pragma: no mutate
         return True
 
     except ImportError as e:

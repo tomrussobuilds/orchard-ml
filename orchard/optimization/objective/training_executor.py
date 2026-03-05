@@ -218,8 +218,8 @@ class TrialTrainingExecutor:
 
             # Check pruning
             if self._should_prune(trial, epoch):
-                logger.info(  # pragma: no mutant
-                    "%s%s Trial %d pruned at epoch %d (%s=%.4f)",
+                logger.info(  # pragma: no mutate
+                    "%s%s Trial %d pruned at epoch %d (%s=%.4f)",  # pragma: no mutate
                     LogStyle.INDENT,
                     LogStyle.ARROW,
                     trial.number,
@@ -234,8 +234,8 @@ class TrialTrainingExecutor:
 
             # Logging
             if epoch % self.log_interval == 0 or epoch == self.epochs:
-                logger.info(  # pragma: no mutant
-                    "%sT%d E%d/%d | Loss:%.4f | %s:%.4f (Best:%.4f)",
+                logger.info(  # pragma: no mutate
+                    "%sT%d E%d/%d | Loss:%.4f | %s:%.4f (Best:%.4f)",  # pragma: no mutate
                     LogStyle.DOUBLE_INDENT,
                     trial.number,
                     epoch,
@@ -269,17 +269,17 @@ class TrialTrainingExecutor:
 
         except (RuntimeError, ValueError) as e:
             self._consecutive_val_failures += 1
-            logger.error(
-                "%s%s Validation failed (x%d): %s",
-                LogStyle.INDENT,
-                LogStyle.FAILURE,
-                self._consecutive_val_failures,
-                e,
+            logger.error(  # pragma: no mutate
+                "%s%s Validation failed (x%d): %s",  # pragma: no mutate
+                LogStyle.INDENT,  # pragma: no mutate
+                LogStyle.FAILURE,  # pragma: no mutate
+                self._consecutive_val_failures,  # pragma: no mutate
+                e,  # pragma: no mutate
             )
             if self._consecutive_val_failures >= _MAX_CONSECUTIVE_VAL_FAILURES:
                 raise RuntimeError(
                     f"Validation failed {self._consecutive_val_failures} consecutive times, "
-                    "aborting trial"
+                    "aborting trial"  # pragma: no mutate
                 ) from e
             return dict(_FALLBACK_METRICS)
 
@@ -317,15 +317,26 @@ class TrialTrainingExecutor:
             best_metric: Best metric achieved
             final_loss: Final training loss
         """
-        logger.info("")  # pragma: no mutant
-        logger.info(  # pragma: no mutant
-            "%s%s Trial %d completed", LogStyle.INDENT, LogStyle.SUCCESS, trial.number
+        logger.info("")  # pragma: no mutate
+        logger.info(  # pragma: no mutate
+            "%s%s Trial %d completed",
+            LogStyle.INDENT,
+            LogStyle.SUCCESS,
+            trial.number,  # pragma: no mutate
         )
-        best_label = "Best %s" % self.metric_extractor.metric_name.upper()
-        logger.info(  # pragma: no mutant
-            "%s%s %-18s: %.6f", LogStyle.INDENT, LogStyle.ARROW, best_label, best_metric
+        best_label = "Best %s" % self.metric_extractor.metric_name.upper()  # pragma: no mutate
+        logger.info(  # pragma: no mutate
+            "%s%s %-18s: %.6f",
+            LogStyle.INDENT,
+            LogStyle.ARROW,
+            best_label,
+            best_metric,  # pragma: no mutate
         )
-        logger.info(  # pragma: no mutant
-            "%s%s %-18s: %.4f", LogStyle.INDENT, LogStyle.ARROW, "Final Loss", final_loss
+        logger.info(  # pragma: no mutate
+            "%s%s %-18s: %.4f",
+            LogStyle.INDENT,
+            LogStyle.ARROW,
+            "Final Loss",
+            final_loss,  # pragma: no mutate
         )
-        logger.info("")  # pragma: no mutant
+        logger.info("")  # pragma: no mutate

@@ -377,12 +377,12 @@ def run_export_phase(
                 label=export_cfg.quantization_type.upper(),
             )
 
-    logger.info("  %s Export completed", LogStyle.SUCCESS)  # pragma: no mutant
+    logger.info("  %s Export completed", LogStyle.SUCCESS)  # pragma: no mutate
     logger.info(
         "    %s Output            : %s", LogStyle.ARROW, onnx_path.name
-    )  # pragma: no mutant
+    )  # pragma: no mutate
     if quantized_path:
-        logger.info(  # pragma: no mutant
+        logger.info(  # pragma: no mutate
             "    %s Quantized         : %s", LogStyle.ARROW, quantized_path.name
         )
 
