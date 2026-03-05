@@ -7,6 +7,7 @@ serialization, and from_recipe factory.
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 
 import pytest
@@ -22,9 +23,12 @@ from orchard.core import (
 from orchard.core.config.manifest import (
     _MODELS_224_ONLY,
     _MODELS_LOW_RES,
+    _OPTUNA_FULL_EXTRA_KEYS,
+    _OPTUNA_QUICK_KEYS,
     _RESOLUTIONS_224_ONLY,
     _RESOLUTIONS_LOW_RES,
     _deep_set,
+    _warn_optuna_override_conflicts,
 )
 from orchard.exceptions import OrchardConfigError
 
@@ -413,6 +417,43 @@ def test_dump_portable_no_data_root():
 
 
 @pytest.mark.unit
+def test_dump_portable_hardware_is_dict():
+    """dump_portable returns hardware as a real dict, not None."""
+    cfg = Config(hardware=HardwareConfig(device="cpu"))
+    portable = cfg.dump_portable()
+    assert isinstance(portable["hardware"], dict)
+    assert "device" in portable["hardware"]
+
+
+@pytest.mark.unit
+def test_dump_portable_telemetry_uses_portable_dict():
+    """dump_portable telemetry comes from to_portable_dict, not raw model_dump."""
+    cfg = Config(hardware=HardwareConfig(device="cpu"))
+    portable = cfg.dump_portable()
+    assert isinstance(portable["telemetry"], dict)
+    assert portable["telemetry"] == cfg.telemetry.to_portable_dict()
+
+
+@pytest.mark.unit
+def test_dump_portable_relative_path_value():
+    """dump_portable converts absolute data_root to ./relative string."""
+    from orchard.core.config import manifest as manifest_mod
+
+    original_root = manifest_mod.PROJECT_ROOT
+    cfg = Config(
+        dataset=DatasetConfig(
+            name="bloodmnist",
+            resolution=28,
+            data_root=str(original_root / "data" / "bloodmnist"),
+        ),
+        hardware=HardwareConfig(device="cpu"),
+    )
+    portable = cfg.dump_portable()
+    dr = portable["dataset"]["data_root"]
+    assert dr == "./data/bloodmnist"
+
+
+@pytest.mark.unit
 def test_dump_serialized_returns_dict():
     """Test dump_serialized produces JSON-compatible dict with mode='json'."""
     cfg = Config(hardware=HardwareConfig(device="cpu"))
@@ -420,6 +461,17 @@ def test_dump_serialized_returns_dict():
     assert isinstance(serialized, dict)
     for key in ("hardware", "training", "dataset"):
         assert key in serialized
+
+
+@pytest.mark.unit
+def test_dump_serialized_paths_are_strings():
+    """dump_serialized with mode='json' converts Path objects to strings."""
+    cfg = Config(hardware=HardwareConfig(device="cpu"))
+    serialized = cfg.dump_serialized()
+    data_root = serialized["dataset"]["data_root"]
+    assert isinstance(data_root, str)
+    # mode='json' should NOT return Path objects
+    assert not isinstance(data_root, Path)
 
 
 @pytest.mark.unit
@@ -486,6 +538,198 @@ def test_from_recipe_default_resolution_28(tmp_path):
     )
     cfg = Config.from_recipe(recipe)
     assert cfg.dataset.resolution == 28
+
+
+# CROSS-DOMAIN: QUANTIZATION-ARCHITECTURE
+
+
+@pytest.mark.unit
+def test_quantize_int4_mini_cnn_warns():
+    """4-bit quantization on mini_cnn emits a UserWarning."""
+    from orchard.core import ExportConfig
+
+    with pytest.warns(UserWarning, match="4-bit quantization.*int4.*mini_cnn"):
+        Config(
+            architecture=ArchitectureConfig(name="mini_cnn", pretrained=False),
+            hardware=HardwareConfig(device="cpu"),
+            export=ExportConfig(quantize=True, quantization_type="int4"),
+        )
+
+
+@pytest.mark.unit
+def test_quantize_uint4_mini_cnn_warns():
+    """uint4 quantization on mini_cnn also triggers the warning."""
+    from orchard.core import ExportConfig
+
+    with pytest.warns(UserWarning, match="4-bit quantization.*uint4.*mini_cnn"):
+        Config(
+            architecture=ArchitectureConfig(name="mini_cnn", pretrained=False),
+            hardware=HardwareConfig(device="cpu"),
+            export=ExportConfig(quantize=True, quantization_type="uint4"),
+        )
+
+
+@pytest.mark.unit
+def test_quantize_int8_mini_cnn_no_warning():
+    """int8 quantization on mini_cnn is fine — no warning."""
+    from orchard.core import ExportConfig
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        Config(
+            architecture=ArchitectureConfig(name="mini_cnn", pretrained=False),
+            hardware=HardwareConfig(device="cpu"),
+            export=ExportConfig(quantize=True, quantization_type="int8"),
+        )
+    quant_warnings = [w for w in caught if "4-bit quantization" in str(w.message)]
+    assert quant_warnings == []
+
+
+@pytest.mark.unit
+def test_quantize_int4_resnet_no_warning():
+    """int4 on a larger model (resnet_18) does not warn."""
+    from orchard.core import ExportConfig
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        Config(
+            architecture=ArchitectureConfig(name="resnet_18", pretrained=False),
+            hardware=HardwareConfig(device="cpu"),
+            export=ExportConfig(quantize=True, quantization_type="int4"),
+        )
+    quant_warnings = [w for w in caught if "4-bit quantization" in str(w.message)]
+    assert quant_warnings == []
+
+
+@pytest.mark.unit
+def test_quantize_disabled_no_warning():
+    """quantize=False skips the check entirely."""
+    from orchard.core import ExportConfig
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        Config(
+            architecture=ArchitectureConfig(name="mini_cnn", pretrained=False),
+            hardware=HardwareConfig(device="cpu"),
+            export=ExportConfig(quantize=False, quantization_type="int4"),
+        )
+    quant_warnings = [w for w in caught if "4-bit quantization" in str(w.message)]
+    assert quant_warnings == []
+
+
+@pytest.mark.unit
+def test_no_export_no_warning():
+    """No export config at all — no warning."""
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        Config(
+            architecture=ArchitectureConfig(name="mini_cnn", pretrained=False),
+            hardware=HardwareConfig(device="cpu"),
+        )
+    quant_warnings = [w for w in caught if "4-bit quantization" in str(w.message)]
+    assert quant_warnings == []
+
+
+# OPTUNA OVERRIDE CONFLICT DETECTION
+
+
+@pytest.mark.unit
+def test_warn_optuna_override_quick_conflict():
+    """Override on a quick-preset param triggers warning."""
+    with pytest.warns(UserWarning, match=r"training\.learning_rate.*will be ignored"):
+        _warn_optuna_override_conflicts(
+            overrides={"training.learning_rate": 0.01, "training.epochs": 30},
+            search_space_preset="quick",
+        )
+
+
+@pytest.mark.unit
+def test_warn_optuna_override_full_conflict():
+    """Override on a full-only param triggers warning when preset is 'full'."""
+    with pytest.warns(UserWarning, match=r"training\.focal_gamma.*will be ignored"):
+        _warn_optuna_override_conflicts(
+            overrides={"training.focal_gamma": 3.0},
+            search_space_preset="full",
+        )
+
+
+@pytest.mark.unit
+def test_no_warn_optuna_override_full_param_quick_preset():
+    """Full-only params do NOT warn under quick preset."""
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        _warn_optuna_override_conflicts(
+            overrides={"training.focal_gamma": 3.0},
+            search_space_preset="quick",
+        )
+    optuna_warnings = [w for w in caught if "will be ignored" in str(w.message)]
+    assert optuna_warnings == []
+
+
+@pytest.mark.unit
+def test_no_warn_optuna_override_safe_keys():
+    """Overrides on non-tunable keys (e.g. epochs, patience) do not warn."""
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        _warn_optuna_override_conflicts(
+            overrides={"training.epochs": 30, "training.patience": 10},
+            search_space_preset="full",
+        )
+    optuna_warnings = [w for w in caught if "will be ignored" in str(w.message)]
+    assert optuna_warnings == []
+
+
+@pytest.mark.unit
+def test_optuna_override_conflict_from_recipe(tmp_path):
+    """End-to-end: from_recipe warns when --set conflicts with Optuna search space."""
+    recipe = tmp_path / "recipe.yaml"
+    recipe.write_text(
+        "dataset:\n  name: bloodmnist\n  resolution: 28\n"
+        "architecture:\n  name: mini_cnn\n  pretrained: false\n"
+        "hardware:\n  device: cpu\n"
+        "optuna:\n  n_trials: 5\n  epochs: 10\n  search_space_preset: quick\n"
+    )
+    with pytest.warns(UserWarning, match=r"training\.learning_rate.*will be ignored"):
+        Config.from_recipe(recipe, overrides={"training.learning_rate": 0.01})
+
+
+@pytest.mark.unit
+def test_no_optuna_override_conflict_without_optuna(tmp_path):
+    """No Optuna config → no warning even for tunable keys."""
+    recipe = tmp_path / "recipe.yaml"
+    recipe.write_text(
+        "dataset:\n  name: bloodmnist\n  resolution: 28\n"
+        "architecture:\n  name: mini_cnn\n  pretrained: false\n"
+        "hardware:\n  device: cpu\n"
+    )
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        Config.from_recipe(recipe, overrides={"training.learning_rate": 0.001})
+    optuna_warnings = [w for w in caught if "will be ignored" in str(w.message)]
+    assert optuna_warnings == []
+
+
+@pytest.mark.unit
+def test_optuna_quick_keys_constant_contents():
+    """Verify _OPTUNA_QUICK_KEYS contains the expected parameters."""
+    assert "training.learning_rate" in _OPTUNA_QUICK_KEYS
+    assert "training.batch_size" in _OPTUNA_QUICK_KEYS
+    assert "architecture.dropout" in _OPTUNA_QUICK_KEYS
+    assert len(_OPTUNA_QUICK_KEYS) == 7
+
+
+@pytest.mark.unit
+def test_optuna_full_extra_keys_constant_contents():
+    """Verify _OPTUNA_FULL_EXTRA_KEYS contains the expected parameters."""
+    assert "training.focal_gamma" in _OPTUNA_FULL_EXTRA_KEYS
+    assert "augmentation.rotation_angle" in _OPTUNA_FULL_EXTRA_KEYS
+    assert len(_OPTUNA_FULL_EXTRA_KEYS) == 9
+
+
+@pytest.mark.unit
+def test_optuna_quick_and_full_disjoint():
+    """Quick and full-extra key sets must not overlap."""
+    assert _OPTUNA_QUICK_KEYS & _OPTUNA_FULL_EXTRA_KEYS == frozenset()
 
 
 if __name__ == "__main__":

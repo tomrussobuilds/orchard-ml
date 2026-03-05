@@ -48,6 +48,88 @@ _MODELS_224_ONLY = frozenset({"efficientnet_b0", "vit_tiny", "convnext_tiny"})
 _RESOLUTIONS_LOW_RES: Final[frozenset[int]] = frozenset({28, 32, 64})
 _RESOLUTIONS_224_ONLY: Final[frozenset[int]] = frozenset({224})
 
+# Optuna override conflict detection: dotted config keys tuned per preset.
+# Derived from optimization/_param_mapping.py PARAM_MAPPING + SearchSpaceRegistry.
+_OPTUNA_QUICK_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        "training.optimizer_type",
+        "training.learning_rate",
+        "training.weight_decay",
+        "training.momentum",
+        "training.min_lr",
+        "training.batch_size",
+        "architecture.dropout",
+    }
+)
+
+_OPTUNA_FULL_EXTRA_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        "training.criterion_type",
+        "training.focal_gamma",
+        "training.label_smoothing",
+        "training.mixup_alpha",
+        "training.scheduler_type",
+        "training.scheduler_patience",
+        "augmentation.rotation_angle",
+        "augmentation.jitter_val",
+        "augmentation.min_scale",
+    }
+)
+
+
+# OVERRIDE UTILITIES
+def _deep_set(data: dict[str, Any], dotted_key: str, value: Any) -> None:
+    """
+    Set a nested dict value using a dot-separated key path.
+
+    Creates intermediate dicts as needed. Used by ``Config.from_recipe``
+    to apply CLI overrides before Pydantic instantiation.
+
+    Args:
+        data: Target dictionary to modify in-place
+        dotted_key: Dot-separated path (e.g. ``"training.epochs"``)
+        value: Value to set at the leaf key
+    """
+    keys = dotted_key.split(".")
+    current = data
+    for key in keys[:-1]:
+        current = current.setdefault(key, {})
+    current[keys[-1]] = value
+
+
+def _warn_optuna_override_conflicts(
+    overrides: dict[str, Any],
+    search_space_preset: str,
+) -> None:
+    """
+    Warn when ``--set`` overrides target parameters that Optuna will tune.
+
+    These overrides apply to the base config but are silently overwritten
+    per trial by Optuna's search space, so the user's intent is lost.
+
+    Args:
+        overrides: Flat dict of dotted override keys from ``--set``.
+        search_space_preset: Active Optuna preset (``"quick"`` or ``"full"``).
+    """
+    tunable = _OPTUNA_QUICK_KEYS
+    if search_space_preset == "full":
+        tunable = tunable | _OPTUNA_FULL_EXTRA_KEYS
+
+    conflicts = sorted(tunable & overrides.keys())
+    if not conflicts:
+        return
+
+    import warnings
+
+    warnings.warn(
+        f"--set overrides {conflicts} will be ignored: "  # pragma: no mutate
+        f"Optuna '{search_space_preset}' search space tunes these parameters per trial. "  # pragma: no mutate
+        f"To fix a parameter, narrow the search space in optuna.search_space_overrides "  # pragma: no mutate
+        f"or use a custom preset that excludes it.",  # pragma: no mutate
+        UserWarning,  # pragma: no mutate
+        stacklevel=3,  # pragma: no mutate
+    )
+
 
 # MAIN CONFIGURATION
 class Config(BaseModel):
@@ -160,7 +242,8 @@ class Config(BaseModel):
         full_data["telemetry"] = self.telemetry.to_portable_dict()
 
         # Sanitize dataset root path
-        dataset_section = full_data.get("dataset", {})
+        # default {} never reached (model_dump always has "dataset"), equivalent mutant
+        dataset_section = full_data.get("dataset", {})  # pragma: no mutate
         data_root = dataset_section.get("data_root")
 
         if data_root:
@@ -181,7 +264,8 @@ class Config(BaseModel):
         Returns:
             Dictionary with all values JSON-serializable for YAML export.
         """
-        return self.model_dump(mode="json")
+        # Pydantic mode= is case-insensitive, so "json"/"JSON" are equivalent mutants
+        return self.model_dump(mode="json")  # pragma: no mutate
 
     # -- Factory: YAML recipe (primary, used by ``orchard`` CLI) -------------
 
@@ -243,6 +327,11 @@ class Config(BaseModel):
         metadata = wrapper.get_dataset(ds_name)
         raw_data.setdefault("dataset", {})["metadata"] = metadata
 
+        if overrides and raw_data.get("optuna") is not None:
+            optuna_section = raw_data["optuna"]
+            preset = optuna_section.get("search_space_preset", "full")
+            _warn_optuna_override_conflicts(overrides, preset)
+
         return cls(**raw_data)
 
 
@@ -264,6 +353,7 @@ class _CrossDomainValidator:
         cls._check_lr_bounds(config)
         cls._check_cpu_highres_performance(config)
         cls._check_min_dataset_size(config)
+        cls._check_quantization_architecture(config)
         return config
 
     @classmethod
@@ -396,6 +486,31 @@ class _CrossDomainValidator:
             )
 
     @classmethod
+    def _check_quantization_architecture(cls, config: Config) -> None:
+        """
+        Warn when aggressive quantization targets a very small model.
+
+        4-bit quantization (int4/uint4) on mini_cnn causes disproportionate
+        precision loss because the model has very few parameters and small
+        convolution kernels.
+        """
+        if config.export is None or not config.export.quantize:
+            return
+        if (
+            config.export.quantization_type in ("int4", "uint4")
+            and config.architecture.name.lower() == "mini_cnn"
+        ):
+            import warnings
+
+            warnings.warn(
+                f"4-bit quantization ({config.export.quantization_type}) on "  # pragma: no mutate
+                f"mini_cnn is likely to degrade accuracy severely. "  # pragma: no mutate
+                f"Consider int8/uint8 or a larger architecture.",  # pragma: no mutate
+                UserWarning,
+                stacklevel=4,  # pragma: no mutate
+            )
+
+    @classmethod
     def _check_min_dataset_size(cls, config: Config) -> None:
         """
         Warn when max_samples is too small for reliable class-balanced training.
@@ -420,23 +535,3 @@ class _CrossDomainValidator:
                 UserWarning,
                 stacklevel=4,
             )
-
-
-# OVERRIDE UTILITIES
-def _deep_set(data: dict[str, Any], dotted_key: str, value: Any) -> None:
-    """
-    Set a nested dict value using a dot-separated key path.
-
-    Creates intermediate dicts as needed. Used by ``Config.from_recipe``
-    to apply CLI overrides before Pydantic instantiation.
-
-    Args:
-        data: Target dictionary to modify in-place
-        dotted_key: Dot-separated path (e.g. ``"training.epochs"``)
-        value: Value to set at the leaf key
-    """
-    keys = dotted_key.split(".")
-    current = data
-    for key in keys[:-1]:
-        current = current.setdefault(key, {})
-    current[keys[-1]] = value
