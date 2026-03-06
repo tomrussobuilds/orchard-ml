@@ -55,6 +55,8 @@ def test_registry_wrapper_get_dataset_not_found():
     assert "nonexistent_dataset" in error_msg
     assert "not found" in error_msg
     assert "Available:" in error_msg
+    # Kill mutant: available = None → message must contain a real list, not "None"
+    assert "[" in error_msg and "]" in error_msg
 
 
 @pytest.mark.unit
@@ -156,6 +158,8 @@ def test_registry_wrapper_get_dataset_returns_deep_copy():
 
     assert meta1 == meta2
     assert meta1 is not meta2
+    # Kill mutant: copy.copy → copy.deepcopy — nested mutable fields must be independent
+    assert meta1.classes is not meta2.classes
 
 
 @pytest.mark.unit

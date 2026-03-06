@@ -17,6 +17,14 @@ from orchard.core import LOGGER_NAME, Config, RootOrchestrator, TimeTracker
 
 # TIMETRACKER TESTS
 @pytest.mark.unit
+def test_timetracker_init_state():
+    """Test __init__ sets _start_time and _end_time to None (not empty string)."""
+    tracker = TimeTracker()
+    assert tracker._start_time is None
+    assert tracker._end_time is None
+
+
+@pytest.mark.unit
 def test_timetracker_elapsed_seconds_before_start():
     """Test elapsed_seconds returns 0 before start() is called."""
     tracker = TimeTracker()
@@ -77,6 +85,14 @@ def test_timetracker_start_resets_end_time():
 
 
 @pytest.mark.unit
+def test_timetracker_start_sets_float_start_time():
+    """Test start() sets _start_time to a float (not None)."""
+    tracker = TimeTracker()
+    tracker.start()
+    assert isinstance(tracker._start_time, float)
+
+
+@pytest.mark.unit
 def test_timetracker_stop_returns_elapsed():
     """Test stop() returns elapsed seconds."""
     tracker = TimeTracker()
@@ -86,7 +102,7 @@ def test_timetracker_stop_returns_elapsed():
     elapsed = tracker.stop()
 
     assert elapsed > 0
-    assert tracker._end_time is not None
+    assert isinstance(tracker._end_time, float)
 
 
 # ORCHESTRATOR: INITIALIZATION

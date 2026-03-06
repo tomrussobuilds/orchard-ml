@@ -102,6 +102,34 @@ class TestClassificationMetrics:
         for key, value in results.items():
             assert isinstance(value, float), f"Key {key} is not a standard float"
 
+    def test_f1_zero_division_suppresses_warning(self):
+        """Kill mutant_12: removing zero_division=0.0 causes UndefinedMetricWarning.
+
+        With explicit zero_division=0.0, sklearn silently returns 0.0.
+        Without it, the default 'warn' emits UndefinedMetricWarning.
+        """
+        import warnings
+
+        # 3-class scenario: class 2 is never predicted → precision=0/0 → triggers
+        # zero_division. Both classes 0 and 1 present in labels → AUC won't warn.
+        labels = np.array([0, 0, 1, 1, 2, 2])
+        preds = np.array([0, 0, 1, 1, 0, 1])  # class 2 never predicted
+        probs = np.array(
+            [
+                [0.8, 0.1, 0.1],
+                [0.7, 0.2, 0.1],
+                [0.1, 0.8, 0.1],
+                [0.1, 0.7, 0.2],
+                [0.5, 0.3, 0.2],
+                [0.2, 0.5, 0.3],
+            ]
+        )
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", category=UserWarning)
+            # Must NOT raise UndefinedMetricWarning
+            compute_classification_metrics(labels, preds, probs)
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

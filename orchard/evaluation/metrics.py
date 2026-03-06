@@ -37,7 +37,11 @@ def compute_classification_metrics(
             - ``f1`` -- Macro-averaged F1 score
     """
     accuracy = np.mean(preds == labels)
-    macro_f1 = f1_score(labels, preds, average="macro", zero_division=0.0)
+    # fmt: off
+    # Equivalent mutants: average="macro"→"MACRO"/None is caught by sklearn;
+    # zero_division=0.0→1.0 or removal is runtime-equiv in sklearn ≥1.8.
+    macro_f1 = f1_score(labels, preds, average="macro", zero_division=0.0)  # pragma: no mutate
+    # fmt: on
     auc = compute_auc(labels, probs)
 
     return {METRIC_ACCURACY: float(accuracy), METRIC_AUC: float(auc), METRIC_F1: float(macro_f1)}

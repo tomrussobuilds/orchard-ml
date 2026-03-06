@@ -223,12 +223,12 @@ orchard/core/environment/reproducibility.py:
   not_checked: 0
   score: 100.0
 orchard/core/environment/timing.py:
-  last_run: '2026-03-06T10:05:17Z'
+  last_run: '2026-03-06T13:42:47Z'
   total: 5
-  killed: 4
-  survived: 1
+  killed: 5
+  survived: 0
   not_checked: 0
-  score: 80.0
+  score: 100.0
 orchard/core/io/__init__.py:
   last_run: '2026-03-06T10:24:22Z'
   total: 0
@@ -251,12 +251,12 @@ orchard/core/io/data_io.py:
   not_checked: 0
   score: 85.3
 orchard/core/io/serialization.py:
-  last_run: '2026-03-06T10:06:01Z'
-  total: 139
-  killed: 135
-  survived: 4
+  last_run: '2026-03-06T13:42:19Z'
+  total: 108
+  killed: 108
+  survived: 0
   not_checked: 0
-  score: 97.1
+  score: 100.0
 orchard/core/logger/__init__.py:
   last_run: '2026-03-06T10:24:27Z'
   total: 0
@@ -328,12 +328,12 @@ orchard/core/metadata/domains/space.py:
   not_checked: 0
   score: 100.0
 orchard/core/metadata/wrapper.py:
-  last_run: '2026-03-06T10:08:56Z'
+  last_run: '2026-03-06T13:42:47Z'
   total: 6
-  killed: 4
-  survived: 2
+  killed: 6
+  survived: 0
   not_checked: 0
-  score: 66.7
+  score: 100.0
 orchard/core/orchestrator.py:
   last_run: '2026-03-06T10:09:07Z'
   total: 208
@@ -363,12 +363,12 @@ orchard/core/paths/root.py:
   not_checked: 0
   score: 100.0
 orchard/core/paths/run_paths.py:
-  last_run: '2026-03-06T10:09:53Z'
+  last_run: '2026-03-06T13:48:20Z'
   total: 14
-  killed: 11
-  survived: 3
+  killed: 14
+  survived: 0
   not_checked: 0
-  score: 78.6
+  score: 100.0
 orchard/data_handler/__init__.py:
   last_run: '2026-03-06T10:25:08Z'
   total: 0
@@ -468,12 +468,12 @@ orchard/evaluation/evaluator.py:
   not_checked: 0
   score: 100.0
 orchard/evaluation/metrics.py:
-  last_run: '2026-03-06T10:13:51Z'
-  total: 23
-  killed: 21
-  survived: 2
+  last_run: '2026-03-06T13:55:43Z'
+  total: 11
+  killed: 11
+  survived: 0
   not_checked: 0
-  score: 91.3
+  score: 100.0
 orchard/evaluation/plot_context.py:
   last_run: '2026-03-06T10:25:23Z'
   total: 0

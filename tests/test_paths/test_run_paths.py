@@ -335,6 +335,9 @@ def test_get_fig_path_method(tmp_path):
 
     fig_path = run_paths.get_fig_path("confusion_matrix.png")
     assert fig_path == run_paths.figures / "confusion_matrix.png"
+    assert isinstance(fig_path, Path)
+    assert fig_path.name == "confusion_matrix.png"
+    assert fig_path.parent == run_paths.figures
 
     fig_path2 = run_paths.get_fig_path("roc_curve.pdf")
     assert fig_path2 == run_paths.figures / "roc_curve.pdf"
@@ -354,6 +357,9 @@ def test_get_config_path_method(tmp_path):
 
     config_path = run_paths.get_config_path()
     assert config_path == run_paths.reports / "config.yaml"
+    assert isinstance(config_path, Path)
+    assert config_path.name == "config.yaml"
+    assert config_path.parent == run_paths.reports
 
 
 @pytest.mark.unit
@@ -370,6 +376,9 @@ def test_get_db_path_method(tmp_path):
 
     db_path = run_paths.get_db_path()
     assert db_path == run_paths.database / "study.db"
+    assert isinstance(db_path, Path)
+    assert db_path.name == "study.db"
+    assert db_path.parent == run_paths.database
 
 
 # RUNPATHS: IMMUTABILITY
@@ -526,6 +535,51 @@ def test_multiple_runs_different_configs(tmp_path):
 
     for run_id in run_ids:
         assert (tmp_path / run_id).exists()
+
+
+@pytest.mark.unit
+def test_setup_run_directories_creates_parents(tmp_path):
+    """Kill mutant: parents=True must be set — dirs created from scratch."""
+    training_cfg = {"batch_size": 32}
+    # Use a deeply nested base_dir that does NOT exist yet
+    nested_base = tmp_path / "deep" / "nested" / "base"
+
+    run_paths = RunPaths.create(
+        dataset_slug="test",
+        architecture_name="arch",
+        training_cfg=training_cfg,
+        base_dir=nested_base,
+    )
+
+    # All subdirectories must exist despite nested_base not pre-existing
+    for subdir_name in RunPaths.SUB_DIRS:
+        subdir_path = run_paths.root / subdir_name
+        assert subdir_path.exists(), f"Missing subdirectory: {subdir_name}"
+
+
+@pytest.mark.unit
+def test_setup_run_directories_idempotent(tmp_path):
+    """Kill mutants: exist_ok=True must be set — re-creation must not raise."""
+    fixed_ts = 1707400000.0
+    training_cfg = {"batch_size": 32, "run_timestamp": fixed_ts}
+
+    # Create the same run twice (same timestamp = same run_id = same dirs)
+    RunPaths.create(
+        dataset_slug="test",
+        architecture_name="arch",
+        training_cfg=training_cfg,
+        base_dir=tmp_path,
+    )
+    # Second creation must NOT raise FileExistsError
+    run_paths = RunPaths.create(
+        dataset_slug="test",
+        architecture_name="arch",
+        training_cfg=training_cfg,
+        base_dir=tmp_path,
+    )
+
+    for subdir_name in RunPaths.SUB_DIRS:
+        assert (run_paths.root / subdir_name).exists()
 
 
 if __name__ == "__main__":

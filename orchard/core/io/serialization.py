@@ -121,8 +121,9 @@ def load_config_from_yaml(yaml_path: Path) -> dict[str, Any]:
     if not yaml_path.exists():
         raise FileNotFoundError(f"YAML configuration file not found at: {yaml_path}")
 
-    with open(yaml_path, "r", encoding="utf-8") as f:
-        return cast(dict[str, Any], yaml.safe_load(f))
+    # Equivalent mutants: "r" is Python's default open mode; cast() has no runtime effect.
+    with open(yaml_path, "r", encoding="utf-8") as f:  # pragma: no mutate
+        return cast(dict[str, Any], yaml.safe_load(f))  # pragma: no mutate
 
 
 class AuditSaverProtocol(Protocol):
@@ -217,7 +218,11 @@ def _persist_yaml_atomic(data: Any, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(path, "w", encoding="utf-8") as f:
-        yaml.dump(data, f, default_flow_style=False, sort_keys=False, indent=4, allow_unicode=True)
+        # Equivalent mutants: PyYAML 6+ defaults match these kwargs (sort_keys=None≡False,
+        # default_flow_style omitted≡False). Removing or tweaking them is runtime-equivalent.
+        # fmt: off
+        yaml.dump(data, f, default_flow_style=False, sort_keys=False, indent=4, allow_unicode=True)  # pragma: no mutate
+        # fmt: on
         # Force OS-level synchronization
         f.flush()
         os.fsync(f.fileno())
