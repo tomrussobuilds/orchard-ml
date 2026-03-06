@@ -144,7 +144,7 @@ class ModelTrainer:
         self.epochs = training.epochs
         self.patience = training.patience
         self.monitor_metric = training.monitor_metric
-        self.best_acc = -1.0
+        self.best_acc = -1.0  # Logging-only: always shown in summary regardless of monitor_metric
         self.best_metric = -float("inf")
         self.epochs_no_improve = 0
 
@@ -227,7 +227,7 @@ class ModelTrainer:
             self.val_metrics_history.append(val_metrics)
 
             val_acc = val_metrics[METRIC_ACCURACY]
-            val_loss = val_metrics[METRIC_LOSS]
+            val_loss = val_metrics[METRIC_LOSS]  # Informational: logged but not used for decisions
             monitor_value = val_metrics[self.monitor_metric]
 
             if val_acc > self.best_acc:
@@ -338,7 +338,7 @@ class ModelTrainer:
         else:
             self.epochs_no_improve += 1
 
-        return self.epochs_no_improve >= self.patience  # type: ignore[no-any-return]
+        return bool(self.epochs_no_improve >= self.patience)
 
     def _finalize_weights(self) -> None:
         """

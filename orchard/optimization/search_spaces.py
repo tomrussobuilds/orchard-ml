@@ -58,7 +58,8 @@ _VIT_WEIGHT_VARIANTS: list[str | None] = [
 def _vit_weight_variant_sampler(trial: Any) -> str | None:
     """Conditionally sample ViT weight variant (only active when model_name is vit_tiny)."""
     if trial.params.get("model_name") == "vit_tiny":
-        return trial.suggest_categorical("weight_variant", _VIT_WEIGHT_VARIANTS)  # type: ignore[no-any-return]
+        result: str | None = trial.suggest_categorical("weight_variant", _VIT_WEIGHT_VARIANTS)
+        return result
     return None
 
 

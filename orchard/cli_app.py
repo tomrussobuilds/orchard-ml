@@ -16,11 +16,14 @@ Usage::
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 import typer
 
 from .exceptions import OrchardError
+
+if TYPE_CHECKING:  # pragma: no cover
+    from pydantic import BaseModel
 
 # ── App instance ───────────────────────────────────────────────────────────
 
@@ -262,7 +265,8 @@ def _parse_overrides(raw: list[str]) -> dict[str, Any]:
         dict mapping dotted keys to auto-casted values.
 
     Raises:
-        typer.BadParameter: If an item has no ``=`` or an empty key.
+        typer.BadParameter: If an item has no ``=``, an empty key,
+            or the section/field does not exist in the config schema.
     """
     overrides: dict[str, Any] = {}
     for item in raw:
@@ -272,14 +276,38 @@ def _parse_overrides(raw: list[str]) -> dict[str, Any]:
         key = key.strip()
         if not key:
             raise typer.BadParameter(f"Empty key in override: '{item}'")
+        _validate_override_key(key)
         overrides[key] = _auto_cast(val.strip())
     return overrides
+
+
+def _validate_override_key(key: str) -> None:
+    """
+    Validate that a dotted override key matches a real config section and field.
+
+    Raises:
+        typer.BadParameter: If section or field is unknown.
+    """
+    parts = key.split(".", maxsplit=1)
+    if len(parts) != 2:
+        raise typer.BadParameter(f"Override key must be 'section.field', got: '{key}'")
+    section, field = parts
+    models = _section_models()
+    if section not in models:
+        raise typer.BadParameter(
+            f"Unknown config section '{section}'. " f"Valid sections: {sorted(models.keys())}"
+        )
+    valid_fields = set(models[section].model_fields)
+    if field not in valid_fields:
+        raise typer.BadParameter(
+            f"Unknown field '{field}' in [{section}]. " f"Valid fields: {sorted(valid_fields)}"
+        )
 
 
 # ── YAML generation helpers ────────────────────────────────────────────────
 
 
-def _section_models() -> dict[str, type]:
+def _section_models() -> dict[str, type[BaseModel]]:
     """Lazy-load config classes and return the section → model mapping."""
     from orchard.core.config import (
         ArchitectureConfig,
@@ -459,8 +487,6 @@ def _render_fields(
 
 def _build_commented_yaml(data: dict[str, Any]) -> str:
     """Build a YAML string with descriptive comments above each field."""
-    from pydantic import BaseModel
-
     models: dict[str, type[BaseModel]] = _section_models()
 
     lines: list[str] = []
@@ -490,8 +516,6 @@ def _build_init_dict() -> dict[str, Any]:
         Ordered dict with every config section dumped via ``model_dump(mode="json")``,
         paths sanitized to portable relative strings, and device reset to ``"auto"``.
     """
-    from pydantic import BaseModel
-
     models = _section_models()
 
     def dump(m: BaseModel) -> dict[str, Any]:

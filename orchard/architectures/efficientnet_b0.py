@@ -15,6 +15,8 @@ Key Features:
 
 from __future__ import annotations
 
+from typing import cast
+
 import torch.nn as nn
 from torchvision import models
 
@@ -74,4 +76,4 @@ def build_efficientnet_b0(
     # Replace ImageNet 1000-class head with dataset-specific projection
     model.classifier[1] = nn.Linear(model.classifier[1].in_features, num_classes)  # 1280 features
 
-    return model  # type: ignore[no-any-return]
+    return cast(nn.Module, model)

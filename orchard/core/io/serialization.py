@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 import yaml
 
@@ -122,7 +122,7 @@ def load_config_from_yaml(yaml_path: Path) -> dict[str, Any]:
         raise FileNotFoundError(f"YAML configuration file not found at: {yaml_path}")
 
     with open(yaml_path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)  # type: ignore[no-any-return]
+        return cast(dict[str, Any], yaml.safe_load(f))
 
 
 class AuditSaverProtocol(Protocol):

@@ -337,7 +337,7 @@ def build_best_config_dict(best_params: dict[str, Any], cfg: Config) -> dict[str
     # Restore normal epochs for final training (not Optuna short epochs)
     config_dict["training"]["epochs"] = cfg.training.epochs
 
-    return config_dict  # type: ignore[no-any-return]
+    return cast(dict[str, Any], config_dict)
 
 
 def build_best_trial_data(

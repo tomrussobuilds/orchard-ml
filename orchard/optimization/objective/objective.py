@@ -28,7 +28,7 @@ Example:
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import optuna
 import torch
@@ -306,7 +306,7 @@ class OptunaObjective:
             Dictionary of sampled hyperparameters
         """
         if hasattr(self.search_space, "sample_params"):
-            return self.search_space.sample_params(trial)  # type: ignore[no-any-return]
+            return cast(dict[str, Any], self.search_space.sample_params(trial))
         return {key: fn(trial) for key, fn in self.search_space.items()}
 
     def _worst_metric(self) -> float:

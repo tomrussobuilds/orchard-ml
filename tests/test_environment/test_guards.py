@@ -29,29 +29,48 @@ from orchard.core.environment import (
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
 def test_ensure_single_instance_success(mock_platform, tmp_path):
     """Test ensure_single_instance acquires lock successfully."""
+    import fcntl
+
+    from orchard.core.environment import guards
+
     lock_file = tmp_path / "test.lock"
     logger = logging.getLogger("test")
 
-    with patch("fcntl.flock") as mock_flock:
-        ensure_single_instance(lock_file, logger)
+    try:
+        with patch("fcntl.flock") as mock_flock:
+            ensure_single_instance(lock_file, logger)
 
-        mock_flock.assert_called_once()
-        assert lock_file.parent.exists()
+            mock_flock.assert_called_once()
+            # Verify exclusive non-blocking flags
+            call_args = mock_flock.call_args
+            assert call_args[0][1] == (fcntl.LOCK_EX | fcntl.LOCK_NB)
+            assert lock_file.parent.exists()
+
+        # Verify global _lock_fd was set
+        assert guards._lock_fd is not None
+    finally:
+        if guards._lock_fd is not None:
+            guards._lock_fd.close()
+            guards._lock_fd = None
 
 
 @pytest.mark.unit
 @patch("platform.system", return_value="Linux")
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
 def test_ensure_single_instance_already_locked(mock_platform, tmp_path):
-    """Test ensure_single_instance exits when lock already held."""
+    """Test ensure_single_instance exits when lock already held and closes fd."""
     lock_file = tmp_path / "test.lock"
     logger = logging.getLogger("test")
+    mock_file = MagicMock()
 
-    with patch("fcntl.flock", side_effect=BlockingIOError):
-        with pytest.raises(SystemExit) as exc_info:
-            ensure_single_instance(lock_file, logger)
+    with patch("builtins.open", return_value=mock_file):
+        with patch("fcntl.flock", side_effect=BlockingIOError):
+            with pytest.raises(SystemExit) as exc_info:
+                ensure_single_instance(lock_file, logger)
 
-        assert exc_info.value.code == 1
+            assert exc_info.value.code == 1
+            # Verify fd is closed on lock failure
+            mock_file.close.assert_called_once()
 
 
 @pytest.mark.unit
@@ -84,13 +103,19 @@ def test_ensure_single_instance_windows(mock_platform, tmp_path):
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
 def test_ensure_single_instance_macos(mock_platform, tmp_path):
     """Test ensure_single_instance works on macOS."""
+    from orchard.core.environment import guards
+
     lock_file = tmp_path / "test.lock"
     logger = logging.getLogger("test")
 
-    with patch("fcntl.flock") as mock_flock:
-        ensure_single_instance(lock_file, logger)
-
-        mock_flock.assert_called_once()
+    try:
+        with patch("fcntl.flock") as mock_flock:
+            ensure_single_instance(lock_file, logger)
+            mock_flock.assert_called_once()
+    finally:
+        if guards._lock_fd is not None:
+            guards._lock_fd.close()
+            guards._lock_fd = None
 
 
 @pytest.mark.unit
@@ -108,7 +133,11 @@ def test_ensure_single_instance_no_fcntl(mock_platform, tmp_path):
 @pytest.mark.unit
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
 def test_release_single_instance_with_lock(tmp_path):
-    """Test release_single_instance releases lock and removes file."""
+    """Test release_single_instance releases lock, closes fd, resets global, and removes file."""
+    import fcntl
+
+    from orchard.core.environment import guards
+
     lock_file = tmp_path / "test.lock"
     lock_file.touch()
 
@@ -117,8 +146,12 @@ def test_release_single_instance_with_lock(tmp_path):
         with patch("fcntl.flock") as mock_flock:
             release_single_instance(lock_file)
 
-            mock_flock.assert_called_once()
+            # Verify unlock with correct flag
+            mock_flock.assert_called_once_with(mock_fd, fcntl.LOCK_UN)
             mock_fd.close.assert_called_once()
+
+        # Global must be reset to None (check inside patch scope)
+        assert guards._lock_fd is None
 
     assert not lock_file.exists()
 
@@ -211,19 +244,20 @@ def test_detect_duplicates_skips_self():
 
 @pytest.mark.unit
 def test_detect_duplicates_skips_non_python():
-    """Test detect_duplicates skips non-Python processes."""
+    """Test detect_duplicates skips non-Python processes (python not in cmd[0])."""
     cleaner = DuplicateProcessCleaner(script_name="test.py")
 
     mock_proc = MagicMock()
     mock_proc.info = {
         "pid": 9999,
         "name": "bash",
-        "cmdline": ["bash", "script.sh"],
+        "cmdline": ["bash", os.path.realpath("test.py")],
     }
 
     with patch("psutil.process_iter", return_value=[mock_proc]):
         duplicates = cleaner.detect_duplicates()
 
+    # Even though script path matches, process is not Python — must be skipped
     assert duplicates == []
 
 
@@ -311,7 +345,7 @@ def test_terminate_duplicates_success():
 
     assert count == 1
     mock_proc.terminate.assert_called_once()
-    mock_proc.wait.assert_called_once()
+    mock_proc.wait.assert_called_once_with(timeout=1)
 
 
 @pytest.mark.unit
@@ -403,18 +437,19 @@ def test_detect_duplicates_handles_zombie_process():
 
 @pytest.mark.unit
 def test_terminate_duplicates_with_logger():
-    """Test terminate_duplicates logs termination when logger provided."""
+    """Test terminate_duplicates logs termination and applies cooldown."""
     cleaner = DuplicateProcessCleaner()
     logger = MagicMock()
 
     mock_proc = MagicMock()
 
     with patch.object(cleaner, "detect_duplicates", return_value=[mock_proc]):
-        with patch("time.sleep"):
+        with patch("time.sleep") as mock_sleep:
             count = cleaner.terminate_duplicates(logger=logger)
 
     assert count == 1
     logger.info.assert_called_once()
+    mock_sleep.assert_called_once_with(1.5)
 
 
 @pytest.mark.unit
@@ -466,17 +501,24 @@ def test_ensure_single_instance_creates_nested_parent_dirs(mock_platform, tmp_pa
     """Test ensure_single_instance creates deeply nested parent directories."""
     import uuid
 
+    from orchard.core.environment import guards
+
     unique_id = str(uuid.uuid4())
     lock_file = tmp_path / unique_id / "level1" / "level2" / "test.lock"
     logger = logging.getLogger("test")
 
     assert not lock_file.parent.exists()
 
-    with patch("fcntl.flock"):
-        ensure_single_instance(lock_file, logger)
+    try:
+        with patch("fcntl.flock"):
+            ensure_single_instance(lock_file, logger)
 
-    assert lock_file.parent.exists()
-    assert lock_file.exists()
+        assert lock_file.parent.exists()
+        assert lock_file.exists()
+    finally:
+        if guards._lock_fd is not None:
+            guards._lock_fd.close()
+            guards._lock_fd = None
 
 
 @pytest.mark.unit
@@ -558,14 +600,20 @@ def test_ensure_single_instance_skips_on_non_main_rank(mock_platform, tmp_path, 
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
 def test_ensure_single_instance_acquires_on_rank_zero(mock_platform, tmp_path, monkeypatch):
     """Test ensure_single_instance acquires lock for rank 0."""
+    from orchard.core.environment import guards
+
     monkeypatch.setenv("RANK", "0")
     lock_file = tmp_path / "test.lock"
     logger = logging.getLogger("test")
 
-    with patch("fcntl.flock") as mock_flock:
-        ensure_single_instance(lock_file, logger)
-
-        mock_flock.assert_called_once()
+    try:
+        with patch("fcntl.flock") as mock_flock:
+            ensure_single_instance(lock_file, logger)
+            mock_flock.assert_called_once()
+    finally:
+        if guards._lock_fd is not None:
+            guards._lock_fd.close()
+            guards._lock_fd = None
 
 
 @pytest.mark.unit
@@ -573,15 +621,21 @@ def test_ensure_single_instance_acquires_on_rank_zero(mock_platform, tmp_path, m
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
 def test_ensure_single_instance_acquires_when_no_rank_env(mock_platform, tmp_path, monkeypatch):
     """Test ensure_single_instance acquires lock when RANK is not set (single-process)."""
+    from orchard.core.environment import guards
+
     monkeypatch.delenv("RANK", raising=False)
     monkeypatch.delenv("LOCAL_RANK", raising=False)
     lock_file = tmp_path / "test.lock"
     logger = logging.getLogger("test")
 
-    with patch("fcntl.flock") as mock_flock:
-        ensure_single_instance(lock_file, logger)
-
-        mock_flock.assert_called_once()
+    try:
+        with patch("fcntl.flock") as mock_flock:
+            ensure_single_instance(lock_file, logger)
+            mock_flock.assert_called_once()
+    finally:
+        if guards._lock_fd is not None:
+            guards._lock_fd.close()
+            guards._lock_fd = None
 
 
 # RANK-AWARE DUPLICATE PROCESS CLEANUP

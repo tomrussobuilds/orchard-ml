@@ -68,7 +68,7 @@ def build_resnet_18(
     # --- Step 3: Replace Classification Head ---
     model.fc = nn.Linear(model.fc.in_features, num_classes)
 
-    return model  # type: ignore[no-any-return]
+    return cast(nn.Module, model)
 
 
 # INTERNAL HELPERS

@@ -99,8 +99,8 @@ class TestParseOverrides:
 
     def test_value_with_equals(self):
         """Values containing = should work (partition on first =)."""
-        result = _parse_overrides(["key=a=b"])
-        assert result == {"key": "a=b"}
+        result = _parse_overrides(["dataset.name=a=b"])
+        assert result == {"dataset.name": "a=b"}
 
     def test_missing_equals_raises(self):
         import typer
@@ -115,16 +115,34 @@ class TestParseOverrides:
             _parse_overrides(["=value"])
 
     def test_whitespace_stripped(self):
-        result = _parse_overrides(["  key  =  42  "])
-        assert result == {"key": 42}
+        result = _parse_overrides(["  training.epochs  =  42  "])
+        assert result == {"training.epochs": 42}
 
     def test_float_scientific(self):
-        result = _parse_overrides(["training.lr=1e-4"])
-        assert result["training.lr"] == pytest.approx(1e-4)
+        result = _parse_overrides(["training.learning_rate=1e-4"])
+        assert result["training.learning_rate"] == pytest.approx(1e-4)
 
     def test_null_value(self):
-        result = _parse_overrides(["optuna=null"])
-        assert result == {"optuna": None}
+        result = _parse_overrides(["dataset.max_samples=null"])
+        assert result == {"dataset.max_samples": None}
+
+    def test_invalid_section_raises(self):
+        import typer
+
+        with pytest.raises(typer.BadParameter, match="Unknown config section"):
+            _parse_overrides(["bogus.field=1"])
+
+    def test_invalid_field_raises(self):
+        import typer
+
+        with pytest.raises(typer.BadParameter, match="Unknown field"):
+            _parse_overrides(["training.bogus=1"])
+
+    def test_missing_dot_raises(self):
+        import typer
+
+        with pytest.raises(typer.BadParameter, match="section.field"):
+            _parse_overrides(["epochs=30"])
 
 
 # CLI COMMAND (help only - avoids running the full pipeline)
