@@ -418,11 +418,15 @@ def test_dump_portable_no_data_root():
 
 @pytest.mark.unit
 def test_dump_portable_hardware_is_dict():
-    """dump_portable returns hardware as a real dict, not None."""
+    """dump_portable returns hardware as a real dict from hardware.model_dump()."""
     cfg = Config(hardware=HardwareConfig(device="cpu"))
     portable = cfg.dump_portable()
     assert isinstance(portable["hardware"], dict)
     assert "device" in portable["hardware"]
+    assert portable["hardware"] == cfg.hardware.model_dump()
+    # No spurious keys from mis-named overrides
+    expected_keys = set(cfg.model_dump().keys())
+    assert set(portable.keys()) == expected_keys
 
 
 @pytest.mark.unit
