@@ -97,7 +97,7 @@ def get_model(
     model_name_lower = arch_cfg.name.lower()
 
     if verbose:
-        logger.info(  # pragma: no mutate
+        logger.info(
             "%s%s %-18s: %s | Input: %dx%dx%d | Output: %d classes",
             LogStyle.INDENT,
             LogStyle.ARROW,
@@ -129,7 +129,7 @@ def get_model(
     # Parameter telemetry
     if verbose:
         total_params = sum(p.numel() for p in model.parameters())
-        logger.info(  # pragma: no mutate
+        logger.info(
             "%s%s %-18s: %s | Parameters: %s",
             LogStyle.INDENT,
             LogStyle.ARROW,

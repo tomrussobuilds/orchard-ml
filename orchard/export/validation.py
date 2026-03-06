@@ -66,13 +66,9 @@ def validate_export(
     try:
         import onnxruntime as ort
 
-        logger.info("  [%s Validation]", label)  # pragma: no mutate
-        logger.info(
-            "    %s Samples           : %s", LogStyle.BULLET, num_samples
-        )  # pragma: no mutate
-        logger.info(  # pragma: no mutate
-            "    %s Max deviation     : %.0e", LogStyle.BULLET, max_deviation
-        )
+        logger.info("  [%s Validation]", label)
+        logger.info("    %s Samples           : %s", LogStyle.BULLET, num_samples)
+        logger.info("    %s Max deviation     : %.0e", LogStyle.BULLET, max_deviation)
 
         # Load ONNX model (force CPU to match export conditions)
         session = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
@@ -117,13 +113,13 @@ def validate_export(
                     )
                     return False
 
-        logger.info(  # pragma: no mutate
+        logger.info(
             "    %s Result            : %s Passed (max diff: %.2e)",
             LogStyle.BULLET,
             LogStyle.SUCCESS,
             max_diff,
         )
-        logger.info("")  # pragma: no mutate
+        logger.info("")
         return True
 
     except ImportError as e:

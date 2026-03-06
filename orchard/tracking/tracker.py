@@ -143,7 +143,7 @@ class MLflowTracker:  # pragma: no cover
         safe_params = {k: str(v)[:500] for k, v in flat_params.items() if v is not None}
         mlflow.log_params(safe_params)
 
-        logger.info("  %s MLflow run started", LogStyle.ARROW)  # pragma: no mutate
+        logger.info("  %s MLflow run started", LogStyle.ARROW)
 
     def log_epoch(
         self, epoch: int, train_loss: float, val_metrics: Mapping[str, float], lr: float
@@ -228,7 +228,7 @@ class MLflowTracker:  # pragma: no cover
         """End the active MLflow run."""
         if mlflow.active_run():
             mlflow.end_run()
-            logger.info("  %s MLflow run ended", LogStyle.ARROW)  # pragma: no mutate
+            logger.info("  %s MLflow run ended", LogStyle.ARROW)
 
     def __enter__(self) -> MLflowTracker:
         return self

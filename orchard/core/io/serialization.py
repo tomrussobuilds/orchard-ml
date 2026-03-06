@@ -68,7 +68,7 @@ def save_config_as_yaml(data: Any, yaml_path: Path) -> Path:
     # 2. Persistence Phase (Atomic Write)
     try:
         _persist_yaml_atomic(final_data, yaml_path)
-        logger.debug("Configuration frozen at → %s", yaml_path.name)  # pragma: no mutate
+        logger.debug("Configuration frozen at → %s", yaml_path.name)
         return yaml_path
 
     except OSError as e:

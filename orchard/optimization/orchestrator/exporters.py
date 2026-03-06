@@ -180,7 +180,7 @@ def export_study_summary(study: optuna.Study, paths: RunPaths) -> None:
     with open(output_path, "w") as f:
         json.dump(summary, f, indent=2)
 
-    logger.info(  # pragma: no mutate
+    logger.info(
         "%s%s %-22s: %s",
         LogStyle.INDENT,
         LogStyle.ARROW,
@@ -245,7 +245,7 @@ def export_top_trials(
     _auto_adjust_column_widths(ws)
 
     wb.save(output_path)
-    logger.info(  # pragma: no mutate
+    logger.info(
         "%s%s %-22s: %s (%d trials)",
         LogStyle.INDENT,
         LogStyle.ARROW,

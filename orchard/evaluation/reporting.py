@@ -136,7 +136,7 @@ class TrainingReport(BaseModel):
                     df.to_excel(writer, sheet_name="Detailed Report", index=False)
                     self._apply_excel_formatting(writer, df)
 
-            logger.info(  # pragma: no mutate
+            logger.info(
                 "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Summary Report", path.name
             )
         except Exception as e:  # xlsxwriter raises non-standard exceptions

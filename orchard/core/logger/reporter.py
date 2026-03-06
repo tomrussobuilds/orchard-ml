@@ -77,10 +77,10 @@ class Reporter(BaseModel):
             style: Separator string (defaults to ``LogStyle.HEAVY``).
         """
         sep = style if style is not None else LogStyle.HEAVY
-        log.info("")  # pragma: no mutate
-        log.info(sep)  # pragma: no mutate
-        log.info(title.center(LogStyle.HEADER_WIDTH))  # pragma: no mutate
-        log.info(sep)  # pragma: no mutate
+        log.info("")
+        log.info(sep)
+        log.info(title.center(LogStyle.HEADER_WIDTH))
+        log.info(sep)
 
     def log_initial_status(
         self,
@@ -111,35 +111,29 @@ class Reporter(BaseModel):
         A = LogStyle.ARROW
 
         # Experiment identifier
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %s", I, A, "Experiment", cfg.run_slug
-        )
-        logger_instance.info("")  # pragma: no mutate
+        logger_instance.info("%s%s %-18s: %s", I, A, "Experiment", cfg.run_slug)
+        logger_instance.info("")
 
         # Hardware Section
         self._log_hardware_section(logger_instance, cfg, device, applied_threads, num_workers)
-        logger_instance.info("")  # pragma: no mutate
+        logger_instance.info("")
 
         # Dataset Section
         self._log_dataset_section(logger_instance, cfg)
-        logger_instance.info("")  # pragma: no mutate
+        logger_instance.info("")
 
         # Strategy Section
         self._log_strategy_section(logger_instance, cfg, device)
-        logger_instance.info("")  # pragma: no mutate
+        logger_instance.info("")
 
         # Hyperparameters Section
-        logger_instance.info("[HYPERPARAMETERS]")  # pragma: no mutate
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %s", I, A, "Epochs", cfg.training.epochs
-        )
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %s", I, A, "Batch Size", cfg.training.batch_size
-        )
+        logger_instance.info("[HYPERPARAMETERS]")
+        logger_instance.info("%s%s %-18s: %s", I, A, "Epochs", cfg.training.epochs)
+        logger_instance.info("%s%s %-18s: %s", I, A, "Batch Size", cfg.training.batch_size)
         lr = cfg.training.learning_rate
         lr_str = f"{lr:.2e}" if isinstance(lr, (float, int)) else str(lr)
-        logger_instance.info("%s%s %-18s: %s", I, A, "Initial LR", lr_str)  # pragma: no mutate
-        logger_instance.info("")  # pragma: no mutate
+        logger_instance.info("%s%s %-18s: %s", I, A, "Initial LR", lr_str)
+        logger_instance.info("")
 
         # Tracking Section (only if configured)
         self._log_tracking_section(logger_instance, cfg)
@@ -151,17 +145,13 @@ class Reporter(BaseModel):
         self._log_export_section(logger_instance, cfg)
 
         # Filesystem Section
-        logger_instance.info("[FILESYSTEM]")  # pragma: no mutate
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %s", I, A, "Run Root", paths.root.name
-        )
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: config.yaml, requirements.txt", I, A, "Manifest"
-        )
+        logger_instance.info("[FILESYSTEM]")
+        logger_instance.info("%s%s %-18s: %s", I, A, "Run Root", paths.root.name)
+        logger_instance.info("%s%s %-18s: config.yaml, requirements.txt", I, A, "Manifest")
 
         # Closing separator
-        logger_instance.info(LogStyle.HEAVY)  # pragma: no mutate
-        logger_instance.info("")  # pragma: no mutate
+        logger_instance.info(LogStyle.HEAVY)
+        logger_instance.info("")
 
     def _log_hardware_section(
         self,
@@ -178,10 +168,8 @@ class Reporter(BaseModel):
         I = LogStyle.INDENT  # noqa: E741
         A = LogStyle.ARROW
 
-        logger_instance.info("[HARDWARE]")  # pragma: no mutate
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %s", I, A, "Active Device", str(device).upper()
-        )
+        logger_instance.info("[HARDWARE]")
+        logger_instance.info("%s%s %-18s: %s", I, A, "Active Device", str(device).upper())
 
         if requested_device != "cpu" and active_type == "cpu":
             logger_instance.warning(
@@ -192,20 +180,14 @@ class Reporter(BaseModel):
             )
 
         if active_type in ("cuda", "mps"):
-            logger_instance.info(  # pragma: no mutate
-                "%s%s %-18s: %s", I, A, "Accelerator", get_accelerator_name()
-            )
+            logger_instance.info("%s%s %-18s: %s", I, A, "Accelerator", get_accelerator_name())
             if active_type == "cuda":
-                logger_instance.info(  # pragma: no mutate
+                logger_instance.info(
                     "%s%s %-18s: %s", I, A, "VRAM Available", get_vram_info(device.index or 0)
                 )
 
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %d workers", I, A, "DataLoader", num_workers
-        )
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %d threads", I, A, "Compute Threads", applied_threads
-        )
+        logger_instance.info("%s%s %-18s: %d workers", I, A, "DataLoader", num_workers)
+        logger_instance.info("%s%s %-18s: %d threads", I, A, "Compute Threads", applied_threads)
 
     def _log_dataset_section(self, logger_instance: logging.Logger, cfg: "Config") -> None:
         """Logs dataset metadata and characteristics."""
@@ -215,23 +197,15 @@ class Reporter(BaseModel):
         I = LogStyle.INDENT  # noqa: E741
         A = LogStyle.ARROW
 
-        logger_instance.info("[DATASET]")  # pragma: no mutate
-        logger_instance.info("%s%s %-18s: %s", I, A, "Name", meta.display_name)  # pragma: no mutate
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %d categories", I, A, "Classes", meta.num_classes
-        )
-        logger_instance.info(  # pragma: no mutate
+        logger_instance.info("[DATASET]")
+        logger_instance.info("%s%s %-18s: %s", I, A, "Name", meta.display_name)
+        logger_instance.info("%s%s %-18s: %d categories", I, A, "Classes", meta.num_classes)
+        logger_instance.info(
             "%s%s %-18s: %dpx (Native: %s)", I, A, "Resolution", ds.img_size, meta.resolution_str
         )
-        logger_instance.info(
-            "%s%s %-18s: %s", I, A, "Channels", meta.in_channels
-        )  # pragma: no mutate
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %s", I, A, "Anatomical", meta.is_anatomical
-        )
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %s", I, A, "Texture-based", meta.is_texture_based
-        )
+        logger_instance.info("%s%s %-18s: %s", I, A, "Channels", meta.in_channels)
+        logger_instance.info("%s%s %-18s: %s", I, A, "Anatomical", meta.is_anatomical)
+        logger_instance.info("%s%s %-18s: %s", I, A, "Texture-based", meta.is_texture_based)
 
     def _log_strategy_section(
         self, logger_instance: logging.Logger, cfg: "Config", device: "torch.device"
@@ -246,24 +220,22 @@ class Reporter(BaseModel):
         I = LogStyle.INDENT  # noqa: E741
         A = LogStyle.ARROW
 
-        logger_instance.info("[STRATEGY]")  # pragma: no mutate
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %s", I, A, "Architecture", cfg.architecture.name
-        )
+        logger_instance.info("[STRATEGY]")
+        logger_instance.info("%s%s %-18s: %s", I, A, "Architecture", cfg.architecture.name)
         weights = "Pretrained" if cfg.architecture.pretrained else "Random"
-        logger_instance.info("%s%s %-18s: %s", I, A, "Weights", weights)  # pragma: no mutate
+        logger_instance.info("%s%s %-18s: %s", I, A, "Weights", weights)
 
         # Add weight variant if present (for ViT)
         if cfg.architecture.weight_variant:
-            logger_instance.info(  # pragma: no mutate
+            logger_instance.info(
                 "%s%s %-18s: %s", I, A, "Weight Variant", cfg.architecture.weight_variant
             )
 
         precision = "AMP (Mixed)" if train.use_amp else "FP32"
-        logger_instance.info("%s%s %-18s: %s", I, A, "Precision", precision)  # pragma: no mutate
-        logger_instance.info("%s%s %-18s: %s", I, A, "TTA Mode", tta_status)  # pragma: no mutate
-        logger_instance.info("%s%s %-18s: %s", I, A, "Repro. Mode", repro_mode)  # pragma: no mutate
-        logger_instance.info("%s%s %-18s: %s", I, A, "Global Seed", train.seed)  # pragma: no mutate
+        logger_instance.info("%s%s %-18s: %s", I, A, "Precision", precision)
+        logger_instance.info("%s%s %-18s: %s", I, A, "TTA Mode", tta_status)
+        logger_instance.info("%s%s %-18s: %s", I, A, "Repro. Mode", repro_mode)
+        logger_instance.info("%s%s %-18s: %s", I, A, "Global Seed", train.seed)
 
     def _log_tracking_section(self, logger_instance: logging.Logger, cfg: "Config") -> None:
         """Logs tracking configuration if enabled."""
@@ -274,14 +246,12 @@ class Reporter(BaseModel):
         I = LogStyle.INDENT  # noqa: E741
         A = LogStyle.ARROW
 
-        logger_instance.info("[TRACKING]")  # pragma: no mutate
+        logger_instance.info("[TRACKING]")
         status = "Active" if tracking_cfg.enabled else "Disabled"
-        logger_instance.info("%s%s %-18s: %s", I, A, "Status", status)  # pragma: no mutate
+        logger_instance.info("%s%s %-18s: %s", I, A, "Status", status)
         if tracking_cfg.enabled:
-            logger_instance.info(  # pragma: no mutate
-                "%s%s %-18s: %s", I, A, "Experiment", tracking_cfg.experiment_name
-            )
-        logger_instance.info("")  # pragma: no mutate
+            logger_instance.info("%s%s %-18s: %s", I, A, "Experiment", tracking_cfg.experiment_name)
+        logger_instance.info("")
 
     def _log_optimization_section(self, logger_instance: logging.Logger, cfg: "Config") -> None:
         """Logs optimization configuration if enabled."""
@@ -292,14 +262,10 @@ class Reporter(BaseModel):
         I = LogStyle.INDENT  # noqa: E741
         A = LogStyle.ARROW
 
-        logger_instance.info("[OPTIMIZATION]")  # pragma: no mutate
+        logger_instance.info("[OPTIMIZATION]")
+        logger_instance.info("%s%s %-18s: %s", I, A, "Trials", optuna_cfg.n_trials)
+        logger_instance.info("%s%s %-18s: %s", I, A, "Epochs/Trial", optuna_cfg.epochs)
         logger_instance.info(
-            "%s%s %-18s: %s", I, A, "Trials", optuna_cfg.n_trials
-        )  # pragma: no mutate
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %s", I, A, "Epochs/Trial", optuna_cfg.epochs
-        )
-        logger_instance.info(  # pragma: no mutate
             "%s%s %-18s: %s (%s)",
             I,
             A,
@@ -307,14 +273,10 @@ class Reporter(BaseModel):
             cfg.training.monitor_metric,
             optuna_cfg.direction,
         )
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %s", I, A, "Sampler", optuna_cfg.sampler_type.upper()
-        )
+        logger_instance.info("%s%s %-18s: %s", I, A, "Sampler", optuna_cfg.sampler_type.upper())
         if optuna_cfg.enable_pruning:
-            logger_instance.info(  # pragma: no mutate
-                "%s%s %-18s: %s", I, A, "Pruner", optuna_cfg.pruner_type
-            )
-        logger_instance.info("")  # pragma: no mutate
+            logger_instance.info("%s%s %-18s: %s", I, A, "Pruner", optuna_cfg.pruner_type)
+        logger_instance.info("")
 
     def _log_export_section(self, logger_instance: logging.Logger, cfg: "Config") -> None:
         """Logs export configuration if enabled."""
@@ -323,18 +285,12 @@ class Reporter(BaseModel):
             return
 
         IND, A = LogStyle.INDENT, LogStyle.ARROW  # pragma: no mutate
-        logger_instance.info("[EXPORT]")  # pragma: no mutate
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %s", IND, A, "Format", export_cfg.format.upper()
-        )
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %s", IND, A, "Opset Version", export_cfg.opset_version
-        )
-        logger_instance.info(  # pragma: no mutate
-            "%s%s %-18s: %s", IND, A, "Validate", export_cfg.validate_export
-        )
+        logger_instance.info("[EXPORT]")
+        logger_instance.info("%s%s %-18s: %s", IND, A, "Format", export_cfg.format.upper())
+        logger_instance.info("%s%s %-18s: %s", IND, A, "Opset Version", export_cfg.opset_version)
+        logger_instance.info("%s%s %-18s: %s", IND, A, "Validate", export_cfg.validate_export)
         if export_cfg.quantize:
-            logger_instance.info(  # pragma: no mutate
+            logger_instance.info(
                 "%s%s %-18s: %s (%s)",
                 IND,
                 A,
@@ -342,4 +298,4 @@ class Reporter(BaseModel):
                 export_cfg.quantization_type.upper(),
                 export_cfg.quantization_backend,
             )
-        logger_instance.info("")  # pragma: no mutate
+        logger_instance.info("")

@@ -96,7 +96,7 @@ def show_sample_images(
 
     plt.savefig(save_path, dpi=fig_dpi, bbox_inches="tight")  # pragma: no mutate
     plt.close()  # pragma: no mutate
-    logger.info(  # pragma: no mutate
+    logger.info(
         "%s%s %-18s: %s",
         LogStyle.INDENT,
         LogStyle.ARROW,

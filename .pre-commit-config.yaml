@@ -34,6 +34,13 @@ repos:
         pass_filenames: false
         always_run: true
 
+      - id: mutmut-ratchet
+        name: mutation score ratchet
+        language: system
+        entry: python scripts/check_mutmut_registry.py --ratchet
+        files: 'mutmut-registry\.yaml'
+        pass_filenames: false
+
       - id: no-env-files
         name: block .env files
         language: fail

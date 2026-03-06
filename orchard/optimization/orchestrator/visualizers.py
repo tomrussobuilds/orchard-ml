@@ -133,8 +133,6 @@ def save_plot(
             _optuna_pc_logger.removeFilter(_missing_params_filter)
         output_path = output_dir / f"{plot_name}.html"
         fig.write_html(str(output_path))  # pragma: no mutate
-        logger.info(  # pragma: no mutate
-            "%s%s %-22s: %s", LogStyle.INDENT, LogStyle.ARROW, plot_name, output_path.name
-        )
+        logger.info("%s%s %-22s: %s", LogStyle.INDENT, LogStyle.ARROW, plot_name, output_path.name)
     except (ValueError, RuntimeError) as e:
         logger.warning("Failed to generate %s: %s", plot_name, e)

@@ -165,7 +165,7 @@ class DataLoaderFactory:
             [weight_map[int(label)] for label in labels], dtype=torch.float
         )
 
-        self.logger.info(  # pragma: no mutate
+        self.logger.info(
             "%s%s %-18s: WeightedRandomSampler generated",
             LogStyle.INDENT,
             LogStyle.ARROW,
@@ -200,7 +200,7 @@ class DataLoaderFactory:
             )
             num_workers = min(num_workers, cap)
 
-            self.logger.info(  # pragma: no mutate
+            self.logger.info(
                 "%s%s %-18s: %d (Resolution=%d)",
                 LogStyle.INDENT,
                 LogStyle.ARROW,
@@ -286,7 +286,7 @@ class DataLoaderFactory:
         )
 
         optuna_str = " (Optuna)" if is_optuna else ""
-        self.logger.info(  # pragma: no mutate
+        self.logger.info(
             "%s%s %-18s: (%s)%s → Train:[%d] Val:[%d] Test:[%d]",
             LogStyle.INDENT,
             LogStyle.ARROW,

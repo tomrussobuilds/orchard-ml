@@ -122,12 +122,12 @@ def _warn_optuna_override_conflicts(
     import warnings
 
     warnings.warn(
-        f"--set overrides {conflicts} will be ignored: "  # pragma: no mutate
-        f"Optuna '{search_space_preset}' search space tunes these parameters per trial. "  # pragma: no mutate
-        f"To fix a parameter, narrow the search space in optuna.search_space_overrides "  # pragma: no mutate
-        f"or use a custom preset that excludes it.",  # pragma: no mutate
-        UserWarning,  # pragma: no mutate
-        stacklevel=3,  # pragma: no mutate
+        f"--set overrides {conflicts} will be ignored: "
+        f"Optuna '{search_space_preset}' search space tunes these parameters per trial. "
+        f"To fix a parameter, narrow the search space in optuna.search_space_overrides "
+        f"or use a custom preset that excludes it.",
+        UserWarning,
+        stacklevel=3,
     )
 
 
@@ -503,11 +503,11 @@ class _CrossDomainValidator:
             import warnings
 
             warnings.warn(
-                f"4-bit quantization ({config.export.quantization_type}) on "  # pragma: no mutate
-                f"mini_cnn is likely to degrade accuracy severely. "  # pragma: no mutate
-                f"Consider int8/uint8 or a larger architecture.",  # pragma: no mutate
+                f"4-bit quantization ({config.export.quantization_type}) on "
+                f"mini_cnn is likely to degrade accuracy severely. "
+                f"Consider int8/uint8 or a larger architecture.",
                 UserWarning,
-                stacklevel=4,  # pragma: no mutate
+                stacklevel=4,
             )
 
     @classmethod

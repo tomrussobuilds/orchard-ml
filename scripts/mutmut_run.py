@@ -33,6 +33,7 @@ import subprocess  # nosec B404 — runs mutmut CLI, no untrusted input
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 try:
     import yaml
@@ -40,6 +41,7 @@ except ImportError:
     sys.exit("PyYAML is required: pip install pyyaml")
 
 ROOT = Path(__file__).resolve().parent.parent
+ENTRY_SCRIPT = str(ROOT / "scripts" / "mutmut_entry.py")
 MUTANTS_DIR = ROOT / "mutants"
 REGISTRY_PATH = ROOT / "mutmut-registry.yaml"
 
@@ -62,6 +64,8 @@ def _to_mutmut_glob(source: Path) -> str:
     """
     rel = source.relative_to(ROOT)
     dotted = str(rel).replace("/", ".").removesuffix(".py")
+    # __init__.py maps to the package module, not package.__init__
+    dotted = dotted.removesuffix(".__init__")
     return f"{dotted}*"
 
 
@@ -93,22 +97,20 @@ def _meta_path_for(source: Path) -> Path:
     return MUTANTS_DIR / f"{rel}.meta"
 
 
-def _update_registry(sources: list[Path]) -> dict[str, dict]:
+def _update_registry(sources: list[Path]) -> dict[str, Any]:
     """Parse .meta files and update the registry YAML. Returns updated entries."""
-    registry: dict[str, dict] = {}
+    registry: dict[str, Any] = {}
     if REGISTRY_PATH.exists():
         with open(REGISTRY_PATH) as f:
             registry = yaml.safe_load(f) or {}
 
-    updated = {}
+    updated: dict[str, Any] = {}
     for src in sources:
         meta = _meta_path_for(src)
         counts = _parse_meta(meta)
-        if counts["total"] == 0:
-            continue
 
         key = str(src.relative_to(ROOT))
-        score = round(counts["killed"] / counts["total"] * 100, 1) if counts["total"] else 0.0
+        score = round(counts["killed"] / counts["total"] * 100, 1) if counts["total"] else 100.0
 
         entry = {
             "last_run": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -130,7 +132,7 @@ def _update_registry(sources: list[Path]) -> dict[str, dict]:
     return updated
 
 
-def _print_table(entries: dict[str, dict]) -> None:
+def _print_table(entries: dict[str, Any]) -> None:
     """Print a summary table of mutation results."""
     if not entries:
         print("No mutation results found.")
@@ -160,6 +162,32 @@ def _print_table(entries: dict[str, dict]) -> None:
     )
 
 
+def _is_fresh(source: Path, registry: dict[str, Any]) -> bool:
+    """Return True if the registry entry for *source* is newer than its last git commit."""
+    key = str(source.relative_to(ROOT))
+    entry = registry.get(key)
+    if not entry or not entry.get("last_run"):
+        return False
+
+    last_run = datetime.fromisoformat(entry["last_run"]).replace(tzinfo=timezone.utc)
+
+    result = subprocess.run(  # nosec B603 B607
+        ["git", "log", "-1", "--format=%aI", "--", key],
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
+    )
+    line = result.stdout.strip()
+    if not line:
+        return False
+
+    file_modified = datetime.fromisoformat(line)
+    if file_modified.tzinfo is None:
+        file_modified = file_modified.replace(tzinfo=timezone.utc)
+
+    return last_run > file_modified
+
+
 def _clean_cache(source: Path) -> None:
     """Remove cached trampoline and meta for a source file."""
     rel = source.relative_to(ROOT)
@@ -184,7 +212,7 @@ def run_mutmut(targets: list[str]) -> None:
         sys.exit("No .py files found for the given targets.")
 
     print(f"Running mutmut on {len(sources)} file(s)...")
-    cmd = [sys.executable, "-m", "mutmut", "run", *globs]
+    cmd = [sys.executable, ENTRY_SCRIPT, "run", *globs]
     print(f"  $ {' '.join(cmd)}")
     subprocess.run(cmd, cwd=ROOT)  # nosec B603
 
@@ -203,6 +231,13 @@ def run_batch(targets: list[str], clean: bool = True) -> None:
     if not sources:
         sys.exit("No .py files found for the given targets.")
 
+    # Load registry once for freshness checks
+    registry: dict[str, Any] = {}
+    if REGISTRY_PATH.exists():
+        with open(REGISTRY_PATH) as f:
+            registry = yaml.safe_load(f) or {}
+
+    skipped = 0
     print(f"Batch mode: {len(sources)} file(s) to process\n")
 
     for i, src in enumerate(sources, 1):
@@ -210,26 +245,33 @@ def run_batch(targets: list[str], clean: bool = True) -> None:
         glob = _to_mutmut_glob(src)
         print(f"[{i}/{len(sources)}] {rel}")
 
+        if _is_fresh(src, registry):
+            print("  (fresh, skipped)\n")
+            skipped += 1
+            continue
+
         if clean:
             _clean_cache(src)
 
-        cmd = [sys.executable, "-m", "mutmut", "run", glob]
-        result = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)  # nosec B603
-
-        if "nothing matches" in result.stderr or "nothing matches" in result.stdout:
-            print("  (no mutants)\n")
-            continue
+        cmd = [sys.executable, ENTRY_SCRIPT, "run", glob]
+        subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)  # nosec B603
 
         updated = _update_registry([src])
         if updated:
-            entry = list(updated.values())[0]
-            print(
-                f"  {entry['total']} mutants: "
-                f"{entry['killed']} killed, {entry['survived']} survived "
-                f"-> {entry['score']:.1f}%\n"
-            )
+            e = list(updated.values())[0]
+            if e["total"] == 0:
+                print("  (no mutants)\n")
+            else:
+                print(
+                    f"  {e['total']} mutants: "
+                    f"{e['killed']} killed, {e['survived']} survived "
+                    f"-> {e['score']:.1f}%\n"
+                )
         else:
             print("  (no mutants)\n")
+
+    if skipped:
+        print(f"Skipped {skipped} fresh file(s).\n")
 
     print("\n" + "=" * 83)
     print("BATCH COMPLETE\n")

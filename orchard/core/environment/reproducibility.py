@@ -69,10 +69,10 @@ def set_seed(seed: int, strict: bool = False, warn_only: bool = False) -> None: 
     if strict and not already_set:
         _stacklevel = 2  # pragma: no mutate
         warnings.warn(
-            f"PYTHONHASHSEED={seed} set at runtime, but CPython reads it only at "  # pragma: no mutate
-            "interpreter startup. For bare-metal determinism: "  # pragma: no mutate
-            f"PYTHONHASHSEED={seed} orchard run <recipe>",  # pragma: no mutate
-            stacklevel=_stacklevel,  # pragma: no mutate
+            f"PYTHONHASHSEED={seed} set at runtime, but CPython reads it only at "
+            "interpreter startup. For bare-metal determinism: "
+            f"PYTHONHASHSEED={seed} orchard run <recipe>",
+            stacklevel=_stacklevel,
         )
 
     np.random.seed(seed)
@@ -96,10 +96,10 @@ def set_seed(seed: int, strict: bool = False, warn_only: bool = False) -> None: 
         if has_mps:
             _stacklevel = 2  # pragma: no mutate
             warnings.warn(
-                "MPS backend has partial determinism support in PyTorch. "  # pragma: no mutate
-                "Some operations may not have deterministic implementations. "  # pragma: no mutate
-                "Consider using CPU for fully deterministic experiments.",  # pragma: no mutate
-                stacklevel=_stacklevel,  # pragma: no mutate
+                "MPS backend has partial determinism support in PyTorch. "
+                "Some operations may not have deterministic implementations. "
+                "Consider using CPU for fully deterministic experiments.",
+                stacklevel=_stacklevel,
             )
         torch.use_deterministic_algorithms(True, warn_only=warn_only)
 

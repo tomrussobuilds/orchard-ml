@@ -167,7 +167,7 @@ def run(
                 _, best_config_path = run_optimization_phase(orchestrator, tracker=tracker)
                 if best_config_path and best_config_path.exists():
                     training_cfg = Config.from_recipe(best_config_path)
-                    run_logger.info(  # pragma: no mutate
+                    run_logger.info(
                         "%s%s %-18s: %s",
                         LogStyle.INDENT,
                         LogStyle.ARROW,
@@ -175,7 +175,7 @@ def run(
                         best_config_path.name,
                     )
             else:
-                run_logger.info(  # pragma: no mutate
+                run_logger.info(
                     "%s%s Skipping optimization (no optuna config)",
                     LogStyle.INDENT,
                     LogStyle.ARROW,

@@ -67,9 +67,7 @@ def ensure_single_instance(lock_file: Path, logger: logging.Logger) -> None:
 
     # In distributed mode, only rank 0 manages the lock
     if not is_main_process():
-        logger.debug(  # pragma: no mutate
-            "Rank %d: skipping lock acquisition (non-main process).", os.getpid()
-        )
+        logger.debug("Rank %d: skipping lock acquisition (non-main process).", os.getpid())
         return
 
     # Locking is currently only supported on Unix-like systems via fcntl
@@ -82,7 +80,7 @@ def ensure_single_instance(lock_file: Path, logger: logging.Logger) -> None:
             # Attempt to acquire an exclusive lock without blocking
             fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
             _lock_fd = f
-            logger.info("  %s System lock acquired", LogStyle.ARROW)  # pragma: no mutate
+            logger.info("  %s System lock acquired", LogStyle.ARROW)
 
         except (IOError, BlockingIOError):
             if f is not None:
@@ -194,9 +192,7 @@ class DuplicateProcessCleaner:
         """
         if is_distributed():
             if logger:
-                logger.debug(  # pragma: no mutate
-                    "Distributed mode: skipping duplicate process cleanup."
-                )
+                logger.debug("Distributed mode: skipping duplicate process cleanup.")
             return 0
 
         duplicates = self.detect_duplicates()
@@ -224,9 +220,7 @@ class DuplicateProcessCleaner:
                 continue
 
         if count and logger:
-            logger.info(  # pragma: no mutate
-                f" {LogStyle.ARROW} Cleaned {count} duplicate process(es). Cooling down..."
-            )
+            logger.info(f" {LogStyle.ARROW} Cleaned {count} duplicate process(es). Cooling down...")
             time.sleep(1.5)
 
         return count

@@ -218,8 +218,8 @@ class TrialTrainingExecutor:
 
             # Check pruning
             if self._should_prune(trial, epoch):
-                logger.info(  # pragma: no mutate
-                    "%s%s Trial %d pruned at epoch %d (%s=%.4f)",  # pragma: no mutate
+                logger.info(
+                    "%s%s Trial %d pruned at epoch %d (%s=%.4f)",
                     LogStyle.INDENT,
                     LogStyle.ARROW,
                     trial.number,
@@ -234,8 +234,8 @@ class TrialTrainingExecutor:
 
             # Logging
             if epoch % self.log_interval == 0 or epoch == self.epochs:
-                logger.info(  # pragma: no mutate
-                    "%sT%d E%d/%d | Loss:%.4f | %s:%.4f (Best:%.4f)",  # pragma: no mutate
+                logger.info(
+                    "%sT%d E%d/%d | Loss:%.4f | %s:%.4f (Best:%.4f)",
                     LogStyle.DOUBLE_INDENT,
                     trial.number,
                     epoch,
@@ -317,26 +317,26 @@ class TrialTrainingExecutor:
             best_metric: Best metric achieved
             final_loss: Final training loss
         """
-        logger.info("")  # pragma: no mutate
-        logger.info(  # pragma: no mutate
+        logger.info("")
+        logger.info(
             "%s%s Trial %d completed",
             LogStyle.INDENT,
             LogStyle.SUCCESS,
-            trial.number,  # pragma: no mutate
+            trial.number,
         )
         best_label = "Best %s" % self.metric_extractor.metric_name.upper()  # pragma: no mutate
-        logger.info(  # pragma: no mutate
+        logger.info(
             "%s%s %-18s: %.6f",
             LogStyle.INDENT,
             LogStyle.ARROW,
             best_label,
-            best_metric,  # pragma: no mutate
+            best_metric,
         )
-        logger.info(  # pragma: no mutate
+        logger.info(
             "%s%s %-18s: %.4f",
             LogStyle.INDENT,
             LogStyle.ARROW,
             "Final Loss",
-            final_loss,  # pragma: no mutate
+            final_loss,
         )
-        logger.info("")  # pragma: no mutate
+        logger.info("")

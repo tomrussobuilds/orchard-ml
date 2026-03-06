@@ -140,8 +140,8 @@ class StudyEarlyStoppingCallback:
         # Threshold met
         self._count += 1
         cmp = "≥" if self.direction == "maximize" else "≤"  # pragma: no mutate
-        logger.info(  # pragma: no mutate
-            "%s%s Trial %d reached threshold (%.6f %s %.6f) [%d/%d]",  # pragma: no mutate
+        logger.info(
+            "%s%s Trial %d reached threshold (%.6f %s %.6f) [%d/%d]",
             LogStyle.INDENT,
             LogStyle.SUCCESS,
             trial.number,
@@ -169,32 +169,32 @@ class StudyEarlyStoppingCallback:
             "EARLY STOPPING: Target performance achieved!",
             LogStyle.DOUBLE,  # pragma: no mutate
         )
-        logger.info(  # pragma: no mutate
-            "%s%s Metric           : %.6f",  # pragma: no mutate
+        logger.info(
+            "%s%s Metric           : %.6f",
             LogStyle.INDENT,
             LogStyle.SUCCESS,
             value,
         )
-        logger.info(  # pragma: no mutate
-            "%s%s Threshold        : %.6f",  # pragma: no mutate
+        logger.info(
+            "%s%s Threshold        : %.6f",
             LogStyle.INDENT,
             LogStyle.ARROW,
             self.threshold,
         )
-        logger.info(  # pragma: no mutate
-            "%s%s Trials completed : %d",  # pragma: no mutate
+        logger.info(
+            "%s%s Trials completed : %d",
             LogStyle.INDENT,
             LogStyle.ARROW,
             trial.number + 1,
         )
-        logger.info(  # pragma: no mutate
-            "%s%s Trials saved     : %s",  # pragma: no mutate
+        logger.info(
+            "%s%s Trials saved     : %s",
             LogStyle.INDENT,
             LogStyle.SUCCESS,
             trials_saved,
         )
-        logger.info(LogStyle.DOUBLE)  # pragma: no mutate
-        logger.info("")  # pragma: no mutate
+        logger.info(LogStyle.DOUBLE)
+        logger.info("")
 
         study.stop()
 

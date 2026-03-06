@@ -128,7 +128,7 @@ def get_vram_info(device_idx: int = 0) -> str:
         free, total = torch.cuda.mem_get_info(device_idx)
         return f"{free / 1024**3:.2f} GB / {total / 1024**3:.2f} GB"
     except RuntimeError as e:
-        logging.debug("VRAM query failed: %s", e)  # pragma: no mutate
+        logging.debug("VRAM query failed: %s", e)
         return "Query Failed"
 
 

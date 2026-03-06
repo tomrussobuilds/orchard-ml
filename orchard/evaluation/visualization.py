@@ -122,7 +122,7 @@ def plot_training_curves(
         fig.tight_layout()  # pragma: no mutate
 
         plt.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")  # pragma: no mutate
-        logger.info(  # pragma: no mutate
+        logger.info(
             "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Training Curves", out_path.name
         )
 
@@ -171,7 +171,7 @@ def plot_confusion_matrix(
 
         fig.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")  # pragma: no mutate
         plt.close()
-        logger.info(  # pragma: no mutate
+        logger.info(
             "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Confusion Matrix", out_path.name
         )
 
@@ -299,12 +299,12 @@ def _finalize_figure(plt_obj: Any, save_path: Path | None, ctx: PlotContext | No
         plt_obj.savefig(
             save_path, dpi=dpi, bbox_inches="tight", facecolor="white"
         )  # pragma: no mutate
-        logger.info(  # pragma: no mutate
+        logger.info(
             "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Predictions Grid", save_path.name
         )
     else:
         plt_obj.show()
-        logger.debug("Displaying figure interactive mode")  # pragma: no mutate
+        logger.debug("Displaying figure interactive mode")
 
     plt_obj.close()
 
