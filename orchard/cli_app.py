@@ -295,12 +295,12 @@ def _validate_override_key(key: str) -> None:
     models = _section_models()
     if section not in models:
         raise typer.BadParameter(
-            f"Unknown config section '{section}'. " f"Valid sections: {sorted(models.keys())}"
+            f"Unknown config section '{section}'. Valid sections: {sorted(models.keys())}"
         )
     valid_fields = set(models[section].model_fields)
     if field not in valid_fields:
         raise typer.BadParameter(
-            f"Unknown field '{field}' in [{section}]. " f"Valid fields: {sorted(valid_fields)}"
+            f"Unknown field '{field}' in [{section}]. Valid fields: {sorted(valid_fields)}"
         )
 
 
