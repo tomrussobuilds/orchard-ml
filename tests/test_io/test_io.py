@@ -41,8 +41,11 @@ def test_validate_npz_keys_missing_keys():
     mock_npz = MagicMock()
     mock_npz.files = ["train_images", "train_labels"]
 
-    with pytest.raises(OrchardDatasetError, match="Missing keys"):
+    with pytest.raises(OrchardDatasetError, match="Missing keys") as exc_info:
         validate_npz_keys(mock_npz)
+
+    msg = str(exc_info.value)
+    assert "Found keys: ['train_images', 'train_labels']" in msg
 
 
 @pytest.mark.unit
@@ -228,8 +231,12 @@ def test_load_model_weights_missing_keys(mock_torch_load, tmp_path):
     mock_torch_load.return_value = {"weight": torch.randn(5, 10)}
     device = torch.device("cpu")
 
-    with pytest.raises(OrchardExportError, match="missing keys"):
+    with pytest.raises(OrchardExportError, match="missing keys") as exc_info:
         load_model_weights(model, checkpoint_path, device)
+
+    msg = str(exc_info.value)
+    assert "missing keys: ['bias']" in msg
+    assert msg.endswith("Ensure the config matches the architecture used during training.")
 
 
 @pytest.mark.unit
@@ -245,8 +252,36 @@ def test_load_model_weights_extra_keys(mock_torch_load, tmp_path):
     mock_torch_load.return_value = state_dict
     device = torch.device("cpu")
 
-    with pytest.raises(OrchardExportError, match="unexpected keys"):
+    with pytest.raises(OrchardExportError, match="unexpected keys") as exc_info:
         load_model_weights(model, checkpoint_path, device)
+
+    msg = str(exc_info.value)
+    assert "unexpected keys: ['extra_layer.weight']" in msg
+
+
+@pytest.mark.unit
+@patch("torch.load")
+def test_load_model_weights_missing_and_extra_keys(mock_torch_load, tmp_path):
+    """Test error message with both missing and unexpected keys uses comma join."""
+    model = nn.Linear(10, 5)
+    checkpoint_path = tmp_path / "model.pth"
+    checkpoint_path.touch()
+
+    # Completely different keys: missing=weight,bias  unexpected=a..f (6 keys)
+    mock_torch_load.return_value = {f"k{i}": torch.randn(1) for i in range(6)}
+    device = torch.device("cpu")
+
+    with pytest.raises(OrchardExportError, match="architecture mismatch") as exc_info:
+        load_model_weights(model, checkpoint_path, device)
+
+    msg = str(exc_info.value)
+    assert "missing keys:" in msg
+    assert "unexpected keys:" in msg
+    assert ", unexpected keys:" in msg  # verifies ', '.join separator
+    # The error truncates to first 5 keys — 6 unexpected should show exactly 5
+    unexpected_part = msg.split("unexpected keys: ")[1].split(")")[0]
+    shown_keys = unexpected_part.strip("[]").split(", ")
+    assert len(shown_keys) == 5
 
 
 @pytest.mark.unit
@@ -262,6 +297,27 @@ def test_load_model_weights_empty_state_dict(mock_torch_load, tmp_path):
 
     with pytest.raises(OrchardExportError, match="missing keys"):
         load_model_weights(model, checkpoint_path, device)
+
+
+@pytest.mark.unit
+@patch("torch.load")
+def test_load_model_weights_truncates_missing_keys(mock_torch_load, tmp_path):
+    """Test error message truncates missing keys list to 5 entries."""
+    model = nn.Sequential(*[nn.Linear(2, 2) for _ in range(4)])
+    checkpoint_path = tmp_path / "model.pth"
+    checkpoint_path.touch()
+
+    # Empty checkpoint → all model keys are "missing" (>5 keys)
+    mock_torch_load.return_value = {}
+    device = torch.device("cpu")
+
+    with pytest.raises(OrchardExportError) as exc_info:
+        load_model_weights(model, checkpoint_path, device)
+
+    msg = str(exc_info.value)
+    missing_part = msg.split("missing keys: ")[1].split("]")[0] + "]"
+    shown_keys = eval(missing_part)  # nosec B307
+    assert len(shown_keys) == 5
 
 
 @pytest.mark.unit
