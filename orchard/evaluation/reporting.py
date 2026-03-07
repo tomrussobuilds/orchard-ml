@@ -103,8 +103,8 @@ class TrainingReport(BaseModel):
         return pd.DataFrame(list(data.items()), columns=["Parameter", "Value"])
 
     def save(
-        self, path: Path, fmt: str = "xlsx"
-    ) -> None:  # pragma: no mutate  # else branch is xlsx fallback
+        self, path: Path, fmt: str = "xlsx"  # pragma: no mutate  # .lower() normalizes any case
+    ) -> None:
         """
         Saves the report to disk in the requested format.
 
@@ -135,9 +135,9 @@ class TrainingReport(BaseModel):
                     engine="xlsxwriter",  # pragma: no mutate
                     engine_kwargs={"options": {"nan_inf_to_errors": True}},  # pragma: no mutate
                 ) as writer:
-                    df.to_excel(
-                        writer, sheet_name="Detailed Report", index=False
-                    )  # pragma: no mutate
+                    # fmt: off
+                    df.to_excel(writer, sheet_name="Detailed Report", index=False)  # pragma: no mutate
+                    # fmt: on
                     self._apply_excel_formatting(writer, df)
 
             logger.info(

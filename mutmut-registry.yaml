@@ -482,7 +482,7 @@ orchard/evaluation/plot_context.py:
   not_checked: 0
   score: 100.0
 orchard/evaluation/reporting.py:
-  last_run: '2026-03-07T09:51:26Z'
+  last_run: '2026-03-07T11:08:52Z'
   total: 115
   killed: 115
   survived: 0
@@ -496,9 +496,9 @@ orchard/evaluation/tta.py:
   not_checked: 0
   score: 100.0
 orchard/evaluation/visualization.py:
-  last_run: '2026-03-07T09:44:27Z'
-  total: 72
-  killed: 72
+  last_run: '2026-03-07T11:08:52Z'
+  total: 99
+  killed: 99
   survived: 0
   not_checked: 0
   score: 100.0
@@ -573,14 +573,14 @@ orchard/optimization/objective/metric_extractor.py:
   not_checked: 0
   score: 80.0
 orchard/optimization/objective/objective.py:
-  last_run: '2026-03-06T10:17:29Z'
+  last_run: '2026-03-07T10:30:33Z'
   total: 138
   killed: 98
   survived: 40
   not_checked: 0
   score: 71.0
 orchard/optimization/objective/training_executor.py:
-  last_run: '2026-03-07T09:40:58Z'
+  last_run: '2026-03-07T10:30:41Z'
   total: 115
   killed: 102
   survived: 13

@@ -188,14 +188,23 @@ def _is_fresh(source: Path, registry: dict[str, Any]) -> bool:
     return last_run > file_modified
 
 
-def _clean_cache(source: Path) -> None:
-    """Remove cached trampoline and meta for a source file."""
+def _clean_cache(source: Path, *, backup_meta: bool = False) -> None:
+    """Remove cached trampoline and meta for a source file.
+
+    When *backup_meta* is True the existing ``.meta`` is renamed to
+    ``.meta.bak`` instead of deleted so it can be restored if the new
+    run produces incomplete results.
+    """
     rel = source.relative_to(ROOT)
     trampoline = MUTANTS_DIR / rel
     meta = MUTANTS_DIR / f"{rel}.meta"
-    for f in (trampoline, meta):
-        if f.exists():
-            f.unlink()
+    if trampoline.exists():
+        trampoline.unlink()
+    if meta.exists():
+        if backup_meta:
+            meta.rename(meta.with_suffix(".meta.bak"))
+        else:
+            meta.unlink()
 
 
 def run_mutmut(targets: list[str]) -> None:
@@ -222,6 +231,34 @@ def run_mutmut(targets: list[str]) -> None:
     print(f"\nRegistry saved to {REGISTRY_PATH.relative_to(ROOT)}")
 
 
+def _meta_is_complete(source: Path) -> bool:
+    """Return True if the .meta for *source* has no ``not_checked`` mutants."""
+    meta = _meta_path_for(source)
+    if not meta.exists():
+        return False
+    counts = _parse_meta(meta)
+    return counts["not_checked"] == 0
+
+
+def _restore_meta_backup(source: Path) -> bool:
+    """Restore ``.meta.bak`` → ``.meta``.  Returns True if restored."""
+    rel = source.relative_to(ROOT)
+    backup = MUTANTS_DIR / f"{rel}.meta.bak"
+    if backup.exists():
+        meta = MUTANTS_DIR / f"{rel}.meta"
+        backup.rename(meta)
+        return True
+    return False
+
+
+def _remove_meta_backup(source: Path) -> None:
+    """Delete the ``.meta.bak`` file if it exists."""
+    rel = source.relative_to(ROOT)
+    backup = MUTANTS_DIR / f"{rel}.meta.bak"
+    if backup.exists():
+        backup.unlink()
+
+
 def run_batch(targets: list[str], clean: bool = True) -> None:
     """Run mutmut on each .py file individually, updating registry after each."""
     sources: list[Path] = []
@@ -238,6 +275,7 @@ def run_batch(targets: list[str], clean: bool = True) -> None:
             registry = yaml.safe_load(f) or {}
 
     skipped = 0
+    restored = 0
     print(f"Batch mode: {len(sources)} file(s) to process\n")
 
     for i, src in enumerate(sources, 1):
@@ -251,14 +289,25 @@ def run_batch(targets: list[str], clean: bool = True) -> None:
             continue
 
         if clean:
-            _clean_cache(src)
+            _clean_cache(src, backup_meta=True)
 
         cmd = [sys.executable, ENTRY_SCRIPT, "run", glob]
+        timed_out = False
         try:
             subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=600)  # nosec B603
         except subprocess.TimeoutExpired:
-            print("  ⚠ timed out (600s), skipping\n")
+            timed_out = True
+
+        if timed_out or not _meta_is_complete(src):
+            reason = "timed out" if timed_out else "incomplete results"
+            if _restore_meta_backup(src):
+                print(f"  ⚠ {reason}, restored previous results\n")
+                restored += 1
+            else:
+                print(f"  ⚠ {reason}, no backup to restore\n")
             continue
+
+        _remove_meta_backup(src)
 
         updated = _update_registry([src])
         if updated:
@@ -275,7 +324,9 @@ def run_batch(targets: list[str], clean: bool = True) -> None:
             print("  (no mutants)\n")
 
     if skipped:
-        print(f"Skipped {skipped} fresh file(s).\n")
+        print(f"Skipped {skipped} fresh file(s).")
+    if restored:
+        print(f"Restored {restored} file(s) from backup (incomplete run).")
 
     print("\n" + "=" * 83)
     print("BATCH COMPLETE\n")

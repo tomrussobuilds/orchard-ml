@@ -107,9 +107,10 @@ def test_plot_training_curves_empty_lists(mock_savez, mock_plt, tmp_path, ctx_gr
 
 # PLOT CONFUSION MATRIX
 @pytest.mark.unit
+@patch("orchard.evaluation.visualization.ConfusionMatrixDisplay")
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.confusion_matrix")
-def test_plot_confusion_matrix_basic(mock_cm, mock_plt, tmp_path):
+def test_plot_confusion_matrix_basic(mock_cm, mock_plt, mock_cmd_cls, tmp_path):
     """Test plot_confusion_matrix creates and saves figure."""
     mock_fig = MagicMock()
     mock_ax = MagicMock()
@@ -138,6 +139,10 @@ def test_plot_confusion_matrix_basic(mock_cm, mock_plt, tmp_path):
     mock_cm.assert_called_once()
     assert mock_plt.subplots.called
     assert mock_plt.savefig.called or mock_plt.close.called
+
+    # Verify display_labels forwarded (not None, not removed)
+    cmd_kwargs = mock_cmd_cls.call_args[1]
+    assert cmd_kwargs["display_labels"] is classes
 
 
 @pytest.mark.unit
@@ -186,6 +191,46 @@ def test_show_predictions_basic(mock_get_batch, mock_plt, tmp_path, ctx_rgb):
     mock_model.eval.assert_called_once()
     assert mock_plt.subplots.called
     assert mock_plt.savefig.called
+
+    # Verify forwarding: _get_predictions_batch receives real args (not None)
+    batch_args = mock_get_batch.call_args[0]
+    assert batch_args[0] is mock_model
+    assert batch_args[1] is mock_loader
+    assert batch_args[2] is device
+
+
+@pytest.mark.unit
+def test_show_predictions_forwards_ctx(tmp_path, ctx_rgb):
+    """Test show_predictions forwards ctx to _plot_single_prediction (not None)."""
+    rng = np.random.default_rng(seed=42)
+    images = rng.random(size=(12, 3, 28, 28))
+    labels = np.array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2])
+    preds = np.array([0, 1, 1, 0, 2, 2, 0, 1, 2, 0, 1, 2])
+
+    mock_model = MagicMock()
+    mock_loader = MagicMock()
+    device = torch.device("cpu")
+    classes = ["class0", "class1", "class2"]
+    save_path = tmp_path / "predictions.png"
+
+    with (
+        patch("orchard.evaluation.visualization._get_predictions_batch") as mock_get_batch,
+        patch("orchard.evaluation.visualization.plt") as mock_plt,
+        patch("orchard.evaluation.visualization._plot_single_prediction") as mock_plot,
+    ):
+        mock_fig = MagicMock()
+        mock_axes = np.empty(12, dtype=object)
+        for idx in range(12):
+            mock_axes[idx] = MagicMock()
+        mock_plt.subplots.return_value = (mock_fig, mock_axes)
+        mock_get_batch.return_value = (images, labels, preds)
+
+        show_predictions(mock_model, mock_loader, device, classes, save_path, ctx_rgb)
+
+    assert mock_plot.call_count == 12
+    # Every call should receive ctx_rgb as last arg, not None
+    for call in mock_plot.call_args_list:
+        assert call[0][5] is ctx_rgb
 
 
 @pytest.mark.unit

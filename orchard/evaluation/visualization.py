@@ -64,8 +64,8 @@ def show_predictions(
         num_samples = n or (ctx.n_samples if ctx else 12)  # pragma: no mutate
         # forwarding; tested in _get_predictions_batch
         images, labels, preds = _get_predictions_batch(
-            model, loader, device, num_samples
-        )  # pragma: no mutate
+            model, loader, device, num_samples  # pragma: no mutate
+        )
 
         # 2. Grid & Figure Setup
         # cosmetic fallback
@@ -79,8 +79,8 @@ def show_predictions(
             if i < len(images):  # pragma: no mutate
                 # forwarding; tested in _plot_single_prediction
                 _plot_single_prediction(
-                    ax, images[i], labels[i], preds[i], classes, ctx
-                )  # pragma: no mutate
+                    ax, images[i], labels[i], preds[i], classes, ctx  # pragma: no mutate
+                )
             ax.axis("off")  # pragma: no mutate
 
         # 4. Suptitle
@@ -173,14 +173,14 @@ def plot_confusion_matrix(
         cm = np.nan_to_num(cm)
 
         disp = ConfusionMatrixDisplay(
-            confusion_matrix=cm, display_labels=classes
-        )  # pragma: no mutate
+            confusion_matrix=cm, display_labels=classes  # pragma: no mutate
+        )
         fig, ax = plt.subplots(figsize=(11, 9))  # pragma: no mutate
 
         disp.plot(  # pragma: no mutate
             ax=ax,
             cmap=ctx.cmap_confusion,
-            xticks_rotation=45,
+            xticks_rotation=45,  # pragma: no mutate
             values_format=".3f",  # pragma: no mutate
         )  # pragma: no mutate
         plt.title(  # pragma: no mutate
@@ -305,7 +305,7 @@ def _setup_prediction_grid(
     fig, axes = plt.subplots(  # pragma: no mutate
         rows,
         cols,
-        figsize=(base_w, (base_h / 3) * rows),
+        figsize=(base_w, (base_h / 3) * rows),  # pragma: no mutate
         constrained_layout=True,  # pragma: no mutate
     )
     # Ensure axes is always an array even for 1x1 grids

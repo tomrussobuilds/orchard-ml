@@ -174,6 +174,10 @@ def test_report_save_creates_xlsx_file(sample_report_data, tmp_path):
     assert expected_path.exists()
     assert expected_path.suffix == ".xlsx"
 
+    # Verify xlsx has no index column (index=False)
+    df = pd.read_excel(expected_path)
+    assert list(df.columns) == ["Parameter", "Value"]
+
 
 @pytest.mark.unit
 def test_report_save_with_existing_xlsx_suffix(sample_report_data, tmp_path):
