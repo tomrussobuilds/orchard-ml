@@ -202,12 +202,12 @@ orchard/core/environment/guards.py:
   not_checked: 0
   score: 87.9
 orchard/core/environment/hardware.py:
-  last_run: '2026-03-07T09:35:13Z'
+  last_run: '2026-03-07T12:25:41Z'
   total: 127
-  killed: 106
-  survived: 21
+  killed: 123
+  survived: 4
   not_checked: 0
-  score: 83.5
+  score: 96.9
 orchard/core/environment/policy.py:
   last_run: '2026-03-06T10:05:03Z'
   total: 8

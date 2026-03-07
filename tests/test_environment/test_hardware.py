@@ -72,6 +72,95 @@ def test_configure_system_libraries_windows(mock_platform):
         assert matplotlib.get_backend() == original_backend
 
 
+@pytest.mark.unit
+@patch("os.path.exists", return_value=False)
+@patch("platform.system", return_value="Windows")
+def test_configure_system_libraries_non_linux_non_docker_skips(mock_platform, mock_exists):
+    """Test non-Linux, non-Docker environment skips all configuration."""
+    with patch.dict(os.environ, mutmut_safe_env(), clear=True):
+        matplotlib.rcParams["pdf.fonttype"] = 3
+        matplotlib.rcParams["ps.fonttype"] = 3
+
+        configure_system_libraries()
+
+        assert matplotlib.rcParams["pdf.fonttype"] == 3
+        assert matplotlib.rcParams["ps.fonttype"] == 3
+
+
+@pytest.mark.unit
+@patch("os.path.exists", return_value=False)
+@patch("platform.system", return_value="Linux")
+def test_configure_system_libraries_linux_only_no_docker(mock_platform, mock_exists):
+    """Test is_linux alone triggers configuration (kills or→and mutant)."""
+    with patch.dict(os.environ, mutmut_safe_env(), clear=True):
+        matplotlib.rcParams["pdf.fonttype"] = 3
+        matplotlib.rcParams["ps.fonttype"] = 3
+
+        configure_system_libraries()
+
+        assert matplotlib.get_backend() == "Agg"
+        assert matplotlib.rcParams["pdf.fonttype"] == 42
+        assert matplotlib.rcParams["ps.fonttype"] == 42
+
+
+@pytest.mark.unit
+@patch("os.path.exists", return_value=False)
+@patch("platform.system", return_value="Darwin")
+def test_configure_system_libraries_docker_env_only_no_linux(mock_platform, mock_exists):
+    """Test is_docker via IN_DOCKER env var alone triggers config (kills is_linux mutants)."""
+    with patch.dict(os.environ, mutmut_safe_env(IN_DOCKER="TRUE"), clear=True):
+        matplotlib.rcParams["pdf.fonttype"] = 3
+        matplotlib.rcParams["ps.fonttype"] = 3
+
+        configure_system_libraries()
+
+        assert matplotlib.get_backend() == "Agg"
+        assert matplotlib.rcParams["pdf.fonttype"] == 42
+        assert matplotlib.rcParams["ps.fonttype"] == 42
+
+
+@pytest.mark.unit
+@patch("platform.system", return_value="Darwin")
+def test_configure_system_libraries_dockerenv_file_only(mock_platform):
+    """Test is_docker via /.dockerenv file alone triggers config (exact path)."""
+    with patch.dict(os.environ, mutmut_safe_env(), clear=True):
+        matplotlib.rcParams["pdf.fonttype"] = 3
+
+        with patch("os.path.exists", side_effect=lambda p: p == "/.dockerenv"):
+            configure_system_libraries()
+
+            assert matplotlib.get_backend() == "Agg"
+            assert matplotlib.rcParams["pdf.fonttype"] == 42
+
+
+@pytest.mark.unit
+@patch("os.path.exists", return_value=True)
+@patch("platform.system", return_value="Darwin")
+def test_configure_system_libraries_docker_env_wrong_value(mock_platform, mock_exists):
+    """Test IN_DOCKER with wrong value still works via dockerenv file."""
+    with patch.dict(os.environ, mutmut_safe_env(IN_DOCKER="false"), clear=True):
+        matplotlib.rcParams["pdf.fonttype"] = 3
+
+        configure_system_libraries()
+
+        assert matplotlib.get_backend() == "Agg"
+        assert matplotlib.rcParams["pdf.fonttype"] == 42
+
+
+@pytest.mark.unit
+@patch("os.path.exists", return_value=False)
+@patch("platform.system", return_value="Darwin")
+def test_configure_system_libraries_no_docker_no_linux_skips(mock_platform, mock_exists):
+    """Test non-Linux non-Docker truly skips (kills or→and and string mutants)."""
+    with patch.dict(os.environ, mutmut_safe_env(), clear=True):
+        matplotlib.rcParams["pdf.fonttype"] = 3
+        matplotlib.rcParams["ps.fonttype"] = 3
+
+        configure_system_libraries()
+
+        assert matplotlib.rcParams["pdf.fonttype"] == 3
+
+
 # DEVICE DETECTION
 @pytest.mark.unit
 @patch("torch.cuda.is_available", return_value=True)
@@ -114,12 +203,14 @@ def test_to_device_obj_cpu():
 
 
 @pytest.mark.unit
+@patch("torch.cuda.set_device")
 @patch("torch.cuda.is_available", return_value=True)
-def test_to_device_obj_cuda(mock_cuda):
-    """Test to_device_obj converts 'cuda' string when CUDA available."""
+def test_to_device_obj_cuda(mock_cuda, mock_set_device):
+    """Test to_device_obj converts 'cuda' to default device (no index)."""
     device = to_device_obj("cuda")
     assert isinstance(device, torch.device)
-    assert device.type == "cuda"
+    assert device == torch.device("cuda")
+    mock_set_device.assert_not_called()
 
 
 @pytest.mark.unit
@@ -271,7 +362,15 @@ def test_get_num_workers_capped(mock_cpu_count):
 @pytest.mark.unit
 @patch("os.cpu_count", return_value=4)
 def test_get_num_workers_low_cores(mock_cpu_count):
-    """Test get_num_workers returns 2 for low-core systems."""
+    """Test get_num_workers returns 2 for low-core systems (exactly 4)."""
+    num_workers = get_num_workers()
+    assert num_workers == 2
+
+
+@pytest.mark.unit
+@patch("os.cpu_count", return_value=5)
+def test_get_num_workers_boundary_five_cores(mock_cpu_count):
+    """Test get_num_workers with exactly 5 cores (kills <=4 vs <=5 mutant)."""
     num_workers = get_num_workers()
     assert num_workers == 2
 
@@ -280,6 +379,14 @@ def test_get_num_workers_low_cores(mock_cpu_count):
 @patch("os.cpu_count", return_value=2)
 def test_get_num_workers_very_low_cores(mock_cpu_count):
     """Test get_num_workers returns 2 for very low-core systems."""
+    num_workers = get_num_workers()
+    assert num_workers == 2
+
+
+@pytest.mark.unit
+@patch("os.cpu_count", return_value=3)
+def test_get_num_workers_three_cores(mock_cpu_count):
+    """Test get_num_workers returns 2 for 3-core systems (kills <4 mutant)."""
     num_workers = get_num_workers()
     assert num_workers == 2
 
@@ -308,12 +415,12 @@ def test_apply_cpu_threads_standard(mock_cpu_count):
 @pytest.mark.unit
 @patch("os.cpu_count", return_value=4)
 def test_apply_cpu_threads_minimum(mock_cpu_count):
-    """Test apply_cpu_threads maintains minimum of 2 threads."""
+    """Test apply_cpu_threads clamps to exactly 2 threads (kills max(2→3) mutant)."""
     num_workers = 8
     threads = apply_cpu_threads(num_workers)
 
-    assert threads >= 2
-    assert torch.get_num_threads() == threads
+    assert threads == 2
+    assert torch.get_num_threads() == 2
 
 
 @pytest.mark.unit
@@ -323,7 +430,7 @@ def test_apply_cpu_threads_fallback(mock_cpu_count):
     num_workers = 4
     threads = apply_cpu_threads(num_workers)
 
-    assert threads >= 2
+    assert threads == 2
 
 
 @pytest.mark.unit
@@ -385,6 +492,23 @@ def test_to_device_obj_cpu_ignores_local_rank():
     device = to_device_obj("cpu", local_rank=3)
 
     assert device == torch.device("cpu")
+
+
+@pytest.mark.unit
+def test_to_device_obj_default_local_rank_is_zero():
+    """to_device_obj defaults local_rank to 0 (kills default=1 mutant)."""
+    import inspect
+
+    sig = inspect.signature(to_device_obj)
+    assert sig.parameters["local_rank"].default == 0
+
+
+@pytest.mark.unit
+@patch("torch.cuda.is_available", return_value=False)
+def test_to_device_obj_cuda_error_message_exact(mock_cuda):
+    """to_device_obj error message is exact (kills string mutant)."""
+    with pytest.raises(ValueError, match="^CUDA requested but not available$"):
+        to_device_obj("cuda")
 
 
 if __name__ == "__main__":

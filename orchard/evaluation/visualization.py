@@ -62,7 +62,6 @@ def show_predictions(
         # 1. Parameter Resolution & Batch Inference
         # cosmetic fallback
         num_samples = n or (ctx.n_samples if ctx else 12)  # pragma: no mutate
-        # forwarding; tested in _get_predictions_batch
         images, labels, preds = _get_predictions_batch(
             model, loader, device, num_samples  # pragma: no mutate
         )
@@ -70,14 +69,12 @@ def show_predictions(
         # 2. Grid & Figure Setup
         # cosmetic fallback
         grid_cols = ctx.grid_cols if ctx else 4  # pragma: no mutate
-        # forwarding; tested in _setup_prediction_grid
         _, axes = _setup_prediction_grid(len(images), grid_cols, ctx)  # pragma: no mutate
 
         # 3. Plotting Loop
         for i, ax in enumerate(axes):
             # guard for extra grid cells beyond actual images
             if i < len(images):  # pragma: no mutate
-                # forwarding; tested in _plot_single_prediction
                 _plot_single_prediction(
                     ax, images[i], labels[i], preds[i], classes, ctx  # pragma: no mutate
                 )
