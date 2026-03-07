@@ -206,8 +206,9 @@ def test_save_plot_success(completed_trial):
 
 
 @pytest.mark.unit
-def test_save_plot_handles_exception(completed_trial):
-    """Test save_plot handles exceptions gracefully."""
+@patch("orchard.optimization.orchestrator.visualizers.logger")
+def test_save_plot_handles_exception(mock_logger, completed_trial):
+    """Test save_plot logs warning with plot_name and exception on failure."""
     study = MagicMock()
     study.trials = [completed_trial]
 
@@ -216,7 +217,13 @@ def test_save_plot_handles_exception(completed_trial):
     with tempfile.TemporaryDirectory() as tmpdir:
         output_dir = Path(tmpdir)
 
-        save_plot(study, "test", mock_plot_fn, output_dir)
+        save_plot(study, "test_plot", mock_plot_fn, output_dir)
+
+        mock_logger.warning.assert_called_once()
+        call_args = mock_logger.warning.call_args[0]
+        # Verify plot_name and exception are passed as format args
+        assert call_args[1] == "test_plot"
+        assert isinstance(call_args[2], ValueError)
 
 
 @pytest.mark.unit
@@ -293,11 +300,56 @@ def test_generate_visualizations_creates_all_plots(
 
             assert mock_save_plot.call_count == 4
 
-            plot_names = [call[0][1] for call in mock_save_plot.call_args_list]
-            assert "optimization_history" in plot_names
-            assert "param_importances" in plot_names
-            assert "slice" in plot_names
-            assert "parallel_coordinate" in plot_names
+            for call in mock_save_plot.call_args_list:
+                call_study, plot_name, plot_fn, call_dir = call[0]
+                assert call_study is study
+                assert plot_name in {
+                    "optimization_history",
+                    "param_importances",
+                    "slice",
+                    "parallel_coordinate",
+                }
+                assert callable(plot_fn)
+                assert call_dir is output_dir
+
+
+@pytest.mark.unit
+@patch("orchard.optimization.orchestrator.visualizers.logging")
+def test_save_plot_applies_and_removes_filter(mock_logging, completed_trial):
+    """Test save_plot adds/removes _missing_params_filter on the correct logger."""
+    study = MagicMock()
+    study.trials = [completed_trial]
+
+    mock_plot_fn = MagicMock()
+    mock_fig = MagicMock()
+    mock_plot_fn.return_value = mock_fig
+
+    mock_pc_logger = MagicMock()
+    mock_logging.getLogger.return_value = mock_pc_logger
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        save_plot(study, "test", mock_plot_fn, Path(tmpdir))
+
+        mock_pc_logger.addFilter.assert_called_once_with(_missing_params_filter)
+        mock_pc_logger.removeFilter.assert_called_once_with(_missing_params_filter)
+
+
+@pytest.mark.unit
+@patch("orchard.optimization.orchestrator.visualizers.logging")
+def test_save_plot_removes_filter_on_exception(mock_logging, completed_trial):
+    """Test save_plot removes filter even when plot_fn raises."""
+    study = MagicMock()
+    study.trials = [completed_trial]
+
+    mock_plot_fn = MagicMock(side_effect=RuntimeError("boom"))
+    mock_pc_logger = MagicMock()
+    mock_logging.getLogger.return_value = mock_pc_logger
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        save_plot(study, "test", mock_plot_fn, Path(tmpdir))
+
+        mock_pc_logger.addFilter.assert_called_once_with(_missing_params_filter)
+        mock_pc_logger.removeFilter.assert_called_once_with(_missing_params_filter)
 
 
 @pytest.mark.unit

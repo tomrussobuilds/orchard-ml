@@ -100,13 +100,15 @@ def test_report_save_success(mock_mkdir, mock_writer, sample_report_data):
 @patch("orchard.evaluation.reporting.logger")
 @patch("pathlib.Path.mkdir")
 def test_report_save_failure(mock_mkdir, mock_logger, sample_report_data):
-    """Test error handling when Excel saving fails."""
+    """Test error handling: logger.error receives the exception."""
     report = TrainingReport(**sample_report_data)
 
     with patch.object(TrainingReport, "to_vertical_df", side_effect=ValueError("Write Error")):
         report.save(Path("error.xlsx"))
 
-        mock_logger.error.assert_called()
+        mock_logger.error.assert_called_once()
+        call_args = mock_logger.error.call_args[0]
+        assert isinstance(call_args[1], ValueError)
 
 
 @pytest.mark.unit
@@ -187,7 +189,7 @@ def test_report_save_with_existing_xlsx_suffix(sample_report_data, tmp_path):
 
 @pytest.mark.unit
 def test_report_save_csv(sample_report_data, tmp_path):
-    """Test save() creates a .csv file when fmt='csv'."""
+    """Test save() creates a .csv with correct format (no index column)."""
     report = TrainingReport(**sample_report_data)
     path = tmp_path / "report"
 
@@ -198,11 +200,16 @@ def test_report_save_csv(sample_report_data, tmp_path):
     assert csv_path.suffix == ".csv"
     content = csv_path.read_text()
     assert "architecture" in content
+    # index=False means first column is "Parameter", not row numbers
+    first_line = content.strip().split("\n")[0]
+    assert first_line == "Parameter,Value"
 
 
 @pytest.mark.unit
 def test_report_save_json(sample_report_data, tmp_path):
-    """Test save() creates a .json file when fmt='json'."""
+    """Test save() creates .json with orient='records' and indent=2."""
+    import json
+
     report = TrainingReport(**sample_report_data)
     path = tmp_path / "report"
 
@@ -211,8 +218,71 @@ def test_report_save_json(sample_report_data, tmp_path):
     json_path = tmp_path / "report.json"
     assert json_path.exists()
     assert json_path.suffix == ".json"
-    content = json_path.read_text()
-    assert "architecture" in content
+    data = json.loads(json_path.read_text())
+    # orient="records" produces a list of dicts
+    assert isinstance(data, list)
+    assert isinstance(data[0], dict)
+    # indent=2 means the output is formatted (not compact)
+    raw = json_path.read_text()
+    assert "\n" in raw  # indented output has newlines
+
+
+@pytest.mark.unit
+def test_create_structured_report_aug_info_none_fallback(mock_config):
+    """Test aug_info=None falls back to 'N/A'."""
+    val_metrics = [{"accuracy": 0.8, "auc": 0.85, "f1": 0.78}]
+    test_metrics = {"accuracy": 0.88, "auc": 0.91}
+
+    report = create_structured_report(
+        val_metrics=val_metrics,
+        test_metrics=test_metrics,
+        macro_f1=0.87,
+        train_losses=[0.5],
+        best_path=Path("/models/best.pth"),
+        log_path=Path("/logs/run.log"),
+        arch_name=mock_config.architecture.name,
+        dataset=mock_config.dataset,
+        training=mock_config.training,
+        aug_info=None,
+    )
+    assert report.augmentations == "N/A"
+
+
+@pytest.mark.unit
+def test_create_structured_report_resolves_paths(mock_config, tmp_path):
+    """Test model_path and log_path are resolved to absolute paths."""
+    model_file = tmp_path / "best.pth"
+    model_file.touch()
+    log_file = tmp_path / "run.log"
+    log_file.touch()
+
+    val_metrics = [{"accuracy": 0.8, "auc": 0.85, "f1": 0.78}]
+    test_metrics = {"accuracy": 0.88, "auc": 0.91}
+
+    report = create_structured_report(
+        val_metrics=val_metrics,
+        test_metrics=test_metrics,
+        macro_f1=0.87,
+        train_losses=[0.5],
+        best_path=model_file,
+        log_path=log_file,
+        arch_name=mock_config.architecture.name,
+        dataset=mock_config.dataset,
+        training=mock_config.training,
+    )
+    assert report.model_path == str(model_file.resolve())
+    assert report.log_path == str(log_file.resolve())
+
+
+@pytest.mark.unit
+def test_report_save_creates_nested_parent_dirs(sample_report_data, tmp_path):
+    """Test save() creates nested parent directories (parents=True)."""
+    report = TrainingReport(**sample_report_data)
+    path = tmp_path / "deep" / "nested" / "report"
+
+    report.save(path, fmt="csv")
+
+    assert (tmp_path / "deep" / "nested" / "report.csv").exists()
 
 
 @pytest.mark.unit
@@ -286,6 +356,47 @@ def test_create_structured_report_all_nan_auc(mock_config):
     )
 
     assert report.best_val_auc == pytest.approx(0.0)
+
+
+@pytest.mark.unit
+def test_report_save_default_fmt_is_xlsx(sample_report_data, tmp_path):
+    """Test save() defaults to xlsx format when fmt is not specified."""
+    report = TrainingReport(**sample_report_data)
+    path = tmp_path / "report"
+
+    report.save(path)
+
+    assert (tmp_path / "report.xlsx").exists()
+
+
+@pytest.mark.unit
+@patch("orchard.evaluation.reporting.logger")
+def test_report_save_xlsx_no_error_logged(mock_logger, sample_report_data, tmp_path):
+    """Test save() does not log errors on success (catches _apply_excel_formatting regressions)."""
+    report = TrainingReport(**sample_report_data)
+    path = tmp_path / "report"
+
+    report.save(path)
+
+    mock_logger.error.assert_not_called()
+
+
+@pytest.mark.unit
+def test_report_save_json_indent(sample_report_data, tmp_path):
+    """Test save() json uses indent=2 specifically (not 3)."""
+    report = TrainingReport(**sample_report_data)
+    path = tmp_path / "report"
+
+    report.save(path, fmt="json")
+
+    raw = (tmp_path / "report.json").read_text()
+    lines = raw.split("\n")
+    # indent=2: inner keys should be indented with exactly 4 spaces (2 for array + 2 for object)
+    key_lines = [line for line in lines if '"Parameter"' in line]
+    assert len(key_lines) > 0
+    assert all(line.startswith("    ") for line in key_lines)
+    # With indent=3 those would start with 6 spaces instead
+    assert not all(line.startswith("      ") for line in key_lines)
 
 
 # ENTRY POINT

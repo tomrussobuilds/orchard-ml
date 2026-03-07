@@ -188,6 +188,12 @@ def test_show_samples_for_dataset_basic(mock_show_images, tmp_path):
     )
 
     mock_show_images.assert_called_once()
+    call_kwargs = mock_show_images.call_args.kwargs
+    assert call_kwargs["loader"] is mock_loader
+    assert call_kwargs["save_path"] == tmp_path / "bloodmnist" / "sample_grid.png"
+    assert call_kwargs["num_samples"] == 16
+    assert call_kwargs["arch_name"] == "Model"
+    assert call_kwargs["title_prefix"] == "bloodmnist"
 
 
 @pytest.mark.unit

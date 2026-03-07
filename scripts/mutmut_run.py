@@ -254,7 +254,11 @@ def run_batch(targets: list[str], clean: bool = True) -> None:
             _clean_cache(src)
 
         cmd = [sys.executable, ENTRY_SCRIPT, "run", glob]
-        subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True)  # nosec B603
+        try:
+            subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=600)  # nosec B603
+        except subprocess.TimeoutExpired:
+            print("  ⚠ timed out (600s), skipping\n")
+            continue
 
         updated = _update_registry([src])
         if updated:

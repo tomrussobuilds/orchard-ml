@@ -314,7 +314,7 @@ def test_show_predictions_with_custom_n(mock_get_batch, mock_plt, tmp_path):
 # HELPER FUNCTIONS - DIRECT TESTS
 @pytest.mark.unit
 def test_get_predictions_batch_directly():
-    """Test _get_predictions_batch function directly."""
+    """Test _get_predictions_batch passes device and images correctly to model."""
     from orchard.evaluation.visualization import _get_predictions_batch
 
     mock_model = MagicMock()
@@ -335,6 +335,11 @@ def test_get_predictions_batch_directly():
     assert isinstance(img_arr, np.ndarray)
     assert isinstance(label_arr, np.ndarray)
     assert isinstance(pred_arr, np.ndarray)
+
+    # Verify model received actual images (not None)
+    model_input = mock_model.call_args[0][0]
+    assert isinstance(model_input, torch.Tensor)
+    assert model_input.shape == (3, 3, 28, 28)
 
 
 @pytest.mark.unit
@@ -370,6 +375,20 @@ def test_finalize_figure_with_save(tmp_path, ctx_rgb):
     mock_plt.savefig.assert_called_once()
     mock_plt.show.assert_not_called()
     mock_plt.close.assert_called_once()
+
+
+@pytest.mark.unit
+def test_finalize_figure_creates_nested_dirs(tmp_path, ctx_rgb):
+    """Test _finalize_figure creates nested parent directories."""
+    from orchard.evaluation.visualization import _finalize_figure
+
+    mock_plt = MagicMock()
+    save_path = tmp_path / "deep" / "nested" / "dir" / "fig.png"
+
+    _finalize_figure(mock_plt, save_path, ctx_rgb)
+
+    assert save_path.parent.exists()
+    mock_plt.savefig.assert_called_once()
 
 
 @pytest.mark.unit
@@ -424,8 +443,9 @@ def test_denormalize_image():
 
 @pytest.mark.unit
 def test_denormalize_image_rgb():
-    """Test _denormalize_image handles RGB images."""
-    img = np.zeros((3, 2, 2))
+    """Test _denormalize_image reverses normalization with non-zero values."""
+    # Use non-zero image so * vs / produces different results
+    img = np.ones((3, 2, 2)) * 2.0
 
     ctx = PlotContext(
         arch_name="m",
@@ -443,8 +463,10 @@ def test_denormalize_image_rgb():
     result = _denormalize_image(img, ctx)
 
     assert result.shape == (3, 2, 2)
-    assert 0.0 <= result.min() <= 1.0
-    assert 0.0 <= result.max() <= 1.0
+    # Verify denormalization formula: (img * std) + mean, clipped to [0,1]
+    # Channel 0: (2.0 * 0.229) + 0.485 = 0.943
+    expected_ch0 = (2.0 * 0.229) + 0.485
+    assert result[0, 0, 0] == pytest.approx(expected_ch0, abs=1e-5)
 
 
 @pytest.mark.unit
@@ -472,24 +494,30 @@ def test_denormalize_image_clips_values():
 
 @pytest.mark.unit
 def test_prepare_for_plt_chw_to_hwc():
-    """Test _prepare_for_plt converts (C, H, W) to (H, W, C)."""
+    """Test _prepare_for_plt converts (C, H, W) to (H, W, C) with correct axes."""
     rng = np.random.default_rng(seed=42)
     img = rng.random(size=(3, 28, 28))
 
     result = _prepare_for_plt(img)
 
     assert result.shape == (28, 28, 3)
+    # Verify pixel values match transposed layout (not just shape)
+    assert result[0, 0, 0] == pytest.approx(img[0, 0, 0])
+    assert result[0, 0, 1] == pytest.approx(img[1, 0, 0])
+    assert result[0, 0, 2] == pytest.approx(img[2, 0, 0])
 
 
 @pytest.mark.unit
 def test_prepare_for_plt_grayscale_squeeze():
-    """Test _prepare_for_plt squeezes single-channel dimension."""
+    """Test _prepare_for_plt squeezes single-channel to 2D and preserves values."""
     rng = np.random.default_rng(seed=42)
     img = rng.random(size=(1, 28, 28))
 
     result = _prepare_for_plt(img)
 
     assert result.shape == (28, 28)
+    # squeeze(-1) on axis=-1: verify pixel value preserved
+    assert result[0, 0] == pytest.approx(img[0, 0, 0])
 
 
 @pytest.mark.unit
@@ -556,6 +584,210 @@ def test_plot_context_from_config_no_metadata():
     assert ctx.is_anatomical is True  # conservative default when metadata absent
     assert ctx.is_texture_based is True  # conservative default when metadata absent
     assert ctx.use_tta is True
+
+
+@pytest.mark.unit
+def test_plot_single_prediction_calls_denormalize(ctx_rgb):
+    """Test _plot_single_prediction forwards image and ctx to _denormalize_image."""
+    from orchard.evaluation.visualization import _plot_single_prediction
+
+    ax = MagicMock()
+    image = np.ones((3, 4, 4)) * 2.0
+    classes = ["cat", "dog"]
+
+    with patch("orchard.evaluation.visualization._denormalize_image") as mock_denorm:
+        mock_denorm.return_value = np.ones((3, 4, 4))
+        _plot_single_prediction(ax, image, label=0, pred=1, classes=classes, ctx=ctx_rgb)
+
+        mock_denorm.assert_called_once()
+        call_img, call_ctx = mock_denorm.call_args[0]
+        np.testing.assert_array_equal(call_img, image)
+        assert call_ctx is ctx_rgb
+
+
+@pytest.mark.unit
+def test_plot_single_prediction_skips_denormalize_without_ctx():
+    """Test _plot_single_prediction skips denormalization when ctx is None."""
+    from orchard.evaluation.visualization import _plot_single_prediction
+
+    ax = MagicMock()
+    image = np.ones((3, 4, 4))
+    classes = ["cat", "dog"]
+
+    with patch("orchard.evaluation.visualization._denormalize_image") as mock_denorm:
+        _plot_single_prediction(ax, image, label=0, pred=0, classes=classes, ctx=None)
+        mock_denorm.assert_not_called()
+
+
+@pytest.mark.unit
+def test_plot_single_prediction_correct_vs_incorrect():
+    """Test _plot_single_prediction uses green for correct, red for incorrect."""
+    from orchard.evaluation.visualization import _plot_single_prediction
+
+    classes = ["cat", "dog"]
+    image = np.ones((3, 4, 4))
+
+    # Correct prediction
+    ax_correct = MagicMock()
+    _plot_single_prediction(ax_correct, image, label=0, pred=0, classes=classes, ctx=None)
+    title_kwargs = ax_correct.set_title.call_args
+    assert title_kwargs[1]["color"] == "green"
+
+    # Incorrect prediction
+    ax_wrong = MagicMock()
+    _plot_single_prediction(ax_wrong, image, label=0, pred=1, classes=classes, ctx=None)
+    title_kwargs = ax_wrong.set_title.call_args
+    assert title_kwargs[1]["color"] == "red"
+
+
+@pytest.mark.unit
+def test_plot_single_prediction_calls_prepare_for_plt():
+    """Test _plot_single_prediction passes denormalized image to _prepare_for_plt."""
+    from orchard.evaluation.visualization import _plot_single_prediction
+
+    ax = MagicMock()
+    image = np.ones((3, 4, 4))
+    classes = ["cat", "dog"]
+
+    with patch("orchard.evaluation.visualization._prepare_for_plt") as mock_prep:
+        mock_prep.return_value = np.ones((4, 4, 3))
+        _plot_single_prediction(ax, image, label=0, pred=0, classes=classes, ctx=None)
+        mock_prep.assert_called_once()
+
+
+@pytest.mark.unit
+def test_get_predictions_batch_passes_device():
+    """Test _get_predictions_batch calls .to() with actual device."""
+    from orchard.evaluation.visualization import _get_predictions_batch
+
+    mock_model = MagicMock()
+    mock_model.return_value = torch.tensor([[0.1, 0.9], [0.8, 0.2]])
+
+    images = torch.randn(4, 3, 8, 8)
+    labels = torch.tensor([0, 1, 0, 1])
+    mock_loader = MagicMock()
+    mock_loader.__iter__ = MagicMock(return_value=iter([(images, labels)]))
+
+    device = torch.device("cpu")
+    _get_predictions_batch(mock_model, mock_loader, device, n=2)
+
+    # The tensor passed to model should be on the correct device
+    model_input = mock_model.call_args[0][0]
+    assert model_input.device == device
+
+
+@pytest.mark.unit
+def test_setup_prediction_grid_row_calculation():
+    """Test _setup_prediction_grid computes rows = ceil(n / cols)."""
+    from orchard.evaluation.visualization import _setup_prediction_grid
+
+    with patch("orchard.evaluation.visualization.plt.subplots") as mock_sub:
+        mock_fig = MagicMock()
+        mock_axes = np.array([MagicMock() for _ in range(8)])
+        mock_sub.return_value = (mock_fig, mock_axes)
+
+        _setup_prediction_grid(7, 4, None)
+
+        call_args = mock_sub.call_args
+        assert call_args[0][0] == 2  # ceil(7/4) = 2 rows
+        assert call_args[0][1] == 4  # 4 cols
+
+
+@pytest.mark.unit
+@patch("orchard.evaluation.visualization.plt")
+@patch("orchard.evaluation.visualization.np.savez")
+def test_plot_training_curves_npz_data(mock_savez, mock_plt, tmp_path, ctx_rgb):
+    """Test plot_training_curves saves correct data in npz file."""
+    mock_fig = MagicMock()
+    mock_ax = MagicMock()
+    mock_plt.subplots.return_value = (mock_fig, mock_ax)
+
+    train_losses = [0.8, 0.6, 0.4]
+    val_accuracies = [0.6, 0.7, 0.8]
+    out_path = tmp_path / "curves.png"
+
+    plot_training_curves(train_losses, val_accuracies, out_path, ctx_rgb)
+
+    # Verify npz called with the correct path and data
+    call_args = mock_savez.call_args
+    npz_path = call_args[0][0]
+    assert str(npz_path).endswith(".npz")
+    assert call_args[1]["train_losses"] == train_losses
+    assert call_args[1]["val_accuracies"] == val_accuracies
+
+
+@pytest.mark.unit
+def test_denormalize_image_reshape_channels():
+    """Test _denormalize_image reshapes mean/std per-channel (not -2)."""
+    # 3-channel image: if reshape used -2 instead of -1, shape would differ
+    img = np.zeros((3, 4, 4))
+    ctx = PlotContext(
+        arch_name="m",
+        resolution=28,
+        fig_dpi=200,
+        plot_style="seaborn-v0_8-muted",
+        cmap_confusion="Blues",
+        grid_cols=4,
+        n_samples=12,
+        fig_size_predictions=(12, 9),
+        mean=(0.1, 0.2, 0.3),
+        std=(0.4, 0.5, 0.6),
+    )
+    result = _denormalize_image(img, ctx)
+    assert result.shape == (3, 4, 4)
+    # Each channel should equal its mean (img=0, so 0*std + mean = mean)
+    np.testing.assert_array_almost_equal(result[0], 0.1)
+    np.testing.assert_array_almost_equal(result[1], 0.2)
+    np.testing.assert_array_almost_equal(result[2], 0.3)
+
+
+@pytest.mark.unit
+def test_denormalize_image_clip_lower_bound():
+    """Test _denormalize_image clips negative values to 0."""
+    img = np.full((1, 2, 2), -10.0)
+    ctx = PlotContext(
+        arch_name="m",
+        resolution=28,
+        fig_dpi=200,
+        plot_style="seaborn-v0_8-muted",
+        cmap_confusion="Blues",
+        grid_cols=4,
+        n_samples=12,
+        fig_size_predictions=(12, 9),
+        mean=(0.5,),
+        std=(0.5,),
+    )
+    result = _denormalize_image(img, ctx)
+    assert result.min() == pytest.approx(0.0)
+
+
+@pytest.mark.unit
+def test_prepare_for_plt_transpose_axes():
+    """Test _prepare_for_plt transposes (C,H,W) to (H,W,C) not arbitrary."""
+    img = np.zeros((3, 4, 5))  # C=3, H=4, W=5
+    img[0, :, :] = 1.0  # channel 0 = 1
+    img[1, :, :] = 2.0  # channel 1 = 2
+
+    result = _prepare_for_plt(img)
+    assert result.shape == (4, 5, 3)  # H, W, C
+    assert result[0, 0, 0] == 1.0  # channel 0 preserved
+    assert result[0, 0, 1] == 2.0  # channel 1 preserved
+
+
+@pytest.mark.unit
+def test_prepare_for_plt_squeeze_axis():
+    """Test _prepare_for_plt squeezes axis -1 specifically (not None)."""
+    # squeeze(None) would also remove other size-1 dims
+    img = np.zeros((1, 1, 4, 4))  # extra dim at front
+    # This has ndim=4, so no transpose. squeeze(None) would collapse both size-1 dims.
+    # But the function only handles ndim==3, so test with ndim==3
+    img_3d = np.zeros((1, 4, 4))  # C=1, H=4, W=4
+    img_3d[0, 0, 0] = 42.0
+
+    result = _prepare_for_plt(img_3d)
+    # After transpose: (4,4,1), then squeeze(-1) -> (4,4)
+    assert result.shape == (4, 4)
+    assert result[0, 0] == 42.0
 
 
 if __name__ == "__main__":

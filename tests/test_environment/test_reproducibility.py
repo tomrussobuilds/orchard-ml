@@ -498,3 +498,38 @@ def test_set_seed_strict_mps_warning_message_content():
         mps_warnings = [r for r in record if "MPS" in str(r.message)]
         assert len(mps_warnings) == 1
         assert "MPS" in str(mps_warnings[0].message)
+
+
+@pytest.mark.unit
+def test_set_seed_strict_pythonhashseed_warning_stacklevel(monkeypatch):
+    """PYTHONHASHSEED warning uses stacklevel=2 so caller frame is shown."""
+    monkeypatch.delenv("PYTHONHASHSEED", raising=False)
+    with (
+        patch("torch.cuda.is_available", return_value=False),
+        patch("torch.use_deterministic_algorithms"),
+        patch("orchard.core.environment.reproducibility.warnings.warn") as mock_warn,
+    ):
+        set_seed(42, strict=True)
+        mock_warn.assert_called_once()
+        assert mock_warn.call_args.kwargs["stacklevel"] == 2
+
+
+@pytest.mark.unit
+def test_set_seed_strict_mps_warning_stacklevel():
+    """MPS partial determinism warning uses stacklevel=2."""
+    mock_mps_backend = MagicMock()
+    mock_mps_backend.is_available.return_value = True
+    mock_mps = MagicMock()
+
+    with (
+        patch("torch.cuda.is_available", return_value=False),
+        patch("torch.backends.mps", mock_mps_backend),
+        patch("torch.mps", mock_mps),
+        patch("torch.use_deterministic_algorithms"),
+        patch("orchard.core.environment.reproducibility.warnings.warn") as mock_warn,
+    ):
+        set_seed(42, strict=True)
+        # Filter to MPS warning call (there may also be PYTHONHASHSEED call)
+        mps_calls = [c for c in mock_warn.call_args_list if "MPS" in str(c)]
+        assert len(mps_calls) == 1
+        assert mps_calls[0].kwargs["stacklevel"] == 2

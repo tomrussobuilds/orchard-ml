@@ -270,7 +270,7 @@ class TrialTrainingExecutor:
         except (RuntimeError, ValueError) as e:
             self._consecutive_val_failures += 1
             logger.error(  # pragma: no mutate
-                "%s%s Validation failed (x%d): %s",  # pragma: no mutate
+                "%s%s Validation failed (x%d): %s",
                 LogStyle.INDENT,  # pragma: no mutate
                 LogStyle.FAILURE,  # pragma: no mutate
                 self._consecutive_val_failures,  # pragma: no mutate

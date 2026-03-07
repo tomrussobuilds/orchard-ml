@@ -272,7 +272,7 @@ class OptunaObjective:
 
         except Exception as e:  # must not crash study
             logger.error(  # pragma: no mutate
-                "%s%s Trial %d failed: %s: %s",  # pragma: no mutate
+                "%s%s Trial %d failed: %s: %s",
                 LogStyle.INDENT,  # pragma: no mutate
                 LogStyle.FAILURE,  # pragma: no mutate
                 trial.number,  # pragma: no mutate
