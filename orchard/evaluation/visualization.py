@@ -273,7 +273,6 @@ def _get_predictions_batch(
         tuple of ``(images, labels, preds)`` as numpy arrays.
     """
     batch = next(iter(loader))
-    # equivalent mutant: .to(None) ≡ .to(cpu) when tensor is already on cpu
     images_tensor = batch[0][:n].to(device)  # pragma: no mutate
     labels_tensor = batch[1][:n]
 
@@ -349,7 +348,6 @@ def _denormalize_image(img: npt.NDArray[Any], ctx: PlotContext) -> npt.NDArray[A
     Returns:
         Denormalized image clipped to ``[0, 1]``.
     """
-    # equivalent mutant: numpy treats any negative as "infer" like -1
     mean = np.array(ctx.mean).reshape(-1, 1, 1)  # pragma: no mutate
     std = np.array(ctx.std).reshape(-1, 1, 1)  # pragma: no mutate
     img = (img * std) + mean
@@ -374,7 +372,6 @@ def _prepare_for_plt(img: npt.NDArray[Any]) -> npt.NDArray[Any]:
         img = np.transpose(img, (1, 2, 0))
 
     if img.ndim == 3 and img.shape[-1] == 1:
-        # equivalent mutant: squeeze(None) ≡ squeeze(-1) for single size-1 dim
         img = img.squeeze(-1)  # pragma: no mutate
 
     return img

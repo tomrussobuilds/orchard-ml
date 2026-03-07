@@ -822,10 +822,8 @@ def test_prepare_for_plt_transpose_axes():
 @pytest.mark.unit
 def test_prepare_for_plt_squeeze_axis():
     """Test _prepare_for_plt squeezes axis -1 specifically (not None)."""
-    # squeeze(None) would also remove other size-1 dims
-    img = np.zeros((1, 1, 4, 4))  # extra dim at front
-    # This has ndim=4, so no transpose. squeeze(None) would collapse both size-1 dims.
-    # But the function only handles ndim==3, so test with ndim==3
+    # squeeze(None) would also remove other size-1 dims;
+    # the function only handles ndim==3, so test with ndim==3
     img_3d = np.zeros((1, 4, 4))  # C=1, H=4, W=4
     img_3d[0, 0, 0] = 42.0
 
