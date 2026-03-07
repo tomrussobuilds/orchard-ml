@@ -79,6 +79,29 @@ def test_create_amp_scaler_enabled(mock_cfg):
     assert isinstance(scaler, torch.amp.GradScaler)
 
 
+@pytest.mark.filterwarnings("ignore:.*GradScaler is enabled, but CUDA is not available.*")
+@pytest.mark.unit
+def test_create_amp_scaler_forwards_device(mock_cfg):
+    """AMP scaler receives the exact device string, not None or mangled default."""
+    mock_cfg.training.use_amp = True
+    with patch("orchard.trainer._loop.torch.amp.grad_scaler.GradScaler") as mock_gs:
+        create_amp_scaler(mock_cfg.training, device="cpu")
+        mock_gs.assert_called_once_with(device="cpu")
+
+
+@pytest.mark.filterwarnings("ignore:.*GradScaler is enabled, but CUDA is not available.*")
+@pytest.mark.unit
+def test_create_amp_scaler_default_device_is_cuda(mock_cfg):
+    """Default device parameter is exactly 'cuda' (lowercase, no mangling).
+
+    Calls without device arg and verifies GradScaler receives 'cuda'.
+    """
+    mock_cfg.training.use_amp = True
+    with patch("orchard.trainer._loop.torch.amp.grad_scaler.GradScaler") as mock_gs:
+        create_amp_scaler(mock_cfg.training)  # no device arg → should use "cuda"
+        mock_gs.assert_called_once_with(device="cuda")
+
+
 @pytest.mark.unit
 def test_create_mixup_fn_disabled(mock_cfg):
     """MixUp function is None when alpha=0."""
@@ -116,6 +139,51 @@ def test_create_mixup_fn_deterministic(mock_cfg):
 
 
 @pytest.mark.unit
+def test_loop_init_stores_all_attributes():
+    """TrainingLoop.__init__ stores every parameter as an attribute (not None)."""
+    model = MagicMock(spec=nn.Module)
+    train_loader = MagicMock()
+    val_loader = MagicMock()
+    optimizer = MagicMock()
+    scheduler = MagicMock()
+    criterion = MagicMock(spec=nn.Module)
+    device = torch.device("cpu")
+    scaler = MagicMock()
+    mixup_fn = MagicMock()
+    options = LoopOptions(
+        grad_clip=1.0,
+        total_epochs=5,
+        mixup_epochs=3,
+        use_tqdm=False,
+        monitor_metric="auc",
+    )
+
+    loop = TrainingLoop(
+        model=model,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        optimizer=optimizer,
+        scheduler=scheduler,
+        criterion=criterion,
+        device=device,
+        scaler=scaler,
+        mixup_fn=mixup_fn,
+        options=options,
+    )
+
+    assert loop.model is model
+    assert loop.train_loader is train_loader
+    assert loop.val_loader is val_loader
+    assert loop.optimizer is optimizer
+    assert loop.scheduler is scheduler
+    assert loop.criterion is criterion
+    assert loop.device is device
+    assert loop.scaler is scaler
+    assert loop.mixup_fn is mixup_fn
+    assert loop.options is options
+
+
+@pytest.mark.unit
 @patch("orchard.trainer._loop.train_one_epoch", return_value=0.42)
 def test_run_train_step_basic(mock_train, loop):
     """run_train_step delegates to train_one_epoch and returns loss."""
@@ -141,6 +209,37 @@ def test_run_train_step_mixup_cutoff(mock_train, loop):
     loop.run_train_step(epoch=4)
     call_kwargs = mock_train.call_args[1]
     assert call_kwargs["mixup_fn"] is None
+
+
+@pytest.mark.unit
+@patch("orchard.trainer._loop.train_one_epoch", return_value=0.5)
+def test_run_train_step_mixup_boundary(mock_train, loop):
+    """MixUp is still active at exactly epoch == mixup_epochs (boundary: <= not <)."""
+    loop.mixup_fn = MagicMock()
+
+    # Epoch 3 == mixup_epochs → must still be active
+    loop.run_train_step(epoch=3)
+    call_kwargs = mock_train.call_args[1]
+    assert call_kwargs["mixup_fn"] is loop.mixup_fn
+
+    mock_train.reset_mock()
+
+    # Epoch 4 → must be disabled
+    loop.run_train_step(epoch=4)
+    call_kwargs = mock_train.call_args[1]
+    assert call_kwargs["mixup_fn"] is None
+
+
+@pytest.mark.unit
+@patch("orchard.trainer._loop.train_one_epoch", return_value=0.5)
+def test_run_train_step_forwards_scaler(mock_train, loop):
+    """run_train_step forwards the scaler attribute (not None)."""
+    sentinel_scaler = MagicMock()
+    loop.scaler = sentinel_scaler
+
+    loop.run_train_step(epoch=1)
+    call_kwargs = mock_train.call_args[1]
+    assert call_kwargs["scaler"] is sentinel_scaler
 
 
 @pytest.mark.unit
