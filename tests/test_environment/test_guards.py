@@ -666,5 +666,230 @@ def test_terminate_duplicates_runs_outside_distributed(monkeypatch):
     assert count == 0
 
 
+# MUTATION: ensure_single_instance — `and` vs `or` for platform/HAS_FCNTL condition
+@pytest.mark.unit
+@patch("platform.system", return_value="Windows")
+@patch("orchard.core.environment.guards.HAS_FCNTL", True)
+def test_ensure_single_instance_windows_no_lock_even_with_fcntl(mock_platform, tmp_path):
+    """Kills mutmut_2: `and` → `or`. On Windows fcntl must NOT be used even if available."""
+    lock_file = tmp_path / "test.lock"
+    logger = logging.getLogger("test")
+
+    with patch("fcntl.flock") as mock_flock:
+        ensure_single_instance(lock_file, logger)
+        mock_flock.assert_not_called()
+
+
+# MUTATION: ensure_single_instance — `f = None` vs `f = ""`
+@pytest.mark.unit
+@patch("platform.system", return_value="Linux")
+@patch("orchard.core.environment.guards.HAS_FCNTL", True)
+def test_ensure_single_instance_open_raises_ioerror(mock_platform, tmp_path):
+    """Kills mutmut_10: `f = None` → `f = ""`. If open() raises IOError, f stays None and close must NOT be called."""
+    lock_file = tmp_path / "test.lock"
+    lock_file.parent.mkdir(parents=True, exist_ok=True)
+    logger = logging.getLogger("test")
+
+    with patch("builtins.open", side_effect=IOError("Cannot open")):
+        with pytest.raises(SystemExit) as exc_info:
+            ensure_single_instance(lock_file, logger)
+        assert exc_info.value.code == 1
+
+
+# MUTATION: ensure_single_instance — logger.error args (LogStyle.WARNING)
+@pytest.mark.unit
+@patch("platform.system", return_value="Linux")
+@patch("orchard.core.environment.guards.HAS_FCNTL", True)
+def test_ensure_single_instance_error_log_includes_warning_style(mock_platform, tmp_path):
+    """Kills mutmut_31 and mutmut_32: logger.error must include LogStyle.WARNING as second arg."""
+    from orchard.core.paths.constants import LogStyle
+
+    lock_file = tmp_path / "test.lock"
+    logger = MagicMock()
+
+    with patch("fcntl.flock", side_effect=BlockingIOError):
+        with pytest.raises(SystemExit):
+            ensure_single_instance(lock_file, logger)
+
+    logger.error.assert_called_once()
+    call_args = logger.error.call_args[0]
+    assert len(call_args) == 2, "logger.error must be called with format string + LogStyle.WARNING"
+    assert call_args[1] is LogStyle.WARNING
+
+
+# MUTATION: detect_duplicates — `continue` vs `break` when skipping self
+@pytest.mark.unit
+def test_detect_duplicates_continues_after_skipping_self():
+    """Kills mutmut_17: `continue` → `break`. Must find duplicate even after skipping self."""
+    script_path = "/path/to/test.py"
+    cleaner = DuplicateProcessCleaner(script_name=script_path)
+
+    # First process is self (should be skipped, not break)
+    mock_self = MagicMock()
+    mock_self.info = {
+        "pid": cleaner.current_pid,
+        "name": "python",
+        "cmdline": ["python", script_path],
+    }
+    # Second process is a valid duplicate
+    mock_dup = MagicMock()
+    mock_dup.info = {
+        "pid": 9999,
+        "name": "python3",
+        "cmdline": ["python3", script_path],
+    }
+
+    with patch("psutil.process_iter", return_value=[mock_self, mock_dup]):
+        with patch("os.path.realpath", side_effect=lambda x: x):
+            duplicates = cleaner.detect_duplicates()
+
+    assert len(duplicates) == 1
+    assert duplicates[0] is mock_dup
+
+
+# MUTATION: detect_duplicates — `continue` vs `break` when skipping non-Python
+@pytest.mark.unit
+def test_detect_duplicates_continues_after_non_python():
+    """Kills mutmut_27: `continue` → `break`. Must find duplicate even after skipping non-Python."""
+    script_path = "/path/to/test.py"
+    cleaner = DuplicateProcessCleaner(script_name=script_path)
+
+    # First: non-Python process
+    mock_bash = MagicMock()
+    mock_bash.info = {
+        "pid": 8888,
+        "name": "bash",
+        "cmdline": ["bash", script_path],
+    }
+    # Second: valid Python duplicate
+    mock_dup = MagicMock()
+    mock_dup.info = {
+        "pid": 9999,
+        "name": "python3",
+        "cmdline": ["python3", script_path],
+    }
+
+    with patch("psutil.process_iter", return_value=[mock_bash, mock_dup]):
+        with patch("os.path.realpath", side_effect=lambda x: x):
+            duplicates = cleaner.detect_duplicates()
+
+    assert len(duplicates) == 1
+
+
+# MUTATION: detect_duplicates — `continue` vs `break` in except handler
+@pytest.mark.unit
+def test_detect_duplicates_continues_after_exception():
+    """Kills mutmut_35: `continue` → `break`. Must find duplicate even after exception in prior proc."""
+    script_path = "/path/to/test.py"
+    cleaner = DuplicateProcessCleaner(script_name=script_path)
+
+    # First: raises NoSuchProcess
+    mock_error = MagicMock()
+    type(mock_error).info = PropertyMock(side_effect=psutil.NoSuchProcess(1111))
+
+    # Second: valid duplicate
+    mock_dup = MagicMock()
+    mock_dup.info = {
+        "pid": 9999,
+        "name": "python3",
+        "cmdline": ["python3", script_path],
+    }
+
+    with patch("psutil.process_iter", return_value=[mock_error, mock_dup]):
+        with patch("os.path.realpath", side_effect=lambda x: x):
+            duplicates = cleaner.detect_duplicates()
+
+    assert len(duplicates) == 1
+
+
+# MUTATION: terminate_duplicates — `continue` vs `break` for NoSuchProcess/AccessDenied
+@pytest.mark.unit
+def test_terminate_duplicates_continues_after_nosuchprocess():
+    """Kills mutmut_11: `continue` → `break`. Must try second proc after first vanishes."""
+    cleaner = DuplicateProcessCleaner()
+
+    mock_gone = MagicMock()
+    mock_gone.terminate.side_effect = psutil.NoSuchProcess(1111)
+
+    mock_ok = MagicMock()
+    mock_ok.terminate = MagicMock()
+    mock_ok.wait = MagicMock()
+
+    with patch.object(cleaner, "detect_duplicates", return_value=[mock_gone, mock_ok]):
+        with patch("time.sleep"):
+            count = cleaner.terminate_duplicates()
+
+    assert count == 1
+    mock_ok.terminate.assert_called_once()
+
+
+# MUTATION: terminate_duplicates — kill wait timeout value
+@pytest.mark.unit
+def test_terminate_duplicates_kill_wait_timeout_is_one():
+    """Kills mutmut_12 and mutmut_13: timeout must be exactly 1 in kill().wait()."""
+    cleaner = DuplicateProcessCleaner()
+
+    mock_proc = MagicMock()
+    mock_proc.terminate = MagicMock()
+    mock_proc.wait = MagicMock(side_effect=[psutil.TimeoutExpired(1), None])
+    mock_proc.kill = MagicMock()
+
+    with patch.object(cleaner, "detect_duplicates", return_value=[mock_proc]):
+        with patch("time.sleep"):
+            cleaner.terminate_duplicates()
+
+    # Second wait call (after kill) must use timeout=1
+    assert mock_proc.wait.call_count == 2
+    second_wait_kwargs = mock_proc.wait.call_args_list[1]
+    assert second_wait_kwargs == ((), {"timeout": 1})
+
+
+# MUTATION: terminate_duplicates — `count += 1` vs `count = 1` in kill branch
+@pytest.mark.unit
+def test_terminate_duplicates_kill_branch_increments_count():
+    """Kills mutmut_14: `count += 1` → `count = 1`. With 2 procs in kill path, count must be 2."""
+    cleaner = DuplicateProcessCleaner()
+
+    def make_kill_proc() -> MagicMock:
+        p = MagicMock()
+        p.terminate = MagicMock()
+        p.wait = MagicMock(side_effect=[psutil.TimeoutExpired(1), None])
+        p.kill = MagicMock()
+        return p
+
+    procs = [make_kill_proc(), make_kill_proc()]
+
+    with patch.object(cleaner, "detect_duplicates", return_value=procs):
+        with patch("time.sleep"):
+            count = cleaner.terminate_duplicates()
+
+    assert count == 2
+
+
+# MUTATION: terminate_duplicates — `continue` vs `break` in kill except handler
+@pytest.mark.unit
+def test_terminate_duplicates_continues_after_kill_failure():
+    """Kills mutmut_17: `continue` → `break`. Must try second proc after first's kill fails."""
+    cleaner = DuplicateProcessCleaner()
+
+    # First proc: terminate times out, kill also fails
+    mock_fail = MagicMock()
+    mock_fail.terminate = MagicMock()
+    mock_fail.wait = MagicMock(side_effect=psutil.TimeoutExpired(1))
+    mock_fail.kill = MagicMock(side_effect=psutil.AccessDenied())
+
+    # Second proc: terminates normally
+    mock_ok = MagicMock()
+    mock_ok.terminate = MagicMock()
+    mock_ok.wait = MagicMock()
+
+    with patch.object(cleaner, "detect_duplicates", return_value=[mock_fail, mock_ok]):
+        with patch("time.sleep"):
+            count = cleaner.terminate_duplicates()
+
+    assert count == 1
+    mock_ok.terminate.assert_called_once()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
