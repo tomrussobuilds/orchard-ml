@@ -15,6 +15,7 @@ import torch
 from pydantic import ValidationError
 
 from orchard.core.config import HardwareConfig, InfrastructureManager
+from orchard.core.paths.constants import LOGGER_NAME, LogStyle
 
 
 # INFRASTRUCTURE MANAGER: CREATION
@@ -413,24 +414,28 @@ def test_flush_compute_cache_mps_failure(monkeypatch):
 
     class MockLogger:
         def __init__(self):
-            self.debug_messages = []
+            self.warning_messages: list[str] = []
+            self.debug_messages: list[str] = []
 
         def debug(self, msg, *args):
             self.debug_messages.append(msg % args if args else msg)
 
+        def warning(self, msg, *args):
+            self.warning_messages.append(msg % args if args else msg)
+
     logger = MockLogger()
     manager._flush_compute_cache(log=logger)
 
-    assert any("MPS cache cleanup failed" in msg for msg in logger.debug_messages)
+    assert any("MPS cache cleanup failed" in msg for msg in logger.warning_messages)
+    assert any(str(LogStyle.ARROW) in msg for msg in logger.warning_messages)
 
 
 @pytest.mark.unit
 def test_release_resources_lock_failure(tmp_path):
-    """Test release_resources() handles lock release failures.
+    """Test release_resources() logs and re-raises lock release failures.
 
-    Uses mock to simulate release_single_instance raising an exception,
-    since the real function catches exceptions internally (correct cleanup behavior).
-    This approach works across all Python versions without platform-specific issues.
+    Uses mock to simulate release_single_instance raising an exception.
+    The error is logged at ERROR level and then re-raised.
     """
     manager = InfrastructureManager()
 
@@ -440,25 +445,25 @@ def test_release_resources_lock_failure(tmp_path):
         allow_process_kill = False
         lock_file_path = lock_path
 
-    # Capture warnings in a list
-    warnings = []
+    errors: list[str] = []
 
     mock_logger = SimpleNamespace(
         info=lambda msg, *a: None,
         debug=lambda msg, *a: None,
-        warning=lambda msg, *a: warnings.append(msg % a if a else msg),
+        warning=lambda msg, *a: None,
+        error=lambda msg, *a: errors.append(msg % a if a else msg),
     )
 
     config = SimpleNamespace(hardware=MockHardware())
 
-    # Mock release_single_instance to raise an exception
     with patch(
         "orchard.core.config.infrastructure_config.release_single_instance",
         side_effect=PermissionError("Cannot release lock: permission denied"),
     ):
-        manager.release_resources(config, logger=mock_logger)
+        with pytest.raises(PermissionError, match="Cannot release lock"):
+            manager.release_resources(config, logger=mock_logger)
 
-    assert any("Failed to release lock" in msg for msg in warnings)
+    assert any("Failed to release lock" in msg for msg in errors)
 
 
 # INFRASTRUCTURE MANAGER: SHARED ENV VAR DETECTION (per-variable)
@@ -610,7 +615,7 @@ def test_release_resources_calls_flush_compute_cache(tmp_path, monkeypatch):
 
 @pytest.mark.unit
 def test_prepare_environment_default_logger_fallback(tmp_path):
-    """Test prepare_environment uses default logger when none is passed."""
+    """Test prepare_environment uses default logger with LOGGER_NAME when none is passed."""
     manager = InfrastructureManager()
 
     class MockHardware:
@@ -620,15 +625,14 @@ def test_prepare_environment_default_logger_fallback(tmp_path):
     config = SimpleNamespace(hardware=MockHardware())
 
     with patch("orchard.core.config.infrastructure_config.ensure_single_instance") as mock_ensure:
-        # No logger passed → should use logging.getLogger(LOGGER_NAME)
         manager.prepare_environment(config)
         _, kwargs = mock_ensure.call_args
-        assert kwargs["logger"] is not None
+        assert kwargs["logger"].name == LOGGER_NAME
 
 
 @pytest.mark.unit
 def test_release_resources_default_logger_fallback(tmp_path, monkeypatch):
-    """Test release_resources uses default logger when none is passed."""
+    """Test release_resources uses default logger with LOGGER_NAME when none is passed."""
     manager = InfrastructureManager()
 
     class MockHardware:
@@ -644,31 +648,26 @@ def test_release_resources_default_logger_fallback(tmp_path, monkeypatch):
 
     with patch("orchard.core.config.infrastructure_config.release_single_instance"):
         monkeypatch.setattr(InfrastructureManager, "_flush_compute_cache", tracking_flush)
-        # No logger passed
         manager.release_resources(config)
 
     assert len(flush_calls) == 1
-    assert flush_calls[0]["log"] is not None
+    assert flush_calls[0]["log"].name == LOGGER_NAME
 
 
 @pytest.mark.unit
 def test_flush_compute_cache_default_logger_fallback(monkeypatch):
-    """Test _flush_compute_cache uses default logger when None is passed."""
+    """Test _flush_compute_cache uses default logger with LOGGER_NAME when None is passed."""
     manager = InfrastructureManager()
 
-    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    monkeypatch.setattr("orchard.core.config.infrastructure_config.has_mps_backend", lambda: False)
 
-    cache_cleared = False
-
-    def mock_empty():
-        nonlocal cache_cleared
-        cache_cleared = True
-
-    monkeypatch.setattr(torch.cuda, "empty_cache", mock_empty)
-
-    # Pass log=None → should fallback to getLogger and not crash
-    manager._flush_compute_cache(log=None)
-    assert cache_cleared
+    with patch("logging.getLogger") as mock_get_logger:
+        mock_get_logger.return_value = SimpleNamespace(
+            debug=lambda *a: None, warning=lambda *a: None
+        )
+        manager._flush_compute_cache(log=None)
+        mock_get_logger.assert_called_once_with(LOGGER_NAME)
 
 
 @pytest.mark.integration
@@ -728,6 +727,189 @@ def test_prepare_environment_any_shared_env_skips_kill(tmp_path, monkeypatch):
 
         # terminate_duplicates should NOT have been called (shared env detected)
         mock_instance.terminate_duplicates.assert_not_called()
+
+
+# MUTATION KILLERS: verify exact log levels and message content
+@pytest.mark.unit
+def test_prepare_environment_lock_acquired_message(tmp_path, monkeypatch):
+    """Test that 'Lock acquired at <path>' is logged at DEBUG level."""
+    manager = InfrastructureManager()
+
+    class MockHardware:
+        allow_process_kill = False
+        lock_file_path = tmp_path / "test.lock"
+
+    config = SimpleNamespace(hardware=MockHardware())
+
+    debug_calls: list[str] = []
+    mock_logger = SimpleNamespace(
+        info=lambda msg, *a: None,
+        debug=lambda msg, *a: debug_calls.append(msg % a if a else msg),
+        warning=lambda msg, *a: None,
+    )
+
+    with patch("orchard.core.config.infrastructure_config.ensure_single_instance"):
+        manager.prepare_environment(config, logger=mock_logger)
+
+    assert any("Lock acquired" in msg for msg in debug_calls)
+    assert any(str(tmp_path / "test.lock") in msg for msg in debug_calls)
+
+
+@pytest.mark.unit
+def test_release_resources_info_level_for_lock_released(tmp_path):
+    """Test that 'System lock released' is logged at INFO level (not debug)."""
+    manager = InfrastructureManager()
+
+    class MockHardware:
+        allow_process_kill = False
+        lock_file_path = tmp_path / "test.lock"
+
+    config = SimpleNamespace(hardware=MockHardware())
+
+    info_calls: list[str] = []
+    debug_calls: list[str] = []
+
+    mock_logger = SimpleNamespace(
+        info=lambda msg, *a: info_calls.append(msg % a if a else msg),
+        debug=lambda msg, *a: debug_calls.append(msg % a if a else msg),
+        warning=lambda msg, *a: None,
+    )
+
+    with patch("orchard.core.config.infrastructure_config.release_single_instance"):
+        manager.release_resources(config, logger=mock_logger)
+
+    assert any("System lock released" in msg for msg in info_calls)
+    # Must be at INFO, not DEBUG
+    assert not any("System lock released" in msg for msg in debug_calls)
+
+
+@pytest.mark.unit
+def test_release_resources_error_level_for_lock_failure(tmp_path):
+    """Test that lock release failure is logged at ERROR level and re-raised."""
+    manager = InfrastructureManager()
+
+    class MockHardware:
+        allow_process_kill = False
+        lock_file_path = tmp_path / "test.lock"
+
+    config = SimpleNamespace(hardware=MockHardware())
+
+    error_calls: list[str] = []
+    info_calls: list[str] = []
+
+    mock_logger = SimpleNamespace(
+        info=lambda msg, *a: info_calls.append(msg % a if a else msg),
+        debug=lambda msg, *a: None,
+        warning=lambda msg, *a: None,
+        error=lambda msg, *a: error_calls.append(msg % a if a else msg),
+    )
+
+    with patch(
+        "orchard.core.config.infrastructure_config.release_single_instance",
+        side_effect=OSError("lock error"),
+    ):
+        with pytest.raises(OSError, match="lock error"):
+            manager.release_resources(config, logger=mock_logger)
+
+    assert any("Failed to release lock" in msg for msg in error_calls)
+    assert not any("Failed to release lock" in msg for msg in info_calls)
+    # Verify LogStyle.ARROW and exception text appear in the message
+    assert any(str(LogStyle.ARROW) in msg for msg in error_calls)
+    assert any("lock error" in msg for msg in error_calls)
+
+
+@pytest.mark.integration
+def test_prepare_environment_terminate_duplicates_receives_logger(tmp_path, monkeypatch):
+    """Test that terminate_duplicates is called with logger=log kwarg."""
+    manager = InfrastructureManager()
+
+    monkeypatch.delenv("SLURM_JOB_ID", raising=False)
+    monkeypatch.delenv("PBS_JOBID", raising=False)
+    monkeypatch.delenv("LSB_JOBID", raising=False)
+    monkeypatch.delenv("RANK", raising=False)
+    monkeypatch.delenv("LOCAL_RANK", raising=False)
+
+    class MockHardware:
+        allow_process_kill = True
+        lock_file_path = tmp_path / "test.lock"
+
+    config = SimpleNamespace(hardware=MockHardware())
+
+    mock_logger = SimpleNamespace(
+        info=lambda msg, *a: None,
+        debug=lambda msg, *a: None,
+        warning=lambda msg, *a: None,
+    )
+
+    with (
+        patch("orchard.core.config.infrastructure_config.DuplicateProcessCleaner") as mock_cls,
+        patch("orchard.core.config.infrastructure_config.ensure_single_instance"),
+    ):
+        mock_instance = mock_cls.return_value
+        mock_instance.terminate_duplicates.return_value = 0
+
+        manager.prepare_environment(config, logger=mock_logger)
+
+        # Verify logger kwarg was passed
+        call_kwargs = mock_instance.terminate_duplicates.call_args
+        assert call_kwargs.kwargs["logger"] is mock_logger
+
+
+@pytest.mark.integration
+def test_prepare_environment_num_zombies_in_message(tmp_path, monkeypatch):
+    """Test that the actual number of terminated zombies appears in log message."""
+    manager = InfrastructureManager()
+
+    monkeypatch.delenv("SLURM_JOB_ID", raising=False)
+    monkeypatch.delenv("PBS_JOBID", raising=False)
+    monkeypatch.delenv("LSB_JOBID", raising=False)
+    monkeypatch.delenv("RANK", raising=False)
+    monkeypatch.delenv("LOCAL_RANK", raising=False)
+
+    class MockHardware:
+        allow_process_kill = True
+        lock_file_path = tmp_path / "test.lock"
+
+    config = SimpleNamespace(hardware=MockHardware())
+
+    debug_calls: list[str] = []
+    mock_logger = SimpleNamespace(
+        info=lambda msg, *a: None,
+        debug=lambda msg, *a: debug_calls.append(msg % a if a else msg),
+        warning=lambda msg, *a: None,
+    )
+
+    with (
+        patch("orchard.core.config.infrastructure_config.DuplicateProcessCleaner") as mock_cls,
+        patch("orchard.core.config.infrastructure_config.ensure_single_instance"),
+    ):
+        mock_instance = mock_cls.return_value
+        mock_instance.terminate_duplicates.return_value = 3
+
+        manager.prepare_environment(config, logger=mock_logger)
+
+    # The message must include the actual count returned by terminate_duplicates
+    assert any("3" in msg and "Duplicate processes terminated" in msg for msg in debug_calls)
+
+
+@pytest.mark.unit
+def test_flush_compute_cache_no_cuda_no_mps_no_log(monkeypatch):
+    """Test _flush_compute_cache does not log when neither CUDA nor MPS available."""
+    manager = InfrastructureManager()
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    monkeypatch.setattr("orchard.core.config.infrastructure_config.has_mps_backend", lambda: False)
+
+    debug_calls: list[str] = []
+
+    class MockLogger:
+        def debug(self, msg, *args):
+            debug_calls.append(msg % args if args else msg)
+
+    manager._flush_compute_cache(log=MockLogger())
+
+    # No cache-related messages when neither backend is available
+    assert not any("cache" in msg.lower() for msg in debug_calls)
 
 
 if __name__ == "__main__":

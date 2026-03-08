@@ -151,9 +151,8 @@ class InfrastructureManager(BaseModel):
             cfg: Configuration object with hardware.lock_file_path attribute.
             logger: Logger for status messages. Defaults to 'Infrastructure'.
 
-        Note:
-            Lock release failures are logged as warnings but do not raise,
-            ensuring experiment completion even with cleanup issues.
+        Raises:
+            OSError: If lock file cannot be released (e.g. permission denied).
         """
         log = logger or logging.getLogger(LOGGER_NAME)
 
@@ -162,7 +161,8 @@ class InfrastructureManager(BaseModel):
             release_single_instance(cfg.hardware.lock_file_path)
             log.info("  %s System lock released", LogStyle.ARROW)
         except OSError as e:
-            log.warning(" %s Failed to release lock: %s", LogStyle.ARROW, e)
+            log.error(" %s Failed to release lock: %s", LogStyle.ARROW, e)
+            raise
 
         # Flush caches
         self._flush_compute_cache(log=log)
@@ -186,4 +186,4 @@ class InfrastructureManager(BaseModel):
                 torch.mps.empty_cache()
                 log.debug(" %s MPS cache cleared.", LogStyle.ARROW)
             except RuntimeError:
-                log.debug(" %s MPS cache cleanup failed (non-fatal).", LogStyle.ARROW)
+                log.warning(" %s MPS cache cleanup failed (non-fatal).", LogStyle.ARROW)

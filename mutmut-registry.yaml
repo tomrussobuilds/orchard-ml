@@ -132,12 +132,12 @@ orchard/core/config/hardware_config.py:
   not_checked: 0
   score: 100.0
 orchard/core/config/infrastructure_config.py:
-  last_run: '2026-03-07T09:34:53Z'
-  total: 36
-  killed: 30
-  survived: 6
+  last_run: '2026-03-08T08:45:18Z'
+  total: 38
+  killed: 38
+  survived: 0
   not_checked: 0
-  score: 83.3
+  score: 100.0
 orchard/core/config/manifest.py:
   last_run: '2026-03-06T11:27:08Z'
   total: 45
