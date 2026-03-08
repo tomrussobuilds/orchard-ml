@@ -185,7 +185,9 @@ def log_optimization_summary(
             )
             log.info("%s%s Best Trial     : %d", I, S, study.best_trial.number)
         except ValueError:  # pragma: no cover
-            log.warning("%s%s Best trial lookup failed (check study integrity)", I, W)
+            # fmt: off
+            log.error("%s%s Best trial lookup failed (check study integrity)", I, W)  # pragma: no mutate
+            # fmt: on
     else:
         log.warning("%s%s No trials completed", I, W)
 

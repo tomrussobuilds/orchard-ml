@@ -265,19 +265,19 @@ orchard/core/logger/__init__.py:
   not_checked: 0
   score: 100.0
 orchard/core/logger/logger.py:
-  last_run: '2026-03-06T10:06:56Z'
-  total: 181
-  killed: 172
-  survived: 9
+  last_run: '2026-03-08T09:27:32Z'
+  total: 178
+  killed: 178
+  survived: 0
   not_checked: 0
-  score: 95.0
+  score: 100.0
 orchard/core/logger/progress.py:
-  last_run: '2026-03-07T09:35:37Z'
-  total: 86
-  killed: 72
-  survived: 14
+  last_run: '2026-03-08T09:27:32Z'
+  total: 82
+  killed: 82
+  survived: 0
   not_checked: 0
-  score: 83.7
+  score: 100.0
 orchard/core/logger/reporter.py:
   last_run: '2026-03-07T09:35:46Z'
   total: 142

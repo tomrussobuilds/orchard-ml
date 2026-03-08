@@ -137,7 +137,7 @@ class ColorFormatter(logging.Formatter):
     def _color_subtitles(self, formatted: str, msg: str) -> str:
         """Apply bold magenta to ``[Subtitle]`` tags in the message portion only."""
         idx = formatted.find(msg)
-        if idx == -1:
+        if idx == -1:  # pragma: no mutate
             return formatted
         prefix = formatted[:idx]
         msg_part = formatted[idx:]

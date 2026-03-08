@@ -904,7 +904,7 @@ def test_count_trial_states_empty():
 
 @pytest.mark.unit
 def test_log_trial_start_exact_category_names():
-    """Verify all 6 exact category names appear in logger output."""
+    """Verify all 6 exact category names are passed as exact args (not substrings)."""
     mock_logger = MagicMock()
     # Provide at least one param per category
     params = {
@@ -918,18 +918,22 @@ def test_log_trial_start_exact_category_names():
 
     log_trial_start(trial_number=0, params=params, logger_instance=mock_logger)
 
-    calls = [str(call) for call in mock_logger.info.call_args_list]
-    log_output = " ".join(calls)
+    # Extract exact category name args from calls matching "%s[%s]" format
+    category_args = []
+    for call in mock_logger.info.call_args_list:
+        args = call[0]
+        if len(args) >= 3 and args[0] == "%s[%s]":
+            category_args.append(args[2])
 
-    for category in [
+    expected = {
         "Optimization",
         "Loss",
         "Regularization",
         "Scheduling",
         "Augmentation",
         "Architecture",
-    ]:
-        assert category in log_output, f"Category '{category}' missing from output"
+    }
+    assert set(category_args) == expected
 
 
 @pytest.mark.unit
@@ -1072,7 +1076,7 @@ def test_log_trial_start_format_string_uses_key_and_value():
 
 @pytest.mark.unit
 def test_log_optimization_summary_warning_no_completed():
-    """log.warning called with 'No trials completed' when no completed trials."""
+    """log.warning called with exact (fmt, I, W) args when no completed trials."""
     mock_logger = MagicMock()
     mock_study = MagicMock()
     mock_study.trials = [MagicMock(state=optuna.trial.TrialState.PRUNED)]
@@ -1091,8 +1095,16 @@ def test_log_optimization_summary_warning_no_completed():
     )
 
     mock_logger.warning.assert_called()
-    warning_calls = [str(c) for c in mock_logger.warning.call_args_list]
-    assert any("No trials completed" in c for c in warning_calls)
+    # Verify exact positional args: (fmt, INDENT, WARNING_SYMBOL)
+    found = False
+    for call in mock_logger.warning.call_args_list:
+        args = call[0]
+        if len(args) >= 3 and "No trials completed" in args[0]:
+            assert args[1] == LogStyle.INDENT, f"Expected INDENT, got {args[1]!r}"
+            assert args[2] == LogStyle.WARNING, f"Expected WARNING symbol, got {args[2]!r}"
+            found = True
+            break
+    assert found, "No 'No trials completed' warning call found"
 
 
 if __name__ == "__main__":

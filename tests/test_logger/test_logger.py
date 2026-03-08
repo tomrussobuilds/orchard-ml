@@ -643,5 +643,128 @@ def test_color_subtitles_fallback_when_msg_not_found():
     assert result == "INFO - hello"
 
 
+# ---------------------------------------------------------------------------
+# Mutation-killing: ColorFormatter edge cases
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_color_formatter_warning_replace_count():
+    """Verify replace(levelname, colored, 1) only colors the level prefix, not the message."""
+    from orchard.core.logger.logger import ColorFormatter
+    from orchard.core.paths.constants import LogStyle
+
+    formatter = ColorFormatter("%(levelname)s - %(message)s")
+    msg = "WARNING detected in config"
+    record = logging.LogRecord(
+        name="test",
+        level=logging.WARNING,
+        pathname="",
+        lineno=0,
+        msg=msg,
+        args=(),
+        exc_info=None,
+    )
+    output = formatter.format(record)
+    # With count=1, the message-level "WARNING" stays intact so
+    # _color_message_only can find the raw msg and wrap it in yellow.
+    # The output must end with the message wrapped in RESET.
+    assert output.endswith(f"detected in config{LogStyle.RESET}")
+
+
+@pytest.mark.unit
+def test_color_formatter_header_boundary_5_chars():
+    """5-char uppercase string must NOT get header coloring (len > 5 excludes 5)."""
+    from orchard.core.logger.logger import ColorFormatter
+    from orchard.core.paths.constants import LogStyle
+
+    formatter = ColorFormatter("%(levelname)s - %(message)s")
+    record = logging.LogRecord(
+        name="test",
+        level=logging.INFO,
+        pathname="",
+        lineno=0,
+        msg="ABCDE",
+        args=(),
+        exc_info=None,
+    )
+    output = formatter.format(record)
+    assert LogStyle.BOLD not in output
+    assert LogStyle.MAGENTA not in output
+
+
+@pytest.mark.unit
+def test_color_formatter_header_boundary_6_chars():
+    """6-char uppercase string SHOULD get header coloring (len > 5 includes 6)."""
+    from orchard.core.logger.logger import ColorFormatter
+    from orchard.core.paths.constants import LogStyle
+
+    formatter = ColorFormatter("%(levelname)s - %(message)s")
+    record = logging.LogRecord(
+        name="test",
+        level=logging.INFO,
+        pathname="",
+        lineno=0,
+        msg="ABCDEF",
+        args=(),
+        exc_info=None,
+    )
+    output = formatter.format(record)
+    assert LogStyle.BOLD in output
+    assert LogStyle.MAGENTA in output
+
+
+@pytest.mark.unit
+def test_color_message_only_uses_first_occurrence():
+    """_color_message_only must use find (first), not rfind (last)."""
+    from orchard.core.logger.logger import ColorFormatter
+    from orchard.core.paths.constants import LogStyle
+
+    formatter = ColorFormatter("%(levelname)s - %(message)s")
+    result = formatter._color_message_only("ABC ABC", "ABC", LogStyle.GREEN)
+    # find returns 0 → prefix=""  → full string is colored
+    # rfind returns 4 → prefix="ABC " → only tail colored
+    assert result == f"{LogStyle.GREEN}ABC ABC{LogStyle.RESET}"
+
+
+@pytest.mark.unit
+def test_color_message_only_preserves_prefix():
+    """_color_message_only prefix must be the actual text before the message."""
+    from orchard.core.logger.logger import ColorFormatter
+    from orchard.core.paths.constants import LogStyle
+
+    formatter = ColorFormatter("%(levelname)s - %(message)s")
+    result = formatter._color_message_only("PREFIX-msg", "msg", LogStyle.GREEN)
+    assert result.startswith("PREFIX-")
+    assert result == f"PREFIX-{LogStyle.GREEN}msg{LogStyle.RESET}"
+
+
+@pytest.mark.unit
+def test_color_subtitles_uses_first_occurrence():
+    """_color_subtitles must use find (first), not rfind (last)."""
+    from orchard.core.logger.logger import ColorFormatter
+    from orchard.core.paths.constants import LogStyle
+
+    formatter = ColorFormatter("%(levelname)s - %(message)s")
+    msg = "[Hardware] xyz"
+    result = formatter._color_subtitles(f"{msg} {msg}", msg)
+    # find returns 0, so the first [Hardware] is in msg_part and gets colored
+    expected_colored = f"{LogStyle.BOLD}{LogStyle.MAGENTA}[Hardware]{LogStyle.RESET}"
+    assert result.startswith(expected_colored)
+
+
+@pytest.mark.unit
+def test_color_subtitles_msg_at_position_one():
+    """_color_subtitles must not bail out when msg is found at index 1."""
+    from orchard.core.logger.logger import ColorFormatter
+    from orchard.core.paths.constants import LogStyle
+
+    formatter = ColorFormatter("%(levelname)s - %(message)s")
+    # msg found at idx=1, guard (idx == -1) must NOT trigger
+    result = formatter._color_subtitles("X[Hardware]", "[Hardware]")
+    expected_colored = f"{LogStyle.BOLD}{LogStyle.MAGENTA}[Hardware]{LogStyle.RESET}"
+    assert expected_colored in result
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
