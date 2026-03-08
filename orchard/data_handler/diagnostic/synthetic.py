@@ -13,7 +13,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .fetcher import DatasetData
+from ..fetcher import DatasetData
 
 _SYNTHETIC_SEED = 42  # Fixed seed for deterministic synthetic data generation
 _SYNTHETIC_PIXEL_RANGE = 255  # Exclusive upper bound for rng.integers (uint8)

@@ -9,7 +9,7 @@ construction so breakage is caught by pytest before CI runs them.
 from __future__ import annotations
 
 from orchard.core import Config
-from orchard.data_handler.synthetic import create_synthetic_dataset
+from orchard.data_handler.diagnostic import create_synthetic_dataset
 from tests.health_check import _build_health_check_config
 from tests.smoke_test import _build_smoke_config
 

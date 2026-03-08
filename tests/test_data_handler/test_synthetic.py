@@ -12,8 +12,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from orchard.data_handler import (
-    DatasetData,
+from orchard.data_handler import DatasetData
+from orchard.data_handler.diagnostic import (
     create_synthetic_dataset,
     create_synthetic_grayscale_dataset,
 )

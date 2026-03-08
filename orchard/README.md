@@ -63,7 +63,9 @@ orchard/
 │   ├── loader.py               # DataLoaderFactory
 │   ├── transforms.py           # Augmentation pipelines (torchvision V2)
 │   ├── data_explorer.py        # Visualization utilities
-│   └── synthetic.py            # Synthetic data generation
+│   └── diagnostic/             # Health check & smoke test utilities
+│       ├── synthetic.py        # Synthetic data generation
+│       └── temp_loader.py      # Lightweight DataLoader for diagnostics
 ├── architectures/              # Architecture factory
 │   ├── factory.py              # Model registry & builder
 │   ├── resnet_18.py            # ResNet-18 multi-resolution (28/32/64/128/224)

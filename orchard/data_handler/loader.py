@@ -16,8 +16,6 @@ Key Components:
 
 - ``DataLoaderFactory``: Main orchestrator for train/val/test loader creation
 - ``get_dataloaders``: Convenience function for direct loader retrieval
-- ``create_temp_loader``: Quick DataLoader builder for health checks
-
 Example:
     >>> from orchard.data_handler import get_dataloaders, load_dataset
     >>> data = load_dataset(ds_meta)
@@ -30,7 +28,6 @@ Example:
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
@@ -62,7 +59,6 @@ _OPTUNA_WORKERS_LOWRES = 6  # Max workers for resolution < _HIGHRES_THRESHOLD
 _HIGHRES_THRESHOLD = 224  # Resolution boundary for worker tuning
 
 _MIN_SUBSAMPLED_SPLIT = 10  # Floor for val/test splits under max_samples
-_DEFAULT_HEALTHCHECK_BATCH_SIZE = 16  # Batch size for create_temp_loader
 
 
 # DATALOADER FACTORY
@@ -335,18 +331,3 @@ def get_dataloaders(
     """
     factory = DataLoaderFactory(dataset_cfg, training_cfg, aug_cfg, num_workers, metadata)
     return factory.build(is_optuna=is_optuna)
-
-
-# HEALTH UTILITIES
-def create_temp_loader(
-    dataset_path: Path, batch_size: int = _DEFAULT_HEALTHCHECK_BATCH_SIZE
-) -> DataLoader[Any]:
-    """
-    Load a NPZ dataset lazily and return a DataLoader for health checks.
-
-    This avoids loading the entire dataset into RAM at once, which is critical
-    for large datasets (e.g., 224x224 images).
-    """
-    dataset = VisionDataset.lazy(dataset_path)
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
-    return loader

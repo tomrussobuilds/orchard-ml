@@ -5,7 +5,7 @@ Focus:
 - DataLoaderFactory.build()
 - WeightedRandomSampler
 - _get_infrastructure_kwargs (Optuna, CUDA/MPS)
-- VisionDataset.lazy() and create_temp_loader
+- VisionDataset.lazy()
 """
 
 from __future__ import annotations
@@ -19,8 +19,9 @@ import pytest
 import torch
 
 from orchard.core import DatasetRegistryWrapper
-from orchard.data_handler import DataLoaderFactory, create_temp_loader
+from orchard.data_handler import DataLoaderFactory
 from orchard.data_handler.dataset import VisionDataset
+from orchard.data_handler.diagnostic import create_temp_loader
 from orchard.exceptions import OrchardDatasetError
 
 
@@ -485,7 +486,7 @@ def test_min_subsampled_split_constant():
 @pytest.mark.unit
 def test_default_healthcheck_batch_size_constant():
     """Verify _DEFAULT_HEALTHCHECK_BATCH_SIZE constant."""
-    from orchard.data_handler.loader import _DEFAULT_HEALTHCHECK_BATCH_SIZE
+    from orchard.data_handler.diagnostic.temp_loader import _DEFAULT_HEALTHCHECK_BATCH_SIZE
 
     assert _DEFAULT_HEALTHCHECK_BATCH_SIZE == 16
 

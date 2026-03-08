@@ -200,6 +200,7 @@ pydeps orchard \
     --max-bacon=0 \
     --max-module-depth=5 \
     --only orchard \
+    --exclude-exact orchard.data_handler.diagnostic \
     --noshow \
     -T svg \
     -o docs/framework_map.svg

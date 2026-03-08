@@ -81,7 +81,7 @@ def run_smoke_test(cfg: Config) -> None:
             # DATA PREPARATION
             run_logger.info("[Stage 1/5] Checking environment for CI/synthetic dataset...")
             if os.getenv("CI"):
-                from orchard.data_handler.synthetic import create_synthetic_dataset
+                from orchard.data_handler.diagnostic import create_synthetic_dataset
 
                 data = create_synthetic_dataset()
             else:
