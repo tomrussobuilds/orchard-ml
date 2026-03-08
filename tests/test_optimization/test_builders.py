@@ -146,3 +146,144 @@ def mock_optuna_cfg():
     optuna_mock.direction = "maximize"
 
     return optuna_mock
+
+
+# ---------------------------------------------------------------------------
+# Mutation-killing tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_build_sampler_returns_sampler_instance(mock_optuna_cfg):
+    """Assert build_sampler returns an actual sampler object, not None."""
+    mock_optuna_cfg.sampler_type = "tpe"
+    result = build_sampler(mock_optuna_cfg)
+    assert result is not None
+
+
+@pytest.mark.unit
+def test_build_sampler_invalid_includes_sampler_name(mock_optuna_cfg):
+    """Assert error message includes the invalid sampler name."""
+    mock_optuna_cfg.sampler_type = "bogus"
+    with pytest.raises(ValueError, match="bogus"):
+        build_sampler(mock_optuna_cfg)
+
+
+@pytest.mark.unit
+def test_build_pruner_returns_pruner_instance(mock_optuna_cfg):
+    """Assert build_pruner returns a pruner, not None."""
+    mock_optuna_cfg.enable_pruning = True
+    mock_optuna_cfg.pruner_type = "median"
+    result = build_pruner(mock_optuna_cfg)
+    assert result is not None
+
+
+@pytest.mark.unit
+def test_build_pruner_disabled_returns_nop_not_none(mock_optuna_cfg):
+    """Assert disabled pruning returns NopPruner specifically, not None."""
+    mock_optuna_cfg.enable_pruning = False
+    result = build_pruner(mock_optuna_cfg)
+    assert isinstance(result, NopPruner)
+    assert not isinstance(result, MedianPruner)
+
+
+@pytest.mark.unit
+def test_build_pruner_invalid_includes_pruner_name(mock_optuna_cfg):
+    """Assert error message includes the invalid pruner name."""
+    mock_optuna_cfg.enable_pruning = True
+    mock_optuna_cfg.pruner_type = "bogus"
+    with pytest.raises(ValueError, match="bogus"):
+        build_pruner(mock_optuna_cfg)
+
+
+@pytest.mark.unit
+def test_build_callbacks_returns_list(mock_optuna_cfg):
+    """Assert build_callbacks always returns a list."""
+    mock_optuna_cfg.enable_early_stopping = False
+    result = build_callbacks(mock_optuna_cfg, "auc")
+    assert isinstance(result, list)
+
+
+@pytest.mark.unit
+def test_build_callbacks_forwards_direction(mock_optuna_cfg):
+    """Assert build_callbacks passes direction to early stopping factory."""
+    from orchard.optimization.early_stopping import StudyEarlyStoppingCallback
+
+    mock_optuna_cfg.enable_early_stopping = True
+    mock_optuna_cfg.early_stopping_threshold = 0.99
+    mock_optuna_cfg.early_stopping_patience = 3
+    mock_optuna_cfg.direction = "minimize"
+
+    callbacks = build_callbacks(mock_optuna_cfg, "loss")
+    assert len(callbacks) == 1
+    assert isinstance(callbacks[0], StudyEarlyStoppingCallback)
+    assert callbacks[0].direction == "minimize"
+
+
+@pytest.mark.unit
+def test_build_callbacks_forwards_threshold(mock_optuna_cfg):
+    """Assert build_callbacks passes threshold to early stopping callback."""
+    from orchard.optimization.early_stopping import StudyEarlyStoppingCallback
+
+    mock_optuna_cfg.enable_early_stopping = True
+    mock_optuna_cfg.early_stopping_threshold = 0.77
+    mock_optuna_cfg.early_stopping_patience = 2
+    mock_optuna_cfg.direction = "maximize"
+
+    callbacks = build_callbacks(mock_optuna_cfg, "auc")
+    assert len(callbacks) == 1
+    assert isinstance(callbacks[0], StudyEarlyStoppingCallback)
+    assert callbacks[0].threshold == pytest.approx(0.77)
+
+
+@pytest.mark.unit
+def test_build_callbacks_forwards_patience(mock_optuna_cfg):
+    """Assert build_callbacks passes patience to early stopping callback."""
+    from orchard.optimization.early_stopping import StudyEarlyStoppingCallback
+
+    mock_optuna_cfg.enable_early_stopping = True
+    mock_optuna_cfg.early_stopping_threshold = 0.9
+    mock_optuna_cfg.early_stopping_patience = 8
+    mock_optuna_cfg.direction = "maximize"
+
+    callbacks = build_callbacks(mock_optuna_cfg, "auc")
+    assert len(callbacks) == 1
+    assert isinstance(callbacks[0], StudyEarlyStoppingCallback)
+    assert callbacks[0].patience == 8
+
+
+@pytest.mark.unit
+def test_build_callbacks_forwards_monitor_metric(mock_optuna_cfg):
+    """Assert build_callbacks passes monitor_metric to the factory."""
+    from unittest.mock import patch as _patch
+
+    mock_optuna_cfg.enable_early_stopping = True
+    mock_optuna_cfg.early_stopping_threshold = 0.9
+    mock_optuna_cfg.early_stopping_patience = 2
+    mock_optuna_cfg.direction = "maximize"
+
+    with _patch(
+        "orchard.optimization.orchestrator.builders.get_early_stopping_callback"
+    ) as mock_factory:
+        mock_factory.return_value = None
+        build_callbacks(mock_optuna_cfg, "custom_metric")
+
+    call_kwargs = mock_factory.call_args[1]
+    assert call_kwargs["metric_name"] == "custom_metric"
+
+
+@pytest.mark.unit
+def test_build_callbacks_empty_when_factory_returns_none(mock_optuna_cfg):
+    """Assert empty list when early stopping factory returns None."""
+    from unittest.mock import patch as _patch
+
+    mock_optuna_cfg.enable_early_stopping = True
+    mock_optuna_cfg.direction = "maximize"
+
+    with _patch(
+        "orchard.optimization.orchestrator.builders.get_early_stopping_callback",
+        return_value=None,
+    ):
+        callbacks = build_callbacks(mock_optuna_cfg, "auc")
+
+    assert callbacks == []

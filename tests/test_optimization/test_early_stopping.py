@@ -715,3 +715,201 @@ def test_factory_warning_on_unknown_metric_calls_logger():
     assert "No default threshold" in fmt_string
     metric_arg = mock_logger.warning.call_args[0][1]
     assert metric_arg == "unknown"
+
+
+# ---------------------------------------------------------------------------
+# Mutation-killing: logger format args in __call__ stopping block
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_stop_logs_metric_value():
+    """Assert the 'Metric' logger call includes the actual trial value."""
+    callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=1)
+
+    trial = MagicMock(spec=Trial)
+    trial.state = TrialState.COMPLETE
+    trial.value = 0.9876
+    trial.number = 2
+
+    study_mock = MagicMock()
+    study_mock.user_attrs = {"n_trials": 10}
+
+    with patch("orchard.optimization.early_stopping.logger") as mock_logger:
+        callback(study=study_mock, trial=trial)
+
+    # Find the "Metric" log call and verify value arg
+    for call in mock_logger.info.call_args_list:
+        args = call[0]
+        if len(args) >= 4 and isinstance(args[0], str) and "Metric" in args[0]:
+            assert args[-1] == pytest.approx(0.9876)
+            break
+    else:
+        pytest.fail("No 'Metric' log call found")
+
+
+@pytest.mark.unit
+def test_stop_logs_threshold_value():
+    """Assert the 'Threshold' logger call includes the actual threshold."""
+    callback = StudyEarlyStoppingCallback(threshold=0.8765, direction="maximize", patience=1)
+
+    trial = MagicMock(spec=Trial)
+    trial.state = TrialState.COMPLETE
+    trial.value = 0.95
+    trial.number = 0
+
+    study_mock = MagicMock()
+    study_mock.user_attrs = {}
+
+    with patch("orchard.optimization.early_stopping.logger") as mock_logger:
+        callback(study=study_mock, trial=trial)
+
+    for call in mock_logger.info.call_args_list:
+        args = call[0]
+        if len(args) >= 4 and isinstance(args[0], str) and "Threshold" in args[0]:
+            assert args[-1] == pytest.approx(0.8765)
+            break
+    else:
+        pytest.fail("No 'Threshold' log call found")
+
+
+@pytest.mark.unit
+def test_stop_logs_trials_completed():
+    """Assert 'Trials completed' log arg is trial.number + 1."""
+    callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=1)
+
+    trial = MagicMock(spec=Trial)
+    trial.state = TrialState.COMPLETE
+    trial.value = 0.95
+    trial.number = 7
+
+    study_mock = MagicMock()
+    study_mock.user_attrs = {"n_trials": 20}
+
+    with patch("orchard.optimization.early_stopping.logger") as mock_logger:
+        callback(study=study_mock, trial=trial)
+
+    for call in mock_logger.info.call_args_list:
+        args = call[0]
+        if len(args) >= 4 and isinstance(args[0], str) and "completed" in args[0].lower():
+            assert args[-1] == 8  # trial.number + 1 = 7 + 1
+            break
+    else:
+        pytest.fail("No 'Trials completed' log call found")
+
+
+@pytest.mark.unit
+def test_threshold_reached_log_includes_count_and_patience():
+    """Assert the threshold-reached log includes _count and patience."""
+    callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=5)
+
+    trial = MagicMock(spec=Trial)
+    trial.state = TrialState.COMPLETE
+    trial.value = 0.95
+    trial.number = 0
+
+    study_mock = MagicMock()
+    study_mock.user_attrs = {}
+
+    with patch("orchard.optimization.early_stopping.logger") as mock_logger:
+        callback(study=study_mock, trial=trial)
+
+    # Find the "reached threshold" log call
+    for call in mock_logger.info.call_args_list:
+        args = call[0]
+        if len(args) >= 8 and isinstance(args[0], str) and "threshold" in args[0].lower():
+            # args[-2] is _count, args[-1] is patience
+            assert args[-2] == 1  # _count after increment
+            assert args[-1] == 5  # patience
+            break
+    else:
+        pytest.fail("No 'reached threshold' log call found")
+
+
+@pytest.mark.unit
+def test_threshold_reached_log_includes_value_and_threshold():
+    """Assert the threshold-reached log includes value and threshold."""
+    callback = StudyEarlyStoppingCallback(threshold=0.85, direction="maximize", patience=5)
+
+    trial = MagicMock(spec=Trial)
+    trial.state = TrialState.COMPLETE
+    trial.value = 0.90
+    trial.number = 3
+
+    study_mock = MagicMock()
+    study_mock.user_attrs = {}
+
+    with patch("orchard.optimization.early_stopping.logger") as mock_logger:
+        callback(study=study_mock, trial=trial)
+
+    for call in mock_logger.info.call_args_list:
+        args = call[0]
+        if len(args) >= 8 and isinstance(args[0], str) and "threshold" in args[0].lower():
+            # args[3] = trial.number, args[4] = value, args[6] = self.threshold
+            assert args[3] == 3  # trial.number
+            assert args[4] == pytest.approx(0.90)  # value
+            assert args[6] == pytest.approx(0.85)  # threshold
+            break
+    else:
+        pytest.fail("No 'reached threshold' log call found")
+
+
+@pytest.mark.unit
+def test_factory_case_insensitive_metric():
+    """Assert factory uses .lower() to look up metric thresholds."""
+    callback = get_early_stopping_callback(metric_name="AUC", direction="maximize")
+    assert callback is not None
+    assert callback.threshold == _THRESH_AUC
+
+
+@pytest.mark.unit
+def test_factory_case_insensitive_metric_mixed():
+    """Assert factory uses .lower() for mixed case metrics."""
+    callback = get_early_stopping_callback(metric_name="Accuracy", direction="maximize")
+    assert callback is not None
+    assert callback.threshold == _THRESH_ACCURACY
+
+
+@pytest.mark.unit
+def test_factory_passes_patience_to_callback():
+    """Assert factory forwards patience argument."""
+    cb = get_early_stopping_callback("auc", "maximize", patience=7)
+    assert cb is not None
+    assert cb.patience == 7
+
+
+@pytest.mark.unit
+def test_factory_passes_direction_to_callback():
+    """Assert factory forwards direction to the callback."""
+    cb = get_early_stopping_callback("loss", "minimize")
+    assert cb is not None
+    assert cb.direction == "minimize"
+
+
+@pytest.mark.unit
+def test_stop_log_phase_header_exact_message():
+    """Assert Reporter.log_phase_header receives the exact expected message."""
+    callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=1)
+
+    trial = MagicMock(spec=Trial)
+    trial.state = TrialState.COMPLETE
+    trial.value = 0.95
+    trial.number = 0
+
+    study_mock = MagicMock()
+    study_mock.user_attrs = {}
+
+    with patch("orchard.optimization.early_stopping.Reporter") as mock_reporter:
+        callback(study=study_mock, trial=trial)
+
+    call_args = mock_reporter.log_phase_header.call_args[0]
+    # Exact match — kills XX-prefix and UPPERCASE mutants
+    assert call_args[1] == "EARLY STOPPING: Target performance achieved!"
+
+
+@pytest.mark.unit
+def test_factory_passes_enabled_to_callback():
+    """Assert factory forwards enabled kwarg to the StudyEarlyStoppingCallback."""
+    cb = get_early_stopping_callback("auc", "maximize", threshold=0.99, enabled=True)
+    assert cb is not None
+    assert cb.enabled is True

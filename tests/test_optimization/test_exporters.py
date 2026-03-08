@@ -25,6 +25,7 @@ from orchard.optimization import (
 )
 from orchard.optimization.orchestrator.exporters import (
     TrialData,
+    build_best_config_dict,
     build_best_trial_data,
     build_top_trials_dataframe,
 )
@@ -387,6 +388,27 @@ def test_export_top_trials_all_type_branches(paths, tmp_path):
     assert df.loc[0, "learning_rate"] == pytest.approx(0.001234)
     assert df.loc[0, "batch_size"] == 32
     assert df.loc[0, "Duration (s)"] == 330
+
+
+@pytest.mark.unit
+def test_build_best_config_dict():
+    """Test building config dict from best trial params."""
+    mock_cfg = MagicMock()
+    mock_cfg.training.epochs = 50
+    mock_cfg.model_dump = MagicMock(
+        return_value={
+            "training": {"epochs": 50},
+            "architecture": {},
+            "augmentation": {},
+        }
+    )
+
+    params = {"learning_rate": 0.001, "dropout": 0.5}
+    config_dict = build_best_config_dict(params, mock_cfg)
+
+    assert config_dict["training"]["learning_rate"] == pytest.approx(0.001)
+    assert config_dict["architecture"]["dropout"] == pytest.approx(0.5)
+    assert config_dict["training"]["epochs"] == 50
 
 
 if __name__ == "__main__":
