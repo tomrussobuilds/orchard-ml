@@ -544,6 +544,7 @@ class TestCLIInit:
         assert "orchard run" in content
 
 
+@pytest.mark.unit
 class TestCommentedYaml:
     """Tests for commented YAML generation in init command."""
 
@@ -644,6 +645,7 @@ class TestCommentedYaml:
                 break
 
 
+@pytest.mark.unit
 class TestYamlHelpers:
     """Unit tests for YAML builder helper functions."""
 
@@ -1235,6 +1237,25 @@ class TestAppendWrappedComment:
         # With width omitted (default 70): 2+ lines
         assert len(lines) == 1
 
+    def test_width_parameter_in_wrapping_branch(self):
+        """When comment exceeds max_text, textwrap.wrap must use width=max_text.
+
+        A comment >max_text enters the wrapping branch. With width=74 we get
+        fewer lines than with the default width=70.
+        """
+        from orchard.cli_app import _COMMENT_MAX_WIDTH, _append_wrapped_comment
+
+        prefix = "    "
+        max_text = _COMMENT_MAX_WIDTH - len(prefix) - 2  # 74
+        # 145 chars = exceeds max_text → enters wrapping branch
+        # 145/74 ≈ 2 lines with width=74, 145/70 ≈ 3 lines with default 70
+        comment = "word " * 29  # 145 chars
+        assert len(comment) > max_text
+        lines: list[str] = []
+        _append_wrapped_comment(lines, comment, prefix)
+        # With width=74: 2 lines. With default width=70: 3 lines.
+        assert len(lines) == 2
+
 
 @pytest.mark.unit
 class TestBuildCommentedYamlMutants:
@@ -1261,6 +1282,27 @@ class TestBuildCommentedYamlMutants:
         result = _build_commented_yaml(data)
         assert "# Dataset identifier" in result or "# " in result
         assert "name: bloodmnist" in result
+
+    def test_defs_key_resolved_for_ref_types(self):
+        """$defs must use the exact key '$defs' to resolve $ref types.
+
+        OptunaConfig has $defs (FloatRange, IntRange, SearchSpaceOverrides).
+        Without correct $defs resolution, nested field descriptions vanish.
+        """
+        from orchard.cli_app import _build_commented_yaml
+
+        data = {
+            "optuna": {
+                "n_trials": 50,
+                "search_space_overrides": {
+                    "optimizer_type": ["sgd", "adamw"],
+                },
+            }
+        }
+        result = _build_commented_yaml(data)
+        # This comment comes from SearchSpaceOverrides.optimizer_type.description,
+        # which is only available when $defs resolves SearchSpaceOverrides correctly.
+        assert "Optimizer algorithms to explore" in result
 
     def test_empty_defs_fallback(self):
         """Missing $defs should not crash (fallback to {})."""
@@ -1322,40 +1364,29 @@ class TestValidateOverrideKeyMutants:
         # Should not raise
         _validate_override_key("training.epochs")
 
-    def test_split_vs_rsplit_difference(self):
-        """With split('.', maxsplit=1), 'a.b.c' → ['a', 'b.c'] (section='a').
-        With rsplit('.', maxsplit=1), 'a.b.c' → ['a.b', 'c'] (section='a.b', invalid).
+    def test_multi_dot_key_uses_split_not_rsplit(self):
+        """With split('.', maxsplit=1), 'training.x.y' → section='training', field='x.y'.
+        With rsplit, section='training.x' (unknown). Error must mention 'Unknown field',
+        not 'Unknown config section'.
         """
+        import typer
 
         from orchard.cli_app import _validate_override_key
 
-        # "training.epochs" should work (section=training, field=epochs)
-        _validate_override_key("training.epochs")
+        with pytest.raises(typer.BadParameter, match="Unknown field"):
+            _validate_override_key("training.not_a_real.field")
 
-        # We need a key with 2+ dots where split and rsplit differ
-        # "augmentation.jitter_val" works with split → section="augmentation", field="jitter_val"
-        _validate_override_key("augmentation.jitter_val")
-
-    def test_maxsplit_1_vs_none(self):
-        """Without maxsplit=1, 'section.field' still produces 2 parts.
-        But with maxsplit=None, a key like 'training.sub.field' gives 3 parts → rejected.
-        With maxsplit=1, it gives 2 parts → accepted (field='sub.field', then validated).
+    def test_maxsplit_1_keeps_two_parts(self):
+        """With maxsplit=1, 'training.a.b' gives 2 parts (passes len check).
+        Without maxsplit (or maxsplit=2), gives 3 parts → 'section.field' format error.
+        Error must mention 'Unknown field', not 'section.field'.
         """
+        import typer
 
         from orchard.cli_app import _validate_override_key
 
-        # This key has one dot — works either way
-        _validate_override_key("training.epochs")
-
-    def test_maxsplit_2_difference(self):
-        """maxsplit=2 vs maxsplit=1: for 'a.b', both give ['a','b'].
-        No difference for simple keys, but the test structure ensures
-        maxsplit=1 is tested via the len(parts)==2 check.
-        """
-
-        from orchard.cli_app import _validate_override_key
-
-        _validate_override_key("dataset.name")
+        with pytest.raises(typer.BadParameter, match="Unknown field"):
+            _validate_override_key("dataset.a.b")
 
 
 @pytest.mark.unit
@@ -1377,6 +1408,17 @@ class TestVersionCallbackMutant:
         assert len(parts) >= 2
         # The version part should contain digits
         assert any(c.isdigit() for c in parts[-1])
+
+    def test_pkg_version_called_with_lowercase(self):
+        """pkg_version must be called with 'orchard-ml', not 'ORCHARD-ML'."""
+        import typer
+
+        with patch("importlib.metadata.version", return_value="0.0.0-test") as mock_ver:
+            from orchard.cli_app import _version_callback
+
+            with pytest.raises(typer.Exit):
+                _version_callback(True)
+            mock_ver.assert_called_once_with("orchard-ml")
 
 
 @pytest.mark.unit

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - use domain-specific exceptions instead of bare ValueError
 - replace type: ignore with cast(), add CLI --set validation, improve tests
+- move diagnostic utilities into data_handler/diagnostic submodule
 
 ### Fixed
 
