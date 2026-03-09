@@ -36,6 +36,8 @@ import torch
 
 
 # REPRODUCIBILITY LOGIC
+# Defaults are tested, but mutmut's test-mapping doesn't link default-value
+# mutations to the exercising tests — false-positive survivors without pragma.
 def set_seed(seed: int, strict: bool = False, warn_only: bool = False) -> None:  # pragma: no mutate
     """
     Seed all PRNGs and optionally enforce deterministic algorithms.

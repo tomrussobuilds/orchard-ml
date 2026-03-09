@@ -1013,6 +1013,336 @@ def test_build_uses_from_npz_when_lazy_loading_false(mock_metadata):
                 assert len(lazy_called) == 0
 
 
+# MUTATION TESTS: argument wiring and DataLoader construction
+@pytest.fixture
+def _spy_ds_factory():
+    """Factory that yields a SpyDS class capturing all build calls."""
+
+    def _make():
+        calls = []
+
+        class SpyDS:
+            def __init__(self, **kwargs):
+                self.labels = np.array([0, 1, 0, 1])
+                calls.append(kwargs)
+
+            @classmethod
+            def lazy(cls, **kwargs):
+                return cls(**kwargs)
+
+            @classmethod
+            def from_npz(cls, **kwargs):
+                return cls(**kwargs)
+
+            def __len__(self):
+                return 4
+
+        return SpyDS, calls
+
+    return _make
+
+
+def _build_factory(cfg, mock_metadata, num_workers=0):
+    """Helper to build a DataLoaderFactory with standard mocking."""
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
+        return DataLoaderFactory(
+            cfg.dataset, cfg.training, cfg.augmentation, num_workers, mock_metadata
+        )
+
+
+@pytest.mark.unit
+def test_build_passes_correct_split_names(mock_cfg_no_sampler, mock_metadata, _spy_ds_factory):
+    """Verify build() passes exact split names ('train', 'val', 'test')."""
+    SpyDS, calls = _spy_ds_factory()
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with (
+        patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta),
+        patch(
+            "orchard.data_handler.loader.get_pipeline_transforms",
+            lambda aug_cfg, img_size, meta, **kw: (lambda x: x, lambda x: x),
+        ),
+        patch("orchard.data_handler.loader.VisionDataset", SpyDS),
+    ):
+        factory = DataLoaderFactory(
+            mock_cfg_no_sampler.dataset,
+            mock_cfg_no_sampler.training,
+            mock_cfg_no_sampler.augmentation,
+            mock_cfg_no_sampler.num_workers,
+            mock_metadata,
+        )
+        factory.build()
+
+        assert calls[0]["split"] == "train"
+        assert calls[1]["split"] == "val"
+        assert calls[2]["split"] == "test"
+
+
+@pytest.mark.unit
+def test_build_passes_path_and_seed(mock_cfg_no_sampler, mock_metadata, _spy_ds_factory):
+    """Verify build() passes metadata path and training seed to each split."""
+    SpyDS, calls = _spy_ds_factory()
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with (
+        patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta),
+        patch(
+            "orchard.data_handler.loader.get_pipeline_transforms",
+            lambda aug_cfg, img_size, meta, **kw: (lambda x: x, lambda x: x),
+        ),
+        patch("orchard.data_handler.loader.VisionDataset", SpyDS),
+    ):
+        factory = DataLoaderFactory(
+            mock_cfg_no_sampler.dataset,
+            mock_cfg_no_sampler.training,
+            mock_cfg_no_sampler.augmentation,
+            mock_cfg_no_sampler.num_workers,
+            mock_metadata,
+        )
+        factory.build()
+
+        for call in calls:
+            assert "path" in call, "ds_params must include 'path'"
+            assert call["path"] == mock_metadata.path
+            assert "seed" in call, "ds_params must include 'seed'"
+            assert call["seed"] == mock_cfg_no_sampler.training.seed
+
+
+@pytest.mark.unit
+def test_build_passes_transforms(mock_cfg_no_sampler, mock_metadata, _spy_ds_factory):
+    """Verify build() passes train transform to train split and val transform to val/test."""
+    SpyDS, calls = _spy_ds_factory()
+    mock_ds_meta = MagicMock(in_channels=1)
+    sentinel_train = object()
+    sentinel_val = object()
+
+    with (
+        patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta),
+        patch(
+            "orchard.data_handler.loader.get_pipeline_transforms",
+            lambda aug_cfg, img_size, meta, **kw: (sentinel_train, sentinel_val),
+        ),
+        patch("orchard.data_handler.loader.VisionDataset", SpyDS),
+    ):
+        factory = DataLoaderFactory(
+            mock_cfg_no_sampler.dataset,
+            mock_cfg_no_sampler.training,
+            mock_cfg_no_sampler.augmentation,
+            mock_cfg_no_sampler.num_workers,
+            mock_metadata,
+        )
+        factory.build()
+
+        assert calls[0]["transform"] is sentinel_train
+        assert calls[1]["transform"] is sentinel_val
+        assert calls[2]["transform"] is sentinel_val
+
+
+@pytest.mark.unit
+def test_build_train_loader_drop_last_true(mock_cfg_no_sampler, mock_metadata, _spy_ds_factory):
+    """Verify train DataLoader has drop_last=True."""
+    SpyDS, _ = _spy_ds_factory()
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with (
+        patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta),
+        patch(
+            "orchard.data_handler.loader.get_pipeline_transforms",
+            lambda aug_cfg, img_size, meta, **kw: (lambda x: x, lambda x: x),
+        ),
+        patch("orchard.data_handler.loader.VisionDataset", SpyDS),
+    ):
+        factory = DataLoaderFactory(
+            mock_cfg_no_sampler.dataset,
+            mock_cfg_no_sampler.training,
+            mock_cfg_no_sampler.augmentation,
+            mock_cfg_no_sampler.num_workers,
+            mock_metadata,
+        )
+        train, _, _ = factory.build()
+
+        assert train.drop_last is True
+
+
+@pytest.mark.unit
+def test_build_val_test_loaders_have_infra_kwargs(
+    mock_cfg_no_sampler, mock_metadata, _spy_ds_factory
+):
+    """Verify val/test DataLoaders receive infrastructure kwargs (num_workers, pin_memory)."""
+    SpyDS, _ = _spy_ds_factory()
+    mock_ds_meta = MagicMock(in_channels=1)
+    num_workers = 2  # non-default to detect missing **infra_kwargs
+
+    with (
+        patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta),
+        patch(
+            "orchard.data_handler.loader.get_pipeline_transforms",
+            lambda aug_cfg, img_size, meta, **kw: (lambda x: x, lambda x: x),
+        ),
+        patch("orchard.data_handler.loader.VisionDataset", SpyDS),
+    ):
+        factory = DataLoaderFactory(
+            mock_cfg_no_sampler.dataset,
+            mock_cfg_no_sampler.training,
+            mock_cfg_no_sampler.augmentation,
+            num_workers,
+            mock_metadata,
+        )
+        _, val, test = factory.build()
+
+        assert val.num_workers == num_workers
+        assert test.num_workers == num_workers
+
+
+@pytest.mark.unit
+def test_infra_kwargs_boundary_num_workers_one(mock_cfg, mock_metadata):
+    """Verify worker_init_fn and persistent_workers with num_workers=1 (boundary)."""
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
+        factory = DataLoaderFactory(
+            mock_cfg.dataset,
+            mock_cfg.training,
+            mock_cfg.augmentation,
+            1,
+            mock_metadata,
+        )
+        infra = factory._get_infrastructure_kwargs(is_optuna=False)
+        assert infra["worker_init_fn"] is not None
+        assert infra["persistent_workers"] is True
+
+
+@pytest.mark.unit
+def test_get_transformation_pipelines_passes_correct_args(mock_cfg_no_sampler, mock_metadata):
+    """Verify _get_transformation_pipelines passes all config args to get_pipeline_transforms."""
+    mock_ds_meta = MagicMock(in_channels=1)
+    captured = {}
+
+    def spy_transforms(aug_cfg, img_size, meta, **kw):
+        captured["aug_cfg"] = aug_cfg
+        captured["img_size"] = img_size
+        captured["meta"] = meta
+        captured.update(kw)
+        return (lambda x: x, lambda x: x)
+
+    with (
+        patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta),
+        patch("orchard.data_handler.loader.get_pipeline_transforms", spy_transforms),
+    ):
+        factory = DataLoaderFactory(
+            mock_cfg_no_sampler.dataset,
+            mock_cfg_no_sampler.training,
+            mock_cfg_no_sampler.augmentation,
+            mock_cfg_no_sampler.num_workers,
+            mock_metadata,
+        )
+        factory._get_transformation_pipelines()
+
+        assert captured["aug_cfg"] is factory.aug_cfg
+        assert captured["img_size"] == mock_cfg_no_sampler.dataset.img_size
+        assert captured["meta"] is factory.ds_meta
+        assert captured["force_rgb"] == mock_cfg_no_sampler.dataset.force_rgb
+        assert captured["norm_mean"] == mock_cfg_no_sampler.dataset.mean
+        assert captured["norm_std"] == mock_cfg_no_sampler.dataset.std
+
+
+@pytest.mark.unit
+def test_init_stores_ds_meta_from_registry(mock_cfg, mock_metadata):
+    """Verify __init__ stores ds_meta from DatasetRegistryWrapper.get_dataset."""
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta) as mock_get:
+        factory = DataLoaderFactory(
+            mock_cfg.dataset,
+            mock_cfg.training,
+            mock_cfg.augmentation,
+            mock_cfg.num_workers,
+            mock_metadata,
+        )
+
+        assert factory.ds_meta is mock_ds_meta
+        mock_get.assert_called_once_with(mock_cfg.dataset.dataset_name)
+
+
+@pytest.mark.unit
+def test_init_stores_aug_cfg(mock_cfg, mock_metadata):
+    """Verify __init__ stores aug_cfg correctly."""
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
+        factory = DataLoaderFactory(
+            mock_cfg.dataset,
+            mock_cfg.training,
+            mock_cfg.augmentation,
+            mock_cfg.num_workers,
+            mock_metadata,
+        )
+
+        assert factory.aug_cfg is mock_cfg.augmentation
+
+
+@pytest.mark.unit
+def test_build_passes_is_optuna_to_infra_kwargs(
+    mock_cfg_no_sampler, mock_metadata, _spy_ds_factory
+):
+    """Verify build() passes is_optuna to _get_infrastructure_kwargs."""
+    SpyDS, _ = _spy_ds_factory()
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with (
+        patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta),
+        patch(
+            "orchard.data_handler.loader.get_pipeline_transforms",
+            lambda aug_cfg, img_size, meta, **kw: (lambda x: x, lambda x: x),
+        ),
+        patch("orchard.data_handler.loader.VisionDataset", SpyDS),
+    ):
+        factory = DataLoaderFactory(
+            mock_cfg_no_sampler.dataset,
+            mock_cfg_no_sampler.training,
+            mock_cfg_no_sampler.augmentation,
+            4,
+            mock_metadata,
+        )
+
+        with patch.object(
+            factory, "_get_infrastructure_kwargs", wraps=factory._get_infrastructure_kwargs
+        ) as spy:
+            factory.build(is_optuna=True)
+            spy.assert_called_once_with(is_optuna=True)
+
+
+@pytest.mark.unit
+def test_build_train_loader_receives_infra_kwargs(
+    mock_cfg_no_sampler, mock_metadata, _spy_ds_factory
+):
+    """Verify train DataLoader receives infra kwargs (num_workers, pin_memory)."""
+    SpyDS, _ = _spy_ds_factory()
+    mock_ds_meta = MagicMock(in_channels=1)
+    num_workers = 2  # non-default to detect missing **infra_kwargs
+
+    with (
+        patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta),
+        patch(
+            "orchard.data_handler.loader.get_pipeline_transforms",
+            lambda aug_cfg, img_size, meta, **kw: (lambda x: x, lambda x: x),
+        ),
+        patch("orchard.data_handler.loader.VisionDataset", SpyDS),
+    ):
+        factory = DataLoaderFactory(
+            mock_cfg_no_sampler.dataset,
+            mock_cfg_no_sampler.training,
+            mock_cfg_no_sampler.augmentation,
+            num_workers,
+            mock_metadata,
+        )
+        train, _, _ = factory.build()
+
+        assert train.num_workers == num_workers
+
+
 # MAIN TEST RUNNER
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

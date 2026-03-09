@@ -216,7 +216,7 @@ orchard/core/environment/policy.py:
   not_checked: 0
   score: 100.0
 orchard/core/environment/reproducibility.py:
-  last_run: '2026-03-07T10:09:01Z'
+  last_run: '2026-03-09T08:53:30Z'
   total: 55
   killed: 55
   survived: 0
@@ -447,12 +447,12 @@ orchard/data_handler/fetchers/medmnist_fetcher.py:
   not_checked: 0
   score: 53.5
 orchard/data_handler/loader.py:
-  last_run: '2026-03-08T20:03:11Z'
+  last_run: '2026-03-09T08:53:30Z'
   total: 189
-  killed: 128
-  survived: 61
+  killed: 170
+  survived: 19
   not_checked: 0
-  score: 67.7
+  score: 89.9
 orchard/data_handler/synthetic.py:
   last_run: '2026-03-06T10:12:13Z'
   total: 140
