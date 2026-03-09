@@ -473,6 +473,42 @@ def test_run_export_phase_quantized_validation_failure_logs_error(
     assert any("Quantized model validation failed" in e for e in error_calls)
 
 
+@pytest.mark.unit
+@patch("orchard.pipeline.phases.quantize_model")
+@patch("orchard.pipeline.phases.validate_export")
+@patch("orchard.pipeline.phases.get_model")
+@patch("orchard.pipeline.phases.export_to_onnx")
+def test_run_export_phase_quantized_validate_kwargs(
+    _mock_export, mock_get_model, mock_validate, mock_quantize, mock_orchestrator
+):
+    """Test run_export_phase passes correct kwargs to validate_export for quantized model."""
+    mock_model = MagicMock()
+    mock_get_model.return_value = mock_model
+    quantized = Path("/mock/test_exports/model_quantized.onnx")
+    mock_quantize.return_value = quantized
+
+    mock_orchestrator.cfg.export.validate_export = True
+    mock_orchestrator.cfg.export.quantize = True
+    mock_orchestrator.cfg.export.quantization_backend = "fbgemm"
+    mock_orchestrator.cfg.export.quantization_type = "int8"
+    mock_orchestrator.cfg.export.validation_samples = 5
+    mock_orchestrator.cfg.export.max_deviation = 1e-5
+    mock_orchestrator.cfg.export.benchmark = False
+
+    mock_validate.return_value = True
+
+    run_export_phase(mock_orchestrator, checkpoint_path=Path("/mock/model.pth"))
+
+    assert mock_validate.call_count == 2
+    kw = mock_validate.call_args_list[1].kwargs
+    assert kw["pytorch_model"] is mock_model
+    assert kw["onnx_path"] == quantized
+    assert kw["input_shape"] == (3, 28, 28)
+    assert kw["num_samples"] == 5
+    assert kw["max_deviation"] == pytest.approx(1e-5 * 10)
+    assert kw["label"] == "INT8"
+
+
 # OPTIMIZATION PHASE: KWARGS AND GUARDS
 @pytest.mark.unit
 @patch("orchard.pipeline.phases.run_optimization")
@@ -992,6 +1028,7 @@ def test_run_export_phase_validate_export_kwargs(
     mock_orchestrator.cfg.export.validate_export = True
     mock_orchestrator.cfg.export.validation_samples = 5
     mock_orchestrator.cfg.export.max_deviation = 1e-5
+    mock_orchestrator.cfg.export.format = "onnx"
     mock_orchestrator.cfg.export.benchmark = False
     mock_orchestrator.cfg.export.quantize = False
 
@@ -1003,6 +1040,7 @@ def test_run_export_phase_validate_export_kwargs(
     assert kw["input_shape"] == (3, 28, 28)
     assert kw["num_samples"] == 5
     assert kw["max_deviation"] == pytest.approx(1e-5)
+    assert kw["label"] == "ONNX"
 
 
 @pytest.mark.unit
@@ -1013,9 +1051,11 @@ def test_run_export_phase_validate_export_kwargs(
 def test_run_export_phase_benchmark_passes_all_kwargs(
     _mock_export, _mock_get_model, _mock_validate, mock_benchmark, mock_orchestrator
 ):
-    """Test run_export_phase passes onnx_path, input_shape to benchmark."""
+    """Test run_export_phase passes all kwargs to benchmark."""
     mock_orchestrator.cfg.export.benchmark = True
     mock_orchestrator.cfg.export.quantize = False
+    mock_orchestrator.cfg.export.benchmark_runs = 100
+    mock_orchestrator.cfg.export.format = "onnx"
     mock_orchestrator.cfg.training.seed = 42
 
     run_export_phase(mock_orchestrator, checkpoint_path=Path("/mock/model.pth"))
@@ -1024,6 +1064,8 @@ def test_run_export_phase_benchmark_passes_all_kwargs(
     assert kw["onnx_path"] == mock_orchestrator.paths.exports / "model.onnx"
     assert kw["input_shape"] == (3, 28, 28)
     assert kw["seed"] == 42
+    assert kw["num_runs"] == 100
+    assert kw["label"] == "ONNX"
 
 
 @pytest.mark.unit
@@ -1035,22 +1077,26 @@ def test_run_export_phase_benchmark_passes_all_kwargs(
 def test_run_export_phase_quantized_benchmark_uses_quantized_path(
     _mock_export, _mock_get_model, _mock_validate, mock_quantize, mock_benchmark, mock_orchestrator
 ):
-    """Test second benchmark call uses quantized_path, not onnx_path."""
+    """Test second benchmark call uses quantized_path with all kwargs."""
     quantized = Path("/mock/test_exports/model_quantized.onnx")
     mock_quantize.return_value = quantized
 
     mock_orchestrator.cfg.export.quantize = True
     mock_orchestrator.cfg.export.quantization_backend = "fbgemm"
+    mock_orchestrator.cfg.export.quantization_type = "int8"
     mock_orchestrator.cfg.export.benchmark = True
+    mock_orchestrator.cfg.export.benchmark_runs = 50
     mock_orchestrator.cfg.training.seed = 42
 
     run_export_phase(mock_orchestrator, checkpoint_path=Path("/mock/model.pth"))
 
-    # Second benchmark call should use quantized path
+    # Second benchmark call should use quantized path with correct kwargs
     second_call = mock_benchmark.call_args_list[1]
     assert second_call.kwargs["onnx_path"] == quantized
     assert second_call.kwargs["input_shape"] == (3, 28, 28)
     assert second_call.kwargs["seed"] == 42
+    assert second_call.kwargs["num_runs"] == 50
+    assert second_call.kwargs["label"] == "INT8"
 
 
 @pytest.mark.unit
@@ -1105,6 +1151,155 @@ def test_run_export_phase_cfg_fallback_to_orchestrator(
 
     # The function should have used orchestrator.cfg (not None)
     _mock_get_model.assert_called_once()
+
+
+# PHASE HEADER AND LOG STYLE VERIFICATION
+
+
+@pytest.mark.unit
+@patch("orchard.pipeline.phases.Reporter")
+@patch("orchard.pipeline.phases.run_optimization")
+@patch("orchard.pipeline.phases.log_optimization_summary")
+def test_run_optimization_phase_logs_header_with_double_style(
+    _mock_log_summary, mock_run_opt, mock_reporter, mock_orchestrator, tmp_path
+):
+    """Test run_optimization_phase logs header with correct title and DOUBLE style."""
+    mock_run_opt.return_value = MagicMock()
+    reports_dir = tmp_path / "reports"
+    reports_dir.mkdir()
+    mock_orchestrator.paths.reports = reports_dir
+
+    run_optimization_phase(mock_orchestrator)
+
+    from orchard.core import LogStyle
+
+    mock_reporter.log_phase_header.assert_called_once_with(
+        mock_orchestrator.run_logger, "HYPERPARAMETER OPTIMIZATION", LogStyle.DOUBLE
+    )
+
+
+@pytest.mark.unit
+@patch("orchard.pipeline.phases.Reporter")
+@patch("orchard.pipeline.phases.load_dataset")
+@patch("orchard.pipeline.phases.get_dataloaders")
+@patch("orchard.pipeline.phases.show_samples_for_dataset")
+@patch("orchard.pipeline.phases.get_model")
+@patch("orchard.pipeline.phases.get_criterion")
+@patch("orchard.pipeline.phases.get_optimizer")
+@patch("orchard.pipeline.phases.get_scheduler")
+@patch("orchard.pipeline.phases.ModelTrainer")
+@patch("orchard.pipeline.phases.run_final_evaluation")
+@patch("orchard.pipeline.phases.get_augmentations_description")
+def test_run_training_phase_logs_all_headers(
+    mock_aug_desc,
+    mock_final_eval,
+    mock_trainer_cls,
+    mock_get_scheduler,
+    mock_get_optimizer,
+    mock_get_criterion,
+    mock_get_model,
+    mock_show_samples,
+    mock_get_loaders,
+    mock_load_dataset,
+    mock_reporter,
+    mock_orchestrator,
+):
+    """Test run_training_phase logs all phase headers with correct titles and styles."""
+    _setup_training_mocks(
+        mock_orchestrator,
+        mock_load_dataset,
+        mock_get_loaders,
+        mock_show_samples,
+        mock_get_model,
+        mock_get_criterion,
+        mock_get_optimizer,
+        mock_get_scheduler,
+        mock_trainer_cls,
+        mock_final_eval,
+        mock_aug_desc,
+    )
+    mock_orchestrator.cfg.training.weighted_loss = False
+
+    run_training_phase(mock_orchestrator)
+
+    from orchard.core import LogStyle
+
+    calls = mock_reporter.log_phase_header.call_args_list
+    assert len(calls) == 3
+
+    # DATA PREPARATION (no style)
+    assert calls[0].args[1] == "DATA PREPARATION"
+
+    # TRAINING PIPELINE - <arch_name> (DOUBLE style)
+    title = calls[1].args[1]
+    assert title.startswith("TRAINING PIPELINE - ")
+    assert title == "TRAINING PIPELINE - " + mock_orchestrator.cfg.architecture.name.upper()
+    assert calls[1].args[2] is LogStyle.DOUBLE
+
+    # FINAL EVALUATION (no style)
+    assert calls[2].args[1] == "FINAL EVALUATION"
+
+
+@pytest.mark.unit
+@patch("orchard.pipeline.phases.Reporter")
+@patch("orchard.pipeline.phases.validate_export")
+@patch("orchard.pipeline.phases.get_model")
+@patch("orchard.pipeline.phases.export_to_onnx")
+def test_run_export_phase_logs_header(
+    _mock_export, _mock_get_model, _mock_validate, mock_reporter, mock_orchestrator
+):
+    """Test run_export_phase logs header with correct title."""
+    run_export_phase(mock_orchestrator, checkpoint_path=Path("/mock/model.pth"))
+
+    mock_reporter.log_phase_header.assert_called_once_with(
+        mock_orchestrator.run_logger, "MODEL EXPORT"
+    )
+
+
+@pytest.mark.unit
+@patch("orchard.pipeline.phases.logger")
+@patch("orchard.pipeline.phases.validate_export", return_value=False)
+@patch("orchard.pipeline.phases.get_model")
+@patch("orchard.pipeline.phases.export_to_onnx")
+def test_run_export_phase_validation_warning_uses_log_style(
+    _mock_export, _mock_get_model, _mock_validate, mock_logger, mock_orchestrator
+):
+    """Test validation failure warning uses LogStyle.WARNING."""
+    mock_orchestrator.cfg.export.benchmark = False
+    mock_orchestrator.cfg.export.quantize = False
+
+    run_export_phase(mock_orchestrator, checkpoint_path=Path("/mock/model.pth"))
+
+    from orchard.core import LogStyle
+
+    warning_call = mock_logger.warning.call_args
+    assert warning_call.args[1] is LogStyle.WARNING
+
+
+@pytest.mark.unit
+@patch("orchard.pipeline.phases.logger")
+@patch("orchard.pipeline.phases.quantize_model")
+@patch("orchard.pipeline.phases.validate_export")
+@patch("orchard.pipeline.phases.get_model")
+@patch("orchard.pipeline.phases.export_to_onnx")
+def test_run_export_phase_quantized_failure_uses_log_style(
+    _mock_export, _mock_get_model, mock_validate, mock_quantize, mock_logger, mock_orchestrator
+):
+    """Test quantized validation failure uses LogStyle.FAILURE."""
+    mock_orchestrator.cfg.export.quantize = True
+    mock_orchestrator.cfg.export.quantization_backend = "qnnpack"
+    mock_orchestrator.cfg.export.quantization_type = "int8"
+    mock_orchestrator.cfg.export.benchmark = False
+    mock_quantize.return_value = Path("/mock/test_exports/model_quantized.onnx")
+
+    mock_validate.side_effect = [True, False]
+
+    run_export_phase(mock_orchestrator, checkpoint_path=Path("/mock/model.pth"))
+
+    from orchard.core import LogStyle
+
+    error_call = mock_logger.error.call_args
+    assert error_call.args[1] is LogStyle.FAILURE
 
 
 if __name__ == "__main__":

@@ -664,12 +664,12 @@ orchard/pipeline/__init__.py:
   not_checked: 0
   score: 100.0
 orchard/pipeline/phases.py:
-  last_run: '2026-03-07T09:41:20Z'
+  last_run: '2026-03-09T13:38:24Z'
   total: 318
-  killed: 270
-  survived: 48
+  killed: 318
+  survived: 0
   not_checked: 0
-  score: 84.9
+  score: 100.0
 orchard/tracking/__init__.py:
   last_run: '2026-03-06T10:26:05Z'
   total: 0
