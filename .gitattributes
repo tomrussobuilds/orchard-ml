@@ -1,0 +1,9 @@
+# Force YAML to be detectable (Linguist classifies it as "data" by default)
+*.yaml linguist-detectable
+*.yml linguist-detectable
+
+# Force Shell to be detectable
+*.sh linguist-detectable
+
+# Force Dockerfile to be detectable
+Dockerfile linguist-detectable
