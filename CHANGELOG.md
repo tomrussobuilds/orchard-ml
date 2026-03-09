@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - replace type: ignore with cast(), add CLI --set validation, improve tests
 - move diagnostic utilities into data_handler/diagnostic submodule
 
+### Documentation
+
+- add mutmut badge and update mutation testing guide
+
 ### Fixed
 
 - resolve CodeQL security warnings for unused variable and mixed returns
