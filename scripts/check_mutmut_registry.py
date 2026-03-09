@@ -73,7 +73,7 @@ def _git_last_modified(path: str) -> datetime | None:
     line = result.stdout.strip()
     if not line:
         return None
-    return datetime.fromisoformat(line)
+    return datetime.fromisoformat(line.replace("Z", "+00:00"))
 
 
 def check_ratchet() -> list[str]:
@@ -117,7 +117,9 @@ def check_freshness() -> list[str]:
             stale.append(f"  {key} (no last_run)")
             continue
 
-        last_run = datetime.fromisoformat(last_run_str).replace(tzinfo=timezone.utc)
+        last_run = datetime.fromisoformat(last_run_str.replace("Z", "+00:00")).replace(
+            tzinfo=timezone.utc
+        )
 
         file_modified = _git_last_modified(key)
         if file_modified is None:

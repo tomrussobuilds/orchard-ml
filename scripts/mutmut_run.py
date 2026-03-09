@@ -169,7 +169,9 @@ def _is_fresh(source: Path, registry: dict[str, Any]) -> bool:
     if not entry or not entry.get("last_run"):
         return False
 
-    last_run = datetime.fromisoformat(entry["last_run"]).replace(tzinfo=timezone.utc)
+    last_run = datetime.fromisoformat(entry["last_run"].replace("Z", "+00:00")).replace(
+        tzinfo=timezone.utc
+    )
 
     result = subprocess.run(  # nosec B603 B607
         ["git", "log", "-1", "--format=%aI", "--", key],
@@ -181,7 +183,7 @@ def _is_fresh(source: Path, registry: dict[str, Any]) -> bool:
     if not line:
         return False
 
-    file_modified = datetime.fromisoformat(line)
+    file_modified = datetime.fromisoformat(line.replace("Z", "+00:00"))
     if file_modified.tzinfo is None:
         file_modified = file_modified.replace(tzinfo=timezone.utc)
 
