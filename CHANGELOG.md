@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - remove commented-out code flagged by SonarCloud (python:S125)
 - escalate log levels in InfrastructureManager and improve mutation score to 100%
 
+### Miscellaneous
+
+- add .gitattributes to make YAML/Shell/Dockerfile detectable by Linguist
+
 ## [0.2.0] - 2026-03-04
 
 ### Added

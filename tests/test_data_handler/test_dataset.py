@@ -161,6 +161,16 @@ def test_direct_constructor_rgb():
 
 
 @pytest.mark.unit
+def test_labels_cast_to_int64():
+    """Labels must be cast to int64 regardless of input dtype."""
+    images = np.random.default_rng(0).integers(0, 255, (5, 28, 28, 3), dtype=np.uint8)
+    float_labels = np.array([0.0, 1.0, 2.0, 3.0, 4.0], dtype=np.float32)
+    ds = VisionDataset(images, float_labels)
+
+    assert ds.labels.dtype == np.int64
+
+
+@pytest.mark.unit
 def test_direct_constructor_grayscale_expands():
     """Direct constructor should expand (N, H, W) to (N, H, W, 1)."""
     images = np.random.default_rng(0).integers(0, 255, (5, 28, 28), dtype=np.uint8)

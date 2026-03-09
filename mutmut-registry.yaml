@@ -216,7 +216,7 @@ orchard/core/environment/policy.py:
   not_checked: 0
   score: 100.0
 orchard/core/environment/reproducibility.py:
-  last_run: '2026-03-09T08:53:30Z'
+  last_run: '2026-03-09T13:12:57Z'
   total: 55
   killed: 55
   survived: 0
@@ -377,19 +377,19 @@ orchard/data_handler/__init__.py:
   not_checked: 0
   score: 100.0
 orchard/data_handler/data_explorer.py:
-  last_run: '2026-03-07T10:21:22Z'
+  last_run: '2026-03-09T13:11:02Z'
   total: 102
-  killed: 89
-  survived: 13
+  killed: 95
+  survived: 7
   not_checked: 0
-  score: 87.3
+  score: 93.1
 orchard/data_handler/dataset.py:
-  last_run: '2026-03-06T10:10:43Z'
+  last_run: '2026-03-09T13:12:15Z'
   total: 33
-  killed: 29
-  survived: 4
+  killed: 30
+  survived: 3
   not_checked: 0
-  score: 87.9
+  score: 90.9
 orchard/data_handler/diagnostic/__init__.py:
   last_run: '2026-03-08T20:02:02Z'
   total: 0
@@ -419,28 +419,28 @@ orchard/data_handler/fetcher.py:
   not_checked: 0
   score: 90.2
 orchard/data_handler/fetchers/__init__.py:
-  last_run: '2026-03-06T10:25:13Z'
+  last_run: '2026-03-09T13:02:33Z'
   total: 0
   killed: 0
   survived: 0
   not_checked: 0
   score: 100.0
 orchard/data_handler/fetchers/cifar_converter.py:
-  last_run: '2026-03-07T09:36:29Z'
+  last_run: '2026-03-09T13:02:33Z'
   total: 132
   killed: 113
   survived: 19
   not_checked: 0
   score: 85.6
 orchard/data_handler/fetchers/galaxy10_converter.py:
-  last_run: '2026-03-07T09:36:39Z'
+  last_run: '2026-03-09T13:02:33Z'
   total: 231
   killed: 155
   survived: 76
   not_checked: 0
   score: 67.1
 orchard/data_handler/fetchers/medmnist_fetcher.py:
-  last_run: '2026-03-07T09:37:02Z'
+  last_run: '2026-03-09T13:02:33Z'
   total: 159
   killed: 85
   survived: 74
@@ -453,13 +453,6 @@ orchard/data_handler/loader.py:
   survived: 19
   not_checked: 0
   score: 89.9
-orchard/data_handler/synthetic.py:
-  last_run: '2026-03-06T10:12:13Z'
-  total: 140
-  killed: 97
-  survived: 43
-  not_checked: 0
-  score: 69.3
 orchard/data_handler/transforms.py:
   last_run: '2026-03-06T10:12:37Z'
   total: 107

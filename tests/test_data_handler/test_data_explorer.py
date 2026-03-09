@@ -220,6 +220,29 @@ def test_show_samples_for_dataset_with_resolution(mock_show_images, tmp_path):
 
 @pytest.mark.unit
 @patch("orchard.data_handler.data_explorer.show_sample_images")
+def test_show_samples_for_dataset_forwards_mean_std_dpi(mock_show_images, tmp_path):
+    """mean, std, and fig_dpi must be forwarded to show_sample_images."""
+    mock_loader = MagicMock()
+    mock_run_paths = MagicMock()
+    mock_run_paths.get_fig_path = MagicMock(return_value=tmp_path / "ds" / "sample_grid.png")
+
+    show_samples_for_dataset(
+        loader=mock_loader,
+        dataset_name="ds",
+        run_paths=mock_run_paths,
+        mean=(0.485, 0.456, 0.406),
+        std=(0.229, 0.224, 0.225),
+        fig_dpi=300,
+    )
+
+    call_kwargs = mock_show_images.call_args.kwargs
+    assert call_kwargs["mean"] == (0.485, 0.456, 0.406)
+    assert call_kwargs["std"] == (0.229, 0.224, 0.225)
+    assert call_kwargs["fig_dpi"] == 300
+
+
+@pytest.mark.unit
+@patch("orchard.data_handler.data_explorer.show_sample_images")
 def test_show_samples_for_dataset_creates_directory(mock_show_images, tmp_path):
     """Test show_samples_for_dataset creates parent directory."""
     mock_loader = MagicMock()
