@@ -622,12 +622,12 @@ orchard/optimization/orchestrator/builders.py:
   not_checked: 0
   score: 93.9
 orchard/optimization/orchestrator/exporters.py:
-  last_run: '2026-03-07T09:41:08Z'
+  last_run: '2026-03-09T07:21:46Z'
   total: 257
-  killed: 171
-  survived: 86
+  killed: 251
+  survived: 6
   not_checked: 0
-  score: 66.5
+  score: 97.7
 orchard/optimization/orchestrator/orchestrator.py:
   last_run: '2026-03-06T10:18:21Z'
   total: 123
