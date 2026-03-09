@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - merge implicitly concatenated f-strings in cli_app.py
 - remove commented-out code flagged by SonarCloud (python:S125)
 - escalate log levels in InfrastructureManager and improve mutation score to 100%
+- handle Z suffix in isoformat dates for Python 3.10 compat
 
 ### Miscellaneous
 
