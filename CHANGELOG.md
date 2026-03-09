@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Miscellaneous
 
 - add .gitattributes to make YAML/Shell/Dockerfile detectable by Linguist
+- refresh mutmut-registry timestamps for v0.2.1 release
 
 ## [0.2.0] - 2026-03-04
 
