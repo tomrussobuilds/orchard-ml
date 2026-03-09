@@ -18,10 +18,10 @@ paths_to_mutate = ["orchard/"]
 tests_dir = ["tests/"]
 ```
 
-Cosmetic code (log formatting, Excel styling) is excluded via line-level
-`# pragma: no mutate` annotations. These are **only** applied to
-`logger.info()` and `logger.debug()` calls — never to warnings, errors,
-or real logic.
+Log and cosmetic mutations are suppressed **automatically** by the patched
+entry point `scripts/mutmut_entry.py` — no per-line `# pragma: no mutate`
+annotations are needed for logging calls.  See [Patched Entry Point](#patched-entry-point)
+below for details.
 
 ---
 
@@ -111,6 +111,19 @@ TOTAL                                                      53    50     3     0 
 
 The registry YAML is tracked in git so you can see score evolution across commits.
 
+**Registry guards** (`scripts/check_mutmut_registry.py`):
+
+```bash
+# Fail if any module score dropped vs HEAD (pre-commit gate)
+python scripts/check_mutmut_registry.py --ratchet
+
+# Fail if any modified module has a stale registry entry (release gate)
+python scripts/check_mutmut_registry.py --freshness
+
+# Both
+python scripts/check_mutmut_registry.py --ratchet --freshness
+```
+
 ---
 
 <h2>Cleaning Cache</h2>
@@ -161,17 +174,35 @@ mutants survive. To kill mutants effectively:
 
 ---
 
+<h2>Patched Entry Point</h2>
+
+`scripts/mutmut_entry.py` monkey-patches mutmut's `MutationVisitor` to
+suppress cosmetic mutations without per-line annotations.  It is invoked
+automatically by `scripts/mutmut_run.py`.
+
+Two suppression levels:
+
+| Level | Methods | Effect |
+|---|---|---|
+| **Full skip** | `debug`, `info`, `add_format` | Entire `Call` node excluded — call, arguments, and strings |
+| **String-only skip** | `warning`, `error`, `warn`, `getLogger` | Only string literals inside the call are excluded; the call itself and non-string args remain mutable |
+
+This eliminates the need for `# pragma: no mutate` on logging lines.
+
+---
+
 <h2>Pragma Conventions</h2>
 
 | Annotation | Scope | Usage |
 |---|---|---|
-| `# pragma: no mutate` | Single line | `logger.info()`, `logger.debug()`, plot formatting |
+| `# pragma: no mutate` | Single line | Plot formatting constants, cosmetic-only literals |
 | `# pragma: no cover` | Single line | Unreachable defensive code |
+
+Logging calls (`info`, `debug`, `warning`, `error`, `warn`) are handled
+automatically by the patched entry point — **do not** annotate them manually.
 
 **Never** apply `# pragma: no mutate` to:
 
-- `logger.warning()` or `logger.error()` calls
-- `warnings.warn()` calls
 - Conditionals, computed values, or any real logic
 - Entire files (`do_not_mutate` is forbidden)
 

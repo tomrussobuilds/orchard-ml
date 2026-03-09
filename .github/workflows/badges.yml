@@ -163,6 +163,37 @@ jobs:
           message: "${{ steps.radon.outputs.status }}"
           color: "${{ steps.radon.outputs.color }}"
 
+      # --- Mutation Score (from committed registry) ---
+      - name: Compute mutation score
+        id: mutmut
+        run: |
+          SCORE=$(python3 -c "
+          import yaml, pathlib
+          reg = yaml.safe_load(pathlib.Path('mutmut-registry.yaml').read_text()) or {}
+          total = sum(e.get('total', 0) for e in reg.values())
+          killed = sum(e.get('killed', 0) for e in reg.values())
+          print(f'{killed / total * 100:.1f}' if total else '0.0')
+          ")
+          echo "score=${SCORE}%" >> "$GITHUB_OUTPUT"
+          # Color: >=95 green, >=85 yellow, <85 red
+          if python3 -c "exit(0 if float('${SCORE}') >= 95 else 1)"; then
+            echo "color=brightgreen" >> "$GITHUB_OUTPUT"
+          elif python3 -c "exit(0 if float('${SCORE}') >= 85 else 1)"; then
+            echo "color=e5ae38" >> "$GITHUB_OUTPUT"
+          else
+            echo "color=e74c3c" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update mutation score badge
+        uses: schneegans/dynamic-badges-action@e9a478b16159b4d31420099ba146cdc50f134483  # v1.7.0
+        with:
+          auth: "${{ env.GIST_AUTH }}"
+          gistID: "7835190af6011e9051b673c8be974f8a"
+          filename: mutmut.json
+          label: mutmut
+          message: "${{ steps.mutmut.outputs.score }}"
+          color: "${{ steps.mutmut.outputs.color }}"
+
       # --- Test Count Badges ---
       - name: Collect test counts
         id: tests
