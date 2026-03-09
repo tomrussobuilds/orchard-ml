@@ -1686,5 +1686,166 @@ def test_non_main_rank_device_failure_raises():
         orch.initialize_core_services()
 
 
+# MUTATION TESTING: cleanup flag precision for non-main ranks
+@pytest.mark.unit
+def test_non_main_rank_cleanup_sets_cleaned_up_true():
+    """Test cleanup on non-main rank sets _cleaned_up to exactly True (not None/False)."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 2
+
+    orch = RootOrchestrator(cfg=mock_cfg, rank=1)
+    assert orch._cleaned_up is False
+
+    orch.cleanup()
+
+    # Must be exactly True (not None, not False) — blocks re-initialization
+    assert orch._cleaned_up is True
+
+
+@pytest.mark.unit
+def test_non_main_rank_cleanup_blocks_reinitialize():
+    """Test non-main rank cannot re-initialize after cleanup."""
+    mock_cfg = MagicMock()
+    mock_cfg.training.seed = 42
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 2
+
+    orch = RootOrchestrator(
+        cfg=mock_cfg,
+        seed_setter=MagicMock(),
+        thread_applier=MagicMock(return_value=2),
+        system_configurator=MagicMock(),
+        device_resolver=MagicMock(return_value=torch.device("cpu")),
+        rank=1,
+    )
+
+    orch.cleanup()
+
+    with pytest.raises(RuntimeError, match="Cannot re-initialize after cleanup"):
+        orch.initialize_core_services()
+
+
+# MUTATION TESTING: _infra_lock_acquired reset after release
+@pytest.mark.unit
+def test_cleanup_resets_infra_lock_acquired_to_false():
+    """Test cleanup sets _infra_lock_acquired to exactly False after release."""
+    mock_cfg = MagicMock()
+    mock_infra = MagicMock()
+    mock_handler = MagicMock()
+    mock_logger = MagicMock()
+    mock_logger.handlers = [mock_handler]
+
+    orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra, rank=0)
+    orch.run_logger = mock_logger
+    orch._infra_lock_acquired = True
+
+    orch.cleanup()
+
+    # Must be exactly False — not None, not True
+    assert orch._infra_lock_acquired is False
+
+
+@pytest.mark.unit
+def test_cleanup_double_call_no_duplicate_release():
+    """Test calling cleanup twice does not release resources twice."""
+    mock_cfg = MagicMock()
+    mock_infra = MagicMock()
+    mock_handler = MagicMock()
+    mock_logger = MagicMock()
+    mock_logger.handlers = [mock_handler]
+
+    orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra, rank=0)
+    orch.run_logger = mock_logger
+    orch._infra_lock_acquired = True
+
+    orch.cleanup()
+    # After first cleanup, _infra_lock_acquired must be False
+    assert orch._infra_lock_acquired is False
+    mock_infra.release_resources.assert_called_once()
+
+    # Second cleanup should not call release_resources again
+    orch.cleanup()
+    mock_infra.release_resources.assert_called_once()
+
+
+# MUTATION TESTING: fallback logger uses LOGGER_NAME, not root logger
+@pytest.mark.unit
+def test_cleanup_fallback_logger_uses_logger_name():
+    """Test cleanup fallback logger uses LOGGER_NAME, not root logger."""
+    mock_cfg = MagicMock()
+    mock_infra = MagicMock()
+
+    orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra, rank=0)
+    orch.run_logger = None  # Force fallback path
+    orch._infra_lock_acquired = True
+
+    with patch("orchard.core.orchestrator.logging.getLogger") as mock_get_logger:
+        fallback = MagicMock()
+        mock_get_logger.return_value = fallback
+        orch.cleanup()
+        mock_get_logger.assert_called_with(LOGGER_NAME)
+
+
+@pytest.mark.unit
+def test_phase_6_fallback_logger_uses_logger_name():
+    """Test _phase_6 fallback logger uses LOGGER_NAME, not root logger."""
+    mock_cfg = MagicMock()
+    mock_infra = MagicMock()
+
+    orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra)
+    orch.run_logger = None  # Force fallback path
+
+    with patch("orchard.core.orchestrator.logging.getLogger") as mock_get_logger:
+        fallback = MagicMock()
+        mock_get_logger.return_value = fallback
+        orch._phase_6_infrastructure_guarding()
+        mock_get_logger.assert_called_with(LOGGER_NAME)
+
+
+@pytest.mark.unit
+def test_phase_7_fallback_logger_uses_logger_name():
+    """Test _phase_7 fallback logger uses LOGGER_NAME, not root logger."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.effective_num_workers = 4
+    mock_reporter = MagicMock()
+
+    orch = RootOrchestrator(cfg=mock_cfg, reporter=mock_reporter)
+    orch.run_logger = None  # Force fallback path
+    orch.paths = MagicMock()
+    orch._device_cache = torch.device("cpu")
+
+    with patch("orchard.core.orchestrator.logging.getLogger") as mock_get_logger:
+        fallback = MagicMock()
+        mock_get_logger.return_value = fallback
+        orch._phase_7_environment_report(applied_threads=4)
+        mock_get_logger.assert_called_with(LOGGER_NAME)
+
+
+# MUTATION TESTING: log_environment_report passes _applied_threads, not None
+@pytest.mark.unit
+def test_log_environment_report_passes_applied_threads():
+    """Test log_environment_report passes _applied_threads value to phase_7."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 4
+    mock_reporter = MagicMock()
+
+    orch = RootOrchestrator(cfg=mock_cfg, reporter=mock_reporter, rank=0)
+    orch._initialized = True
+    orch._applied_threads = 7
+    orch.paths = MagicMock()
+    orch._device_cache = torch.device("cpu")
+    orch.run_logger = MagicMock()
+
+    orch.log_environment_report()
+
+    kw = mock_reporter.log_initial_status.call_args.kwargs
+    assert kw["applied_threads"] == 7
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

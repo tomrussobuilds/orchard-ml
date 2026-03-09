@@ -335,12 +335,12 @@ orchard/core/metadata/wrapper.py:
   not_checked: 0
   score: 100.0
 orchard/core/orchestrator.py:
-  last_run: '2026-03-07T09:35:56Z'
+  last_run: '2026-03-09T07:54:20Z'
   total: 203
-  killed: 173
-  survived: 30
+  killed: 181
+  survived: 22
   not_checked: 0
-  score: 85.2
+  score: 89.2
 orchard/core/paths/__init__.py:
   last_run: '2026-03-06T10:24:58Z'
   total: 0
