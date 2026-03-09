@@ -20,7 +20,9 @@ from orchard.data_handler.fetcher import (
 )
 from orchard.data_handler.fetchers.medmnist_fetcher import (
     _is_valid_npz,
+    _retry_delay,
     _stream_download,
+    ensure_medmnist_npz,
 )
 from orchard.exceptions import OrchardDatasetError
 
@@ -653,3 +655,438 @@ def test_ensure_dataset_npz_galaxy10_converter_path(tmp_path, monkeypatch):
     result = ensure_dataset_npz(galaxy10_metadata)
 
     assert result == target_npz
+
+
+# ─── MUTATION-KILLING TESTS: _stream_download ───
+
+
+@pytest.mark.unit
+def test_stream_download_passes_exact_kwargs(tmp_path, monkeypatch):
+    """Verify requests.get receives url, headers, timeout, stream, allow_redirects."""
+    output_path = tmp_path / "output.npz"
+    captured = {}
+
+    class FakeResponse:
+        def __init__(self):
+            self.headers = {"Content-type": "application/octet-stream"}
+
+        def raise_for_status(self):
+            pass
+
+        def iter_content(self, chunk_size):
+            yield b"data"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    def capturing_get(*args, **kwargs):
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+        return FakeResponse()
+
+    monkeypatch.setattr("requests.get", capturing_get)
+
+    _stream_download("https://example.com/file.npz", output_path)
+
+    assert captured["args"] == ("https://example.com/file.npz",)
+    assert captured["kwargs"]["timeout"] == 60
+    assert captured["kwargs"]["stream"] is True
+    assert captured["kwargs"]["allow_redirects"] is True
+
+    headers = captured["kwargs"]["headers"]
+    assert headers is not None
+    assert headers["User-Agent"] == "Wget/1.0"
+    assert headers["Accept"] == "application/octet-stream"
+    assert headers["Accept-Encoding"] == "identity"
+
+
+@pytest.mark.unit
+def test_stream_download_passes_chunk_size(tmp_path, monkeypatch):
+    """Verify iter_content receives the chunk_size parameter."""
+    output_path = tmp_path / "output.npz"
+    captured_chunk_sizes = []
+
+    class FakeResponse:
+        def __init__(self):
+            self.headers = {"Content-type": "application/octet-stream"}
+
+        def raise_for_status(self):
+            pass
+
+        def iter_content(self, chunk_size):
+            captured_chunk_sizes.append(chunk_size)
+            yield b"data"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr("requests.get", lambda *a, **kw: FakeResponse())
+
+    _stream_download("https://example.com/file.npz", output_path)
+
+    assert captured_chunk_sizes == [8192]
+
+
+@pytest.mark.unit
+def test_stream_download_content_type_missing_no_error(tmp_path, monkeypatch):
+    """Missing Content-type header should not raise (not HTML)."""
+    output_path = tmp_path / "output.npz"
+
+    class FakeResponse:
+        def __init__(self):
+            self.headers = {}
+
+        def raise_for_status(self):
+            pass
+
+        def iter_content(self, chunk_size):
+            yield b"data"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr("requests.get", lambda *a, **kw: FakeResponse())
+
+    _stream_download("https://example.com/file.npz", output_path)
+
+    assert output_path.read_bytes() == b"data"
+
+
+# ─── MUTATION-KILLING TESTS: _is_valid_npz ───
+
+
+@pytest.mark.unit
+def test_is_valid_npz_passes_path_to_md5(valid_npz_file, monkeypatch):
+    """md5_checksum should receive the actual file path, not None."""
+    received_paths = []
+
+    def tracking_md5(path):
+        received_paths.append(path)
+        return "correct_md5"
+
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.md5_checksum",
+        tracking_md5,
+    )
+
+    _is_valid_npz(valid_npz_file, "correct_md5")
+
+    assert received_paths == [valid_npz_file]
+
+
+# ─── MUTATION-KILLING TESTS: _retry_delay ───
+
+
+@pytest.mark.unit
+def test_retry_delay_429_quadratic_backoff(monkeypatch):
+    """429 response should produce quadratic delay and log the delay value."""
+    exc = requests.HTTPError("429 Rate Limit")
+    exc.response = SimpleNamespace(status_code=429)
+
+    log_calls = []
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.logger.warning",
+        lambda msg, *args: log_calls.append(msg % args if args else msg),
+    )
+
+    result = _retry_delay(exc, base_delay=2.0, attempt=3)
+
+    assert result == pytest.approx(18.0)
+    assert any("18.0" in call for call in log_calls)
+
+
+@pytest.mark.unit
+def test_retry_delay_non_429_returns_base():
+    """Non-429 error should return base delay without warning."""
+    exc = OSError("generic")
+
+    result = _retry_delay(exc, base_delay=5.0, attempt=3)
+
+    assert result == pytest.approx(5.0)
+
+
+# ─── MUTATION-KILLING TESTS: ensure_medmnist_npz ───
+
+
+@pytest.mark.unit
+def test_ensure_medmnist_npz_default_params(monkeypatch):
+    """Default retries=5 and delay=5.0 should be used."""
+    import inspect
+
+    sig = inspect.signature(ensure_medmnist_npz)
+    assert sig.parameters["retries"].default == 5
+    assert sig.parameters["delay"].default == pytest.approx(5.0)
+
+
+@pytest.mark.unit
+def test_ensure_medmnist_npz_passes_url_to_stream_download(metadata, monkeypatch):
+    """_stream_download should receive metadata.url, not None."""
+    received_urls = []
+
+    def tracking_download(url, tmp_path):
+        received_urls.append(url)
+        real_npz = tmp_path.with_suffix(".npz")
+        np.savez(real_npz, train_images=np.zeros((2, 28, 28)))
+        tmp_path.write_bytes(real_npz.read_bytes())
+
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
+        tracking_download,
+    )
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.md5_checksum",
+        lambda _: "correct_md5",
+    )
+
+    ensure_medmnist_npz(metadata, retries=1)
+
+    assert received_urls == ["https://example.com/fake.npz"]
+
+
+@pytest.mark.unit
+def test_ensure_medmnist_npz_uses_tmp_suffix(metadata, monkeypatch):
+    """Temp file should use .tmp suffix (lowercase)."""
+    received_tmp_paths = []
+
+    def tracking_download(url, tmp_path):
+        received_tmp_paths.append(tmp_path)
+        real_npz = tmp_path.with_suffix(".npz")
+        np.savez(real_npz, train_images=np.zeros((2, 28, 28)))
+        tmp_path.write_bytes(real_npz.read_bytes())
+
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
+        tracking_download,
+    )
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.md5_checksum",
+        lambda _: "correct_md5",
+    )
+
+    ensure_medmnist_npz(metadata, retries=1)
+
+    assert received_tmp_paths[0].suffix == ".tmp"
+
+
+@pytest.mark.unit
+def test_ensure_medmnist_npz_mkdir_parents(metadata, monkeypatch):
+    """Parent directory creation should use parents=True."""
+    # Use a deeply nested path
+    deep_path = metadata.path.parent / "sub" / "deep" / "dataset.npz"
+    metadata.path = deep_path
+
+    def fake_download(url, tmp_path):
+        real_npz = tmp_path.with_suffix(".npz")
+        np.savez(real_npz, train_images=np.zeros((2, 28, 28)))
+        tmp_path.write_bytes(real_npz.read_bytes())
+
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
+        fake_download,
+    )
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.md5_checksum",
+        lambda _: "correct_md5",
+    )
+
+    result = ensure_medmnist_npz(metadata, retries=1)
+
+    assert result.exists()
+    assert deep_path.parent.exists()
+
+
+@pytest.mark.unit
+def test_ensure_medmnist_npz_md5_mismatch_error_message(metadata, monkeypatch):
+    """MD5 mismatch should raise with specific error message."""
+
+    def fake_download(url, tmp_path):
+        real_npz = tmp_path.with_suffix(".npz")
+        np.savez(real_npz, train_images=np.zeros((2, 28, 28)))
+        tmp_path.write_bytes(real_npz.read_bytes())
+
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
+        fake_download,
+    )
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.md5_checksum",
+        lambda _: "wrong_md5",
+    )
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.time.sleep",
+        lambda _: None,
+    )
+
+    with pytest.raises(OrchardDatasetError, match="Could not download"):
+        ensure_medmnist_npz(metadata, retries=1, delay=0.01)
+
+
+@pytest.mark.unit
+def test_ensure_medmnist_npz_corrupted_file_warning(metadata, monkeypatch):
+    """Corrupted file should log warning with the path."""
+    metadata.path.parent.mkdir(parents=True, exist_ok=True)
+    metadata.path.write_bytes(b"CORRUPTED")
+
+    warning_calls = []
+
+    def fake_download(url, tmp_path):
+        real_npz = tmp_path.with_suffix(".npz")
+        np.savez(real_npz, train_images=np.zeros((2, 28, 28)))
+        tmp_path.write_bytes(real_npz.read_bytes())
+
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
+        fake_download,
+    )
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.md5_checksum",
+        lambda _: "correct_md5",
+    )
+    original_warning = __import__(
+        "orchard.data_handler.fetchers.medmnist_fetcher", fromlist=["logger"]
+    ).logger.warning
+
+    def tracking_warning(msg, *args):
+        warning_calls.append(msg % args if args else msg)
+        original_warning(msg, *args)
+
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.logger.warning",
+        tracking_warning,
+    )
+
+    ensure_medmnist_npz(metadata, retries=1)
+
+    assert any(str(metadata.path) in call for call in warning_calls)
+
+
+@pytest.mark.unit
+def test_ensure_medmnist_npz_retry_logging(metadata, monkeypatch):
+    """Retry warnings should include attempt number, total retries, error, and delay."""
+    call_count = {"n": 0}
+    warning_calls = []
+
+    def failing_then_ok(url, tmp_path):
+        call_count["n"] += 1
+        if call_count["n"] == 1:
+            raise OSError("network glitch")
+        real_npz = tmp_path.with_suffix(".npz")
+        np.savez(real_npz, train_images=np.zeros((2, 28, 28)))
+        tmp_path.write_bytes(real_npz.read_bytes())
+
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
+        failing_then_ok,
+    )
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.md5_checksum",
+        lambda _: "correct_md5",
+    )
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.time.sleep",
+        lambda _: None,
+    )
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.logger.warning",
+        lambda msg, *args: warning_calls.append(msg % args if args else msg),
+    )
+
+    ensure_medmnist_npz(metadata, retries=2, delay=3.0)
+
+    combined = " ".join(warning_calls)
+    assert "1/2" in combined
+    assert "network glitch" in combined
+    assert "3.0" in combined
+
+
+@pytest.mark.unit
+def test_ensure_medmnist_npz_final_failure_error_log(metadata, monkeypatch):
+    """Final failure should log error with retry count and raise with dataset name."""
+    error_calls = []
+
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
+        lambda *a: (_ for _ in ()).throw(OSError("fail")),
+    )
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.time.sleep",
+        lambda _: None,
+    )
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.logger.error",
+        lambda msg, *args: error_calls.append(msg % args if args else msg),
+    )
+
+    with pytest.raises(OrchardDatasetError, match="test_medmnist"):
+        ensure_medmnist_npz(metadata, retries=2, delay=0.01)
+
+    combined = " ".join(error_calls)
+    assert "2" in combined
+
+
+@pytest.mark.unit
+def test_ensure_medmnist_npz_md5_failure_error_log(metadata, monkeypatch):
+    """MD5 validation failure should log error with expected and actual MD5."""
+    error_calls = []
+
+    def fake_download(url, tmp_path):
+        real_npz = tmp_path.with_suffix(".npz")
+        np.savez(real_npz, train_images=np.zeros((2, 28, 28)))
+        tmp_path.write_bytes(real_npz.read_bytes())
+
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
+        fake_download,
+    )
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.md5_checksum",
+        lambda _: "bad_hash_xyz",
+    )
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.time.sleep",
+        lambda _: None,
+    )
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.logger.error",
+        lambda msg, *args: error_calls.append(msg % args if args else msg),
+    )
+
+    with pytest.raises(OrchardDatasetError):
+        ensure_medmnist_npz(metadata, retries=1, delay=0.01)
+
+    combined = " ".join(error_calls)
+    assert "correct_md5" in combined
+    assert "bad_hash_xyz" in combined
+
+
+@pytest.mark.unit
+def test_ensure_medmnist_npz_retries_exact_count(metadata, monkeypatch):
+    """ensure_medmnist_npz should retry exactly `retries` times."""
+    call_count = {"n": 0}
+
+    def counting_download(url, tmp_path):
+        call_count["n"] += 1
+        raise OSError("fail")
+
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
+        counting_download,
+    )
+    monkeypatch.setattr(
+        "orchard.data_handler.fetchers.medmnist_fetcher.time.sleep",
+        lambda _: None,
+    )
+
+    with pytest.raises(OrchardDatasetError):
+        ensure_medmnist_npz(metadata, retries=3, delay=0.01)
+
+    assert call_count["n"] == 3

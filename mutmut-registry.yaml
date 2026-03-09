@@ -426,26 +426,26 @@ orchard/data_handler/fetchers/__init__.py:
   not_checked: 0
   score: 100.0
 orchard/data_handler/fetchers/cifar_converter.py:
-  last_run: '2026-03-09T13:02:33Z'
+  last_run: '2026-03-09T18:07:08Z'
   total: 132
-  killed: 113
-  survived: 19
+  killed: 126
+  survived: 6
   not_checked: 0
-  score: 85.6
+  score: 95.5
 orchard/data_handler/fetchers/galaxy10_converter.py:
-  last_run: '2026-03-09T13:02:33Z'
+  last_run: '2026-03-09T18:32:18Z'
   total: 231
-  killed: 155
-  survived: 76
+  killed: 201
+  survived: 30
   not_checked: 0
-  score: 67.1
+  score: 87.0
 orchard/data_handler/fetchers/medmnist_fetcher.py:
-  last_run: '2026-03-09T13:02:33Z'
+  last_run: '2026-03-09T18:08:49Z'
   total: 159
-  killed: 85
-  survived: 74
+  killed: 144
+  survived: 15
   not_checked: 0
-  score: 53.5
+  score: 90.6
 orchard/data_handler/loader.py:
   last_run: '2026-03-09T08:53:30Z'
   total: 189

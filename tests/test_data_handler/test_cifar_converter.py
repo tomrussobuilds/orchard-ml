@@ -262,5 +262,131 @@ class TestEnsureCifarNpz:
         assert result.exists()
 
 
+# ─── MUTATION-KILLING TESTS ───
+
+
+@pytest.mark.unit
+class TestCreateStratifiedSplitMutations:
+    """Kill surviving mutants in _create_stratified_split."""
+
+    def test_default_val_ratio_is_015(self):
+        """Default val_ratio=0.15 should produce ~15% validation split."""
+        n = 1000
+        images = np.random.randint(0, 255, (n, 32, 32, 3), dtype=np.uint8)
+        labels = np.repeat(np.arange(10), 100)
+
+        # Call WITHOUT specifying val_ratio — uses default 0.15
+        _, _, val_imgs, _ = _create_stratified_split(images, labels)
+
+        actual_ratio = len(val_imgs) / n
+        # 0.15 default → ~15%. If mutated to 1.15, val would be ~100%.
+        assert 0.12 < actual_ratio < 0.20
+
+    def test_default_seed_is_42(self):
+        """Default seed=42 should produce same result as explicit seed=42."""
+        n = 200
+        images = np.random.randint(0, 255, (n, 32, 32, 3), dtype=np.uint8)
+        labels = np.random.randint(0, 5, n)
+
+        result_default = _create_stratified_split(images, labels, val_ratio=0.15)
+        result_explicit = _create_stratified_split(images, labels, val_ratio=0.15, seed=42)
+
+        np.testing.assert_array_equal(result_default[0], result_explicit[0])
+
+    def test_max_1_ensures_at_least_one_val_per_class(self):
+        """max(1, ...) ensures each class has at least 1 validation sample."""
+        # 5 classes with only 3 samples each → val_ratio=0.15 would give 0
+        # but max(1, ...) forces at least 1
+        n = 15
+        images = np.random.randint(0, 255, (n, 32, 32, 3), dtype=np.uint8)
+        labels = np.repeat(np.arange(5), 3)
+
+        _, _, val_imgs, val_labels = _create_stratified_split(images, labels, val_ratio=0.15)
+
+        # Each class should have exactly 1 val sample (max(1, int(3*0.15))=max(1,0)=1)
+        for label in range(5):
+            count = np.sum(val_labels == label)
+            assert count >= 1, f"Class {label} has {count} val samples, expected >= 1"
+
+
+@pytest.mark.unit
+class TestDownloadAndConvertMutations:
+    """Kill surviving mutants in _download_and_convert."""
+
+    def test_cifar_cls_called_with_correct_args(self, cifar10_metadata):
+        """cifar_cls should be called with root=str(download_dir), train=T/F, download=True."""
+        call_log = []
+
+        def tracking_cls(root, train, download):
+            call_log.append({"root": root, "train": train, "download": download})
+            ds = MagicMock()
+            ds.data = np.random.randint(0, 255, (50, 32, 32, 3), dtype=np.uint8)
+            ds.targets = list(np.random.randint(0, 10, 50))
+            return ds
+
+        _download_and_convert(cifar10_metadata, tracking_cls)
+
+        assert len(call_log) == 2
+
+        # Train call
+        assert call_log[0]["train"] is True
+        assert call_log[0]["download"] is True
+        assert isinstance(call_log[0]["root"], str)
+        assert call_log[0]["root"] != "None"
+
+        # Test call
+        assert call_log[1]["train"] is False
+        assert call_log[1]["download"] is True
+        assert isinstance(call_log[1]["root"], str)
+        assert call_log[1]["root"] == call_log[0]["root"]
+
+    def test_download_dir_derived_from_metadata(self, cifar10_metadata):
+        """Download directory should be parent/.{name}_raw."""
+        call_log = []
+
+        def tracking_cls(root, train, download):
+            call_log.append(root)
+            ds = MagicMock()
+            ds.data = np.random.randint(0, 255, (50, 32, 32, 3), dtype=np.uint8)
+            ds.targets = list(np.random.randint(0, 10, 50))
+            return ds
+
+        _download_and_convert(cifar10_metadata, tracking_cls)
+
+        expected_dir = str(cifar10_metadata.path.parent / ".cifar10_raw")
+        assert call_log[0] == expected_dir
+
+    def test_labels_reshaped_to_n_by_1_not_n_by_other(self, cifar10_metadata, mock_cifar_cls):
+        """Labels must be reshaped to (-1, 1), not (-2, 1) or other."""
+        cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=100, test_size=20)
+
+        result = _download_and_convert(cifar10_metadata, cifar_cls)
+
+        with np.load(result) as data:
+            for key in ["train_labels", "val_labels", "test_labels"]:
+                assert data[key].shape[1] == 1
+                assert data[key].shape[0] > 0
+                # Verify values are correct (not garbage from wrong reshape)
+                assert np.all(data[key] >= 0)
+                assert np.all(data[key] < 10)
+
+    def test_parent_dir_created_with_parents(self, tmp_path, mock_cifar_cls):
+        """mkdir should use parents=True for nested directories."""
+        deep_path = tmp_path / "a" / "b" / "c" / "cifar10.npz"
+        deep_metadata = SimpleNamespace(
+            name="cifar10",
+            display_name="CIFAR-10",
+            md5_checksum="",
+            url="torchvision",
+            path=deep_path,
+            native_resolution=32,
+        )
+        cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=50, test_size=10)
+
+        result = _download_and_convert(deep_metadata, cifar_cls)
+
+        assert result.exists()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
