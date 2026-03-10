@@ -96,6 +96,9 @@ docs = [
 include = ["orchard*"]
 exclude = ["tests*", "docs*"]
 
+[tool.setuptools.package-data]
+orchard = ["core/metadata/domains/*.yaml"]
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = [

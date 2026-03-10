@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Documentation
+
+- fix notebook setup cells and add edge deploy notebook
+
 ## [0.2.1] - 2026-03-09
 
 ### Added
@@ -29,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - remove commented-out code flagged by SonarCloud (python:S125)
 - escalate log levels in InfrastructureManager and improve mutation score to 100%
 - handle Z suffix in isoformat dates for Python 3.10 compat
+- add fetch-depth: 0 to publish checkout for freshness check
 
 ### Miscellaneous
 
