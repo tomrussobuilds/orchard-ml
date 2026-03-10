@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fix notebook setup cells and add edge deploy notebook
 
+### Fixed
+
+- use --no-deps to avoid reinstalling Colab dependencies
+
 ## [0.2.1] - 2026-03-09
 
 ### Added
