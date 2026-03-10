@@ -105,6 +105,65 @@ def dump_requirements(output_path: Path) -> None:
         logger.error("Failed to dump requirements: %s", e)
 
 
+def dump_git_info(output_path: Path) -> None:
+    """
+    Persist git commit hash, branch, and dirty status for run auditability.
+
+    Captures the current HEAD commit (short hash + full hash), active branch,
+    and whether the working tree has uncommitted changes. Silently skips if
+    git is not available or the project is not a git repository.
+
+    Args:
+        output_path: Filesystem path where the git info is written.
+    """
+    import subprocess  # nosec B404
+
+    logger = logging.getLogger(LOGGER_NAME)
+
+    try:
+        git_info_parts: list[str] = []
+
+        commit_full = subprocess.run(  # nosec B603 B607
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        commit_short = subprocess.run(  # nosec B603 B607
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        branch = subprocess.run(  # nosec B603 B607
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        dirty = subprocess.run(  # nosec B603 B607
+            ["git", "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+
+        if commit_full.returncode == 0:
+            git_info_parts.append(f"commit: {commit_full.stdout.strip()}")
+            git_info_parts.append(f"commit_short: {commit_short.stdout.strip()}")
+        if branch.returncode == 0:
+            git_info_parts.append(f"branch: {branch.stdout.strip()}")
+        if dirty.returncode == 0:
+            is_dirty = bool(dirty.stdout.strip())
+            git_info_parts.append(f"dirty: {is_dirty}")
+
+        if git_info_parts:
+            output_path.write_text("\n".join(git_info_parts) + "\n", encoding="utf-8")
+
+    except (subprocess.TimeoutExpired, OSError, FileNotFoundError) as e:
+        logger.debug("Could not capture git info: %s", e)
+
+
 def load_config_from_yaml(yaml_path: Path) -> dict[str, Any]:
     """
     Loads a raw configuration dictionary from a YAML file.
@@ -157,13 +216,23 @@ class AuditSaverProtocol(Protocol):
         """
         ...  # pragma: no cover
 
+    def dump_git_info(self, output_path: Path) -> None:
+        """
+        Persist git commit hash and working tree status for auditability.
+
+        Args:
+            output_path: Filesystem path for the git info snapshot.
+        """
+        ...  # pragma: no cover
+
 
 class AuditSaver:
     """
     Default ``AuditSaverProtocol`` implementation.
 
-    Delegates to the module-level ``save_config_as_yaml`` and
-    ``dump_requirements`` functions — no logic duplication.
+    Delegates to the module-level ``save_config_as_yaml``,
+    ``dump_requirements``, and ``dump_git_info`` functions —
+    no logic duplication.
     """
 
     def save_config(self, data: Any, yaml_path: Path) -> Path:
@@ -187,6 +256,15 @@ class AuditSaver:
             output_path: Filesystem path for the requirements snapshot.
         """
         dump_requirements(output_path)
+
+    def dump_git_info(self, output_path: Path) -> None:
+        """
+        Persist git commit hash and working tree status.
+
+        Args:
+            output_path: Filesystem path for the git info snapshot.
+        """
+        dump_git_info(output_path)
 
 
 def _sanitize_for_yaml(obj: Any) -> Any:

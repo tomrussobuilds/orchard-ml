@@ -1107,5 +1107,602 @@ def test_log_optimization_summary_warning_no_completed():
     assert found, "No 'No trials completed' warning call found"
 
 
+# ---------------------------------------------------------------------------
+# Mutation-killing: Reporter exact argument assertions
+# ---------------------------------------------------------------------------
+
+
+def _build_cpu_cfg() -> MagicMock:
+    """Build a minimal mock cfg for CPU-only Reporter tests."""
+    cfg = MagicMock()
+    cfg.hardware.device = "cpu"
+    cfg.training.epochs = 10
+    cfg.training.batch_size = 16
+    cfg.training.learning_rate = 0.01
+    cfg.training.use_tta = False
+    cfg.training.use_amp = False
+    cfg.training.seed = 42
+    cfg.training.monitor_metric = "auc"
+    cfg.hardware.use_deterministic_algorithms = False
+    cfg.architecture.name = "mini_cnn"
+    cfg.architecture.pretrained = False
+    cfg.architecture.weight_variant = None
+    cfg.augmentation.tta_mode = "none"
+    cfg.dataset.metadata.display_name = "Test"
+    cfg.dataset.metadata.num_classes = 3
+    cfg.dataset.metadata.in_channels = 1
+    cfg.dataset.metadata.resolution_str = "28x28"
+    cfg.dataset.metadata.is_anatomical = False
+    cfg.dataset.metadata.is_texture_based = True
+    cfg.dataset.img_size = 28
+    cfg.run_slug = "test-run"
+    return cfg
+
+
+def _find_call_with_label(calls, label: str):
+    """Find the call tuple that contains a specific label like 'Weights'.
+
+    Logger calls use: logger.info(fmt, I, A, label, value, ...) where
+    args[0]=fmt, args[1]=I, args[2]=A, args[3]=label, args[4]=value.
+    """
+    for c in calls:
+        args = c[0]
+        if len(args) >= 4 and args[3] is not None and label in str(args[3]):
+            return args
+    return None
+
+
+# --- log_initial_status: delegation and argument passing ---
+@pytest.mark.unit
+def test_reporter_initial_status_passes_indent_and_arrow():
+    """Kill mutmut I=None and A=None in log_initial_status."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = _build_cpu_cfg()
+    paths = MagicMock()
+    paths.root = Path("/run")
+    device = torch.device("cpu")
+
+    reporter.log_initial_status(log, cfg, paths, device, 4, 2)
+
+    # Experiment line uses I, A — verify they are not None
+    exp_call = _find_call_with_label(log.info.call_args_list, "Experiment")
+    assert exp_call is not None
+    assert exp_call[1] == LogStyle.INDENT
+    assert exp_call[2] == LogStyle.ARROW
+
+
+@pytest.mark.unit
+def test_reporter_initial_status_passes_applied_threads_and_workers():
+    """Kill mutmut applied_threads=None and num_workers=None in log_initial_status."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = _build_cpu_cfg()
+    paths = MagicMock()
+    paths.root = Path("/run")
+    device = torch.device("cpu")
+
+    reporter.log_initial_status(log, cfg, paths, device, 7, 3)
+
+    # Check hardware section got the right values
+    dl_call = _find_call_with_label(log.info.call_args_list, "DataLoader")
+    assert dl_call is not None
+    assert dl_call[4] == 3  # num_workers
+
+    ct_call = _find_call_with_label(log.info.call_args_list, "Compute Threads")
+    assert ct_call is not None
+    assert ct_call[4] == 7  # applied_threads
+
+
+@pytest.mark.unit
+def test_reporter_initial_status_lr_formatting():
+    """Kill mutmut lr=None, lr_str=None, and str(None) mutations."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = _build_cpu_cfg()
+    cfg.training.learning_rate = 0.001
+    paths = MagicMock()
+    paths.root = Path("/run")
+    device = torch.device("cpu")
+
+    reporter.log_initial_status(log, cfg, paths, device, 4, 2)
+
+    lr_call = _find_call_with_label(log.info.call_args_list, "Initial LR")
+    assert lr_call is not None
+    assert lr_call[4] == "1.00e-03"  # exact scientific notation
+
+
+@pytest.mark.unit
+def test_reporter_initial_status_lr_string_passthrough():
+    """Kill str(None) mutation — when LR is string, pass through as-is."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = _build_cpu_cfg()
+    cfg.training.learning_rate = "auto"
+    paths = MagicMock()
+    paths.root = Path("/run")
+    device = torch.device("cpu")
+
+    reporter.log_initial_status(log, cfg, paths, device, 4, 2)
+
+    lr_call = _find_call_with_label(log.info.call_args_list, "Initial LR")
+    assert lr_call is not None
+    assert lr_call[4] == "auto"
+
+
+@pytest.mark.unit
+def test_reporter_initial_status_env_init_header():
+    """Kill mutmut XX/lowercase mutations on ENVIRONMENT INITIALIZATION header."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = _build_cpu_cfg()
+    paths = MagicMock()
+    paths.root = Path("/run")
+    device = torch.device("cpu")
+
+    reporter.log_initial_status(log, cfg, paths, device, 4, 2)
+
+    # log_phase_header centers the title — verify exact centered string
+    expected_centered = "ENVIRONMENT INITIALIZATION".center(LogStyle.HEADER_WIDTH)
+    found = False
+    for c in log.info.call_args_list:
+        args = c[0]
+        if len(args) == 1 and args[0] == expected_centered:
+            found = True
+            break
+    assert found, "ENVIRONMENT INITIALIZATION header not found with exact content"
+
+
+@pytest.mark.unit
+def test_reporter_initial_status_delegates_tracking_cfg():
+    """Kill mutmut cfg→None mutation for _log_tracking_section."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = _build_cpu_cfg()
+    cfg.tracking.enabled = True
+    cfg.tracking.experiment_name = "exp1"
+    paths = MagicMock()
+    paths.root = Path("/run")
+    device = torch.device("cpu")
+
+    reporter.log_initial_status(log, cfg, paths, device, 4, 2)
+
+    # If cfg was replaced by None, getattr(None, 'tracking', None) returns None
+    # and [TRACKING] section would not appear
+    calls_str = " ".join(str(c) for c in log.info.call_args_list)
+    assert "TRACKING" in calls_str
+    assert "exp1" in calls_str
+
+
+@pytest.mark.unit
+def test_reporter_initial_status_delegates_optimization_cfg():
+    """Kill mutmut cfg→None mutation for _log_optimization_section."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = _build_cpu_cfg()
+    cfg.optuna.n_trials = 10
+    cfg.optuna.epochs = 5
+    cfg.optuna.direction = "maximize"
+    cfg.optuna.sampler_type = "tpe"
+    cfg.optuna.enable_pruning = False
+    paths = MagicMock()
+    paths.root = Path("/run")
+    device = torch.device("cpu")
+
+    reporter.log_initial_status(log, cfg, paths, device, 4, 2)
+
+    calls_str = " ".join(str(c) for c in log.info.call_args_list)
+    assert "OPTIMIZATION" in calls_str
+
+
+@pytest.mark.unit
+def test_reporter_initial_status_delegates_export_cfg():
+    """Kill mutmut cfg→None mutation for _log_export_section."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = _build_cpu_cfg()
+    cfg.export.format = "onnx"
+    cfg.export.opset_version = 18
+    cfg.export.validate_export = True
+    cfg.export.quantize = False
+    paths = MagicMock()
+    paths.root = Path("/run")
+    device = torch.device("cpu")
+
+    reporter.log_initial_status(log, cfg, paths, device, 4, 2)
+
+    calls_str = " ".join(str(c) for c in log.info.call_args_list)
+    assert "EXPORT" in calls_str
+
+
+# --- _log_hardware_section: exact argument assertions ---
+@pytest.mark.unit
+def test_hardware_section_exact_args_cpu():
+    """Kill I=None, A=None, device.lower() mutations in hardware section."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.hardware.device = "cpu"
+    device = torch.device("cpu")
+
+    reporter._log_hardware_section(log, cfg, device, 4, 2)
+
+    I = LogStyle.INDENT  # noqa: E741
+    A = LogStyle.ARROW
+
+    # Active Device uses str(device).upper()
+    ad_call = _find_call_with_label(log.info.call_args_list, "Active Device")
+    assert ad_call is not None
+    assert ad_call[1] == I
+    assert ad_call[2] == A
+    assert ad_call[4] == "CPU"
+
+    # DataLoader
+    dl_call = _find_call_with_label(log.info.call_args_list, "DataLoader")
+    assert dl_call is not None
+    assert dl_call[4] == 2  # num_workers
+
+    # Compute Threads
+    ct_call = _find_call_with_label(log.info.call_args_list, "Compute Threads")
+    assert ct_call is not None
+    assert ct_call[4] == 4  # applied_threads
+
+
+@pytest.mark.unit
+def test_hardware_section_fallback_warning_exact_args():
+    """Kill I, LogStyle.WARNING, requested_device arg swap/None mutations."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.hardware.device = "cuda"
+    device = torch.device("cpu")
+
+    reporter._log_hardware_section(log, cfg, device, 4, 2)
+
+    assert log.warning.called
+    warn_args = log.warning.call_args[0]
+    # args: (fmt, I, WARNING, requested_device)
+    assert warn_args[1] == LogStyle.INDENT
+    assert warn_args[2] == LogStyle.WARNING
+    assert warn_args[3] == "cuda"  # requested_device after .lower()
+
+
+@pytest.mark.unit
+def test_hardware_section_no_fallback_when_cpu_requested():
+    """Kill 'or' mutation: if requested=='cpu' and active=='cpu', no warning."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.hardware.device = "cpu"
+    device = torch.device("cpu")
+
+    reporter._log_hardware_section(log, cfg, device, 4, 2)
+
+    log.warning.assert_not_called()
+
+
+@pytest.mark.unit
+def test_hardware_section_lower_not_upper():
+    """Kill .upper() mutation on requested_device = cfg.hardware.device.lower()."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.hardware.device = "CUDA"
+    device = torch.device("cpu")
+
+    reporter._log_hardware_section(log, cfg, device, 4, 2)
+
+    # requested_device should be "cuda" (lower), not "CUDA" (upper)
+    assert log.warning.called
+    warn_args = log.warning.call_args[0]
+    assert warn_args[3] == "cuda"
+
+
+@pytest.mark.unit
+def test_hardware_section_mps_no_vram():
+    """Kill 'MPS'→'XXmpsXX' mutation in active_type in ('cuda', 'mps')."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.hardware.device = "mps"
+    device = MagicMock()
+    device.type = "mps"
+    device.__str__ = lambda _: "mps"
+
+    with patch("orchard.core.logger.reporter.get_accelerator_name", return_value="Apple M2"):
+        reporter._log_hardware_section(log, cfg, device, 4, 2)
+
+    calls_str = " ".join(str(c) for c in log.info.call_args_list)
+    assert "Apple M2" in calls_str
+    # MPS should NOT log VRAM
+    assert "VRAM" not in calls_str
+
+
+@pytest.mark.unit
+def test_hardware_section_fallback_cpu_string_exact():
+    """Kill 'cpu'→'XXcpuXX' and 'cpu'→'CPU' mutations in condition."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+
+    # requested='cpu' (exact), active='cpu' => no warning
+    cfg.hardware.device = "cpu"
+    reporter._log_hardware_section(log, cfg, torch.device("cpu"), 4, 2)
+    log.warning.assert_not_called()
+
+    # requested='cuda', active='cpu' => warning
+    log.reset_mock()
+    cfg.hardware.device = "cuda"
+    reporter._log_hardware_section(log, cfg, torch.device("cpu"), 4, 2)
+    assert log.warning.called
+
+
+# --- _log_dataset_section: I and A not None ---
+@pytest.mark.unit
+def test_dataset_section_exact_indent_arrow():
+    """Kill I=None, A=None mutations in _log_dataset_section."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.dataset.metadata.display_name = "Blood"
+    cfg.dataset.metadata.num_classes = 8
+    cfg.dataset.metadata.in_channels = 3
+    cfg.dataset.metadata.resolution_str = "28x28"
+    cfg.dataset.metadata.is_anatomical = True
+    cfg.dataset.metadata.is_texture_based = False
+    cfg.dataset.img_size = 28
+
+    reporter._log_dataset_section(log, cfg)
+
+    name_call = _find_call_with_label(log.info.call_args_list, "Name")
+    assert name_call is not None
+    assert name_call[1] == LogStyle.INDENT
+    assert name_call[2] == LogStyle.ARROW
+    assert name_call[4] == "Blood"
+
+
+# --- _log_strategy_section: exact values for weights, precision, repro, tta ---
+@pytest.mark.unit
+def test_strategy_section_pretrained_weights():
+    """Kill 'Pretrained'→'XXPretrainedXX'/'pretrained'/'PRETRAINED'/None."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.architecture.pretrained = True
+    cfg.architecture.name = "resnet_18"
+    cfg.architecture.weight_variant = None
+    cfg.training.use_tta = False
+    cfg.training.use_amp = False
+    cfg.training.seed = 42
+    cfg.hardware.use_deterministic_algorithms = False
+    cfg.augmentation.tta_mode = "none"
+
+    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="disabled"):
+        reporter._log_strategy_section(log, cfg, torch.device("cpu"))
+
+    w_call = _find_call_with_label(log.info.call_args_list, "Weights")
+    assert w_call is not None
+    assert w_call[4] == "Pretrained"
+
+
+@pytest.mark.unit
+def test_strategy_section_random_weights():
+    """Kill 'Random'→'XXRandomXX'/'random'/'RANDOM' mutations."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.architecture.pretrained = False
+    cfg.architecture.name = "mini_cnn"
+    cfg.architecture.weight_variant = None
+    cfg.training.use_tta = False
+    cfg.training.use_amp = False
+    cfg.training.seed = 42
+    cfg.hardware.use_deterministic_algorithms = False
+    cfg.augmentation.tta_mode = "none"
+
+    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="disabled"):
+        reporter._log_strategy_section(log, cfg, torch.device("cpu"))
+
+    w_call = _find_call_with_label(log.info.call_args_list, "Weights")
+    assert w_call is not None
+    assert w_call[4] == "Random"
+
+
+@pytest.mark.unit
+def test_strategy_section_amp_precision():
+    """Kill 'AMP (Mixed)'→mutations and None."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.architecture.pretrained = False
+    cfg.architecture.name = "x"
+    cfg.architecture.weight_variant = None
+    cfg.training.use_tta = False
+    cfg.training.use_amp = True
+    cfg.training.seed = 1
+    cfg.hardware.use_deterministic_algorithms = False
+    cfg.augmentation.tta_mode = "none"
+
+    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="disabled"):
+        reporter._log_strategy_section(log, cfg, torch.device("cpu"))
+
+    p_call = _find_call_with_label(log.info.call_args_list, "Precision")
+    assert p_call is not None
+    assert p_call[4] == "AMP (Mixed)"
+
+
+@pytest.mark.unit
+def test_strategy_section_fp32_precision():
+    """Kill 'FP32'→'XXFP32XX'/'fp32' mutations."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.architecture.pretrained = False
+    cfg.architecture.name = "x"
+    cfg.architecture.weight_variant = None
+    cfg.training.use_tta = False
+    cfg.training.use_amp = False
+    cfg.training.seed = 1
+    cfg.hardware.use_deterministic_algorithms = False
+    cfg.augmentation.tta_mode = "none"
+
+    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="disabled"):
+        reporter._log_strategy_section(log, cfg, torch.device("cpu"))
+
+    p_call = _find_call_with_label(log.info.call_args_list, "Precision")
+    assert p_call is not None
+    assert p_call[4] == "FP32"
+
+
+@pytest.mark.unit
+def test_strategy_section_strict_repro_mode():
+    """Kill 'Strict'→mutations and None."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.architecture.pretrained = False
+    cfg.architecture.name = "x"
+    cfg.architecture.weight_variant = None
+    cfg.training.use_tta = False
+    cfg.training.use_amp = False
+    cfg.training.seed = 1
+    cfg.hardware.use_deterministic_algorithms = True
+    cfg.augmentation.tta_mode = "none"
+
+    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="disabled"):
+        reporter._log_strategy_section(log, cfg, torch.device("cpu"))
+
+    r_call = _find_call_with_label(log.info.call_args_list, "Repro. Mode")
+    assert r_call is not None
+    assert r_call[4] == "Strict"
+
+
+@pytest.mark.unit
+def test_strategy_section_standard_repro_mode():
+    """Kill 'Standard'→mutations."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.architecture.pretrained = False
+    cfg.architecture.name = "x"
+    cfg.architecture.weight_variant = None
+    cfg.training.use_tta = False
+    cfg.training.use_amp = False
+    cfg.training.seed = 1
+    cfg.hardware.use_deterministic_algorithms = False
+    cfg.augmentation.tta_mode = "none"
+
+    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="disabled"):
+        reporter._log_strategy_section(log, cfg, torch.device("cpu"))
+
+    r_call = _find_call_with_label(log.info.call_args_list, "Repro. Mode")
+    assert r_call is not None
+    assert r_call[4] == "Standard"
+
+
+@pytest.mark.unit
+def test_strategy_section_tta_mode_exact():
+    """Kill tta_status=None and determine_tta_mode arg mutations."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.architecture.pretrained = False
+    cfg.architecture.name = "x"
+    cfg.architecture.weight_variant = None
+    cfg.training.use_tta = True
+    cfg.training.use_amp = False
+    cfg.training.seed = 1
+    cfg.hardware.use_deterministic_algorithms = False
+    cfg.augmentation.tta_mode = "flip"
+
+    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="flip") as mock_tta:
+        reporter._log_strategy_section(log, cfg, torch.device("cpu"))
+        mock_tta.assert_called_once_with(True, "cpu", "flip")
+
+    tta_call = _find_call_with_label(log.info.call_args_list, "TTA Mode")
+    assert tta_call is not None
+    assert tta_call[4] == "flip"
+
+
+@pytest.mark.unit
+def test_strategy_section_indent_arrow_not_none():
+    """Kill I=None, A=None in _log_strategy_section."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.architecture.pretrained = False
+    cfg.architecture.name = "x"
+    cfg.architecture.weight_variant = None
+    cfg.training.use_tta = False
+    cfg.training.use_amp = False
+    cfg.training.seed = 1
+    cfg.hardware.use_deterministic_algorithms = False
+    cfg.augmentation.tta_mode = "none"
+
+    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="none"):
+        reporter._log_strategy_section(log, cfg, torch.device("cpu"))
+
+    arch_call = _find_call_with_label(log.info.call_args_list, "Architecture")
+    assert arch_call is not None
+    assert arch_call[1] == LogStyle.INDENT
+    assert arch_call[2] == LogStyle.ARROW
+
+
+# --- _log_tracking_section: exact status values ---
+@pytest.mark.unit
+def test_tracking_section_active_exact():
+    """Kill 'Active'→'XXActiveXX' mutation."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.tracking.enabled = True
+    cfg.tracking.experiment_name = "exp"
+
+    reporter._log_tracking_section(log, cfg)
+
+    status_call = _find_call_with_label(log.info.call_args_list, "Status")
+    assert status_call is not None
+    assert status_call[4] == "Active"
+    assert status_call[1] == LogStyle.INDENT
+    assert status_call[2] == LogStyle.ARROW
+
+
+@pytest.mark.unit
+def test_tracking_section_disabled_exact():
+    """Kill 'Disabled'→'XXDisabledXX' mutation."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.tracking.enabled = False
+
+    reporter._log_tracking_section(log, cfg)
+
+    status_call = _find_call_with_label(log.info.call_args_list, "Status")
+    assert status_call is not None
+    assert status_call[4] == "Disabled"
+
+
+# --- _log_optimization_section: I/A not None ---
+@pytest.mark.unit
+def test_optimization_section_indent_arrow_not_none():
+    """Kill I=None, A=None in _log_optimization_section."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = MagicMock()
+    cfg.optuna.n_trials = 20
+    cfg.optuna.epochs = 10
+    cfg.training.monitor_metric = "auc"
+    cfg.optuna.direction = "maximize"
+    cfg.optuna.sampler_type = "tpe"
+    cfg.optuna.enable_pruning = False
+
+    reporter._log_optimization_section(log, cfg)
+
+    trials_call = _find_call_with_label(log.info.call_args_list, "Trials")
+    assert trials_call is not None
+    assert trials_call[1] == LogStyle.INDENT
+    assert trials_call[2] == LogStyle.ARROW
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -16,6 +16,7 @@ import yaml
 from orchard.core.io.serialization import (
     _persist_yaml_atomic,
     _sanitize_for_yaml,
+    dump_git_info,
     dump_requirements,
     load_config_from_yaml,
     save_config_as_yaml,
@@ -927,6 +928,274 @@ def test_dump_requirements_writes_utf8_encoding(tmp_path):
             assert call_kwargs.kwargs.get("encoding") == "utf-8" or (
                 len(call_kwargs.args) >= 2 and "utf-8" in str(call_kwargs)
             )
+
+
+# DUMP GIT INFO
+@pytest.mark.unit
+def test_dump_git_info_writes_commit_and_branch(tmp_path):
+    """Test dump_git_info writes commit hash, short hash, branch, and dirty status."""
+
+    output = tmp_path / "git_info.txt"
+
+    def fake_run(cmd, **kwargs):
+        result = MagicMock(returncode=0)
+        if cmd == ["git", "rev-parse", "HEAD"]:
+            result.stdout = "abc123def456\n"
+        elif cmd == ["git", "rev-parse", "--short", "HEAD"]:
+            result.stdout = "abc123d\n"
+        elif cmd == ["git", "rev-parse", "--abbrev-ref", "HEAD"]:
+            result.stdout = "main\n"
+        elif cmd == ["git", "status", "--porcelain"]:
+            result.stdout = " M file.py\n"
+        else:
+            result.returncode = 1
+            result.stdout = ""
+        return result
+
+    with patch("subprocess.run", side_effect=fake_run):
+        dump_git_info(output)
+
+    assert output.exists()
+    content = output.read_text()
+    assert "commit: abc123def456" in content
+    assert "commit_short: abc123d" in content
+    assert "branch: main" in content
+    assert "dirty: True" in content
+
+    # Kill join-separator mutant: each line must be exactly one key-value pair
+    lines = content.strip().splitlines()
+    assert len(lines) == 4
+    assert lines[0] == "commit: abc123def456"
+    assert lines[1] == "commit_short: abc123d"
+    assert lines[2] == "branch: main"
+    assert lines[3] == "dirty: True"
+
+
+@pytest.mark.unit
+def test_dump_git_info_clean_working_tree(tmp_path):
+    """Test dump_git_info reports dirty: False for clean working tree."""
+    output = tmp_path / "git_info.txt"
+
+    def fake_run(cmd, **kwargs):
+        result = MagicMock(returncode=0)
+        if cmd == ["git", "rev-parse", "HEAD"]:
+            result.stdout = "deadbeef\n"
+        elif cmd == ["git", "rev-parse", "--short", "HEAD"]:
+            result.stdout = "deadbee\n"
+        elif cmd == ["git", "rev-parse", "--abbrev-ref", "HEAD"]:
+            result.stdout = "feature\n"
+        elif cmd == ["git", "status", "--porcelain"]:
+            result.stdout = "\n"
+        else:
+            result.returncode = 1
+            result.stdout = ""
+        return result
+
+    with patch("subprocess.run", side_effect=fake_run):
+        dump_git_info(output)
+
+    content = output.read_text()
+    assert "dirty: False" in content
+
+
+@pytest.mark.unit
+def test_dump_git_info_handles_file_not_found(tmp_path):
+    """Test dump_git_info gracefully handles git not installed (FileNotFoundError)."""
+    output = tmp_path / "git_info.txt"
+
+    with patch("subprocess.run", side_effect=FileNotFoundError("git not found")):
+        dump_git_info(output)  # Should not raise
+
+    assert not output.exists()
+
+
+@pytest.mark.unit
+def test_dump_git_info_handles_timeout(tmp_path):
+    """Test dump_git_info gracefully handles subprocess timeout."""
+    import subprocess
+
+    output = tmp_path / "git_info.txt"
+
+    with patch(
+        "subprocess.run",
+        side_effect=subprocess.TimeoutExpired(cmd="git", timeout=5),
+    ):
+        dump_git_info(output)  # Should not raise
+
+    assert not output.exists()
+
+
+@pytest.mark.unit
+def test_dump_git_info_handles_os_error(tmp_path):
+    """Test dump_git_info gracefully handles OSError."""
+    output = tmp_path / "git_info.txt"
+
+    with patch("subprocess.run", side_effect=OSError("permission denied")):
+        dump_git_info(output)  # Should not raise
+
+    assert not output.exists()
+
+
+@pytest.mark.unit
+def test_dump_git_info_no_output_when_all_commands_fail(tmp_path):
+    """Test dump_git_info writes nothing when all git commands fail (returncode != 0)."""
+    output = tmp_path / "git_info.txt"
+
+    def fake_run(cmd, **kwargs):
+        return MagicMock(returncode=1, stdout="")
+
+    with patch("subprocess.run", side_effect=fake_run):
+        dump_git_info(output)
+
+    assert not output.exists()
+
+
+@pytest.mark.unit
+def test_dump_git_info_partial_git_output(tmp_path):
+    """Test dump_git_info handles partial results (e.g. commit ok, branch fails)."""
+    output = tmp_path / "git_info.txt"
+
+    def fake_run(cmd, **kwargs):
+        result = MagicMock()
+        if cmd == ["git", "rev-parse", "HEAD"]:
+            result.returncode = 0
+            result.stdout = "abc123\n"
+        elif cmd == ["git", "rev-parse", "--short", "HEAD"]:
+            result.returncode = 0
+            result.stdout = "abc\n"
+        else:
+            result.returncode = 1
+            result.stdout = ""
+        return result
+
+    with patch("subprocess.run", side_effect=fake_run):
+        dump_git_info(output)
+
+    content = output.read_text()
+    assert "commit: abc123" in content
+    assert "commit_short: abc" in content
+    assert "branch" not in content
+    assert "dirty" not in content
+
+
+@pytest.mark.unit
+def test_dump_git_info_writes_utf8(tmp_path):
+    """Test dump_git_info writes file with utf-8 encoding."""
+    output = tmp_path / "git_info.txt"
+
+    def fake_run(cmd, **kwargs):
+        result = MagicMock(returncode=0)
+        if cmd == ["git", "rev-parse", "HEAD"]:
+            result.stdout = "abc123\n"
+        elif cmd == ["git", "rev-parse", "--short", "HEAD"]:
+            result.stdout = "abc\n"
+        elif cmd == ["git", "rev-parse", "--abbrev-ref", "HEAD"]:
+            result.stdout = "main\n"
+        elif cmd == ["git", "status", "--porcelain"]:
+            result.stdout = ""
+        return result
+
+    with patch("subprocess.run", side_effect=fake_run):
+        with patch.object(type(output), "write_text", wraps=output.write_text) as mock_wt:
+            dump_git_info(output)
+            mock_wt.assert_called_once()
+            call_kwargs = mock_wt.call_args
+            assert call_kwargs.kwargs.get("encoding") == "utf-8" or (
+                len(call_kwargs.args) >= 2 and "utf-8" in str(call_kwargs)
+            )
+
+
+@pytest.mark.unit
+def test_dump_git_info_uses_orchard_logger(tmp_path):
+    """Test dump_git_info uses the OrchardML logger."""
+    import logging
+
+    output = tmp_path / "git_info.txt"
+    logger = logging.getLogger("OrchardML")
+
+    with (
+        patch("subprocess.run", side_effect=OSError("fail")),
+        patch.object(logger, "debug") as mock_debug,
+    ):
+        dump_git_info(output)
+
+    mock_debug.assert_called_once()
+
+
+@pytest.mark.unit
+def test_dump_git_info_error_logs_exact_message(tmp_path):
+    """Kill log string mutants: assert exact logger.debug message for git errors."""
+    import logging
+
+    output = tmp_path / "git_info.txt"
+    logger = logging.getLogger("OrchardML")
+    err = FileNotFoundError("git not found")
+
+    with (
+        patch("subprocess.run", side_effect=err),
+        patch.object(logger, "debug") as mock_debug,
+    ):
+        dump_git_info(output)
+
+    mock_debug.assert_called_once_with("Could not capture git info: %s", err)
+
+
+@pytest.mark.unit
+def test_dump_git_info_subprocess_args(tmp_path):
+    """Test dump_git_info calls subprocess.run with correct timeout and kwargs."""
+    output = tmp_path / "git_info.txt"
+    calls = []
+
+    def tracking_run(cmd, **kwargs):
+        calls.append((cmd, kwargs))
+        return MagicMock(returncode=1, stdout="")
+
+    with patch("subprocess.run", side_effect=tracking_run):
+        dump_git_info(output)
+
+    assert len(calls) == 4
+    for cmd, kwargs in calls:
+        assert kwargs["capture_output"] is True
+        assert kwargs["text"] is True
+        assert kwargs["timeout"] == 5
+
+
+@pytest.mark.unit
+def test_dump_git_info_content_ends_with_newline(tmp_path):
+    """Test dump_git_info output ends with a trailing newline."""
+    output = tmp_path / "git_info.txt"
+
+    def fake_run(cmd, **kwargs):
+        result = MagicMock(returncode=0)
+        if cmd == ["git", "rev-parse", "HEAD"]:
+            result.stdout = "abc\n"
+        elif cmd == ["git", "rev-parse", "--short", "HEAD"]:
+            result.stdout = "ab\n"
+        elif cmd == ["git", "rev-parse", "--abbrev-ref", "HEAD"]:
+            result.stdout = "main\n"
+        elif cmd == ["git", "status", "--porcelain"]:
+            result.stdout = ""
+        return result
+
+    with patch("subprocess.run", side_effect=fake_run):
+        dump_git_info(output)
+
+    content = output.read_text()
+    assert content.endswith("\n")
+
+
+# AUDIT SAVER: DUMP GIT INFO DELEGATION
+@pytest.mark.unit
+def test_audit_saver_dump_git_info_delegates(tmp_path):
+    """Test AuditSaver.dump_git_info delegates to module-level dump_git_info."""
+    from orchard.core.io.serialization import AuditSaver
+
+    saver = AuditSaver()
+    output = tmp_path / "git_info.txt"
+
+    with patch("orchard.core.io.serialization.dump_git_info") as mock_dump:
+        saver.dump_git_info(output)
+        mock_dump.assert_called_once_with(output)
 
 
 if __name__ == "__main__":

@@ -147,7 +147,9 @@ class Reporter(BaseModel):
         # Filesystem Section
         logger_instance.info("[FILESYSTEM]")
         logger_instance.info("%s%s %-18s: %s", I, A, "Run Root", paths.root.name)
-        logger_instance.info("%s%s %-18s: config.yaml, requirements.txt", I, A, "Manifest")
+        logger_instance.info(
+            "%s%s %-18s: config.yaml, requirements.txt, git_info.txt", I, A, "Manifest"
+        )
 
         # Closing separator
         logger_instance.info(LogStyle.HEAVY)

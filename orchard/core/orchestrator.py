@@ -371,6 +371,7 @@ class RootOrchestrator:
         ), "Paths must be initialized before config persistence"  # nosec B101
         self._audit_saver.save_config(data=self.cfg, yaml_path=self.paths.get_config_path())
         self._audit_saver.dump_requirements(self.paths.reports / "requirements.txt")
+        self._audit_saver.dump_git_info(self.paths.reports / "git_info.txt")
 
     def _phase_6_infrastructure_guarding(self) -> None:
         """

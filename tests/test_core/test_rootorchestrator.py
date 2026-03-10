@@ -1847,5 +1847,180 @@ def test_log_environment_report_passes_applied_threads():
     assert kw["applied_threads"] == 7
 
 
+# MUTATION KILLERS: assert/error message exact content
+@pytest.mark.unit
+def test_phase_4_assert_message_exact():
+    """Kill mutmut string mutations on phase 4 assert message."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 2
+
+    orch = RootOrchestrator(cfg=mock_cfg, rank=0)
+    orch.paths = None  # trigger the assert
+
+    with pytest.raises(AssertionError, match=r"^Paths must be initialized before logging$"):
+        orch._phase_4_logging_initialization()
+
+
+@pytest.mark.unit
+def test_phase_5_assert_message_exact():
+    """Kill mutmut string mutations on phase 5 assert message."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 2
+
+    orch = RootOrchestrator(cfg=mock_cfg, rank=0)
+    orch.paths = None
+
+    with pytest.raises(
+        AssertionError, match=r"^Paths must be initialized before config persistence$"
+    ):
+        orch._phase_5_run_manifest()
+
+
+@pytest.mark.unit
+def test_phase_5_dump_git_info_exact_path(tmp_path):
+    """Kill mutmut mutations on git_info.txt filename in phase 5."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 2
+
+    mock_paths = MagicMock()
+    mock_paths.reports = tmp_path
+    mock_paths.get_config_path = MagicMock(return_value=tmp_path / "config.yaml")
+    mock_audit = MagicMock()
+
+    orch = RootOrchestrator(cfg=mock_cfg, audit_saver=mock_audit, rank=0)
+    orch.paths = mock_paths
+
+    orch._phase_5_run_manifest()
+
+    mock_audit.dump_git_info.assert_called_once_with(tmp_path / "git_info.txt")
+
+
+@pytest.mark.unit
+def test_phase_7_assert_message_paths_none():
+    """Kill mutmut string mutations on phase 7 paths assert message."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 2
+
+    orch = RootOrchestrator(cfg=mock_cfg, rank=0)
+    orch.paths = None
+    orch._device_cache = torch.device("cpu")
+
+    with pytest.raises(AssertionError, match=r"^Paths must be initialized before reporting$"):
+        orch._phase_7_environment_report(applied_threads=4)
+
+
+@pytest.mark.unit
+def test_phase_7_assert_message_device_none():
+    """Kill mutmut string mutations on phase 7 device assert message."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 2
+
+    orch = RootOrchestrator(cfg=mock_cfg, rank=0)
+    orch.paths = MagicMock()
+    orch._device_cache = None
+
+    with pytest.raises(
+        AssertionError, match=r"^Device must be resolved before environment report$"
+    ):
+        orch._phase_7_environment_report(applied_threads=4)
+
+
+@pytest.mark.unit
+def test_reinitialize_after_cleanup_full_error_message():
+    """Kill mutmut string mutations on both halves of RuntimeError message."""
+    mock_cfg = MagicMock()
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 2
+
+    orch = RootOrchestrator(cfg=mock_cfg, rank=0)
+    orch._cleaned_up = True
+
+    with pytest.raises(RuntimeError) as exc_info:
+        orch.initialize_core_services()
+
+    msg = str(exc_info.value)
+    assert msg.startswith("Cannot re-initialize after cleanup")
+    assert msg.endswith("RootOrchestrator is a single-use context manager")
+
+
+@pytest.mark.unit
+def test_initialize_core_services_paths_assert_message(tmp_path):
+    """Kill mutmut string mutations on 'Paths not initialized after phase 3'."""
+    mock_cfg = MagicMock()
+    mock_cfg.training.seed = 42
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 2
+    mock_cfg.hardware.device = "cpu"
+    mock_cfg.dataset.dataset_name = "ds"
+    mock_cfg.architecture.name = "arch"
+    mock_cfg.telemetry.output_dir = str(tmp_path)
+
+    orch = RootOrchestrator(
+        cfg=mock_cfg,
+        seed_setter=MagicMock(),
+        thread_applier=MagicMock(return_value=2),
+        system_configurator=MagicMock(),
+        static_dir_setup=MagicMock(),
+        rank=0,
+    )
+
+    # Mock phases 3-4 to NOT set paths (remains None)
+    with (
+        patch.object(orch, "_phase_3_filesystem_provisioning"),
+        patch.object(orch, "_phase_4_logging_initialization"),
+    ):
+        with pytest.raises(AssertionError, match=r"^Paths not initialized after phase 3$"):
+            orch.initialize_core_services()
+
+
+@pytest.mark.unit
+def test_initialize_core_services_logger_assert_message(tmp_path):
+    """Kill mutmut string mutations on 'Logger not initialized after phase 4'."""
+    mock_cfg = MagicMock()
+    mock_cfg.training.seed = 42
+    mock_cfg.hardware.use_deterministic_algorithms = False
+    mock_cfg.hardware.deterministic_warn_only = False
+    mock_cfg.hardware.effective_num_workers = 2
+    mock_cfg.hardware.device = "cpu"
+    mock_cfg.dataset.dataset_name = "ds"
+    mock_cfg.architecture.name = "arch"
+    mock_cfg.telemetry.output_dir = str(tmp_path)
+
+    mock_paths = MagicMock()
+    mock_paths.logs = str(tmp_path / "logs")
+
+    orch = RootOrchestrator(
+        cfg=mock_cfg,
+        seed_setter=MagicMock(),
+        thread_applier=MagicMock(return_value=2),
+        system_configurator=MagicMock(),
+        static_dir_setup=MagicMock(),
+        log_initializer=MagicMock(return_value=None),
+        rank=0,
+    )
+
+    def fake_phase_3() -> None:
+        orch.paths = mock_paths
+
+    with (
+        patch.object(orch, "_phase_3_filesystem_provisioning", side_effect=fake_phase_3),
+        patch.object(orch, "_phase_4_logging_initialization"),
+    ):
+        with pytest.raises(AssertionError, match=r"^Logger not initialized after phase 4$"):
+            orch.initialize_core_services()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
