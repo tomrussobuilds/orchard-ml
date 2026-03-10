@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- add dump_git_info to audit pipeline and harden mutation scores
+
 ### Documentation
 
 - fix notebook setup cells and add edge deploy notebook

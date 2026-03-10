@@ -156,6 +156,29 @@ def test_suppress_download_noise_restores_previous_tqdm_value():
 
 
 @pytest.mark.unit
+def test_suppress_download_noise_sets_hf_hub_disable():
+    """Test context manager sets HF_HUB_DISABLE_PROGRESS_BARS=1 inside and restores after."""
+    os.environ.pop("HF_HUB_DISABLE_PROGRESS_BARS", None)
+
+    with _suppress_download_noise():
+        assert os.environ.get("HF_HUB_DISABLE_PROGRESS_BARS") == "1"
+
+    assert "HF_HUB_DISABLE_PROGRESS_BARS" not in os.environ
+
+
+@pytest.mark.unit
+def test_suppress_download_noise_restores_previous_hf_hub_value():
+    """Test context manager restores previous HF_HUB_DISABLE_PROGRESS_BARS value."""
+    os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "0"
+
+    with _suppress_download_noise():
+        assert os.environ.get("HF_HUB_DISABLE_PROGRESS_BARS") == "1"
+
+    assert os.environ.get("HF_HUB_DISABLE_PROGRESS_BARS") == "0"
+    os.environ.pop("HF_HUB_DISABLE_PROGRESS_BARS", None)
+
+
+@pytest.mark.unit
 def test_suppress_download_noise_restores_on_exception():
     """Test context manager restores env even if body raises."""
     os.environ.pop("TQDM_DISABLE", None)

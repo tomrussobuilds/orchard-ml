@@ -147,11 +147,14 @@ def _suppress_download_noise() -> Iterator[None]:
     """
     Suppress tqdm progress bars and download logging from torch.hub and huggingface_hub.
     """
-    prev = os.environ.get("TQDM_DISABLE")
+    prev_tqdm = os.environ.get("TQDM_DISABLE")
+    prev_hf = os.environ.get("HF_HUB_DISABLE_PROGRESS_BARS")
     os.environ["TQDM_DISABLE"] = "1"
+    os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
     noisy_loggers = [
         logging.getLogger("torch.hub"),
         logging.getLogger("huggingface_hub.utils._http"),
+        logging.getLogger("huggingface_hub.file_download"),
     ]
     old_levels = [lg.level for lg in noisy_loggers]
     for lg in noisy_loggers:
@@ -159,10 +162,14 @@ def _suppress_download_noise() -> Iterator[None]:
     try:
         yield
     finally:
-        if prev is None:
+        if prev_tqdm is None:
             os.environ.pop("TQDM_DISABLE", None)
         else:
-            os.environ["TQDM_DISABLE"] = prev
+            os.environ["TQDM_DISABLE"] = prev_tqdm
+        if prev_hf is None:
+            os.environ.pop("HF_HUB_DISABLE_PROGRESS_BARS", None)
+        else:
+            os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = prev_hf
         for lg, level in zip(noisy_loggers, old_levels):
             lg.setLevel(level)
 
