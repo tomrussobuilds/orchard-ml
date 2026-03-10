@@ -17,8 +17,13 @@ The ``timm/`` prefix is stripped by the factory before reaching this builder.
 
 from __future__ import annotations
 
+import os
+
 import timm
 import torch.nn as nn
+
+# Suppress huggingface_hub download progress bars for clean training logs
+os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 
 from ..core.config import ArchitectureConfig
 

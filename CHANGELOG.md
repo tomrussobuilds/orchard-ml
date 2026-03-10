@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - use --no-deps to avoid reinstalling Colab dependencies
+- ensure clean orchard-ml install on Colab re-runs
 
 ## [0.2.1] - 2026-03-09
 
