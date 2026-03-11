@@ -303,6 +303,7 @@ Try Orchard ML directly in Google Colab — no local setup required:
 |----------|-------------|---------|------|
 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomrussobuilds/orchard-ml/blob/main/notebooks/01_quickstart_bloodmnist_cpu.ipynb) **[Quick Start: BloodMNIST CPU](notebooks/01_quickstart_bloodmnist_cpu.ipynb)** | `MiniCNN` training on `BloodMNIST` 28×28 — end-to-end training, evaluation, and `ONNX` export | CPU | ~15 min |
 | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomrussobuilds/orchard-ml/blob/main/notebooks/02_galaxy10_optuna_model_search.ipynb) **[Optuna Model Search: Galaxy10 GPU](notebooks/02_galaxy10_optuna_model_search.ipynb)** | Automatic architecture search (`EfficientNet-B0`, `ViT-Tiny`, `ConvNeXt-Tiny`, `ResNet-18`) on Galaxy10 224×224 with `Optuna` | T4 GPU | ~30-45 min |
+| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tomrussobuilds/orchard-ml/blob/main/notebooks/03_edge_deploy_onnx_quantize.ipynb) **[Edge Deploy: ONNX & Quantization](notebooks/03_edge_deploy_onnx_quantize.ipynb)** | `ONNX` export with `INT8`/`UINT8` quantization, latency benchmarking, and edge-ready inference pipeline | CPU | ~50 min |
 
 ---
 
