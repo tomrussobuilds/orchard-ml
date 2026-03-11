@@ -1,0 +1,201 @@
+# ==============================================================================
+# FILE: recipes/optuna_organcmnist_mobilenetv3.yaml
+# Hyperparameter Optimization for MobileNetV3-Small on OrganCMNIST (28x28)
+# ==============================================================================
+# Usage: orchard run recipes/optuna_organcmnist_mobilenetv3.yaml
+# Estimated Time: ~1-2h GPU (50 trials × 10 epochs, RTX 5070)
+# Memory Usage: ~1GB VRAM
+# Architecture: MobileNetV3-Small via timm (~1.5M parameters, mobile-optimized)
+#
+# OPTUNA SEARCH SPACE:
+#   OPTIMIZED PARAMETERS (ranges):
+#     - Learning rate: 1e-5 to 1e-2 (log scale)
+#     - Weight decay: 1e-6 to 1e-3 (log scale)
+#     - Momentum: 0.85 to 0.95
+#     - Batch size: [16, 32, 48, 64]
+#     - Dropout: 0.1 to 0.5
+#     - MixUp alpha: 0.0 to 0.4
+#     - Label smoothing: 0.0 to 0.2
+#     - Scheduler type: cosine, plateau, step
+#     - Criterion: cross_entropy, focal
+#     - Augmentation: rotation (0-15°), jitter (0-0.15), scale (0.9-1.0)
+#
+#   FIXED PARAMETERS (not optimized):
+#     - epochs, patience, grad_clip
+#     - use_amp, use_tta, weighted_loss
+
+dataset:
+  name: "organcmnist"
+  data_root: ./dataset
+  resolution: 28
+  lazy_loading: true
+  force_rgb: true
+  use_weighted_sampler: true
+
+architecture:
+  name: "timm/mobilenetv3_small_100"
+  pretrained: true
+  dropout: 0.2                  # Will be optimized
+
+training:
+  seed: 42
+
+  # Base values (WILL BE OPTIMIZED BY OPTUNA)
+  batch_size: 64
+  learning_rate: 0.0005
+  weight_decay: 1e-4
+  momentum: 0.9
+  min_lr: 1e-6
+
+  # Regularization (WILL BE OPTIMIZED)
+  mixup_alpha: 0.1
+  label_smoothing: 0.1
+
+  # Training loop
+  epochs: 25                    # Final training only
+  patience: 8
+  grad_clip: 1.0
+  mixup_epochs: 25
+
+  # Scheduler
+  monitor_metric: "auc"
+  scheduler_type: "cosine"
+  scheduler_patience: 5
+  scheduler_factor: 0.1
+  step_size: 20
+
+  # Performance
+  use_amp: false
+  use_tta: false
+  criterion_type: "cross_entropy"
+  weighted_loss: false
+  focal_gamma: 2.0
+
+augmentation:
+  hflip: 0.5
+  rotation_angle: 10
+  jitter_val: 0.2
+  min_scale: 0.9
+  tta_blur_kernel_size: 3
+
+hardware:
+  device: "auto"
+  reproducible: false
+
+telemetry:
+  output_dir: ./outputs
+  log_level: "INFO"
+  log_interval: 50
+
+evaluation:
+  n_samples: 16
+  fig_dpi: 200
+  cmap_confusion: Blues
+  plot_style: seaborn-v0_8-muted
+  grid_cols: 4
+  fig_size_predictions: [12, 8]
+  report_format: xlsx
+  save_confusion_matrix: true
+  save_predictions_grid: true
+
+optuna:
+  study_name: "organcmnist_mobilenetv3_optimized"
+  n_trials: 50
+  epochs: 10
+  timeout: null
+
+  direction: "maximize"
+
+  enable_early_stopping: true
+  early_stopping_threshold: 0.9999
+  early_stopping_patience: 3
+
+  sampler_type: "tpe"
+  search_space_preset: "full"
+  enable_model_search: false
+
+  enable_pruning: true
+  pruner_type: "median"
+  pruning_warmup_epochs: 3
+
+  storage_type: "sqlite"
+  storage_path: null
+
+  n_jobs: 1
+  load_if_exists: true
+  show_progress_bar: false
+
+  save_plots: true
+  save_best_config: true
+
+  search_space_overrides:
+      optimizer_type:
+      - sgd
+      - adamw
+      learning_rate:
+          low: 1.0e-05
+          high: 0.01
+          log: true
+      weight_decay:
+          low: 1.0e-06
+          high: 0.001
+          log: true
+      momentum:
+          low: 0.85
+          high: 0.95
+          log: false
+      min_lr:
+          low: 1.0e-07
+          high: 1.0e-05
+          log: true
+      criterion_type:
+      - cross_entropy
+      - focal
+      focal_gamma:
+          low: 0.5
+          high: 5.0
+          log: false
+      mixup_alpha:
+          low: 0.0
+          high: 0.4
+          log: false
+      label_smoothing:
+          low: 0.0
+          high: 0.2
+          log: false
+      dropout:
+          low: 0.1
+          high: 0.5
+          log: false
+      scheduler_type:
+      - cosine
+      - plateau
+      - step
+      scheduler_patience:
+          low: 3
+          high: 10
+      rotation_angle:
+          low: 0
+          high: 15
+      jitter_val:
+          low: 0.0
+          high: 0.15
+          log: false
+      min_scale:
+          low: 0.9
+          high: 1.0
+          log: false
+      batch_size_low_res:
+      - 16
+      - 32
+      - 48
+      - 64
+
+tracking:
+  enabled: true
+  experiment_name: "orchard-ml"
+
+export:
+  format: onnx
+  opset_version: 18
+  validate_export: true

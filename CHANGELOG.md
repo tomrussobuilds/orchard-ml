@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - use --no-deps to avoid reinstalling Colab dependencies
 - ensure clean orchard-ml install on Colab re-runs
 - fix API calls, suppress HF progress bar, clean up configs
+- suppress HF download noise and fix notebook 03 Colab errors
 
 ## [0.2.1] - 2026-03-09
 
