@@ -46,8 +46,8 @@ class ArchitectureConfig(BaseModel):
         default=0.2,
         description=(
             "Dropout probability for the classification head. "
-            "Only wired for mini_cnn and timm_backbone; ignored by "
-            "convnext_tiny, efficientnet_b0, vit_tiny, resnet_18."
+            "Only wired for mini_cnn; ignored by resnet_18, "
+            "efficientnet_b0, convnext_tiny, vit_tiny, and timm/* models."
         ),
     )
 

@@ -39,6 +39,7 @@ import torch
 from torch.utils.data import DataLoader, WeightedRandomSampler
 
 from ..core import (
+    HIGHRES_THRESHOLD,
     LOGGER_NAME,
     AugmentationConfig,
     DatasetConfig,
@@ -54,9 +55,8 @@ from .fetcher import DatasetData
 from .transforms import get_pipeline_transforms
 
 # Optuna mode: cap workers to prevent file descriptor exhaustion during trials
-_OPTUNA_WORKERS_HIGHRES = 4  # Max workers for resolution >= _HIGHRES_THRESHOLD
-_OPTUNA_WORKERS_LOWRES = 6  # Max workers for resolution < _HIGHRES_THRESHOLD
-_HIGHRES_THRESHOLD = 224  # Resolution boundary for worker tuning
+_OPTUNA_WORKERS_HIGHRES = 4  # Max workers for resolution >= HIGHRES_THRESHOLD
+_OPTUNA_WORKERS_LOWRES = 6  # Max workers for resolution < HIGHRES_THRESHOLD
 
 _MIN_SUBSAMPLED_SPLIT = 10  # Floor for val/test splits under max_samples
 
@@ -191,7 +191,7 @@ class DataLoaderFactory:
         if is_optuna:
             cap = (
                 _OPTUNA_WORKERS_HIGHRES
-                if self.dataset_cfg.resolution >= _HIGHRES_THRESHOLD
+                if self.dataset_cfg.resolution >= HIGHRES_THRESHOLD
                 else _OPTUNA_WORKERS_LOWRES
             )
             num_workers = min(num_workers, cap)

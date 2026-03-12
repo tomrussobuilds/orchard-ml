@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix API calls, suppress HF progress bar, clean up configs
 - suppress HF download noise and fix notebook 03 Colab errors
 - notebook 03 Optuna best params and remove quantize from pipeline
+- add notebook 03 to README and update stale comments
 
 ## [0.2.1] - 2026-03-09
 

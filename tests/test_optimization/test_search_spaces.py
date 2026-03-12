@@ -461,6 +461,10 @@ def test_optimization_space_passes_exact_bounds():
     space["min_lr"](trial)
     trial.suggest_float.assert_called_with("min_lr", ov.min_lr.low, ov.min_lr.high, log=True)
 
+    trial.suggest_categorical = MagicMock(return_value="AdamW")
+    space["optimizer_type"](trial)
+    trial.suggest_categorical.assert_called_with("optimizer_type", ov.optimizer_type)
+
 
 @pytest.mark.unit
 def test_regularization_space_passes_exact_bounds():

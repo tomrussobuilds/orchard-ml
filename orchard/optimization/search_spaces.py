@@ -31,6 +31,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Callable
 
+from ..core.paths.constants import HIGHRES_THRESHOLD
 from ..exceptions import OrchardConfigError
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -196,7 +197,7 @@ class SearchSpaceRegistry:
         Returns:
             Immutable mapping with batch_size sampler
         """
-        if resolution >= 224:
+        if resolution >= HIGHRES_THRESHOLD:
             batch_choices = list(self.ov.batch_size_high_res)
         else:
             batch_choices = list(self.ov.batch_size_low_res)
@@ -364,7 +365,7 @@ def get_search_space(
     if include_models:
         if model_pool is not None:
             space.update(_build_model_space_from_pool(model_pool))
-        elif resolution >= 224:
+        elif resolution >= HIGHRES_THRESHOLD:
             space.update(registry.get_model_space_224())
         else:
             space.update(registry.get_model_space_28())

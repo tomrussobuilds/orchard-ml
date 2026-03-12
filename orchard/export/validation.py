@@ -66,7 +66,7 @@ def validate_export(
     try:
         import onnxruntime as ort
 
-        logger.info("  [%s Validation]", label)
+        logger.info("%s[%s Validation]", LogStyle.INDENT, label)
         logger.info("    %s Samples           : %s", LogStyle.BULLET, num_samples)
         logger.info("    %s Max deviation     : %.0e", LogStyle.BULLET, max_deviation)
 

@@ -68,6 +68,7 @@ from .orchestrator import RootOrchestrator
 # Constants & Paths
 from .paths import (
     DATASET_DIR,
+    HIGHRES_THRESHOLD,
     LOGGER_NAME,
     OUTPUTS_ROOT,
     PROJECT_ROOT,
@@ -95,6 +96,7 @@ __all__ = [
     "DATASET_DIR",
     "OUTPUTS_ROOT",
     "STATIC_DIRS",
+    "HIGHRES_THRESHOLD",
     "LOGGER_NAME",
     "RunPaths",
     "setup_static_directories",

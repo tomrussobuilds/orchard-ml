@@ -22,6 +22,10 @@ from typing import Final
 # Supported image resolutions across all model architectures
 SUPPORTED_RESOLUTIONS: Final[frozenset[int]] = frozenset({28, 32, 64, 128, 224})
 
+# Resolution boundary: at or above this threshold, models are "high-res"
+# (larger batches, fewer workers, different search spaces).
+HIGHRES_THRESHOLD: Final[int] = 224
+
 # Canonical metric key strings used across training, evaluation, and optimization
 METRIC_ACCURACY: Final[str] = "accuracy"
 METRIC_AUC: Final[str] = "auc"

@@ -144,7 +144,7 @@ class DuplicateProcessCleaner:
     """
 
     def __init__(self, script_name: str | None = None) -> None:
-        self.script_path = os.path.realpath(script_name or sys.argv[0])
+        self.script_path = str(Path(script_name or sys.argv[0]).resolve())
         self.current_pid = os.getpid()
 
     def detect_duplicates(self) -> list[psutil.Process]:
@@ -163,12 +163,12 @@ class DuplicateProcessCleaner:
                     continue
 
                 # Check if process is Python
-                cmd0 = os.path.basename(info["cmdline"][0]).lower()
+                cmd0 = Path(info["cmdline"][0]).name.lower()
                 if "python" not in cmd0:
                     continue
 
                 # Match exact script path in cmdline
-                cmdline_paths = [os.path.realpath(arg) for arg in info["cmdline"][1:]]
+                cmdline_paths = [str(Path(arg).resolve()) for arg in info["cmdline"][1:]]
                 if self.script_path in cmdline_paths:
                     duplicates.append(proc)
 

@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import os
 import platform
+from pathlib import Path
 
 import matplotlib
 import torch
@@ -30,7 +31,7 @@ def configure_system_libraries() -> None:
     - Suppresses verbose Matplotlib warnings
     """
     is_linux = platform.system() == "Linux"
-    is_docker = os.environ.get("IN_DOCKER") == "TRUE" or os.path.exists("/.dockerenv")
+    is_docker = os.environ.get("IN_DOCKER") == "TRUE" or Path("/.dockerenv").exists()
 
     if is_linux or is_docker:
         matplotlib.use("Agg")

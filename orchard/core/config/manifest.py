@@ -26,7 +26,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from ...exceptions import OrchardConfigError
 from ..io import load_config_from_yaml
 from ..metadata.wrapper import DatasetRegistryWrapper
-from ..paths import PROJECT_ROOT
+from ..paths import HIGHRES_THRESHOLD, PROJECT_ROOT
 from .architecture_config import ArchitectureConfig
 from .augmentation_config import AugmentationConfig
 from .dataset_config import DatasetConfig
@@ -121,13 +121,13 @@ def _warn_optuna_override_conflicts(
 
     import warnings
 
-    warnings.warn(
+    _stacklevel = 3  # pragma: no mutate
+    warnings.warn(  # pragma: no mutate
         f"--set overrides {conflicts} will be ignored: "
         f"Optuna '{search_space_preset}' search space tunes these parameters per trial. "
         f"To fix a parameter, narrow the search space in optuna.search_space_overrides "
         f"or use a custom preset that excludes it.",
-        UserWarning,
-        stacklevel=3,
+        stacklevel=_stacklevel,
     )
 
 
@@ -475,7 +475,10 @@ class _CrossDomainValidator:
         dataset resolution is 224px or above, as this combination
         results in significantly slower training.
         """
-        if config.hardware.device.lower().startswith("cpu") and config.dataset.resolution >= 224:
+        if (
+            config.hardware.device.lower().startswith("cpu")
+            and config.dataset.resolution >= HIGHRES_THRESHOLD
+        ):
             import warnings
 
             warnings.warn(

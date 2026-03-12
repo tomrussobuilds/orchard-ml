@@ -27,6 +27,7 @@ Example:
 
 from .constants import (
     HEALTHCHECK_LOGGER_NAME,
+    HIGHRES_THRESHOLD,
     LOGGER_NAME,
     METRIC_ACCURACY,
     METRIC_AUC,
@@ -49,6 +50,7 @@ from .run_paths import RunPaths
 __all__ = [
     # Constants
     "SUPPORTED_RESOLUTIONS",
+    "HIGHRES_THRESHOLD",
     "METRIC_ACCURACY",
     "METRIC_AUC",
     "METRIC_LOSS",

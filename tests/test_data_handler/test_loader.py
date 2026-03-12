@@ -464,15 +464,15 @@ def test_balancing_sampler_all_classes_present(mock_cfg, mock_metadata):
 @pytest.mark.unit
 def test_optuna_worker_constants():
     """Verify Optuna worker cap constants have exact expected values."""
+    from orchard.core.paths.constants import HIGHRES_THRESHOLD
     from orchard.data_handler.loader import (
-        _HIGHRES_THRESHOLD,
         _OPTUNA_WORKERS_HIGHRES,
         _OPTUNA_WORKERS_LOWRES,
     )
 
     assert _OPTUNA_WORKERS_HIGHRES == 4
     assert _OPTUNA_WORKERS_LOWRES == 6
-    assert _HIGHRES_THRESHOLD == 224
+    assert HIGHRES_THRESHOLD == 224
 
 
 @pytest.mark.unit

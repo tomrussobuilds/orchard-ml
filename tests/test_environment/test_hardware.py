@@ -41,9 +41,10 @@ def test_configure_system_libraries_linux(mock_platform):
 
 @pytest.mark.unit
 @patch("platform.system", return_value="Linux")
-@patch("os.path.exists", return_value=True)
-def test_configure_system_libraries_docker(mock_exists, mock_platform):
+@patch("orchard.core.environment.hardware.Path")
+def test_configure_system_libraries_docker(mock_path, mock_platform):
     """Test configure_system_libraries detects Docker environment."""
+    mock_path.return_value.exists.return_value = True
     with patch.dict(os.environ, mutmut_safe_env(), clear=True):
         configure_system_libraries()
 
@@ -73,10 +74,11 @@ def test_configure_system_libraries_windows(mock_platform):
 
 
 @pytest.mark.unit
-@patch("os.path.exists", return_value=False)
+@patch("orchard.core.environment.hardware.Path")
 @patch("platform.system", return_value="Windows")
-def test_configure_system_libraries_non_linux_non_docker_skips(mock_platform, mock_exists):
+def test_configure_system_libraries_non_linux_non_docker_skips(mock_platform, mock_path):
     """Test non-Linux, non-Docker environment skips all configuration."""
+    mock_path.return_value.exists.return_value = False
     with patch.dict(os.environ, mutmut_safe_env(), clear=True):
         matplotlib.rcParams["pdf.fonttype"] = 3
         matplotlib.rcParams["ps.fonttype"] = 3
@@ -88,10 +90,11 @@ def test_configure_system_libraries_non_linux_non_docker_skips(mock_platform, mo
 
 
 @pytest.mark.unit
-@patch("os.path.exists", return_value=False)
+@patch("orchard.core.environment.hardware.Path")
 @patch("platform.system", return_value="Linux")
-def test_configure_system_libraries_linux_only_no_docker(mock_platform, mock_exists):
+def test_configure_system_libraries_linux_only_no_docker(mock_platform, mock_path):
     """Test is_linux alone triggers configuration (kills or→and mutant)."""
+    mock_path.return_value.exists.return_value = False
     with patch.dict(os.environ, mutmut_safe_env(), clear=True):
         matplotlib.rcParams["pdf.fonttype"] = 3
         matplotlib.rcParams["ps.fonttype"] = 3
@@ -104,10 +107,11 @@ def test_configure_system_libraries_linux_only_no_docker(mock_platform, mock_exi
 
 
 @pytest.mark.unit
-@patch("os.path.exists", return_value=False)
+@patch("orchard.core.environment.hardware.Path")
 @patch("platform.system", return_value="Darwin")
-def test_configure_system_libraries_docker_env_only_no_linux(mock_platform, mock_exists):
+def test_configure_system_libraries_docker_env_only_no_linux(mock_platform, mock_path):
     """Test is_docker via IN_DOCKER env var alone triggers config (kills is_linux mutants)."""
+    mock_path.return_value.exists.return_value = False
     with patch.dict(os.environ, mutmut_safe_env(IN_DOCKER="TRUE"), clear=True):
         matplotlib.rcParams["pdf.fonttype"] = 3
         matplotlib.rcParams["ps.fonttype"] = 3
@@ -126,18 +130,22 @@ def test_configure_system_libraries_dockerenv_file_only(mock_platform):
     with patch.dict(os.environ, mutmut_safe_env(), clear=True):
         matplotlib.rcParams["pdf.fonttype"] = 3
 
-        with patch("os.path.exists", side_effect=lambda p: p == "/.dockerenv"):
+        with patch("orchard.core.environment.hardware.Path") as MockPath:
+            MockPath.return_value.exists.return_value = True
             configure_system_libraries()
 
+            # Verify exact dockerenv path (kills path-string mutants)
+            MockPath.assert_called_once_with("/.dockerenv")
             assert matplotlib.get_backend() == "Agg"
             assert matplotlib.rcParams["pdf.fonttype"] == 42
 
 
 @pytest.mark.unit
-@patch("os.path.exists", return_value=True)
+@patch("orchard.core.environment.hardware.Path")
 @patch("platform.system", return_value="Darwin")
-def test_configure_system_libraries_docker_env_wrong_value(mock_platform, mock_exists):
+def test_configure_system_libraries_docker_env_wrong_value(mock_platform, mock_path):
     """Test IN_DOCKER with wrong value still works via dockerenv file."""
+    mock_path.return_value.exists.return_value = True
     with patch.dict(os.environ, mutmut_safe_env(IN_DOCKER="false"), clear=True):
         matplotlib.rcParams["pdf.fonttype"] = 3
 
@@ -148,10 +156,11 @@ def test_configure_system_libraries_docker_env_wrong_value(mock_platform, mock_e
 
 
 @pytest.mark.unit
-@patch("os.path.exists", return_value=False)
+@patch("orchard.core.environment.hardware.Path")
 @patch("platform.system", return_value="Darwin")
-def test_configure_system_libraries_no_docker_no_linux_skips(mock_platform, mock_exists):
+def test_configure_system_libraries_no_docker_no_linux_skips(mock_platform, mock_path):
     """Test non-Linux non-Docker truly skips (kills or→and and string mutants)."""
+    mock_path.return_value.exists.return_value = False
     with patch.dict(os.environ, mutmut_safe_env(), clear=True):
         matplotlib.rcParams["pdf.fonttype"] = 3
         matplotlib.rcParams["ps.fonttype"] = 3

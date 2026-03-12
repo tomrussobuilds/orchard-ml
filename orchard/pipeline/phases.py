@@ -336,6 +336,8 @@ def run_export_phase(
             max_deviation=export_cfg.max_deviation,
             label=export_cfg.format.upper(),
         )
+        # `is False` (not `not is_valid`): None means onnxruntime is absent,
+        # which is a skip — only warn when validation actually ran and failed.
         if is_valid is False:
             logger.warning(
                 "  %s Numerical validation failed: ONNX outputs diverge from PyTorch model",
@@ -352,6 +354,7 @@ def run_export_phase(
                 max_deviation=export_cfg.max_deviation * _QUANTIZED_TOLERANCE_FACTOR,
                 label=export_cfg.quantization_type.upper(),
             )
+            # See comment above: `is False` intentionally excludes None (skipped).
             if q_valid is False:
                 logger.error(
                     "  %s Quantized model validation failed: "

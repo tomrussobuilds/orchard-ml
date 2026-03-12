@@ -196,7 +196,7 @@ def test_duplicate_process_cleaner_init_default():
     """Test DuplicateProcessCleaner initializes with default script name."""
     cleaner = DuplicateProcessCleaner()
 
-    assert cleaner.script_path == os.path.realpath(sys.argv[0])
+    assert cleaner.script_path == str(Path(sys.argv[0]).resolve())
     assert cleaner.current_pid == os.getpid()
 
 
@@ -205,8 +205,7 @@ def test_duplicate_process_cleaner_init_custom_script():
     """Test DuplicateProcessCleaner initializes with custom script name."""
     custom_script = "/path/to/custom_script.py"
 
-    with patch("os.path.realpath", return_value=custom_script):
-        cleaner = DuplicateProcessCleaner(script_name=custom_script)
+    cleaner = DuplicateProcessCleaner(script_name=custom_script)
 
     assert cleaner.script_path == custom_script
 
@@ -233,7 +232,7 @@ def test_detect_duplicates_skips_self():
     mock_proc.info = {
         "pid": cleaner.current_pid,
         "name": "python",
-        "cmdline": ["python", os.path.realpath("test.py")],
+        "cmdline": ["python", str(Path("test.py").resolve())],
     }
 
     with patch("psutil.process_iter", return_value=[mock_proc]):
@@ -251,7 +250,7 @@ def test_detect_duplicates_skips_non_python():
     mock_proc.info = {
         "pid": 9999,
         "name": "bash",
-        "cmdline": ["bash", os.path.realpath("test.py")],
+        "cmdline": ["bash", str(Path("test.py").resolve())],
     }
 
     with patch("psutil.process_iter", return_value=[mock_proc]):
@@ -275,8 +274,7 @@ def test_detect_duplicates_finds_duplicate():
     }
 
     with patch("psutil.process_iter", return_value=[mock_proc]):
-        with patch("os.path.realpath", side_effect=lambda x: x):
-            duplicates = cleaner.detect_duplicates()
+        duplicates = cleaner.detect_duplicates()
 
     assert len(duplicates) == 1
     assert duplicates[0] == mock_proc
@@ -740,8 +738,7 @@ def test_detect_duplicates_continues_after_skipping_self():
     }
 
     with patch("psutil.process_iter", return_value=[mock_self, mock_dup]):
-        with patch("os.path.realpath", side_effect=lambda x: x):
-            duplicates = cleaner.detect_duplicates()
+        duplicates = cleaner.detect_duplicates()
 
     assert len(duplicates) == 1
     assert duplicates[0] is mock_dup
@@ -770,8 +767,7 @@ def test_detect_duplicates_continues_after_non_python():
     }
 
     with patch("psutil.process_iter", return_value=[mock_bash, mock_dup]):
-        with patch("os.path.realpath", side_effect=lambda x: x):
-            duplicates = cleaner.detect_duplicates()
+        duplicates = cleaner.detect_duplicates()
 
     assert len(duplicates) == 1
 
@@ -796,8 +792,7 @@ def test_detect_duplicates_continues_after_exception():
     }
 
     with patch("psutil.process_iter", return_value=[mock_error, mock_dup]):
-        with patch("os.path.realpath", side_effect=lambda x: x):
-            duplicates = cleaner.detect_duplicates()
+        duplicates = cleaner.detect_duplicates()
 
     assert len(duplicates) == 1
 

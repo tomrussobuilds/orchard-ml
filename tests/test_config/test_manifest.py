@@ -648,6 +648,19 @@ def test_warn_optuna_override_quick_conflict():
 
 
 @pytest.mark.unit
+def test_warn_optuna_override_emits_exactly_one():
+    """Verify exactly one UserWarning is emitted per call (kills duplicate/removal mutants)."""
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        _warn_optuna_override_conflicts(
+            overrides={"training.learning_rate": 0.01},
+            search_space_preset="quick",
+        )
+    assert len(caught) == 1
+    assert caught[0].category is UserWarning
+
+
+@pytest.mark.unit
 def test_warn_optuna_override_full_conflict():
     """Override on a full-only param triggers warning when preset is 'full'."""
     with pytest.warns(UserWarning, match=r"training\.focal_gamma.*will be ignored"):

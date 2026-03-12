@@ -15,6 +15,7 @@ import pytest
 
 from orchard.core.paths import (
     DATASET_DIR,
+    HIGHRES_THRESHOLD,
     LOGGER_NAME,
     OUTPUTS_ROOT,
     PROJECT_ROOT,
@@ -31,6 +32,13 @@ def test_logger_name_constant():
     """Test LOGGER_NAME is correctly defined."""
     assert LOGGER_NAME == "OrchardML"
     assert isinstance(LOGGER_NAME, str)
+
+
+@pytest.mark.unit
+def test_highres_threshold_constant():
+    """Test HIGHRES_THRESHOLD is correctly defined."""
+    assert HIGHRES_THRESHOLD == 224
+    assert isinstance(HIGHRES_THRESHOLD, int)
 
 
 # PROJECT ROOT: DOCKER ENVIRONMENT
