@@ -160,7 +160,7 @@ def dump_git_info(output_path: Path) -> None:
         if git_info_parts:
             output_path.write_text("\n".join(git_info_parts) + "\n", encoding="utf-8")
 
-    except (subprocess.TimeoutExpired, OSError, FileNotFoundError) as e:
+    except (subprocess.TimeoutExpired, OSError) as e:
         logger.debug("Could not capture git info: %s", e)
 
 

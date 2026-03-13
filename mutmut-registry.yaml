@@ -251,7 +251,7 @@ orchard/core/io/data_io.py:
   not_checked: 0
   score: 100.0
 orchard/core/io/serialization.py:
-  last_run: '2026-03-10T22:11:19Z'
+  last_run: '2026-03-13T08:17:45Z'
   total: 195
   killed: 195
   survived: 0
