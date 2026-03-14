@@ -36,9 +36,13 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Install Python dependencies (rebuilds only when requirements.txt changes)
-COPY requirements.txt .
-RUN pip3 install -r requirements.txt
+# Install Python dependencies (rebuilds only when pyproject.toml changes)
+COPY pyproject.toml .
+RUN python3 -c "\
+import tomllib; \
+deps = tomllib.load(open('pyproject.toml', 'rb'))['project']['dependencies']; \
+open('/tmp/reqs.txt', 'w').write('\n'.join(deps))" && \
+    pip3 install -r /tmp/reqs.txt && rm /tmp/reqs.txt
 
 # Copy project files (changes most frequently — last layer)
 COPY . .

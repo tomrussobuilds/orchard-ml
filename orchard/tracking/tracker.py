@@ -254,7 +254,7 @@ def create_tracker(cfg: Any) -> TrackerProtocol:
     if not _MLFLOW_AVAILABLE:
         logger.warning(
             "Tracking enabled in config but mlflow is not installed. "
-            "Install with: pip install orchard-ml[tracking]"
+            "Install with: pip install mlflow"
         )
         return NoOpTracker()
 

@@ -2,7 +2,7 @@
 Project Root Discovery and Derived Path Constants.
 
 Dynamically locates the project root by searching for anchor files
-(.git, requirements.txt) and derives all core directory paths from it.
+(.git, pyproject.toml) and derives all core directory paths from it.
 
 Attributes:
     PROJECT_ROOT: Dynamically resolved absolute path to the project root.
@@ -24,7 +24,7 @@ def get_project_root() -> Path:
     Dynamically locate the project root by searching for anchor files.
 
     Traverses upward from current file's directory until finding a marker
-    file (.git or requirements.txt). Supports Docker environments via
+    file (.git or pyproject.toml). Supports Docker environments via
     IN_DOCKER environment variable override.
 
     Returns:
@@ -44,7 +44,7 @@ def get_project_root() -> Path:
 
     # Look for markers that define the project root
     # Note: .git is most reliable; README.md alone can exist in subdirectories
-    root_markers = {".git", "requirements.txt"}
+    root_markers = {".git", "pyproject.toml"}
 
     for parent in [current_path] + list(current_path.parents):
         if any((parent / marker).exists() for marker in root_markers):

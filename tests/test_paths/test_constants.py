@@ -89,16 +89,16 @@ def test_get_project_root_finds_git_marker(tmp_path):
 
 
 @pytest.mark.unit
-def test_get_project_root_finds_requirements_marker(tmp_path):
-    """Test get_project_root() locates project root via requirements.txt marker."""
+def test_get_project_root_finds_pyproject_marker(tmp_path):
+    """Test get_project_root() locates project root via pyproject.toml marker."""
     project_root = tmp_path / "project"
     nested_dir = project_root / "orchard" / "core" / "paths"
     nested_dir.mkdir(parents=True)
 
-    (project_root / "requirements.txt").touch()
+    (project_root / "pyproject.toml").touch()
 
     with patch.dict(os.environ, mutmut_safe_env(IN_DOCKER="0"), clear=True):
-        assert (project_root / "requirements.txt").exists()
+        assert (project_root / "pyproject.toml").exists()
 
 
 @pytest.mark.unit

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - add dump_git_info to audit pipeline and harden mutation scores
 
+### Build
+
+- bump black in the uv group across 1 directory (#3)
+
 ### Documentation
 
 - fix notebook setup cells and add edge deploy notebook
@@ -24,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - notebook 03 Optuna best params and remove quantize from pipeline
 - add notebook 03 to README and update stale comments
 - cleanup — centralize HIGHRES_THRESHOLD, pathlib consistency, stale docs
+- remove redundant FileNotFoundError catch in serialization
 
 ## [0.2.1] - 2026-03-09
 

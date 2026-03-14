@@ -2918,6 +2918,7 @@ source = { editable = "." }
 dependencies = [
     { name = "h5py" },
     { name = "matplotlib" },
+    { name = "mlflow" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "onnx" },
@@ -2975,9 +2976,6 @@ test = [
     { name = "pytest-cov" },
     { name = "pytest-xdist" },
 ]
-tracking = [
-    { name = "mlflow" },
-]
 
 [package.metadata]
 requires-dist = [
@@ -2994,7 +2992,7 @@ requires-dist = [
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.5.0" },
     { name = "mkdocs-section-index", marker = "extra == 'docs'", specifier = ">=0.3.9" },
     { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'", specifier = ">=1.0.0" },
-    { name = "mlflow", marker = "extra == 'tracking'", specifier = ">=3.9.0" },
+    { name = "mlflow", specifier = ">=3.9.0" },
     { name = "mutmut", marker = "extra == 'dev'", specifier = ">=3.2.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = "==1.19.1" },
     { name = "numpy", specifier = ">=2.0.0,<3" },
@@ -3027,7 +3025,7 @@ requires-dist = [
     { name = "types-requests", marker = "extra == 'dev'", specifier = ">=2.32.0" },
     { name = "xlsxwriter", specifier = ">=3.2.0,<4" },
 ]
-provides-extras = ["tracking", "notebooks", "test", "dev", "docs"]
+provides-extras = ["notebooks", "test", "dev", "docs"]
 
 [[package]]
 name = "packaging"

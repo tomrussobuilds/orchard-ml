@@ -61,28 +61,6 @@ jobs:
       - name: Check uv.lock in sync with pyproject.toml
         run: uv lock --check
 
-      - name: Check requirements.txt in sync with pyproject.toml
-        run: |
-          python -c "
-          import tomllib, pathlib, re
-          with open('pyproject.toml', 'rb') as f:
-              deps = tomllib.load(f)['project']['dependencies']
-          # Normalize: strip markers, whitespace, and compare package names + versions
-          def norm(d):
-              d = re.split(r';\s*', d)[0].strip()  # drop env markers
-              return d
-          expected = sorted(norm(d) for d in deps)
-          actual = [l.strip() for l in pathlib.Path('requirements.txt').read_text().splitlines()
-                    if l.strip() and not l.startswith('#')]
-          actual = sorted(norm(d) for d in actual)
-          if expected != actual:
-              print('requirements.txt is out of sync with pyproject.toml')
-              print(f'  pyproject.toml: {expected}')
-              print(f'  requirements.txt: {actual}')
-              raise SystemExit(1)
-          print('requirements.txt is in sync')
-          "
-
   # Job 2: Pytest Suite
   test-pytest:
     name: Pytest Suite (Python ${{ matrix.python-version }})
@@ -107,7 +85,7 @@ jobs:
       - name: Install package
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[tracking]"
+          pip install -e "."
 
       - name: Install test dependencies
         run: |

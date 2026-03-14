@@ -4,12 +4,10 @@
 
 <h2>Setup</h2>
 
-MLflow is an **optional** dependency. Install it with:
+MLflow is included as a core dependency of orchard-ml. No extra install needed:
 
 ```bash
-pip install orchard-ml[tracking]
-# or directly
-pip install mlflow>=2.9.0
+pip install orchard-ml
 ```
 
 <h2>Configuration</h2>
