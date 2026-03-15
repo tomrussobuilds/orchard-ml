@@ -8,13 +8,8 @@ to Config's hierarchical structure. Used by both trial construction
 
 from __future__ import annotations
 
-import logging
 from types import MappingProxyType
 from typing import Mapping
-
-from ..core import LOGGER_NAME
-
-logger = logging.getLogger(LOGGER_NAME)
 
 # ==================== PARAMETER MAPPING (single source of truth) ===========
 
@@ -76,6 +71,7 @@ def map_param_to_config_path(param_name: str) -> tuple[str, str]:
     section = _SECTION_LOOKUP.get(param_name)
     if section is not None:
         return (section, param_name)
-    # Fallback: assume it's a training parameter
-    logger.warning("Unknown parameter '%s', defaulting to training section", param_name)
-    return ("training", param_name)
+    raise ValueError(
+        f"Unknown hyperparameter '{param_name}'. "
+        f"Add it to PARAM_MAPPING or SPECIAL_PARAMS in _param_mapping.py."
+    )

@@ -7,8 +7,6 @@ orchard/optimization/_param_mapping.py.
 
 from __future__ import annotations
 
-import logging
-
 import pytest
 
 from orchard.optimization._param_mapping import map_param_to_config_path
@@ -88,10 +86,7 @@ def test_map_param_to_config_path_special_weight_variant():
 
 
 @pytest.mark.unit
-def test_map_param_to_config_path_unknown_defaults_to_training(caplog):
-    """Test unknown parameter defaults to training with warning."""
-    with caplog.at_level(logging.WARNING):
-        section, key = map_param_to_config_path("unknown_param")
-
-        assert section == "training"
-        assert key == "unknown_param"
+def test_map_param_to_config_path_unknown_raises():
+    """Test unknown parameter raises ValueError."""
+    with pytest.raises(ValueError, match="Unknown hyperparameter 'unknown_param'"):
+        map_param_to_config_path("unknown_param")

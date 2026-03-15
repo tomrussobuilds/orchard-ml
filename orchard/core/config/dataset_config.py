@@ -171,7 +171,8 @@ class DatasetConfig(BaseModel):
             object.__setattr__(self, "metadata", metadata)
 
         meta = self.metadata
-        assert meta is not None  # nosec B101
+        if meta is None:  # pragma: no cover
+            raise RuntimeError("Metadata failed to load for dataset '%s'" % self.name)
         if self.data_root != DATASET_DIR and meta.path.parent.resolve() == DATASET_DIR:
             object.__setattr__(meta, "path", self.data_root / meta.path.name)
 
@@ -253,7 +254,7 @@ class DatasetConfig(BaseModel):
         Returns:
             Metadata flag if available, else True (safest for augmentation).
         """
-        return self.metadata.is_anatomical if self.metadata else True
+        return self._ensure_metadata.is_anatomical
 
     @property
     def effective_is_texture_based(self) -> bool:
@@ -263,7 +264,7 @@ class DatasetConfig(BaseModel):
         Returns:
             Metadata flag if available, else True (safest for augmentation).
         """
-        return self.metadata.is_texture_based if self.metadata else True
+        return self._ensure_metadata.is_texture_based
 
     @property
     def processing_mode(self) -> str:

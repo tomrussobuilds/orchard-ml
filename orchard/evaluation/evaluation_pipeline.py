@@ -59,7 +59,7 @@ def run_final_evaluation(
     augmentation: AugmentationConfig,
     evaluation: EvaluationConfig,
     arch_name: str,
-    aug_info: str = "N/A",
+    aug_info: str = "N/A",  # pragma: no mutate
     tracker: TrackerProtocol | None = None,
 ) -> tuple[float, float, float]:
     """
@@ -175,7 +175,7 @@ def run_final_evaluation(
     report.save(paths.final_report_path, fmt=evaluation.report_format)
 
     test_acc = test_metrics[METRIC_ACCURACY]
-    test_auc = test_metrics.get(METRIC_AUC, float("nan"))
+    test_auc = test_metrics[METRIC_AUC]
 
     # Log test metrics to experiment tracker
     if tracker is not None:

@@ -96,7 +96,7 @@ def test_run_final_evaluation_calls_evaluate_model(
     mock_evaluate,
 ):
     """Test run_final_evaluation calls evaluate_model with correct params."""
-    mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9}, 0.88)
+    mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report.return_value = MagicMock()
 
     mock_architecture = MagicMock()
@@ -132,7 +132,13 @@ def test_run_final_evaluation_calls_evaluate_model(
     )
 
     mock_evaluate.assert_called_once()
-    call_kwargs = mock_evaluate.call_args.kwargs
+    call_args = mock_evaluate.call_args
+    # Positional args: model, test_loader
+    assert call_args[0][0] is mock_architecture
+    assert call_args[0][1] is mock_loader
+    # Keyword args
+    call_kwargs = call_args.kwargs
+    assert call_kwargs["device"] is not None  # resolved from model.parameters()
     assert call_kwargs["use_tta"] is True
     assert call_kwargs["is_anatomical"] is False
     assert call_kwargs["is_texture_based"] is True
@@ -152,7 +158,7 @@ def test_run_final_evaluation_calls_visualizations(
     mock_evaluate,
 ):
     """Test run_final_evaluation calls all visualization functions."""
-    mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9}, 0.88)
+    mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report.return_value = MagicMock()
 
     mock_architecture = MagicMock()
@@ -188,8 +194,23 @@ def test_run_final_evaluation_calls_visualizations(
     )
 
     mock_confusion.assert_called_once()
+    cm_kw = mock_confusion.call_args.kwargs
+    assert cm_kw["all_labels"] is not None
+    assert cm_kw["all_preds"] is not None
+    assert cm_kw["classes"] == ["class0"]
+    assert cm_kw["ctx"] is not None
+
     mock_curves.assert_called_once()
+    curves_kw = mock_curves.call_args.kwargs
+    assert curves_kw["ctx"] is not None
+
     mock_show_pred.assert_called_once()
+    sp_kw = mock_show_pred.call_args.kwargs
+    assert sp_kw["model"] is mock_architecture
+    assert sp_kw["loader"] is mock_loader
+    assert sp_kw["device"] is not None
+    assert sp_kw["classes"] == ["class0"]
+    assert sp_kw["ctx"] is not None
 
 
 @pytest.mark.unit
@@ -387,50 +408,6 @@ def test_arch_tag_replaces_slash(
         arg = call[0][0]
         assert "/" not in arg
         assert "timm_mobilenet_v3" in arg
-
-
-@pytest.mark.unit
-@patch("orchard.evaluation.evaluation_pipeline.evaluate_model")
-@patch("orchard.evaluation.evaluation_pipeline.plot_confusion_matrix")
-@patch("orchard.evaluation.evaluation_pipeline.plot_training_curves")
-@patch("orchard.evaluation.evaluation_pipeline.show_predictions")
-@patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
-def test_test_auc_fallback_to_nan(
-    mock_report,
-    _mock_show_pred,
-    _mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
-    """Verify test_auc falls back to NaN when 'auc' is missing from test_metrics."""
-    import math
-
-    mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9}, 0.88)  # no "auc" key
-    mock_report.return_value = MagicMock()
-
-    mock_paths = MagicMock()
-    mock_paths.get_fig_path = MagicMock(return_value=Path("/mock/fig.png"))
-    mock_paths.best_model_path = Path("/mock/model.pth")
-    mock_paths.logs = Path("/mock/logs")
-    mock_paths.final_report_path = Path("/mock/report.xlsx")
-
-    mock_cfg = MagicMock()
-
-    _, _, test_auc = run_final_evaluation(
-        model=MagicMock(),
-        test_loader=MagicMock(),
-        train_losses=[0.1],
-        val_metrics_history=[{"accuracy": 0.9}],
-        class_names=["a"],
-        paths=mock_paths,
-        training=mock_cfg.training,
-        dataset=mock_cfg.dataset,
-        augmentation=mock_cfg.augmentation,
-        evaluation=mock_cfg.evaluation,
-        arch_name="test",
-    )
-
-    assert math.isnan(test_auc)
 
 
 @pytest.mark.unit

@@ -147,9 +147,9 @@ def test_effective_is_anatomical_with_metadata(mock_metadata_28):
 
 @pytest.mark.unit
 def test_effective_is_anatomical_without_metadata():
-    """Test effective_is_anatomical defaults to True when metadata is None."""
-    config = DatasetConfig()
-    assert config.effective_is_anatomical is True
+    """Test effective_is_anatomical lazy-loads from registry when metadata is None."""
+    config = DatasetConfig()  # default dataset = bloodmnist (is_anatomical=False)
+    assert config.effective_is_anatomical is False
 
 
 @pytest.mark.unit
@@ -161,9 +161,9 @@ def test_effective_is_texture_based_with_metadata(mock_metadata_28):
 
 @pytest.mark.unit
 def test_effective_is_texture_based_without_metadata():
-    """Test effective_is_texture_based defaults to True when metadata is None."""
-    config = DatasetConfig()
-    assert config.effective_is_texture_based is True
+    """Test effective_is_texture_based lazy-loads from registry when metadata is None."""
+    config = DatasetConfig()  # default dataset = bloodmnist (is_texture_based=False)
+    assert config.effective_is_texture_based is False
 
 
 # EDGE CASES & REGRESSION TESTS

@@ -71,7 +71,7 @@ def export_to_onnx(
         ... )
     """
     logger.info("  [Source]")
-    logger.info(f"    {LogStyle.BULLET} Checkpoint        : {checkpoint_path.name}")
+    logger.info("    %s Checkpoint        : %s", LogStyle.BULLET, checkpoint_path.name)
     logger.info("")
 
     # Create output directory if needed
@@ -153,9 +153,9 @@ def export_to_onnx(
             onnx.checker.check_model(onnx_model)
 
             logger.info("  [Validation]")
-            logger.info(f"    {LogStyle.BULLET} ONNX check        : {LogStyle.SUCCESS} Valid")
+            logger.info("    %s ONNX check        : %s Valid", LogStyle.BULLET, LogStyle.SUCCESS)
             size_mb = _onnx_file_size_mb(output_path)
-            logger.info(f"    {LogStyle.BULLET} Model size        : {size_mb:.2f} MB")
+            logger.info("    %s Model size        : %.2f MB", LogStyle.BULLET, size_mb)
 
         except ImportError:
             logger.warning(
@@ -227,9 +227,13 @@ def quantize_model(
     ratio = original_mb / quantized_mb if quantized_mb > 0 else 0
 
     logger.info(
-        f"    {LogStyle.BULLET} Size              : {original_mb:.2f} MB → {quantized_mb:.2f} MB ({ratio:.1f}x)"
+        "    %s Size              : %.2f MB → %.2f MB (%.1fx)",
+        LogStyle.BULLET,
+        original_mb,
+        quantized_mb,
+        ratio,
     )
-    logger.info(f"    {LogStyle.BULLET} Status            : {LogStyle.SUCCESS} Done")
+    logger.info("    %s Status            : %s Done", LogStyle.BULLET, LogStyle.SUCCESS)
     logger.info("")
 
     return output_path
