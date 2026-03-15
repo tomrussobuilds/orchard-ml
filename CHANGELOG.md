@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - add dump_git_info to audit pipeline and harden mutation scores
+- add task abstraction layer with strategy dispatch
 
 ### Build
 
@@ -29,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add notebook 03 to README and update stale comments
 - cleanup — centralize HIGHRES_THRESHOLD, pathlib consistency, stale docs
 - remove redundant FileNotFoundError catch in serialization
+- remove requirements.txt, use pyproject.toml as single source of truth
 
 ## [0.2.1] - 2026-03-09
 

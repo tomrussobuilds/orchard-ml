@@ -14,6 +14,7 @@ __version__ = _pkg_version("orchard-ml")
 from .architectures import get_model
 from .core import Config, LogStyle, RootOrchestrator, log_pipeline_summary
 from .core.paths import MLRUNS_DB
+from .core.task_registry import TaskComponents, register_task
 from .exceptions import (
     OrchardConfigError,
     OrchardDatasetError,
@@ -23,7 +24,22 @@ from .exceptions import (
     OrchardInfrastructureError,
 )
 from .pipeline import run_export_phase, run_optimization_phase, run_training_phase
+from .tasks import (
+    ClassificationCriterionAdapter,
+    ClassificationEvalPipelineAdapter,
+    ClassificationMetricsAdapter,
+)
 from .tracking import create_tracker
+
+# ── Task Registration ─────────────────────────────────────────────────────
+register_task(
+    "classification",
+    TaskComponents(
+        criterion_factory=ClassificationCriterionAdapter(),
+        validation_metrics=ClassificationMetricsAdapter(),
+        eval_pipeline=ClassificationEvalPipelineAdapter(),
+    ),
+)
 
 __all__ = [
     "__version__",

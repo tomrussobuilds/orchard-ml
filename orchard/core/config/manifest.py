@@ -37,6 +37,7 @@ from .optuna_config import OptunaConfig
 from .telemetry_config import TelemetryConfig
 from .tracking_config import TrackingConfig
 from .training_config import TrainingConfig
+from .types import TaskType
 
 # Architecture resolution constraints (add new architectures here).
 # These are semantic subsets of SUPPORTED_RESOLUTIONS (core.paths.constants);
@@ -141,6 +142,7 @@ class Config(BaseModel):
     and provides factory methods for YAML and CLI instantiation.
 
     Attributes:
+        task_type: ML task type (currently ``"classification"``)
         hardware: Device selection, threading, reproducibility settings
         telemetry: Logging, paths, experiment naming
         training: Optimizer, scheduler, epochs, regularization
@@ -161,6 +163,10 @@ class Config(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    task_type: TaskType = Field(
+        default="classification",
+        description="ML task type driving strategy dispatch for losses, metrics, and evaluation.",
+    )
     hardware: HardwareConfig = Field(default_factory=HardwareConfig)
     telemetry: TelemetryConfig = Field(default_factory=TelemetryConfig)
     training: TrainingConfig = Field(default_factory=TrainingConfig)

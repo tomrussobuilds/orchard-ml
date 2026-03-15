@@ -86,3 +86,6 @@ ProjectSlug = Annotated[str, Field(pattern=r"^[a-z0-9_-]+$", min_length=3, max_l
 LogFrequency = Annotated[int, Field(ge=1, le=1000)]
 LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 DeviceType = Literal["auto", "cpu", "cuda", "mps"]
+
+# TASK
+TaskType = Literal["classification"]

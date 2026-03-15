@@ -374,6 +374,7 @@ def test_reporter_log_initial_status():
     reporter = Reporter()
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
+    mock_cfg.task_type = "classification"
     mock_cfg.hardware.device = "cuda"
     mock_cfg.training.epochs = 60
     mock_cfg.training.batch_size = 32
@@ -419,6 +420,7 @@ def test_reporter_log_initial_status_cpu_device():
     reporter = Reporter()
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
+    mock_cfg.task_type = "classification"
     mock_cfg.hardware.device = "cpu"
     mock_cfg.training.epochs = 10
     mock_cfg.training.batch_size = 16
@@ -464,6 +466,7 @@ def test_reporter_log_initial_status_with_weight_variant():
     reporter = Reporter()
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
+    mock_cfg.task_type = "classification"
     mock_cfg.hardware.device = "cuda"
     mock_cfg.training.epochs = 10
     mock_cfg.training.batch_size = 32
@@ -534,8 +537,10 @@ def test_reporter_log_hardware_section_cuda_device():
 
     mock_device = torch.device("cuda")
 
-    with patch("orchard.core.logger.reporter.get_accelerator_name", return_value="NVIDIA RTX 5070"):
-        with patch("orchard.core.logger.reporter.get_vram_info", return_value="8 GB"):
+    with patch(
+        "orchard.core.logger.env_reporter.get_accelerator_name", return_value="NVIDIA RTX 5070"
+    ):
+        with patch("orchard.core.logger.env_reporter.get_vram_info", return_value="8 GB"):
             reporter._log_hardware_section(
                 logger_instance=mock_logger,
                 cfg=mock_cfg,
@@ -1135,6 +1140,7 @@ def _build_cpu_cfg() -> MagicMock:
     cfg.dataset.metadata.is_anatomical = False
     cfg.dataset.metadata.is_texture_based = True
     cfg.dataset.img_size = 28
+    cfg.task_type = "classification"
     cfg.run_slug = "test-run"
     return cfg
 
@@ -1251,6 +1257,26 @@ def test_reporter_initial_status_env_init_header():
             found = True
             break
     assert found, "ENVIRONMENT INITIALIZATION header not found with exact content"
+
+
+@pytest.mark.unit
+def test_reporter_initial_status_logs_task_section():
+    """log_initial_status includes [TASK] section with capitalized task_type."""
+    reporter = Reporter()
+    log = MagicMock()
+    cfg = _build_cpu_cfg()
+    paths = MagicMock()
+    paths.root = Path("/run")
+    device = torch.device("cpu")
+
+    reporter.log_initial_status(log, cfg, paths, device, 4, 2)
+
+    task_call = _find_call_with_label(log.info.call_args_list, "Type")
+    assert task_call is not None
+    assert task_call[4] == "Classification"
+
+    calls_str = " ".join(str(c) for c in log.info.call_args_list)
+    assert "[TASK]" in calls_str
 
 
 @pytest.mark.unit
@@ -1409,7 +1435,7 @@ def test_hardware_section_mps_no_vram():
     device.type = "mps"
     device.__str__ = lambda _: "mps"
 
-    with patch("orchard.core.logger.reporter.get_accelerator_name", return_value="Apple M2"):
+    with patch("orchard.core.logger.env_reporter.get_accelerator_name", return_value="Apple M2"):
         reporter._log_hardware_section(log, cfg, device, 4, 2)
 
     calls_str = " ".join(str(c) for c in log.info.call_args_list)
@@ -1477,7 +1503,7 @@ def test_strategy_section_pretrained_weights():
     cfg.hardware.use_deterministic_algorithms = False
     cfg.augmentation.tta_mode = "none"
 
-    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="disabled"):
+    with patch("orchard.core.logger.env_reporter.determine_tta_mode", return_value="disabled"):
         reporter._log_strategy_section(log, cfg, torch.device("cpu"))
 
     w_call = _find_call_with_label(log.info.call_args_list, "Weights")
@@ -1500,7 +1526,7 @@ def test_strategy_section_random_weights():
     cfg.hardware.use_deterministic_algorithms = False
     cfg.augmentation.tta_mode = "none"
 
-    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="disabled"):
+    with patch("orchard.core.logger.env_reporter.determine_tta_mode", return_value="disabled"):
         reporter._log_strategy_section(log, cfg, torch.device("cpu"))
 
     w_call = _find_call_with_label(log.info.call_args_list, "Weights")
@@ -1523,7 +1549,7 @@ def test_strategy_section_amp_precision():
     cfg.hardware.use_deterministic_algorithms = False
     cfg.augmentation.tta_mode = "none"
 
-    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="disabled"):
+    with patch("orchard.core.logger.env_reporter.determine_tta_mode", return_value="disabled"):
         reporter._log_strategy_section(log, cfg, torch.device("cpu"))
 
     p_call = _find_call_with_label(log.info.call_args_list, "Precision")
@@ -1546,7 +1572,7 @@ def test_strategy_section_fp32_precision():
     cfg.hardware.use_deterministic_algorithms = False
     cfg.augmentation.tta_mode = "none"
 
-    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="disabled"):
+    with patch("orchard.core.logger.env_reporter.determine_tta_mode", return_value="disabled"):
         reporter._log_strategy_section(log, cfg, torch.device("cpu"))
 
     p_call = _find_call_with_label(log.info.call_args_list, "Precision")
@@ -1569,7 +1595,7 @@ def test_strategy_section_strict_repro_mode():
     cfg.hardware.use_deterministic_algorithms = True
     cfg.augmentation.tta_mode = "none"
 
-    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="disabled"):
+    with patch("orchard.core.logger.env_reporter.determine_tta_mode", return_value="disabled"):
         reporter._log_strategy_section(log, cfg, torch.device("cpu"))
 
     r_call = _find_call_with_label(log.info.call_args_list, "Repro. Mode")
@@ -1592,7 +1618,7 @@ def test_strategy_section_standard_repro_mode():
     cfg.hardware.use_deterministic_algorithms = False
     cfg.augmentation.tta_mode = "none"
 
-    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="disabled"):
+    with patch("orchard.core.logger.env_reporter.determine_tta_mode", return_value="disabled"):
         reporter._log_strategy_section(log, cfg, torch.device("cpu"))
 
     r_call = _find_call_with_label(log.info.call_args_list, "Repro. Mode")
@@ -1615,7 +1641,9 @@ def test_strategy_section_tta_mode_exact():
     cfg.hardware.use_deterministic_algorithms = False
     cfg.augmentation.tta_mode = "flip"
 
-    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="flip") as mock_tta:
+    with patch(
+        "orchard.core.logger.env_reporter.determine_tta_mode", return_value="flip"
+    ) as mock_tta:
         reporter._log_strategy_section(log, cfg, torch.device("cpu"))
         mock_tta.assert_called_once_with(True, "cpu", "flip")
 
@@ -1639,7 +1667,7 @@ def test_strategy_section_indent_arrow_not_none():
     cfg.hardware.use_deterministic_algorithms = False
     cfg.augmentation.tta_mode = "none"
 
-    with patch("orchard.core.logger.reporter.determine_tta_mode", return_value="none"):
+    with patch("orchard.core.logger.env_reporter.determine_tta_mode", return_value="none"):
         reporter._log_strategy_section(log, cfg, torch.device("cpu"))
 
     arch_call = _find_call_with_label(log.info.call_args_list, "Architecture")

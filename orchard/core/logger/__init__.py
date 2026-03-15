@@ -14,6 +14,7 @@ Available Components:
 """
 
 from ..paths.constants import LogStyle
+from .env_reporter import Reporter, ReporterProtocol
 from .logger import Logger
 from .progress import (
     log_optimization_header,
@@ -21,7 +22,6 @@ from .progress import (
     log_pipeline_summary,
     log_trial_start,
 )
-from .reporter import Reporter, ReporterProtocol
 
 __all__ = [
     "Logger",

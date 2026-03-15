@@ -810,6 +810,7 @@ def test_train_tracks_best_acc(mock_validate, mock_train, trainer):
         {"loss": 0.3, "accuracy": 0.92, "auc": 0.83},
         {"loss": 0.3, "accuracy": 0.91, "auc": 0.84},
     ]
+
     trainer.optimizer.step = MagicMock()
 
     trainer.train()
@@ -830,6 +831,7 @@ def test_train_records_val_loss_and_monitor(mock_validate, mock_train, trainer):
         {"loss": 0.2, "accuracy": 0.93, "auc": 0.91},
         {"loss": 0.2, "accuracy": 0.93, "auc": 0.92},
     ]
+
     trainer.optimizer.step = MagicMock()
 
     _, train_losses, val_metrics = trainer.train()
@@ -854,6 +856,7 @@ def test_train_calls_tracker(mock_validate, mock_train, trainer):
     mock_validate.side_effect = [
         {"loss": 0.3, "accuracy": 0.9, "auc": 0.80 + i * 0.01} for i in range(trainer.epochs)
     ]
+
     trainer.optimizer.step = MagicMock()
 
     mock_tracker = MagicMock()
@@ -875,6 +878,7 @@ def test_train_early_stop_warning(mock_validate, mock_train, trainer):
     """Test train() logs warning on early stopping."""
     mock_train.return_value = 0.5
     mock_validate.return_value = {"loss": 0.5, "accuracy": 0.5, "auc": 0.5}
+
     trainer.best_metric = 0.95
     trainer.optimizer.step = MagicMock()
 
@@ -896,6 +900,7 @@ def test_train_early_stop_warning_includes_epoch(mock_validate, mock_train, trai
     """Early stopping warning includes the actual epoch number (not None)."""
     mock_train.return_value = 0.5
     mock_validate.return_value = {"loss": 0.5, "accuracy": 0.5, "auc": 0.5}
+
     trainer.best_metric = 0.95
     trainer.optimizer.step = MagicMock()
 
@@ -929,6 +934,7 @@ def test_train_best_acc_strict_greater(mock_validate, mock_train, trainer):
     mock_validate.side_effect = [
         {"loss": 0.3, "accuracy": 0.90, "auc": 0.80 + i * 0.01} for i in range(trainer.epochs)
     ]
+
     trainer.optimizer.step = MagicMock()
     # Set best_acc = val_acc so the > condition should be False
     trainer.best_acc = 0.90
@@ -951,6 +957,7 @@ def test_train_log_epoch_summary_receives_real_values(mock_validate, mock_train,
     mock_validate.side_effect = [
         {"loss": 0.3, "accuracy": 0.9, "auc": 0.80 + i * 0.01} for i in range(trainer.epochs)
     ]
+
     trainer.optimizer.step = MagicMock()
 
     with patch.object(trainer, "_log_epoch_summary") as mock_log:
@@ -975,6 +982,7 @@ def test_train_val_loss_extracted_from_metrics(mock_validate, mock_train, traine
     """val_loss is read from val_metrics[METRIC_LOSS] (not set to None)."""
     mock_train.return_value = 0.5
     mock_validate.return_value = {"loss": 0.25, "accuracy": 0.9, "auc": 0.85}
+
     trainer.epochs = 1
     trainer._loop.options = trainer._loop.options.__class__(
         grad_clip=trainer._loop.options.grad_clip,

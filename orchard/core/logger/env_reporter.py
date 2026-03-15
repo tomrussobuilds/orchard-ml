@@ -114,6 +114,11 @@ class Reporter(BaseModel):
         logger_instance.info("%s%s %-18s: %s", I, A, "Experiment", cfg.run_slug)
         logger_instance.info("")
 
+        # Task Section
+        logger_instance.info("[TASK]")
+        logger_instance.info("%s%s %-18s: %s", I, A, "Type", cfg.task_type.capitalize())
+        logger_instance.info("")
+
         # Hardware Section
         self._log_hardware_section(logger_instance, cfg, device, applied_threads, num_workers)
         logger_instance.info("")

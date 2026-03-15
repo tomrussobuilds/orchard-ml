@@ -36,13 +36,13 @@ if TYPE_CHECKING:  # pragma: no cover
     from ..tracking import TrackerProtocol
 
 from ..architectures import get_model
+from ..core.task_registry import get_task
 from ..data_handler import (
     get_augmentations_description,
     get_dataloaders,
     load_dataset,
     show_samples_for_dataset,
 )
-from ..evaluation import run_final_evaluation
 from ..export import (
     benchmark_onnx_inference,
     export_to_onnx,
@@ -53,7 +53,6 @@ from ..optimization import run_optimization
 from ..trainer import (
     ModelTrainer,
     compute_class_weights,
-    get_criterion,
     get_optimizer,
     get_scheduler,
 )
@@ -197,7 +196,8 @@ def run_training_phase(
         train_labels = train_loader.dataset.labels.flatten()  # type: ignore[attr-defined]
         class_weights = compute_class_weights(train_labels, ds_meta.num_classes, device)
 
-    criterion = get_criterion(cfg.training, class_weights=class_weights)
+    task = get_task(cfg.task_type)
+    criterion = task.criterion_factory.get_criterion(cfg.training, class_weights=class_weights)
     optimizer = get_optimizer(model, cfg.training)
     scheduler = get_scheduler(optimizer, cfg.training)
 
@@ -219,7 +219,7 @@ def run_training_phase(
     # FINAL EVALUATION
     Reporter.log_phase_header(run_logger, "FINAL EVALUATION")
 
-    macro_f1, test_acc, test_auc = run_final_evaluation(
+    macro_f1, test_acc, test_auc = task.eval_pipeline.run_evaluation(
         model=model,
         test_loader=test_loader,
         train_losses=train_losses,

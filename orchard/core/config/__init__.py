@@ -46,6 +46,7 @@ __all__ = [
     "SearchSpaceOverrides",
     "ExportConfig",
     "TrackingConfig",
+    "TaskType",
 ]
 
 # LAZY IMPORTS MAPPING
@@ -71,6 +72,7 @@ _LAZY_IMPORTS: dict[str, str] = {
     "SearchSpaceOverrides": _OPTUNA_MOD,
     "ExportConfig": f"{_PKG}.export_config",
     "TrackingConfig": f"{_PKG}.tracking_config",
+    "TaskType": f"{_PKG}.types",
 }
 
 

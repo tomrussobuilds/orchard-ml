@@ -80,6 +80,8 @@ dev = [
     "types-requests>=2.32.0",
     "git-cliff>=2.12.0",
     "pre-commit>=4.0.0",
+    "pydeps>=3.0.0",
+    "pypistats>=1.13.0",
 ]
 docs = [
     "mkdocs>=1.6.0",

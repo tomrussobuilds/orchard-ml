@@ -19,7 +19,7 @@ Key Components:
 Related Protocols (defined in their respective modules):
 
 - ``InfraManagerProtocol``: ``config/infrastructure_config.py``
-- ``ReporterProtocol``: ``logger/reporter.py``
+- ``ReporterProtocol``: ``logger/env_reporter.py``
 - ``TimeTrackerProtocol``: ``environment/timing.py``
 - ``AuditSaverProtocol``: ``io/serialization.py``
 
@@ -54,7 +54,7 @@ from .environment.timing import TimeTracker, TimeTrackerProtocol
 from .io import AuditSaver
 from .io.serialization import AuditSaverProtocol
 from .logger import Logger, Reporter
-from .logger.reporter import ReporterProtocol
+from .logger.env_reporter import ReporterProtocol
 from .paths import LOGGER_NAME, LogStyle, RunPaths, setup_static_directories
 
 if TYPE_CHECKING:  # pragma: no cover

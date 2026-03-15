@@ -29,6 +29,7 @@ def mock_orchestrator():
     orch.cfg.dataset.effective_in_channels = 3
     orch.cfg.dataset.metadata.name = "organcmnist"
     orch.cfg.dataset.dataset_name = "organcmnist"
+    orch.cfg.task_type = "classification"
     orch.cfg.architecture.name = "mini_cnn"
     orch.cfg.evaluation.n_samples = 16
     orch.cfg.dataset._ensure_metadata = MagicMock(classes=["a", "b"], num_classes=2)
@@ -134,11 +135,11 @@ def test_run_optimization_phase_handles_none_config_path(
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
 @patch("orchard.pipeline.phases.get_model")
-@patch("orchard.pipeline.phases.get_criterion")
+@patch("orchard.tasks.classification.criterion_adapter.get_criterion")
 @patch("orchard.pipeline.phases.get_optimizer")
 @patch("orchard.pipeline.phases.get_scheduler")
 @patch("orchard.pipeline.phases.ModelTrainer")
-@patch("orchard.pipeline.phases.run_final_evaluation")
+@patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
 def test_run_training_phase_returns_expected_tuple(
     mock_aug_desc,
@@ -181,11 +182,11 @@ def test_run_training_phase_returns_expected_tuple(
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
 @patch("orchard.pipeline.phases.get_model")
-@patch("orchard.pipeline.phases.get_criterion")
+@patch("orchard.tasks.classification.criterion_adapter.get_criterion")
 @patch("orchard.pipeline.phases.get_optimizer")
 @patch("orchard.pipeline.phases.get_scheduler")
 @patch("orchard.pipeline.phases.ModelTrainer")
-@patch("orchard.pipeline.phases.run_final_evaluation")
+@patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
 def test_run_training_phase_with_custom_config(
     mock_aug_desc,
@@ -202,6 +203,7 @@ def test_run_training_phase_with_custom_config(
 ):
     """Test run_training_phase uses provided config override."""
     custom_cfg = MagicMock()
+    custom_cfg.task_type = "classification"
     custom_cfg.dataset.resolution = 224
     custom_cfg.dataset.metadata.name = "bloodmnist"
     custom_cfg.dataset.dataset_name = "bloodmnist"
@@ -574,11 +576,11 @@ def test_run_optimization_phase_forwards_all_kwargs(
 # TRAINING PHASE: KWARGS AND GUARDS
 _TRAINING_PATCHES = [
     "orchard.pipeline.phases.get_augmentations_description",
-    "orchard.pipeline.phases.run_final_evaluation",
+    "orchard.tasks.classification.evaluation_adapter.run_final_evaluation",
     "orchard.pipeline.phases.ModelTrainer",
     "orchard.pipeline.phases.get_scheduler",
     "orchard.pipeline.phases.get_optimizer",
-    "orchard.pipeline.phases.get_criterion",
+    "orchard.tasks.classification.criterion_adapter.get_criterion",
     "orchard.pipeline.phases.get_model",
     "orchard.pipeline.phases.show_samples_for_dataset",
     "orchard.pipeline.phases.get_dataloaders",
@@ -645,11 +647,11 @@ def _setup_training_mocks(
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
 @patch("orchard.pipeline.phases.get_model")
-@patch("orchard.pipeline.phases.get_criterion")
+@patch("orchard.tasks.classification.criterion_adapter.get_criterion")
 @patch("orchard.pipeline.phases.get_optimizer")
 @patch("orchard.pipeline.phases.get_scheduler")
 @patch("orchard.pipeline.phases.ModelTrainer")
-@patch("orchard.pipeline.phases.run_final_evaluation")
+@patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
 def test_run_training_phase_asserts_run_logger(
     _m1,
@@ -676,11 +678,11 @@ def test_run_training_phase_asserts_run_logger(
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
 @patch("orchard.pipeline.phases.get_model")
-@patch("orchard.pipeline.phases.get_criterion")
+@patch("orchard.tasks.classification.criterion_adapter.get_criterion")
 @patch("orchard.pipeline.phases.get_optimizer")
 @patch("orchard.pipeline.phases.get_scheduler")
 @patch("orchard.pipeline.phases.ModelTrainer")
-@patch("orchard.pipeline.phases.run_final_evaluation")
+@patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
 def test_run_training_phase_asserts_paths(
     _m1,
@@ -707,11 +709,11 @@ def test_run_training_phase_asserts_paths(
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
 @patch("orchard.pipeline.phases.get_model")
-@patch("orchard.pipeline.phases.get_criterion")
+@patch("orchard.tasks.classification.criterion_adapter.get_criterion")
 @patch("orchard.pipeline.phases.get_optimizer")
 @patch("orchard.pipeline.phases.get_scheduler")
 @patch("orchard.pipeline.phases.ModelTrainer")
-@patch("orchard.pipeline.phases.run_final_evaluation")
+@patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
 def test_run_training_phase_verifies_all_kwargs(
     mock_aug_desc,
@@ -832,11 +834,11 @@ def test_run_training_phase_verifies_all_kwargs(
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
 @patch("orchard.pipeline.phases.get_model")
-@patch("orchard.pipeline.phases.get_criterion")
+@patch("orchard.tasks.classification.criterion_adapter.get_criterion")
 @patch("orchard.pipeline.phases.get_optimizer")
 @patch("orchard.pipeline.phases.get_scheduler")
 @patch("orchard.pipeline.phases.ModelTrainer")
-@patch("orchard.pipeline.phases.run_final_evaluation")
+@patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
 def test_run_training_phase_weighted_loss(
     mock_aug_desc,
@@ -892,11 +894,11 @@ def test_run_training_phase_weighted_loss(
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
 @patch("orchard.pipeline.phases.get_model")
-@patch("orchard.pipeline.phases.get_criterion")
+@patch("orchard.tasks.classification.criterion_adapter.get_criterion")
 @patch("orchard.pipeline.phases.get_optimizer")
 @patch("orchard.pipeline.phases.get_scheduler")
 @patch("orchard.pipeline.phases.ModelTrainer")
-@patch("orchard.pipeline.phases.run_final_evaluation")
+@patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
 def test_run_training_phase_passes_tracker(
     mock_aug_desc,
@@ -1184,11 +1186,11 @@ def test_run_optimization_phase_logs_header_with_double_style(
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
 @patch("orchard.pipeline.phases.get_model")
-@patch("orchard.pipeline.phases.get_criterion")
+@patch("orchard.tasks.classification.criterion_adapter.get_criterion")
 @patch("orchard.pipeline.phases.get_optimizer")
 @patch("orchard.pipeline.phases.get_scheduler")
 @patch("orchard.pipeline.phases.ModelTrainer")
-@patch("orchard.pipeline.phases.run_final_evaluation")
+@patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
 def test_run_training_phase_logs_all_headers(
     mock_aug_desc,

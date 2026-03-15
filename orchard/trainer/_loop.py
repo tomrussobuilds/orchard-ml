@@ -34,7 +34,7 @@ from .engine import mixup_data, train_one_epoch, validate_epoch
 
 
 def create_amp_scaler(
-    training: TrainingConfig, device: str = "cuda"
+    training: TrainingConfig, device: str = "cuda"  # pragma: no mutate
 ) -> torch.amp.grad_scaler.GradScaler | None:
     """
     Create AMP GradScaler if mixed precision is enabled.

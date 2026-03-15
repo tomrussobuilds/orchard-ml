@@ -15,7 +15,7 @@ import optuna
 
 from ..paths import LOGGER_NAME
 from ..paths.constants import LogStyle
-from .reporter import Reporter
+from .env_reporter import Reporter
 
 if TYPE_CHECKING:  # pragma: no cover
     import torch
