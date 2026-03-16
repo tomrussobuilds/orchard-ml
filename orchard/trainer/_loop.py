@@ -21,6 +21,8 @@ from typing import TYPE_CHECKING, Any, Callable
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
 
+    from ..core.task_protocols import TaskValidationMetrics
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -130,6 +132,7 @@ class TrainingLoop:
         scaler: torch.amp.grad_scaler.GradScaler | None,
         mixup_fn: Callable[..., Any] | None,
         options: LoopOptions,
+        validation_metrics: TaskValidationMetrics | None = None,
     ) -> None:
         self.model = model
         self.train_loader = train_loader
@@ -141,6 +144,7 @@ class TrainingLoop:
         self.scaler = scaler
         self.mixup_fn = mixup_fn
         self.options = options
+        self._validation_metrics = validation_metrics
 
     def run_train_step(self, epoch: int) -> float:
         """
@@ -181,12 +185,20 @@ class TrainingLoop:
             Tuple of (average training loss, validation metrics dict).
         """
         train_loss = self.run_train_step(epoch)
-        val_metrics = validate_epoch(
-            model=self.model,
-            val_loader=self.val_loader,
-            criterion=self.criterion,
-            device=self.device,
-        )
+        if self._validation_metrics is not None:
+            val_metrics = self._validation_metrics.compute_validation_metrics(
+                model=self.model,
+                val_loader=self.val_loader,
+                criterion=self.criterion,
+                device=self.device,
+            )
+        else:
+            val_metrics = validate_epoch(
+                model=self.model,
+                val_loader=self.val_loader,
+                criterion=self.criterion,
+                device=self.device,
+            )
         monitor = self.options.monitor_metric
         if monitor not in val_metrics:
             raise KeyError(

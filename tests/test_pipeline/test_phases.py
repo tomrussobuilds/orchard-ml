@@ -798,6 +798,7 @@ def test_run_training_phase_verifies_all_kwargs(
     assert trainer_kwargs["training"] is cfg.training
     assert trainer_kwargs["output_path"] is mock_orchestrator.paths.best_model_path
     assert trainer_kwargs["tracker"] is None
+    assert trainer_kwargs["validation_metrics"] is not None
 
     # run_final_evaluation
     eval_kwargs = mock_final_eval.call_args.kwargs

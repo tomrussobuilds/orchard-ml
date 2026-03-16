@@ -37,6 +37,7 @@ from ..exceptions import OrchardExportError
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
 
+    from ..core.task_protocols import TaskValidationMetrics
     from ..tracking import TrackerProtocol
 
 from ._loop import LoopOptions, TrainingLoop, create_amp_scaler, create_mixup_fn
@@ -114,6 +115,7 @@ class ModelTrainer:
         training: TrainingConfig,
         output_path: Path | None = None,
         tracker: TrackerProtocol | None = None,
+        validation_metrics: TaskValidationMetrics | None = None,
     ) -> None:
         """
         Initializes the ModelTrainer with all required training components.
@@ -129,6 +131,9 @@ class ModelTrainer:
             training: Training hyperparameters sub-config.
             output_path: Path for best model checkpoint (default: ``./best_model.pth``).
             tracker: Optional experiment tracker for MLflow metric logging.
+            validation_metrics: Task-specific validation metrics adapter.
+                If provided, used instead of the default classification-specific
+                ``validate_epoch``. Obtained via ``get_task(task_type).validation_metrics``.
         """
         self.model = model
         self.train_loader = train_loader
@@ -181,6 +186,7 @@ class ModelTrainer:
                 use_tqdm=training.use_tqdm,
                 monitor_metric=self.monitor_metric,
             ),
+            validation_metrics=validation_metrics,
         )
 
         logger.info(

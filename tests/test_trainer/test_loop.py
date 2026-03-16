@@ -311,3 +311,110 @@ def test_run_epoch_calls_validate_with_correct_args(mock_train, mock_val, mock_s
         criterion=loop.criterion,
         device=loop.device,
     )
+
+
+# ── TESTS: TrainingLoop with injected TaskValidationMetrics ───────────────
+
+
+@pytest.fixture
+def loop_with_validation_metrics():
+    """TrainingLoop instance with a mock TaskValidationMetrics adapter."""
+    mock_adapter = MagicMock()
+    mock_adapter.compute_validation_metrics.return_value = {
+        "loss": 0.2,
+        "accuracy": 0.95,
+        "auc": 0.98,
+    }
+    return (
+        TrainingLoop(
+            model=MagicMock(spec=nn.Module),
+            train_loader=MagicMock(),
+            val_loader=MagicMock(),
+            optimizer=MagicMock(),
+            scheduler=MagicMock(),
+            criterion=MagicMock(spec=nn.Module),
+            device=torch.device("cpu"),
+            scaler=None,
+            mixup_fn=None,
+            options=LoopOptions(
+                grad_clip=1.0,
+                total_epochs=5,
+                mixup_epochs=3,
+                use_tqdm=False,
+                monitor_metric="auc",
+            ),
+            validation_metrics=mock_adapter,
+        ),
+        mock_adapter,
+    )
+
+
+@pytest.mark.unit
+def test_loop_init_stores_validation_metrics():
+    """TrainingLoop.__init__ stores validation_metrics when provided."""
+    adapter = MagicMock()
+    loop = TrainingLoop(
+        model=MagicMock(spec=nn.Module),
+        train_loader=MagicMock(),
+        val_loader=MagicMock(),
+        optimizer=MagicMock(),
+        scheduler=MagicMock(),
+        criterion=MagicMock(spec=nn.Module),
+        device=torch.device("cpu"),
+        scaler=None,
+        mixup_fn=None,
+        options=LoopOptions(
+            grad_clip=1.0,
+            total_epochs=5,
+            mixup_epochs=3,
+            use_tqdm=False,
+            monitor_metric="auc",
+        ),
+        validation_metrics=adapter,
+    )
+    assert loop._validation_metrics is adapter
+
+
+@pytest.mark.unit
+def test_loop_init_validation_metrics_defaults_to_none(loop):
+    """TrainingLoop._validation_metrics is None when not provided."""
+    assert loop._validation_metrics is None
+
+
+@pytest.mark.unit
+@patch("orchard.trainer._loop.step_scheduler")
+@patch("orchard.trainer._loop.train_one_epoch", return_value=0.42)
+def test_run_epoch_uses_injected_validation_metrics(
+    mock_train,
+    mock_sched,
+    loop_with_validation_metrics,
+):
+    """run_epoch delegates to the injected TaskValidationMetrics adapter."""
+    loop, mock_adapter = loop_with_validation_metrics
+    train_loss, val_metrics = loop.run_epoch(epoch=1)
+
+    mock_adapter.compute_validation_metrics.assert_called_once_with(
+        model=loop.model,
+        val_loader=loop.val_loader,
+        criterion=loop.criterion,
+        device=loop.device,
+    )
+    assert val_metrics["auc"] == pytest.approx(0.98)
+    assert train_loss == pytest.approx(0.42)
+
+
+@pytest.mark.unit
+@patch("orchard.trainer._loop.step_scheduler")
+@patch("orchard.trainer._loop.validate_epoch")
+@patch("orchard.trainer._loop.train_one_epoch", return_value=0.42)
+def test_run_epoch_skips_validate_epoch_when_adapter_injected(
+    mock_train,
+    mock_val,
+    mock_sched,
+    loop_with_validation_metrics,
+):
+    """run_epoch does NOT call validate_epoch when validation_metrics is set."""
+    loop, _ = loop_with_validation_metrics
+    loop.run_epoch(epoch=1)
+
+    mock_val.assert_not_called()

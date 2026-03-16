@@ -168,6 +168,30 @@ def test_trainer_init(
     assert loop.options.total_epochs == trainer.epochs
     assert loop.options.use_tqdm is mock_cfg.training.use_tqdm
     assert loop.options.monitor_metric == "auc"
+    # No validation_metrics injected → fallback to validate_epoch
+    assert loop._validation_metrics is None
+
+
+@pytest.mark.unit
+def test_trainer_forwards_validation_metrics_to_loop(
+    simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cfg, tmp_path
+):
+    """ModelTrainer passes validation_metrics to the inner TrainingLoop."""
+    mock_adapter = MagicMock()
+    train_loader, val_loader = mock_loaders
+    trainer = ModelTrainer(
+        model=simple_model,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        optimizer=optimizer,
+        scheduler=scheduler,
+        criterion=criterion,
+        device=torch.device("cpu"),
+        training=mock_cfg.training,
+        output_path=tmp_path / "best.pth",
+        validation_metrics=mock_adapter,
+    )
+    assert trainer._loop._validation_metrics is mock_adapter
 
 
 @pytest.mark.unit

@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - bump black in the uv group across 1 directory (#3)
 
+### Changed
+
+- generalize task eval protocols to Mapping[str, float]
+
 ### Documentation
 
 - fix notebook setup cells and add edge deploy notebook

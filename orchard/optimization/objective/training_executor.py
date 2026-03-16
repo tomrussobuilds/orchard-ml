@@ -34,6 +34,8 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
 
+    from ...core.task_protocols import TaskValidationMetrics
+
 import optuna
 import torch
 
@@ -127,6 +129,8 @@ class TrialTrainingExecutor:
         log_interval: int,
         device: torch.device,
         metric_extractor: MetricExtractor,
+        validation_metrics: TaskValidationMetrics | None = None,
+        fallback_metrics: Mapping[str, float] | None = None,
     ) -> None:
         """
         Initialize training executor.
@@ -143,6 +147,10 @@ class TrialTrainingExecutor:
             log_interval: Epoch interval for progress logging.
             device: Training device.
             metric_extractor: Metric extraction and tracking handler.
+            validation_metrics: Task-specific validation metrics adapter.
+                If provided, used instead of the default ``validate_epoch``.
+            fallback_metrics: Metrics returned on validation failure.
+                Defaults to classification-specific fallback if not provided.
         """
         self.model = model
         self.train_loader = train_loader
@@ -152,6 +160,8 @@ class TrialTrainingExecutor:
         self.criterion = criterion
         self.device = device
         self.metric_extractor = metric_extractor
+        self._validation_metrics = validation_metrics
+        self._fallback_metrics = fallback_metrics or _FALLBACK_METRICS
 
         # Pruning config
         self.enable_pruning = optuna.enable_pruning
@@ -253,17 +263,28 @@ class TrialTrainingExecutor:
         """
         Validate single epoch with error handling.
 
+        Uses the injected ``TaskValidationMetrics`` adapter when available,
+        falling back to the default ``validate_epoch`` engine otherwise.
+
         Returns:
             Dictionary of validation metrics (loss, accuracy, auc, etc.)
             Returns fallback metrics on validation failure
         """
         try:
-            metrics = validate_epoch(
-                model=self.model,
-                val_loader=self.val_loader,
-                criterion=self.criterion,
-                device=self.device,
-            )
+            if self._validation_metrics is not None:
+                metrics = self._validation_metrics.compute_validation_metrics(
+                    model=self.model,
+                    val_loader=self.val_loader,
+                    criterion=self.criterion,
+                    device=self.device,
+                )
+            else:
+                metrics = validate_epoch(
+                    model=self.model,
+                    val_loader=self.val_loader,
+                    criterion=self.criterion,
+                    device=self.device,
+                )
             self._consecutive_val_failures = 0
             return metrics
 
@@ -281,7 +302,7 @@ class TrialTrainingExecutor:
                     f"Validation failed {self._consecutive_val_failures} consecutive times, "
                     "aborting trial"  # pragma: no mutate
                 ) from e
-            return dict(_FALLBACK_METRICS)
+            return dict(self._fallback_metrics)
 
     def _should_prune(self, trial: optuna.Trial, epoch: int) -> bool:
         """

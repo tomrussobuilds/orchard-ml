@@ -213,7 +213,7 @@ def test_objective_calls_tracker_nested_runs(mock_tracker):
         with patch("orchard.optimization.objective.objective.log_trial_start"):
             with patch("orchard.optimization.objective.objective.get_optimizer"):
                 with patch("orchard.optimization.objective.objective.get_scheduler"):
-                    with patch("orchard.optimization.objective.objective.get_criterion"):
+                    with patch("orchard.optimization.objective.objective.get_task"):
                         result = objective(mock_trial)
 
     assert result == pytest.approx(0.95, abs=1e-5)

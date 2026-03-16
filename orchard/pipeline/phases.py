@@ -209,6 +209,7 @@ def run_training_phase(
         training=cfg.training,
         output_path=paths.best_model_path,
         tracker=tracker,
+        validation_metrics=task.validation_metrics,
     )
 
     best_model_path, train_losses, val_metrics_history = trainer.train()

@@ -510,6 +510,128 @@ def test_validate_epoch_passes_correct_kwargs():
 
 
 @pytest.mark.unit
+def test_validate_epoch_uses_injected_adapter():
+    """Assert _validate_epoch delegates to injected TaskValidationMetrics adapter."""
+    model = nn.Linear(10, 2)
+    val_loader = MagicMock()
+    criterion = nn.CrossEntropyLoss()
+    device = torch.device("cpu")
+
+    mock_adapter = MagicMock()
+    mock_adapter.compute_validation_metrics.return_value = {
+        "loss": 0.2,
+        "accuracy": 0.95,
+        "auc": 0.98,
+        "f1": 0.93,
+    }
+
+    executor = TrialTrainingExecutor(
+        model=model,
+        train_loader=MagicMock(),
+        val_loader=val_loader,
+        optimizer=torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0),
+        scheduler=MagicMock(),
+        criterion=criterion,
+        training=MagicMock(
+            use_amp=False,
+            epochs=5,
+            mixup_alpha=0,
+            grad_clip=1.0,
+            mixup_epochs=0,
+            scheduler_type="step",
+            monitor_metric="auc",
+        ),
+        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        log_interval=5,
+        device=device,
+        metric_extractor=MetricExtractor("auc"),
+        validation_metrics=mock_adapter,
+    )
+
+    result = executor._validate_epoch()
+
+    mock_adapter.compute_validation_metrics.assert_called_once_with(
+        model=model,
+        val_loader=val_loader,
+        criterion=criterion,
+        device=device,
+    )
+    assert result["auc"] == pytest.approx(0.98)
+
+
+@pytest.mark.unit
+def test_validate_epoch_skips_validate_epoch_when_adapter_injected():
+    """Assert _validate_epoch does NOT call validate_epoch when adapter is set."""
+    model = nn.Linear(10, 2)
+    mock_adapter = MagicMock()
+    mock_adapter.compute_validation_metrics.return_value = {
+        "loss": 0.2,
+        "accuracy": 0.95,
+        "auc": 0.98,
+        "f1": 0.93,
+    }
+
+    executor = TrialTrainingExecutor(
+        model=model,
+        train_loader=MagicMock(),
+        val_loader=MagicMock(),
+        optimizer=torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0),
+        scheduler=MagicMock(),
+        criterion=nn.CrossEntropyLoss(),
+        training=MagicMock(
+            use_amp=False,
+            epochs=5,
+            mixup_alpha=0,
+            grad_clip=1.0,
+            mixup_epochs=0,
+            scheduler_type="step",
+            monitor_metric="auc",
+        ),
+        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        log_interval=5,
+        device=torch.device("cpu"),
+        metric_extractor=MetricExtractor("auc"),
+        validation_metrics=mock_adapter,
+    )
+
+    with patch("orchard.optimization.objective.training_executor.validate_epoch") as mock_val:
+        executor._validate_epoch()
+        mock_val.assert_not_called()
+
+
+@pytest.mark.unit
+def test_executor_stores_validation_metrics():
+    """Assert TrialTrainingExecutor.__init__ stores validation_metrics."""
+    model = nn.Linear(10, 2)
+    mock_adapter = MagicMock()
+
+    executor = TrialTrainingExecutor(
+        model=model,
+        train_loader=MagicMock(),
+        val_loader=MagicMock(),
+        optimizer=torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0),
+        scheduler=MagicMock(),
+        criterion=nn.CrossEntropyLoss(),
+        training=MagicMock(
+            use_amp=False,
+            epochs=5,
+            mixup_alpha=0,
+            grad_clip=1.0,
+            mixup_epochs=0,
+            scheduler_type="step",
+            monitor_metric="auc",
+        ),
+        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        log_interval=5,
+        device=torch.device("cpu"),
+        metric_extractor=MetricExtractor("auc"),
+        validation_metrics=mock_adapter,
+    )
+
+    assert executor._validation_metrics is mock_adapter
+
+
+@pytest.mark.unit
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.optimization.objective.training_executor.validate_epoch")
 def test_log_interval_controls_logging(mock_val, mock_train, mock_trial):

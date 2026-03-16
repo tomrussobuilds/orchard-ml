@@ -608,19 +608,19 @@ orchard/optimization/objective/metric_extractor.py:
   not_checked: 0
   score: 82.9
 orchard/optimization/objective/objective.py:
-  last_run: '2026-03-09T20:42:14Z'
-  total: 138
-  killed: 98
+  last_run: '2026-03-16T11:28:35Z'
+  total: 142
+  killed: 102
   survived: 40
   not_checked: 0
-  score: 71.0
+  score: 71.8
 orchard/optimization/objective/training_executor.py:
-  last_run: '2026-03-09T20:42:14Z'
-  total: 115
-  killed: 102
+  last_run: '2026-03-16T11:28:52Z'
+  total: 128
+  killed: 115
   survived: 13
   not_checked: 0
-  score: 88.7
+  score: 89.8
 orchard/optimization/orchestrator/__init__.py:
   last_run: '2026-03-09T20:42:14Z'
   total: 0
@@ -685,9 +685,9 @@ orchard/pipeline/__init__.py:
   not_checked: 0
   score: 100.0
 orchard/pipeline/phases.py:
-  last_run: '2026-03-16T09:24:35Z'
-  total: 316
-  killed: 316
+  last_run: '2026-03-16T11:11:57Z'
+  total: 318
+  killed: 318
   survived: 0
   not_checked: 0
   score: 100.0
@@ -748,9 +748,9 @@ orchard/trainer/__init__.py:
   not_checked: 0
   score: 100.0
 orchard/trainer/_loop.py:
-  last_run: '2026-03-15T21:33:55Z'
-  total: 64
-  killed: 64
+  last_run: '2026-03-16T11:06:34Z'
+  total: 75
+  killed: 75
   survived: 0
   not_checked: 0
   score: 100.0
@@ -783,9 +783,9 @@ orchard/trainer/setup.py:
   not_checked: 0
   score: 99.1
 orchard/trainer/trainer.py:
-  last_run: '2026-03-15T22:19:53Z'
-  total: 163
-  killed: 161
+  last_run: '2026-03-16T11:28:01Z'
+  total: 165
+  killed: 163
   survived: 2
   not_checked: 0
   score: 98.8

@@ -54,10 +54,10 @@ if TYPE_CHECKING:  # pragma: no cover
     from ...tracking import TrackerProtocol
 
 from ...architectures import get_model
+from ...core.task_registry import get_task
 from ...data_handler import DatasetData, get_dataloaders, load_dataset
 from ...trainer import (
     compute_class_weights,
-    get_criterion,
     get_optimizer,
     get_scheduler,
 )
@@ -238,13 +238,17 @@ class OptunaObjective:
             optimizer = get_optimizer(model, trial_cfg.training)
             scheduler = get_scheduler(optimizer, trial_cfg.training)
 
+            task = get_task(self.cfg.task_type)
+
             class_weights = None
             if trial_cfg.training.weighted_loss:
                 train_labels = train_loader.dataset.labels.flatten()  # type: ignore[attr-defined]
                 num_classes = self.config_builder.base_metadata.num_classes
                 class_weights = compute_class_weights(train_labels, num_classes, self.device)
 
-            criterion = get_criterion(trial_cfg.training, class_weights=class_weights)
+            criterion = task.criterion_factory.get_criterion(
+                trial_cfg.training, class_weights=class_weights
+            )
 
             # Execute training
             executor = TrialTrainingExecutor(
@@ -259,6 +263,7 @@ class OptunaObjective:
                 log_interval=trial_cfg.telemetry.log_interval,
                 device=self.device,
                 metric_extractor=self.metric_extractor,
+                validation_metrics=task.validation_metrics,
             )
 
             best_metric = executor.execute(trial)

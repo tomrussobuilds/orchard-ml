@@ -518,7 +518,7 @@ def test_optuna_objective_call_with_pruning():
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
-        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
     ):
         with patch(
@@ -566,7 +566,7 @@ def test_optuna_objective_call_cleanup_on_success():
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
-        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
     ):
         with patch(
@@ -617,7 +617,7 @@ def test_optuna_objective_call_returns_worst_metric_on_failure():
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
-        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
     ):
         with patch(
@@ -668,7 +668,7 @@ def test_optuna_objective_call_returns_inf_on_failure_minimize():
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
-        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
     ):
         with patch(
@@ -717,7 +717,7 @@ def test_optuna_objective_failed_trial_logs_worst_metric_to_tracker():
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
-        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
     ):
         with patch(
@@ -767,7 +767,7 @@ def test_optuna_objective_call_reraises_trial_pruned():
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
-        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
     ):
         with patch(
@@ -820,7 +820,7 @@ def test_optuna_objective_call_builds_trial_config():
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
-        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
     ):
         with patch(
@@ -1105,7 +1105,7 @@ def test_objective_call_resets_metric_extractor():
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
-        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
         patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec_cls,
     ):
@@ -1147,7 +1147,7 @@ def test_objective_call_log_params_includes_pretrained():
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
-        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start") as mock_log,
         patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec,
     ):
@@ -1194,7 +1194,7 @@ def test_objective_tracker_end_with_best_metric_on_success():
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
-        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
         patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec,
     ):
@@ -1277,7 +1277,7 @@ def test_objective_weighted_loss_calls_compute_class_weights():
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
-        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
         patch("orchard.optimization.objective.objective.compute_class_weights") as mock_cw,
         patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec,
@@ -1385,7 +1385,10 @@ def test_call_passes_correct_kwargs_to_executor():
             "orchard.optimization.objective.objective.get_scheduler", return_value=mock_scheduler
         ),
         patch(
-            "orchard.optimization.objective.objective.get_criterion", return_value=mock_criterion
+            "orchard.optimization.objective.objective.get_task",
+            return_value=MagicMock(
+                criterion_factory=MagicMock(get_criterion=MagicMock(return_value=mock_criterion))
+            ),
         ),
         patch("orchard.optimization.objective.objective.log_trial_start"),
         patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec_cls,
@@ -1405,6 +1408,54 @@ def test_call_passes_correct_kwargs_to_executor():
     assert call_kwargs["metric_extractor"] is objective.metric_extractor
     assert call_kwargs["training"] is _mock_trial_cfg.training
     assert call_kwargs["optuna"] is _mock_trial_cfg.optuna
+    assert call_kwargs["validation_metrics"] is not None
+
+
+@pytest.mark.unit
+def test_call_uses_task_registry_for_criterion():
+    """Verify __call__ uses get_task() for criterion and validation_metrics."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.training.weighted_loss = False
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+    mock_cfg.task_type = "classification"
+
+    mock_task = MagicMock()
+    mock_criterion = MagicMock()
+    mock_task.criterion_factory.get_criterion.return_value = mock_criterion
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
+        model_factory=MagicMock(return_value=MagicMock()),
+    )
+    objective._cleanup = MagicMock()
+    objective.config_builder.build = MagicMock(return_value=MagicMock(training=mock_cfg.training))
+
+    mock_trial = MagicMock()
+    mock_trial.number = 0
+
+    with (
+        patch("orchard.optimization.objective.objective.get_optimizer"),
+        patch("orchard.optimization.objective.objective.get_scheduler"),
+        patch(
+            "orchard.optimization.objective.objective.get_task", return_value=mock_task
+        ) as mock_get_task,
+        patch("orchard.optimization.objective.objective.log_trial_start"),
+        patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec_cls,
+    ):
+        mock_exec_cls.return_value.execute.return_value = 0.9
+        objective(mock_trial)
+
+    mock_get_task.assert_called_once_with(mock_cfg.task_type)
+    mock_task.criterion_factory.get_criterion.assert_called_once()
+    call_kwargs = mock_exec_cls.call_args[1]
+    assert call_kwargs["criterion"] is mock_criterion
+    assert call_kwargs["validation_metrics"] is mock_task.validation_metrics
 
 
 @pytest.mark.unit
@@ -1436,7 +1487,7 @@ def test_call_log_trial_start_receives_correct_args():
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
-        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start") as mock_log,
         patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec,
     ):
@@ -1517,7 +1568,7 @@ def test_call_dataloader_factory_receives_is_optuna():
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
-        patch("orchard.optimization.objective.objective.get_criterion"),
+        patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
         patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec,
     ):
