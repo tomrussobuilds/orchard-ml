@@ -8,14 +8,11 @@ fallback when MLflow is unavailable or tracking is disabled.
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol
-
-if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Mapping
+from typing import Any, Protocol
 
 from ..core import LOGGER_NAME, LogStyle
-from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -53,7 +50,7 @@ class TrackerProtocol(Protocol):
         self, epoch: int, train_loss: float, val_metrics: Mapping[str, float], lr: float
     ) -> None: ...
 
-    def log_test_metrics(self, test_acc: float, macro_f1: float) -> None: ...
+    def log_test_metrics(self, metrics: Mapping[str, float]) -> None: ...
 
     def log_artifact(self, path: Path) -> None: ...
 
@@ -82,7 +79,7 @@ class NoOpTracker:  # pragma: no cover
     ) -> None:
         """No-op: skip per-epoch metric logging."""
 
-    def log_test_metrics(self, test_acc: float, macro_f1: float) -> None:  # noqa: ARG002
+    def log_test_metrics(self, metrics: Mapping[str, float]) -> None:  # noqa: ARG002
         """No-op: skip test metric logging."""
 
     def log_artifact(self, path: Path) -> None:  # noqa: ARG002
@@ -154,30 +151,25 @@ class MLflowTracker:  # pragma: no cover
         Args:
             epoch: Current epoch number (1-based).
             train_loss: Training loss for this epoch.
-            val_metrics: Validation metrics dict with 'loss', 'accuracy', 'auc', 'f1'.
+            val_metrics: Validation metrics mapping (task-specific keys).
             lr: Current learning rate.
         """
-        mlflow.log_metrics(
-            {
-                "train_loss": train_loss,
-                "val_loss": val_metrics[METRIC_LOSS],
-                "val_accuracy": val_metrics[METRIC_ACCURACY],
-                "val_auc": val_metrics.get(METRIC_AUC, 0.0),
-                "val_f1": val_metrics.get(METRIC_F1, 0.0),
-                "learning_rate": lr,
-            },
-            step=epoch,
-        )
+        metrics_to_log: dict[str, float] = {
+            "train_loss": train_loss,
+            "learning_rate": lr,
+        }
+        for key, value in val_metrics.items():
+            metrics_to_log[f"val_{key}"] = value
+        mlflow.log_metrics(metrics_to_log, step=epoch)
 
-    def log_test_metrics(self, test_acc: float, macro_f1: float) -> None:
+    def log_test_metrics(self, metrics: Mapping[str, float]) -> None:
         """
         Log final test set metrics.
 
         Args:
-            test_acc: Test set accuracy.
-            macro_f1: Test set macro-averaged F1 score.
+            metrics: Task-specific test metrics mapping.
         """
-        mlflow.log_metrics({"test_accuracy": test_acc, "test_macro_f1": macro_f1})
+        mlflow.log_metrics({f"test_{k}": v for k, v in metrics.items()})
 
     def log_artifact(self, path: Path) -> None:
         """

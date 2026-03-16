@@ -199,9 +199,7 @@ def run(
             tracker.log_artifact(paths.get_config_path())
 
             log_pipeline_summary(
-                test_acc=result.test_acc,
-                macro_f1=result.macro_f1,
-                test_auc=result.test_auc,
+                test_metrics=result.test_metrics,
                 best_model_path=result.best_model_path,
                 run_dir=paths.root,
                 duration=orchestrator.time_tracker.elapsed_formatted,

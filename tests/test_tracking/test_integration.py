@@ -158,7 +158,9 @@ def test_evaluation_calls_tracker_log_test_metrics(mock_tracker):
             tracker=mock_tracker,
         )
 
-    mock_tracker.log_test_metrics.assert_called_once_with(test_acc=0.92, macro_f1=0.88)
+    mock_tracker.log_test_metrics.assert_called_once_with(
+        {"accuracy": 0.92, "f1": 0.88, "auc": 0.96}
+    )
     assert test_acc == pytest.approx(0.92, abs=1e-5)
     assert macro_f1 == pytest.approx(0.88, abs=1e-5)
     assert test_auc == pytest.approx(0.96, abs=1e-5)

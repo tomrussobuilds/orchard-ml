@@ -7,16 +7,16 @@ to satisfy :class:`~orchard.core.task_protocols.TaskEvalPipeline`.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
+from ...core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1
 from ...evaluation.evaluation_pipeline import run_final_evaluation
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Mapping
-
     from ...core.config import (
         AugmentationConfig,
         DatasetConfig,
@@ -45,7 +45,7 @@ class ClassificationEvalPipelineAdapter:
         arch_name: str,
         aug_info: str = "N/A",  # pragma: no mutate
         tracker: TrackerProtocol | None = None,
-    ) -> tuple[float, float, float]:
+    ) -> Mapping[str, float]:
         """
         Delegate to the existing final evaluation pipeline.
 
@@ -65,9 +65,9 @@ class ClassificationEvalPipelineAdapter:
             tracker: Optional experiment tracker for final metrics.
 
         Returns:
-            3-tuple of (macro_f1, test_acc, test_auc).
+            Mapping of metric names to float values.
         """
-        return run_final_evaluation(
+        macro_f1, test_acc, test_auc = run_final_evaluation(
             model=model,
             test_loader=test_loader,
             train_losses=train_losses,
@@ -82,3 +82,8 @@ class ClassificationEvalPipelineAdapter:
             aug_info=aug_info,
             tracker=tracker,
         )
+        return {
+            METRIC_F1: macro_f1,
+            METRIC_ACCURACY: test_acc,
+            METRIC_AUC: test_auc,
+        }

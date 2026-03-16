@@ -30,7 +30,7 @@ from ..core import (
     RunPaths,
     TrainingConfig,
 )
-from ..core.paths import METRIC_ACCURACY, METRIC_AUC
+from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
@@ -179,7 +179,9 @@ def run_final_evaluation(
 
     # Log test metrics to experiment tracker
     if tracker is not None:
-        tracker.log_test_metrics(test_acc=test_acc, macro_f1=macro_f1)
+        tracker.log_test_metrics(
+            {METRIC_ACCURACY: test_acc, METRIC_F1: macro_f1, METRIC_AUC: test_auc}
+        )
 
     logger.info("%s%s Final Evaluation Phase Complete.", LogStyle.INDENT, LogStyle.SUCCESS)
 

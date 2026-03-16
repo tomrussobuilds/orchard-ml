@@ -451,7 +451,9 @@ def test_tracker_receives_metrics(
         tracker=mock_tracker,
     )
 
-    mock_tracker.log_test_metrics.assert_called_once_with(test_acc=0.92, macro_f1=0.91)
+    mock_tracker.log_test_metrics.assert_called_once_with(
+        {"accuracy": 0.92, "f1": 0.91, "auc": 0.97}
+    )
 
 
 @pytest.mark.unit

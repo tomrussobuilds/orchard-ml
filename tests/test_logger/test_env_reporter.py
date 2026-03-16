@@ -562,8 +562,7 @@ def test_log_pipeline_summary_basic():
     mock_logger = MagicMock()
 
     log_pipeline_summary(
-        test_acc=0.9234,
-        macro_f1=0.8765,
+        test_metrics={"accuracy": 0.9234, "macro_f1": 0.8765},
         best_model_path="/mock/best_model.pth",
         run_dir="/mock/outputs/run123",
         duration="5m 30s",
@@ -578,6 +577,7 @@ def test_log_pipeline_summary_basic():
     assert "92.34" in log_output
     assert "0.8765" in log_output
     assert "5m 30s" in log_output
+    assert "Macro F1" in log_output
 
 
 @pytest.mark.unit
@@ -586,8 +586,7 @@ def test_log_pipeline_summary_with_onnx_path():
     mock_logger = MagicMock()
 
     log_pipeline_summary(
-        test_acc=0.85,
-        macro_f1=0.80,
+        test_metrics={"accuracy": 0.85, "f1": 0.80},
         best_model_path="/mock/best.pth",
         run_dir="/mock/run",
         duration="10m 0s",
@@ -608,8 +607,7 @@ def test_log_pipeline_summary_without_onnx_path():
     mock_logger = MagicMock()
 
     log_pipeline_summary(
-        test_acc=0.9,
-        macro_f1=0.85,
+        test_metrics={"accuracy": 0.9, "f1": 0.85},
         best_model_path="/mock/best.pth",
         run_dir="/mock/run",
         duration="2m 15s",
@@ -628,8 +626,7 @@ def test_log_pipeline_summary_uses_module_logger_when_none():
     """Test log_pipeline_summary uses module logger when none provided."""
     with patch("orchard.core.logger.progress.logger") as mock_module_logger:
         log_pipeline_summary(
-            test_acc=0.9,
-            macro_f1=0.85,
+            test_metrics={"accuracy": 0.9, "f1": 0.85},
             best_model_path="/mock/best.pth",
             run_dir="/mock/run",
             duration="1m 0s",
@@ -640,24 +637,22 @@ def test_log_pipeline_summary_uses_module_logger_when_none():
 
 
 @pytest.mark.unit
-def test_log_pipeline_summary_with_test_auc():
-    """Test log_pipeline_summary includes AUC line when test_auc is provided."""
+def test_log_pipeline_summary_with_auc():
+    """Test log_pipeline_summary includes AUC line when auc metric is present."""
     mock_logger = MagicMock()
 
     log_pipeline_summary(
-        test_acc=0.92,
-        macro_f1=0.88,
+        test_metrics={"accuracy": 0.92, "f1": 0.88, "auc": 0.9567},
         best_model_path="/mock/best.pth",
         run_dir="/mock/run",
         duration="3m 0s",
-        test_auc=0.9567,
         logger_instance=mock_logger,
     )
 
     calls = [str(call) for call in mock_logger.info.call_args_list]
     log_output = " ".join(calls)
 
-    assert "Test AUC" in log_output
+    assert "Auc" in log_output
     assert "0.9567" in log_output
 
 

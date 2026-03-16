@@ -169,12 +169,12 @@ def test_run_training_phase_returns_expected_tuple(
     result = run_training_phase(mock_orchestrator)
 
     assert isinstance(result, TrainingResult)
-    assert len(result) == 7
+    assert len(result) == 5
     assert result.best_model_path == Path("/mock/best.pth")
     assert result.train_losses == [0.5, 0.4]
-    assert result.macro_f1 == pytest.approx(0.85)
-    assert result.test_acc == pytest.approx(0.90)
-    assert result.test_auc == pytest.approx(0.92)
+    assert result.test_metrics["f1"] == pytest.approx(0.85)
+    assert result.test_metrics["accuracy"] == pytest.approx(0.90)
+    assert result.test_metrics["auc"] == pytest.approx(0.92)
 
 
 @pytest.mark.unit

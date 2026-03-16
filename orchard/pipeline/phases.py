@@ -14,6 +14,7 @@ Phases:
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple
 
@@ -30,8 +31,6 @@ from ..core import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Mapping
-
     from ..core import RootOrchestrator
     from ..tracking import TrackerProtocol
 
@@ -71,9 +70,7 @@ class TrainingResult(NamedTuple):
     train_losses: list[float]
     val_metrics: list[Mapping[str, float]]
     model: nn.Module
-    macro_f1: float
-    test_acc: float
-    test_auc: float
+    test_metrics: Mapping[str, float]
 
 
 def run_optimization_phase(
@@ -146,12 +143,12 @@ def run_training_phase(
 
     Returns:
         TrainingResult named tuple with best_model_path, train_losses,
-        val_metrics, model, macro_f1, test_acc, test_auc.
+        val_metrics, model, test_metrics.
 
     Example:
         >>> with RootOrchestrator(cfg) as orch:
         ...     result = run_training_phase(orch)
-        ...     print(f"Test Accuracy: {result.test_acc:.4f}")
+        ...     print(f"Test metrics: {result.test_metrics}")
     """
     cfg = cfg or orchestrator.cfg
     paths = orchestrator.paths
@@ -219,7 +216,7 @@ def run_training_phase(
     # FINAL EVALUATION
     Reporter.log_phase_header(run_logger, "FINAL EVALUATION")
 
-    macro_f1, test_acc, test_auc = task.eval_pipeline.run_evaluation(
+    test_metrics = task.eval_pipeline.run_evaluation(
         model=model,
         test_loader=test_loader,
         train_losses=train_losses,
@@ -245,9 +242,7 @@ def run_training_phase(
         train_losses=train_losses,
         val_metrics=val_metrics_history,
         model=model,
-        macro_f1=macro_f1,
-        test_acc=test_acc,
-        test_auc=test_auc,
+        test_metrics=test_metrics,
     )
 
 

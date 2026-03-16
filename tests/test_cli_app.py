@@ -246,9 +246,7 @@ class TestCLIRun:
         mock_orch_cls.return_value.__enter__.return_value = mock_orch
         mock_result = MagicMock()
         mock_result.best_model_path = Path("model.pt")
-        mock_result.macro_f1 = 0.95
-        mock_result.test_acc = 0.90
-        mock_result.test_auc = 0.92
+        mock_result.test_metrics = {"f1": 0.95, "accuracy": 0.90, "auc": 0.92}
         mock_train.return_value = mock_result
         mock_tracker_fn.return_value = MagicMock()
 
@@ -299,9 +297,7 @@ class TestCLIRun:
         mock_optuna.return_value = (MagicMock(), best_config)
         mock_result = MagicMock()
         mock_result.best_model_path = Path("model.pt")
-        mock_result.macro_f1 = 0.95
-        mock_result.test_acc = 0.90
-        mock_result.test_auc = 0.92
+        mock_result.test_metrics = {"f1": 0.95, "accuracy": 0.90, "auc": 0.92}
         mock_train.return_value = mock_result
         mock_export.return_value = Path("model.onnx")
         mock_tracker_fn.return_value = MagicMock()
@@ -820,9 +816,7 @@ class TestCLIIntegration:
         mock_infra_cls.return_value = MagicMock()
         mock_result = MagicMock()
         mock_result.best_model_path = tmp_path / "model.pt"
-        mock_result.test_acc = 0.90
-        mock_result.macro_f1 = 0.88
-        mock_result.test_auc = 0.91
+        mock_result.test_metrics = {"accuracy": 0.90, "f1": 0.88, "auc": 0.91}
         mock_train.return_value = mock_result
         mock_tracker = MagicMock()
         mock_tracker_fn.return_value = mock_tracker
@@ -859,9 +853,7 @@ class TestCLIIntegration:
         mock_infra_cls.return_value = MagicMock()
         mock_result = MagicMock()
         mock_result.best_model_path = tmp_path / "model.pt"
-        mock_result.test_acc = 0.9
-        mock_result.macro_f1 = 0.9
-        mock_result.test_auc = 0.9
+        mock_result.test_metrics = {"accuracy": 0.9, "f1": 0.9, "auc": 0.9}
         mock_train.return_value = mock_result
         mock_tracker_fn.return_value = MagicMock()
 

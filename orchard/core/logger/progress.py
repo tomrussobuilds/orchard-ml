@@ -8,13 +8,14 @@ and pipeline completion summaries.
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import optuna
 
 from ..paths import LOGGER_NAME
-from ..paths.constants import LogStyle
+from ..paths.constants import METRIC_ACCURACY, LogStyle
 from .env_reporter import Reporter
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -198,12 +199,10 @@ def log_optimization_summary(
 
 
 def log_pipeline_summary(
-    test_acc: float,
-    macro_f1: float,
+    test_metrics: Mapping[str, float],
     best_model_path: Path,
     run_dir: Path,
     duration: str,
-    test_auc: float | None = None,
     onnx_path: Path | None = None,
     logger_instance: logging.Logger | None = None,
 ) -> None:
@@ -214,12 +213,10 @@ def log_pipeline_summary(
     Consolidates key metrics and artifact locations.
 
     Args:
-        test_acc: Final test accuracy
-        macro_f1: Final macro F1 score
+        test_metrics: Task-specific test metrics mapping.
         best_model_path: Path to best model checkpoint
         run_dir: Root directory for this run
         duration: Human-readable duration string
-        test_auc: Final test AUC (if available)
         onnx_path: Path to ONNX export (if performed)
         logger_instance: Logger instance to use (defaults to module logger)
     """
@@ -230,10 +227,12 @@ def log_pipeline_summary(
     S = LogStyle.SUCCESS  # pragma: no mutate
 
     Reporter.log_phase_header(log, "PIPELINE COMPLETE", LogStyle.DOUBLE)  # pragma: no mutate
-    log.info("%s%s Test Accuracy  : %7.2f%%", I, S, test_acc * 100)
-    log.info("%s%s Macro F1       : %8.4f", I, S, macro_f1)
-    if test_auc is not None:
-        log.info("%s%s Test AUC       : %8.4f", I, S, test_auc)
+    for key, value in test_metrics.items():
+        label = key.replace("_", " ").title()
+        if key == METRIC_ACCURACY:
+            log.info("%s%s %-15s: %7.2f%%", I, S, label, value * 100)
+        else:
+            log.info("%s%s %-15s: %8.4f", I, S, label, value)
     log.info("%s%s Best Model     : %s", I, A, Path(best_model_path).name)
     if onnx_path:
         log.info("%s%s ONNX Export    : %s", I, A, Path(onnx_path).name)

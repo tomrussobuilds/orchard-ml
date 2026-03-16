@@ -15,6 +15,7 @@ and are registered in the :mod:`orchard.core.task_registry`.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 import torch
@@ -22,8 +23,6 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Mapping
-
     from ..tracking import TrackerProtocol
     from .config import (
         AugmentationConfig,
@@ -103,7 +102,7 @@ class TaskEvalPipeline(Protocol):
         arch_name: str,
         aug_info: str = "N/A",
         tracker: TrackerProtocol | None = None,
-    ) -> tuple[float, float, float]:
+    ) -> Mapping[str, float]:
         """
         Execute the complete evaluation pipeline.
 
@@ -126,6 +125,6 @@ class TaskEvalPipeline(Protocol):
             tracker: Optional experiment tracker for final metrics.
 
         Returns:
-            3-tuple of (macro_f1, test_acc, test_auc).
+            Mapping of task-specific metric names to float values.
         """
         ...  # pragma: no cover

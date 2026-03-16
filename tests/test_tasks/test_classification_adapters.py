@@ -132,7 +132,7 @@ def test_eval_adapter_delegates(mock_eval):
     )
 
     mock_eval.assert_called_once()
-    assert result == (0.85, 0.90, 0.92)
+    assert result == {"f1": 0.85, "accuracy": 0.90, "auc": 0.92}
 
 
 @pytest.mark.unit
@@ -233,10 +233,9 @@ def test_eval_adapter_default_tracker_none(mock_eval):
 
 @pytest.mark.unit
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
-def test_eval_adapter_returns_exact_tuple(mock_eval):
-    """EvalPipelineAdapter returns the exact 3-tuple from run_final_evaluation."""
-    expected = (0.91, 0.93, 0.95)
-    mock_eval.return_value = expected
+def test_eval_adapter_returns_mapping(mock_eval):
+    """EvalPipelineAdapter converts the 3-tuple to a metric mapping."""
+    mock_eval.return_value = (0.91, 0.93, 0.95)
 
     adapter = ClassificationEvalPipelineAdapter()
     result = adapter.run_evaluation(
@@ -253,10 +252,9 @@ def test_eval_adapter_returns_exact_tuple(mock_eval):
         arch_name="cnn",
     )
 
-    assert result == expected
-    assert result[0] == pytest.approx(0.91)
-    assert result[1] == pytest.approx(0.93)
-    assert result[2] == pytest.approx(0.95)
+    assert result["f1"] == pytest.approx(0.91)
+    assert result["accuracy"] == pytest.approx(0.93)
+    assert result["auc"] == pytest.approx(0.95)
 
 
 # ── Auto-registration ────────────────────────────────────────────────────────

@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - cleanup — centralize HIGHRES_THRESHOLD, pathlib consistency, stale docs
 - remove redundant FileNotFoundError catch in serialization
 - remove requirements.txt, use pyproject.toml as single source of truth
+- harden evaluation pipeline, param mapping, and config safety
 
 ## [0.2.1] - 2026-03-09
 

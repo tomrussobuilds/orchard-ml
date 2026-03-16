@@ -88,4 +88,4 @@ LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 DeviceType = Literal["auto", "cpu", "cuda", "mps"]
 
 # TASK
-TaskType = Literal["classification"]
+TaskType = Literal["classification", "detection"]

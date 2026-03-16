@@ -102,7 +102,7 @@ def test_noop_tracker_log_epoch():
 def test_noop_tracker_log_test_metrics():
     """NoOpTracker.log_test_metrics completes without error."""
     tracker = NoOpTracker()
-    tracker.log_test_metrics(test_acc=0.95, macro_f1=0.90)
+    tracker.log_test_metrics({"accuracy": 0.95, "f1": 0.90})
 
 
 @pytest.mark.unit
