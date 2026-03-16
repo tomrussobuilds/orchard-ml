@@ -27,14 +27,14 @@ from orchard.optimization.early_stopping import (
 
 # TEST CASES
 @pytest.mark.unit
-def test_initialization_invalid_direction():
+def test_initialization_invalid_direction() -> None:
     """Test initialization with an invalid direction."""
     with pytest.raises(ValueError):
         StudyEarlyStoppingCallback(threshold=0.9999, direction="invalid", patience=3)
 
 
 @pytest.mark.unit
-def test_initialization_valid():
+def test_initialization_valid() -> None:
     """Test valid initialization."""
     callback = StudyEarlyStoppingCallback(threshold=0.9999, direction="maximize", patience=3)
     assert callback.threshold == pytest.approx(0.9999)
@@ -43,7 +43,7 @@ def test_initialization_valid():
 
 
 @pytest.mark.unit
-def test_callback_threshold_not_met():
+def test_callback_threshold_not_met() -> None:
     """Test callback when the threshold is not met."""
     callback = StudyEarlyStoppingCallback(threshold=0.9999, direction="maximize", patience=3)
 
@@ -59,7 +59,7 @@ def test_callback_threshold_not_met():
 
 
 @pytest.mark.unit
-def test_callback_threshold_met_once():
+def test_callback_threshold_met_once() -> None:
     """Test callback when the threshold is met once."""
     callback = StudyEarlyStoppingCallback(threshold=0.9999, direction="maximize", patience=3)
 
@@ -78,7 +78,7 @@ def test_callback_threshold_met_once():
 
 
 @pytest.mark.unit
-def test_callback_trials_saved():
+def test_callback_trials_saved() -> None:
     """Test callback when total trials are available, and we calculate the trials saved."""
     callback = StudyEarlyStoppingCallback(threshold=0.9999, direction="maximize", patience=3)
 
@@ -101,7 +101,7 @@ def test_callback_trials_saved():
 
 
 @pytest.mark.unit
-def test_callback_patience_reached():
+def test_callback_patience_reached() -> None:
     """Test callback when patience is reached."""
     callback = StudyEarlyStoppingCallback(threshold=0.9999, direction="maximize", patience=3)
 
@@ -127,7 +127,7 @@ def test_callback_patience_reached():
 
 
 @pytest.mark.unit
-def test_callback_threshold_not_met_after_patience():
+def test_callback_threshold_not_met_after_patience() -> None:
     """Test callback when threshold is not met after patience is reached."""
     callback = StudyEarlyStoppingCallback(threshold=0.9999, direction="maximize", patience=3)
 
@@ -152,7 +152,7 @@ def test_callback_threshold_not_met_after_patience():
 
 
 @pytest.mark.unit
-def test_callback_trial_state_not_complete():
+def test_callback_trial_state_not_complete() -> None:
     """Test callback when the trial state is not COMPLETE (e.g., PRUNED)."""
     callback = StudyEarlyStoppingCallback(threshold=0.9999, direction="maximize", patience=3)
 
@@ -169,7 +169,7 @@ def test_callback_trial_state_not_complete():
 
 
 @pytest.mark.unit
-def test_callback_inactive_when_disabled():
+def test_callback_inactive_when_disabled() -> None:
     """Test callback behavior when disabled."""
     callback = StudyEarlyStoppingCallback(
         threshold=0.9999, direction="maximize", patience=3, enabled=False
@@ -186,7 +186,7 @@ def test_callback_inactive_when_disabled():
 
 
 @pytest.mark.unit
-def test_get_early_stopping_callback_valid():
+def test_get_early_stopping_callback_valid() -> None:
     """Test the get_early_stopping_callback factory function."""
     callback = get_early_stopping_callback(
         metric_name="auc", direction="maximize", threshold=None, patience=3, enabled=True
@@ -195,7 +195,7 @@ def test_get_early_stopping_callback_valid():
 
 
 @pytest.mark.unit
-def test_get_early_stopping_callback_invalid_metric():
+def test_get_early_stopping_callback_invalid_metric() -> None:
     """Test the get_early_stopping_callback factory function with an invalid metric."""
     callback = get_early_stopping_callback(
         metric_name="invalid_metric", direction="maximize", threshold=None, patience=3, enabled=True
@@ -204,7 +204,7 @@ def test_get_early_stopping_callback_invalid_metric():
 
 
 @pytest.mark.unit
-def test_callback_trial_value_none():
+def test_callback_trial_value_none() -> None:
     """Test callback when trial.value is None (edge case for type safety)."""
     callback = StudyEarlyStoppingCallback(threshold=0.9999, direction="maximize", patience=3)
     callback._count = 2  # Simulate some previous successes
@@ -227,43 +227,43 @@ def test_callback_trial_value_none():
 
 
 @pytest.mark.unit
-def test_constant_thresh_auc():
+def test_constant_thresh_auc() -> None:
     """Assert exact value of _THRESH_AUC to kill constant-replacement mutants."""
     assert _THRESH_AUC == 0.9999
 
 
 @pytest.mark.unit
-def test_constant_thresh_accuracy():
+def test_constant_thresh_accuracy() -> None:
     """Assert exact value of _THRESH_ACCURACY."""
     assert _THRESH_ACCURACY == 0.995
 
 
 @pytest.mark.unit
-def test_constant_thresh_f1():
+def test_constant_thresh_f1() -> None:
     """Assert exact value of _THRESH_F1."""
     assert _THRESH_F1 == 0.98
 
 
 @pytest.mark.unit
-def test_constant_thresh_loss():
+def test_constant_thresh_loss() -> None:
     """Assert exact value of _THRESH_LOSS."""
     assert _THRESH_LOSS == 0.01
 
 
 @pytest.mark.unit
-def test_constant_thresh_mae():
+def test_constant_thresh_mae() -> None:
     """Assert exact value of _THRESH_MAE."""
     assert _THRESH_MAE == 0.01
 
 
 @pytest.mark.unit
-def test_constant_thresh_mse():
+def test_constant_thresh_mse() -> None:
     """Assert exact value of _THRESH_MSE."""
     assert _THRESH_MSE == 0.001
 
 
 @pytest.mark.unit
-def test_default_thresholds_maximize_keys():
+def test_default_thresholds_maximize_keys() -> None:
     """Assert _DEFAULT_THRESHOLDS maximize direction contains expected metrics."""
     maximize = _DEFAULT_THRESHOLDS["maximize"]
     assert "auc" in maximize
@@ -275,7 +275,7 @@ def test_default_thresholds_maximize_keys():
 
 
 @pytest.mark.unit
-def test_default_thresholds_minimize_keys():
+def test_default_thresholds_minimize_keys() -> None:
     """Assert _DEFAULT_THRESHOLDS minimize direction contains expected metrics."""
     minimize = _DEFAULT_THRESHOLDS["minimize"]
     assert "loss" in minimize
@@ -287,7 +287,7 @@ def test_default_thresholds_minimize_keys():
 
 
 @pytest.mark.unit
-def test_minimize_direction_threshold_met():
+def test_minimize_direction_threshold_met() -> None:
     """Test that minimize direction uses <= comparison."""
     callback = StudyEarlyStoppingCallback(threshold=0.01, direction="minimize", patience=1)
 
@@ -305,7 +305,7 @@ def test_minimize_direction_threshold_met():
 
 
 @pytest.mark.unit
-def test_minimize_direction_below_threshold():
+def test_minimize_direction_below_threshold() -> None:
     """Test that minimize direction treats values below threshold as met."""
     callback = StudyEarlyStoppingCallback(threshold=0.01, direction="minimize", patience=1)
 
@@ -323,7 +323,7 @@ def test_minimize_direction_below_threshold():
 
 
 @pytest.mark.unit
-def test_minimize_direction_above_threshold_not_met():
+def test_minimize_direction_above_threshold_not_met() -> None:
     """Test that minimize direction treats values above threshold as NOT met."""
     callback = StudyEarlyStoppingCallback(threshold=0.01, direction="minimize", patience=1)
 
@@ -339,28 +339,28 @@ def test_minimize_direction_above_threshold_not_met():
 
 
 @pytest.mark.unit
-def test_init_count_starts_at_zero():
+def test_init_count_starts_at_zero() -> None:
     """Assert _count is initialized to exactly 0."""
     callback = StudyEarlyStoppingCallback(threshold=0.5, direction="maximize")
     assert callback._count == 0
 
 
 @pytest.mark.unit
-def test_init_enabled_default_true():
+def test_init_enabled_default_true() -> None:
     """Assert enabled defaults to True when not specified."""
     callback = StudyEarlyStoppingCallback(threshold=0.5, direction="maximize")
     assert callback.enabled is True
 
 
 @pytest.mark.unit
-def test_init_patience_default():
+def test_init_patience_default() -> None:
     """Assert patience defaults to 2."""
     callback = StudyEarlyStoppingCallback(threshold=0.5, direction="maximize")
     assert callback.patience == 2
 
 
 @pytest.mark.unit
-def test_trials_saved_na_when_n_trials_missing():
+def test_trials_saved_na_when_n_trials_missing() -> None:
     """When n_trials is not in user_attrs, study.stop() is still called."""
     callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=1)
 
@@ -377,7 +377,7 @@ def test_trials_saved_na_when_n_trials_missing():
 
 
 @pytest.mark.unit
-def test_trials_saved_na_when_n_trials_is_string():
+def test_trials_saved_na_when_n_trials_is_string() -> None:
     """When n_trials is a non-int type, stop still fires."""
     callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=1)
 
@@ -394,7 +394,7 @@ def test_trials_saved_na_when_n_trials_is_string():
 
 
 @pytest.mark.unit
-def test_count_resets_when_threshold_not_met_after_successes():
+def test_count_resets_when_threshold_not_met_after_successes() -> None:
     """After consecutive successes, a below-threshold trial resets _count to 0."""
     callback = StudyEarlyStoppingCallback(threshold=0.9999, direction="maximize", patience=5)
     callback._count = 2
@@ -411,7 +411,7 @@ def test_count_resets_when_threshold_not_met_after_successes():
 
 
 @pytest.mark.unit
-def test_get_early_stopping_callback_custom_threshold():
+def test_get_early_stopping_callback_custom_threshold() -> None:
     """Factory should use the explicit threshold rather than a default."""
     callback = get_early_stopping_callback(
         metric_name="auc", direction="maximize", threshold=0.75, patience=5
@@ -422,7 +422,7 @@ def test_get_early_stopping_callback_custom_threshold():
 
 
 @pytest.mark.unit
-def test_get_early_stopping_callback_minimize_default_loss():
+def test_get_early_stopping_callback_minimize_default_loss() -> None:
     """Factory should resolve correct default threshold for loss metric."""
     callback = get_early_stopping_callback(metric_name="loss", direction="minimize", threshold=None)
     assert callback is not None
@@ -431,7 +431,7 @@ def test_get_early_stopping_callback_minimize_default_loss():
 
 
 @pytest.mark.unit
-def test_get_early_stopping_callback_minimize_default_mae():
+def test_get_early_stopping_callback_minimize_default_mae() -> None:
     """Factory should resolve correct default threshold for mae metric."""
     callback = get_early_stopping_callback(metric_name="mae", direction="minimize", threshold=None)
     assert callback is not None
@@ -439,7 +439,7 @@ def test_get_early_stopping_callback_minimize_default_mae():
 
 
 @pytest.mark.unit
-def test_get_early_stopping_callback_minimize_default_mse():
+def test_get_early_stopping_callback_minimize_default_mse() -> None:
     """Factory should resolve correct default threshold for mse metric."""
     callback = get_early_stopping_callback(metric_name="mse", direction="minimize", threshold=None)
     assert callback is not None
@@ -447,7 +447,7 @@ def test_get_early_stopping_callback_minimize_default_mse():
 
 
 @pytest.mark.unit
-def test_get_early_stopping_callback_returns_none_when_disabled():
+def test_get_early_stopping_callback_returns_none_when_disabled() -> None:
     """Factory returns None when enabled=False."""
     result = get_early_stopping_callback(
         metric_name="auc", direction="maximize", threshold=0.99, enabled=False
@@ -456,7 +456,7 @@ def test_get_early_stopping_callback_returns_none_when_disabled():
 
 
 @pytest.mark.unit
-def test_get_early_stopping_callback_unknown_metric_minimize_returns_none():
+def test_get_early_stopping_callback_unknown_metric_minimize_returns_none() -> None:
     """Factory returns None with warning when direction is valid but metric is unknown."""
     result = get_early_stopping_callback(
         metric_name="unknown_metric", direction="minimize", threshold=None
@@ -465,14 +465,14 @@ def test_get_early_stopping_callback_unknown_metric_minimize_returns_none():
 
 
 @pytest.mark.unit
-def test_get_early_stopping_callback_unknown_direction_returns_none():
+def test_get_early_stopping_callback_unknown_direction_returns_none() -> None:
     """Factory returns None when direction has no entry in _DEFAULT_THRESHOLDS."""
     result = get_early_stopping_callback(metric_name="auc", direction="unknown_dir", threshold=None)
     assert result is None
 
 
 @pytest.mark.unit
-def test_maximize_exact_threshold_is_met():
+def test_maximize_exact_threshold_is_met() -> None:
     """For maximize, value == threshold should satisfy >= check."""
     callback = StudyEarlyStoppingCallback(threshold=0.9999, direction="maximize", patience=1)
 
@@ -490,7 +490,7 @@ def test_maximize_exact_threshold_is_met():
 
 
 @pytest.mark.unit
-def test_maximize_just_below_threshold_not_met():
+def test_maximize_just_below_threshold_not_met() -> None:
     """For maximize, value just below threshold should NOT be met."""
     callback = StudyEarlyStoppingCallback(threshold=0.9999, direction="maximize", patience=1)
 
@@ -506,7 +506,7 @@ def test_maximize_just_below_threshold_not_met():
 
 
 @pytest.mark.unit
-def test_count_increments_by_one():
+def test_count_increments_by_one() -> None:
     """Verify _count increments by exactly 1, not 2 or other values."""
     callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=10)
 
@@ -530,7 +530,7 @@ def test_count_increments_by_one():
 
 
 @pytest.mark.unit
-def test_patience_boundary_not_met_at_less_than():
+def test_patience_boundary_not_met_at_less_than() -> None:
     """Stop should NOT happen when _count < patience (boundary: patience - 1)."""
     callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=3)
     callback._count = 1
@@ -549,7 +549,7 @@ def test_patience_boundary_not_met_at_less_than():
 
 
 @pytest.mark.unit
-def test_pruned_trial_resets_count():
+def test_pruned_trial_resets_count() -> None:
     """A PRUNED trial should reset _count (state != COMPLETE branch)."""
     callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=5)
     callback._count = 3
@@ -565,21 +565,21 @@ def test_pruned_trial_resets_count():
 
 
 @pytest.mark.unit
-def test_init_default_direction():
+def test_init_default_direction() -> None:
     """Default direction parameter is exactly 'maximize'."""
     callback = StudyEarlyStoppingCallback(threshold=0.5)
     assert callback.direction == "maximize"
 
 
 @pytest.mark.unit
-def test_init_invalid_direction_error_message():
+def test_init_invalid_direction_error_message() -> None:
     """ValueError message includes 'direction must be'."""
     with pytest.raises(ValueError, match="direction must be"):
         StudyEarlyStoppingCallback(threshold=0.5, direction="bad")
 
 
 @pytest.mark.unit
-def test_factory_default_patience():
+def test_factory_default_patience() -> None:
     """Factory default patience is exactly 2."""
     cb = get_early_stopping_callback("auc", "maximize")
     assert cb is not None
@@ -587,7 +587,7 @@ def test_factory_default_patience():
 
 
 @pytest.mark.unit
-def test_factory_default_enabled():
+def test_factory_default_enabled() -> None:
     """Factory default enabled is True."""
     cb = get_early_stopping_callback("auc", "maximize")
     assert cb is not None
@@ -595,7 +595,7 @@ def test_factory_default_enabled():
 
 
 @pytest.mark.unit
-def test_factory_passes_enabled_kwarg():
+def test_factory_passes_enabled_kwarg() -> None:
     """Factory forwards enabled kwarg to the callback."""
     cb = get_early_stopping_callback("auc", "maximize", enabled=True)
     assert cb is not None
@@ -603,7 +603,7 @@ def test_factory_passes_enabled_kwarg():
 
 
 @pytest.mark.unit
-def test_trials_saved_exact_computation():
+def test_trials_saved_exact_computation() -> None:
     """Verify trials_saved = n_trials - (trial.number + 1)."""
     callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=1)
 
@@ -635,7 +635,7 @@ def test_trials_saved_exact_computation():
 
 
 @pytest.mark.unit
-def test_trials_saved_uses_n_trials_key():
+def test_trials_saved_uses_n_trials_key() -> None:
     """Verify study.user_attrs is queried with exact key 'n_trials'."""
     callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=1)
 
@@ -656,7 +656,7 @@ def test_trials_saved_uses_n_trials_key():
 
 
 @pytest.mark.unit
-def test_trials_saved_na_exact_string():
+def test_trials_saved_na_exact_string() -> None:
     """When n_trials is missing, trials_saved is exactly 'N/A' (not 'n/a' or None)."""
     callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=1)
 
@@ -683,7 +683,7 @@ def test_trials_saved_na_exact_string():
 
 
 @pytest.mark.unit
-def test_reporter_log_phase_header_called():
+def test_reporter_log_phase_header_called() -> None:
     """Reporter.log_phase_header is called when stopping triggers."""
     callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=1)
 
@@ -704,7 +704,7 @@ def test_reporter_log_phase_header_called():
 
 
 @pytest.mark.unit
-def test_factory_warning_on_unknown_metric_calls_logger():
+def test_factory_warning_on_unknown_metric_calls_logger() -> None:
     """Factory logs a warning when metric has no default threshold."""
     with patch("orchard.optimization.early_stopping.logger") as mock_logger:
         result = get_early_stopping_callback("unknown", "maximize")
@@ -723,7 +723,7 @@ def test_factory_warning_on_unknown_metric_calls_logger():
 
 
 @pytest.mark.unit
-def test_stop_logs_metric_value():
+def test_stop_logs_metric_value() -> None:
     """Assert the 'Metric' logger call includes the actual trial value."""
     callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=1)
 
@@ -749,7 +749,7 @@ def test_stop_logs_metric_value():
 
 
 @pytest.mark.unit
-def test_stop_logs_threshold_value():
+def test_stop_logs_threshold_value() -> None:
     """Assert the 'Threshold' logger call includes the actual threshold."""
     callback = StudyEarlyStoppingCallback(threshold=0.8765, direction="maximize", patience=1)
 
@@ -774,7 +774,7 @@ def test_stop_logs_threshold_value():
 
 
 @pytest.mark.unit
-def test_stop_logs_trials_completed():
+def test_stop_logs_trials_completed() -> None:
     """Assert 'Trials completed' log arg is trial.number + 1."""
     callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=1)
 
@@ -799,7 +799,7 @@ def test_stop_logs_trials_completed():
 
 
 @pytest.mark.unit
-def test_threshold_reached_log_includes_count_and_patience():
+def test_threshold_reached_log_includes_count_and_patience() -> None:
     """Assert the threshold-reached log includes _count and patience."""
     callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=5)
 
@@ -827,7 +827,7 @@ def test_threshold_reached_log_includes_count_and_patience():
 
 
 @pytest.mark.unit
-def test_threshold_reached_log_includes_value_and_threshold():
+def test_threshold_reached_log_includes_value_and_threshold() -> None:
     """Assert the threshold-reached log includes value and threshold."""
     callback = StudyEarlyStoppingCallback(threshold=0.85, direction="maximize", patience=5)
 
@@ -855,7 +855,7 @@ def test_threshold_reached_log_includes_value_and_threshold():
 
 
 @pytest.mark.unit
-def test_factory_case_insensitive_metric():
+def test_factory_case_insensitive_metric() -> None:
     """Assert factory uses .lower() to look up metric thresholds."""
     callback = get_early_stopping_callback(metric_name="AUC", direction="maximize")
     assert callback is not None
@@ -863,7 +863,7 @@ def test_factory_case_insensitive_metric():
 
 
 @pytest.mark.unit
-def test_factory_case_insensitive_metric_mixed():
+def test_factory_case_insensitive_metric_mixed() -> None:
     """Assert factory uses .lower() for mixed case metrics."""
     callback = get_early_stopping_callback(metric_name="Accuracy", direction="maximize")
     assert callback is not None
@@ -871,7 +871,7 @@ def test_factory_case_insensitive_metric_mixed():
 
 
 @pytest.mark.unit
-def test_factory_passes_patience_to_callback():
+def test_factory_passes_patience_to_callback() -> None:
     """Assert factory forwards patience argument."""
     cb = get_early_stopping_callback("auc", "maximize", patience=7)
     assert cb is not None
@@ -879,7 +879,7 @@ def test_factory_passes_patience_to_callback():
 
 
 @pytest.mark.unit
-def test_factory_passes_direction_to_callback():
+def test_factory_passes_direction_to_callback() -> None:
     """Assert factory forwards direction to the callback."""
     cb = get_early_stopping_callback("loss", "minimize")
     assert cb is not None
@@ -887,7 +887,7 @@ def test_factory_passes_direction_to_callback():
 
 
 @pytest.mark.unit
-def test_stop_log_phase_header_exact_message():
+def test_stop_log_phase_header_exact_message() -> None:
     """Assert Reporter.log_phase_header receives the exact expected message."""
     callback = StudyEarlyStoppingCallback(threshold=0.9, direction="maximize", patience=1)
 
@@ -908,7 +908,7 @@ def test_stop_log_phase_header_exact_message():
 
 
 @pytest.mark.unit
-def test_factory_passes_enabled_to_callback():
+def test_factory_passes_enabled_to_callback() -> None:
     """Assert factory forwards enabled kwarg to the StudyEarlyStoppingCallback."""
     cb = get_early_stopping_callback("auc", "maximize", threshold=0.99, enabled=True)
     assert cb is not None

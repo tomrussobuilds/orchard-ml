@@ -30,7 +30,7 @@ from orchard.exceptions import OrchardConfigError
 
 
 @pytest.fixture(autouse=True)
-def _clean_registry():
+def _clean_registry() -> None:  # type: ignore
     """Ensure each test starts with a clean registry and restores it after."""
     saved = dict(_TASK_REGISTRY)
     _TASK_REGISTRY.clear()
@@ -52,7 +52,7 @@ def _make_components() -> TaskComponents:
 
 
 @pytest.mark.unit
-def test_register_task_stores_components():
+def test_register_task_stores_components() -> None:
     """register_task adds components to the internal registry."""
     components = _make_components()
     register_task("test_task", components)
@@ -62,7 +62,7 @@ def test_register_task_stores_components():
 
 
 @pytest.mark.unit
-def test_register_task_duplicate_raises():
+def test_register_task_duplicate_raises() -> None:
     """register_task raises OrchardConfigError on duplicate registration."""
     register_task("dup", _make_components())
 
@@ -71,7 +71,7 @@ def test_register_task_duplicate_raises():
 
 
 @pytest.mark.unit
-def test_register_task_error_mentions_task_name():
+def test_register_task_error_mentions_task_name() -> None:
     """Duplicate registration error message includes the task name."""
     register_task("segmentation", _make_components())
 
@@ -83,7 +83,7 @@ def test_register_task_error_mentions_task_name():
 
 
 @pytest.mark.unit
-def test_get_task_returns_registered_components():
+def test_get_task_returns_registered_components() -> None:
     """get_task returns the exact components bundle that was registered."""
     components = _make_components()
     register_task("cls", components)
@@ -94,14 +94,14 @@ def test_get_task_returns_registered_components():
 
 
 @pytest.mark.unit
-def test_get_task_unknown_raises():
+def test_get_task_unknown_raises() -> None:
     """get_task raises OrchardConfigError for unregistered task types."""
     with pytest.raises(OrchardConfigError, match="Unknown task_type"):
         get_task("nonexistent")
 
 
 @pytest.mark.unit
-def test_get_task_error_lists_available():
+def test_get_task_error_lists_available() -> None:
     """get_task error message lists registered task types."""
     register_task("alpha", _make_components())
     register_task("beta", _make_components())
@@ -111,7 +111,7 @@ def test_get_task_error_lists_available():
 
 
 @pytest.mark.unit
-def test_get_task_error_empty_registry():
+def test_get_task_error_empty_registry() -> None:
     """get_task error on empty registry shows empty list."""
     with pytest.raises(OrchardConfigError, match=r"\[\]"):
         get_task("anything")
@@ -121,7 +121,7 @@ def test_get_task_error_empty_registry():
 
 
 @pytest.mark.unit
-def test_get_registry_returns_mapping_proxy():
+def test_get_registry_returns_mapping_proxy() -> None:
     """get_registry returns a MappingProxyType."""
     register_task("x", _make_components())
 
@@ -131,17 +131,17 @@ def test_get_registry_returns_mapping_proxy():
 
 
 @pytest.mark.unit
-def test_get_registry_is_immutable():
+def test_get_registry_is_immutable() -> None:
     """Returned registry proxy rejects mutation."""
     register_task("x", _make_components())
     registry = get_registry()
 
     with pytest.raises(TypeError):
-        registry["y"] = _make_components()  # type: ignore[index]
+        registry["y"] = _make_components()  # type: ignore
 
 
 @pytest.mark.unit
-def test_get_registry_reflects_registrations():
+def test_get_registry_reflects_registrations() -> None:
     """get_registry includes all registered tasks."""
     c1 = _make_components()
     c2 = _make_components()
@@ -156,7 +156,7 @@ def test_get_registry_reflects_registrations():
 
 
 @pytest.mark.unit
-def test_get_registry_empty():
+def test_get_registry_empty() -> None:
     """get_registry returns empty proxy when no tasks are registered."""
     assert len(get_registry()) == 0
 
@@ -165,19 +165,19 @@ def test_get_registry_empty():
 
 
 @pytest.mark.unit
-def test_task_components_frozen():
+def test_task_components_frozen() -> None:
     """TaskComponents is frozen — attribute assignment raises."""
     components = _make_components()
 
     with pytest.raises(AttributeError):
-        components.criterion_factory = MagicMock()  # type: ignore[misc]
+        components.criterion_factory = MagicMock()  # type: ignore
 
 
 # ── Protocol isinstance checks ────────────────────────────────────────────────
 
 
 @pytest.mark.unit
-def test_classification_criterion_adapter_satisfies_protocol():
+def test_classification_criterion_adapter_satisfies_protocol() -> None:
     """ClassificationCriterionAdapter passes isinstance check."""
     from orchard.tasks.classification.criterion_adapter import (
         ClassificationCriterionAdapter,
@@ -189,7 +189,7 @@ def test_classification_criterion_adapter_satisfies_protocol():
 
 
 @pytest.mark.unit
-def test_classification_metrics_adapter_satisfies_protocol():
+def test_classification_metrics_adapter_satisfies_protocol() -> None:
     """ClassificationMetricsAdapter passes isinstance check."""
     from orchard.tasks.classification.metrics_adapter import (
         ClassificationMetricsAdapter,
@@ -201,7 +201,7 @@ def test_classification_metrics_adapter_satisfies_protocol():
 
 
 @pytest.mark.unit
-def test_classification_eval_adapter_satisfies_protocol():
+def test_classification_eval_adapter_satisfies_protocol() -> None:
     """ClassificationEvalPipelineAdapter passes isinstance check."""
     from orchard.tasks.classification.evaluation_adapter import (
         ClassificationEvalPipelineAdapter,
@@ -213,7 +213,7 @@ def test_classification_eval_adapter_satisfies_protocol():
 
 
 @pytest.mark.unit
-def test_object_without_method_fails_protocol():
+def test_object_without_method_fails_protocol() -> None:
     """An object missing the required method does not satisfy TaskCriterionFactory."""
 
     class _Empty:
@@ -226,7 +226,7 @@ def test_object_without_method_fails_protocol():
 
 
 @pytest.mark.unit
-def test_classification_registered_on_import():
+def test_classification_registered_on_import() -> None:
     """Importing orchard.tasks registers the 'classification' task."""
     register_task("classification", _make_components())
 

@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - generalize task eval protocols to Mapping[str, float]
+- inject TaskValidationMetrics into training loop and Optuna executor
 
 ### Documentation
 

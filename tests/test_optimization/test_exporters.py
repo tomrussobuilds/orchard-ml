@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import optuna
@@ -36,7 +38,7 @@ from orchard.optimization.orchestrator.exporters import (
 
 # FIXTURES
 @pytest.fixture
-def study():
+def study() -> None:
     """Fixture for creating a mock Optuna Study object."""
     study = MagicMock(spec=optuna.Study)
     trial_mock = MagicMock(spec=optuna.trial.FrozenTrial)
@@ -52,19 +54,19 @@ def study():
     study.trials = [trial_mock]
     study.study_name = "test_study"
     study.direction = optuna.study.StudyDirection.MAXIMIZE
-    return study
+    return study  # type: ignore
 
 
 @pytest.fixture
-def paths(tmpdir):
+def paths(tmpdir: Any) -> None:
     """Fixture for creating a mock RunPaths object."""
     paths = MagicMock(spec=RunPaths)
     paths.reports = tmpdir.mkdir("reports")
-    return paths
+    return paths  # type: ignore
 
 
 @pytest.fixture
-def config():
+def config() -> None:
     """Fixture for creating a valid Config object with ModelConfig and TrainingConfig."""
     model_config = {
         "name": "resnet_18",
@@ -75,12 +77,12 @@ def config():
 
     training_config = {"epochs": 10, "mixup_epochs": 5}
 
-    return Config(model=model_config, training=training_config)
+    return Config(model=model_config, training=training_config)  # type: ignore
 
 
 # TESTS
 @pytest.mark.unit
-def test_export_study_summary(study, paths):
+def test_export_study_summary(study: Any, paths: Any) -> None:
     """Test export of study summary to JSON."""
     export_study_summary(study, paths)
 
@@ -97,7 +99,7 @@ def test_export_study_summary(study, paths):
 
 
 @pytest.mark.unit
-def test_export_top_trials(study, paths):
+def test_export_top_trials(study: Any, paths: Any) -> None:
     """Test export of top trials to Excel."""
     export_top_trials(study, paths, metric_name="accuracy", top_k=1)
 
@@ -111,7 +113,7 @@ def test_export_top_trials(study, paths):
 
 
 @pytest.mark.unit
-def test_export_best_config_invalid_config(study, paths):
+def test_export_best_config_invalid_config(study: Any, paths: Any) -> None:
     """Test handling of invalid config during export."""
 
     invalid_model_config = "invalid_model"
@@ -127,7 +129,7 @@ def test_export_best_config_invalid_config(study, paths):
 
 
 @pytest.mark.unit
-def test_export_study_summary_no_completed_trials(study, paths):
+def test_export_study_summary_no_completed_trials(study: Any, paths: Any) -> None:
     """Test export when no completed trials exist."""
     study.trials = []
     export_study_summary(study, paths)
@@ -144,7 +146,7 @@ def test_export_study_summary_no_completed_trials(study, paths):
 
 
 @pytest.mark.unit
-def test_export_top_trials_no_completed_trials(study, paths):
+def test_export_top_trials_no_completed_trials(study: Any, paths: Any) -> None:
     """Test export when no completed trials exist."""
     study.trials = []
     export_top_trials(study, paths, metric_name="accuracy", top_k=1)
@@ -154,12 +156,12 @@ def test_export_top_trials_no_completed_trials(study, paths):
 
 
 @pytest.mark.unit
-def test_build_best_trial_data_value_error():
+def test_build_best_trial_data_value_error() -> None:
     """Test build_best_trial_data handles ValueError from study.best_trial."""
     study = MagicMock(spec=optuna.Study)
     study.best_trial.side_effect = ValueError("No trials")
 
-    completed = []
+    completed = []  # type: ignore
 
     result = build_best_trial_data(study, completed)
 
@@ -167,7 +169,7 @@ def test_build_best_trial_data_value_error():
 
 
 @pytest.mark.unit
-def test_build_best_trial_data_value_error_with_completed_trials():
+def test_build_best_trial_data_value_error_with_completed_trials() -> None:
     """Test build_best_trial_data handles ValueError even with completed trials."""
     study = MagicMock(spec=optuna.Study)
 
@@ -179,18 +181,18 @@ def test_build_best_trial_data_value_error_with_completed_trials():
 
     type(study).best_trial = PropertyMock(side_effect=ValueError("Corrupted study"))
 
-    result = build_best_trial_data(study, completed)
+    result = build_best_trial_data(study, completed)  # type: ignore
 
     assert result is None
 
 
 @pytest.mark.unit
-def test_build_best_trial_data_value_error_direct_call():
+def test_build_best_trial_data_value_error_direct_call() -> None:
     """Test build_best_trial_data ValueError exception path directly."""
 
     class BrokenStudy:
         @property
-        def best_trial(self):
+        def best_trial(self) -> None:
             raise ValueError("No best trial available")
 
     study = BrokenStudy()
@@ -199,13 +201,13 @@ def test_build_best_trial_data_value_error_direct_call():
     trial_mock.state = optuna.trial.TrialState.COMPLETE
     completed = [trial_mock]
 
-    result = build_best_trial_data(study, completed)
+    result = build_best_trial_data(study, completed)  # type: ignore
 
     assert result is None
 
 
 @pytest.mark.unit
-def test_trial_data_from_trial_without_timestamps():
+def test_trial_data_from_trial_without_timestamps() -> None:
     """Test TrialData.from_trial when datetime fields are None."""
     trial = MagicMock(spec=optuna.trial.FrozenTrial)
     trial.number = 5
@@ -227,7 +229,7 @@ def test_trial_data_from_trial_without_timestamps():
 
 
 @pytest.mark.unit
-def test_trial_data_from_trial_with_only_start_time():
+def test_trial_data_from_trial_with_only_start_time() -> None:
     """Test TrialData.from_trial when only start time is available."""
     trial = MagicMock(spec=optuna.trial.FrozenTrial)
     trial.number = 5
@@ -245,7 +247,7 @@ def test_trial_data_from_trial_with_only_start_time():
 
 
 @pytest.mark.unit
-def test_build_top_trials_dataframe_without_duration():
+def test_build_top_trials_dataframe_without_duration() -> None:
     """Test build_top_trials_dataframe when trials have no timestamps."""
     trial1 = MagicMock(spec=optuna.trial.FrozenTrial)
     trial1.number = 1
@@ -263,7 +265,7 @@ def test_build_top_trials_dataframe_without_duration():
 
     sorted_trials = [trial1, trial2]
 
-    df = build_top_trials_dataframe(sorted_trials, "auc")
+    df = build_top_trials_dataframe(sorted_trials, "auc")  # type: ignore
 
     assert len(df) == 2
     assert "Rank" in df.columns
@@ -273,7 +275,7 @@ def test_build_top_trials_dataframe_without_duration():
 
 
 @pytest.mark.unit
-def test_build_top_trials_dataframe_with_mixed_durations():
+def test_build_top_trials_dataframe_with_mixed_durations() -> None:
     """Test build_top_trials_dataframe with some trials having duration, some not."""
     trial1 = MagicMock(spec=optuna.trial.FrozenTrial)
     trial1.number = 1
@@ -290,7 +292,7 @@ def test_build_top_trials_dataframe_with_mixed_durations():
 
     sorted_trials = [trial1, trial2]
 
-    df = build_top_trials_dataframe(sorted_trials, "accuracy")
+    df = build_top_trials_dataframe(sorted_trials, "accuracy")  # type: ignore
 
     assert len(df) == 2
     assert "Duration (s)" in df.columns
@@ -299,7 +301,9 @@ def test_build_top_trials_dataframe_with_mixed_durations():
 
 
 @pytest.mark.unit
-def test_export_best_config_no_completed_trials_integration(minimal_config, paths):
+def test_export_best_config_no_completed_trials_integration(
+    minimal_config: Any, paths: Any
+) -> None:
     """Test export_best_config returns None when no completed trials exist."""
     study = MagicMock()
 
@@ -319,7 +323,7 @@ def test_export_best_config_no_completed_trials_integration(minimal_config, path
 
 
 @pytest.mark.unit
-def test_export_best_config_success_path(minimal_config, paths, tmp_path):
+def test_export_best_config_success_path(minimal_config: Any, paths: Any, tmp_path: Path) -> None:
     """Test export_best_config creates YAML when trials exist."""
     study = MagicMock()
     study.best_params = {
@@ -353,7 +357,7 @@ def test_export_best_config_success_path(minimal_config, paths, tmp_path):
 
 
 @pytest.mark.unit
-def test_export_top_trials_all_type_branches(paths, tmp_path):
+def test_export_top_trials_all_type_branches(paths: Any, tmp_path: Path) -> None:
     """Test that all formatting branches (float, int, bool, string) are covered."""
     study = MagicMock(spec=optuna.Study)
     study.direction = optuna.study.StudyDirection.MAXIMIZE
@@ -394,7 +398,7 @@ def test_export_top_trials_all_type_branches(paths, tmp_path):
 
 
 @pytest.mark.unit
-def test_build_best_config_dict():
+def test_build_best_config_dict() -> None:
     """Test building config dict from best trial params."""
     mock_cfg = MagicMock()
     mock_cfg.training.epochs = 50
@@ -415,7 +419,7 @@ def test_build_best_config_dict():
 
 
 @pytest.mark.unit
-def test_build_best_config_dict_epochs_key():
+def test_build_best_config_dict_epochs_key() -> None:
     """Test that build_best_config_dict writes to the exact 'epochs' key."""
     mock_cfg = MagicMock()
     mock_cfg.training.epochs = 100
@@ -437,7 +441,7 @@ def test_build_best_config_dict_epochs_key():
 
 
 @pytest.mark.unit
-def test_export_study_summary_json_structure(study, tmp_path):
+def test_export_study_summary_json_structure(study: Any, tmp_path: Path) -> None:
     """Test that export_study_summary produces correct JSON keys and formatting."""
     paths = MagicMock(spec=RunPaths)
     paths.reports = tmp_path / "reports"
@@ -469,7 +473,7 @@ def test_export_study_summary_json_structure(study, tmp_path):
 
 
 @pytest.mark.unit
-def test_export_study_summary_best_trial_data(tmp_path):
+def test_export_study_summary_best_trial_data(tmp_path: Path) -> None:
     """Test that best_trial_data is correctly computed from study, not set to None."""
     study = MagicMock(spec=optuna.Study)
     trial = MagicMock(spec=optuna.trial.FrozenTrial)
@@ -502,7 +506,7 @@ def test_export_study_summary_best_trial_data(tmp_path):
 
 
 @pytest.mark.unit
-def test_export_top_trials_sorting_minimize(tmp_path):
+def test_export_top_trials_sorting_minimize(tmp_path: Path) -> None:
     """Test that MINIMIZE direction sorts trials ascending."""
     study = MagicMock(spec=optuna.Study)
     study.direction = optuna.study.StudyDirection.MINIMIZE
@@ -538,7 +542,7 @@ def test_export_top_trials_sorting_minimize(tmp_path):
 
 
 @pytest.mark.unit
-def test_export_top_trials_filters_nan_and_none(tmp_path):
+def test_export_top_trials_filters_nan_and_none(tmp_path: Path) -> None:
     """Test that trials with NaN or None values are excluded from top trials."""
     study = MagicMock(spec=optuna.Study)
     study.direction = optuna.study.StudyDirection.MAXIMIZE
@@ -582,7 +586,7 @@ def test_export_top_trials_filters_nan_and_none(tmp_path):
 
 
 @pytest.mark.unit
-def test_export_top_trials_top_k_slicing(tmp_path):
+def test_export_top_trials_top_k_slicing(tmp_path: Path) -> None:
     """Test that top_k correctly limits the number of exported trials."""
     study = MagicMock(spec=optuna.Study)
     study.direction = optuna.study.StudyDirection.MAXIMIZE
@@ -611,7 +615,7 @@ def test_export_top_trials_top_k_slicing(tmp_path):
 
 
 @pytest.mark.unit
-def test_write_styled_rows_header_formatting(tmp_path):
+def test_write_styled_rows_header_formatting(tmp_path: Path) -> None:
     """Test that header row has correct fill, font, and alignment."""
     from openpyxl import Workbook
 
@@ -633,7 +637,7 @@ def test_write_styled_rows_header_formatting(tmp_path):
 
 
 @pytest.mark.unit
-def test_write_styled_rows_body_formatting(tmp_path):
+def test_write_styled_rows_body_formatting(tmp_path: Path) -> None:
     """Test that body rows have correct alignment and number formatting."""
     from openpyxl import Workbook
 
@@ -660,7 +664,7 @@ def test_write_styled_rows_body_formatting(tmp_path):
 
 
 @pytest.mark.unit
-def test_write_styled_rows_cell_positions(tmp_path):
+def test_write_styled_rows_cell_positions(tmp_path: Path) -> None:
     """Test that cells are written starting at column 1 (not 2)."""
     from openpyxl import Workbook
 
@@ -677,7 +681,7 @@ def test_write_styled_rows_cell_positions(tmp_path):
 
 
 @pytest.mark.unit
-def test_write_styled_rows_dataframe_no_index(tmp_path):
+def test_write_styled_rows_dataframe_no_index(tmp_path: Path) -> None:
     """Test that index=False is respected (no index column in output)."""
     from openpyxl import Workbook
 
@@ -695,7 +699,7 @@ def test_write_styled_rows_dataframe_no_index(tmp_path):
 
 
 @pytest.mark.unit
-def test_auto_adjust_column_widths_values():
+def test_auto_adjust_column_widths_values() -> None:
     """Test that column widths are computed correctly with +2, min 12, max 50."""
     from openpyxl import Workbook
 
@@ -720,7 +724,7 @@ def test_auto_adjust_column_widths_values():
 
 
 @pytest.mark.unit
-def test_auto_adjust_column_widths_first_cell_letter():
+def test_auto_adjust_column_widths_first_cell_letter() -> None:
     """Test that column letter is taken from first cell (index 0), not index 1."""
     from openpyxl import Workbook
 
@@ -737,7 +741,7 @@ def test_auto_adjust_column_widths_first_cell_letter():
 
 
 @pytest.mark.unit
-def test_export_top_trials_worksheet_title(tmp_path):
+def test_export_top_trials_worksheet_title(tmp_path: Path) -> None:
     """Test that the worksheet title is exactly 'Top Trials'."""
     study = MagicMock(spec=optuna.Study)
     study.direction = optuna.study.StudyDirection.MAXIMIZE
@@ -763,7 +767,7 @@ def test_export_top_trials_worksheet_title(tmp_path):
 
 
 @pytest.mark.unit
-def test_export_best_config_calls_save_with_correct_args(tmp_path):
+def test_export_best_config_calls_save_with_correct_args(tmp_path: Path) -> None:
     """Test export_best_config passes correct Config and path to save_config_as_yaml."""
     study = MagicMock()
     study.best_params = {"learning_rate": 0.001}
@@ -800,7 +804,7 @@ def test_export_best_config_calls_save_with_correct_args(tmp_path):
 
 
 @pytest.mark.unit
-def test_export_top_trials_excel_formatting_roundtrip(tmp_path):
+def test_export_top_trials_excel_formatting_roundtrip(tmp_path: Path) -> None:
     """Test full Excel roundtrip: verify formatting via openpyxl read-back."""
     study = MagicMock(spec=optuna.Study)
     study.direction = optuna.study.StudyDirection.MAXIMIZE
@@ -848,7 +852,7 @@ def test_export_top_trials_excel_formatting_roundtrip(tmp_path):
 
 
 @pytest.mark.unit
-def test_build_top_trials_dataframe_only_complete_set():
+def test_build_top_trials_dataframe_only_complete_set() -> None:
     """Test that duration is only added when both start AND complete are set."""
     trial = MagicMock(spec=optuna.trial.FrozenTrial)
     trial.number = 1
@@ -862,7 +866,7 @@ def test_build_top_trials_dataframe_only_complete_set():
 
 
 @pytest.mark.unit
-def test_write_styled_rows_header_fill_end_color():
+def test_write_styled_rows_header_fill_end_color() -> None:
     """Test that header fill end_color is set to the exact expected value."""
     from openpyxl import Workbook
 
@@ -878,7 +882,7 @@ def test_write_styled_rows_header_fill_end_color():
 
 
 @pytest.mark.unit
-def test_export_top_trials_maximize_descending_order(tmp_path):
+def test_export_top_trials_maximize_descending_order(tmp_path: Path) -> None:
     """Test that MAXIMIZE direction sorts trials in descending order."""
     study = MagicMock(spec=optuna.Study)
     study.direction = optuna.study.StudyDirection.MAXIMIZE
@@ -914,7 +918,7 @@ def test_export_top_trials_maximize_descending_order(tmp_path):
 
 
 @pytest.mark.unit
-def test_export_top_trials_default_top_k(tmp_path):
+def test_export_top_trials_default_top_k(tmp_path: Path) -> None:
     """Test that the default top_k is exactly 10."""
     study = MagicMock(spec=optuna.Study)
     study.direction = optuna.study.StudyDirection.MAXIMIZE

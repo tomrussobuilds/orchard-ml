@@ -9,6 +9,7 @@ graceful handling of edge cases such as single-class labels.
 from __future__ import annotations
 
 import math
+from typing import Any
 from unittest.mock import patch
 
 import numpy as np
@@ -24,7 +25,7 @@ class TestClassificationMetrics:
     Covers accuracy, F1, and ROC-AUC calculations.
     """
 
-    def test_compute_metrics_perfect_prediction(self):
+    def test_compute_metrics_perfect_prediction(self) -> None:
         """Test behavior with 100% correct predictions."""
         labels = np.array([0, 1, 2])
         preds = np.array([0, 1, 2])
@@ -36,7 +37,7 @@ class TestClassificationMetrics:
         assert results["f1"] == pytest.approx(1.0)
         assert results["auc"] == pytest.approx(1.0)
 
-    def test_compute_metrics_half_wrong(self):
+    def test_compute_metrics_half_wrong(self) -> None:
         """Test accuracy and F1 with partially incorrect predictions."""
         labels = np.array([0, 0, 1, 1])
         preds = np.array([0, 1, 1, 0])
@@ -49,7 +50,7 @@ class TestClassificationMetrics:
         assert isinstance(results["auc"], float)
 
     @pytest.mark.parametrize("input_size", [10, 50, 100])
-    def test_data_types_and_shapes(self, input_size):
+    def test_data_types_and_shapes(self, input_size: Any) -> None:
         """Parametrized test to ensure consistency across different input sizes."""
         rng = np.random.default_rng(seed=42)
 
@@ -67,7 +68,7 @@ class TestClassificationMetrics:
         assert "f1" in results
 
     @pytest.mark.filterwarnings("ignore::sklearn.exceptions.UndefinedMetricWarning")
-    def test_auc_fallback_single_class(self):
+    def test_auc_fallback_single_class(self) -> None:
         """AUC returns NaN when all labels are the same class."""
         labels = np.array([0, 0, 0, 0])
         preds = np.array([0, 0, 0, 0])
@@ -77,7 +78,7 @@ class TestClassificationMetrics:
 
         assert math.isnan(results["auc"])
 
-    def test_auc_fallback_value_error(self):
+    def test_auc_fallback_value_error(self) -> None:
         """AUC returns NaN when roc_auc_score raises ValueError."""
         labels = np.array([0, 1])
         preds = np.array([0, 1])
@@ -91,7 +92,7 @@ class TestClassificationMetrics:
 
         assert math.isnan(results["auc"])
 
-    def test_return_types(self):
+    def test_return_types(self) -> None:
         """Ensure the returned dictionary contains standard Python floats (not NumPy types)."""
         labels = np.array([0, 1])
         preds = np.array([0, 1])
@@ -102,7 +103,7 @@ class TestClassificationMetrics:
         for key, value in results.items():
             assert isinstance(value, float), f"Key {key} is not a standard float"
 
-    def test_f1_zero_division_suppresses_warning(self):
+    def test_f1_zero_division_suppresses_warning(self) -> None:
         """Kill mutant_12: removing zero_division=0.0 causes UndefinedMetricWarning.
 
         With explicit zero_division=0.0, sklearn silently returns 0.0.

@@ -28,7 +28,7 @@ from orchard.tasks.classification.metrics_adapter import (
 
 @pytest.mark.unit
 @patch("orchard.tasks.classification.criterion_adapter.get_criterion")
-def test_criterion_adapter_delegates(mock_get_criterion):
+def test_criterion_adapter_delegates(mock_get_criterion: MagicMock) -> None:
     """CriterionAdapter delegates to trainer.setup.get_criterion."""
     mock_loss = MagicMock(spec=nn.Module)
     mock_get_criterion.return_value = mock_loss
@@ -43,7 +43,7 @@ def test_criterion_adapter_delegates(mock_get_criterion):
 
 @pytest.mark.unit
 @patch("orchard.tasks.classification.criterion_adapter.get_criterion")
-def test_criterion_adapter_passes_class_weights(mock_get_criterion):
+def test_criterion_adapter_passes_class_weights(mock_get_criterion: MagicMock) -> None:
     """CriterionAdapter forwards class_weights to get_criterion."""
     mock_loss = MagicMock(spec=nn.Module)
     mock_get_criterion.return_value = mock_loss
@@ -59,7 +59,7 @@ def test_criterion_adapter_passes_class_weights(mock_get_criterion):
 
 @pytest.mark.unit
 @patch("orchard.tasks.classification.criterion_adapter.get_criterion")
-def test_criterion_adapter_default_weights_none(mock_get_criterion):
+def test_criterion_adapter_default_weights_none(mock_get_criterion: MagicMock) -> None:
     """CriterionAdapter defaults class_weights to None."""
     mock_get_criterion.return_value = MagicMock()
     training_cfg = MagicMock()
@@ -74,7 +74,7 @@ def test_criterion_adapter_default_weights_none(mock_get_criterion):
 
 @pytest.mark.unit
 @patch("orchard.tasks.classification.metrics_adapter.validate_epoch")
-def test_metrics_adapter_delegates(mock_validate):
+def test_metrics_adapter_delegates(mock_validate: MagicMock) -> None:
     """MetricsAdapter delegates to trainer.engine.validate_epoch."""
     mock_metrics = {"loss": 0.3, "accuracy": 0.9, "auc": 0.85, "f1": 0.88}
     mock_validate.return_value = mock_metrics
@@ -93,7 +93,7 @@ def test_metrics_adapter_delegates(mock_validate):
 
 @pytest.mark.unit
 @patch("orchard.tasks.classification.metrics_adapter.validate_epoch")
-def test_metrics_adapter_returns_mapping(mock_validate):
+def test_metrics_adapter_returns_mapping(mock_validate: MagicMock) -> None:
     """MetricsAdapter returns the mapping from validate_epoch unchanged."""
     expected = {"loss": 0.25, "accuracy": 0.92, "auc": 0.88, "f1": 0.90}
     mock_validate.return_value = expected
@@ -112,7 +112,7 @@ def test_metrics_adapter_returns_mapping(mock_validate):
 
 @pytest.mark.unit
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
-def test_eval_adapter_delegates(mock_eval):
+def test_eval_adapter_delegates(mock_eval: MagicMock) -> None:
     """EvalPipelineAdapter delegates to run_final_evaluation."""
     mock_eval.return_value = (0.85, 0.90, 0.92)
 
@@ -137,7 +137,7 @@ def test_eval_adapter_delegates(mock_eval):
 
 @pytest.mark.unit
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
-def test_eval_adapter_passes_all_kwargs(mock_eval):
+def test_eval_adapter_passes_all_kwargs(mock_eval: MagicMock) -> None:
     """EvalPipelineAdapter forwards all kwargs to run_final_evaluation."""
     mock_eval.return_value = (0.85, 0.90, 0.92)
 
@@ -185,7 +185,7 @@ def test_eval_adapter_passes_all_kwargs(mock_eval):
 
 @pytest.mark.unit
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
-def test_eval_adapter_default_aug_info(mock_eval):
+def test_eval_adapter_default_aug_info(mock_eval: MagicMock) -> None:
     """EvalPipelineAdapter uses default aug_info='N/A' when not specified."""
     mock_eval.return_value = (0.8, 0.85, 0.9)
 
@@ -209,7 +209,7 @@ def test_eval_adapter_default_aug_info(mock_eval):
 
 @pytest.mark.unit
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
-def test_eval_adapter_default_tracker_none(mock_eval):
+def test_eval_adapter_default_tracker_none(mock_eval: MagicMock) -> None:
     """EvalPipelineAdapter passes tracker=None by default."""
     mock_eval.return_value = (0.8, 0.85, 0.9)
 
@@ -233,7 +233,7 @@ def test_eval_adapter_default_tracker_none(mock_eval):
 
 @pytest.mark.unit
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
-def test_eval_adapter_returns_mapping(mock_eval):
+def test_eval_adapter_returns_mapping(mock_eval: MagicMock) -> None:
     """EvalPipelineAdapter converts the 3-tuple to a metric mapping."""
     mock_eval.return_value = (0.91, 0.93, 0.95)
 
@@ -261,7 +261,7 @@ def test_eval_adapter_returns_mapping(mock_eval):
 
 
 @pytest.mark.unit
-def test_tasks_init_triggers_registration():
+def test_tasks_init_triggers_registration() -> None:
     """Importing orchard.tasks registers the classification task."""
     from orchard.core.task_registry import _TASK_REGISTRY
 

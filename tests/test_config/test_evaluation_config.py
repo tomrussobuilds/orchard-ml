@@ -15,7 +15,7 @@ from orchard.core.config import EvaluationConfig
 
 # EVALUATION CONFIG: DEFAULTS
 @pytest.mark.unit
-def test_evaluation_config_defaults():
+def test_evaluation_config_defaults() -> None:
     """Test EvaluationConfig with default values."""
     config = EvaluationConfig()
 
@@ -31,7 +31,7 @@ def test_evaluation_config_defaults():
 
 
 @pytest.mark.unit
-def test_evaluation_config_custom_values():
+def test_evaluation_config_custom_values() -> None:
     """Test EvaluationConfig with custom parameters."""
     config = EvaluationConfig(n_samples=20, fig_dpi=300, grid_cols=5, report_format="csv")
 
@@ -43,7 +43,7 @@ def test_evaluation_config_custom_values():
 
 # EVALUATION CONFIG: VALIDATION
 @pytest.mark.unit
-def test_n_samples_positive():
+def test_n_samples_positive() -> None:
     """Test n_samples must be positive."""
 
     config = EvaluationConfig(n_samples=1)
@@ -57,7 +57,7 @@ def test_n_samples_positive():
 
 
 @pytest.mark.unit
-def test_fig_dpi_positive():
+def test_fig_dpi_positive() -> None:
     """Test fig_dpi must be positive."""
 
     config = EvaluationConfig(fig_dpi=100)
@@ -71,7 +71,7 @@ def test_fig_dpi_positive():
 
 
 @pytest.mark.unit
-def test_grid_cols_positive():
+def test_grid_cols_positive() -> None:
     """Test grid_cols must be positive."""
 
     config = EvaluationConfig(grid_cols=3)
@@ -83,7 +83,7 @@ def test_grid_cols_positive():
 
 # EVALUATION CONFIG: FORMAT VALIDATION
 @pytest.mark.unit
-def test_report_format_validation_valid():
+def test_report_format_validation_valid() -> None:
     """Test report_format accepts valid formats."""
     for fmt in ["xlsx", "csv", "json", "XLSX", "CSV", "JSON"]:
         config = EvaluationConfig(report_format=fmt)
@@ -91,7 +91,7 @@ def test_report_format_validation_valid():
 
 
 @pytest.mark.unit
-def test_report_format_validation_invalid():
+def test_report_format_validation_invalid() -> None:
     """Test report_format raises ValueError for unsupported formats."""
     with pytest.raises(ValidationError, match="Unsupported report_format"):
         EvaluationConfig(report_format="pdf")
@@ -101,7 +101,7 @@ def test_report_format_validation_invalid():
 
 
 @pytest.mark.unit
-def test_report_format_case_insensitive():
+def test_report_format_case_insensitive() -> None:
     """Test report_format is case-insensitive."""
     config = EvaluationConfig(report_format="CSV")
     assert config.report_format == "csv"
@@ -112,7 +112,7 @@ def test_report_format_case_insensitive():
 
 # EVALUATION CONFIG: VISUALIZATION
 @pytest.mark.unit
-def test_colormap_string():
+def test_colormap_string() -> None:
     """Test cmap_confusion accepts string values."""
     config = EvaluationConfig(cmap_confusion="Reds")
     assert config.cmap_confusion == "Reds"
@@ -122,14 +122,14 @@ def test_colormap_string():
 
 
 @pytest.mark.unit
-def test_colormap_invalid_rejected():
+def test_colormap_invalid_rejected() -> None:
     """Test cmap_confusion rejects unknown colormap names."""
     with pytest.raises(ValidationError, match="Unknown matplotlib colormap"):
         EvaluationConfig(cmap_confusion="not_a_real_colormap_xyz")
 
 
 @pytest.mark.unit
-def test_plot_style_string():
+def test_plot_style_string() -> None:
     """Test plot_style accepts string values."""
     config = EvaluationConfig(plot_style="ggplot")
     assert config.plot_style == "ggplot"
@@ -139,14 +139,14 @@ def test_plot_style_string():
 
 
 @pytest.mark.unit
-def test_plot_style_invalid_rejected():
+def test_plot_style_invalid_rejected() -> None:
     """Test plot_style rejects unknown style names."""
     with pytest.raises(ValidationError, match="Unknown matplotlib style"):
         EvaluationConfig(plot_style="not_a_real_style_xyz")
 
 
 @pytest.mark.unit
-def test_fig_size_tuple():
+def test_fig_size_tuple() -> None:
     """Test fig_size_predictions accepts tuple of positive ints."""
     config = EvaluationConfig(fig_size_predictions=(16, 10))
     assert config.fig_size_predictions == (16, 10)
@@ -160,7 +160,7 @@ def test_fig_size_tuple():
 
 # EVALUATION CONFIG: EXPORT FLAGS
 @pytest.mark.unit
-def test_save_flags_boolean():
+def test_save_flags_boolean() -> None:
     """Test save flags accept boolean values."""
     config = EvaluationConfig(save_confusion_matrix=False, save_predictions_grid=False)
 
@@ -169,7 +169,7 @@ def test_save_flags_boolean():
 
 
 @pytest.mark.unit
-def test_save_flags_default_true():
+def test_save_flags_default_true() -> None:
     """Test save flags default to True."""
     config = EvaluationConfig()
 
@@ -179,7 +179,7 @@ def test_save_flags_default_true():
 
 # EVALUATION CONFIG: IMMUTABILITY
 @pytest.mark.unit
-def test_config_is_frozen():
+def test_config_is_frozen() -> None:
     """Test EvaluationConfig is immutable after creation."""
     config = EvaluationConfig()
 
@@ -188,7 +188,7 @@ def test_config_is_frozen():
 
 
 @pytest.mark.unit
-def test_config_forbids_extra_fields():
+def test_config_forbids_extra_fields() -> None:
     """Test EvaluationConfig rejects unknown fields."""
     with pytest.raises(ValidationError):
         EvaluationConfig(unknown_param="value")

@@ -8,6 +8,7 @@ deterministic subsampling, RGB vs grayscale handling, and __getitem__ behavior.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
@@ -21,7 +22,7 @@ _rng = np.random.default_rng(0)
 
 # FIXTURES
 @pytest.fixture
-def rgb_npz(tmp_path: Path):
+def rgb_npz(tmp_path: Path) -> None:
     """Creates a valid RGB MedMNIST-like NPZ."""
     path = tmp_path / "rgb.npz"
     np.savez(
@@ -33,11 +34,11 @@ def rgb_npz(tmp_path: Path):
         test_images=_rng.integers(0, 255, (10, 28, 28, 3), dtype=np.uint8),
         test_labels=np.arange(10),
     )
-    return path
+    return path  # type: ignore
 
 
 @pytest.fixture
-def grayscale_npz(tmp_path: Path):
+def grayscale_npz(tmp_path: Path) -> None:
     """Creates a valid Grayscale MedMNIST-like NPZ."""
     path = tmp_path / "gray.npz"
     np.savez(
@@ -49,12 +50,12 @@ def grayscale_npz(tmp_path: Path):
         test_images=_rng.integers(0, 255, (10, 28, 28), dtype=np.uint8),
         test_labels=np.arange(10),
     )
-    return path
+    return path  # type: ignore
 
 
 # TEST: Initialization Errors
 @pytest.mark.unit
-def test_from_npz_requires_existing_file(tmp_path):
+def test_from_npz_requires_existing_file(tmp_path: Path) -> None:
     """from_npz should fail if NPZ does not exist."""
     with pytest.raises(Exception, match="Dataset file not found"):
         VisionDataset.from_npz(path=tmp_path / "missing.npz")
@@ -62,14 +63,14 @@ def test_from_npz_requires_existing_file(tmp_path):
 
 # TEST: Basic Loading (from_npz)
 @pytest.mark.unit
-def test_len_matches_number_of_samples(rgb_npz):
+def test_len_matches_number_of_samples(rgb_npz: Any) -> None:
     """__len__ should match number of loaded labels."""
     ds = VisionDataset.from_npz(path=rgb_npz, split="train")
     assert len(ds) == 20
 
 
 @pytest.mark.unit
-def test_getitem_returns_tensor_pair(rgb_npz):
+def test_getitem_returns_tensor_pair(rgb_npz: Any) -> None:
     """__getitem__ should return (image, label) tensors."""
     ds = VisionDataset.from_npz(path=rgb_npz, split="train")
 
@@ -84,7 +85,7 @@ def test_getitem_returns_tensor_pair(rgb_npz):
 
 # TEST: Grayscale Handling
 @pytest.mark.unit
-def test_grayscale_images_are_expanded(grayscale_npz):
+def test_grayscale_images_are_expanded(grayscale_npz: Any) -> None:
     """Grayscale datasets should be expanded to (H, W, 1)."""
     ds = VisionDataset.from_npz(path=grayscale_npz, split="train")
 
@@ -97,7 +98,7 @@ def test_grayscale_images_are_expanded(grayscale_npz):
 
 # TEST: Deterministic Subsampling
 @pytest.mark.unit
-def test_max_samples_is_deterministic(rgb_npz):
+def test_max_samples_is_deterministic(rgb_npz: Any) -> None:
     """Subsampling should be reproducible given the same seed."""
     ds1 = VisionDataset.from_npz(path=rgb_npz, split="train", max_samples=5, seed=42)
     ds2 = VisionDataset.from_npz(path=rgb_npz, split="train", max_samples=5, seed=42)
@@ -108,7 +109,7 @@ def test_max_samples_is_deterministic(rgb_npz):
 
 
 @pytest.mark.unit
-def test_max_samples_smaller_than_dataset(rgb_npz):
+def test_max_samples_smaller_than_dataset(rgb_npz: Any) -> None:
     """max_samples should reduce dataset size."""
     ds = VisionDataset.from_npz(path=rgb_npz, split="train", max_samples=7)
     assert len(ds) == 7
@@ -116,7 +117,7 @@ def test_max_samples_smaller_than_dataset(rgb_npz):
 
 # TEST: Transform Application
 @pytest.mark.unit
-def test_custom_transform_is_applied(rgb_npz):
+def test_custom_transform_is_applied(rgb_npz: Any) -> None:
     """Custom transforms should be applied to images."""
     transform = transforms.Compose(
         [
@@ -140,7 +141,7 @@ def test_custom_transform_is_applied(rgb_npz):
 # TEST: Different Splits
 @pytest.mark.unit
 @pytest.mark.parametrize("split,expected_len", [("train", 20), ("val", 10), ("test", 10)])
-def test_dataset_splits(rgb_npz, split, expected_len):
+def test_dataset_splits(rgb_npz: Any, split: Any, expected_len: Any) -> None:
     """Dataset should correctly load all supported splits."""
     ds = VisionDataset.from_npz(path=rgb_npz, split=split)
     assert len(ds) == expected_len
@@ -148,7 +149,7 @@ def test_dataset_splits(rgb_npz, split, expected_len):
 
 # TEST: Direct Constructor
 @pytest.mark.unit
-def test_direct_constructor_rgb():
+def test_direct_constructor_rgb() -> None:
     """Direct constructor should accept raw arrays."""
     images = np.random.default_rng(0).integers(0, 255, (5, 28, 28, 3), dtype=np.uint8)
     labels = np.arange(5)
@@ -161,7 +162,7 @@ def test_direct_constructor_rgb():
 
 
 @pytest.mark.unit
-def test_labels_cast_to_int64():
+def test_labels_cast_to_int64() -> None:
     """Labels must be cast to int64 regardless of input dtype."""
     images = np.random.default_rng(0).integers(0, 255, (5, 28, 28, 3), dtype=np.uint8)
     float_labels = np.array([0.0, 1.0, 2.0, 3.0, 4.0], dtype=np.float32)
@@ -171,7 +172,7 @@ def test_labels_cast_to_int64():
 
 
 @pytest.mark.unit
-def test_direct_constructor_grayscale_expands():
+def test_direct_constructor_grayscale_expands() -> None:
     """Direct constructor should expand (N, H, W) to (N, H, W, 1)."""
     images = np.random.default_rng(0).integers(0, 255, (5, 28, 28), dtype=np.uint8)
     labels = np.arange(5)
@@ -185,7 +186,7 @@ def test_direct_constructor_grayscale_expands():
 
 # TEST: Lazy Loading
 @pytest.mark.unit
-def test_lazy_rgb(rgb_npz):
+def test_lazy_rgb(rgb_npz: Any) -> None:
     """Lazy loading should return valid tensors for RGB images."""
     ds = VisionDataset.lazy(rgb_npz)
 
@@ -198,7 +199,7 @@ def test_lazy_rgb(rgb_npz):
 
 
 @pytest.mark.unit
-def test_lazy_grayscale(grayscale_npz):
+def test_lazy_grayscale(grayscale_npz: Any) -> None:
     """Lazy loading should handle grayscale images."""
     ds = VisionDataset.lazy(grayscale_npz)
 
@@ -209,21 +210,21 @@ def test_lazy_grayscale(grayscale_npz):
 
 
 @pytest.mark.unit
-def test_lazy_keeps_npz_handle(rgb_npz):
+def test_lazy_keeps_npz_handle(rgb_npz: Any) -> None:
     """Lazy loading should keep _npz_handle alive for mmap validity."""
     ds = VisionDataset.lazy(rgb_npz)
     assert ds._npz_handle is not None
 
 
 @pytest.mark.unit
-def test_lazy_val_split(rgb_npz):
+def test_lazy_val_split(rgb_npz: Any) -> None:
     """Lazy loading should support non-default splits."""
     ds = VisionDataset.lazy(rgb_npz, split="val")
     assert len(ds) == 10
 
 
 @pytest.mark.unit
-def test_lazy_with_transform(rgb_npz):
+def test_lazy_with_transform(rgb_npz: Any) -> None:
     """Lazy loading should apply transforms."""
     transform = transforms.Compose(
         [
@@ -241,7 +242,7 @@ def test_lazy_with_transform(rgb_npz):
 
 
 @pytest.mark.unit
-def test_lazy_with_max_samples(rgb_npz):
+def test_lazy_with_max_samples(rgb_npz: Any) -> None:
     """Lazy loading should support deterministic subsampling."""
     ds = VisionDataset.lazy(rgb_npz, max_samples=5, seed=42)
 
@@ -251,12 +252,12 @@ def test_lazy_with_max_samples(rgb_npz):
 
     # Deterministic: same seed produces same indices
     ds2 = VisionDataset.lazy(rgb_npz, max_samples=5, seed=42)
-    assert np.array_equal(ds._indices, ds2._indices)
+    assert np.array_equal(ds._indices, ds2._indices)  # type: ignore
     assert np.array_equal(ds.labels, ds2.labels)
 
 
 @pytest.mark.unit
-def test_lazy_max_samples_larger_than_dataset(rgb_npz):
+def test_lazy_max_samples_larger_than_dataset(rgb_npz: Any) -> None:
     """Lazy loading should ignore max_samples when larger than dataset."""
     ds = VisionDataset.lazy(rgb_npz, max_samples=100)
 

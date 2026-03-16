@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
@@ -19,7 +20,7 @@ from orchard.core.paths import RunPaths
 
 # RUNPATHS: CLASS CONSTANTS
 @pytest.mark.unit
-def test_sub_dirs_constant():
+def test_sub_dirs_constant() -> None:
     """Test SUB_DIRS class constant contains all required subdirectories."""
     assert hasattr(RunPaths, "SUB_DIRS")
     assert RunPaths.SUB_DIRS == ("figures", "checkpoints", "reports", "logs", "database", "exports")
@@ -28,7 +29,7 @@ def test_sub_dirs_constant():
 
 # RUNPATHS: CREATION FACTORY
 @pytest.mark.unit
-def test_runpaths_create_basic(tmp_path):
+def test_runpaths_create_basic(tmp_path: Path) -> None:
     """Test RunPaths.create() with minimal valid arguments."""
     training_cfg = {"batch_size": 32, "learning_rate": 0.001, "epochs": 10}
 
@@ -46,7 +47,7 @@ def test_runpaths_create_basic(tmp_path):
 
 
 @pytest.mark.unit
-def test_runpaths_create_uses_default_base_dir(safe_outputs_root):
+def test_runpaths_create_uses_default_base_dir(safe_outputs_root: Any) -> None:
     """Test RunPaths.create() uses OUTPUTS_ROOT when base_dir not provided."""
     training_cfg = {"batch_size": 32}
 
@@ -60,7 +61,7 @@ def test_runpaths_create_uses_default_base_dir(safe_outputs_root):
 
 
 @pytest.mark.unit
-def test_runpaths_create_normalizes_dataset_slug(tmp_path):
+def test_runpaths_create_normalizes_dataset_slug(tmp_path: Path) -> None:
     """Test dataset_slug is normalized to lowercase."""
     training_cfg = {"batch_size": 32}
 
@@ -75,7 +76,7 @@ def test_runpaths_create_normalizes_dataset_slug(tmp_path):
 
 
 @pytest.mark.unit
-def test_runpaths_create_normalizes_model_name(tmp_path):
+def test_runpaths_create_normalizes_model_name(tmp_path: Path) -> None:
     """Test model_name is sanitized (alphanumeric only, lowercase)."""
     training_cfg = {"batch_size": 32}
 
@@ -97,34 +98,34 @@ def test_runpaths_create_normalizes_model_name(tmp_path):
 
 
 @pytest.mark.unit
-def test_runpaths_create_invalid_dataset_type():
+def test_runpaths_create_invalid_dataset_type() -> None:
     """Test RunPaths.create() raises ValueError for non-string dataset_slug."""
     training_cfg = {"batch_size": 32}
 
     with pytest.raises(ValueError, match="Expected string for dataset_slug"):
         RunPaths.create(
-            dataset_slug=123,
+            dataset_slug=123,  # type: ignore
             architecture_name="resnet",
             training_cfg=training_cfg,
         )
 
 
 @pytest.mark.unit
-def test_runpaths_create_invalid_model_type():
+def test_runpaths_create_invalid_model_type() -> None:
     """Test RunPaths.create() raises ValueError for non-string architecture_name."""
     training_cfg = {"batch_size": 32}
 
     with pytest.raises(ValueError, match="Expected string for architecture_name"):
         RunPaths.create(
             dataset_slug="test",
-            architecture_name=123,
+            architecture_name=123,  # type: ignore
             training_cfg=training_cfg,
         )
 
 
 # RUNPATHS: UNIQUE ID GENERATION
 @pytest.mark.unit
-def test_generate_unique_id_format():
+def test_generate_unique_id_format() -> None:
     """Test _generate_unique_id() produces correct format: YYYYMMDD_dataset_model_hash."""
     ds_slug = "organcmnist"
     a_slug = "efficientnetb0"
@@ -141,7 +142,7 @@ def test_generate_unique_id_format():
 
 
 @pytest.mark.unit
-def test_generate_unique_id_deterministic():
+def test_generate_unique_id_deterministic() -> None:
     """Test _generate_unique_id() produces same hash for identical configs + timestamp."""
     ds_slug = "test"
     a_slug = "architecture"
@@ -155,7 +156,7 @@ def test_generate_unique_id_deterministic():
 
 
 @pytest.mark.unit
-def test_generate_unique_id_different_configs():
+def test_generate_unique_id_different_configs() -> None:
     """Test _generate_unique_id() produces different hashes for different configs."""
     ds_slug = "test"
     a_slug = "architecture"
@@ -169,7 +170,7 @@ def test_generate_unique_id_different_configs():
 
 
 @pytest.mark.unit
-def test_generate_unique_id_filters_non_hashable():
+def test_generate_unique_id_filters_non_hashable() -> None:
     """Test _generate_unique_id() filters out non-hashable types."""
     ds_slug = "test"
     a_slug = "architecture"
@@ -185,11 +186,11 @@ def test_generate_unique_id_filters_non_hashable():
 
 
 @pytest.mark.unit
-def test_generate_unique_id_empty_config():
+def test_generate_unique_id_empty_config() -> None:
     """Test _generate_unique_id() handles empty config dict."""
     ds_slug = "test"
     a_slug = "architecture"
-    cfg = {}
+    cfg = {}  # type: ignore
 
     run_id = RunPaths._generate_unique_id(ds_slug, a_slug, cfg)
     assert isinstance(run_id, str)
@@ -198,7 +199,7 @@ def test_generate_unique_id_empty_config():
 
 
 @pytest.mark.unit
-def test_generate_unique_id_uses_blake2b():
+def test_generate_unique_id_uses_blake2b() -> None:
     """Test _generate_unique_id() uses blake2b with digest_size=3."""
     ds_slug = "test"
     a_slug = "architecture"
@@ -218,7 +219,7 @@ def test_generate_unique_id_uses_blake2b():
 
 # RUNPATHS: UNIQUENESS VIA TIMESTAMP
 @pytest.mark.unit
-def test_runpaths_unique_via_timestamp(tmp_path):
+def test_runpaths_unique_via_timestamp(tmp_path: Path) -> None:
     """Test that different timestamps produce unique run IDs."""
     cfg1 = {"batch_size": 32, "run_timestamp": 1707400000.0}
     cfg2 = {"batch_size": 32, "run_timestamp": 1707400001.0}
@@ -243,7 +244,7 @@ def test_runpaths_unique_via_timestamp(tmp_path):
 
 # RUNPATHS: DIRECTORY STRUCTURE
 @pytest.mark.unit
-def test_runpaths_creates_all_subdirectories(tmp_path):
+def test_runpaths_creates_all_subdirectories(tmp_path: Path) -> None:
     """Test RunPaths.create() physically creates all subdirectories."""
     training_cfg = {"batch_size": 32}
 
@@ -264,7 +265,7 @@ def test_runpaths_creates_all_subdirectories(tmp_path):
 
 
 @pytest.mark.unit
-def test_runpaths_path_attributes(tmp_path):
+def test_runpaths_path_attributes(tmp_path: Path) -> None:
     """Test all path attributes are correctly set."""
     training_cfg = {"batch_size": 32}
 
@@ -290,7 +291,7 @@ def test_runpaths_path_attributes(tmp_path):
 
 # RUNPATHS: DYNAMIC PROPERTIES
 @pytest.mark.unit
-def test_best_model_path_property(tmp_path):
+def test_best_model_path_property(tmp_path: Path) -> None:
     """Test best_model_path property returns correct path."""
     training_cfg = {"batch_size": 32}
 
@@ -306,7 +307,7 @@ def test_best_model_path_property(tmp_path):
 
 
 @pytest.mark.unit
-def test_final_report_path_property(tmp_path):
+def test_final_report_path_property(tmp_path: Path) -> None:
     """Test final_report_path property returns correct path."""
     training_cfg = {"batch_size": 32}
 
@@ -322,7 +323,7 @@ def test_final_report_path_property(tmp_path):
 
 
 @pytest.mark.unit
-def test_get_fig_path_method(tmp_path):
+def test_get_fig_path_method(tmp_path: Path) -> None:
     """Test get_fig_path() method returns correct figure path."""
     training_cfg = {"batch_size": 32}
 
@@ -344,7 +345,7 @@ def test_get_fig_path_method(tmp_path):
 
 
 @pytest.mark.unit
-def test_get_config_path_method(tmp_path):
+def test_get_config_path_method(tmp_path: Path) -> None:
     """Test get_config_path() method returns correct config path."""
     training_cfg = {"batch_size": 32}
 
@@ -363,7 +364,7 @@ def test_get_config_path_method(tmp_path):
 
 
 @pytest.mark.unit
-def test_get_db_path_method(tmp_path):
+def test_get_db_path_method(tmp_path: Path) -> None:
     """Test get_db_path() method returns correct database path."""
     training_cfg = {"batch_size": 32}
 
@@ -383,7 +384,7 @@ def test_get_db_path_method(tmp_path):
 
 # RUNPATHS: IMMUTABILITY
 @pytest.mark.unit
-def test_runpaths_is_frozen(tmp_path):
+def test_runpaths_is_frozen(tmp_path: Path) -> None:
     """Test RunPaths instances are immutable after creation."""
     training_cfg = {"batch_size": 32}
 
@@ -403,7 +404,7 @@ def test_runpaths_is_frozen(tmp_path):
 
 # RUNPATHS: STRING REPRESENTATION
 @pytest.mark.unit
-def test_runpaths_repr(tmp_path):
+def test_runpaths_repr(tmp_path: Path) -> None:
     """Test __repr__ provides useful debug information."""
     training_cfg = {"batch_size": 32}
 
@@ -423,7 +424,7 @@ def test_runpaths_repr(tmp_path):
 
 # RUNPATHS: EDGE CASES
 @pytest.mark.unit
-def test_runpaths_create_with_special_characters_in_model(tmp_path):
+def test_runpaths_create_with_special_characters_in_model(tmp_path: Path) -> None:
     """Test model_name with various special characters is properly sanitized."""
     training_cfg = {"batch_size": 32}
 
@@ -445,7 +446,7 @@ def test_runpaths_create_with_special_characters_in_model(tmp_path):
 
 
 @pytest.mark.unit
-def test_runpaths_create_with_empty_model_name(tmp_path):
+def test_runpaths_create_with_empty_model_name(tmp_path: Path) -> None:
     """Test empty model_name after sanitization."""
     training_cfg = {"batch_size": 32}
 
@@ -461,7 +462,7 @@ def test_runpaths_create_with_empty_model_name(tmp_path):
 
 
 @pytest.mark.unit
-def test_runpaths_create_with_complex_training_config(tmp_path):
+def test_runpaths_create_with_complex_training_config(tmp_path: Path) -> None:
     """Test RunPaths.create() with complex nested training config."""
     training_cfg = {
         "batch_size": 32,
@@ -486,7 +487,7 @@ def test_runpaths_create_with_complex_training_config(tmp_path):
 
 # RUNPATHS: INTEGRATION TESTS
 @pytest.mark.integration
-def test_runpaths_full_workflow(tmp_path):
+def test_runpaths_full_workflow(tmp_path: Path) -> None:
     """Test complete RunPaths workflow from creation to artifact saving."""
     training_cfg = {
         "batch_size": 32,
@@ -513,7 +514,7 @@ def test_runpaths_full_workflow(tmp_path):
 
 
 @pytest.mark.integration
-def test_multiple_runs_different_configs(tmp_path):
+def test_multiple_runs_different_configs(tmp_path: Path) -> None:
     """Test creating multiple runs with different configs produces unique directories."""
     configs = [
         {"batch_size": 32, "learning_rate": 0.001},
@@ -538,7 +539,7 @@ def test_multiple_runs_different_configs(tmp_path):
 
 
 @pytest.mark.unit
-def test_setup_run_directories_creates_parents(tmp_path):
+def test_setup_run_directories_creates_parents(tmp_path: Path) -> None:
     """Kill mutant: parents=True must be set — dirs created from scratch."""
     training_cfg = {"batch_size": 32}
     # Use a deeply nested base_dir that does NOT exist yet
@@ -558,7 +559,7 @@ def test_setup_run_directories_creates_parents(tmp_path):
 
 
 @pytest.mark.unit
-def test_setup_run_directories_idempotent(tmp_path):
+def test_setup_run_directories_idempotent(tmp_path: Path) -> None:
     """Kill mutants: exist_ok=True must be set — re-creation must not raise."""
     fixed_ts = 1707400000.0
     training_cfg = {"batch_size": 32, "run_timestamp": fixed_ts}

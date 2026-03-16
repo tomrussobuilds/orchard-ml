@@ -20,7 +20,7 @@ from orchard.exceptions import OrchardDatasetError, OrchardExportError
 
 # VALIDATE NPZ KEYS
 @pytest.mark.unit
-def test_validate_npz_keys_valid_data():
+def test_validate_npz_keys_valid_data() -> None:
     """Test validate_npz_keys passes with all required keys."""
     mock_npz = MagicMock()
     mock_npz.files = [
@@ -36,7 +36,7 @@ def test_validate_npz_keys_valid_data():
 
 
 @pytest.mark.unit
-def test_validate_npz_keys_missing_keys():
+def test_validate_npz_keys_missing_keys() -> None:
     """Test validate_npz_keys raises ValueError for missing keys."""
     mock_npz = MagicMock()
     mock_npz.files = ["train_images", "train_labels"]
@@ -49,7 +49,7 @@ def test_validate_npz_keys_missing_keys():
 
 
 @pytest.mark.unit
-def test_validate_npz_keys_extra_keys_allowed():
+def test_validate_npz_keys_extra_keys_allowed() -> None:
     """Test validate_npz_keys allows extra keys beyond required."""
     mock_npz = MagicMock()
     mock_npz.files = [
@@ -66,7 +66,7 @@ def test_validate_npz_keys_extra_keys_allowed():
 
 
 @pytest.mark.unit
-def test_validate_npz_keys_empty_file():
+def test_validate_npz_keys_empty_file() -> None:
     """Test validate_npz_keys raises ValueError for empty NPZ."""
     mock_npz = MagicMock()
     mock_npz.files = []
@@ -77,7 +77,7 @@ def test_validate_npz_keys_empty_file():
 
 # MD5 CHECKSUM
 @pytest.mark.unit
-def test_md5_checksum_basic(tmp_path):
+def test_md5_checksum_basic(tmp_path: Path) -> None:
     """Test md5_checksum calculates correct hash."""
     test_file = tmp_path / "test.txt"
     test_content = b"Hello, World!"
@@ -91,7 +91,7 @@ def test_md5_checksum_basic(tmp_path):
 
 
 @pytest.mark.unit
-def test_md5_checksum_empty_file(tmp_path):
+def test_md5_checksum_empty_file(tmp_path: Path) -> None:
     """Test md5_checksum handles empty file."""
     test_file = tmp_path / "empty.txt"
     test_file.write_bytes(b"")
@@ -104,7 +104,7 @@ def test_md5_checksum_empty_file(tmp_path):
 
 
 @pytest.mark.unit
-def test_md5_checksum_large_file(tmp_path):
+def test_md5_checksum_large_file(tmp_path: Path) -> None:
     """Test md5_checksum handles file larger than buffer size."""
     test_file = tmp_path / "large.bin"
     large_content = b"X" * 10000
@@ -118,7 +118,7 @@ def test_md5_checksum_large_file(tmp_path):
 
 
 @pytest.mark.unit
-def test_md5_checksum_binary_content(tmp_path):
+def test_md5_checksum_binary_content(tmp_path: Path) -> None:
     """Test md5_checksum handles binary content."""
     test_file = tmp_path / "binary.bin"
     binary_content = bytes(range(256))
@@ -132,7 +132,7 @@ def test_md5_checksum_binary_content(tmp_path):
 
 # LOAD MODEL WEIGHTS
 @pytest.mark.unit
-def test_load_model_weights_file_not_found():
+def test_load_model_weights_file_not_found() -> None:
     """Test load_model_weights raises FileNotFoundError for missing checkpoint."""
     mock_model = MagicMock()
     nonexistent_path = Path("/nonexistent/model.pth")
@@ -144,7 +144,7 @@ def test_load_model_weights_file_not_found():
 
 @pytest.mark.unit
 @patch("torch.load")
-def test_load_model_weights_success(mock_torch_load, tmp_path):
+def test_load_model_weights_success(mock_torch_load: MagicMock, tmp_path: Path) -> None:
     """Test load_model_weights loads checkpoint successfully."""
     model = nn.Linear(10, 5)
     checkpoint_path = tmp_path / "model.pth"
@@ -163,7 +163,7 @@ def test_load_model_weights_success(mock_torch_load, tmp_path):
 
 @pytest.mark.unit
 @patch("torch.load")
-def test_load_model_weights_maps_to_device(mock_torch_load, tmp_path):
+def test_load_model_weights_maps_to_device(mock_torch_load: MagicMock, tmp_path: Path) -> None:
     """Test load_model_weights uses correct device mapping."""
     model = nn.Linear(10, 5)
     checkpoint_path = tmp_path / "model.pth"
@@ -182,7 +182,7 @@ def test_load_model_weights_maps_to_device(mock_torch_load, tmp_path):
 
 @pytest.mark.unit
 @patch("torch.load")
-def test_load_model_weights_uses_weights_only(mock_torch_load, tmp_path):
+def test_load_model_weights_uses_weights_only(mock_torch_load: MagicMock, tmp_path: Path) -> None:
     """Test load_model_weights uses weights_only=True for security."""
     model = nn.Linear(10, 5)
     checkpoint_path = tmp_path / "model.pth"
@@ -200,7 +200,9 @@ def test_load_model_weights_uses_weights_only(mock_torch_load, tmp_path):
 
 @pytest.mark.unit
 @patch("torch.load")
-def test_load_model_weights_architecture_mismatch(mock_torch_load, tmp_path):
+def test_load_model_weights_architecture_mismatch(
+    mock_torch_load: MagicMock, tmp_path: Path
+) -> None:
     """Test load_model_weights raises RuntimeError for mismatched checkpoint keys."""
     model = nn.Linear(10, 5)
     checkpoint_path = tmp_path / "model.pth"
@@ -221,7 +223,7 @@ def test_load_model_weights_architecture_mismatch(mock_torch_load, tmp_path):
 
 @pytest.mark.unit
 @patch("torch.load")
-def test_load_model_weights_missing_keys(mock_torch_load, tmp_path):
+def test_load_model_weights_missing_keys(mock_torch_load: MagicMock, tmp_path: Path) -> None:
     """Test error message includes missing keys on mismatch."""
     model = nn.Linear(10, 5)
     checkpoint_path = tmp_path / "model.pth"
@@ -241,7 +243,7 @@ def test_load_model_weights_missing_keys(mock_torch_load, tmp_path):
 
 @pytest.mark.unit
 @patch("torch.load")
-def test_load_model_weights_extra_keys(mock_torch_load, tmp_path):
+def test_load_model_weights_extra_keys(mock_torch_load: MagicMock, tmp_path: Path) -> None:
     """Test error message includes unexpected keys on mismatch."""
     model = nn.Linear(10, 5)
     checkpoint_path = tmp_path / "model.pth"
@@ -261,7 +263,9 @@ def test_load_model_weights_extra_keys(mock_torch_load, tmp_path):
 
 @pytest.mark.unit
 @patch("torch.load")
-def test_load_model_weights_missing_and_extra_keys(mock_torch_load, tmp_path):
+def test_load_model_weights_missing_and_extra_keys(
+    mock_torch_load: MagicMock, tmp_path: Path
+) -> None:
     """Test error message with both missing and unexpected keys uses comma join."""
     model = nn.Linear(10, 5)
     checkpoint_path = tmp_path / "model.pth"
@@ -286,7 +290,7 @@ def test_load_model_weights_missing_and_extra_keys(mock_torch_load, tmp_path):
 
 @pytest.mark.unit
 @patch("torch.load")
-def test_load_model_weights_empty_state_dict(mock_torch_load, tmp_path):
+def test_load_model_weights_empty_state_dict(mock_torch_load: MagicMock, tmp_path: Path) -> None:
     """Test error when checkpoint has empty state dict."""
     model = nn.Linear(10, 5)
     checkpoint_path = tmp_path / "model.pth"
@@ -301,7 +305,9 @@ def test_load_model_weights_empty_state_dict(mock_torch_load, tmp_path):
 
 @pytest.mark.unit
 @patch("torch.load")
-def test_load_model_weights_truncates_missing_keys(mock_torch_load, tmp_path):
+def test_load_model_weights_truncates_missing_keys(
+    mock_torch_load: MagicMock, tmp_path: Path
+) -> None:
     """Test error message truncates missing keys list to 5 entries."""
     model = nn.Sequential(*[nn.Linear(2, 2) for _ in range(4)])
     checkpoint_path = tmp_path / "model.pth"
@@ -321,7 +327,7 @@ def test_load_model_weights_truncates_missing_keys(mock_torch_load, tmp_path):
 
 
 @pytest.mark.unit
-def test_load_model_weights_real_tensor_values(tmp_path):
+def test_load_model_weights_real_tensor_values(tmp_path: Path) -> None:
     """Test loaded weights match saved weights (no mocking)."""
     model = nn.Linear(10, 5, bias=True)
     checkpoint_path = tmp_path / "model.pth"

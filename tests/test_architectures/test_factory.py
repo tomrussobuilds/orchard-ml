@@ -8,6 +8,7 @@ These are minimal tests to boost coverage from 0% to ~20%.
 from __future__ import annotations
 
 import os
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -20,7 +21,7 @@ from orchard.exceptions import OrchardConfigError
 
 # FACTORY: BASIC INSTANTIATION
 @pytest.mark.unit
-def test_get_model_returns_nn_module():
+def test_get_model_returns_nn_module() -> None:
     """Test get_model returns a torch.nn.Module instance."""
     device = torch.device("cpu")
     mock_cfg = MagicMock()
@@ -36,7 +37,7 @@ def test_get_model_returns_nn_module():
 
 
 @pytest.mark.unit
-def test_get_model_deploys_to_device():
+def test_get_model_deploys_to_device() -> None:
     """Test get_model deploys model to specified device."""
     device = torch.device("cpu")
     mock_cfg = MagicMock()
@@ -52,7 +53,7 @@ def test_get_model_deploys_to_device():
 
 
 @pytest.mark.unit
-def test_get_model_invalid_architecture():
+def test_get_model_invalid_architecture() -> None:
     """Test get_model raises ValueError for unknown architecture."""
     device = torch.device("cpu")
     mock_cfg = MagicMock()
@@ -66,7 +67,7 @@ def test_get_model_invalid_architecture():
 
 
 @pytest.mark.unit
-def test_get_model_case_insensitive():
+def test_get_model_case_insensitive() -> None:
     """Test get_model handles case-insensitive model names."""
     device = torch.device("cpu")
     mock_cfg = MagicMock()
@@ -87,7 +88,7 @@ def test_get_model_case_insensitive():
     "model_name",
     ["mini_cnn", "resnet_18", "efficientnet_b0", "convnext_tiny", "vit_tiny"],
 )
-def test_get_model_all_registered_models(model_name):
+def test_get_model_all_registered_models(model_name: Any) -> None:
     """Test get_model can instantiate all registered models."""
     device = torch.device("cpu")
     mock_cfg = MagicMock()
@@ -108,7 +109,7 @@ def test_get_model_all_registered_models(model_name):
 
 
 @pytest.mark.unit
-def test_get_model_verbose_false_suppresses_logs(caplog):
+def test_get_model_verbose_false_suppresses_logs(caplog: pytest.LogCaptureFixture) -> None:
     """Test verbose=False suppresses factory and builder logs."""
     device = torch.device("cpu")
     mock_cfg = MagicMock()
@@ -133,7 +134,7 @@ def test_get_model_verbose_false_suppresses_logs(caplog):
 
 # FACTORY: DOWNLOAD NOISE SUPPRESSION
 @pytest.mark.unit
-def test_suppress_download_noise_sets_tqdm_disable():
+def test_suppress_download_noise_sets_tqdm_disable() -> None:
     """Test context manager sets TQDM_DISABLE=1 inside and restores after."""
     os.environ.pop("TQDM_DISABLE", None)
 
@@ -144,7 +145,7 @@ def test_suppress_download_noise_sets_tqdm_disable():
 
 
 @pytest.mark.unit
-def test_suppress_download_noise_restores_previous_tqdm_value():
+def test_suppress_download_noise_restores_previous_tqdm_value() -> None:
     """Test context manager restores previous TQDM_DISABLE value."""
     os.environ["TQDM_DISABLE"] = "0"
 
@@ -156,7 +157,7 @@ def test_suppress_download_noise_restores_previous_tqdm_value():
 
 
 @pytest.mark.unit
-def test_suppress_download_noise_sets_hf_hub_disable():
+def test_suppress_download_noise_sets_hf_hub_disable() -> None:
     """Test context manager sets HF_HUB_DISABLE_PROGRESS_BARS=1 inside and restores after."""
     os.environ.pop("HF_HUB_DISABLE_PROGRESS_BARS", None)
 
@@ -167,7 +168,7 @@ def test_suppress_download_noise_sets_hf_hub_disable():
 
 
 @pytest.mark.unit
-def test_suppress_download_noise_restores_previous_hf_hub_value():
+def test_suppress_download_noise_restores_previous_hf_hub_value() -> None:
     """Test context manager restores previous HF_HUB_DISABLE_PROGRESS_BARS value."""
     os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "0"
 
@@ -179,7 +180,7 @@ def test_suppress_download_noise_restores_previous_hf_hub_value():
 
 
 @pytest.mark.unit
-def test_suppress_download_noise_restores_on_exception():
+def test_suppress_download_noise_restores_on_exception() -> None:
     """Test context manager restores env even if body raises."""
     os.environ.pop("TQDM_DISABLE", None)
 
@@ -191,7 +192,7 @@ def test_suppress_download_noise_restores_on_exception():
 
 
 @pytest.mark.unit
-def test_get_model_suppresses_download_bar():
+def test_get_model_suppresses_download_bar() -> None:
     """Test get_model uses _suppress_download_noise during builder call."""
     device = torch.device("cpu")
     mock_cfg = MagicMock()

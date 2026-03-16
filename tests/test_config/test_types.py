@@ -39,7 +39,7 @@ from orchard.core.config.types import (
 
 # GENERIC PRIMITIVES: POSITIVE INT
 @pytest.mark.unit
-def test_positive_int_valid():
+def test_positive_int_valid() -> None:
     """Test PositiveInt accepts values > 0."""
 
     class Model(BaseModel):
@@ -50,7 +50,7 @@ def test_positive_int_valid():
 
 
 @pytest.mark.unit
-def test_positive_int_invalid():
+def test_positive_int_invalid() -> None:
     """Test PositiveInt rejects values <= 0."""
 
     class Model(BaseModel):
@@ -65,7 +65,7 @@ def test_positive_int_invalid():
 
 # GENERIC PRIMITIVES: NON-NEGATIVE
 @pytest.mark.unit
-def test_non_negative_int_valid():
+def test_non_negative_int_valid() -> None:
     """Test NonNegativeInt accepts values >= 0."""
 
     class Model(BaseModel):
@@ -76,7 +76,7 @@ def test_non_negative_int_valid():
 
 
 @pytest.mark.unit
-def test_non_negative_int_invalid():
+def test_non_negative_int_invalid() -> None:
     """Test NonNegativeInt rejects negative values."""
 
     class Model(BaseModel):
@@ -87,7 +87,7 @@ def test_non_negative_int_invalid():
 
 
 @pytest.mark.unit
-def test_non_negative_float_valid():
+def test_non_negative_float_valid() -> None:
     """Test NonNegativeFloat accepts values >= 0.0."""
 
     class Model(BaseModel):
@@ -99,7 +99,7 @@ def test_non_negative_float_valid():
 
 # PROBABILITIES AND PERCENTAGES
 @pytest.mark.unit
-def test_probability_bounds():
+def test_probability_bounds() -> None:
     """Test Probability accepts [0.0, 1.0]."""
 
     class Model(BaseModel):
@@ -118,7 +118,7 @@ def test_probability_bounds():
 
 # FILESYSTEM: VALIDATED PATH
 @pytest.mark.unit
-def test_validated_path_expansion():
+def test_validated_path_expansion() -> None:
     """Test ValidatedPath expands ~ and resolves to absolute."""
 
     class Model(BaseModel):
@@ -131,7 +131,7 @@ def test_validated_path_expansion():
 
 
 @pytest.mark.unit
-def test_validated_path_resolution():
+def test_validated_path_resolution() -> None:
     """Test ValidatedPath resolves relative paths."""
 
     class Model(BaseModel):
@@ -143,7 +143,7 @@ def test_validated_path_resolution():
 
 
 @pytest.mark.unit
-def test_validated_path_json_serialization():
+def test_validated_path_json_serialization() -> None:
     """Test ValidatedPath serializes to string in JSON."""
 
     class Model(BaseModel):
@@ -158,7 +158,7 @@ def test_validated_path_json_serialization():
 
 # TRAINING: BATCH SIZE
 @pytest.mark.unit
-def test_batch_size_bounds():
+def test_batch_size_bounds() -> None:
     """Test BatchSize must be in [1, 128]."""
 
     class Model(BaseModel):
@@ -176,7 +176,7 @@ def test_batch_size_bounds():
 
 # MODEL GEOMETRY
 @pytest.mark.unit
-def test_image_size_bounds():
+def test_image_size_bounds() -> None:
     """Test ImageSize must be in [28, 1024]."""
 
     class Model(BaseModel):
@@ -194,7 +194,7 @@ def test_image_size_bounds():
 
 
 @pytest.mark.unit
-def test_dropout_rate_bounds():
+def test_dropout_rate_bounds() -> None:
     """Test DropoutRate must be in [0.0, 0.9]."""
 
     class Model(BaseModel):
@@ -213,7 +213,7 @@ def test_dropout_rate_bounds():
 
 # OPTIMIZATION HYPERPARAMETERS
 @pytest.mark.unit
-def test_learning_rate_bounds():
+def test_learning_rate_bounds() -> None:
     """Test LearningRate must be in (1e-8, 1.0)."""
 
     class Model(BaseModel):
@@ -230,7 +230,7 @@ def test_learning_rate_bounds():
 
 
 @pytest.mark.unit
-def test_weight_decay_bounds():
+def test_weight_decay_bounds() -> None:
     """Test WeightDecay must be in [0.0, 0.2]."""
 
     class Model(BaseModel):
@@ -248,7 +248,7 @@ def test_weight_decay_bounds():
 
 
 @pytest.mark.unit
-def test_momentum_bounds():
+def test_momentum_bounds() -> None:
     """Test Momentum must be in [0.0, 1.0)."""
 
     class Model(BaseModel):
@@ -262,7 +262,7 @@ def test_momentum_bounds():
 
 
 @pytest.mark.unit
-def test_smoothing_value_bounds():
+def test_smoothing_value_bounds() -> None:
     """Test SmoothingValue must be in [0.0, 0.3]."""
 
     class Model(BaseModel):
@@ -277,7 +277,7 @@ def test_smoothing_value_bounds():
 
 
 @pytest.mark.unit
-def test_grad_norm_bounds():
+def test_grad_norm_bounds() -> None:
     """Test GradNorm must be in [0.0, 100.0]."""
 
     class Model(BaseModel):
@@ -293,7 +293,7 @@ def test_grad_norm_bounds():
 
 # AUGMENTATION TYPES
 @pytest.mark.unit
-def test_rotation_degrees_bounds():
+def test_rotation_degrees_bounds() -> None:
     """Test RotationDegrees must be in [0, 360]."""
 
     class Model(BaseModel):
@@ -311,7 +311,7 @@ def test_rotation_degrees_bounds():
 
 
 @pytest.mark.unit
-def test_zoom_scale_bounds():
+def test_zoom_scale_bounds() -> None:
     """Test ZoomScale must be in (0.0, 2.0]."""
 
     class Model(BaseModel):
@@ -328,7 +328,7 @@ def test_zoom_scale_bounds():
 
 
 @pytest.mark.unit
-def test_pixel_shift_bounds():
+def test_pixel_shift_bounds() -> None:
     """Test PixelShift must be in [0.0, 50.0]."""
 
     class Model(BaseModel):
@@ -343,7 +343,7 @@ def test_pixel_shift_bounds():
 
 
 @pytest.mark.unit
-def test_blur_sigma_bounds():
+def test_blur_sigma_bounds() -> None:
     """Test BlurSigma must be in [0.0, 5.0]."""
 
     class Model(BaseModel):
@@ -359,7 +359,7 @@ def test_blur_sigma_bounds():
 
 # SYSTEM METADATA TYPES
 @pytest.mark.unit
-def test_project_slug_pattern():
+def test_project_slug_pattern() -> None:
     """Test ProjectSlug enforces lowercase alphanumeric + underscore/dash."""
 
     class Model(BaseModel):
@@ -380,7 +380,7 @@ def test_project_slug_pattern():
 
 
 @pytest.mark.unit
-def test_project_slug_length():
+def test_project_slug_length() -> None:
     """Test ProjectSlug length must be in [3, 50]."""
 
     class Model(BaseModel):
@@ -397,7 +397,7 @@ def test_project_slug_length():
 
 
 @pytest.mark.unit
-def test_log_frequency_bounds():
+def test_log_frequency_bounds() -> None:
     """Test LogFrequency must be in [1, 1000]."""
 
     class Model(BaseModel):
@@ -415,34 +415,34 @@ def test_log_frequency_bounds():
 
 
 @pytest.mark.unit
-def test_log_level_literals():
+def test_log_level_literals() -> None:
     """Test LogLevel accepts only valid logging levels."""
 
     class Model(BaseModel):
         level: LogLevel
 
     for level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
-        assert Model(level=level).level == level
+        assert Model(level=level).level == level  # type: ignore
 
     with pytest.raises(ValidationError):
-        Model(level="INVALID")
+        Model(level="INVALID")  # type: ignore
 
 
 @pytest.mark.unit
-def test_device_type_literals():
+def test_device_type_literals() -> None:
     """Test DeviceType accepts only valid device strings."""
 
     class Model(BaseModel):
         device: DeviceType
 
     for device in ["auto", "cpu", "cuda", "mps"]:
-        assert Model(device=device).device == device
+        assert Model(device=device).device == device  # type: ignore
 
     with pytest.raises(ValidationError):
-        Model(device="gpu")
+        Model(device="gpu")  # type: ignore
 
     with pytest.raises(ValidationError):
-        Model(device="tpu")
+        Model(device="tpu")  # type: ignore
 
 
 if __name__ == "__main__":

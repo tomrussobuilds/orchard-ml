@@ -7,6 +7,8 @@ parameters, quantization settings, and validation options.
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 from pydantic import ValidationError
 
@@ -15,7 +17,7 @@ from orchard.core.config import ExportConfig
 
 # EXPORT CONFIG: DEFAULTS
 @pytest.mark.unit
-def test_export_config_defaults():
+def test_export_config_defaults() -> None:
     """Test ExportConfig with default values."""
     config = ExportConfig()
 
@@ -33,7 +35,7 @@ def test_export_config_defaults():
 
 
 @pytest.mark.unit
-def test_export_config_custom_values():
+def test_export_config_custom_values() -> None:
     """Test ExportConfig with custom parameters."""
     config = ExportConfig(
         format="onnx",
@@ -52,14 +54,14 @@ def test_export_config_custom_values():
 
 # EXPORT CONFIG: FORMAT VALIDATION
 @pytest.mark.unit
-def test_valid_formats():
+def test_valid_formats() -> None:
     """Test only ONNX format is accepted."""
     config = ExportConfig(format="onnx")
     assert config.format == "onnx"
 
 
 @pytest.mark.unit
-def test_invalid_format_rejected():
+def test_invalid_format_rejected() -> None:
     """Test non-onnx formats are rejected."""
     for fmt in ["torchscript", "both", "invalid_format"]:
         with pytest.raises(ValidationError):
@@ -68,7 +70,7 @@ def test_invalid_format_rejected():
 
 # EXPORT CONFIG: ONNX PARAMETERS
 @pytest.mark.unit
-def test_opset_version_positive():
+def test_opset_version_positive() -> None:
     """Test opset_version must be positive."""
     config = ExportConfig(opset_version=16)
     assert config.opset_version == 16
@@ -81,7 +83,7 @@ def test_opset_version_positive():
 
 
 @pytest.mark.unit
-def test_dynamic_axes_boolean():
+def test_dynamic_axes_boolean() -> None:
     """Test dynamic_axes accepts boolean values."""
     config_true = ExportConfig(dynamic_axes=True)
     assert config_true.dynamic_axes is True
@@ -91,7 +93,7 @@ def test_dynamic_axes_boolean():
 
 
 @pytest.mark.unit
-def test_constant_folding_boolean():
+def test_constant_folding_boolean() -> None:
     """Test do_constant_folding accepts boolean values."""
     config_true = ExportConfig(do_constant_folding=True)
     assert config_true.do_constant_folding is True
@@ -102,21 +104,21 @@ def test_constant_folding_boolean():
 
 # EXPORT CONFIG: QUANTIZATION
 @pytest.mark.unit
-def test_quantization_disabled_by_default():
+def test_quantization_disabled_by_default() -> None:
     """Test quantization is disabled by default."""
     config = ExportConfig()
     assert config.quantize is False
 
 
 @pytest.mark.unit
-def test_quantization_can_be_enabled():
+def test_quantization_can_be_enabled() -> None:
     """Test quantization can be enabled."""
     config = ExportConfig(quantize=True)
     assert config.quantize is True
 
 
 @pytest.mark.unit
-def test_valid_quantization_backends():
+def test_valid_quantization_backends() -> None:
     """Test valid quantization backends are accepted."""
     for backend in ["qnnpack", "fbgemm"]:
         config = ExportConfig(quantization_backend=backend)
@@ -124,7 +126,7 @@ def test_valid_quantization_backends():
 
 
 @pytest.mark.unit
-def test_invalid_quantization_backend_rejected():
+def test_invalid_quantization_backend_rejected() -> None:
     """Test invalid quantization backend is rejected."""
     with pytest.raises(ValidationError):
         ExportConfig(quantization_backend="invalid_backend")
@@ -132,7 +134,7 @@ def test_invalid_quantization_backend_rejected():
 
 # EXPORT CONFIG: QUANTIZATION TYPE
 @pytest.mark.unit
-def test_quantization_type_default_is_int8():
+def test_quantization_type_default_is_int8() -> None:
     """Test quantization_type defaults to int8."""
     config = ExportConfig()
     assert config.quantization_type == "int8"
@@ -140,7 +142,7 @@ def test_quantization_type_default_is_int8():
 
 @pytest.mark.unit
 @pytest.mark.parametrize("qtype", ["int8", "uint8", "int4", "uint4"])
-def test_valid_quantization_types(qtype):
+def test_valid_quantization_types(qtype: Any) -> None:
     """Test all valid quantization types are accepted."""
     config = ExportConfig(quantization_type=qtype)
     assert config.quantization_type == qtype
@@ -148,7 +150,7 @@ def test_valid_quantization_types(qtype):
 
 @pytest.mark.unit
 @pytest.mark.parametrize("qtype", ["float16", "int16", "bfloat16", "invalid"])
-def test_invalid_quantization_type_rejected(qtype):
+def test_invalid_quantization_type_rejected(qtype: Any) -> None:
     """Test invalid quantization types are rejected."""
     with pytest.raises(ValidationError):
         ExportConfig(quantization_type=qtype)
@@ -156,21 +158,21 @@ def test_invalid_quantization_type_rejected(qtype):
 
 # EXPORT CONFIG: VALIDATION PARAMETERS
 @pytest.mark.unit
-def test_validation_enabled_by_default():
+def test_validation_enabled_by_default() -> None:
     """Test export validation is enabled by default."""
     config = ExportConfig()
     assert config.validate_export is True
 
 
 @pytest.mark.unit
-def test_validation_can_be_disabled():
+def test_validation_can_be_disabled() -> None:
     """Test export validation can be disabled."""
     config = ExportConfig(validate_export=False)
     assert config.validate_export is False
 
 
 @pytest.mark.unit
-def test_validation_samples_positive():
+def test_validation_samples_positive() -> None:
     """Test validation_samples must be positive."""
     config = ExportConfig(validation_samples=50)
     assert config.validation_samples == 50
@@ -183,7 +185,7 @@ def test_validation_samples_positive():
 
 
 @pytest.mark.unit
-def test_max_deviation_accepts_float():
+def test_max_deviation_accepts_float() -> None:
     """Test max_deviation accepts float values."""
     config = ExportConfig(max_deviation=1e-3)
     assert config.max_deviation == pytest.approx(1e-3)
@@ -194,7 +196,7 @@ def test_max_deviation_accepts_float():
 
 # EXPORT CONFIG: IMMUTABILITY
 @pytest.mark.unit
-def test_config_is_frozen():
+def test_config_is_frozen() -> None:
     """Test ExportConfig is immutable after creation."""
     config = ExportConfig()
 
@@ -203,7 +205,7 @@ def test_config_is_frozen():
 
 
 @pytest.mark.unit
-def test_config_forbids_extra_fields():
+def test_config_forbids_extra_fields() -> None:
     """Test ExportConfig rejects unknown fields."""
     with pytest.raises(ValidationError):
         ExportConfig(unknown_param="value")
@@ -211,7 +213,7 @@ def test_config_forbids_extra_fields():
 
 # EXPORT CONFIG: INTEGRATION SCENARIOS
 @pytest.mark.unit
-def test_onnx_export_config():
+def test_onnx_export_config() -> None:
     """Test typical ONNX export configuration."""
     config = ExportConfig(
         format="onnx",
@@ -229,7 +231,7 @@ def test_onnx_export_config():
 
 
 @pytest.mark.unit
-def test_quantized_export_config():
+def test_quantized_export_config() -> None:
     """Test quantized export configuration."""
     config = ExportConfig(
         format="onnx",
@@ -245,7 +247,7 @@ def test_quantized_export_config():
 
 
 @pytest.mark.unit
-def test_edge_quantized_export_config():
+def test_edge_quantized_export_config() -> None:
     """Test edge deployment configuration with INT4 quantization."""
     config = ExportConfig(
         quantize=True,
@@ -259,7 +261,7 @@ def test_edge_quantized_export_config():
 
 
 @pytest.mark.unit
-def test_benchmark_can_be_enabled():
+def test_benchmark_can_be_enabled() -> None:
     """Test benchmark flag can be enabled."""
     config = ExportConfig(benchmark=True)
     assert config.benchmark is True

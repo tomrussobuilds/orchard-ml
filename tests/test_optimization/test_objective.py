@@ -8,6 +8,7 @@ coverage through isolated and deterministic unit tests.
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import optuna
@@ -20,11 +21,12 @@ from orchard.optimization.objective import (
     TrialConfigBuilder,
     TrialTrainingExecutor,
 )
+from tests.conftest import make_optuna_config, make_training_config
 
 
 # TRIAL CONFIG BUILDER TESTS
 @pytest.mark.unit
-def test_config_builder_preserves_metadata():
+def test_config_builder_preserves_metadata() -> None:
     """Test TrialConfigBuilder preserves dataset metadata."""
     mock_cfg = MagicMock()
     mock_cfg.model_dump.return_value = {
@@ -45,10 +47,10 @@ def test_config_builder_preserves_metadata():
 
 
 @pytest.mark.unit
-def test_config_builder_applies_param_overrides():
+def test_config_builder_applies_param_overrides() -> None:
     """Test TrialConfigBuilder applies parameter overrides correctly."""
     mock_cfg = MagicMock()
-    config_dict = {
+    config_dict: dict[str, Any] = {
         "dataset": {"resolution": 28, "metadata": None},
         "training": {"learning_rate": 0.001, "epochs": 60},
         "architecture": {"dropout": 0.0},
@@ -67,7 +69,7 @@ def test_config_builder_applies_param_overrides():
         "rotation_angle": 15,
     }
 
-    test_dict = config_dict.copy()
+    test_dict: dict[str, Any] = config_dict.copy()
     test_dict["dataset"]["metadata"] = builder.base_metadata
     test_dict["training"]["epochs"] = builder.optuna_epochs
     builder._apply_param_overrides(test_dict, trial_params)
@@ -79,10 +81,10 @@ def test_config_builder_applies_param_overrides():
 
 
 @pytest.mark.unit
-def test_config_builder_handles_model_name():
+def test_config_builder_handles_model_name() -> None:
     """Test TrialConfigBuilder maps model_name to architecture.name."""
     mock_cfg = MagicMock()
-    config_dict = {
+    config_dict: dict[str, Any] = {
         "dataset": {"resolution": 224, "metadata": None},
         "training": {"epochs": 60},
         "architecture": {"name": "efficientnet_b0", "dropout": 0.3},
@@ -97,7 +99,7 @@ def test_config_builder_handles_model_name():
 
     trial_params = {"model_name": "vit_tiny"}
 
-    test_dict = config_dict.copy()
+    test_dict: dict[str, Any] = config_dict.copy()
     test_dict["dataset"]["metadata"] = builder.base_metadata
     test_dict["training"]["epochs"] = builder.optuna_epochs
     builder._apply_param_overrides(test_dict, trial_params)
@@ -106,10 +108,10 @@ def test_config_builder_handles_model_name():
 
 
 @pytest.mark.unit
-def test_config_builder_handles_weight_variant():
+def test_config_builder_handles_weight_variant() -> None:
     """Test TrialConfigBuilder applies weight_variant."""
     mock_cfg = MagicMock()
-    config_dict = {
+    config_dict: dict[str, Any] = {
         "dataset": {"resolution": 224, "metadata": None},
         "training": {"epochs": 60},
         "architecture": {"name": "vit_tiny", "weight_variant": None},
@@ -124,7 +126,7 @@ def test_config_builder_handles_weight_variant():
 
     trial_params = {"weight_variant": "vit_tiny_patch16_224.augreg_in21k_ft_in1k"}
 
-    test_dict = config_dict.copy()
+    test_dict: dict[str, Any] = config_dict.copy()
     test_dict["dataset"]["metadata"] = builder.base_metadata
     test_dict["training"]["epochs"] = builder.optuna_epochs
     builder._apply_param_overrides(test_dict, trial_params)
@@ -135,10 +137,10 @@ def test_config_builder_handles_weight_variant():
 
 
 @pytest.mark.unit
-def test_config_builder_maps_criterion_and_focal_gamma():
+def test_config_builder_maps_criterion_and_focal_gamma() -> None:
     """Test TrialConfigBuilder maps criterion_type and focal_gamma to training."""
     mock_cfg = MagicMock()
-    config_dict = {
+    config_dict: dict[str, Any] = {
         "dataset": {"resolution": 28, "metadata": None},
         "training": {"epochs": 60, "criterion_type": "cross_entropy", "focal_gamma": 2.0},
         "architecture": {"name": "mini_cnn", "dropout": 0.3},
@@ -153,7 +155,7 @@ def test_config_builder_maps_criterion_and_focal_gamma():
 
     trial_params = {"criterion_type": "focal", "focal_gamma": 3.5}
 
-    test_dict = config_dict.copy()
+    test_dict: dict[str, Any] = config_dict.copy()
     test_dict["dataset"]["metadata"] = builder.base_metadata
     test_dict["training"]["epochs"] = builder.optuna_epochs
     builder._apply_param_overrides(test_dict, trial_params)
@@ -163,10 +165,10 @@ def test_config_builder_maps_criterion_and_focal_gamma():
 
 
 @pytest.mark.unit
-def test_config_builder_skips_none_weight_variant():
+def test_config_builder_skips_none_weight_variant() -> None:
     """Test TrialConfigBuilder skips None weight_variant (for non-ViT models)."""
     mock_cfg = MagicMock()
-    config_dict = {
+    config_dict: dict[str, Any] = {
         "dataset": {"resolution": 224, "metadata": None},
         "training": {"epochs": 60},
         "architecture": {"name": "efficientnet_b0", "weight_variant": "original_value"},
@@ -182,7 +184,7 @@ def test_config_builder_skips_none_weight_variant():
     # Simulate None from search space for non-ViT model
     trial_params = {"weight_variant": None}
 
-    test_dict = config_dict.copy()
+    test_dict: dict[str, Any] = config_dict.copy()
     test_dict["dataset"]["metadata"] = builder.base_metadata
     test_dict["training"]["epochs"] = builder.optuna_epochs
     builder._apply_param_overrides(test_dict, trial_params)
@@ -193,7 +195,7 @@ def test_config_builder_skips_none_weight_variant():
 
 # METRIC EXTRACTOR TESTS
 @pytest.mark.unit
-def test_metric_extractor_extracts_correct_metric():
+def test_metric_extractor_extracts_correct_metric() -> None:
     """Test MetricExtractor extracts specified metric."""
     extractor = MetricExtractor(metric_name="auc")
 
@@ -205,7 +207,7 @@ def test_metric_extractor_extracts_correct_metric():
 
 
 @pytest.mark.unit
-def test_metric_extractor_raises_on_missing_metric():
+def test_metric_extractor_raises_on_missing_metric() -> None:
     """Test MetricExtractor raises KeyError for missing metric."""
     extractor = MetricExtractor(metric_name="f1")
 
@@ -216,7 +218,7 @@ def test_metric_extractor_raises_on_missing_metric():
 
 
 @pytest.mark.unit
-def test_metric_extractor_tracks_best():
+def test_metric_extractor_tracks_best() -> None:
     """Test MetricExtractor tracks best metric."""
     extractor = MetricExtractor(metric_name="auc")
 
@@ -234,7 +236,7 @@ def test_metric_extractor_tracks_best():
 
 
 @pytest.mark.unit
-def test_metric_extractor_ignores_nan():
+def test_metric_extractor_ignores_nan() -> None:
     """NaN values should not poison the best-metric state."""
     extractor = MetricExtractor(metric_name="auc")
 
@@ -246,7 +248,7 @@ def test_metric_extractor_ignores_nan():
 
 
 @pytest.mark.unit
-def test_metric_extractor_reset():
+def test_metric_extractor_reset() -> None:
     """Test MetricExtractor.reset() clears best metric between trials."""
     extractor = MetricExtractor(metric_name="auc")
 
@@ -262,18 +264,13 @@ def test_metric_extractor_reset():
 
 # TRAINING EXECUTOR TESTS
 @pytest.mark.unit
-def test_training_executor_should_prune_warmup():
+def test_training_executor_should_prune_warmup() -> None:
     """Test TrialTrainingExecutor respects warmup period."""
     mock_trial = MagicMock()
     mock_trial.should_prune.return_value = True
 
-    mock_cfg = MagicMock()
-    mock_cfg.training.use_amp = False
-    mock_cfg.training.epochs = 30
-    mock_cfg.training.mixup_alpha = 0
-    mock_cfg.training.scheduler_type = "cosine"
-    mock_cfg.optuna.enable_pruning = True
-    mock_cfg.optuna.pruning_warmup_epochs = 10
+    training = make_training_config(epochs=30)
+    optuna_cfg = make_optuna_config(enable_pruning=True, pruning_warmup_epochs=10)
 
     executor = TrialTrainingExecutor(
         model=MagicMock(),
@@ -282,8 +279,8 @@ def test_training_executor_should_prune_warmup():
         optimizer=MagicMock(),
         scheduler=MagicMock(),
         criterion=MagicMock(),
-        training=mock_cfg.training,
-        optuna=mock_cfg.optuna,
+        training=training,
+        optuna=optuna_cfg,
         log_interval=5,
         device=torch.device("cpu"),
         metric_extractor=MetricExtractor("auc"),
@@ -295,22 +292,15 @@ def test_training_executor_should_prune_warmup():
 
 
 @pytest.mark.unit
-def test_training_executor_disabled_pruning():
+def test_training_executor_disabled_pruning() -> None:
     """Test TrialTrainingExecutor with pruning disabled."""
     mock_trial = MagicMock()
     mock_trial.should_prune.return_value = True
 
-    mock_cfg = MagicMock()
-    mock_cfg.training.use_amp = False
-    mock_cfg.training.epochs = 30
-    mock_cfg.training.grad_clip = 0.0
-    mock_cfg.training.mixup_alpha = 0
-    mock_cfg.training.scheduler_type = "cosine"
-    mock_cfg.training.mixup_epochs = 0
-    mock_cfg.optuna.enable_pruning = False
-    mock_cfg.optuna.pruning_warmup_epochs = 10
+    training = make_training_config(epochs=30, grad_clip=0.0)
+    optuna_cfg = make_optuna_config(enable_pruning=False, pruning_warmup_epochs=10)
 
-    assert mock_cfg.optuna.enable_pruning is False
+    assert optuna_cfg.enable_pruning is False
 
     executor = TrialTrainingExecutor(
         model=MagicMock(),
@@ -319,8 +309,8 @@ def test_training_executor_disabled_pruning():
         optimizer=MagicMock(),
         scheduler=MagicMock(),
         criterion=MagicMock(),
-        training=mock_cfg.training,
-        optuna=mock_cfg.optuna,
+        training=training,
+        optuna=optuna_cfg,
         log_interval=5,
         device=torch.device("cpu"),
         metric_extractor=MetricExtractor("auc"),
@@ -334,14 +324,10 @@ def test_training_executor_disabled_pruning():
 
 
 @pytest.mark.unit
-def test_training_executor_validate_epoch_error_handling():
+def test_training_executor_validate_epoch_error_handling() -> None:
     """Test TrialTrainingExecutor handles validation errors."""
-    mock_cfg = MagicMock()
-    mock_cfg.training.use_amp = False
-    mock_cfg.training.epochs = 30
-    mock_cfg.training.mixup_alpha = 0
-    mock_cfg.optuna.enable_pruning = True
-    mock_cfg.optuna.pruning_warmup_epochs = 5
+    training = make_training_config(epochs=30)
+    optuna_cfg = make_optuna_config(enable_pruning=True, pruning_warmup_epochs=5)
 
     executor = TrialTrainingExecutor(
         model=MagicMock(),
@@ -350,8 +336,8 @@ def test_training_executor_validate_epoch_error_handling():
         optimizer=MagicMock(),
         scheduler=MagicMock(),
         criterion=MagicMock(),
-        training=mock_cfg.training,
-        optuna=mock_cfg.optuna,
+        training=training,
+        optuna=optuna_cfg,
         log_interval=5,
         device=torch.device("cpu"),
         metric_extractor=MetricExtractor("auc"),
@@ -369,7 +355,7 @@ def test_training_executor_validate_epoch_error_handling():
 
 # OPTUNA OBJECTIVE TESTS
 @pytest.mark.unit
-def test_optuna_objective_init_with_defaults():
+def test_optuna_objective_init_with_defaults() -> None:
     """Test OptunaObjective initializes with dependency injection."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 20
@@ -397,14 +383,14 @@ def test_optuna_objective_init_with_defaults():
 
 
 @pytest.mark.unit
-def test_optuna_objective_uses_injected_dependencies():
+def test_optuna_objective_uses_injected_dependencies() -> None:
     """Test OptunaObjective uses all injected dependencies."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 20
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
-    search_space = {}
+    search_space: dict[str, Any] = {}
     device = torch.device("cpu")
 
     mock_dataset_loader = MagicMock(return_value=MagicMock())
@@ -428,7 +414,7 @@ def test_optuna_objective_uses_injected_dependencies():
 
 
 @pytest.mark.unit
-def test_optuna_objective_sample_params_dict():
+def test_optuna_objective_sample_params_dict() -> None:
     """Test OptunaObjective samples params from dict search space."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 20
@@ -456,7 +442,7 @@ def test_optuna_objective_sample_params_dict():
 
 
 @pytest.mark.unit
-def test_optuna_objective_sample_params_object():
+def test_optuna_objective_sample_params_object() -> None:
     """Test OptunaObjective samples params from object with sample_params."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 20
@@ -486,7 +472,7 @@ def test_optuna_objective_sample_params_object():
 
 # OPTUNA OBJECTIVE: __CALL__ METHOD
 @pytest.mark.unit
-def test_optuna_objective_call_with_pruning():
+def test_optuna_objective_call_with_pruning() -> None:
     """Test OptunaObjective.__call__ handles pruning correctly."""
 
     mock_cfg = MagicMock()
@@ -494,7 +480,7 @@ def test_optuna_objective_call_with_pruning():
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
-    search_space = {}
+    search_space: dict[str, Any] = {}
     mock_dataset_loader = MagicMock(return_value=MagicMock())
     mock_dataloader_factory = MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock()))
     mock_model_factory = MagicMock(return_value=MagicMock())
@@ -513,7 +499,7 @@ def test_optuna_objective_call_with_pruning():
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
@@ -533,14 +519,14 @@ def test_optuna_objective_call_with_pruning():
 
 
 @pytest.mark.unit
-def test_optuna_objective_call_cleanup_on_success():
+def test_optuna_objective_call_cleanup_on_success() -> None:
     """Test OptunaObjective.__call__ calls cleanup after successful trial."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
-    search_space = {}
+    search_space: dict[str, Any] = {}
     mock_dataset_loader = MagicMock(return_value=MagicMock())
     mock_dataloader_factory = MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock()))
     mock_model_factory = MagicMock(return_value=MagicMock())
@@ -557,11 +543,11 @@ def test_optuna_objective_call_cleanup_on_success():
         model_factory=mock_model_factory,
     )
 
-    objective._cleanup = MagicMock()
+    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
@@ -583,7 +569,7 @@ def test_optuna_objective_call_cleanup_on_success():
 
 
 @pytest.mark.unit
-def test_optuna_objective_call_returns_worst_metric_on_failure():
+def test_optuna_objective_call_returns_worst_metric_on_failure() -> None:
     """Test OptunaObjective.__call__ returns worst metric on exception (maximize)."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
@@ -591,7 +577,7 @@ def test_optuna_objective_call_returns_worst_metric_on_failure():
     mock_cfg.optuna.direction = "maximize"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
-    search_space = {}
+    search_space: dict[str, Any] = {}
     mock_dataset_loader = MagicMock(return_value=MagicMock())
     mock_dataloader_factory = MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock()))
     mock_model_factory = MagicMock(return_value=MagicMock())
@@ -608,11 +594,11 @@ def test_optuna_objective_call_returns_worst_metric_on_failure():
         model_factory=mock_model_factory,
     )
 
-    objective._cleanup = MagicMock()
+    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
@@ -634,7 +620,7 @@ def test_optuna_objective_call_returns_worst_metric_on_failure():
 
 
 @pytest.mark.unit
-def test_optuna_objective_call_returns_inf_on_failure_minimize():
+def test_optuna_objective_call_returns_inf_on_failure_minimize() -> None:
     """Test OptunaObjective.__call__ returns inf on exception (minimize)."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
@@ -642,7 +628,7 @@ def test_optuna_objective_call_returns_inf_on_failure_minimize():
     mock_cfg.optuna.direction = "minimize"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
-    search_space = {}
+    search_space: dict[str, Any] = {}
     mock_dataset_loader = MagicMock(return_value=MagicMock())
     mock_dataloader_factory = MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock()))
     mock_model_factory = MagicMock(return_value=MagicMock())
@@ -659,11 +645,11 @@ def test_optuna_objective_call_returns_inf_on_failure_minimize():
         model_factory=mock_model_factory,
     )
 
-    objective._cleanup = MagicMock()
+    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
@@ -685,7 +671,7 @@ def test_optuna_objective_call_returns_inf_on_failure_minimize():
 
 
 @pytest.mark.unit
-def test_optuna_objective_failed_trial_logs_worst_metric_to_tracker():
+def test_optuna_objective_failed_trial_logs_worst_metric_to_tracker() -> None:
     """Test tracker receives worst_metric when trial fails before validation."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
@@ -693,7 +679,7 @@ def test_optuna_objective_failed_trial_logs_worst_metric_to_tracker():
     mock_cfg.optuna.direction = "maximize"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
-    search_space = {}
+    search_space: dict[str, Any] = {}
     mock_tracker = MagicMock()
 
     objective = OptunaObjective(
@@ -705,11 +691,11 @@ def test_optuna_objective_failed_trial_logs_worst_metric_to_tracker():
         model_factory=MagicMock(return_value=MagicMock()),
         tracker=mock_tracker,
     )
-    objective._cleanup = MagicMock()
+    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 5
@@ -733,7 +719,7 @@ def test_optuna_objective_failed_trial_logs_worst_metric_to_tracker():
 
 
 @pytest.mark.unit
-def test_optuna_objective_call_reraises_trial_pruned():
+def test_optuna_objective_call_reraises_trial_pruned() -> None:
     """Test OptunaObjective.__call__ re-raises TrialPruned (not caught)."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
@@ -741,7 +727,7 @@ def test_optuna_objective_call_reraises_trial_pruned():
     mock_cfg.optuna.direction = "maximize"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
-    search_space = {}
+    search_space: dict[str, Any] = {}
     mock_dataset_loader = MagicMock(return_value=MagicMock())
     mock_dataloader_factory = MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock()))
     mock_model_factory = MagicMock(return_value=MagicMock())
@@ -758,11 +744,11 @@ def test_optuna_objective_call_reraises_trial_pruned():
         model_factory=mock_model_factory,
     )
 
-    objective._cleanup = MagicMock()
+    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
@@ -784,7 +770,7 @@ def test_optuna_objective_call_reraises_trial_pruned():
 
 
 @pytest.mark.unit
-def test_optuna_objective_call_builds_trial_config():
+def test_optuna_objective_call_builds_trial_config() -> None:
     """Test OptunaObjective.__call__ builds trial-specific config."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
@@ -815,7 +801,7 @@ def test_optuna_objective_call_builds_trial_config():
     )
 
     mock_trial_cfg = MagicMock()
-    objective.config_builder.build = MagicMock(return_value=mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=mock_trial_cfg)  # type: ignore
 
     with (
         patch("orchard.optimization.objective.objective.get_optimizer"),
@@ -848,14 +834,14 @@ def test_optuna_objective_call_builds_trial_config():
 
 # CLEANUP METHOD TESTS
 @pytest.mark.unit
-def test_cleanup_with_cuda_available(monkeypatch):
+def test_cleanup_with_cuda_available(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test _cleanup clears CUDA cache when available."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
-    search_space = {}
+    search_space: dict[str, Any] = {}
     mock_dataset_loader = MagicMock(return_value=MagicMock())
 
     objective = OptunaObjective(
@@ -867,7 +853,7 @@ def test_cleanup_with_cuda_available(monkeypatch):
 
     cuda_cache_cleared = False
 
-    def mock_empty_cache():
+    def mock_empty_cache() -> None:
         nonlocal cuda_cache_cleared
         cuda_cache_cleared = True
 
@@ -880,14 +866,14 @@ def test_cleanup_with_cuda_available(monkeypatch):
 
 
 @pytest.mark.unit
-def test_cleanup_with_cuda_unavailable(monkeypatch):
+def test_cleanup_with_cuda_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test _cleanup does nothing when CUDA unavailable."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
-    search_space = {}
+    search_space: dict[str, Any] = {}
     mock_dataset_loader = MagicMock(return_value=MagicMock())
 
     objective = OptunaObjective(
@@ -899,7 +885,7 @@ def test_cleanup_with_cuda_unavailable(monkeypatch):
 
     cuda_cache_cleared = False
 
-    def mock_empty_cache():
+    def mock_empty_cache() -> None:
         nonlocal cuda_cache_cleared
         cuda_cache_cleared = True
 
@@ -912,14 +898,14 @@ def test_cleanup_with_cuda_unavailable(monkeypatch):
 
 
 @pytest.mark.unit
-def test_cleanup_with_mps(monkeypatch):
+def test_cleanup_with_mps(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test _cleanup clears MPS cache when MPS is available."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
-    search_space = {}
+    search_space: dict[str, Any] = {}
     mock_dataset_loader = MagicMock(return_value=MagicMock())
 
     objective = OptunaObjective(
@@ -931,7 +917,7 @@ def test_cleanup_with_mps(monkeypatch):
 
     mps_cache_cleared = False
 
-    def mock_mps_empty_cache():
+    def mock_mps_empty_cache() -> None:
         nonlocal mps_cache_cleared
         mps_cache_cleared = True
 
@@ -950,7 +936,7 @@ def test_cleanup_with_mps(monkeypatch):
 
 
 @pytest.mark.unit
-def test_trial_config_builder_preserves_resolution_when_none():
+def test_trial_config_builder_preserves_resolution_when_none() -> None:
     """Test TrialConfigBuilder sets resolution when missing from model_dump."""
     from orchard.optimization.objective.config_builder import TrialConfigBuilder
 
@@ -977,7 +963,7 @@ def test_trial_config_builder_preserves_resolution_when_none():
 
 
 @pytest.mark.unit
-def test_trial_config_builder_keeps_existing_resolution():
+def test_trial_config_builder_keeps_existing_resolution() -> None:
     """Test TrialConfigBuilder doesn't override existing resolution."""
     from orchard.optimization.objective.config_builder import TrialConfigBuilder
 
@@ -1009,7 +995,7 @@ def test_trial_config_builder_keeps_existing_resolution():
 
 
 @pytest.mark.unit
-def test_objective_init_stores_all_attributes():
+def test_objective_init_stores_all_attributes() -> None:
     """Assert all __init__ attributes are stored correctly."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
@@ -1037,7 +1023,7 @@ def test_objective_init_stores_all_attributes():
 
 
 @pytest.mark.unit
-def test_objective_init_tracker_default_none():
+def test_objective_init_tracker_default_none() -> None:
     """Assert tracker defaults to None."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
@@ -1056,7 +1042,7 @@ def test_objective_init_tracker_default_none():
 
 
 @pytest.mark.unit
-def test_objective_init_metric_extractor_config():
+def test_objective_init_metric_extractor_config() -> None:
     """Assert metric_extractor uses correct metric_name and direction."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
@@ -1076,7 +1062,7 @@ def test_objective_init_metric_extractor_config():
 
 
 @pytest.mark.unit
-def test_objective_call_resets_metric_extractor():
+def test_objective_call_resets_metric_extractor() -> None:
     """Verify metric_extractor.reset() is called at start of __call__."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
@@ -1093,11 +1079,11 @@ def test_objective_call_resets_metric_extractor():
         dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
         model_factory=MagicMock(return_value=MagicMock()),
     )
-    objective._cleanup = MagicMock()
+    objective._cleanup = MagicMock()  # type: ignore
     objective.metric_extractor = MagicMock()
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 0
@@ -1116,7 +1102,7 @@ def test_objective_call_resets_metric_extractor():
 
 
 @pytest.mark.unit
-def test_objective_call_log_params_includes_pretrained():
+def test_objective_call_log_params_includes_pretrained() -> None:
     """Assert log_trial_start receives params with 'pretrained' key."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
@@ -1136,10 +1122,10 @@ def test_objective_call_log_params_includes_pretrained():
         dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
         model_factory=MagicMock(return_value=MagicMock()),
     )
-    objective._cleanup = MagicMock()
+    objective._cleanup = MagicMock()  # type: ignore
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 1
@@ -1160,7 +1146,7 @@ def test_objective_call_log_params_includes_pretrained():
 
 
 @pytest.mark.unit
-def test_objective_tracker_end_with_best_metric_on_success():
+def test_objective_tracker_end_with_best_metric_on_success() -> None:
     """Verify tracker.end_optuna_trial receives best_metric on success."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
@@ -1179,14 +1165,14 @@ def test_objective_tracker_end_with_best_metric_on_success():
         model_factory=MagicMock(return_value=MagicMock()),
         tracker=mock_tracker,
     )
-    objective._cleanup = MagicMock()
+    objective._cleanup = MagicMock()  # type: ignore
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
     mock_trial = MagicMock()
     mock_trial.number = 0
 
-    def _fake_execute(trial):
+    def _fake_execute(trial: MagicMock) -> float:
         # Simulate what real executor does: update best_metric on the shared extractor
         objective.metric_extractor.update_best(0.95)
         return 0.95
@@ -1205,7 +1191,7 @@ def test_objective_tracker_end_with_best_metric_on_success():
 
 
 @pytest.mark.unit
-def test_objective_worst_metric_maximize():
+def test_objective_worst_metric_maximize() -> None:
     """Assert _worst_metric returns -inf for maximize direction."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
@@ -1224,7 +1210,7 @@ def test_objective_worst_metric_maximize():
 
 
 @pytest.mark.unit
-def test_objective_worst_metric_minimize():
+def test_objective_worst_metric_minimize() -> None:
     """Assert _worst_metric returns +inf for minimize direction."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
@@ -1243,7 +1229,7 @@ def test_objective_worst_metric_minimize():
 
 
 @pytest.mark.unit
-def test_objective_weighted_loss_calls_compute_class_weights():
+def test_objective_weighted_loss_calls_compute_class_weights() -> None:
     """Verify compute_class_weights is called when weighted_loss=True."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
@@ -1265,11 +1251,11 @@ def test_objective_weighted_loss_calls_compute_class_weights():
         dataloader_factory=MagicMock(return_value=(mock_train_loader, MagicMock(), MagicMock())),
         model_factory=MagicMock(return_value=MagicMock()),
     )
-    objective._cleanup = MagicMock()
+    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = True
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 0
@@ -1295,7 +1281,7 @@ def test_objective_weighted_loss_calls_compute_class_weights():
 
 
 @pytest.mark.unit
-def test_sample_params_uses_sample_params_attr():
+def test_sample_params_uses_sample_params_attr() -> None:
     """Verify _sample_params dispatches to obj.sample_params when attr exists."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.direction = "maximize"
@@ -1320,7 +1306,7 @@ def test_sample_params_uses_sample_params_attr():
 
 
 @pytest.mark.unit
-def test_sample_params_dict_fallback():
+def test_sample_params_dict_fallback() -> None:
     """Verify _sample_params iterates dict items when no sample_params attr."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.direction = "maximize"
@@ -1344,7 +1330,7 @@ def test_sample_params_dict_fallback():
 
 
 @pytest.mark.unit
-def test_call_passes_correct_kwargs_to_executor():
+def test_call_passes_correct_kwargs_to_executor() -> None:
     """Verify TrialTrainingExecutor receives correct wired kwargs."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.direction = "maximize"
@@ -1368,11 +1354,11 @@ def test_call_passes_correct_kwargs_to_executor():
         ),
         model_factory=MagicMock(return_value=mock_model),
     )
-    objective._cleanup = MagicMock()
+    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 0
@@ -1412,7 +1398,7 @@ def test_call_passes_correct_kwargs_to_executor():
 
 
 @pytest.mark.unit
-def test_call_uses_task_registry_for_criterion():
+def test_call_uses_task_registry_for_criterion() -> None:
     """Verify __call__ uses get_task() for criterion and validation_metrics."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.direction = "maximize"
@@ -1433,8 +1419,8 @@ def test_call_uses_task_registry_for_criterion():
         dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
         model_factory=MagicMock(return_value=MagicMock()),
     )
-    objective._cleanup = MagicMock()
-    objective.config_builder.build = MagicMock(return_value=MagicMock(training=mock_cfg.training))
+    objective._cleanup = MagicMock()  # type: ignore
+    objective.config_builder.build = MagicMock(return_value=MagicMock(training=mock_cfg.training))  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 0
@@ -1459,7 +1445,7 @@ def test_call_uses_task_registry_for_criterion():
 
 
 @pytest.mark.unit
-def test_call_log_trial_start_receives_correct_args():
+def test_call_log_trial_start_receives_correct_args() -> None:
     """Verify log_trial_start is called with trial.number and log_params including pretrained."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.direction = "maximize"
@@ -1475,11 +1461,11 @@ def test_call_log_trial_start_receives_correct_args():
         dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
         model_factory=MagicMock(return_value=MagicMock()),
     )
-    objective._cleanup = MagicMock()
+    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 7
@@ -1502,7 +1488,7 @@ def test_call_log_trial_start_receives_correct_args():
 
 
 @pytest.mark.unit
-def test_call_tracker_not_called_on_failure():
+def test_call_tracker_not_called_on_failure() -> None:
     """Verify tracker.end_optuna_trial gets worst metric when trial fails."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.direction = "maximize"
@@ -1520,11 +1506,11 @@ def test_call_tracker_not_called_on_failure():
         model_factory=MagicMock(),
         tracker=mock_tracker,
     )
-    objective._cleanup = MagicMock()
+    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 0
@@ -1539,7 +1525,7 @@ def test_call_tracker_not_called_on_failure():
 
 
 @pytest.mark.unit
-def test_call_dataloader_factory_receives_is_optuna():
+def test_call_dataloader_factory_receives_is_optuna() -> None:
     """Verify dataloader_factory is called with is_optuna=True."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.direction = "maximize"
@@ -1556,11 +1542,11 @@ def test_call_dataloader_factory_receives_is_optuna():
         dataloader_factory=mock_factory,
         model_factory=MagicMock(return_value=MagicMock()),
     )
-    objective._cleanup = MagicMock()
+    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 0

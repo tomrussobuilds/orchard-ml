@@ -18,7 +18,7 @@ from orchard.architectures._morphing import morph_conv_weights
 class TestMorphConvWeights:
     """Test suite for morph_conv_weights."""
 
-    def test_rgb_to_grayscale_no_kernel_resize(self):
+    def test_rgb_to_grayscale_no_kernel_resize(self) -> None:
         """Channel reduction 3ch→1ch without spatial resize."""
         old_conv = nn.Conv2d(3, 64, kernel_size=7, bias=False)
         new_conv = nn.Conv2d(1, 64, kernel_size=7, bias=False)
@@ -29,7 +29,7 @@ class TestMorphConvWeights:
         assert new_conv.weight.shape == (64, 1, 7, 7)
         assert torch.allclose(new_conv.weight, expected)
 
-    def test_rgb_to_grayscale_with_kernel_resize(self):
+    def test_rgb_to_grayscale_with_kernel_resize(self) -> None:
         """Channel reduction + spatial resize (7x7 → 3x3)."""
         old_conv = nn.Conv2d(3, 64, kernel_size=7, bias=False)
         new_conv = nn.Conv2d(1, 64, kernel_size=3, bias=False)
@@ -38,7 +38,7 @@ class TestMorphConvWeights:
 
         assert new_conv.weight.shape == (64, 1, 3, 3)
 
-    def test_kernel_resize_no_channel_reduction(self):
+    def test_kernel_resize_no_channel_reduction(self) -> None:
         """Spatial resize only (3ch stays 3ch)."""
         old_conv = nn.Conv2d(3, 64, kernel_size=7, bias=False)
         new_conv = nn.Conv2d(3, 64, kernel_size=3, bias=False)
@@ -47,7 +47,7 @@ class TestMorphConvWeights:
 
         assert new_conv.weight.shape == (64, 3, 3, 3)
 
-    def test_passthrough_copy(self):
+    def test_passthrough_copy(self) -> None:
         """No channel change, no kernel resize → exact copy."""
         old_conv = nn.Conv2d(3, 64, kernel_size=3, bias=False)
         new_conv = nn.Conv2d(3, 64, kernel_size=3, bias=False)
@@ -56,26 +56,26 @@ class TestMorphConvWeights:
 
         assert torch.equal(new_conv.weight, old_conv.weight)
 
-    def test_bias_transfer_both_have_bias(self):
+    def test_bias_transfer_both_have_bias(self) -> None:
         """Bias copied when both convolutions have bias."""
         old_conv = nn.Conv2d(3, 64, kernel_size=3, bias=True)
         new_conv = nn.Conv2d(3, 64, kernel_size=3, bias=True)
 
         morph_conv_weights(old_conv, new_conv, in_channels=3)
 
-        assert torch.equal(new_conv.bias, old_conv.bias)
+        assert torch.equal(new_conv.bias, old_conv.bias)  # type: ignore
 
-    def test_no_bias_transfer_old_no_bias(self):
+    def test_no_bias_transfer_old_no_bias(self) -> None:
         """No bias copy when old conv has no bias."""
         old_conv = nn.Conv2d(3, 64, kernel_size=3, bias=False)
         new_conv = nn.Conv2d(3, 64, kernel_size=3, bias=True)
 
-        original_bias = new_conv.bias.clone()
+        original_bias = new_conv.bias.clone()  # type: ignore
         morph_conv_weights(old_conv, new_conv, in_channels=3)
 
-        assert torch.equal(new_conv.bias, original_bias)
+        assert torch.equal(new_conv.bias, original_bias)  # type: ignore
 
-    def test_no_bias_transfer_new_no_bias(self):
+    def test_no_bias_transfer_new_no_bias(self) -> None:
         """No crash when new conv has no bias slot."""
         old_conv = nn.Conv2d(3, 64, kernel_size=3, bias=True)
         new_conv = nn.Conv2d(3, 64, kernel_size=3, bias=False)
@@ -84,7 +84,7 @@ class TestMorphConvWeights:
 
         assert new_conv.bias is None
 
-    def test_shape_after_full_morph(self):
+    def test_shape_after_full_morph(self) -> None:
         """Correct shape after both channel and spatial morph."""
         old_conv = nn.Conv2d(3, 32, kernel_size=5, bias=False)
         new_conv = nn.Conv2d(1, 32, kernel_size=3, bias=False)
@@ -93,7 +93,7 @@ class TestMorphConvWeights:
 
         assert new_conv.weight.shape == (32, 1, 3, 3)
 
-    def test_no_gradient_tracking(self):
+    def test_no_gradient_tracking(self) -> None:
         """Morphed weights have no grad_fn attached."""
         old_conv = nn.Conv2d(3, 64, kernel_size=3, bias=False)
         new_conv = nn.Conv2d(1, 64, kernel_size=3, bias=False)

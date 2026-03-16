@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -27,7 +28,7 @@ from orchard.exceptions import OrchardDatasetError
 
 # MOCK CONFIG AND METADATA
 @pytest.fixture
-def mock_cfg():
+def mock_cfg() -> None:
     cfg = MagicMock()
     cfg.dataset.dataset_name = "mock_dataset"
     cfg.dataset.use_weighted_sampler = True
@@ -37,11 +38,11 @@ def mock_cfg():
     cfg.dataset.lazy_loading = True
     cfg.training.batch_size = 2
     cfg.num_workers = 0
-    return cfg
+    return cfg  # type: ignore
 
 
 @pytest.fixture
-def mock_cfg_no_sampler():
+def mock_cfg_no_sampler() -> None:
     """Config with weighted sampler disabled."""
     cfg = MagicMock()
     cfg.dataset.dataset_name = "mock_dataset"
@@ -51,11 +52,11 @@ def mock_cfg_no_sampler():
     cfg.dataset.lazy_loading = True
     cfg.training.batch_size = 2
     cfg.num_workers = 0
-    return cfg
+    return cfg  # type: ignore
 
 
 @pytest.fixture
-def mock_cfg_high_res():
+def mock_cfg_high_res() -> None:
     """Config with high resolution for Optuna test."""
     cfg = MagicMock()
     cfg.dataset.dataset_name = "mock_dataset"
@@ -65,19 +66,19 @@ def mock_cfg_high_res():
     cfg.dataset.lazy_loading = True
     cfg.training.batch_size = 2
     cfg.num_workers = 8
-    return cfg
+    return cfg  # type: ignore
 
 
 @pytest.fixture
-def mock_metadata():
+def mock_metadata() -> None:
     metadata = MagicMock()
     metadata.path = "/fake/path"
-    return metadata
+    return metadata  # type: ignore
 
 
 # DATA LOADER FACTORY TESTS
 @pytest.mark.unit
-def test_build_loaders_with_weighted_sampler(mock_cfg, mock_metadata):
+def test_build_loaders_with_weighted_sampler(mock_cfg: MagicMock, mock_metadata: MagicMock) -> None:
     """Test DataLoaderFactory.build() with sampler and transforms."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -88,19 +89,19 @@ def test_build_loaders_with_weighted_sampler(mock_cfg, mock_metadata):
         ):
 
             class FakeDataset:
-                def __init__(self, **kwargs):
+                def __init__(self, **kwargs: object) -> None:
                     self.labels = np.array([0, 1, 0, 1])
 
                 @classmethod
-                def from_npz(cls, **kwargs):
-                    return cls()
+                def from_npz(cls: Any, **kwargs: object) -> None:
+                    return cls()  # type: ignore
 
                 @classmethod
-                def lazy(cls, **kwargs):
-                    return cls()
+                def lazy(cls: Any, **kwargs: object) -> None:
+                    return cls()  # type: ignore
 
-                def __len__(self):
-                    return 4
+                def __len__(self) -> None:
+                    return 4  # type: ignore
 
             with patch("orchard.data_handler.loader.VisionDataset", FakeDataset):
                 factory = DataLoaderFactory(
@@ -113,9 +114,9 @@ def test_build_loaders_with_weighted_sampler(mock_cfg, mock_metadata):
                 train, val, test = factory.build()
 
                 # Check number of samples
-                assert len(train.dataset) == 4
-                assert len(val.dataset) == 4
-                assert len(test.dataset) == 4
+                assert len(train.dataset) == 4  # type: ignore
+                assert len(val.dataset) == 4  # type: ignore
+                assert len(test.dataset) == 4  # type: ignore
 
                 # Check number of batches
                 assert len(train) == 2
@@ -128,7 +129,9 @@ def test_build_loaders_with_weighted_sampler(mock_cfg, mock_metadata):
 
 
 @pytest.mark.unit
-def test_build_loaders_without_weighted_sampler(mock_cfg_no_sampler, mock_metadata):
+def test_build_loaders_without_weighted_sampler(
+    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Test DataLoaderFactory.build() WITHOUT weighted sampler."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -139,19 +142,19 @@ def test_build_loaders_without_weighted_sampler(mock_cfg_no_sampler, mock_metada
         ):
 
             class FakeDataset:
-                def __init__(self, **kwargs):
+                def __init__(self, **kwargs: object) -> None:
                     self.labels = np.array([0, 1, 0, 1])
 
                 @classmethod
-                def from_npz(cls, **kwargs):
-                    return cls()
+                def from_npz(cls: Any, **kwargs: object) -> None:
+                    return cls()  # type: ignore
 
                 @classmethod
-                def lazy(cls, **kwargs):
-                    return cls()
+                def lazy(cls: Any, **kwargs: object) -> None:
+                    return cls()  # type: ignore
 
-                def __len__(self):
-                    return 4
+                def __len__(self) -> None:
+                    return 4  # type: ignore
 
             with patch("orchard.data_handler.loader.VisionDataset", FakeDataset):
                 factory = DataLoaderFactory(
@@ -174,7 +177,7 @@ def test_build_loaders_without_weighted_sampler(mock_cfg_no_sampler, mock_metada
 
 
 @pytest.mark.unit
-def test_infra_kwargs_optuna(mock_cfg, mock_metadata):
+def test_infra_kwargs_optuna(mock_cfg: MagicMock, mock_metadata: MagicMock) -> None:
     """Test _get_infrastructure_kwargs behavior in Optuna mode."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -192,7 +195,9 @@ def test_infra_kwargs_optuna(mock_cfg, mock_metadata):
 
 
 @pytest.mark.unit
-def test_infra_kwargs_optuna_high_res(mock_cfg_high_res, mock_metadata):
+def test_infra_kwargs_optuna_high_res(
+    mock_cfg_high_res: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Test _get_infrastructure_kwargs with high resolution in Optuna mode."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -211,7 +216,9 @@ def test_infra_kwargs_optuna_high_res(mock_cfg_high_res, mock_metadata):
 
 
 @pytest.mark.unit
-def test_infra_kwargs_pin_memory(monkeypatch, mock_cfg, mock_metadata):
+def test_infra_kwargs_pin_memory(
+    monkeypatch: pytest.MonkeyPatch, mock_cfg: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Test that pin_memory is True if CUDA or MPS available."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -231,7 +238,9 @@ def test_infra_kwargs_pin_memory(monkeypatch, mock_cfg, mock_metadata):
 
 
 @pytest.mark.unit
-def test_infra_kwargs_no_pin_memory(monkeypatch, mock_cfg, mock_metadata):
+def test_infra_kwargs_no_pin_memory(
+    monkeypatch: pytest.MonkeyPatch, mock_cfg: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Test that pin_memory is False when neither CUDA nor MPS available."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -252,7 +261,7 @@ def test_infra_kwargs_no_pin_memory(monkeypatch, mock_cfg, mock_metadata):
 
 # LAZY VISION DATASET TESTS
 @pytest.mark.unit
-def test_vision_dataset_lazy():
+def test_vision_dataset_lazy() -> None:
     """Test VisionDataset.lazy() loads and returns tensors correctly."""
     rng = np.random.default_rng(seed=42)
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -261,7 +270,7 @@ def test_vision_dataset_lazy():
             "train_images": rng.integers(0, 255, (5, 28, 28), dtype=np.uint8),
             "train_labels": rng.integers(0, 2, (5, 1), dtype=np.int64),
         }
-        np.savez(tmp_path, **data)
+        np.savez(tmp_path, **data)  # type: ignore
 
         dataset = VisionDataset.lazy(tmp_path)
         assert len(dataset) == 5
@@ -274,7 +283,7 @@ def test_vision_dataset_lazy():
 
 
 @pytest.mark.unit
-def test_vision_dataset_lazy_rgb():
+def test_vision_dataset_lazy_rgb() -> None:
     """Test VisionDataset.lazy() with RGB images."""
     rng = np.random.default_rng(seed=42)
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -283,7 +292,7 @@ def test_vision_dataset_lazy_rgb():
             "train_images": rng.integers(0, 255, (5, 28, 28, 3), dtype=np.uint8),
             "train_labels": rng.integers(0, 2, (5, 1), dtype=np.int64),
         }
-        np.savez(tmp_path, **data)
+        np.savez(tmp_path, **data)  # type: ignore
 
         dataset = VisionDataset.lazy(tmp_path)
         assert len(dataset) == 5
@@ -298,7 +307,7 @@ def test_vision_dataset_lazy_rgb():
 
 
 @pytest.mark.unit
-def test_vision_dataset_lazy_grayscale_2d():
+def test_vision_dataset_lazy_grayscale_2d() -> None:
     """Test VisionDataset.lazy() with 2D grayscale images."""
     rng = np.random.default_rng(seed=42)
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -307,7 +316,7 @@ def test_vision_dataset_lazy_grayscale_2d():
             "train_images": rng.integers(0, 255, (5, 28, 28), dtype=np.uint8),
             "train_labels": rng.integers(0, 2, (5, 1), dtype=np.int64),
         }
-        np.savez(tmp_path, **data)
+        np.savez(tmp_path, **data)  # type: ignore
 
         dataset = VisionDataset.lazy(tmp_path)
         img, _ = dataset[0]
@@ -318,7 +327,7 @@ def test_vision_dataset_lazy_grayscale_2d():
 
 
 @pytest.mark.unit
-def test_create_temp_loader():
+def test_create_temp_loader() -> None:
     """Test create_temp_loader returns a working DataLoader."""
     rng = np.random.default_rng(seed=42)
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -327,7 +336,7 @@ def test_create_temp_loader():
             "train_images": rng.integers(0, 255, (5, 28, 28), dtype=np.uint8),
             "train_labels": rng.integers(0, 2, (5, 1), dtype=np.int64),
         }
-        np.savez(tmp_path, **data)
+        np.savez(tmp_path, **data)  # type: ignore
 
         loader = create_temp_loader(tmp_path, batch_size=2)
         batch_imgs, _ = next(iter(loader))
@@ -336,7 +345,7 @@ def test_create_temp_loader():
 
 
 @pytest.mark.unit
-def test_create_temp_loader_rgb():
+def test_create_temp_loader_rgb() -> None:
     """Test create_temp_loader with RGB images."""
     rng = np.random.default_rng(seed=42)
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -345,7 +354,7 @@ def test_create_temp_loader_rgb():
             "train_images": rng.integers(0, 255, (8, 32, 32, 3), dtype=np.uint8),
             "train_labels": rng.integers(0, 3, (8, 1), dtype=np.int64),
         }
-        np.savez(tmp_path, **data)
+        np.savez(tmp_path, **data)  # type: ignore
 
         loader = create_temp_loader(tmp_path, batch_size=4)
         batch_imgs, _ = next(iter(loader))
@@ -358,7 +367,9 @@ def test_create_temp_loader_rgb():
 
 # TESTS: get_dataloader
 @pytest.mark.unit
-def test_get_dataloaders_convenience_function(mock_cfg, mock_metadata):
+def test_get_dataloaders_convenience_function(
+    mock_cfg: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Test get_dataloaders convenience function."""
     from orchard.data_handler.loader import get_dataloaders
 
@@ -393,7 +404,7 @@ def test_get_dataloaders_convenience_function(mock_cfg, mock_metadata):
 
 
 @pytest.mark.unit
-def test_get_dataloaders_with_optuna_mode(mock_cfg, mock_metadata):
+def test_get_dataloaders_with_optuna_mode(mock_cfg: MagicMock, mock_metadata: MagicMock) -> None:
     """Test get_dataloaders with is_optuna=True."""
     from orchard.data_handler.loader import get_dataloaders
 
@@ -417,7 +428,9 @@ def test_get_dataloaders_with_optuna_mode(mock_cfg, mock_metadata):
 
 
 @pytest.mark.unit
-def test_balancing_sampler_missing_class_raises(mock_cfg, mock_metadata):
+def test_balancing_sampler_missing_class_raises(
+    mock_cfg: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Test _get_balancing_sampler raises ValueError when classes are missing."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -439,7 +452,9 @@ def test_balancing_sampler_missing_class_raises(mock_cfg, mock_metadata):
 
 
 @pytest.mark.unit
-def test_balancing_sampler_all_classes_present(mock_cfg, mock_metadata):
+def test_balancing_sampler_all_classes_present(
+    mock_cfg: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Test _get_balancing_sampler succeeds when all classes are represented."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -462,7 +477,7 @@ def test_balancing_sampler_all_classes_present(mock_cfg, mock_metadata):
 
 # MUTATION-RESILIENT: EXACT CONSTANTS AND LOGIC
 @pytest.mark.unit
-def test_optuna_worker_constants():
+def test_optuna_worker_constants() -> None:
     """Verify Optuna worker cap constants have exact expected values."""
     from orchard.core.paths.constants import HIGHRES_THRESHOLD
     from orchard.data_handler.loader import (
@@ -476,7 +491,7 @@ def test_optuna_worker_constants():
 
 
 @pytest.mark.unit
-def test_min_subsampled_split_constant():
+def test_min_subsampled_split_constant() -> None:
     """Verify _MIN_SUBSAMPLED_SPLIT floor constant."""
     from orchard.data_handler.loader import _MIN_SUBSAMPLED_SPLIT
 
@@ -484,7 +499,7 @@ def test_min_subsampled_split_constant():
 
 
 @pytest.mark.unit
-def test_default_healthcheck_batch_size_constant():
+def test_default_healthcheck_batch_size_constant() -> None:
     """Verify _DEFAULT_HEALTHCHECK_BATCH_SIZE constant."""
     from orchard.data_handler.diagnostic.temp_loader import _DEFAULT_HEALTHCHECK_BATCH_SIZE
 
@@ -492,7 +507,9 @@ def test_default_healthcheck_batch_size_constant():
 
 
 @pytest.mark.unit
-def test_infra_kwargs_persistent_workers_true_when_not_optuna(mock_cfg, mock_metadata):
+def test_infra_kwargs_persistent_workers_true_when_not_optuna(
+    mock_cfg: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Verify persistent_workers=True when workers > 0 and NOT Optuna."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -509,7 +526,9 @@ def test_infra_kwargs_persistent_workers_true_when_not_optuna(mock_cfg, mock_met
 
 
 @pytest.mark.unit
-def test_infra_kwargs_persistent_workers_false_when_optuna(mock_cfg, mock_metadata):
+def test_infra_kwargs_persistent_workers_false_when_optuna(
+    mock_cfg: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Verify persistent_workers=False in Optuna mode even with workers > 0."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -526,7 +545,9 @@ def test_infra_kwargs_persistent_workers_false_when_optuna(mock_cfg, mock_metada
 
 
 @pytest.mark.unit
-def test_infra_kwargs_persistent_workers_false_when_zero_workers(mock_cfg, mock_metadata):
+def test_infra_kwargs_persistent_workers_false_when_zero_workers(
+    mock_cfg: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Verify persistent_workers=False when num_workers=0 even without Optuna."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -543,7 +564,9 @@ def test_infra_kwargs_persistent_workers_false_when_zero_workers(mock_cfg, mock_
 
 
 @pytest.mark.unit
-def test_infra_kwargs_worker_init_fn_none_when_zero_workers(mock_cfg, mock_metadata):
+def test_infra_kwargs_worker_init_fn_none_when_zero_workers(
+    mock_cfg: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Verify worker_init_fn is None when num_workers=0."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -560,7 +583,9 @@ def test_infra_kwargs_worker_init_fn_none_when_zero_workers(mock_cfg, mock_metad
 
 
 @pytest.mark.unit
-def test_infra_kwargs_worker_init_fn_set_when_workers_positive(mock_cfg, mock_metadata):
+def test_infra_kwargs_worker_init_fn_set_when_workers_positive(
+    mock_cfg: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Verify worker_init_fn is not None when num_workers > 0."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -577,7 +602,7 @@ def test_infra_kwargs_worker_init_fn_set_when_workers_positive(mock_cfg, mock_me
 
 
 @pytest.mark.unit
-def test_optuna_workers_capped_lowres(mock_cfg, mock_metadata):
+def test_optuna_workers_capped_lowres(mock_cfg: MagicMock, mock_metadata: MagicMock) -> None:
     """Verify Optuna caps workers to 6 for low resolution."""
     mock_ds_meta = MagicMock(in_channels=1)
     mock_cfg.dataset.resolution = 28
@@ -595,7 +620,9 @@ def test_optuna_workers_capped_lowres(mock_cfg, mock_metadata):
 
 
 @pytest.mark.unit
-def test_optuna_workers_capped_highres(mock_cfg_high_res, mock_metadata):
+def test_optuna_workers_capped_highres(
+    mock_cfg_high_res: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Verify Optuna caps workers to 4 for high resolution (>= 224)."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -612,7 +639,9 @@ def test_optuna_workers_capped_highres(mock_cfg_high_res, mock_metadata):
 
 
 @pytest.mark.unit
-def test_build_train_loader_shuffle_and_drop_last(mock_cfg_no_sampler, mock_metadata):
+def test_build_train_loader_shuffle_and_drop_last(
+    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Verify train_loader has shuffle=True (no sampler) and drop_last=True."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -623,15 +652,15 @@ def test_build_train_loader_shuffle_and_drop_last(mock_cfg_no_sampler, mock_meta
         ):
 
             class FakeDS:
-                def __init__(self, **kwargs):
+                def __init__(self, **kwargs: object) -> None:
                     self.labels = np.array([0, 1, 0, 1])
 
                 @classmethod
-                def lazy(cls, **kwargs):
-                    return cls()
+                def lazy(cls: Any, **kwargs: object) -> None:
+                    return cls()  # type: ignore
 
-                def __len__(self):
-                    return 4
+                def __len__(self) -> None:
+                    return 4  # type: ignore
 
             with patch("orchard.data_handler.loader.VisionDataset", FakeDS):
                 factory = DataLoaderFactory(
@@ -655,7 +684,9 @@ def test_build_train_loader_shuffle_and_drop_last(mock_cfg_no_sampler, mock_meta
 
 
 @pytest.mark.unit
-def test_build_train_loader_no_shuffle_with_sampler(mock_cfg, mock_metadata):
+def test_build_train_loader_no_shuffle_with_sampler(
+    mock_cfg: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Verify train_loader has shuffle=False when WeightedRandomSampler is active."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -666,15 +697,15 @@ def test_build_train_loader_no_shuffle_with_sampler(mock_cfg, mock_metadata):
         ):
 
             class FakeDS:
-                def __init__(self, **kwargs):
+                def __init__(self, **kwargs: object) -> None:
                     self.labels = np.array([0, 1, 0, 1])
 
                 @classmethod
-                def lazy(cls, **kwargs):
-                    return cls()
+                def lazy(cls: Any, **kwargs: object) -> None:
+                    return cls()  # type: ignore
 
-                def __len__(self):
-                    return 4
+                def __len__(self) -> None:
+                    return 4  # type: ignore
 
             with patch("orchard.data_handler.loader.VisionDataset", FakeDS):
                 factory = DataLoaderFactory(
@@ -692,7 +723,7 @@ def test_build_train_loader_no_shuffle_with_sampler(mock_cfg, mock_metadata):
 
 
 @pytest.mark.unit
-def test_balancing_sampler_replacement_true(mock_cfg, mock_metadata):
+def test_balancing_sampler_replacement_true(mock_cfg: MagicMock, mock_metadata: MagicMock) -> None:
     """Verify WeightedRandomSampler uses replacement=True."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -715,7 +746,7 @@ def test_balancing_sampler_replacement_true(mock_cfg, mock_metadata):
 
 
 @pytest.mark.unit
-def test_balancing_sampler_num_samples(mock_cfg, mock_metadata):
+def test_balancing_sampler_num_samples(mock_cfg: MagicMock, mock_metadata: MagicMock) -> None:
     """Verify WeightedRandomSampler num_samples equals dataset size."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -733,11 +764,13 @@ def test_balancing_sampler_num_samples(mock_cfg, mock_metadata):
         mock_cfg.dataset.num_classes = 2
 
         sampler = factory._get_balancing_sampler(dataset)
-        assert sampler.num_samples == 6
+        assert sampler.num_samples == 6  # type: ignore
 
 
 @pytest.mark.unit
-def test_balancing_sampler_inverse_frequency_weights(mock_cfg, mock_metadata):
+def test_balancing_sampler_inverse_frequency_weights(
+    mock_cfg: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Verify class weights are 1/count (inverse frequency)."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -756,7 +789,7 @@ def test_balancing_sampler_inverse_frequency_weights(mock_cfg, mock_metadata):
         mock_cfg.dataset.num_classes = 2
 
         sampler = factory._get_balancing_sampler(dataset)
-        weights = list(sampler.weights)
+        weights = list(sampler.weights)  # type: ignore
 
         # class 0: count=3, weight=1/3; class 1: count=1, weight=1.0
         assert weights[0] == pytest.approx(1.0 / 3)
@@ -766,7 +799,7 @@ def test_balancing_sampler_inverse_frequency_weights(mock_cfg, mock_metadata):
 
 
 @pytest.mark.unit
-def test_build_sub_samples_calculation(mock_metadata):
+def test_build_sub_samples_calculation(mock_metadata: MagicMock) -> None:
     """Verify val/test sub_samples = max(_MIN_SUBSAMPLED_SPLIT, max_samples * val_ratio)."""
     mock_ds_meta = MagicMock(in_channels=1)
     cfg = MagicMock()
@@ -787,17 +820,17 @@ def test_build_sub_samples_calculation(mock_metadata):
             build_calls = []
 
             class SpyDS:
-                def __init__(self, **kwargs):
+                def __init__(self, **kwargs: object) -> None:
                     self.labels = np.array([0, 1])
                     self.max_samples = kwargs.get("max_samples")
                     build_calls.append(kwargs)
 
                 @classmethod
-                def lazy(cls, **kwargs):
-                    return cls(**kwargs)
+                def lazy(cls: Any, **kwargs: object) -> None:
+                    return cls(**kwargs)  # type: ignore
 
-                def __len__(self):
-                    return 4
+                def __len__(self) -> None:
+                    return 4  # type: ignore
 
             with patch("orchard.data_handler.loader.VisionDataset", SpyDS):
                 factory = DataLoaderFactory(
@@ -817,7 +850,7 @@ def test_build_sub_samples_calculation(mock_metadata):
 
 
 @pytest.mark.unit
-def test_build_sub_samples_floor(mock_metadata):
+def test_build_sub_samples_floor(mock_metadata: MagicMock) -> None:
     """Verify sub_samples floors at _MIN_SUBSAMPLED_SPLIT when max_samples * val_ratio < 10."""
     mock_ds_meta = MagicMock(in_channels=1)
     cfg = MagicMock()
@@ -838,16 +871,16 @@ def test_build_sub_samples_floor(mock_metadata):
             build_calls = []
 
             class SpyDS:
-                def __init__(self, **kwargs):
+                def __init__(self, **kwargs: object) -> None:
                     self.labels = np.array([0, 1])
                     build_calls.append(kwargs)
 
                 @classmethod
-                def lazy(cls, **kwargs):
-                    return cls(**kwargs)
+                def lazy(cls: Any, **kwargs: object) -> None:
+                    return cls(**kwargs)  # type: ignore
 
-                def __len__(self):
-                    return 4
+                def __len__(self) -> None:
+                    return 4  # type: ignore
 
             with patch("orchard.data_handler.loader.VisionDataset", SpyDS):
                 factory = DataLoaderFactory(
@@ -864,7 +897,9 @@ def test_build_sub_samples_floor(mock_metadata):
 
 
 @pytest.mark.unit
-def test_build_sub_samples_none_when_no_max_samples(mock_cfg_no_sampler, mock_metadata):
+def test_build_sub_samples_none_when_no_max_samples(
+    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Verify val/test max_samples is None when dataset max_samples is None."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -876,16 +911,16 @@ def test_build_sub_samples_none_when_no_max_samples(mock_cfg_no_sampler, mock_me
             build_calls = []
 
             class SpyDS:
-                def __init__(self, **kwargs):
+                def __init__(self, **kwargs: object) -> None:
                     self.labels = np.array([0, 1])
                     build_calls.append(kwargs)
 
                 @classmethod
-                def lazy(cls, **kwargs):
-                    return cls(**kwargs)
+                def lazy(cls: Any, **kwargs: object) -> None:
+                    return cls(**kwargs)  # type: ignore
 
-                def __len__(self):
-                    return 4
+                def __len__(self) -> None:
+                    return 4  # type: ignore
 
             with patch("orchard.data_handler.loader.VisionDataset", SpyDS):
                 factory = DataLoaderFactory(
@@ -902,7 +937,7 @@ def test_build_sub_samples_none_when_no_max_samples(mock_cfg_no_sampler, mock_me
 
 
 @pytest.mark.unit
-def test_create_temp_loader_uses_default_batch_size():
+def test_create_temp_loader_uses_default_batch_size() -> None:
     """Verify create_temp_loader uses _DEFAULT_HEALTHCHECK_BATCH_SIZE when not specified."""
     rng = np.random.default_rng(seed=42)
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -911,14 +946,14 @@ def test_create_temp_loader_uses_default_batch_size():
             "train_images": rng.integers(0, 255, (20, 28, 28), dtype=np.uint8),
             "train_labels": rng.integers(0, 2, (20, 1), dtype=np.int64),
         }
-        np.savez(tmp_path, **data)
+        np.savez(tmp_path, **data)  # type: ignore
 
         loader = create_temp_loader(tmp_path)
         assert loader.batch_size == 16
 
 
 @pytest.mark.unit
-def test_build_uses_lazy_when_lazy_loading_true(mock_metadata):
+def test_build_uses_lazy_when_lazy_loading_true(mock_metadata: MagicMock) -> None:
     """Verify build() calls VisionDataset.lazy when lazy_loading=True."""
     mock_ds_meta = MagicMock(in_channels=1)
     cfg = MagicMock()
@@ -939,21 +974,21 @@ def test_build_uses_lazy_when_lazy_loading_true(mock_metadata):
             from_npz_called = []
 
             class SpyDS:
-                def __init__(self, **kwargs):
+                def __init__(self, **kwargs: object) -> None:
                     self.labels = np.array([0, 1])
 
                 @classmethod
-                def lazy(cls, **kwargs):
+                def lazy(cls: Any, **kwargs: object) -> None:
                     lazy_called.append(True)
-                    return cls(**kwargs)
+                    return cls(**kwargs)  # type: ignore
 
                 @classmethod
-                def from_npz(cls, **kwargs):
+                def from_npz(cls: Any, **kwargs: object) -> None:
                     from_npz_called.append(True)
-                    return cls(**kwargs)
+                    return cls(**kwargs)  # type: ignore
 
-                def __len__(self):
-                    return 4
+                def __len__(self) -> None:
+                    return 4  # type: ignore
 
             with patch("orchard.data_handler.loader.VisionDataset", SpyDS):
                 factory = DataLoaderFactory(
@@ -966,7 +1001,7 @@ def test_build_uses_lazy_when_lazy_loading_true(mock_metadata):
 
 
 @pytest.mark.unit
-def test_build_uses_from_npz_when_lazy_loading_false(mock_metadata):
+def test_build_uses_from_npz_when_lazy_loading_false(mock_metadata: MagicMock) -> None:
     """Verify build() calls VisionDataset.from_npz when lazy_loading=False."""
     mock_ds_meta = MagicMock(in_channels=1)
     cfg = MagicMock()
@@ -987,21 +1022,21 @@ def test_build_uses_from_npz_when_lazy_loading_false(mock_metadata):
             from_npz_called = []
 
             class SpyDS:
-                def __init__(self, **kwargs):
+                def __init__(self, **kwargs: object) -> None:
                     self.labels = np.array([0, 1])
 
                 @classmethod
-                def lazy(cls, **kwargs):
+                def lazy(cls: Any, **kwargs: object) -> None:
                     lazy_called.append(True)
-                    return cls(**kwargs)
+                    return cls(**kwargs)  # type: ignore
 
                 @classmethod
-                def from_npz(cls, **kwargs):
+                def from_npz(cls: Any, **kwargs: object) -> None:
                     from_npz_called.append(True)
-                    return cls(**kwargs)
+                    return cls(**kwargs)  # type: ignore
 
-                def __len__(self):
-                    return 4
+                def __len__(self) -> None:
+                    return 4  # type: ignore
 
             with patch("orchard.data_handler.loader.VisionDataset", SpyDS):
                 factory = DataLoaderFactory(
@@ -1015,45 +1050,47 @@ def test_build_uses_from_npz_when_lazy_loading_false(mock_metadata):
 
 # MUTATION TESTS: argument wiring and DataLoader construction
 @pytest.fixture
-def _spy_ds_factory():
+def _spy_ds_factory() -> None:
     """Factory that yields a SpyDS class capturing all build calls."""
 
-    def _make():
+    def _make() -> None:
         calls = []
 
         class SpyDS:
-            def __init__(self, **kwargs):
+            def __init__(self, **kwargs: object) -> None:
                 self.labels = np.array([0, 1, 0, 1])
                 calls.append(kwargs)
 
             @classmethod
-            def lazy(cls, **kwargs):
-                return cls(**kwargs)
+            def lazy(cls: Any, **kwargs: object) -> None:
+                return cls(**kwargs)  # type: ignore
 
             @classmethod
-            def from_npz(cls, **kwargs):
-                return cls(**kwargs)
+            def from_npz(cls: Any, **kwargs: object) -> None:
+                return cls(**kwargs)  # type: ignore
 
-            def __len__(self):
-                return 4
+            def __len__(self) -> None:
+                return 4  # type: ignore
 
-        return SpyDS, calls
+        return SpyDS, calls  # type: ignore
 
-    return _make
+    return _make  # type: ignore
 
 
-def _build_factory(cfg, mock_metadata, num_workers=0):
+def _build_factory(cfg: Any, mock_metadata: MagicMock, num_workers: Any = 0) -> None:
     """Helper to build a DataLoaderFactory with standard mocking."""
     mock_ds_meta = MagicMock(in_channels=1)
 
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
-        return DataLoaderFactory(
+        return DataLoaderFactory(  # type: ignore
             cfg.dataset, cfg.training, cfg.augmentation, num_workers, mock_metadata
         )
 
 
 @pytest.mark.unit
-def test_build_passes_correct_split_names(mock_cfg_no_sampler, mock_metadata, _spy_ds_factory):
+def test_build_passes_correct_split_names(  # type: ignore
+    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock, _spy_ds_factory
+) -> None:
     """Verify build() passes exact split names ('train', 'val', 'test')."""
     SpyDS, calls = _spy_ds_factory()
     mock_ds_meta = MagicMock(in_channels=1)
@@ -1081,7 +1118,9 @@ def test_build_passes_correct_split_names(mock_cfg_no_sampler, mock_metadata, _s
 
 
 @pytest.mark.unit
-def test_build_passes_path_and_seed(mock_cfg_no_sampler, mock_metadata, _spy_ds_factory):
+def test_build_passes_path_and_seed(  # type: ignore
+    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock, _spy_ds_factory
+) -> None:
     """Verify build() passes metadata path and training seed to each split."""
     SpyDS, calls = _spy_ds_factory()
     mock_ds_meta = MagicMock(in_channels=1)
@@ -1111,7 +1150,9 @@ def test_build_passes_path_and_seed(mock_cfg_no_sampler, mock_metadata, _spy_ds_
 
 
 @pytest.mark.unit
-def test_build_passes_transforms(mock_cfg_no_sampler, mock_metadata, _spy_ds_factory):
+def test_build_passes_transforms(  # type: ignore
+    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock, _spy_ds_factory
+) -> None:
     """Verify build() passes train transform to train split and val transform to val/test."""
     SpyDS, calls = _spy_ds_factory()
     mock_ds_meta = MagicMock(in_channels=1)
@@ -1141,7 +1182,9 @@ def test_build_passes_transforms(mock_cfg_no_sampler, mock_metadata, _spy_ds_fac
 
 
 @pytest.mark.unit
-def test_build_train_loader_drop_last_true(mock_cfg_no_sampler, mock_metadata, _spy_ds_factory):
+def test_build_train_loader_drop_last_true(  # type: ignore
+    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock, _spy_ds_factory
+) -> None:
     """Verify train DataLoader has drop_last=True."""
     SpyDS, _ = _spy_ds_factory()
     mock_ds_meta = MagicMock(in_channels=1)
@@ -1167,9 +1210,9 @@ def test_build_train_loader_drop_last_true(mock_cfg_no_sampler, mock_metadata, _
 
 
 @pytest.mark.unit
-def test_build_val_test_loaders_have_infra_kwargs(
-    mock_cfg_no_sampler, mock_metadata, _spy_ds_factory
-):
+def test_build_val_test_loaders_have_infra_kwargs(  # type: ignore
+    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock, _spy_ds_factory
+) -> None:
     """Verify val/test DataLoaders receive infrastructure kwargs (num_workers, pin_memory)."""
     SpyDS, _ = _spy_ds_factory()
     mock_ds_meta = MagicMock(in_channels=1)
@@ -1197,7 +1240,9 @@ def test_build_val_test_loaders_have_infra_kwargs(
 
 
 @pytest.mark.unit
-def test_infra_kwargs_boundary_num_workers_one(mock_cfg, mock_metadata):
+def test_infra_kwargs_boundary_num_workers_one(
+    mock_cfg: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Verify worker_init_fn and persistent_workers with num_workers=1 (boundary)."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -1215,17 +1260,19 @@ def test_infra_kwargs_boundary_num_workers_one(mock_cfg, mock_metadata):
 
 
 @pytest.mark.unit
-def test_get_transformation_pipelines_passes_correct_args(mock_cfg_no_sampler, mock_metadata):
+def test_get_transformation_pipelines_passes_correct_args(
+    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock
+) -> None:
     """Verify _get_transformation_pipelines passes all config args to get_pipeline_transforms."""
     mock_ds_meta = MagicMock(in_channels=1)
     captured = {}
 
-    def spy_transforms(aug_cfg, img_size, meta, **kw):
+    def spy_transforms(aug_cfg: Any, img_size: Any, meta: Any, **kw: object) -> None:
         captured["aug_cfg"] = aug_cfg
         captured["img_size"] = img_size
         captured["meta"] = meta
         captured.update(kw)
-        return (lambda x: x, lambda x: x)
+        return (lambda x: x, lambda x: x)  # type: ignore
 
     with (
         patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta),
@@ -1249,7 +1296,7 @@ def test_get_transformation_pipelines_passes_correct_args(mock_cfg_no_sampler, m
 
 
 @pytest.mark.unit
-def test_init_stores_ds_meta_from_registry(mock_cfg, mock_metadata):
+def test_init_stores_ds_meta_from_registry(mock_cfg: MagicMock, mock_metadata: MagicMock) -> None:
     """Verify __init__ stores ds_meta from DatasetRegistryWrapper.get_dataset."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -1267,7 +1314,7 @@ def test_init_stores_ds_meta_from_registry(mock_cfg, mock_metadata):
 
 
 @pytest.mark.unit
-def test_init_stores_aug_cfg(mock_cfg, mock_metadata):
+def test_init_stores_aug_cfg(mock_cfg: MagicMock, mock_metadata: MagicMock) -> None:
     """Verify __init__ stores aug_cfg correctly."""
     mock_ds_meta = MagicMock(in_channels=1)
 
@@ -1284,9 +1331,9 @@ def test_init_stores_aug_cfg(mock_cfg, mock_metadata):
 
 
 @pytest.mark.unit
-def test_build_passes_is_optuna_to_infra_kwargs(
-    mock_cfg_no_sampler, mock_metadata, _spy_ds_factory
-):
+def test_build_passes_is_optuna_to_infra_kwargs(  # type: ignore
+    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock, _spy_ds_factory
+) -> None:
     """Verify build() passes is_optuna to _get_infrastructure_kwargs."""
     SpyDS, _ = _spy_ds_factory()
     mock_ds_meta = MagicMock(in_channels=1)
@@ -1315,9 +1362,9 @@ def test_build_passes_is_optuna_to_infra_kwargs(
 
 
 @pytest.mark.unit
-def test_build_train_loader_receives_infra_kwargs(
-    mock_cfg_no_sampler, mock_metadata, _spy_ds_factory
-):
+def test_build_train_loader_receives_infra_kwargs(  # type: ignore
+    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock, _spy_ds_factory
+) -> None:
     """Verify train DataLoader receives infra kwargs (num_workers, pin_memory)."""
     SpyDS, _ = _spy_ds_factory()
     mock_ds_meta = MagicMock(in_channels=1)

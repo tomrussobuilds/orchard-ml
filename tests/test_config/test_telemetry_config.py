@@ -18,7 +18,7 @@ from orchard.core.paths import PROJECT_ROOT
 
 # TELEMETRY CONFIG: DEFAULTS
 @pytest.mark.unit
-def test_telemetry_config_defaults():
+def test_telemetry_config_defaults() -> None:
     """Test TelemetryConfig with default values."""
     config = TelemetryConfig()
 
@@ -28,7 +28,7 @@ def test_telemetry_config_defaults():
 
 
 @pytest.mark.unit
-def test_telemetry_config_custom_values():
+def test_telemetry_config_custom_values() -> None:
     """Test TelemetryConfig with custom parameters."""
     config = TelemetryConfig(
         output_dir=Path("./custom_out"),
@@ -43,7 +43,7 @@ def test_telemetry_config_custom_values():
 
 # TELEMETRY CONFIG: VALIDATION
 @pytest.mark.unit
-def test_log_interval_bounds():
+def test_log_interval_bounds() -> None:
     """Test log_interval must be in [1, 1000]."""
 
     config = TelemetryConfig(log_interval=1)
@@ -60,7 +60,7 @@ def test_log_interval_bounds():
 
 
 @pytest.mark.unit
-def test_log_level_valid_values():
+def test_log_level_valid_values() -> None:
     """Test log_level accepts valid logging levels."""
     for level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
         config = TelemetryConfig(log_level=level)
@@ -68,7 +68,7 @@ def test_log_level_valid_values():
 
 
 @pytest.mark.unit
-def test_log_level_invalid_value():
+def test_log_level_invalid_value() -> None:
     """Test log_level rejects invalid values."""
     with pytest.raises(ValidationError):
         TelemetryConfig(log_level="INVALID")
@@ -79,7 +79,7 @@ def test_log_level_invalid_value():
 
 # TELEMETRY CONFIG: PATH RESOLUTION
 @pytest.mark.unit
-def test_path_sanitization():
+def test_path_sanitization() -> None:
     """Test paths are resolved to absolute forms."""
     config = TelemetryConfig(output_dir=Path("./outputs"))
 
@@ -88,7 +88,7 @@ def test_path_sanitization():
 
 # TELEMETRY CONFIG: PORTABILITY
 @pytest.mark.unit
-def test_to_portable_dict():
+def test_to_portable_dict() -> None:
     """Test to_portable_dict() converts to relative paths."""
     config = TelemetryConfig(output_dir=PROJECT_ROOT / "outputs")
 
@@ -98,7 +98,7 @@ def test_to_portable_dict():
 
 
 @pytest.mark.unit
-def test_to_portable_dict_absolute_outside_project():
+def test_to_portable_dict_absolute_outside_project() -> None:
     """Test to_portable_dict() preserves absolute paths outside PROJECT_ROOT."""
     external_path = Path("/mock/external_out")
     config = TelemetryConfig(output_dir=external_path)
@@ -109,7 +109,7 @@ def test_to_portable_dict_absolute_outside_project():
 
 
 @pytest.mark.unit
-def test_to_portable_dict_preserves_other_fields():
+def test_to_portable_dict_preserves_other_fields() -> None:
     """Test to_portable_dict() preserves non-path fields."""
     config = TelemetryConfig(log_level="DEBUG", log_interval=5)
 
@@ -121,7 +121,7 @@ def test_to_portable_dict_preserves_other_fields():
 
 # TELEMETRY CONFIG: EMPTY YAML HANDLING
 @pytest.mark.unit
-def test_handle_empty_config():
+def test_handle_empty_config() -> None:
     """Test empty YAML section (None) is handled correctly."""
     config = TelemetryConfig(**TelemetryConfig.handle_empty_config(None))
 
@@ -129,7 +129,7 @@ def test_handle_empty_config():
 
 
 @pytest.mark.unit
-def test_handle_empty_config_with_values():
+def test_handle_empty_config_with_values() -> None:
     """Test handle_empty_config passes through non-None values."""
     data = {"log_level": "DEBUG", "log_interval": 20}
     result = TelemetryConfig.handle_empty_config(data)
@@ -139,7 +139,7 @@ def test_handle_empty_config_with_values():
 
 # TELEMETRY CONFIG: IMMUTABILITY
 @pytest.mark.unit
-def test_config_is_frozen():
+def test_config_is_frozen() -> None:
     """Test TelemetryConfig is immutable after creation."""
     config = TelemetryConfig()
 
@@ -148,7 +148,7 @@ def test_config_is_frozen():
 
 
 @pytest.mark.unit
-def test_config_forbids_extra_fields():
+def test_config_forbids_extra_fields() -> None:
     """Test TelemetryConfig rejects unknown fields."""
     with pytest.raises(ValidationError):
         TelemetryConfig(unknown_field="value")

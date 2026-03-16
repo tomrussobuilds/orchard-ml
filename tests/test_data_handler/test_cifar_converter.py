@@ -7,7 +7,9 @@ and NPZ output format without performing real network calls.
 
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -22,9 +24,9 @@ from orchard.data_handler.fetchers.cifar_converter import (
 
 # FIXTURES
 @pytest.fixture
-def cifar10_metadata(tmp_path):
+def cifar10_metadata(tmp_path: Path) -> None:
     """Minimal CIFAR-10 metadata stub."""
-    return SimpleNamespace(
+    return SimpleNamespace(  # type: ignore
         name="cifar10",
         display_name="CIFAR-10",
         md5_checksum="",
@@ -35,9 +37,9 @@ def cifar10_metadata(tmp_path):
 
 
 @pytest.fixture
-def cifar100_metadata(tmp_path):
+def cifar100_metadata(tmp_path: Path) -> None:
     """Minimal CIFAR-100 metadata stub."""
-    return SimpleNamespace(
+    return SimpleNamespace(  # type: ignore
         name="cifar100",
         display_name="CIFAR-100",
         md5_checksum="",
@@ -48,10 +50,10 @@ def cifar100_metadata(tmp_path):
 
 
 @pytest.fixture
-def mock_cifar_cls():
+def mock_cifar_cls() -> None:
     """Creates a mock torchvision CIFAR class with fake data."""
 
-    def _make_mock(num_classes=10, train_size=100, test_size=20):
+    def _make_mock(num_classes: Any = 10, train_size: Any = 100, test_size: Any = 20) -> None:
         train_ds = MagicMock()
         train_ds.data = np.random.randint(0, 255, (train_size, 32, 32, 3), dtype=np.uint8)
         train_ds.targets = list(np.random.randint(0, num_classes, train_size))
@@ -60,12 +62,12 @@ def mock_cifar_cls():
         test_ds.data = np.random.randint(0, 255, (test_size, 32, 32, 3), dtype=np.uint8)
         test_ds.targets = list(np.random.randint(0, num_classes, test_size))
 
-        def cifar_cls(root, train, download):
-            return train_ds if train else test_ds
+        def cifar_cls(root: Any, train: Any, download: Any) -> None:
+            return train_ds if train else test_ds  # type: ignore
 
-        return cifar_cls, train_ds, test_ds
+        return cifar_cls, train_ds, test_ds  # type: ignore
 
-    return _make_mock
+    return _make_mock  # type: ignore
 
 
 # TEST: _create_stratified_split
@@ -73,7 +75,7 @@ def mock_cifar_cls():
 class TestCreateStratifiedSplit:
     """Tests for _create_stratified_split."""
 
-    def test_split_preserves_total_count(self):
+    def test_split_preserves_total_count(self) -> None:
         """Total samples after split should equal input count."""
         n = 1000
         images = np.random.rand(n, 32, 32, 3).astype(np.uint8)
@@ -86,7 +88,7 @@ class TestCreateStratifiedSplit:
         assert len(train_imgs) + len(val_imgs) == n
         assert len(train_labels) + len(val_labels) == n
 
-    def test_split_ratio_approximate(self):
+    def test_split_ratio_approximate(self) -> None:
         """Validation split should be approximately 15% of total."""
         n = 1000
         images = np.random.rand(n, 32, 32, 3).astype(np.uint8)
@@ -97,7 +99,7 @@ class TestCreateStratifiedSplit:
         actual_ratio = len(val_imgs) / n
         assert 0.12 < actual_ratio < 0.18
 
-    def test_split_is_stratified(self):
+    def test_split_is_stratified(self) -> None:
         """Each class should be represented in both train and val sets."""
         n = 500
         images = np.random.rand(n, 32, 32, 3).astype(np.uint8)
@@ -111,7 +113,7 @@ class TestCreateStratifiedSplit:
         assert train_classes == set(range(10))
         assert val_classes == set(range(10))
 
-    def test_split_deterministic(self):
+    def test_split_deterministic(self) -> None:
         """Same seed should produce identical splits."""
         n = 200
         images = np.random.rand(n, 32, 32, 3).astype(np.uint8)
@@ -123,7 +125,7 @@ class TestCreateStratifiedSplit:
         np.testing.assert_array_equal(result1[0], result2[0])
         np.testing.assert_array_equal(result1[1], result2[1])
 
-    def test_split_different_seeds_differ(self):
+    def test_split_different_seeds_differ(self) -> None:
         """Different seeds should produce different label orderings."""
         n = 200
         images = np.random.randint(0, 255, (n, 32, 32, 3), dtype=np.uint8)
@@ -140,7 +142,9 @@ class TestCreateStratifiedSplit:
 class TestDownloadAndConvert:
     """Tests for _download_and_convert."""
 
-    def test_creates_npz_with_correct_keys(self, cifar10_metadata, mock_cifar_cls):
+    def test_creates_npz_with_correct_keys(  # type: ignore
+        self, cifar10_metadata, mock_cifar_cls: MagicMock
+    ) -> None:
         """Converted NPZ should have all 6 standard keys."""
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=100, test_size=20)
 
@@ -157,7 +161,7 @@ class TestDownloadAndConvert:
                 "test_labels",
             }
 
-    def test_labels_shape_is_n_by_1(self, cifar10_metadata, mock_cifar_cls):
+    def test_labels_shape_is_n_by_1(self, cifar10_metadata: Any, mock_cifar_cls: MagicMock) -> None:
         """Labels should be reshaped to (N, 1) for NPZ compatibility."""
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=100, test_size=20)
 
@@ -171,7 +175,7 @@ class TestDownloadAndConvert:
             assert data["test_labels"].ndim == 2
             assert data["test_labels"].shape[1] == 1
 
-    def test_labels_dtype_is_int64(self, cifar10_metadata, mock_cifar_cls):
+    def test_labels_dtype_is_int64(self, cifar10_metadata: Any, mock_cifar_cls: MagicMock) -> None:
         """Labels should be int64."""
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=100, test_size=20)
 
@@ -182,7 +186,7 @@ class TestDownloadAndConvert:
             assert data["val_labels"].dtype == np.int64
             assert data["test_labels"].dtype == np.int64
 
-    def test_image_shape_is_32x32x3(self, cifar10_metadata, mock_cifar_cls):
+    def test_image_shape_is_32x32x3(self, cifar10_metadata: Any, mock_cifar_cls: MagicMock) -> None:
         """Images should be 32x32x3 HWC format."""
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=100, test_size=20)
 
@@ -192,7 +196,7 @@ class TestDownloadAndConvert:
             assert data["train_images"].shape[1:] == (32, 32, 3)
             assert data["test_images"].shape[1:] == (32, 32, 3)
 
-    def test_train_val_split_sizes(self, cifar10_metadata, mock_cifar_cls):
+    def test_train_val_split_sizes(self, cifar10_metadata: Any, mock_cifar_cls: MagicMock) -> None:
         """Train + val should equal original train size."""
         train_size = 100
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=train_size, test_size=20)
@@ -203,7 +207,7 @@ class TestDownloadAndConvert:
             total = len(data["train_images"]) + len(data["val_images"])
             assert total == train_size
 
-    def test_test_set_preserved(self, cifar10_metadata, mock_cifar_cls):
+    def test_test_set_preserved(self, cifar10_metadata: Any, mock_cifar_cls: MagicMock) -> None:
         """Test set should be passed through unchanged."""
         test_size = 20
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=100, test_size=test_size)
@@ -220,7 +224,7 @@ class TestDownloadAndConvert:
 class TestEnsureCifarNpz:
     """Tests for ensure_cifar_npz."""
 
-    def test_skips_download_when_npz_exists(self, cifar10_metadata):
+    def test_skips_download_when_npz_exists(self, cifar10_metadata: Any) -> None:
         """Existing NPZ should be returned without downloading."""
         cifar10_metadata.path.parent.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(
@@ -237,7 +241,9 @@ class TestEnsureCifarNpz:
 
         assert result == cifar10_metadata.path
 
-    def test_cifar10_routes_to_cifar10_class(self, cifar10_metadata, mock_cifar_cls):
+    def test_cifar10_routes_to_cifar10_class(  # type: ignore
+        self, cifar10_metadata, mock_cifar_cls: MagicMock
+    ) -> None:
         """CIFAR-10 metadata should route to torchvision.CIFAR10."""
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10)
 
@@ -249,7 +255,9 @@ class TestEnsureCifarNpz:
 
         assert result.exists()
 
-    def test_cifar100_routes_to_cifar100_class(self, cifar100_metadata, mock_cifar_cls):
+    def test_cifar100_routes_to_cifar100_class(  # type: ignore
+        self, cifar100_metadata, mock_cifar_cls: MagicMock
+    ) -> None:
         """CIFAR-100 metadata should route to torchvision.CIFAR100."""
         cifar_cls, _, _ = mock_cifar_cls(num_classes=100, train_size=200, test_size=40)
 
@@ -269,7 +277,7 @@ class TestEnsureCifarNpz:
 class TestCreateStratifiedSplitMutations:
     """Kill surviving mutants in _create_stratified_split."""
 
-    def test_default_val_ratio_is_015(self):
+    def test_default_val_ratio_is_015(self) -> None:
         """Default val_ratio=0.15 should produce ~15% validation split."""
         n = 1000
         images = np.random.randint(0, 255, (n, 32, 32, 3), dtype=np.uint8)
@@ -282,7 +290,7 @@ class TestCreateStratifiedSplitMutations:
         # 0.15 default → ~15%. If mutated to 1.15, val would be ~100%.
         assert 0.12 < actual_ratio < 0.20
 
-    def test_default_seed_is_42(self):
+    def test_default_seed_is_42(self) -> None:
         """Default seed=42 should produce same result as explicit seed=42."""
         n = 200
         images = np.random.randint(0, 255, (n, 32, 32, 3), dtype=np.uint8)
@@ -293,7 +301,7 @@ class TestCreateStratifiedSplitMutations:
 
         np.testing.assert_array_equal(result_default[0], result_explicit[0])
 
-    def test_max_1_ensures_at_least_one_val_per_class(self):
+    def test_max_1_ensures_at_least_one_val_per_class(self) -> None:
         """max(1, ...) ensures each class has at least 1 validation sample."""
         # 5 classes with only 3 samples each → val_ratio=0.15 would give 0
         # but max(1, ...) forces at least 1
@@ -313,18 +321,18 @@ class TestCreateStratifiedSplitMutations:
 class TestDownloadAndConvertMutations:
     """Kill surviving mutants in _download_and_convert."""
 
-    def test_cifar_cls_called_with_correct_args(self, cifar10_metadata):
+    def test_cifar_cls_called_with_correct_args(self, cifar10_metadata: Any) -> None:
         """cifar_cls should be called with root=str(download_dir), train=T/F, download=True."""
         call_log = []
 
-        def tracking_cls(root, train, download):
+        def tracking_cls(root: Any, train: Any, download: Any) -> None:
             call_log.append({"root": root, "train": train, "download": download})
             ds = MagicMock()
             ds.data = np.random.randint(0, 255, (50, 32, 32, 3), dtype=np.uint8)
             ds.targets = list(np.random.randint(0, 10, 50))
-            return ds
+            return ds  # type: ignore
 
-        _download_and_convert(cifar10_metadata, tracking_cls)
+        _download_and_convert(cifar10_metadata, tracking_cls)  # type: ignore
 
         assert len(call_log) == 2
 
@@ -340,23 +348,25 @@ class TestDownloadAndConvertMutations:
         assert isinstance(call_log[1]["root"], str)
         assert call_log[1]["root"] == call_log[0]["root"]
 
-    def test_download_dir_derived_from_metadata(self, cifar10_metadata):
+    def test_download_dir_derived_from_metadata(self, cifar10_metadata: Any) -> None:
         """Download directory should be parent/.{name}_raw."""
         call_log = []
 
-        def tracking_cls(root, train, download):
+        def tracking_cls(root: Any, train: Any, download: Any) -> None:
             call_log.append(root)
             ds = MagicMock()
             ds.data = np.random.randint(0, 255, (50, 32, 32, 3), dtype=np.uint8)
             ds.targets = list(np.random.randint(0, 10, 50))
-            return ds
+            return ds  # type: ignore
 
-        _download_and_convert(cifar10_metadata, tracking_cls)
+        _download_and_convert(cifar10_metadata, tracking_cls)  # type: ignore
 
         expected_dir = str(cifar10_metadata.path.parent / ".cifar10_raw")
         assert call_log[0] == expected_dir
 
-    def test_labels_reshaped_to_n_by_1_not_n_by_other(self, cifar10_metadata, mock_cifar_cls):
+    def test_labels_reshaped_to_n_by_1_not_n_by_other(  # type: ignore
+        self, cifar10_metadata, mock_cifar_cls: MagicMock
+    ) -> None:
         """Labels must be reshaped to (-1, 1), not (-2, 1) or other."""
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=100, test_size=20)
 
@@ -370,7 +380,9 @@ class TestDownloadAndConvertMutations:
                 assert np.all(data[key] >= 0)
                 assert np.all(data[key] < 10)
 
-    def test_parent_dir_created_with_parents(self, tmp_path, mock_cifar_cls):
+    def test_parent_dir_created_with_parents(
+        self, tmp_path: Path, mock_cifar_cls: MagicMock
+    ) -> None:
         """mkdir should use parents=True for nested directories."""
         deep_path = tmp_path / "a" / "b" / "c" / "cifar10.npz"
         deep_metadata = SimpleNamespace(
@@ -383,7 +395,7 @@ class TestDownloadAndConvertMutations:
         )
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=50, test_size=10)
 
-        result = _download_and_convert(deep_metadata, cifar_cls)
+        result = _download_and_convert(deep_metadata, cifar_cls)  # type: ignore
 
         assert result.exists()
 

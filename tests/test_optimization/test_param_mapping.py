@@ -21,13 +21,13 @@ from orchard.optimization.orchestrator.registries import (
 
 
 @pytest.mark.unit
-def test_sampler_registry_has_tpe():
+def test_sampler_registry_has_tpe() -> None:
     """Test SAMPLER_REGISTRY contains TPE."""
     assert "tpe" in SAMPLER_REGISTRY
 
 
 @pytest.mark.unit
-def test_pruner_registry_has_median():
+def test_pruner_registry_has_median() -> None:
     """Test PRUNER_REGISTRY contains Median."""
     assert "median" in PRUNER_REGISTRY
 
@@ -38,7 +38,7 @@ def test_pruner_registry_has_median():
 
 
 @pytest.mark.unit
-def test_map_param_to_config_path_training():
+def test_map_param_to_config_path_training() -> None:
     """Test mapping training parameter."""
     section, key = map_param_to_config_path("learning_rate")
     assert section == "training"
@@ -46,7 +46,7 @@ def test_map_param_to_config_path_training():
 
 
 @pytest.mark.unit
-def test_map_param_to_config_path_architecture():
+def test_map_param_to_config_path_architecture() -> None:
     """Test mapping architecture parameter."""
     section, key = map_param_to_config_path("dropout")
     assert section == "architecture"
@@ -54,7 +54,7 @@ def test_map_param_to_config_path_architecture():
 
 
 @pytest.mark.unit
-def test_map_param_to_config_path_augmentation():
+def test_map_param_to_config_path_augmentation() -> None:
     """Test mapping augmentation parameter."""
     section, key = map_param_to_config_path("rotation_angle")
     assert section == "augmentation"
@@ -70,7 +70,7 @@ def test_map_param_to_config_path_augmentation():
 
 
 @pytest.mark.unit
-def test_map_param_to_config_path_special_model_name():
+def test_map_param_to_config_path_special_model_name() -> None:
     """Test mapping special parameter: model_name."""
     section, key = map_param_to_config_path("model_name")
     assert section == "architecture"
@@ -78,7 +78,7 @@ def test_map_param_to_config_path_special_model_name():
 
 
 @pytest.mark.unit
-def test_map_param_to_config_path_special_weight_variant():
+def test_map_param_to_config_path_special_weight_variant() -> None:
     """Test mapping special parameter: weight_variant."""
     section, key = map_param_to_config_path("weight_variant")
     assert section == "architecture"
@@ -86,7 +86,7 @@ def test_map_param_to_config_path_special_weight_variant():
 
 
 @pytest.mark.unit
-def test_map_param_to_config_path_unknown_raises():
+def test_map_param_to_config_path_unknown_raises() -> None:
     """Test unknown parameter raises ValueError."""
     with pytest.raises(ValueError, match="Unknown hyperparameter 'unknown_param'"):
         map_param_to_config_path("unknown_param")

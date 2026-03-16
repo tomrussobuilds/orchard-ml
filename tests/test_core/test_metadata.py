@@ -17,7 +17,7 @@ from orchard.core.metadata import DatasetMetadata, DatasetRegistryWrapper
 
 # DATASET METADATA TESTS
 @pytest.mark.unit
-def test_dataset_metadata_repr_all_components():
+def test_dataset_metadata_repr_all_components() -> None:
     """Test DatasetMetadata __repr__ includes all components."""
     metadata = DatasetMetadata(
         name="testmnist",
@@ -44,7 +44,7 @@ def test_dataset_metadata_repr_all_components():
 
 
 @pytest.mark.unit
-def test_registry_wrapper_get_dataset_not_found():
+def test_registry_wrapper_get_dataset_not_found() -> None:
     """Test DatasetRegistryWrapper.get_dataset raises KeyError for unknown dataset."""
     wrapper = DatasetRegistryWrapper(resolution=28)
 
@@ -60,7 +60,7 @@ def test_registry_wrapper_get_dataset_not_found():
 
 
 @pytest.mark.unit
-def test_registry_wrapper_invalid_resolution():
+def test_registry_wrapper_invalid_resolution() -> None:
     """Test DatasetRegistryWrapper raises ValueError for invalid resolution."""
     with pytest.raises(ValueError) as exc_info:
         DatasetRegistryWrapper(resolution=999)
@@ -71,7 +71,7 @@ def test_registry_wrapper_invalid_resolution():
 
 
 @pytest.mark.unit
-def test_registry_wrapper_resolution_28():
+def test_registry_wrapper_resolution_28() -> None:
     """Test DatasetRegistryWrapper loads 28x28 registry correctly."""
     wrapper = DatasetRegistryWrapper(resolution=28)
 
@@ -83,7 +83,7 @@ def test_registry_wrapper_resolution_28():
 
 
 @pytest.mark.unit
-def test_registry_wrapper_resolution_32():
+def test_registry_wrapper_resolution_32() -> None:
     """Test DatasetRegistryWrapper loads 32x32 registry correctly."""
     wrapper = DatasetRegistryWrapper(resolution=32)
 
@@ -95,7 +95,7 @@ def test_registry_wrapper_resolution_32():
 
 
 @pytest.mark.unit
-def test_registry_wrapper_resolution_32_contains_cifar():
+def test_registry_wrapper_resolution_32_contains_cifar() -> None:
     """Test 32x32 registry contains CIFAR-10 and CIFAR-100."""
     wrapper = DatasetRegistryWrapper(resolution=32)
 
@@ -108,7 +108,7 @@ def test_registry_wrapper_resolution_32_contains_cifar():
 
 
 @pytest.mark.unit
-def test_registry_wrapper_resolution_64():
+def test_registry_wrapper_resolution_64() -> None:
     """Test DatasetRegistryWrapper loads 64x64 registry correctly."""
     wrapper = DatasetRegistryWrapper(resolution=64)
 
@@ -120,7 +120,7 @@ def test_registry_wrapper_resolution_64():
 
 
 @pytest.mark.unit
-def test_registry_wrapper_resolution_128():
+def test_registry_wrapper_resolution_128() -> None:
     """Test DatasetRegistryWrapper loads 128x128 registry correctly."""
     wrapper = DatasetRegistryWrapper(resolution=128)
 
@@ -132,7 +132,7 @@ def test_registry_wrapper_resolution_128():
 
 
 @pytest.mark.unit
-def test_registry_wrapper_resolution_224():
+def test_registry_wrapper_resolution_224() -> None:
     """Test DatasetRegistryWrapper loads 224x224 registry correctly."""
     wrapper = DatasetRegistryWrapper(resolution=224)
 
@@ -144,7 +144,7 @@ def test_registry_wrapper_resolution_224():
 
 
 @pytest.mark.unit
-def test_registry_wrapper_get_dataset_returns_deep_copy():
+def test_registry_wrapper_get_dataset_returns_deep_copy() -> None:
     """Test get_dataset returns independent copy of metadata."""
     wrapper = DatasetRegistryWrapper(resolution=28)
 
@@ -163,7 +163,7 @@ def test_registry_wrapper_get_dataset_returns_deep_copy():
 
 
 @pytest.mark.unit
-def test_dataset_metadata_normalization_info_property():
+def test_dataset_metadata_normalization_info_property() -> None:
     """Test DatasetMetadata.normalization_info property (line 59 in base.py)."""
     metadata = DatasetMetadata(
         name="testmnist",
@@ -187,7 +187,7 @@ def test_dataset_metadata_normalization_info_property():
 
 
 @pytest.mark.unit
-def test_dataset_metadata_resolution_str_none():
+def test_dataset_metadata_resolution_str_none() -> None:
     """Test resolution_str returns 'unknown' when native_resolution is None."""
     metadata = DatasetMetadata(
         name="testmnist",
@@ -207,9 +207,9 @@ def test_dataset_metadata_resolution_str_none():
 
 
 @pytest.mark.unit
-def test_registry_wrapper_empty_source_registry():
+def test_registry_wrapper_empty_source_registry() -> None:
     """Test DatasetRegistryWrapper raises ValueError when source registry is empty."""
-    empty_table = {28: ({},), 32: ({},), 64: ({},), 128: ({},), 224: ({}, {})}
+    empty_table = {28: ({},), 32: ({},), 64: ({},), 128: ({},), 224: ({}, {})}  # type: ignore
     with patch("orchard.core.metadata.wrapper._RESOLUTION_REGISTRIES", empty_table):
         with pytest.raises(ValueError) as exc_info:
             DatasetRegistryWrapper(resolution=28)

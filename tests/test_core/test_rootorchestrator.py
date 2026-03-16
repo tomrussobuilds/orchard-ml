@@ -7,6 +7,7 @@ Achieves high coverage through dependency injection and mocking.
 from __future__ import annotations
 
 import time
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -17,7 +18,7 @@ from orchard.core import LOGGER_NAME, Config, RootOrchestrator, TimeTracker
 
 # TIMETRACKER TESTS
 @pytest.mark.unit
-def test_timetracker_init_state():
+def test_timetracker_init_state() -> None:
     """Test __init__ sets _start_time and _end_time to None (not empty string)."""
     tracker = TimeTracker()
     assert tracker._start_time is None
@@ -25,14 +26,14 @@ def test_timetracker_init_state():
 
 
 @pytest.mark.unit
-def test_timetracker_elapsed_seconds_before_start():
+def test_timetracker_elapsed_seconds_before_start() -> None:
     """Test elapsed_seconds returns 0 before start() is called."""
     tracker = TimeTracker()
     assert tracker.elapsed_seconds == pytest.approx(0.0)
 
 
 @pytest.mark.unit
-def test_timetracker_elapsed_formatted_seconds():
+def test_timetracker_elapsed_formatted_seconds() -> None:
     """Test elapsed_formatted returns seconds format for < 1 minute."""
     tracker = TimeTracker()
     tracker._start_time = time.time() - 45.5  # 45.5 seconds ago
@@ -45,7 +46,7 @@ def test_timetracker_elapsed_formatted_seconds():
 
 
 @pytest.mark.unit
-def test_timetracker_elapsed_formatted_minutes():
+def test_timetracker_elapsed_formatted_minutes() -> None:
     """Test elapsed_formatted returns minutes format for >= 1 minute."""
     tracker = TimeTracker()
     tracker._start_time = time.time() - 125  # 2 minutes 5 seconds ago
@@ -59,7 +60,7 @@ def test_timetracker_elapsed_formatted_minutes():
 
 
 @pytest.mark.unit
-def test_timetracker_elapsed_formatted_hours():
+def test_timetracker_elapsed_formatted_hours() -> None:
     """Test elapsed_formatted returns hours format for >= 1 hour."""
     tracker = TimeTracker()
     tracker._start_time = time.time() - 3725  # 1 hour 2 minutes 5 seconds
@@ -73,7 +74,7 @@ def test_timetracker_elapsed_formatted_hours():
 
 
 @pytest.mark.unit
-def test_timetracker_start_resets_end_time():
+def test_timetracker_start_resets_end_time() -> None:
     """Test start() resets _end_time to None."""
     tracker = TimeTracker()
     tracker._end_time = time.time()
@@ -85,7 +86,7 @@ def test_timetracker_start_resets_end_time():
 
 
 @pytest.mark.unit
-def test_timetracker_start_sets_float_start_time():
+def test_timetracker_start_sets_float_start_time() -> None:
     """Test start() sets _start_time to a float (not None)."""
     tracker = TimeTracker()
     tracker.start()
@@ -93,7 +94,7 @@ def test_timetracker_start_sets_float_start_time():
 
 
 @pytest.mark.unit
-def test_timetracker_stop_returns_elapsed():
+def test_timetracker_stop_returns_elapsed() -> None:
     """Test stop() returns elapsed seconds."""
     tracker = TimeTracker()
     tracker.start()
@@ -107,7 +108,7 @@ def test_timetracker_stop_returns_elapsed():
 
 # ORCHESTRATOR: INITIALIZATION
 @pytest.mark.unit
-def test_orchestrator_init_with_defaults():
+def test_orchestrator_init_with_defaults() -> None:
     """Test RootOrchestrator initializes with default dependencies."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -125,7 +126,7 @@ def test_orchestrator_init_with_defaults():
 
 
 @pytest.mark.unit
-def test_orchestrator_init_extracts_policies():
+def test_orchestrator_init_extracts_policies() -> None:
     """Test RootOrchestrator extracts policies from config."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = True
@@ -140,7 +141,7 @@ def test_orchestrator_init_extracts_policies():
 
 
 @pytest.mark.unit
-def test_init_lazy_attributes_and_policy_extraction():
+def test_init_lazy_attributes_and_policy_extraction() -> None:
     """Test __init__ sets lazy attributes and extracts policy flags."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = True
@@ -159,7 +160,7 @@ def test_init_lazy_attributes_and_policy_extraction():
 
 # CONTEXT MANAGER: __ENTER__
 @pytest.mark.unit
-def test_context_manager_enter():
+def test_context_manager_enter() -> None:
     """Test __enter__ calls initialize_core_services."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -167,7 +168,7 @@ def test_context_manager_enter():
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
-    orch.initialize_core_services = MagicMock(return_value=MagicMock())
+    orch.initialize_core_services = MagicMock(return_value=MagicMock())  # type: ignore
 
     result = orch.__enter__()
 
@@ -176,7 +177,7 @@ def test_context_manager_enter():
 
 
 @pytest.mark.unit
-def test_context_manager_enter_exception_cleanup():
+def test_context_manager_enter_exception_cleanup() -> None:
     """Test __enter__ calls cleanup on exception."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -184,8 +185,8 @@ def test_context_manager_enter_exception_cleanup():
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
-    orch.initialize_core_services = MagicMock(side_effect=RuntimeError("Init failed"))
-    orch.cleanup = MagicMock()
+    orch.initialize_core_services = MagicMock(side_effect=RuntimeError("Init failed"))  # type: ignore
+    orch.cleanup = MagicMock()  # type: ignore
 
     with pytest.raises(RuntimeError, match="Init failed"):
         orch.__enter__()
@@ -195,7 +196,7 @@ def test_context_manager_enter_exception_cleanup():
 
 # CONTEXT MANAGER: __EXIT__
 @pytest.mark.unit
-def test_context_manager_exit_calls_cleanup():
+def test_context_manager_exit_calls_cleanup() -> None:
     """Test __exit__ calls cleanup."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -203,7 +204,7 @@ def test_context_manager_exit_calls_cleanup():
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
-    orch.cleanup = MagicMock()
+    orch.cleanup = MagicMock()  # type: ignore
 
     result = orch.__exit__(None, None, None)
 
@@ -212,7 +213,7 @@ def test_context_manager_exit_calls_cleanup():
 
 
 @pytest.mark.unit
-def test_context_manager_exit_propagates_exception():
+def test_context_manager_exit_propagates_exception() -> None:
     """Test __exit__ returns False to propagate exceptions."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -220,7 +221,7 @@ def test_context_manager_exit_propagates_exception():
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
-    orch.cleanup = MagicMock()
+    orch.cleanup = MagicMock()  # type: ignore
 
     result = orch.__exit__(ValueError, ValueError("test"), None)
 
@@ -228,7 +229,7 @@ def test_context_manager_exit_propagates_exception():
 
 
 @pytest.mark.unit
-def test_context_manager_exit_stops_timer():
+def test_context_manager_exit_stops_timer() -> None:
     """Test __exit__ stops the time tracker and runs cleanup."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -238,7 +239,7 @@ def test_context_manager_exit_stops_timer():
     mock_time_tracker = MagicMock()
 
     orch = RootOrchestrator(cfg=mock_cfg, time_tracker=mock_time_tracker)
-    orch.cleanup = MagicMock()
+    orch.cleanup = MagicMock()  # type: ignore
 
     orch.__exit__(None, None, None)
 
@@ -248,7 +249,7 @@ def test_context_manager_exit_stops_timer():
 
 # GET DEVICE
 @pytest.mark.unit
-def test_get_device_returns_cpu():
+def test_get_device_returns_cpu() -> None:
     """Test get_device returns CPU device."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.device = "cpu"
@@ -264,7 +265,7 @@ def test_get_device_returns_cpu():
 
 
 @pytest.mark.unit
-def test_get_device_caches_result():
+def test_get_device_caches_result() -> None:
     """Test get_device caches device object."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.device = "cpu"
@@ -281,7 +282,7 @@ def test_get_device_caches_result():
 
 
 @pytest.mark.unit
-def test_get_device_calls_resolver_when_cache_none():
+def test_get_device_calls_resolver_when_cache_none() -> None:
     """Test get_device calls device resolver when _device_cache is None."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.device = "cpu"
@@ -300,7 +301,7 @@ def test_get_device_calls_resolver_when_cache_none():
 
 # CLEANUP
 @pytest.mark.unit
-def test_cleanup_handles_infra_release_exception(monkeypatch):
+def test_cleanup_handles_infra_release_exception(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test cleanup handles exceptions raised by infra.release_resources."""
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -319,7 +320,7 @@ def test_cleanup_handles_infra_release_exception(monkeypatch):
 
 
 @pytest.mark.unit
-def test_cleanup_release_resources_fails_no_logger(caplog):
+def test_cleanup_release_resources_fails_no_logger(caplog) -> None:  # type: ignore
     """Test cleanup logs error if release_resources fails and no logger."""
     import logging
 
@@ -344,7 +345,7 @@ def test_cleanup_release_resources_fails_no_logger(caplog):
 
 # ORCHESTRATOR: PHASES 1-7
 @pytest.mark.unit
-def test_phase_1_determinism_always_calls_seed_setter():
+def test_phase_1_determinism_always_calls_seed_setter() -> None:
     """Test _phase_1_determinism always calls seed setter."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 123
@@ -358,7 +359,7 @@ def test_phase_1_determinism_always_calls_seed_setter():
 
 
 @pytest.mark.unit
-def test_phase_2_runtime_configuration_applies_threads_and_system():
+def test_phase_2_runtime_configuration_applies_threads_and_system() -> None:
     mock_cfg = MagicMock()
     mock_cfg.hardware.effective_num_workers = 4
     mock_thread_applier = MagicMock(return_value=7)
@@ -376,11 +377,11 @@ def test_phase_2_runtime_configuration_applies_threads_and_system():
 
 
 @pytest.mark.unit
-def test_phase_3_filesystem_provisioning_calls_static_setup_and_runpaths():
+def test_phase_3_filesystem_provisioning_calls_static_setup_and_runpaths() -> None:
     import orchard.core.orchestrator as orch_module
 
-    orig_create = orch_module.RunPaths.create
-    orch_module.RunPaths.create = MagicMock(return_value="runpaths_obj")
+    orig_create = orch_module.RunPaths.create  # type: ignore
+    orch_module.RunPaths.create = MagicMock(return_value="runpaths_obj")  # type: ignore
 
     mock_cfg = MagicMock()
     mock_cfg.dataset.dataset_name = "ds"
@@ -393,18 +394,18 @@ def test_phase_3_filesystem_provisioning_calls_static_setup_and_runpaths():
     orch._phase_3_filesystem_provisioning()
 
     mock_static_setup.assert_called_once()
-    orch_module.RunPaths.create.assert_called_once_with(
+    orch_module.RunPaths.create.assert_called_once_with(  # type: ignore
         dataset_slug="ds",
         architecture_name="architecture",
         training_cfg={"some": "data"},
         base_dir="/mock/out",
     )
-    assert orch.paths == "runpaths_obj"
-    orch_module.RunPaths.create = orig_create
+    assert orch.paths == "runpaths_obj"  # type: ignore
+    orch_module.RunPaths.create = orig_create  # type: ignore
 
 
 @pytest.mark.unit
-def test_phase_4_logging_initialization_sets_logger():
+def test_phase_4_logging_initialization_sets_logger() -> None:
     mock_cfg = MagicMock()
     mock_cfg.telemetry.log_level = "INFO"
     orch = RootOrchestrator(cfg=mock_cfg)
@@ -420,11 +421,11 @@ def test_phase_4_logging_initialization_sets_logger():
         log_dir="/mock/logs",
         level="INFO",
     )
-    assert orch.run_logger == "logger_obj"
+    assert orch.run_logger == "logger_obj"  # type: ignore
 
 
 @pytest.mark.unit
-def test_phase_5_run_manifest_saves_config(tmp_path):
+def test_phase_5_run_manifest_saves_config(tmp_path: Path) -> None:
     mock_cfg = MagicMock()
     mock_audit = MagicMock()
     orch = RootOrchestrator(cfg=mock_cfg, audit_saver=mock_audit)
@@ -438,7 +439,7 @@ def test_phase_5_run_manifest_saves_config(tmp_path):
 
 
 @pytest.mark.unit
-def test_phase_6_infra_prepare_raises_on_failure_no_logger():
+def test_phase_6_infra_prepare_raises_on_failure_no_logger() -> None:
     """Test _phase_6_infrastructure_guarding raises OrchardInfrastructureError on failure."""
     from orchard.exceptions import OrchardInfrastructureError
 
@@ -457,7 +458,7 @@ def test_phase_6_infra_prepare_raises_on_failure_no_logger():
 
 
 @pytest.mark.unit
-def test_device_resolver_fails_raises_device_error_during_init():
+def test_device_resolver_fails_raises_device_error_during_init() -> None:
     """Test initialize_core_services raises OrchardDeviceError if device resolver fails."""
     from orchard.exceptions import OrchardDeviceError
 
@@ -467,7 +468,7 @@ def test_device_resolver_fails_raises_device_error_during_init():
     mock_cfg.hardware.device = "cuda"
     mock_paths = MagicMock()
 
-    def failing_resolver(**kwargs):
+    def failing_resolver(**kwargs):  # type: ignore
         raise RuntimeError("device fail")
 
     with pytest.MonkeyPatch.context() as m:
@@ -491,7 +492,7 @@ def test_device_resolver_fails_raises_device_error_during_init():
 
 # CLEANUP: EDGE CASES
 @pytest.mark.unit
-def test_cleanup_with_no_infra_manager():
+def test_cleanup_with_no_infra_manager() -> None:
     """Test cleanup when infra manager is None."""
     mock_cfg = MagicMock()
     mock_logger = MagicMock()
@@ -506,7 +507,7 @@ def test_cleanup_with_no_infra_manager():
 
 
 @pytest.mark.unit
-def test_cleanup_closes_logger_handlers_on_infra_failure():
+def test_cleanup_closes_logger_handlers_on_infra_failure() -> None:
     """Test cleanup closes logger handlers when infra.release_resources fails."""
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -532,7 +533,7 @@ def test_cleanup_closes_logger_handlers_on_infra_failure():
 
 
 @pytest.mark.unit
-def test_cleanup_with_empty_handlers_list():
+def test_cleanup_with_empty_handlers_list() -> None:
     """Test cleanup when logger has no handlers."""
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -550,7 +551,7 @@ def test_cleanup_with_empty_handlers_list():
 
 # GET DEVICE: ADDITIONAL EDGE CASES
 @pytest.mark.unit
-def test_get_device_with_cuda_string():
+def test_get_device_with_cuda_string() -> None:
     """Test get_device with 'cuda' device string."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.device = "cuda"
@@ -569,7 +570,7 @@ def test_get_device_with_cuda_string():
 
 
 @pytest.mark.unit
-def test_get_device_with_mps_string():
+def test_get_device_with_mps_string() -> None:
     """Test get_device with 'mps' device string."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.device = "mps"
@@ -589,7 +590,7 @@ def test_get_device_with_mps_string():
 
 # PHASE 7: DEVICE RESOLUTION EDGE CASES
 @pytest.mark.unit
-def test_phase_7_device_already_cached_with_logger(caplog):
+def test_phase_7_device_already_cached_with_logger(caplog) -> None:  # type: ignore
     """Test _phase_7 when device is already cached."""
     import logging
 
@@ -612,7 +613,7 @@ def test_phase_7_device_already_cached_with_logger(caplog):
 
 
 @pytest.mark.unit
-def test_phase_7_uses_cached_device():
+def test_phase_7_uses_cached_device() -> None:
     """Test _phase_7 uses pre-resolved device cache for reporting."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.deterministic_warn_only = False
@@ -635,7 +636,7 @@ def test_phase_7_uses_cached_device():
 
 # PHASE 6: INFRASTRUCTURE GUARDING EDGE CASES
 @pytest.mark.unit
-def test_phase_6_prepare_fails_with_logger():
+def test_phase_6_prepare_fails_with_logger() -> None:
     """Test _phase_6 raises OrchardInfrastructureError when prepare_environment fails."""
     from orchard.exceptions import OrchardInfrastructureError
 
@@ -655,7 +656,7 @@ def test_phase_6_prepare_fails_with_logger():
 
 # INTEGRATION: FULL LIFECYCLE
 @pytest.mark.integration
-def test_full_lifecycle_with_all_phases(tmp_path):
+def test_full_lifecycle_with_all_phases(tmp_path: Path) -> None:
     """Test complete initialization through all phases."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
@@ -726,7 +727,7 @@ def test_full_lifecycle_with_all_phases(tmp_path):
 
 
 @pytest.mark.integration
-def test_context_manager_full_lifecycle():
+def test_context_manager_full_lifecycle() -> None:
     """Test full lifecycle using context manager."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -736,7 +737,7 @@ def test_context_manager_full_lifecycle():
     mock_infra = MagicMock()
 
     orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra)
-    orch.initialize_core_services = MagicMock(return_value=MagicMock())
+    orch.initialize_core_services = MagicMock(return_value=MagicMock())  # type: ignore
     orch._infra_lock_acquired = True
 
     with orch as orchestrator:
@@ -747,7 +748,7 @@ def test_context_manager_full_lifecycle():
 
 
 # INTEGRATION: REAL DEPENDENCIES
-def _make_integration_cfg(tmp_path):
+def _make_integration_cfg(tmp_path: Path):  # type: ignore
     """Build a minimal real Config rooted at tmp_path."""
     return Config(
         dataset={"name": "bloodmnist", "resolution": 28},
@@ -759,7 +760,7 @@ def _make_integration_cfg(tmp_path):
 
 
 @pytest.mark.integration
-def test_integration_phases_1_through_4_real_filesystem(tmp_path):
+def test_integration_phases_1_through_4_real_filesystem(tmp_path: Path) -> None:
     """Phases 1-4 with real set_seed, RunPaths.create, Logger.setup."""
     cfg = _make_integration_cfg(tmp_path)
     mock_infra = MagicMock()
@@ -787,7 +788,7 @@ def test_integration_phases_1_through_4_real_filesystem(tmp_path):
 
 
 @pytest.mark.integration
-def test_integration_context_manager_lifecycle(tmp_path):
+def test_integration_context_manager_lifecycle(tmp_path: Path) -> None:
     """Context manager creates real dirs and cleans up logging on exit."""
     cfg = _make_integration_cfg(tmp_path)
     mock_infra = MagicMock()
@@ -809,7 +810,7 @@ def test_integration_context_manager_lifecycle(tmp_path):
 
 
 @pytest.mark.integration
-def test_integration_phase_5_writes_real_config_yaml(tmp_path):
+def test_integration_phase_5_writes_real_config_yaml(tmp_path: Path) -> None:
     """Real AuditSaver.save_config writes a parseable config.yaml."""
     from orchard.core.io import load_config_from_yaml
     from orchard.core.io.serialization import AuditSaver
@@ -827,7 +828,7 @@ def test_integration_phase_5_writes_real_config_yaml(tmp_path):
         )
         orch.initialize_core_services()
 
-    config_yaml = orch.paths.get_config_path()
+    config_yaml = orch.paths.get_config_path()  # type: ignore
     assert config_yaml.exists()
     loaded = load_config_from_yaml(config_yaml)
     assert loaded["dataset"]["name"] == "bloodmnist"
@@ -836,7 +837,7 @@ def test_integration_phase_5_writes_real_config_yaml(tmp_path):
 
 
 @pytest.mark.integration
-def test_integration_phase_7_deferred_report(tmp_path):
+def test_integration_phase_7_deferred_report(tmp_path: Path) -> None:
     """Reporter called only after explicit log_environment_report()."""
     cfg = _make_integration_cfg(tmp_path)
     mock_reporter = MagicMock()
@@ -861,7 +862,7 @@ def test_integration_phase_7_deferred_report(tmp_path):
 
 
 @pytest.mark.integration
-def test_integration_idempotent_single_run_dir(tmp_path):
+def test_integration_idempotent_single_run_dir(tmp_path: Path) -> None:
     """Two initialize_core_services() calls create only one run directory."""
     cfg = _make_integration_cfg(tmp_path)
 
@@ -884,7 +885,7 @@ def test_integration_idempotent_single_run_dir(tmp_path):
 
 # IDEMPOTENCY
 @pytest.mark.unit
-def test_initialize_core_services_idempotent_returns_cached_paths(tmp_path):
+def test_initialize_core_services_idempotent_returns_cached_paths(tmp_path: Path) -> None:
     """Test that calling initialize_core_services twice returns same paths without re-executing phases."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
@@ -952,7 +953,7 @@ def test_initialize_core_services_idempotent_returns_cached_paths(tmp_path):
 
 
 @pytest.mark.unit
-def test_initialize_core_services_skips_when_already_initialized():
+def test_initialize_core_services_skips_when_already_initialized() -> None:
     """Test that initialize_core_services returns immediately when _initialized is True."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -974,7 +975,7 @@ def test_initialize_core_services_skips_when_already_initialized():
 
 # RANK-AWARENESS: INITIALIZATION
 @pytest.mark.unit
-def test_orchestrator_rank_defaults_to_zero(monkeypatch):
+def test_orchestrator_rank_defaults_to_zero(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test rank defaults to 0 when RANK env var is not set."""
     monkeypatch.delenv("RANK", raising=False)
     mock_cfg = MagicMock()
@@ -989,7 +990,7 @@ def test_orchestrator_rank_defaults_to_zero(monkeypatch):
 
 
 @pytest.mark.unit
-def test_orchestrator_rank_from_env(monkeypatch):
+def test_orchestrator_rank_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test rank is read from RANK env var."""
     monkeypatch.setenv("RANK", "3")
     mock_cfg = MagicMock()
@@ -1004,7 +1005,7 @@ def test_orchestrator_rank_from_env(monkeypatch):
 
 
 @pytest.mark.unit
-def test_orchestrator_rank_injectable():
+def test_orchestrator_rank_injectable() -> None:
     """Test rank can be injected directly, overriding env var."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -1019,7 +1020,7 @@ def test_orchestrator_rank_injectable():
 
 # RANK-AWARENESS: PHASE GATING
 @pytest.mark.unit
-def test_rank_zero_executes_all_phases(tmp_path):
+def test_rank_zero_executes_all_phases(tmp_path: Path) -> None:
     """Test rank 0 executes all phases."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
@@ -1075,7 +1076,7 @@ def test_rank_zero_executes_all_phases(tmp_path):
 
 
 @pytest.mark.unit
-def test_non_main_rank_skips_phases_3_through_7():
+def test_non_main_rank_skips_phases_3_through_7() -> None:
     """Test non-main rank only executes phases 1-2, skipping 3-7."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
@@ -1128,7 +1129,7 @@ def test_non_main_rank_skips_phases_3_through_7():
 
 
 @pytest.mark.unit
-def test_non_main_rank_cleanup_is_noop():
+def test_non_main_rank_cleanup_is_noop() -> None:
     """Test cleanup is a no-op for non-main ranks."""
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -1146,7 +1147,7 @@ def test_non_main_rank_cleanup_is_noop():
 
 
 @pytest.mark.unit
-def test_rank_zero_cleanup_releases_resources():
+def test_rank_zero_cleanup_releases_resources() -> None:
     """Test cleanup releases resources for rank 0."""
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -1165,7 +1166,7 @@ def test_rank_zero_cleanup_releases_resources():
 
 
 @pytest.mark.unit
-def test_non_main_rank_context_manager_lifecycle():
+def test_non_main_rank_context_manager_lifecycle() -> None:
     """Test full context manager lifecycle for non-main rank."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
@@ -1198,7 +1199,7 @@ def test_non_main_rank_context_manager_lifecycle():
 
 # ORCHESTRATOR: INITIAL STATE AND KWARGS VERIFICATION
 @pytest.mark.unit
-def test_init_initialized_starts_false():
+def test_init_initialized_starts_false() -> None:
     """Test _initialized flag starts as False."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -1211,7 +1212,7 @@ def test_init_initialized_starts_false():
 
 
 @pytest.mark.unit
-def test_init_applied_threads_starts_zero():
+def test_init_applied_threads_starts_zero() -> None:
     """Test _applied_threads starts as 0."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -1224,7 +1225,7 @@ def test_init_applied_threads_starts_zero():
 
 
 @pytest.mark.unit
-def test_phase_7_reporter_receives_all_kwargs():
+def test_phase_7_reporter_receives_all_kwargs() -> None:
     """Test _phase_7_environment_report passes all kwargs to reporter.log_initial_status."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.deterministic_warn_only = False
@@ -1250,7 +1251,7 @@ def test_phase_7_reporter_receives_all_kwargs():
 
 
 @pytest.mark.unit
-def test_cleanup_error_message_content():
+def test_cleanup_error_message_content() -> None:
     """Test cleanup logs specific error message when release fails."""
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -1270,7 +1271,7 @@ def test_cleanup_error_message_content():
 
 
 @pytest.mark.unit
-def test_log_environment_report_noop_on_non_main_rank():
+def test_log_environment_report_noop_on_non_main_rank() -> None:
     """Test log_environment_report is a no-op for non-main ranks."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.deterministic_warn_only = False
@@ -1287,7 +1288,7 @@ def test_log_environment_report_noop_on_non_main_rank():
 
 
 @pytest.mark.unit
-def test_applied_threads_stored_from_phase_2(tmp_path):
+def test_applied_threads_stored_from_phase_2(tmp_path: Path) -> None:
     """Test _applied_threads is set from phase 2 return value."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
@@ -1328,7 +1329,7 @@ def test_applied_threads_stored_from_phase_2(tmp_path):
 
 
 @pytest.mark.unit
-def test_applied_threads_stored_non_main_rank():
+def test_applied_threads_stored_non_main_rank() -> None:
     """Test _applied_threads is set even for non-main ranks."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
@@ -1353,7 +1354,7 @@ def test_applied_threads_stored_non_main_rank():
 
 
 @pytest.mark.unit
-def test_phase_6_prepare_environment_receives_cfg_and_logger():
+def test_phase_6_prepare_environment_receives_cfg_and_logger() -> None:
     """Test _phase_6 passes cfg and logger to infra.prepare_environment."""
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -1368,7 +1369,7 @@ def test_phase_6_prepare_environment_receives_cfg_and_logger():
 
 
 @pytest.mark.unit
-def test_cleanup_passes_cfg_and_logger_to_release():
+def test_cleanup_passes_cfg_and_logger_to_release() -> None:
     """Test cleanup passes cfg and logger to infra.release_resources."""
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -1385,7 +1386,7 @@ def test_cleanup_passes_cfg_and_logger_to_release():
 
 
 @pytest.mark.unit
-def test_initialized_flag_set_after_init():
+def test_initialized_flag_set_after_init() -> None:
     """Test _initialized is True after initialize_core_services completes."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
@@ -1408,7 +1409,7 @@ def test_initialized_flag_set_after_init():
 
 
 @pytest.mark.unit
-def test_phase_5_audit_saver_receives_data_and_path():
+def test_phase_5_audit_saver_receives_data_and_path() -> None:
     """Test _phase_5 passes data= and yaml_path= to audit_saver."""
     mock_cfg = MagicMock()
     mock_audit = MagicMock()
@@ -1427,7 +1428,7 @@ def test_phase_5_audit_saver_receives_data_and_path():
 
 # GUARD: log_environment_report no-op when not initialized
 @pytest.mark.unit
-def test_log_environment_report_noop_when_not_initialized():
+def test_log_environment_report_noop_when_not_initialized() -> None:
     """Test log_environment_report is a no-op when _initialized is False."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.deterministic_warn_only = False
@@ -1446,7 +1447,7 @@ def test_log_environment_report_noop_when_not_initialized():
 
 # GUARD: _cleaned_up blocks re-initialization
 @pytest.mark.unit
-def test_cleaned_up_blocks_reinitialize():
+def test_cleaned_up_blocks_reinitialize() -> None:
     """Test initialize_core_services raises RuntimeError after cleanup."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -1461,7 +1462,7 @@ def test_cleaned_up_blocks_reinitialize():
 
 
 @pytest.mark.unit
-def test_cleanup_sets_cleaned_up_flag():
+def test_cleanup_sets_cleaned_up_flag() -> None:
     """Test cleanup sets _cleaned_up to True."""
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -1478,7 +1479,7 @@ def test_cleanup_sets_cleaned_up_flag():
 
 # GUARD: run_logger nulled after cleanup
 @pytest.mark.unit
-def test_cleanup_nulls_run_logger():
+def test_cleanup_nulls_run_logger() -> None:
     """Test cleanup sets run_logger to None after closing handlers."""
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -1497,7 +1498,7 @@ def test_cleanup_nulls_run_logger():
 
 # GUARD: _infra_lock_acquired flag
 @pytest.mark.unit
-def test_infra_lock_acquired_true_on_success():
+def test_infra_lock_acquired_true_on_success() -> None:
     """Test _infra_lock_acquired is True when prepare_environment succeeds."""
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -1512,7 +1513,7 @@ def test_infra_lock_acquired_true_on_success():
 
 
 @pytest.mark.unit
-def test_infra_lock_acquired_false_on_failure():
+def test_infra_lock_acquired_false_on_failure() -> None:
     """Test _infra_lock_acquired stays False when prepare_environment fails."""
     from orchard.exceptions import OrchardInfrastructureError
 
@@ -1531,7 +1532,7 @@ def test_infra_lock_acquired_false_on_failure():
 
 
 @pytest.mark.unit
-def test_infra_lock_acquired_false_by_default():
+def test_infra_lock_acquired_false_by_default() -> None:
     """Test _infra_lock_acquired starts as False."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -1545,7 +1546,7 @@ def test_infra_lock_acquired_false_by_default():
 
 # LOCAL_RANK AND WARN_ONLY SUPPORT
 @pytest.mark.unit
-def test_orchestrator_local_rank_defaults_to_zero():
+def test_orchestrator_local_rank_defaults_to_zero() -> None:
     """Test local_rank defaults to 0 when LOCAL_RANK env var is not set."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -1558,7 +1559,7 @@ def test_orchestrator_local_rank_defaults_to_zero():
 
 
 @pytest.mark.unit
-def test_orchestrator_local_rank_from_env(monkeypatch):
+def test_orchestrator_local_rank_from_env(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test local_rank is read from LOCAL_RANK env var."""
     monkeypatch.setenv("LOCAL_RANK", "2")
     mock_cfg = MagicMock()
@@ -1572,7 +1573,7 @@ def test_orchestrator_local_rank_from_env(monkeypatch):
 
 
 @pytest.mark.unit
-def test_orchestrator_local_rank_injectable():
+def test_orchestrator_local_rank_injectable() -> None:
     """Test local_rank can be injected directly."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -1585,7 +1586,7 @@ def test_orchestrator_local_rank_injectable():
 
 
 @pytest.mark.unit
-def test_orchestrator_stores_warn_only_mode():
+def test_orchestrator_stores_warn_only_mode() -> None:
     """Test warn_only_mode is extracted from config."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = True
@@ -1598,7 +1599,7 @@ def test_orchestrator_stores_warn_only_mode():
 
 
 @pytest.mark.unit
-def test_phase_1_passes_warn_only_true():
+def test_phase_1_passes_warn_only_true() -> None:
     """Test _phase_1_determinism passes warn_only=True to seed setter."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
@@ -1614,7 +1615,7 @@ def test_phase_1_passes_warn_only_true():
 
 
 @pytest.mark.unit
-def test_get_device_passes_local_rank():
+def test_get_device_passes_local_rank() -> None:
     """Test get_device passes local_rank to device resolver."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.device = "cuda"
@@ -1631,7 +1632,7 @@ def test_get_device_passes_local_rank():
 
 
 @pytest.mark.unit
-def test_non_main_rank_resolves_device():
+def test_non_main_rank_resolves_device() -> None:
     """Test non-main ranks resolve their device during initialization."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
@@ -1658,7 +1659,7 @@ def test_non_main_rank_resolves_device():
 
 
 @pytest.mark.unit
-def test_non_main_rank_device_failure_raises():
+def test_non_main_rank_device_failure_raises() -> None:
     """Test non-main rank device resolution failure raises OrchardDeviceError."""
     from orchard.exceptions import OrchardDeviceError
 
@@ -1669,7 +1670,7 @@ def test_non_main_rank_device_failure_raises():
     mock_cfg.hardware.effective_num_workers = 2
     mock_cfg.hardware.device = "cuda"
 
-    def failing_resolver(**kwargs):
+    def failing_resolver(**kwargs):  # type: ignore
         raise RuntimeError("GPU gone")
 
     orch = RootOrchestrator(
@@ -1688,7 +1689,7 @@ def test_non_main_rank_device_failure_raises():
 
 # MUTATION TESTING: cleanup flag precision for non-main ranks
 @pytest.mark.unit
-def test_non_main_rank_cleanup_sets_cleaned_up_true():
+def test_non_main_rank_cleanup_sets_cleaned_up_true() -> None:
     """Test cleanup on non-main rank sets _cleaned_up to exactly True (not None/False)."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -1705,7 +1706,7 @@ def test_non_main_rank_cleanup_sets_cleaned_up_true():
 
 
 @pytest.mark.unit
-def test_non_main_rank_cleanup_blocks_reinitialize():
+def test_non_main_rank_cleanup_blocks_reinitialize() -> None:
     """Test non-main rank cannot re-initialize after cleanup."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
@@ -1730,7 +1731,7 @@ def test_non_main_rank_cleanup_blocks_reinitialize():
 
 # MUTATION TESTING: _infra_lock_acquired reset after release
 @pytest.mark.unit
-def test_cleanup_resets_infra_lock_acquired_to_false():
+def test_cleanup_resets_infra_lock_acquired_to_false() -> None:
     """Test cleanup sets _infra_lock_acquired to exactly False after release."""
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -1749,7 +1750,7 @@ def test_cleanup_resets_infra_lock_acquired_to_false():
 
 
 @pytest.mark.unit
-def test_cleanup_double_call_no_duplicate_release():
+def test_cleanup_double_call_no_duplicate_release() -> None:
     """Test calling cleanup twice does not release resources twice."""
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -1773,7 +1774,7 @@ def test_cleanup_double_call_no_duplicate_release():
 
 # MUTATION TESTING: fallback logger uses LOGGER_NAME, not root logger
 @pytest.mark.unit
-def test_cleanup_fallback_logger_uses_logger_name():
+def test_cleanup_fallback_logger_uses_logger_name() -> None:
     """Test cleanup fallback logger uses LOGGER_NAME, not root logger."""
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -1790,7 +1791,7 @@ def test_cleanup_fallback_logger_uses_logger_name():
 
 
 @pytest.mark.unit
-def test_phase_6_fallback_logger_uses_logger_name():
+def test_phase_6_fallback_logger_uses_logger_name() -> None:
     """Test _phase_6 fallback logger uses LOGGER_NAME, not root logger."""
     mock_cfg = MagicMock()
     mock_infra = MagicMock()
@@ -1806,7 +1807,7 @@ def test_phase_6_fallback_logger_uses_logger_name():
 
 
 @pytest.mark.unit
-def test_phase_7_fallback_logger_uses_logger_name():
+def test_phase_7_fallback_logger_uses_logger_name() -> None:
     """Test _phase_7 fallback logger uses LOGGER_NAME, not root logger."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.effective_num_workers = 4
@@ -1826,7 +1827,7 @@ def test_phase_7_fallback_logger_uses_logger_name():
 
 # MUTATION TESTING: log_environment_report passes _applied_threads, not None
 @pytest.mark.unit
-def test_log_environment_report_passes_applied_threads():
+def test_log_environment_report_passes_applied_threads() -> None:
     """Test log_environment_report passes _applied_threads value to phase_7."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -1849,7 +1850,7 @@ def test_log_environment_report_passes_applied_threads():
 
 # MUTATION KILLERS: assert/error message exact content
 @pytest.mark.unit
-def test_phase_4_assert_message_exact():
+def test_phase_4_assert_message_exact() -> None:
     """Kill mutmut string mutations on phase 4 assert message."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -1864,7 +1865,7 @@ def test_phase_4_assert_message_exact():
 
 
 @pytest.mark.unit
-def test_phase_5_assert_message_exact():
+def test_phase_5_assert_message_exact() -> None:
     """Kill mutmut string mutations on phase 5 assert message."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -1881,7 +1882,7 @@ def test_phase_5_assert_message_exact():
 
 
 @pytest.mark.unit
-def test_phase_5_dump_git_info_exact_path(tmp_path):
+def test_phase_5_dump_git_info_exact_path(tmp_path: Path) -> None:
     """Kill mutmut mutations on git_info.txt filename in phase 5."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -1902,7 +1903,7 @@ def test_phase_5_dump_git_info_exact_path(tmp_path):
 
 
 @pytest.mark.unit
-def test_phase_7_assert_message_paths_none():
+def test_phase_7_assert_message_paths_none() -> None:
     """Kill mutmut string mutations on phase 7 paths assert message."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -1918,7 +1919,7 @@ def test_phase_7_assert_message_paths_none():
 
 
 @pytest.mark.unit
-def test_phase_7_assert_message_device_none():
+def test_phase_7_assert_message_device_none() -> None:
     """Kill mutmut string mutations on phase 7 device assert message."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -1936,7 +1937,7 @@ def test_phase_7_assert_message_device_none():
 
 
 @pytest.mark.unit
-def test_reinitialize_after_cleanup_full_error_message():
+def test_reinitialize_after_cleanup_full_error_message() -> None:
     """Kill mutmut string mutations on both halves of RuntimeError message."""
     mock_cfg = MagicMock()
     mock_cfg.hardware.use_deterministic_algorithms = False
@@ -1955,7 +1956,7 @@ def test_reinitialize_after_cleanup_full_error_message():
 
 
 @pytest.mark.unit
-def test_initialize_core_services_paths_assert_message(tmp_path):
+def test_initialize_core_services_paths_assert_message(tmp_path: Path) -> None:
     """Kill mutmut string mutations on 'Paths not initialized after phase 3'."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42
@@ -1986,7 +1987,7 @@ def test_initialize_core_services_paths_assert_message(tmp_path):
 
 
 @pytest.mark.unit
-def test_initialize_core_services_logger_assert_message(tmp_path):
+def test_initialize_core_services_logger_assert_message(tmp_path: Path) -> None:
     """Kill mutmut string mutations on 'Logger not initialized after phase 4'."""
     mock_cfg = MagicMock()
     mock_cfg.training.seed = 42

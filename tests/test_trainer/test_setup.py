@@ -7,6 +7,7 @@ Covers get_criterion, get_optimizer, and get_scheduler factories.
 from __future__ import annotations
 
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 import pytest
@@ -22,13 +23,13 @@ from orchard.trainer.losses import FocalLoss
 
 # FIXTURES
 @pytest.fixture
-def simple_model():
+def simple_model() -> None:
     """Simple linear model for testing."""
-    return nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
+    return nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))  # type: ignore
 
 
 @pytest.fixture
-def base_cfg():
+def base_cfg() -> None:
     """Mock Config as a SimpleNamespace to satisfy factories."""
     cfg = SimpleNamespace()
     cfg.training = SimpleNamespace(
@@ -48,12 +49,12 @@ def base_cfg():
         criterion_type="cross_entropy",
     )
     cfg.architecture = SimpleNamespace(name="resnet_18")
-    return cfg
+    return cfg  # type: ignore
 
 
 # TESTS: COMPUTE_CLASS_WEIGHTS
 @pytest.mark.unit
-def test_compute_class_weights_balanced():
+def test_compute_class_weights_balanced() -> None:
     """Balanced classes produce equal weights."""
     labels = np.array([0, 0, 1, 1, 2, 2])
     w = setup.compute_class_weights(labels, num_classes=3, device=torch.device("cpu"))
@@ -64,7 +65,7 @@ def test_compute_class_weights_balanced():
 
 
 @pytest.mark.unit
-def test_compute_class_weights_imbalanced():
+def test_compute_class_weights_imbalanced() -> None:
     """Imbalanced classes produce correct sklearn-formula weights."""
     # 4 samples of class 0, 1 of class 1 → N/(n_classes*count)
     labels = np.array([0, 0, 0, 0, 1])
@@ -75,7 +76,7 @@ def test_compute_class_weights_imbalanced():
 
 
 @pytest.mark.unit
-def test_compute_class_weights_missing_class_defaults_to_one():
+def test_compute_class_weights_missing_class_defaults_to_one() -> None:
     """Classes absent from labels get fallback weight 1.0 (not None or 2.0)."""
     labels = np.array([0, 0, 0])
     w = setup.compute_class_weights(labels, num_classes=3, device=torch.device("cpu"))
@@ -86,7 +87,7 @@ def test_compute_class_weights_missing_class_defaults_to_one():
 
 
 @pytest.mark.unit
-def test_compute_class_weights_dtype_is_float():
+def test_compute_class_weights_dtype_is_float() -> None:
     """Weights tensor has dtype=torch.float (not default int or None)."""
     labels = np.array([0, 1])
     w = setup.compute_class_weights(labels, num_classes=2, device=torch.device("cpu"))
@@ -94,7 +95,7 @@ def test_compute_class_weights_dtype_is_float():
 
 
 @pytest.mark.unit
-def test_compute_class_weights_on_device():
+def test_compute_class_weights_on_device() -> None:
     """Weights tensor is on the requested device."""
     labels = np.array([0, 1])
     w = setup.compute_class_weights(labels, num_classes=2, device=torch.device("cpu"))
@@ -104,7 +105,7 @@ def test_compute_class_weights_on_device():
 # TESTS: CRITERION
 @pytest.mark.unit
 @pytest.mark.parametrize("crit_type", ["cross_entropy", "focal"])
-def test_get_criterion_types(base_cfg, crit_type):
+def test_get_criterion_types(base_cfg: Any, crit_type: Any) -> None:
     """Test all valid criterion types."""
     base_cfg.training.criterion_type = crit_type
 
@@ -113,7 +114,7 @@ def test_get_criterion_types(base_cfg, crit_type):
 
 
 @pytest.mark.unit
-def test_get_criterion_invalid_type(base_cfg):
+def test_get_criterion_invalid_type(base_cfg: Any) -> None:
     """Test unknown criterion type raises ValueError."""
     base_cfg.training.criterion_type = "unknown_type"
     with pytest.raises(OrchardConfigError, match="Unknown criterion type"):
@@ -121,7 +122,7 @@ def test_get_criterion_invalid_type(base_cfg):
 
 
 @pytest.mark.unit
-def test_get_criterion_cross_entropy_label_smoothing(base_cfg):
+def test_get_criterion_cross_entropy_label_smoothing(base_cfg: Any) -> None:
     """CrossEntropyLoss receives label_smoothing from config (not None or omitted)."""
     base_cfg.training.criterion_type = "cross_entropy"
     base_cfg.training.label_smoothing = 0.15
@@ -131,7 +132,7 @@ def test_get_criterion_cross_entropy_label_smoothing(base_cfg):
 
 
 @pytest.mark.unit
-def test_get_criterion_cross_entropy_weighted(base_cfg):
+def test_get_criterion_cross_entropy_weighted(base_cfg: Any) -> None:
     """CrossEntropyLoss receives class weights when weighted_loss=True."""
     base_cfg.training.criterion_type = "cross_entropy"
     base_cfg.training.weighted_loss = True
@@ -143,7 +144,7 @@ def test_get_criterion_cross_entropy_weighted(base_cfg):
 
 
 @pytest.mark.unit
-def test_get_criterion_cross_entropy_unweighted(base_cfg):
+def test_get_criterion_cross_entropy_unweighted(base_cfg: Any) -> None:
     """CrossEntropyLoss gets weight=None when weighted_loss=False."""
     base_cfg.training.criterion_type = "cross_entropy"
     base_cfg.training.weighted_loss = False
@@ -154,7 +155,7 @@ def test_get_criterion_cross_entropy_unweighted(base_cfg):
 
 
 @pytest.mark.unit
-def test_get_criterion_focal_gamma(base_cfg):
+def test_get_criterion_focal_gamma(base_cfg: Any) -> None:
     """FocalLoss receives gamma from config."""
     base_cfg.training.criterion_type = "focal"
     base_cfg.training.focal_gamma = 3.0
@@ -164,7 +165,7 @@ def test_get_criterion_focal_gamma(base_cfg):
 
 
 @pytest.mark.unit
-def test_get_criterion_focal_weighted(base_cfg):
+def test_get_criterion_focal_weighted(base_cfg: Any) -> None:
     """FocalLoss receives class weights when weighted_loss=True."""
     base_cfg.training.criterion_type = "focal"
     base_cfg.training.weighted_loss = True
@@ -172,11 +173,11 @@ def test_get_criterion_focal_weighted(base_cfg):
     criterion = setup.get_criterion(base_cfg.training, class_weights=class_weights)
     assert isinstance(criterion, FocalLoss)
     assert criterion.weight is not None
-    assert torch.equal(criterion.weight, class_weights)
+    assert torch.equal(criterion.weight, class_weights)  # type: ignore
 
 
 @pytest.mark.unit
-def test_get_criterion_focal_unweighted(base_cfg):
+def test_get_criterion_focal_unweighted(base_cfg: Any) -> None:
     """FocalLoss gets weight=None when weighted_loss=False."""
     base_cfg.training.criterion_type = "focal"
     base_cfg.training.weighted_loss = False
@@ -188,7 +189,7 @@ def test_get_criterion_focal_unweighted(base_cfg):
 
 # TESTS: OPTIMIZER
 @pytest.mark.unit
-def test_get_optimizer_sgd(base_cfg, simple_model):
+def test_get_optimizer_sgd(base_cfg: Any, simple_model: Any) -> None:
     """Test SGD optimizer via optimizer_type config."""
     base_cfg.training.optimizer_type = "sgd"
     optimizer = setup.get_optimizer(simple_model, base_cfg.training)
@@ -196,7 +197,7 @@ def test_get_optimizer_sgd(base_cfg, simple_model):
 
 
 @pytest.mark.unit
-def test_get_optimizer_sgd_params(base_cfg, simple_model):
+def test_get_optimizer_sgd_params(base_cfg: Any, simple_model: Any) -> None:
     """SGD receives lr, momentum, weight_decay from config."""
     base_cfg.training.optimizer_type = "sgd"
     base_cfg.training.learning_rate = 0.05
@@ -210,7 +211,7 @@ def test_get_optimizer_sgd_params(base_cfg, simple_model):
 
 
 @pytest.mark.unit
-def test_get_optimizer_adamw(base_cfg, simple_model):
+def test_get_optimizer_adamw(base_cfg: Any, simple_model: Any) -> None:
     """Test AdamW optimizer via optimizer_type config."""
     base_cfg.training.optimizer_type = "adamw"
     optimizer = setup.get_optimizer(simple_model, base_cfg.training)
@@ -218,7 +219,7 @@ def test_get_optimizer_adamw(base_cfg, simple_model):
 
 
 @pytest.mark.unit
-def test_get_optimizer_adamw_params(base_cfg, simple_model):
+def test_get_optimizer_adamw_params(base_cfg: Any, simple_model: Any) -> None:
     """AdamW receives lr and weight_decay from config."""
     base_cfg.training.optimizer_type = "adamw"
     base_cfg.training.learning_rate = 0.003
@@ -230,7 +231,7 @@ def test_get_optimizer_adamw_params(base_cfg, simple_model):
 
 
 @pytest.mark.unit
-def test_get_optimizer_adamw_with_resnet_name(base_cfg, simple_model):
+def test_get_optimizer_adamw_with_resnet_name(base_cfg: Any, simple_model: Any) -> None:
     """Test AdamW is used when optimizer_type=adamw regardless of model name."""
     base_cfg.training.optimizer_type = "adamw"
     base_cfg.architecture.name = "resnet_18"
@@ -239,7 +240,7 @@ def test_get_optimizer_adamw_with_resnet_name(base_cfg, simple_model):
 
 
 @pytest.mark.unit
-def test_get_optimizer_invalid_type(base_cfg, simple_model):
+def test_get_optimizer_invalid_type(base_cfg: Any, simple_model: Any) -> None:
     """Test unknown optimizer type raises ValueError."""
     base_cfg.training.optimizer_type = "invalid_opt"
     with pytest.raises(OrchardConfigError, match="Unknown optimizer type"):
@@ -249,7 +250,7 @@ def test_get_optimizer_invalid_type(base_cfg, simple_model):
 # TESTS: SCHEDULER
 @pytest.mark.unit
 @pytest.mark.parametrize("sched_type", ["cosine", "plateau", "step", "none"])
-def test_get_scheduler_types(base_cfg, simple_model, sched_type):
+def test_get_scheduler_types(base_cfg: Any, simple_model: Any, sched_type: Any) -> None:
     """Test all scheduler types."""
     base_cfg.training.scheduler_type = sched_type
     optimizer = setup.get_optimizer(simple_model, base_cfg.training)
@@ -266,7 +267,7 @@ def test_get_scheduler_types(base_cfg, simple_model, sched_type):
 
 
 @pytest.mark.unit
-def test_get_scheduler_cosine_params(base_cfg, simple_model):
+def test_get_scheduler_cosine_params(base_cfg: Any, simple_model: Any) -> None:
     """CosineAnnealingLR receives T_max and eta_min from config."""
     base_cfg.training.scheduler_type = "cosine"
     base_cfg.training.epochs = 20
@@ -279,7 +280,7 @@ def test_get_scheduler_cosine_params(base_cfg, simple_model):
 
 
 @pytest.mark.unit
-def test_get_scheduler_plateau_params(base_cfg, simple_model):
+def test_get_scheduler_plateau_params(base_cfg: Any, simple_model: Any) -> None:
     """ReduceLROnPlateau receives mode, factor, patience, min_lr from config."""
     base_cfg.training.scheduler_type = "plateau"
     base_cfg.training.scheduler_factor = 0.3
@@ -295,7 +296,7 @@ def test_get_scheduler_plateau_params(base_cfg, simple_model):
 
 
 @pytest.mark.unit
-def test_get_scheduler_step_params(base_cfg, simple_model):
+def test_get_scheduler_step_params(base_cfg: Any, simple_model: Any) -> None:
     """StepLR receives step_size and gamma from config."""
     base_cfg.training.scheduler_type = "step"
     base_cfg.training.step_size = 7
@@ -308,7 +309,7 @@ def test_get_scheduler_step_params(base_cfg, simple_model):
 
 
 @pytest.mark.unit
-def test_get_scheduler_none_keeps_lr_constant(base_cfg, simple_model):
+def test_get_scheduler_none_keeps_lr_constant(base_cfg: Any, simple_model: Any) -> None:
     """'none' scheduler keeps LR at 1.0x (lambda returns 1.0, not 2.0)."""
     base_cfg.training.scheduler_type = "none"
     base_cfg.training.learning_rate = 0.05
@@ -322,7 +323,7 @@ def test_get_scheduler_none_keeps_lr_constant(base_cfg, simple_model):
 
 
 @pytest.mark.unit
-def test_get_scheduler_invalid_type(base_cfg, simple_model):
+def test_get_scheduler_invalid_type(base_cfg: Any, simple_model: Any) -> None:
     """Test invalid scheduler type raises ValueError with exact options list."""
     base_cfg.training.scheduler_type = "invalid_sched"
     optimizer = setup.get_optimizer(simple_model, base_cfg.training)
@@ -331,7 +332,7 @@ def test_get_scheduler_invalid_type(base_cfg, simple_model):
 
 
 @pytest.mark.unit
-def test_get_scheduler_error_message_lists_options(base_cfg, simple_model):
+def test_get_scheduler_error_message_lists_options(base_cfg: Any, simple_model: Any) -> None:
     """Error message lists available options with exact casing."""
     base_cfg.training.scheduler_type = "bad"
     optimizer = setup.get_optimizer(simple_model, base_cfg.training)

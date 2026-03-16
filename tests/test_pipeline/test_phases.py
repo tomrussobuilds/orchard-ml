@@ -20,7 +20,7 @@ from orchard.pipeline.phases import (
 
 
 @pytest.fixture
-def mock_orchestrator():
+def mock_orchestrator() -> None:
     """Create a mock RootOrchestrator."""
     orch = MagicMock()
     orch.cfg = MagicMock()
@@ -42,7 +42,7 @@ def mock_orchestrator():
     orch.get_device.return_value = "cpu"
     orch.run_logger = MagicMock()
 
-    return orch
+    return orch  # type: ignore
 
 
 # OPTIMIZATION PHASE TESTS
@@ -50,8 +50,11 @@ def mock_orchestrator():
 @patch("orchard.pipeline.phases.run_optimization")
 @patch("orchard.pipeline.phases.log_optimization_summary")
 def test_run_optimization_phase_returns_study_and_path(
-    _mock_log_summary, mock_run_opt, mock_orchestrator, tmp_path
-):
+    _mock_log_summary: MagicMock,
+    mock_run_opt: MagicMock,
+    mock_orchestrator: MagicMock,
+    tmp_path: Path,
+) -> None:
     """Test run_optimization_phase returns (study, config_path)."""
     mock_study = MagicMock()
     mock_run_opt.return_value = mock_study
@@ -74,8 +77,11 @@ def test_run_optimization_phase_returns_study_and_path(
 @patch("orchard.pipeline.phases.run_optimization")
 @patch("orchard.pipeline.phases.log_optimization_summary")
 def test_run_optimization_phase_with_custom_config(
-    _mock_log_summary, mock_run_opt, mock_orchestrator, tmp_path
-):
+    _mock_log_summary: MagicMock,
+    mock_run_opt: MagicMock,
+    mock_orchestrator: MagicMock,
+    tmp_path: Path,
+) -> None:
     """Test run_optimization_phase uses provided config override."""
     custom_cfg = MagicMock()
     mock_study = MagicMock()
@@ -96,8 +102,11 @@ def test_run_optimization_phase_with_custom_config(
 @patch("orchard.pipeline.phases.run_optimization")
 @patch("orchard.pipeline.phases.log_optimization_summary")
 def test_run_optimization_phase_logs_summary(
-    mock_log_summary, mock_run_opt, mock_orchestrator, tmp_path
-):
+    mock_log_summary: MagicMock,
+    mock_run_opt: MagicMock,
+    mock_orchestrator: MagicMock,
+    tmp_path: Path,
+) -> None:
     """Test run_optimization_phase calls log_optimization_summary."""
     mock_run_opt.return_value = MagicMock()
 
@@ -114,8 +123,11 @@ def test_run_optimization_phase_logs_summary(
 @patch("orchard.pipeline.phases.run_optimization")
 @patch("orchard.pipeline.phases.log_optimization_summary")
 def test_run_optimization_phase_handles_none_config_path(
-    _mock_log_summary, mock_run_opt, mock_orchestrator, tmp_path
-):
+    _mock_log_summary: MagicMock,
+    mock_run_opt: MagicMock,
+    mock_orchestrator: MagicMock,
+    tmp_path: Path,
+) -> None:
     """Test run_optimization_phase returns None when best_config.yaml doesn't exist."""
     mock_run_opt.return_value = MagicMock()
 
@@ -142,18 +154,18 @@ def test_run_optimization_phase_handles_none_config_path(
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
 def test_run_training_phase_returns_expected_tuple(
-    mock_aug_desc,
-    mock_final_eval,
-    mock_trainer_cls,
-    _mock_get_scheduler,
-    _mock_get_optimizer,
-    _mock_get_criterion,
-    mock_get_model,
-    _mock_show_samples,
-    mock_get_loaders,
-    _mock_load_dataset,
-    mock_orchestrator,
-):
+    mock_aug_desc: MagicMock,
+    mock_final_eval: MagicMock,
+    mock_trainer_cls: MagicMock,
+    _mock_get_scheduler: MagicMock,
+    _mock_get_optimizer: MagicMock,
+    _mock_get_criterion: MagicMock,
+    mock_get_model: MagicMock,
+    _mock_show_samples: MagicMock,
+    mock_get_loaders: MagicMock,
+    _mock_load_dataset: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_training_phase returns all expected components."""
     mock_get_loaders.return_value = (MagicMock(), MagicMock(), MagicMock())
     mock_model = MagicMock()
@@ -189,18 +201,18 @@ def test_run_training_phase_returns_expected_tuple(
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
 def test_run_training_phase_with_custom_config(
-    mock_aug_desc,
-    mock_final_eval,
-    mock_trainer_cls,
-    _mock_get_scheduler,
-    _mock_get_optimizer,
-    _mock_get_criterion,
-    mock_get_model,
-    _mock_show_samples,
-    mock_get_loaders,
-    mock_load_dataset,
-    mock_orchestrator,
-):
+    mock_aug_desc: MagicMock,
+    mock_final_eval: MagicMock,
+    mock_trainer_cls: MagicMock,
+    _mock_get_scheduler: MagicMock,
+    _mock_get_optimizer: MagicMock,
+    _mock_get_criterion: MagicMock,
+    mock_get_model: MagicMock,
+    _mock_show_samples: MagicMock,
+    mock_get_loaders: MagicMock,
+    mock_load_dataset: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_training_phase uses provided config override."""
     custom_cfg = MagicMock()
     custom_cfg.task_type = "classification"
@@ -229,7 +241,7 @@ def test_run_training_phase_with_custom_config(
 
 # EXPORT PHASE TESTS
 @pytest.mark.unit
-def test_run_export_phase_returns_none_when_no_export_config(mock_orchestrator):
+def test_run_export_phase_returns_none_when_no_export_config(mock_orchestrator: MagicMock) -> None:
     """Test run_export_phase returns None when export config is absent."""
     mock_orchestrator.cfg.export = None
     result = run_export_phase(
@@ -245,8 +257,11 @@ def test_run_export_phase_returns_none_when_no_export_config(mock_orchestrator):
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_exports_onnx(
-    mock_export_onnx, mock_get_model, mock_validate, mock_orchestrator
-):
+    mock_export_onnx: MagicMock,
+    mock_get_model: MagicMock,
+    mock_validate: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase calls export_to_onnx with correct parameters."""
     mock_model = MagicMock()
     mock_get_model.return_value = mock_model
@@ -271,8 +286,11 @@ def test_run_export_phase_exports_onnx(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_grayscale_input(
-    mock_export_onnx, _mock_get_model, _mock_validate, mock_orchestrator
-):
+    mock_export_onnx: MagicMock,
+    _mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase determines input channels from config."""
     mock_orchestrator.cfg.dataset.force_rgb = False
     mock_orchestrator.cfg.dataset.effective_in_channels = 1
@@ -292,8 +310,11 @@ def test_run_export_phase_grayscale_input(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_with_custom_config(
-    mock_export_onnx, _mock_get_model, _mock_validate, mock_orchestrator
-):
+    mock_export_onnx: MagicMock,
+    _mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase uses provided config override."""
     custom_cfg = MagicMock()
     custom_cfg.dataset.resolution = 64
@@ -314,8 +335,11 @@ def test_run_export_phase_with_custom_config(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_logs_output_path(
-    _mock_export_onnx, _mock_get_model, _mock_validate, mock_orchestrator
-):
+    _mock_export_onnx: MagicMock,
+    _mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase logs the export path."""
     run_export_phase(
         mock_orchestrator,
@@ -331,8 +355,12 @@ def test_run_export_phase_logs_output_path(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_benchmark(
-    _mock_export, _mock_get_model, _mock_validate, mock_benchmark, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_benchmark: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase calls benchmark when enabled."""
     mock_orchestrator.cfg.export.benchmark = True
     mock_orchestrator.cfg.training.seed = 42
@@ -353,8 +381,12 @@ def test_run_export_phase_benchmark(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_no_benchmark_by_default(
-    _mock_export, _mock_get_model, _mock_validate, mock_benchmark, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_benchmark: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase skips benchmark when disabled."""
     mock_orchestrator.cfg.export.benchmark = False
 
@@ -373,13 +405,13 @@ def test_run_export_phase_no_benchmark_by_default(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_quantize_with_benchmark(
-    _mock_export,
-    _mock_get_model,
-    _mock_validate,
-    mock_quantize,
-    mock_benchmark,
-    mock_orchestrator,
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_quantize: MagicMock,
+    mock_benchmark: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase benchmarks quantized model when both enabled."""
     mock_orchestrator.cfg.export.quantize = True
     mock_orchestrator.cfg.export.quantization_backend = "fbgemm"
@@ -403,12 +435,12 @@ def test_run_export_phase_quantize_with_benchmark(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_quantize_logs_output(
-    _mock_export,
-    _mock_get_model,
-    _mock_validate,
-    mock_quantize,
-    mock_orchestrator,
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_quantize: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase logs quantized model path."""
     mock_orchestrator.cfg.export.quantize = True
     mock_orchestrator.cfg.export.quantization_backend = "qnnpack"
@@ -430,8 +462,12 @@ def test_run_export_phase_quantize_logs_output(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_validation_failure_logs_warning(
-    _mock_export, _mock_get_model, mock_validate, mock_logger, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    mock_validate: MagicMock,
+    mock_logger: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase logs warning when numerical validation fails."""
     mock_orchestrator.cfg.export.benchmark = False
     mock_orchestrator.cfg.export.quantize = False
@@ -453,8 +489,13 @@ def test_run_export_phase_validation_failure_logs_warning(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_quantized_validation_failure_logs_error(
-    _mock_export, _mock_get_model, mock_validate, mock_quantize, mock_logger, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    mock_validate: MagicMock,
+    mock_quantize: MagicMock,
+    mock_logger: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase logs error when quantized validation fails."""
     mock_orchestrator.cfg.export.quantize = True
     mock_orchestrator.cfg.export.quantization_backend = "qnnpack"
@@ -481,8 +522,12 @@ def test_run_export_phase_quantized_validation_failure_logs_error(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_quantized_validate_kwargs(
-    _mock_export, mock_get_model, mock_validate, mock_quantize, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    mock_get_model: MagicMock,
+    mock_validate: MagicMock,
+    mock_quantize: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase passes correct kwargs to validate_export for quantized model."""
     mock_model = MagicMock()
     mock_get_model.return_value = mock_model
@@ -516,8 +561,11 @@ def test_run_export_phase_quantized_validate_kwargs(
 @patch("orchard.pipeline.phases.run_optimization")
 @patch("orchard.pipeline.phases.log_optimization_summary")
 def test_run_optimization_phase_asserts_run_logger(
-    _mock_log_summary, mock_run_opt, mock_orchestrator, tmp_path
-):
+    _mock_log_summary: MagicMock,
+    mock_run_opt: MagicMock,
+    mock_orchestrator: MagicMock,
+    tmp_path: Path,
+) -> None:
     """Test run_optimization_phase raises when run_logger is None."""
     mock_orchestrator.run_logger = None
     mock_run_opt.return_value = MagicMock()
@@ -531,8 +579,11 @@ def test_run_optimization_phase_asserts_run_logger(
 @patch("orchard.pipeline.phases.run_optimization")
 @patch("orchard.pipeline.phases.log_optimization_summary")
 def test_run_optimization_phase_asserts_paths(
-    _mock_log_summary, mock_run_opt, mock_orchestrator, tmp_path
-):
+    _mock_log_summary: MagicMock,
+    mock_run_opt: MagicMock,
+    mock_orchestrator: MagicMock,
+    tmp_path: Path,
+) -> None:
     """Test run_optimization_phase raises when paths is None."""
     mock_orchestrator.paths = None
     mock_run_opt.return_value = MagicMock()
@@ -545,8 +596,11 @@ def test_run_optimization_phase_asserts_paths(
 @patch("orchard.pipeline.phases.run_optimization")
 @patch("orchard.pipeline.phases.log_optimization_summary")
 def test_run_optimization_phase_forwards_all_kwargs(
-    mock_log_summary, mock_run_opt, mock_orchestrator, tmp_path
-):
+    mock_log_summary: MagicMock,
+    mock_run_opt: MagicMock,
+    mock_orchestrator: MagicMock,
+    tmp_path: Path,
+) -> None:
     """Test run_optimization_phase passes device, paths, tracker to run_optimization."""
     mock_study = MagicMock()
     mock_run_opt.return_value = mock_study
@@ -589,18 +643,18 @@ _TRAINING_PATCHES = [
 
 
 def _setup_training_mocks(
-    mock_orchestrator,
-    mock_load_dataset,
-    mock_get_loaders,
-    mock_show_samples,
-    mock_get_model,
-    mock_get_criterion,
-    mock_get_optimizer,
-    mock_get_scheduler,
-    mock_trainer_cls,
-    mock_final_eval,
-    mock_aug_desc,
-):
+    mock_orchestrator: MagicMock,
+    mock_load_dataset: MagicMock,
+    mock_get_loaders: MagicMock,
+    mock_show_samples: MagicMock,
+    mock_get_model: MagicMock,
+    mock_get_criterion: MagicMock,
+    mock_get_optimizer: MagicMock,
+    mock_get_scheduler: MagicMock,
+    mock_trainer_cls: MagicMock,
+    mock_final_eval: MagicMock,
+    mock_aug_desc: MagicMock,
+) -> None:
     """Configure mocks for run_training_phase tests."""
     ds_meta = MagicMock(classes=["a", "b"], num_classes=2)
     mock_orchestrator.cfg.dataset._ensure_metadata = ds_meta
@@ -629,7 +683,7 @@ def _setup_training_mocks(
     mock_final_eval.return_value = (0.85, 0.90, 0.92)
     mock_aug_desc.return_value = "test_aug"
 
-    return {
+    return {  # type: ignore
         "ds_meta": ds_meta,
         "train_loader": train_loader,
         "val_loader": val_loader,
@@ -653,7 +707,7 @@ def _setup_training_mocks(
 @patch("orchard.pipeline.phases.ModelTrainer")
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
-def test_run_training_phase_asserts_run_logger(
+def test_run_training_phase_asserts_run_logger(  # type: ignore
     _m1,
     _m2,
     _m3,
@@ -664,8 +718,8 @@ def test_run_training_phase_asserts_run_logger(
     _m8,
     _m9,
     _m10,
-    mock_orchestrator,
-):
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_training_phase raises when run_logger is None."""
     mock_orchestrator.run_logger = None
 
@@ -684,7 +738,7 @@ def test_run_training_phase_asserts_run_logger(
 @patch("orchard.pipeline.phases.ModelTrainer")
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
-def test_run_training_phase_asserts_paths(
+def test_run_training_phase_asserts_paths(  # type: ignore
     _m1,
     _m2,
     _m3,
@@ -695,8 +749,8 @@ def test_run_training_phase_asserts_paths(
     _m8,
     _m9,
     _m10,
-    mock_orchestrator,
-):
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_training_phase raises when paths is None."""
     mock_orchestrator.paths = None
 
@@ -716,20 +770,20 @@ def test_run_training_phase_asserts_paths(
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
 def test_run_training_phase_verifies_all_kwargs(
-    mock_aug_desc,
-    mock_final_eval,
-    mock_trainer_cls,
-    mock_get_scheduler,
-    mock_get_optimizer,
-    mock_get_criterion,
-    mock_get_model,
-    mock_show_samples,
-    mock_get_loaders,
-    mock_load_dataset,
-    mock_orchestrator,
-):
+    mock_aug_desc: MagicMock,
+    mock_final_eval: MagicMock,
+    mock_trainer_cls: MagicMock,
+    mock_get_scheduler: MagicMock,
+    mock_get_optimizer: MagicMock,
+    mock_get_criterion: MagicMock,
+    mock_get_model: MagicMock,
+    mock_show_samples: MagicMock,
+    mock_get_loaders: MagicMock,
+    mock_load_dataset: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_training_phase passes correct kwargs to every dependency."""
-    refs = _setup_training_mocks(
+    refs = _setup_training_mocks(  # type: ignore
         mock_orchestrator,
         mock_load_dataset,
         mock_get_loaders,
@@ -842,19 +896,19 @@ def test_run_training_phase_verifies_all_kwargs(
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
 def test_run_training_phase_weighted_loss(
-    mock_aug_desc,
-    mock_final_eval,
-    mock_trainer_cls,
-    mock_get_scheduler,
-    mock_get_optimizer,
-    mock_get_criterion,
-    mock_get_model,
-    mock_show_samples,
-    mock_get_loaders,
-    mock_load_dataset,
-    mock_compute_weights,
-    mock_orchestrator,
-):
+    mock_aug_desc: MagicMock,
+    mock_final_eval: MagicMock,
+    mock_trainer_cls: MagicMock,
+    mock_get_scheduler: MagicMock,
+    mock_get_optimizer: MagicMock,
+    mock_get_criterion: MagicMock,
+    mock_get_model: MagicMock,
+    mock_show_samples: MagicMock,
+    mock_get_loaders: MagicMock,
+    mock_load_dataset: MagicMock,
+    mock_compute_weights: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_training_phase computes class weights when weighted_loss is True."""
     import numpy as np
 
@@ -902,18 +956,18 @@ def test_run_training_phase_weighted_loss(
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
 def test_run_training_phase_passes_tracker(
-    mock_aug_desc,
-    mock_final_eval,
-    mock_trainer_cls,
-    mock_get_scheduler,
-    mock_get_optimizer,
-    mock_get_criterion,
-    mock_get_model,
-    mock_show_samples,
-    mock_get_loaders,
-    mock_load_dataset,
-    mock_orchestrator,
-):
+    mock_aug_desc: MagicMock,
+    mock_final_eval: MagicMock,
+    mock_trainer_cls: MagicMock,
+    mock_get_scheduler: MagicMock,
+    mock_get_optimizer: MagicMock,
+    mock_get_criterion: MagicMock,
+    mock_get_model: MagicMock,
+    mock_show_samples: MagicMock,
+    mock_get_loaders: MagicMock,
+    mock_load_dataset: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_training_phase forwards tracker to ModelTrainer and run_final_evaluation."""
     _setup_training_mocks(
         mock_orchestrator,
@@ -943,8 +997,11 @@ def test_run_training_phase_passes_tracker(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_asserts_run_logger(
-    _mock_export, _mock_get_model, _mock_validate, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase raises when run_logger is None."""
     mock_orchestrator.run_logger = None
 
@@ -957,8 +1014,11 @@ def test_run_export_phase_asserts_run_logger(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_asserts_paths(
-    _mock_export, _mock_get_model, _mock_validate, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase raises when paths is None."""
     mock_orchestrator.paths = None
 
@@ -971,8 +1031,11 @@ def test_run_export_phase_asserts_paths(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_get_model_cpu_no_verbose(
-    _mock_export, mock_get_model, _mock_validate, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase loads model on CPU with verbose=False."""
     import torch
 
@@ -992,8 +1055,11 @@ def test_run_export_phase_get_model_cpu_no_verbose(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_all_export_to_onnx_kwargs(
-    mock_export_onnx, mock_get_model, _mock_validate, mock_orchestrator
-):
+    mock_export_onnx: MagicMock,
+    mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase passes all kwargs to export_to_onnx."""
     mock_model = MagicMock()
     mock_get_model.return_value = mock_model
@@ -1022,8 +1088,11 @@ def test_run_export_phase_all_export_to_onnx_kwargs(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_validate_export_kwargs(
-    _mock_export, mock_get_model, mock_validate, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    mock_get_model: MagicMock,
+    mock_validate: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase passes all kwargs to validate_export."""
     mock_model = MagicMock()
     mock_get_model.return_value = mock_model
@@ -1052,8 +1121,12 @@ def test_run_export_phase_validate_export_kwargs(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_benchmark_passes_all_kwargs(
-    _mock_export, _mock_get_model, _mock_validate, mock_benchmark, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_benchmark: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase passes all kwargs to benchmark."""
     mock_orchestrator.cfg.export.benchmark = True
     mock_orchestrator.cfg.export.quantize = False
@@ -1078,8 +1151,13 @@ def test_run_export_phase_benchmark_passes_all_kwargs(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_quantized_benchmark_uses_quantized_path(
-    _mock_export, _mock_get_model, _mock_validate, mock_quantize, mock_benchmark, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_quantize: MagicMock,
+    mock_benchmark: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test second benchmark call uses quantized_path with all kwargs."""
     quantized = Path("/mock/test_exports/model_quantized.onnx")
     mock_quantize.return_value = quantized
@@ -1108,8 +1186,12 @@ def test_run_export_phase_quantized_benchmark_uses_quantized_path(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_quantize_passes_onnx_path(
-    _mock_export, _mock_get_model, _mock_validate, mock_quantize, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_quantize: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase passes onnx_path to quantize_model."""
     mock_orchestrator.cfg.export.quantize = True
     mock_orchestrator.cfg.export.quantization_backend = "fbgemm"
@@ -1130,8 +1212,11 @@ def test_run_export_phase_quantize_passes_onnx_path(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_skips_validation_when_disabled(
-    _mock_export, _mock_get_model, mock_validate, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    mock_validate: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase skips validate_export when validate_export is False."""
     mock_orchestrator.cfg.export.validate_export = False
     mock_orchestrator.cfg.export.benchmark = False
@@ -1147,8 +1232,11 @@ def test_run_export_phase_skips_validation_when_disabled(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_cfg_fallback_to_orchestrator(
-    _mock_export, _mock_get_model, _mock_validate, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase uses orchestrator.cfg when cfg=None."""
     run_export_phase(mock_orchestrator, checkpoint_path=Path("/mock/model.pth"))
 
@@ -1164,8 +1252,12 @@ def test_run_export_phase_cfg_fallback_to_orchestrator(
 @patch("orchard.pipeline.phases.run_optimization")
 @patch("orchard.pipeline.phases.log_optimization_summary")
 def test_run_optimization_phase_logs_header_with_double_style(
-    _mock_log_summary, mock_run_opt, mock_reporter, mock_orchestrator, tmp_path
-):
+    _mock_log_summary: MagicMock,
+    mock_run_opt: MagicMock,
+    mock_reporter: MagicMock,
+    mock_orchestrator: MagicMock,
+    tmp_path: Path,
+) -> None:
     """Test run_optimization_phase logs header with correct title and DOUBLE style."""
     mock_run_opt.return_value = MagicMock()
     reports_dir = tmp_path / "reports"
@@ -1194,19 +1286,19 @@ def test_run_optimization_phase_logs_header_with_double_style(
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
 def test_run_training_phase_logs_all_headers(
-    mock_aug_desc,
-    mock_final_eval,
-    mock_trainer_cls,
-    mock_get_scheduler,
-    mock_get_optimizer,
-    mock_get_criterion,
-    mock_get_model,
-    mock_show_samples,
-    mock_get_loaders,
-    mock_load_dataset,
-    mock_reporter,
-    mock_orchestrator,
-):
+    mock_aug_desc: MagicMock,
+    mock_final_eval: MagicMock,
+    mock_trainer_cls: MagicMock,
+    mock_get_scheduler: MagicMock,
+    mock_get_optimizer: MagicMock,
+    mock_get_criterion: MagicMock,
+    mock_get_model: MagicMock,
+    mock_show_samples: MagicMock,
+    mock_get_loaders: MagicMock,
+    mock_load_dataset: MagicMock,
+    mock_reporter: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_training_phase logs all phase headers with correct titles and styles."""
     _setup_training_mocks(
         mock_orchestrator,
@@ -1249,8 +1341,12 @@ def test_run_training_phase_logs_all_headers(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_logs_header(
-    _mock_export, _mock_get_model, _mock_validate, mock_reporter, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_reporter: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test run_export_phase logs header with correct title."""
     run_export_phase(mock_orchestrator, checkpoint_path=Path("/mock/model.pth"))
 
@@ -1265,8 +1361,12 @@ def test_run_export_phase_logs_header(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_validation_warning_uses_log_style(
-    _mock_export, _mock_get_model, _mock_validate, mock_logger, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    _mock_validate: MagicMock,
+    mock_logger: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test validation failure warning uses LogStyle.WARNING."""
     mock_orchestrator.cfg.export.benchmark = False
     mock_orchestrator.cfg.export.quantize = False
@@ -1286,8 +1386,13 @@ def test_run_export_phase_validation_warning_uses_log_style(
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")
 def test_run_export_phase_quantized_failure_uses_log_style(
-    _mock_export, _mock_get_model, mock_validate, mock_quantize, mock_logger, mock_orchestrator
-):
+    _mock_export: MagicMock,
+    _mock_get_model: MagicMock,
+    mock_validate: MagicMock,
+    mock_quantize: MagicMock,
+    mock_logger: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
     """Test quantized validation failure uses LogStyle.FAILURE."""
     mock_orchestrator.cfg.export.quantize = True
     mock_orchestrator.cfg.export.quantization_backend = "qnnpack"

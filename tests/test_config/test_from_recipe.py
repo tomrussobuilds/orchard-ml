@@ -7,6 +7,8 @@ including dot-notation override application.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 import yaml
 
@@ -18,38 +20,38 @@ from orchard.core.config.manifest import Config, _deep_set
 class TestDeepSet:
     """Tests for the _deep_set module-level helper."""
 
-    def test_single_key(self):
+    def test_single_key(self) -> None:
         data = {"a": 1}
         _deep_set(data, "a", 2)
         assert data == {"a": 2}
 
-    def test_nested_key(self):
+    def test_nested_key(self) -> None:
         data = {"training": {"epochs": 60}}
         _deep_set(data, "training.epochs", 20)
         assert data["training"]["epochs"] == 20
 
-    def test_creates_intermediate_dicts(self):
-        data = {}
+    def test_creates_intermediate_dicts(self) -> None:
+        data = {}  # type: ignore
         _deep_set(data, "a.b.c", 42)
         assert data == {"a": {"b": {"c": 42}}}
 
-    def test_preserves_siblings(self):
+    def test_preserves_siblings(self) -> None:
         data = {"training": {"epochs": 60, "seed": 42}}
         _deep_set(data, "training.epochs", 20)
         assert data["training"]["epochs"] == 20
         assert data["training"]["seed"] == 42
 
-    def test_deep_three_levels(self):
+    def test_deep_three_levels(self) -> None:
         data = {"optuna": {"search_space": {"lr": 0.01}}}
         _deep_set(data, "optuna.search_space.lr", 0.001)
         assert data["optuna"]["search_space"]["lr"] == pytest.approx(0.001)
 
-    def test_none_value(self):
+    def test_none_value(self) -> None:
         data = {"a": 1}
         _deep_set(data, "a", None)
         assert data["a"] is None
 
-    def test_bool_value(self):
+    def test_bool_value(self) -> None:
         data = {"training": {"use_amp": True}}
         _deep_set(data, "training.use_amp", False)
         assert data["training"]["use_amp"] is False
@@ -60,7 +62,7 @@ class TestDeepSet:
 class TestFromRecipe:
     """Tests for Config.from_recipe() factory method."""
 
-    def test_loads_valid_recipe(self, tmp_path):
+    def test_loads_valid_recipe(self, tmp_path: Path) -> None:
         """from_recipe loads a minimal valid YAML recipe."""
         yaml_content = {
             "dataset": {"name": "bloodmnist", "resolution": 28, "force_rgb": True},
@@ -77,7 +79,7 @@ class TestFromRecipe:
         assert cfg.architecture.name == "mini_cnn"
         assert cfg.training.epochs == 10
 
-    def test_applies_scalar_overrides(self, tmp_path):
+    def test_applies_scalar_overrides(self, tmp_path: Path) -> None:
         """from_recipe applies dot-notation overrides before instantiation."""
         yaml_content = {
             "dataset": {"name": "bloodmnist", "resolution": 28, "force_rgb": True},
@@ -96,7 +98,7 @@ class TestFromRecipe:
         assert cfg.training.epochs == 20
         assert cfg.training.seed == 123
 
-    def test_override_dataset_name(self, tmp_path):
+    def test_override_dataset_name(self, tmp_path: Path) -> None:
         """Overriding dataset.name re-resolves metadata correctly."""
         yaml_content = {
             "dataset": {"name": "bloodmnist", "resolution": 28, "force_rgb": True},
@@ -114,7 +116,7 @@ class TestFromRecipe:
 
         assert cfg.dataset.dataset_name == "pathmnist"
 
-    def test_missing_dataset_name_raises(self, tmp_path):
+    def test_missing_dataset_name_raises(self, tmp_path: Path) -> None:
         """from_recipe raises ValueError if dataset.name is missing."""
         yaml_content = {
             "architecture": {"name": "mini_cnn"},
@@ -126,7 +128,7 @@ class TestFromRecipe:
         with pytest.raises(ValueError, match="must specify 'dataset.name'"):
             Config.from_recipe(recipe)
 
-    def test_unknown_dataset_raises(self, tmp_path):
+    def test_unknown_dataset_raises(self, tmp_path: Path) -> None:
         """from_recipe raises KeyError for unregistered datasets."""
         yaml_content = {
             "dataset": {"name": "nonexistent_dataset", "resolution": 28},
@@ -137,7 +139,7 @@ class TestFromRecipe:
         with pytest.raises(ValueError, match="nonexistent_dataset"):
             Config.from_recipe(recipe)
 
-    def test_none_overrides_ignored(self, tmp_path):
+    def test_none_overrides_ignored(self, tmp_path: Path) -> None:
         """from_recipe works when overrides is None."""
         yaml_content = {
             "dataset": {"name": "bloodmnist", "resolution": 28, "force_rgb": True},
@@ -152,7 +154,7 @@ class TestFromRecipe:
 
         assert cfg.training.epochs == 10
 
-    def test_empty_overrides_ignored(self, tmp_path):
+    def test_empty_overrides_ignored(self, tmp_path: Path) -> None:
         """from_recipe works when overrides is an empty dict."""
         yaml_content = {
             "dataset": {"name": "bloodmnist", "resolution": 28, "force_rgb": True},
@@ -167,7 +169,7 @@ class TestFromRecipe:
 
         assert cfg.training.epochs == 10
 
-    def test_loads_real_recipe(self):
+    def test_loads_real_recipe(self) -> None:
         """from_recipe loads an actual recipe from the recipes/ directory."""
         from orchard.core.paths import PROJECT_ROOT
 
@@ -180,7 +182,7 @@ class TestFromRecipe:
         assert cfg.dataset.dataset_name == "bloodmnist"
         assert cfg.architecture.name == "mini_cnn"
 
-    def test_cross_validation_still_runs(self, tmp_path):
+    def test_cross_validation_still_runs(self, tmp_path: Path) -> None:
         """from_recipe triggers cross-domain validation (e.g. resolution mismatch)."""
         yaml_content = {
             "dataset": {"name": "bloodmnist", "resolution": 224, "force_rgb": True},

@@ -27,7 +27,7 @@ from orchard.core.environment import (
 @pytest.mark.unit
 @patch("platform.system", return_value="Linux")
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
-def test_ensure_single_instance_success(mock_platform, tmp_path):
+def test_ensure_single_instance_success(mock_platform: MagicMock, tmp_path: Path) -> None:
     """Test ensure_single_instance acquires lock successfully."""
     import fcntl
 
@@ -57,7 +57,7 @@ def test_ensure_single_instance_success(mock_platform, tmp_path):
 @pytest.mark.unit
 @patch("platform.system", return_value="Linux")
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
-def test_ensure_single_instance_already_locked(mock_platform, tmp_path):
+def test_ensure_single_instance_already_locked(mock_platform: MagicMock, tmp_path: Path) -> None:
     """Test ensure_single_instance exits when lock already held and closes fd."""
     lock_file = tmp_path / "test.lock"
     logger = logging.getLogger("test")
@@ -76,7 +76,7 @@ def test_ensure_single_instance_already_locked(mock_platform, tmp_path):
 @pytest.mark.unit
 @patch("platform.system", return_value="Linux")
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
-def test_ensure_single_instance_io_error(mock_platform, tmp_path):
+def test_ensure_single_instance_io_error(mock_platform: MagicMock, tmp_path: Path) -> None:
     """Test ensure_single_instance handles IOError."""
     lock_file = tmp_path / "test.lock"
     logger = logging.getLogger("test")
@@ -90,7 +90,7 @@ def test_ensure_single_instance_io_error(mock_platform, tmp_path):
 
 @pytest.mark.unit
 @patch("platform.system", return_value="Windows")
-def test_ensure_single_instance_windows(mock_platform, tmp_path):
+def test_ensure_single_instance_windows(mock_platform: MagicMock, tmp_path: Path) -> None:
     """Test ensure_single_instance skips locking on Windows."""
     lock_file = tmp_path / "test.lock"
     logger = logging.getLogger("test")
@@ -101,7 +101,7 @@ def test_ensure_single_instance_windows(mock_platform, tmp_path):
 @pytest.mark.unit
 @patch("platform.system", return_value="Darwin")
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
-def test_ensure_single_instance_macos(mock_platform, tmp_path):
+def test_ensure_single_instance_macos(mock_platform: MagicMock, tmp_path: Path) -> None:
     """Test ensure_single_instance works on macOS."""
     from orchard.core.environment import guards
 
@@ -121,7 +121,7 @@ def test_ensure_single_instance_macos(mock_platform, tmp_path):
 @pytest.mark.unit
 @patch("platform.system", return_value="Linux")
 @patch("orchard.core.environment.guards.HAS_FCNTL", False)
-def test_ensure_single_instance_no_fcntl(mock_platform, tmp_path):
+def test_ensure_single_instance_no_fcntl(mock_platform: MagicMock, tmp_path: Path) -> None:
     """Test ensure_single_instance when fcntl not available."""
     lock_file = tmp_path / "test.lock"
     logger = logging.getLogger("test")
@@ -132,7 +132,7 @@ def test_ensure_single_instance_no_fcntl(mock_platform, tmp_path):
 # LOCK RELEASE
 @pytest.mark.unit
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
-def test_release_single_instance_with_lock(tmp_path):
+def test_release_single_instance_with_lock(tmp_path: Path) -> None:
     """Test release_single_instance releases lock, closes fd, resets global, and removes file."""
     import fcntl
 
@@ -157,7 +157,7 @@ def test_release_single_instance_with_lock(tmp_path):
 
 
 @pytest.mark.unit
-def test_release_single_instance_no_lock(tmp_path):
+def test_release_single_instance_no_lock(tmp_path: Path) -> None:
     """Test release_single_instance when no lock is held."""
     lock_file = tmp_path / "test.lock"
     lock_file.touch()
@@ -169,7 +169,7 @@ def test_release_single_instance_no_lock(tmp_path):
 
 
 @pytest.mark.unit
-def test_release_single_instance_file_not_exists(tmp_path):
+def test_release_single_instance_file_not_exists(tmp_path: Path) -> None:
     """Test release_single_instance when lock file doesn't exist."""
     lock_file = tmp_path / "nonexistent.lock"
 
@@ -179,7 +179,7 @@ def test_release_single_instance_file_not_exists(tmp_path):
 
 @pytest.mark.unit
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
-def test_release_single_instance_oserror(tmp_path):
+def test_release_single_instance_oserror(tmp_path: Path) -> None:
     """Test release_single_instance handles OSError gracefully."""
     lock_file = tmp_path / "test.lock"
 
@@ -192,7 +192,7 @@ def test_release_single_instance_oserror(tmp_path):
 
 # DUPLICATE PROCESS CLEANER: INITIALIZATION
 @pytest.mark.unit
-def test_duplicate_process_cleaner_init_default():
+def test_duplicate_process_cleaner_init_default() -> None:
     """Test DuplicateProcessCleaner initializes with default script name."""
     cleaner = DuplicateProcessCleaner()
 
@@ -201,7 +201,7 @@ def test_duplicate_process_cleaner_init_default():
 
 
 @pytest.mark.unit
-def test_duplicate_process_cleaner_init_custom_script():
+def test_duplicate_process_cleaner_init_custom_script() -> None:
     """Test DuplicateProcessCleaner initializes with custom script name."""
     custom_script = "/path/to/custom_script.py"
 
@@ -212,11 +212,11 @@ def test_duplicate_process_cleaner_init_custom_script():
 
 # DUPLICATE PROCESS CLEANER: DETECTION
 @pytest.mark.unit
-def test_detect_duplicates_no_duplicates():
+def test_detect_duplicates_no_duplicates() -> None:
     """Test detect_duplicates returns empty list when no duplicates."""
     cleaner = DuplicateProcessCleaner()
 
-    mock_procs = []
+    mock_procs = []  # type: ignore
     with patch("psutil.process_iter", return_value=mock_procs):
         duplicates = cleaner.detect_duplicates()
 
@@ -224,7 +224,7 @@ def test_detect_duplicates_no_duplicates():
 
 
 @pytest.mark.unit
-def test_detect_duplicates_skips_self():
+def test_detect_duplicates_skips_self() -> None:
     """Test detect_duplicates skips current process."""
     cleaner = DuplicateProcessCleaner(script_name="test.py")
 
@@ -242,7 +242,7 @@ def test_detect_duplicates_skips_self():
 
 
 @pytest.mark.unit
-def test_detect_duplicates_skips_non_python():
+def test_detect_duplicates_skips_non_python() -> None:
     """Test detect_duplicates skips non-Python processes (python not in cmd[0])."""
     cleaner = DuplicateProcessCleaner(script_name="test.py")
 
@@ -261,7 +261,7 @@ def test_detect_duplicates_skips_non_python():
 
 
 @pytest.mark.unit
-def test_detect_duplicates_finds_duplicate():
+def test_detect_duplicates_finds_duplicate() -> None:
     """Test detect_duplicates finds matching Python process."""
     script_path = "/path/to/test.py"
     cleaner = DuplicateProcessCleaner(script_name=script_path)
@@ -281,7 +281,7 @@ def test_detect_duplicates_finds_duplicate():
 
 
 @pytest.mark.unit
-def test_detect_duplicates_handles_exceptions():
+def test_detect_duplicates_handles_exceptions() -> None:
     """Test detect_duplicates handles psutil exceptions gracefully."""
     cleaner = DuplicateProcessCleaner()
 
@@ -298,7 +298,7 @@ def test_detect_duplicates_handles_exceptions():
 
 
 @pytest.mark.unit
-def test_detect_duplicates_empty_cmdline():
+def test_detect_duplicates_empty_cmdline() -> None:
     """Test detect_duplicates skips processes with empty cmdline."""
     cleaner = DuplicateProcessCleaner()
 
@@ -317,7 +317,7 @@ def test_detect_duplicates_empty_cmdline():
 
 # DUPLICATE PROCESS CLEANER: TERMINATION
 @pytest.mark.unit
-def test_terminate_duplicates_no_duplicates():
+def test_terminate_duplicates_no_duplicates() -> None:
     """Test terminate_duplicates returns 0 when no duplicates found."""
     cleaner = DuplicateProcessCleaner()
 
@@ -328,7 +328,7 @@ def test_terminate_duplicates_no_duplicates():
 
 
 @pytest.mark.unit
-def test_terminate_duplicates_success():
+def test_terminate_duplicates_success() -> None:
     """Test terminate_duplicates successfully terminates processes."""
     cleaner = DuplicateProcessCleaner()
     logger = logging.getLogger("test")
@@ -347,7 +347,7 @@ def test_terminate_duplicates_success():
 
 
 @pytest.mark.unit
-def test_terminate_duplicates_multiple():
+def test_terminate_duplicates_multiple() -> None:
     """Test terminate_duplicates handles multiple processes."""
     cleaner = DuplicateProcessCleaner()
 
@@ -364,7 +364,7 @@ def test_terminate_duplicates_multiple():
 
 
 @pytest.mark.unit
-def test_terminate_duplicates_handles_no_such_process():
+def test_terminate_duplicates_handles_no_such_process() -> None:
     """Test terminate_duplicates handles NoSuchProcess exception."""
     cleaner = DuplicateProcessCleaner()
 
@@ -378,7 +378,7 @@ def test_terminate_duplicates_handles_no_such_process():
 
 
 @pytest.mark.unit
-def test_terminate_duplicates_handles_access_denied():
+def test_terminate_duplicates_handles_access_denied() -> None:
     """Test terminate_duplicates handles AccessDenied exception."""
     cleaner = DuplicateProcessCleaner()
 
@@ -392,7 +392,7 @@ def test_terminate_duplicates_handles_access_denied():
 
 
 @pytest.mark.unit
-def test_detect_duplicates_handles_no_such_process():
+def test_detect_duplicates_handles_no_such_process() -> None:
     """Test detect_duplicates handles NoSuchProcess exception."""
     cleaner = DuplicateProcessCleaner()
 
@@ -406,7 +406,7 @@ def test_detect_duplicates_handles_no_such_process():
 
 
 @pytest.mark.unit
-def test_detect_duplicates_handles_access_denied():
+def test_detect_duplicates_handles_access_denied() -> None:
     """Test detect_duplicates handles AccessDenied exception."""
     cleaner = DuplicateProcessCleaner()
 
@@ -420,7 +420,7 @@ def test_detect_duplicates_handles_access_denied():
 
 
 @pytest.mark.unit
-def test_detect_duplicates_handles_zombie_process():
+def test_detect_duplicates_handles_zombie_process() -> None:
     """Test detect_duplicates handles ZombieProcess exception."""
     cleaner = DuplicateProcessCleaner()
 
@@ -434,7 +434,7 @@ def test_detect_duplicates_handles_zombie_process():
 
 
 @pytest.mark.unit
-def test_terminate_duplicates_with_logger():
+def test_terminate_duplicates_with_logger() -> None:
     """Test terminate_duplicates logs termination and applies cooldown."""
     cleaner = DuplicateProcessCleaner()
     logger = MagicMock()
@@ -452,7 +452,7 @@ def test_terminate_duplicates_with_logger():
 
 @pytest.mark.unit
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
-def test_release_single_instance_unlock_ioerror_real(tmp_path):
+def test_release_single_instance_unlock_ioerror_real(tmp_path: Path) -> None:
     """Test release_single_instance handles IOError during unlock."""
     lock_file = tmp_path / "test.lock"
     lock_file.touch()
@@ -467,7 +467,7 @@ def test_release_single_instance_unlock_ioerror_real(tmp_path):
 
 @pytest.mark.unit
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
-def test_release_single_instance_close_ioerror_real(tmp_path):
+def test_release_single_instance_close_ioerror_real(tmp_path: Path) -> None:
     """Test release_single_instance handles IOError during close."""
     lock_file = tmp_path / "test.lock"
     lock_file.touch()
@@ -475,10 +475,10 @@ def test_release_single_instance_close_ioerror_real(tmp_path):
     real_fd = open(lock_file, "a")
     original_close = real_fd.close
 
-    def mock_close_ioerror():
+    def mock_close_ioerror() -> None:
         raise IOError("Close IO failed")
 
-    real_fd.close = mock_close_ioerror
+    real_fd.close = mock_close_ioerror  # type: ignore
 
     with patch("orchard.core.environment.guards._lock_fd", real_fd):
         with patch("fcntl.flock"):
@@ -495,7 +495,9 @@ def test_release_single_instance_close_ioerror_real(tmp_path):
 @pytest.mark.unit
 @patch("platform.system", return_value="Linux")
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
-def test_ensure_single_instance_creates_nested_parent_dirs(mock_platform, tmp_path):
+def test_ensure_single_instance_creates_nested_parent_dirs(
+    mock_platform: MagicMock, tmp_path: Path
+) -> None:
     """Test ensure_single_instance creates deeply nested parent directories."""
     import uuid
 
@@ -520,7 +522,7 @@ def test_ensure_single_instance_creates_nested_parent_dirs(mock_platform, tmp_pa
 
 
 @pytest.mark.unit
-def test_terminate_duplicates_timeout_then_kill_success():
+def test_terminate_duplicates_timeout_then_kill_success() -> None:
     """Test terminate_duplicates falls back to kill() after TimeoutExpired."""
     cleaner = DuplicateProcessCleaner()
 
@@ -541,7 +543,7 @@ def test_terminate_duplicates_timeout_then_kill_success():
 
 
 @pytest.mark.unit
-def test_terminate_duplicates_timeout_then_kill_fails():
+def test_terminate_duplicates_timeout_then_kill_fails() -> None:
     """Test terminate_duplicates handles exception after kill()."""
     cleaner = DuplicateProcessCleaner()
 
@@ -561,7 +563,7 @@ def test_terminate_duplicates_timeout_then_kill_fails():
 
 
 @pytest.mark.unit
-def test_terminate_duplicates_timeout_kill_no_such_process():
+def test_terminate_duplicates_timeout_kill_no_such_process() -> None:
     """Test terminate_duplicates handles NoSuchProcess after kill()."""
     cleaner = DuplicateProcessCleaner()
 
@@ -581,7 +583,9 @@ def test_terminate_duplicates_timeout_kill_no_such_process():
 @pytest.mark.unit
 @patch("platform.system", return_value="Linux")
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
-def test_ensure_single_instance_skips_on_non_main_rank(mock_platform, tmp_path, monkeypatch):
+def test_ensure_single_instance_skips_on_non_main_rank(
+    mock_platform: MagicMock, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test ensure_single_instance skips lock acquisition for non-main rank."""
     monkeypatch.setenv("RANK", "1")
     lock_file = tmp_path / "test.lock"
@@ -596,7 +600,9 @@ def test_ensure_single_instance_skips_on_non_main_rank(mock_platform, tmp_path, 
 @pytest.mark.unit
 @patch("platform.system", return_value="Linux")
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
-def test_ensure_single_instance_acquires_on_rank_zero(mock_platform, tmp_path, monkeypatch):
+def test_ensure_single_instance_acquires_on_rank_zero(
+    mock_platform: MagicMock, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test ensure_single_instance acquires lock for rank 0."""
     from orchard.core.environment import guards
 
@@ -617,7 +623,9 @@ def test_ensure_single_instance_acquires_on_rank_zero(mock_platform, tmp_path, m
 @pytest.mark.unit
 @patch("platform.system", return_value="Linux")
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
-def test_ensure_single_instance_acquires_when_no_rank_env(mock_platform, tmp_path, monkeypatch):
+def test_ensure_single_instance_acquires_when_no_rank_env(
+    mock_platform: MagicMock, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test ensure_single_instance acquires lock when RANK is not set (single-process)."""
     from orchard.core.environment import guards
 
@@ -638,7 +646,7 @@ def test_ensure_single_instance_acquires_when_no_rank_env(mock_platform, tmp_pat
 
 # RANK-AWARE DUPLICATE PROCESS CLEANUP
 @pytest.mark.unit
-def test_terminate_duplicates_skips_in_distributed_mode(monkeypatch):
+def test_terminate_duplicates_skips_in_distributed_mode(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test terminate_duplicates returns 0 in distributed mode without scanning."""
     monkeypatch.setenv("RANK", "0")
     cleaner = DuplicateProcessCleaner()
@@ -652,7 +660,7 @@ def test_terminate_duplicates_skips_in_distributed_mode(monkeypatch):
 
 
 @pytest.mark.unit
-def test_terminate_duplicates_runs_outside_distributed(monkeypatch):
+def test_terminate_duplicates_runs_outside_distributed(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test terminate_duplicates runs normally when not in distributed mode."""
     monkeypatch.delenv("RANK", raising=False)
     monkeypatch.delenv("LOCAL_RANK", raising=False)
@@ -668,7 +676,9 @@ def test_terminate_duplicates_runs_outside_distributed(monkeypatch):
 @pytest.mark.unit
 @patch("platform.system", return_value="Windows")
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
-def test_ensure_single_instance_windows_no_lock_even_with_fcntl(mock_platform, tmp_path):
+def test_ensure_single_instance_windows_no_lock_even_with_fcntl(
+    mock_platform: MagicMock, tmp_path: Path
+) -> None:
     """Kills mutmut_2: `and` → `or`. On Windows fcntl must NOT be used even if available."""
     lock_file = tmp_path / "test.lock"
     logger = logging.getLogger("test")
@@ -682,7 +692,9 @@ def test_ensure_single_instance_windows_no_lock_even_with_fcntl(mock_platform, t
 @pytest.mark.unit
 @patch("platform.system", return_value="Linux")
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
-def test_ensure_single_instance_open_raises_ioerror(mock_platform, tmp_path):
+def test_ensure_single_instance_open_raises_ioerror(
+    mock_platform: MagicMock, tmp_path: Path
+) -> None:
     """Kills mutmut_10: `f = None` → `f = ""`. If open() raises IOError, f stays None and close must NOT be called."""
     lock_file = tmp_path / "test.lock"
     lock_file.parent.mkdir(parents=True, exist_ok=True)
@@ -698,7 +710,9 @@ def test_ensure_single_instance_open_raises_ioerror(mock_platform, tmp_path):
 @pytest.mark.unit
 @patch("platform.system", return_value="Linux")
 @patch("orchard.core.environment.guards.HAS_FCNTL", True)
-def test_ensure_single_instance_error_log_includes_warning_style(mock_platform, tmp_path):
+def test_ensure_single_instance_error_log_includes_warning_style(
+    mock_platform: MagicMock, tmp_path: Path
+) -> None:
     """Kills mutmut_31 and mutmut_32: logger.error must include LogStyle.WARNING as second arg."""
     from orchard.core.paths.constants import LogStyle
 
@@ -717,7 +731,7 @@ def test_ensure_single_instance_error_log_includes_warning_style(mock_platform, 
 
 # MUTATION: detect_duplicates — `continue` vs `break` when skipping self
 @pytest.mark.unit
-def test_detect_duplicates_continues_after_skipping_self():
+def test_detect_duplicates_continues_after_skipping_self() -> None:
     """Kills mutmut_17: `continue` → `break`. Must find duplicate even after skipping self."""
     script_path = "/path/to/test.py"
     cleaner = DuplicateProcessCleaner(script_name=script_path)
@@ -746,7 +760,7 @@ def test_detect_duplicates_continues_after_skipping_self():
 
 # MUTATION: detect_duplicates — `continue` vs `break` when skipping non-Python
 @pytest.mark.unit
-def test_detect_duplicates_continues_after_non_python():
+def test_detect_duplicates_continues_after_non_python() -> None:
     """Kills mutmut_27: `continue` → `break`. Must find duplicate even after skipping non-Python."""
     script_path = "/path/to/test.py"
     cleaner = DuplicateProcessCleaner(script_name=script_path)
@@ -774,7 +788,7 @@ def test_detect_duplicates_continues_after_non_python():
 
 # MUTATION: detect_duplicates — `continue` vs `break` in except handler
 @pytest.mark.unit
-def test_detect_duplicates_continues_after_exception():
+def test_detect_duplicates_continues_after_exception() -> None:
     """Kills mutmut_35: `continue` → `break`. Must find duplicate even after exception in prior proc."""
     script_path = "/path/to/test.py"
     cleaner = DuplicateProcessCleaner(script_name=script_path)
@@ -799,7 +813,7 @@ def test_detect_duplicates_continues_after_exception():
 
 # MUTATION: terminate_duplicates — `continue` vs `break` for NoSuchProcess/AccessDenied
 @pytest.mark.unit
-def test_terminate_duplicates_continues_after_nosuchprocess():
+def test_terminate_duplicates_continues_after_nosuchprocess() -> None:
     """Kills mutmut_11: `continue` → `break`. Must try second proc after first vanishes."""
     cleaner = DuplicateProcessCleaner()
 
@@ -820,7 +834,7 @@ def test_terminate_duplicates_continues_after_nosuchprocess():
 
 # MUTATION: terminate_duplicates — kill wait timeout value
 @pytest.mark.unit
-def test_terminate_duplicates_kill_wait_timeout_is_one():
+def test_terminate_duplicates_kill_wait_timeout_is_one() -> None:
     """Kills mutmut_12 and mutmut_13: timeout must be exactly 1 in kill().wait()."""
     cleaner = DuplicateProcessCleaner()
 
@@ -841,7 +855,7 @@ def test_terminate_duplicates_kill_wait_timeout_is_one():
 
 # MUTATION: terminate_duplicates — `count += 1` vs `count = 1` in kill branch
 @pytest.mark.unit
-def test_terminate_duplicates_kill_branch_increments_count():
+def test_terminate_duplicates_kill_branch_increments_count() -> None:
     """Kills mutmut_14: `count += 1` → `count = 1`. With 2 procs in kill path, count must be 2."""
     cleaner = DuplicateProcessCleaner()
 
@@ -863,7 +877,7 @@ def test_terminate_duplicates_kill_branch_increments_count():
 
 # MUTATION: terminate_duplicates — `continue` vs `break` in kill except handler
 @pytest.mark.unit
-def test_terminate_duplicates_continues_after_kill_failure():
+def test_terminate_duplicates_continues_after_kill_failure() -> None:
     """Kills mutmut_17: `continue` → `break`. Must try second proc after first's kill fails."""
     cleaner = DuplicateProcessCleaner()
 

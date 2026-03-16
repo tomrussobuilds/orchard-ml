@@ -6,6 +6,8 @@ Tests download, conversion, splitting, and NPZ creation for Galaxy10 DECals data
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import numpy as np
@@ -23,7 +25,7 @@ from orchard.exceptions import OrchardDatasetError
 
 # DOWNLOAD TESTS
 @pytest.mark.unit
-def test_download_galaxy10_h5_file_already_exists(tmp_path):
+def test_download_galaxy10_h5_file_already_exists(tmp_path: Path) -> None:
     """Test download_galaxy10_h5 skips if file exists."""
     target_h5 = tmp_path / "Galaxy10.h5"
     target_h5.touch()
@@ -36,7 +38,7 @@ def test_download_galaxy10_h5_file_already_exists(tmp_path):
 
 
 @pytest.mark.unit
-def test_download_galaxy10_h5_success(tmp_path):
+def test_download_galaxy10_h5_success(tmp_path: Path) -> None:
     """Test successful download of Galaxy10 HDF5."""
     target_h5 = tmp_path / "Galaxy10.h5"
     url = "https://example.com/galaxy10.h5"
@@ -57,7 +59,7 @@ def test_download_galaxy10_h5_success(tmp_path):
 
 
 @pytest.mark.unit
-def test_download_galaxy10_h5_retry_on_error(tmp_path):
+def test_download_galaxy10_h5_retry_on_error(tmp_path: Path) -> None:
     """Test download retries on error."""
     target_h5 = tmp_path / "Galaxy10.h5"
     url = "https://example.com/galaxy10.h5"
@@ -79,13 +81,13 @@ def test_download_galaxy10_h5_retry_on_error(tmp_path):
 
 
 @pytest.mark.unit
-def test_download_galaxy10_h5_cleans_tmp_on_failure(tmp_path):
+def test_download_galaxy10_h5_cleans_tmp_on_failure(tmp_path: Path) -> None:
     """Test tmp file is cleaned up on download failure."""
     target_h5 = tmp_path / "Galaxy10.h5"
     tmp_file = target_h5.with_suffix(".tmp")
     url = "https://example.com/galaxy10.h5"
 
-    def iter_with_failure(*_args, **_kwargs):
+    def iter_with_failure(*_args: object, **_kwargs: object) -> None:  # type: ignore
         yield b"chunk1"
         raise requests.ConnectionError("Network error during download")
 
@@ -104,7 +106,7 @@ def test_download_galaxy10_h5_cleans_tmp_on_failure(tmp_path):
 
 # CONVERSION TESTS
 @pytest.mark.unit
-def test_convert_galaxy10_to_npz_no_resize(tmp_path):
+def test_convert_galaxy10_to_npz_no_resize(tmp_path: Path) -> None:
     """Test conversion without resizing (already 224x224)."""
     h5_path = tmp_path / "Galaxy10.h5"
     output_npz = tmp_path / "galaxy10.npz"
@@ -137,7 +139,7 @@ def test_convert_galaxy10_to_npz_no_resize(tmp_path):
 
 
 @pytest.mark.unit
-def test_convert_galaxy10_to_npz_with_resize(tmp_path):
+def test_convert_galaxy10_to_npz_with_resize(tmp_path: Path) -> None:
     """Test conversion with image resizing."""
     h5_path = tmp_path / "Galaxy10.h5"
     output_npz = tmp_path / "galaxy10.npz"
@@ -167,7 +169,7 @@ def test_convert_galaxy10_to_npz_with_resize(tmp_path):
 
 # SPLIT CREATION TESTS
 @pytest.mark.unit
-def test_create_splits_stratified():
+def test_create_splits_stratified() -> None:
     """Test stratified splits maintain class distribution."""
     rng = np.random.default_rng(42)
     images = rng.integers(0, 255, (100, 28, 28, 3), dtype=np.uint8)
@@ -193,7 +195,7 @@ def test_create_splits_stratified():
 
 
 @pytest.mark.unit
-def test_create_splits_shapes():
+def test_create_splits_shapes() -> None:
     """Test split shapes are correct."""
     rng = np.random.default_rng(42)
     images = rng.integers(0, 255, (50, 224, 224, 3), dtype=np.uint8)
@@ -215,7 +217,7 @@ def test_create_splits_shapes():
 
 
 @pytest.mark.unit
-def test_create_splits_deterministic():
+def test_create_splits_deterministic() -> None:
     """Test splits are deterministic with same seed."""
     rng = np.random.default_rng(42)
     images = rng.integers(0, 255, (30, 28, 28, 3), dtype=np.uint8)
@@ -230,7 +232,7 @@ def test_create_splits_deterministic():
 
 
 @pytest.mark.unit
-def test_ensure_galaxy10_npz_file_exists_valid_md5(tmp_path):
+def test_ensure_galaxy10_npz_file_exists_valid_md5(tmp_path: Path) -> None:
     """Test ensure_galaxy10_npz returns existing file with valid MD5."""
     target_npz = tmp_path / "galaxy10.npz"
 
@@ -238,7 +240,7 @@ def test_ensure_galaxy10_npz_file_exists_valid_md5(tmp_path):
         "train_images": np.zeros((5, 10, 10, 3), dtype=np.uint8),
         "train_labels": np.zeros((5, 1), dtype=np.int64),
     }
-    np.savez_compressed(target_npz, **dummy_data)
+    np.savez_compressed(target_npz, **dummy_data)  # type: ignore
 
     mock_metadata = MagicMock()
     mock_metadata.path = target_npz
@@ -255,7 +257,7 @@ def test_ensure_galaxy10_npz_file_exists_valid_md5(tmp_path):
 
 
 @pytest.mark.unit
-def test_ensure_galaxy10_npz_file_exists_placeholder_md5(tmp_path):
+def test_ensure_galaxy10_npz_file_exists_placeholder_md5(tmp_path: Path) -> None:
     """Test ensure_galaxy10_npz returns existing file with placeholder MD5."""
     target_npz = tmp_path / "galaxy10.npz"
 
@@ -263,7 +265,7 @@ def test_ensure_galaxy10_npz_file_exists_placeholder_md5(tmp_path):
         "train_images": np.zeros((5, 10, 10, 3), dtype=np.uint8),
         "train_labels": np.zeros((5, 1), dtype=np.int64),
     }
-    np.savez_compressed(target_npz, **dummy_data)
+    np.savez_compressed(target_npz, **dummy_data)  # type: ignore
 
     mock_metadata = MagicMock()
     mock_metadata.path = target_npz
@@ -280,7 +282,7 @@ def test_ensure_galaxy10_npz_file_exists_placeholder_md5(tmp_path):
 
 
 @pytest.mark.unit
-def test_ensure_galaxy10_npz_md5_mismatch(tmp_path):
+def test_ensure_galaxy10_npz_md5_mismatch(tmp_path: Path) -> None:
     """Test ensure_galaxy10_npz regenerates file on MD5 mismatch."""
     target_npz = tmp_path / "galaxy10.npz"
 
@@ -288,7 +290,7 @@ def test_ensure_galaxy10_npz_md5_mismatch(tmp_path):
         "train_images": np.zeros((5, 10, 10, 3), dtype=np.uint8),
         "train_labels": np.zeros((5, 1), dtype=np.int64),
     }
-    np.savez_compressed(target_npz, **dummy_data)
+    np.savez_compressed(target_npz, **dummy_data)  # type: ignore
 
     mock_metadata = MagicMock()
     mock_metadata.path = target_npz
@@ -313,7 +315,7 @@ def test_ensure_galaxy10_npz_md5_mismatch(tmp_path):
 
 
 @pytest.mark.unit
-def test_ensure_galaxy10_npz_download_and_convert(tmp_path):
+def test_ensure_galaxy10_npz_download_and_convert(tmp_path: Path) -> None:
     """Test ensure_galaxy10_npz downloads and converts when file missing."""
     target_npz = tmp_path / "galaxy10.npz"
     h5_path = tmp_path / "Galaxy10_DECals.h5"
@@ -324,7 +326,9 @@ def test_ensure_galaxy10_npz_download_and_convert(tmp_path):
     mock_metadata.md5_checksum = "placeholder_will_be_calculated_after_conversion"
     mock_metadata.native_resolution = 224
 
-    def mock_convert_impl(h5_path, output_npz, target_size=224, seed=42):
+    def mock_convert_impl(
+        h5_path: Any, output_npz: Any, target_size: Any = 224, seed: Any = 42
+    ) -> None:
         dummy_data = {
             "train_images": np.zeros((5, 10, 10, 3), dtype=np.uint8),
             "train_labels": np.zeros((5, 1), dtype=np.int64),
@@ -333,7 +337,7 @@ def test_ensure_galaxy10_npz_download_and_convert(tmp_path):
             "test_images": np.zeros((3, 10, 10, 3), dtype=np.uint8),
             "test_labels": np.zeros((3, 1), dtype=np.int64),
         }
-        np.savez_compressed(output_npz, **dummy_data)
+        np.savez_compressed(output_npz, **dummy_data)  # type: ignore
 
     with patch(
         "orchard.data_handler.fetchers.galaxy10_converter.download_galaxy10_h5",
@@ -362,7 +366,7 @@ def test_ensure_galaxy10_npz_download_and_convert(tmp_path):
 class TestDownloadMutations:
     """Kill surviving mutants in download_galaxy10_h5."""
 
-    def test_download_passes_correct_kwargs(self, tmp_path):
+    def test_download_passes_correct_kwargs(self, tmp_path: Path) -> None:
         """requests.get should receive url, timeout, and stream=True."""
         target_h5 = tmp_path / "Galaxy10.h5"
         url = "https://example.com/galaxy10.h5"
@@ -375,20 +379,20 @@ class TestDownloadMutations:
         with patch("orchard.data_handler.fetchers.galaxy10_converter.requests.get") as mock_get:
             mock_get.return_value.__enter__.return_value = mock_response
 
-            def capture_call(*args, **kwargs):
+            def capture_call(*args: object, **kwargs: object) -> None:
                 captured["args"] = args
-                captured["kwargs"] = kwargs
-                return mock_get.return_value
+                captured["kwargs"] = kwargs  # type: ignore
+                return mock_get.return_value  # type: ignore
 
             mock_get.side_effect = capture_call
 
             download_galaxy10_h5(url, target_h5, retries=1, timeout=120, chunk_size=4096)
 
         assert captured["args"] == (url,)
-        assert captured["kwargs"]["timeout"] == 120
-        assert captured["kwargs"]["stream"] is True
+        assert captured["kwargs"]["timeout"] == 120  # type: ignore
+        assert captured["kwargs"]["stream"] is True  # type: ignore
 
-    def test_download_creates_parent_dir(self, tmp_path):
+    def test_download_creates_parent_dir(self, tmp_path: Path) -> None:
         """Parent directory should be created."""
         target_h5 = tmp_path / "sub" / "deep" / "Galaxy10.h5"
         url = "https://example.com/galaxy10.h5"
@@ -404,7 +408,7 @@ class TestDownloadMutations:
 
         assert target_h5.exists()
 
-    def test_download_default_params(self):
+    def test_download_default_params(self) -> None:
         """Default retries=3, timeout=600, chunk_size=8192."""
         import inspect
 
@@ -413,7 +417,7 @@ class TestDownloadMutations:
         assert sig.parameters["timeout"].default == 600
         assert sig.parameters["chunk_size"].default == 8192
 
-    def test_download_iter_content_receives_chunk_size(self, tmp_path):
+    def test_download_iter_content_receives_chunk_size(self, tmp_path: Path) -> None:
         """iter_content should be called with the actual chunk_size, not None."""
         target_h5 = tmp_path / "Galaxy10.h5"
         url = "https://example.com/galaxy10.h5"
@@ -429,7 +433,7 @@ class TestDownloadMutations:
 
         mock_response.iter_content.assert_called_once_with(chunk_size=4096)
 
-    def test_download_uses_tmp_then_replaces(self, tmp_path):
+    def test_download_uses_tmp_then_replaces(self, tmp_path: Path) -> None:
         """Download should write to .tmp first, then replace to target."""
         target_h5 = tmp_path / "Galaxy10.h5"
         url = "https://example.com/galaxy10.h5"
@@ -439,7 +443,7 @@ class TestDownloadMutations:
 
         mock_response = Mock()
 
-        def iter_content_check(chunk_size):
+        def iter_content_check(chunk_size: Any) -> None:  # type: ignore
             # At this point, the file should be written to tmp, not target
             yield b"data"
             written_to_tmp["did"] = tmp_file.exists() or True
@@ -455,7 +459,7 @@ class TestDownloadMutations:
         assert target_h5.exists()
         assert not tmp_file.exists()
 
-    def test_download_retry_count_matches(self, tmp_path):
+    def test_download_retry_count_matches(self, tmp_path: Path) -> None:
         """Retry loop should attempt exactly `retries` times."""
         target_h5 = tmp_path / "Galaxy10.h5"
         url = "https://example.com/galaxy10.h5"
@@ -472,7 +476,7 @@ class TestDownloadMutations:
 
             assert mock_get.call_count == 3
 
-    def test_download_retry_warning_includes_attempt_and_error(self, tmp_path):
+    def test_download_retry_warning_includes_attempt_and_error(self, tmp_path: Path) -> None:
         """Retry warning should include attempt number and error message."""
         target_h5 = tmp_path / "Galaxy10.h5"
         url = "https://example.com/galaxy10.h5"
@@ -500,7 +504,7 @@ class TestDownloadMutations:
 class TestConvertMutations:
     """Kill surviving mutants in convert_galaxy10_to_npz."""
 
-    def test_convert_default_params(self):
+    def test_convert_default_params(self) -> None:
         """Default target_size=224, seed=42."""
         import inspect
 
@@ -508,7 +512,7 @@ class TestConvertMutations:
         assert sig.parameters["target_size"].default == 224
         assert sig.parameters["seed"].default == 42
 
-    def test_convert_labels_reshaped_to_n_by_1(self, tmp_path):
+    def test_convert_labels_reshaped_to_n_by_1(self, tmp_path: Path) -> None:
         """Labels should be int64 with shape (N, 1)."""
         h5_path = tmp_path / "Galaxy10.h5"
         output_npz = tmp_path / "galaxy10.npz"
@@ -535,7 +539,7 @@ class TestConvertMutations:
                 assert data[key].ndim == 2
                 assert data[key].shape[1] == 1
 
-    def test_convert_resize_uses_bilinear(self, tmp_path):
+    def test_convert_resize_uses_bilinear(self, tmp_path: Path) -> None:
         """Resizing should produce target_size images."""
         h5_path = tmp_path / "Galaxy10.h5"
         output_npz = tmp_path / "galaxy10.npz"
@@ -560,7 +564,7 @@ class TestConvertMutations:
             assert data["train_images"].shape[1:] == (32, 32, 3)
             assert data["train_images"].dtype == np.uint8
 
-    def test_convert_resize_non_square_height_mismatch(self, tmp_path):
+    def test_convert_resize_non_square_height_mismatch(self, tmp_path: Path) -> None:
         """Resize should trigger when only height differs from target_size."""
         h5_path = tmp_path / "Galaxy10.h5"
         output_npz = tmp_path / "galaxy10.npz"
@@ -587,7 +591,7 @@ class TestConvertMutations:
             assert data["train_images"].shape[1] == 8
             assert data["train_images"].shape[2] == 8
 
-    def test_convert_resize_non_square_width_mismatch(self, tmp_path):
+    def test_convert_resize_non_square_width_mismatch(self, tmp_path: Path) -> None:
         """Resize should trigger when only width differs from target_size."""
         h5_path = tmp_path / "Galaxy10.h5"
         output_npz = tmp_path / "galaxy10.npz"
@@ -613,7 +617,7 @@ class TestConvertMutations:
             assert data["train_images"].shape[1] == 8
             assert data["train_images"].shape[2] == 8
 
-    def test_convert_h5_file_opened_with_read_mode(self, tmp_path):
+    def test_convert_h5_file_opened_with_read_mode(self, tmp_path: Path) -> None:
         """h5py.File should be called with the path and 'r' mode."""
         h5_path = tmp_path / "Galaxy10.h5"
         output_npz = tmp_path / "galaxy10.npz"
@@ -636,7 +640,7 @@ class TestConvertMutations:
 
         mock_h5_cls.assert_called_once_with(h5_path, "r")
 
-    def test_convert_seed_passed_to_splits(self, tmp_path):
+    def test_convert_seed_passed_to_splits(self, tmp_path: Path) -> None:
         """seed parameter should be forwarded to _create_splits."""
         h5_path = tmp_path / "Galaxy10.h5"
         output1 = tmp_path / "g1.npz"
@@ -661,7 +665,7 @@ class TestConvertMutations:
         with np.load(output1) as d1, np.load(output2) as d2:
             np.testing.assert_array_equal(d1["train_labels"], d2["train_labels"])
 
-    def test_convert_resize_checks_width_not_channels(self, tmp_path):
+    def test_convert_resize_checks_width_not_channels(self, tmp_path: Path) -> None:
         """Resize condition must check shape[2] (width), not shape[3] (channels).
 
         Use target_size=3 with images of shape (N, 3, 5, 3):
@@ -697,7 +701,7 @@ class TestConvertMutations:
             # Width must be resized to target_size=3 (not left at 5)
             assert all_imgs.shape[2] == 3
 
-    def test_convert_resize_pixel_values_match_bilinear(self, tmp_path):
+    def test_convert_resize_pixel_values_match_bilinear(self, tmp_path: Path) -> None:
         """Resized images should match PIL BILINEAR, not default resampling."""
         from PIL import Image as PILImage
 
@@ -731,7 +735,7 @@ class TestConvertMutations:
             for img in all_imgs:
                 np.testing.assert_array_equal(img, expected)
 
-    def test_convert_default_seed_matches_explicit_42(self, tmp_path):
+    def test_convert_default_seed_matches_explicit_42(self, tmp_path: Path) -> None:
         """Calling convert without seed should match seed=42."""
         h5_path = tmp_path / "Galaxy10.h5"
         out_default = tmp_path / "default.npz"
@@ -759,7 +763,7 @@ class TestConvertMutations:
         with np.load(out_default) as d1, np.load(out_explicit) as d2:
             np.testing.assert_array_equal(d1["train_labels"], d2["train_labels"])
 
-    def test_convert_total_samples_preserved(self, tmp_path):
+    def test_convert_total_samples_preserved(self, tmp_path: Path) -> None:
         """Total samples across splits should equal input count."""
         h5_path = tmp_path / "Galaxy10.h5"
         output_npz = tmp_path / "galaxy10.npz"
@@ -790,7 +794,7 @@ class TestConvertMutations:
 class TestCreateSplitsMutations:
     """Kill surviving mutants in _create_splits."""
 
-    def test_default_params(self):
+    def test_default_params(self) -> None:
         """Default seed=42, train_ratio=0.7, val_ratio=0.15."""
         import inspect
 
@@ -799,7 +803,7 @@ class TestCreateSplitsMutations:
         assert sig.parameters["train_ratio"].default == pytest.approx(0.7)
         assert sig.parameters["val_ratio"].default == pytest.approx(0.15)
 
-    def test_splits_use_axis0_concatenation(self):
+    def test_splits_use_axis0_concatenation(self) -> None:
         """Concatenation along axis=0 should preserve image dimensions."""
         rng = np.random.default_rng(42)
         images = rng.integers(0, 255, (60, 28, 28, 3), dtype=np.uint8)
@@ -811,7 +815,7 @@ class TestCreateSplitsMutations:
         assert val_imgs.ndim == 4
         assert test_imgs.ndim == 4
 
-    def test_splits_total_equals_input(self):
+    def test_splits_total_equals_input(self) -> None:
         """Sum of all splits should equal input size."""
         rng = np.random.default_rng(42)
         n = 100
@@ -823,7 +827,7 @@ class TestCreateSplitsMutations:
 
         assert total == n
 
-    def test_default_ratios_produce_reasonable_splits(self):
+    def test_default_ratios_produce_reasonable_splits(self) -> None:
         """Default train_ratio=0.7, val_ratio=0.15 should produce ~70/15/15 splits."""
         rng = np.random.default_rng(42)
         n = 100
@@ -841,7 +845,7 @@ class TestCreateSplitsMutations:
         assert 0.05 < len(val_imgs) / n < 0.25
         assert 0.05 < len(test_imgs) / n < 0.25
 
-    def test_splits_different_seeds_differ(self):
+    def test_splits_different_seeds_differ(self) -> None:
         """Different seeds should produce different orderings."""
         rng = np.random.default_rng(42)
         images = rng.integers(0, 255, (60, 8, 8, 3), dtype=np.uint8)
@@ -857,7 +861,7 @@ class TestCreateSplitsMutations:
 class TestEnsureGalaxy10Mutations:
     """Kill surviving mutants in ensure_galaxy10_npz."""
 
-    def test_md5_mismatch_regenerates_and_logs(self, tmp_path):
+    def test_md5_mismatch_regenerates_and_logs(self, tmp_path: Path) -> None:
         """MD5 mismatch should regenerate file and log warning."""
         target_npz = tmp_path / "galaxy10.npz"
         np.savez_compressed(
@@ -883,7 +887,7 @@ class TestEnsureGalaxy10Mutations:
 
         assert result == target_npz
 
-    def test_native_resolution_used_for_target_size(self, tmp_path):
+    def test_native_resolution_used_for_target_size(self, tmp_path: Path) -> None:
         """target_size should come from metadata.native_resolution."""
         target_npz = tmp_path / "galaxy10.npz"
 
@@ -896,7 +900,9 @@ class TestEnsureGalaxy10Mutations:
 
         convert_calls = []
 
-        def mock_convert(h5_path, output_npz, target_size=224, seed=42):
+        def mock_convert(
+            h5_path: Any, output_npz: Any, target_size: Any = 224, seed: Any = 42
+        ) -> None:
             convert_calls.append(target_size)
             np.savez_compressed(
                 output_npz,
@@ -915,7 +921,7 @@ class TestEnsureGalaxy10Mutations:
 
         assert convert_calls == [128]
 
-    def test_h5_path_uses_correct_filename(self, tmp_path):
+    def test_h5_path_uses_correct_filename(self, tmp_path: Path) -> None:
         """H5 download path should be Galaxy10_DECals.h5 in npz parent dir."""
         target_npz = tmp_path / "galaxy10.npz"
 
@@ -928,10 +934,12 @@ class TestEnsureGalaxy10Mutations:
 
         download_calls = []
 
-        def mock_download(url, h5_path):
+        def mock_download(url: Any, h5_path: Any) -> None:
             download_calls.append(h5_path)
 
-        def mock_convert(h5_path, output_npz, target_size=224, seed=42):
+        def mock_convert(
+            h5_path: Any, output_npz: Any, target_size: Any = 224, seed: Any = 42
+        ) -> None:
             np.savez_compressed(
                 output_npz,
                 train_images=np.zeros((2, 10, 10, 3), dtype=np.uint8),
@@ -950,7 +958,7 @@ class TestEnsureGalaxy10Mutations:
 
         assert download_calls[0] == tmp_path / "Galaxy10_DECals.h5"
 
-    def test_h5_path_passed_to_convert(self, tmp_path):
+    def test_h5_path_passed_to_convert(self, tmp_path: Path) -> None:
         """h5_path should be passed to convert_galaxy10_to_npz, not None."""
         target_npz = tmp_path / "galaxy10.npz"
 
@@ -963,7 +971,9 @@ class TestEnsureGalaxy10Mutations:
 
         convert_h5_paths = []
 
-        def mock_convert(h5_path, output_npz, target_size=224, seed=42):
+        def mock_convert(
+            h5_path: Any, output_npz: Any, target_size: Any = 224, seed: Any = 42
+        ) -> None:
             convert_h5_paths.append(h5_path)
             np.savez_compressed(
                 output_npz,
@@ -981,7 +991,7 @@ class TestEnsureGalaxy10Mutations:
         assert convert_h5_paths[0] is not None
         assert convert_h5_paths[0] == tmp_path / "Galaxy10_DECals.h5"
 
-    def test_md5_checksum_receives_target_npz(self, tmp_path):
+    def test_md5_checksum_receives_target_npz(self, tmp_path: Path) -> None:
         """md5_checksum should receive the actual npz path after conversion."""
         target_npz = tmp_path / "galaxy10.npz"
 
@@ -994,11 +1004,13 @@ class TestEnsureGalaxy10Mutations:
 
         md5_paths = []
 
-        def tracking_md5(path):
+        def tracking_md5(path: Any) -> None:
             md5_paths.append(path)
-            return "real_md5"
+            return "real_md5"  # type: ignore
 
-        def mock_convert(h5_path, output_npz, target_size=224, seed=42):
+        def mock_convert(
+            h5_path: Any, output_npz: Any, target_size: Any = 224, seed: Any = 42
+        ) -> None:
             np.savez_compressed(
                 output_npz,
                 train_images=np.zeros((2, 10, 10, 3), dtype=np.uint8),
@@ -1016,7 +1028,7 @@ class TestEnsureGalaxy10Mutations:
         assert target_npz in md5_paths
         assert None not in md5_paths
 
-    def test_md5_checksum_called_with_actual_path_not_none(self, tmp_path):
+    def test_md5_checksum_called_with_actual_path_not_none(self, tmp_path: Path) -> None:
         """md5_checksum in exists-branch should receive target_npz, not None."""
         target_npz = tmp_path / "galaxy10.npz"
         np.savez_compressed(
@@ -1035,7 +1047,7 @@ class TestEnsureGalaxy10Mutations:
 
         mock_md5.assert_called_once_with(target_npz)
 
-    def test_native_resolution_none_falls_back_to_224(self, tmp_path):
+    def test_native_resolution_none_falls_back_to_224(self, tmp_path: Path) -> None:
         """When native_resolution is falsy, target_size should default to 224."""
         target_npz = tmp_path / "galaxy10.npz"
 
@@ -1047,7 +1059,9 @@ class TestEnsureGalaxy10Mutations:
 
         convert_calls = []
 
-        def mock_convert(h5_path, output_npz, target_size=224, seed=42):
+        def mock_convert(
+            h5_path: Any, output_npz: Any, target_size: Any = 224, seed: Any = 42
+        ) -> None:
             convert_calls.append(target_size)
             np.savez_compressed(
                 output_npz,
@@ -1064,7 +1078,7 @@ class TestEnsureGalaxy10Mutations:
 
         assert convert_calls == [224]
 
-    def test_placeholder_md5_logs_action_required(self, tmp_path):
+    def test_placeholder_md5_logs_action_required(self, tmp_path: Path) -> None:
         """Placeholder MD5 should trigger 'Action Required' log."""
         target_npz = tmp_path / "galaxy10.npz"
 
@@ -1075,7 +1089,9 @@ class TestEnsureGalaxy10Mutations:
         mock_metadata.native_resolution = 224
         mock_metadata.name = "galaxy10"
 
-        def mock_convert(h5_path, output_npz, target_size=224, seed=42):
+        def mock_convert(
+            h5_path: Any, output_npz: Any, target_size: Any = 224, seed: Any = 42
+        ) -> None:
             np.savez_compressed(
                 output_npz,
                 train_images=np.zeros((2, 10, 10, 3), dtype=np.uint8),

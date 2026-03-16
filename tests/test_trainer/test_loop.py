@@ -19,26 +19,13 @@ from orchard.trainer._loop import (
     create_amp_scaler,
     create_mixup_fn,
 )
+from tests.conftest import make_training_config
 
 # ── FIXTURES ───────────────────────────────────────────────────────────────
 
 
 @pytest.fixture
-def mock_cfg():
-    """Mock Config with training parameters."""
-    cfg = MagicMock()
-    cfg.training.use_amp = False
-    cfg.training.mixup_alpha = 0.0
-    cfg.training.mixup_epochs = 0
-    cfg.training.seed = 42
-    cfg.training.grad_clip = 1.0
-    cfg.training.epochs = 5
-    cfg.training.use_tqdm = False
-    return cfg
-
-
-@pytest.fixture
-def loop():
+def loop() -> TrainingLoop:
     """TrainingLoop instance with mocked components."""
     return TrainingLoop(
         model=MagicMock(spec=nn.Module),
@@ -64,68 +51,69 @@ def loop():
 
 
 @pytest.mark.unit
-def test_create_amp_scaler_disabled(mock_cfg):
+def test_create_amp_scaler_disabled() -> None:
     """AMP scaler is None when use_amp=False."""
-    mock_cfg.training.use_amp = False
-    assert create_amp_scaler(mock_cfg.training) is None
+    training = make_training_config(use_amp=False)
+    assert create_amp_scaler(training) is None
 
 
 @pytest.mark.filterwarnings("ignore:.*GradScaler is enabled, but CUDA is not available.*")
 @pytest.mark.unit
-def test_create_amp_scaler_enabled(mock_cfg):
+def test_create_amp_scaler_enabled() -> None:
     """AMP scaler is GradScaler when use_amp=True."""
-    mock_cfg.training.use_amp = True
-    scaler = create_amp_scaler(mock_cfg.training)
-    assert isinstance(scaler, torch.amp.GradScaler)
+    training = make_training_config(use_amp=True)
+    scaler = create_amp_scaler(training)
+    assert isinstance(scaler, torch.amp.GradScaler)  # type: ignore
 
 
 @pytest.mark.filterwarnings("ignore:.*GradScaler is enabled, but CUDA is not available.*")
 @pytest.mark.unit
-def test_create_amp_scaler_forwards_device(mock_cfg):
+def test_create_amp_scaler_forwards_device() -> None:
     """AMP scaler receives the exact device string, not None or mangled default."""
-    mock_cfg.training.use_amp = True
+    training = make_training_config(use_amp=True)
     with patch("orchard.trainer._loop.torch.amp.grad_scaler.GradScaler") as mock_gs:
-        create_amp_scaler(mock_cfg.training, device="cpu")
+        create_amp_scaler(training, device="cpu")
         mock_gs.assert_called_once_with(device="cpu")
 
 
 @pytest.mark.filterwarnings("ignore:.*GradScaler is enabled, but CUDA is not available.*")
 @pytest.mark.unit
-def test_create_amp_scaler_default_device_is_cuda(mock_cfg):
+def test_create_amp_scaler_default_device_is_cuda() -> None:
     """Default device parameter is exactly 'cuda' (lowercase, no mangling).
 
     Calls without device arg and verifies GradScaler receives 'cuda'.
     """
-    mock_cfg.training.use_amp = True
+    training = make_training_config(use_amp=True)
     with patch("orchard.trainer._loop.torch.amp.grad_scaler.GradScaler") as mock_gs:
-        create_amp_scaler(mock_cfg.training)  # no device arg → should use "cuda"
+        create_amp_scaler(training)  # no device arg → should use "cuda"
         mock_gs.assert_called_once_with(device="cuda")
 
 
 @pytest.mark.unit
-def test_create_mixup_fn_disabled(mock_cfg):
+def test_create_mixup_fn_disabled() -> None:
     """MixUp function is None when alpha=0."""
-    mock_cfg.training.mixup_alpha = 0.0
-    assert create_mixup_fn(mock_cfg.training) is None
+    training = make_training_config(mixup_alpha=0.0)
+    assert create_mixup_fn(training) is None
 
 
 @pytest.mark.unit
-def test_create_mixup_fn_enabled(mock_cfg):
+def test_create_mixup_fn_enabled() -> None:
     """MixUp function is callable when alpha > 0."""
-    mock_cfg.training.mixup_alpha = 0.4
-    fn = create_mixup_fn(mock_cfg.training)
+    training = make_training_config(mixup_alpha=0.4)
+    fn = create_mixup_fn(training)
     assert fn is not None
     assert callable(fn)
 
 
 @pytest.mark.unit
-def test_create_mixup_fn_deterministic(mock_cfg):
+def test_create_mixup_fn_deterministic() -> None:
     """Two calls with same seed produce same MixUp lambdas."""
-    mock_cfg.training.mixup_alpha = 0.4
-    mock_cfg.training.seed = 123
+    training = make_training_config(mixup_alpha=0.4, seed=123)
 
-    fn1 = create_mixup_fn(mock_cfg.training)
-    fn2 = create_mixup_fn(mock_cfg.training)
+    fn1 = create_mixup_fn(training)
+    fn2 = create_mixup_fn(training)
+    assert fn1 is not None
+    assert fn2 is not None
 
     x = torch.randn(4, 1, 28, 28)
     y = torch.randint(0, 10, (4,))
@@ -139,7 +127,7 @@ def test_create_mixup_fn_deterministic(mock_cfg):
 
 
 @pytest.mark.unit
-def test_loop_init_stores_all_attributes():
+def test_loop_init_stores_all_attributes() -> None:
     """TrainingLoop.__init__ stores every parameter as an attribute (not None)."""
     model = MagicMock(spec=nn.Module)
     train_loader = MagicMock()
@@ -158,7 +146,7 @@ def test_loop_init_stores_all_attributes():
         monitor_metric="auc",
     )
 
-    loop = TrainingLoop(
+    tl = TrainingLoop(
         model=model,
         train_loader=train_loader,
         val_loader=val_loader,
@@ -171,21 +159,21 @@ def test_loop_init_stores_all_attributes():
         options=options,
     )
 
-    assert loop.model is model
-    assert loop.train_loader is train_loader
-    assert loop.val_loader is val_loader
-    assert loop.optimizer is optimizer
-    assert loop.scheduler is scheduler
-    assert loop.criterion is criterion
-    assert loop.device is device
-    assert loop.scaler is scaler
-    assert loop.mixup_fn is mixup_fn
-    assert loop.options is options
+    assert tl.model is model
+    assert tl.train_loader is train_loader
+    assert tl.val_loader is val_loader
+    assert tl.optimizer is optimizer
+    assert tl.scheduler is scheduler
+    assert tl.criterion is criterion
+    assert tl.device is device
+    assert tl.scaler is scaler
+    assert tl.mixup_fn is mixup_fn
+    assert tl.options is options
 
 
 @pytest.mark.unit
 @patch("orchard.trainer._loop.train_one_epoch", return_value=0.42)
-def test_run_train_step_basic(mock_train, loop):
+def test_run_train_step_basic(mock_train: MagicMock, loop: TrainingLoop) -> None:
     """run_train_step delegates to train_one_epoch and returns loss."""
     loss = loop.run_train_step(epoch=1)
     assert loss == pytest.approx(0.42)
@@ -194,7 +182,7 @@ def test_run_train_step_basic(mock_train, loop):
 
 @pytest.mark.unit
 @patch("orchard.trainer._loop.train_one_epoch", return_value=0.5)
-def test_run_train_step_mixup_cutoff(mock_train, loop):
+def test_run_train_step_mixup_cutoff(mock_train: MagicMock, loop: TrainingLoop) -> None:
     """MixUp is passed when epoch <= mixup_epochs, None after."""
     loop.mixup_fn = MagicMock()
 
@@ -213,7 +201,7 @@ def test_run_train_step_mixup_cutoff(mock_train, loop):
 
 @pytest.mark.unit
 @patch("orchard.trainer._loop.train_one_epoch", return_value=0.5)
-def test_run_train_step_mixup_boundary(mock_train, loop):
+def test_run_train_step_mixup_boundary(mock_train: MagicMock, loop: TrainingLoop) -> None:
     """MixUp is still active at exactly epoch == mixup_epochs (boundary: <= not <)."""
     loop.mixup_fn = MagicMock()
 
@@ -232,7 +220,7 @@ def test_run_train_step_mixup_boundary(mock_train, loop):
 
 @pytest.mark.unit
 @patch("orchard.trainer._loop.train_one_epoch", return_value=0.5)
-def test_run_train_step_forwards_scaler(mock_train, loop):
+def test_run_train_step_forwards_scaler(mock_train: MagicMock, loop: TrainingLoop) -> None:
     """run_train_step forwards the scaler attribute (not None)."""
     sentinel_scaler = MagicMock()
     loop.scaler = sentinel_scaler
@@ -244,7 +232,7 @@ def test_run_train_step_forwards_scaler(mock_train, loop):
 
 @pytest.mark.unit
 @patch("orchard.trainer._loop.train_one_epoch", return_value=0.3)
-def test_run_train_step_passes_all_args(mock_train, loop):
+def test_run_train_step_passes_all_args(mock_train: MagicMock, loop: TrainingLoop) -> None:
     """All loop attributes are forwarded to train_one_epoch."""
     loop.run_train_step(epoch=2)
     call_kwargs = mock_train.call_args[1]
@@ -271,7 +259,9 @@ def test_run_train_step_passes_all_args(mock_train, loop):
     return_value={"loss": 0.3, "accuracy": 0.9, "auc": 0.95},
 )
 @patch("orchard.trainer._loop.train_one_epoch", return_value=0.42)
-def test_run_epoch_returns_loss_and_metrics(mock_train, mock_val, mock_sched, loop):
+def test_run_epoch_returns_loss_and_metrics(
+    mock_train: MagicMock, mock_val: MagicMock, mock_sched: MagicMock, loop: TrainingLoop
+) -> None:
     """run_epoch returns (train_loss, val_metrics) tuple."""
     train_loss, val_metrics = loop.run_epoch(epoch=1)
 
@@ -287,7 +277,9 @@ def test_run_epoch_returns_loss_and_metrics(mock_train, mock_val, mock_sched, lo
     return_value={"loss": 0.3, "accuracy": 0.9, "auc": 0.95},
 )
 @patch("orchard.trainer._loop.train_one_epoch", return_value=0.42)
-def test_run_epoch_steps_scheduler(mock_train, mock_val, mock_sched, loop):
+def test_run_epoch_steps_scheduler(
+    mock_train: MagicMock, mock_val: MagicMock, mock_sched: MagicMock, loop: TrainingLoop
+) -> None:
     """run_epoch calls step_scheduler with scheduler and monitor_metric value."""
     loop.run_epoch(epoch=1)
 
@@ -301,7 +293,9 @@ def test_run_epoch_steps_scheduler(mock_train, mock_val, mock_sched, loop):
     return_value={"loss": 0.3, "accuracy": 0.9, "auc": 0.95},
 )
 @patch("orchard.trainer._loop.train_one_epoch", return_value=0.42)
-def test_run_epoch_calls_validate_with_correct_args(mock_train, mock_val, mock_sched, loop):
+def test_run_epoch_calls_validate_with_correct_args(
+    mock_train: MagicMock, mock_val: MagicMock, mock_sched: MagicMock, loop: TrainingLoop
+) -> None:
     """run_epoch passes model, val_loader, criterion, device to validate_epoch."""
     loop.run_epoch(epoch=1)
 
@@ -317,7 +311,7 @@ def test_run_epoch_calls_validate_with_correct_args(mock_train, mock_val, mock_s
 
 
 @pytest.fixture
-def loop_with_validation_metrics():
+def loop_with_validation_metrics() -> tuple[TrainingLoop, MagicMock]:
     """TrainingLoop instance with a mock TaskValidationMetrics adapter."""
     mock_adapter = MagicMock()
     mock_adapter.compute_validation_metrics.return_value = {
@@ -350,10 +344,10 @@ def loop_with_validation_metrics():
 
 
 @pytest.mark.unit
-def test_loop_init_stores_validation_metrics():
+def test_loop_init_stores_validation_metrics() -> None:
     """TrainingLoop.__init__ stores validation_metrics when provided."""
     adapter = MagicMock()
-    loop = TrainingLoop(
+    tl = TrainingLoop(
         model=MagicMock(spec=nn.Module),
         train_loader=MagicMock(),
         val_loader=MagicMock(),
@@ -372,11 +366,11 @@ def test_loop_init_stores_validation_metrics():
         ),
         validation_metrics=adapter,
     )
-    assert loop._validation_metrics is adapter
+    assert tl._validation_metrics is adapter
 
 
 @pytest.mark.unit
-def test_loop_init_validation_metrics_defaults_to_none(loop):
+def test_loop_init_validation_metrics_defaults_to_none(loop: TrainingLoop) -> None:
     """TrainingLoop._validation_metrics is None when not provided."""
     assert loop._validation_metrics is None
 
@@ -385,19 +379,19 @@ def test_loop_init_validation_metrics_defaults_to_none(loop):
 @patch("orchard.trainer._loop.step_scheduler")
 @patch("orchard.trainer._loop.train_one_epoch", return_value=0.42)
 def test_run_epoch_uses_injected_validation_metrics(
-    mock_train,
-    mock_sched,
-    loop_with_validation_metrics,
-):
+    mock_train: MagicMock,
+    mock_sched: MagicMock,
+    loop_with_validation_metrics: tuple[TrainingLoop, MagicMock],
+) -> None:
     """run_epoch delegates to the injected TaskValidationMetrics adapter."""
-    loop, mock_adapter = loop_with_validation_metrics
-    train_loss, val_metrics = loop.run_epoch(epoch=1)
+    tl, mock_adapter = loop_with_validation_metrics
+    train_loss, val_metrics = tl.run_epoch(epoch=1)
 
     mock_adapter.compute_validation_metrics.assert_called_once_with(
-        model=loop.model,
-        val_loader=loop.val_loader,
-        criterion=loop.criterion,
-        device=loop.device,
+        model=tl.model,
+        val_loader=tl.val_loader,
+        criterion=tl.criterion,
+        device=tl.device,
     )
     assert val_metrics["auc"] == pytest.approx(0.98)
     assert train_loss == pytest.approx(0.42)
@@ -408,13 +402,13 @@ def test_run_epoch_uses_injected_validation_metrics(
 @patch("orchard.trainer._loop.validate_epoch")
 @patch("orchard.trainer._loop.train_one_epoch", return_value=0.42)
 def test_run_epoch_skips_validate_epoch_when_adapter_injected(
-    mock_train,
-    mock_val,
-    mock_sched,
-    loop_with_validation_metrics,
-):
+    mock_train: MagicMock,
+    mock_val: MagicMock,
+    mock_sched: MagicMock,
+    loop_with_validation_metrics: tuple[TrainingLoop, MagicMock],
+) -> None:
     """run_epoch does NOT call validate_epoch when validation_metrics is set."""
-    loop, _ = loop_with_validation_metrics
-    loop.run_epoch(epoch=1)
+    tl, _ = loop_with_validation_metrics
+    tl.run_epoch(epoch=1)
 
     mock_val.assert_not_called()

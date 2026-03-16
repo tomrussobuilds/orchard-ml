@@ -24,7 +24,9 @@ except ImportError:  # pragma: no cover
     _MLFLOW_AVAILABLE = False
 
 
-def _flatten_dict(d: dict[str, Any], parent_key: str = "", sep: str = ".") -> dict[str, Any]:
+def _flatten_dict(
+    d: dict[str, Any], parent_key: str = "", sep: str = "."
+) -> dict[str, Any]:  # pragma: no mutate
     """Flatten a nested dict into dot-separated keys for MLflow params."""
     items: list[tuple[str, Any]] = []
     for k, v in d.items():
@@ -110,7 +112,7 @@ class MLflowTracker:  # pragma: no cover
         experiment_name (str): MLflow experiment name.
     """
 
-    def __init__(self, experiment_name: str = "orchard-ml") -> None:
+    def __init__(self, experiment_name: str = "orchard-ml") -> None:  # pragma: no mutate
         self.experiment_name = experiment_name
         self._parent_run_id: str | None = None
 

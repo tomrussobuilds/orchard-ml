@@ -15,7 +15,7 @@ from orchard.core.config import AugmentationConfig
 
 # AUGMENTATION CONFIG: DEFAULTS
 @pytest.mark.unit
-def test_augmentation_config_defaults():
+def test_augmentation_config_defaults() -> None:
     """Test AugmentationConfig with default values."""
     config = AugmentationConfig()
 
@@ -29,7 +29,7 @@ def test_augmentation_config_defaults():
 
 
 @pytest.mark.unit
-def test_augmentation_config_custom_values():
+def test_augmentation_config_custom_values() -> None:
     """Test AugmentationConfig with custom parameters."""
     config = AugmentationConfig(hflip=0.7, rotation_angle=15, jitter_val=0.3, min_scale=0.85)
 
@@ -41,7 +41,7 @@ def test_augmentation_config_custom_values():
 
 # AUGMENTATION CONFIG: VALIDATION
 @pytest.mark.unit
-def test_hflip_probability_bounds():
+def test_hflip_probability_bounds() -> None:
     """Test hflip probability must be in [0, 1]."""
 
     config = AugmentationConfig(hflip=0.0)
@@ -58,7 +58,7 @@ def test_hflip_probability_bounds():
 
 
 @pytest.mark.unit
-def test_rotation_angle_bounds():
+def test_rotation_angle_bounds() -> None:
     """Test rotation_angle must be in [0, 360]."""
 
     config = AugmentationConfig(rotation_angle=0)
@@ -75,7 +75,7 @@ def test_rotation_angle_bounds():
 
 
 @pytest.mark.unit
-def test_jitter_val_non_negative():
+def test_jitter_val_non_negative() -> None:
     """Test jitter_val must be non-negative."""
 
     _ = AugmentationConfig(jitter_val=0.0)
@@ -85,7 +85,7 @@ def test_jitter_val_non_negative():
 
 
 @pytest.mark.unit
-def test_min_scale_probability_bounds():
+def test_min_scale_probability_bounds() -> None:
     """Test min_scale must be in (0, 1]."""
 
     config = AugmentationConfig(min_scale=0.5)
@@ -100,7 +100,7 @@ def test_min_scale_probability_bounds():
 
 # AUGMENTATION CONFIG: TTA PARAMS
 @pytest.mark.unit
-def test_tta_translate_bounds():
+def test_tta_translate_bounds() -> None:
     """Test tta_translate must be in [0, 50]."""
 
     config = AugmentationConfig(tta_translate=0.0)
@@ -117,7 +117,7 @@ def test_tta_translate_bounds():
 
 
 @pytest.mark.unit
-def test_tta_scale_bounds():
+def test_tta_scale_bounds() -> None:
     """Test tta_scale must be in (0, 2]."""
 
     config = AugmentationConfig(tta_scale=1.0)
@@ -134,7 +134,7 @@ def test_tta_scale_bounds():
 
 
 @pytest.mark.unit
-def test_tta_blur_sigma_bounds():
+def test_tta_blur_sigma_bounds() -> None:
     """Test tta_blur_sigma must be in [0, 5]."""
 
     config = AugmentationConfig(tta_blur_sigma=0.0)
@@ -151,7 +151,7 @@ def test_tta_blur_sigma_bounds():
 
 
 @pytest.mark.unit
-def test_tta_blur_kernel_size_must_be_odd():
+def test_tta_blur_kernel_size_must_be_odd() -> None:
     """Test tta_blur_kernel_size rejects even values."""
     config = AugmentationConfig(tta_blur_kernel_size=5)
     assert config.tta_blur_kernel_size == 5
@@ -162,7 +162,7 @@ def test_tta_blur_kernel_size_must_be_odd():
 
 # AUGMENTATION CONFIG: IMMUTABILITY
 @pytest.mark.unit
-def test_config_is_frozen():
+def test_config_is_frozen() -> None:
     """Test AugmentationConfig is immutable after creation."""
     config = AugmentationConfig()
 
@@ -171,7 +171,7 @@ def test_config_is_frozen():
 
 
 @pytest.mark.unit
-def test_config_forbids_extra_fields():
+def test_config_forbids_extra_fields() -> None:
     """Test AugmentationConfig rejects unknown fields."""
     with pytest.raises(ValidationError):
         AugmentationConfig(unknown_field="value")

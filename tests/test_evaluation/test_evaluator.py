@@ -7,7 +7,8 @@ and logging behavior during the evaluation process.
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import patch
+from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
@@ -19,28 +20,28 @@ from orchard.evaluation.evaluator import evaluate_model
 
 # MOCK CLASSES
 class SimpleModel(nn.Module):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.fc = nn.Linear(10, 2)
 
-    def forward(self, x):
-        return self.fc(x)
+    def forward(self, x: Any) -> None:
+        return self.fc(x)  # type: ignore
 
 
 # FIXTURES
 @pytest.fixture
-def mock_dataloader():
+def mock_dataloader() -> None:
     """Create a dummy DataLoader with 2 batches of data."""
     x = torch.randn(4, 10)
     y = torch.tensor([0, 1, 0, 1])
     dataset = TensorDataset(x, y)
-    return DataLoader(dataset, batch_size=2, num_workers=0)
+    return DataLoader(dataset, batch_size=2, num_workers=0)  # type: ignore
 
 
 @pytest.fixture
-def aug_cfg():
+def aug_cfg() -> None:
     """Augmentation config stub for TTA."""
-    return SimpleNamespace(
+    return SimpleNamespace(  # type: ignore
         tta_mode="full",
         tta_translate=2,
         tta_scale=1.05,
@@ -52,7 +53,7 @@ def aug_cfg():
 # TEST CASES
 @pytest.mark.unit
 @patch("orchard.evaluation.evaluator.compute_classification_metrics")
-def test_evaluate_model_standard(mock_compute, mock_dataloader):
+def test_evaluate_model_standard(mock_compute: MagicMock, mock_dataloader: MagicMock) -> None:
     """Test standard inference without TTA (Test-Time Augmentation)."""
     device = torch.device("cpu")
     model = SimpleModel()
@@ -74,7 +75,9 @@ def test_evaluate_model_standard(mock_compute, mock_dataloader):
 @pytest.mark.unit
 @patch("orchard.evaluation.evaluator.compute_classification_metrics")
 @patch("orchard.evaluation.evaluator.adaptive_tta_predict")
-def test_evaluate_model_with_tta(mock_tta, mock_compute, mock_dataloader, aug_cfg):
+def test_evaluate_model_with_tta(  # type: ignore
+    mock_tta: MagicMock, mock_compute: MagicMock, mock_dataloader: MagicMock, aug_cfg
+) -> None:
     """Test the execution path when TTA is enabled."""
     device = torch.device("cpu")
     model = SimpleModel()
@@ -90,7 +93,9 @@ def test_evaluate_model_with_tta(mock_tta, mock_compute, mock_dataloader, aug_cf
 @pytest.mark.unit
 @patch("orchard.evaluation.evaluator.compute_classification_metrics")
 @patch("orchard.evaluation.evaluator.adaptive_tta_predict")
-def test_tta_skipped_without_config(mock_tta, mock_compute, mock_dataloader):
+def test_tta_skipped_without_config(
+    mock_tta: MagicMock, mock_compute: MagicMock, mock_dataloader: MagicMock
+) -> None:
     """Verify that TTA is skipped if aug_cfg is None, even if use_tta is True."""
     device = torch.device("cpu")
     model = SimpleModel()

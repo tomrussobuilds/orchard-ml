@@ -16,7 +16,7 @@ from orchard.architectures import build_convnext_tiny
 
 # FIXTURES
 @pytest.fixture
-def device():
+def device():  # type: ignore
     """Resolves target device for test execution."""
     return torch.device("cpu")
 
@@ -37,7 +37,7 @@ class TestConvNeXtTiny:
             (3, 100),
         ],
     )
-    def test_convnext_tiny_output_shape(self, device, in_channels, num_classes):
+    def test_convnext_tiny_output_shape(self, device, in_channels, num_classes) -> None:  # type: ignore
         """Verify output shape matches expected dimensions."""
         model = build_convnext_tiny(
             num_classes=num_classes, in_channels=in_channels, pretrained=False
@@ -52,23 +52,23 @@ class TestConvNeXtTiny:
 
         assert output.shape == (batch_size, num_classes)
 
-    def test_convnext_tiny_grayscale_adaptation(self, device):
+    def test_convnext_tiny_grayscale_adaptation(self, device) -> None:  # type: ignore
         """Verify grayscale input channel adaptation."""
         model = build_convnext_tiny(num_classes=10, in_channels=1, pretrained=False)
 
-        first_conv = model.features[0][0]
-        assert first_conv.in_channels == 1
-        assert first_conv.out_channels == 96
+        first_conv = model.features[0][0]  # type: ignore
+        assert first_conv.in_channels == 1  # type: ignore
+        assert first_conv.out_channels == 96  # type: ignore
 
-    def test_convnext_tiny_rgb_standard(self, device):
+    def test_convnext_tiny_rgb_standard(self, device) -> None:  # type: ignore
         """Verify RGB input channel configuration."""
         model = build_convnext_tiny(num_classes=10, in_channels=3, pretrained=False)
 
-        first_conv = model.features[0][0]
-        assert first_conv.in_channels == 3
-        assert first_conv.out_channels == 96
+        first_conv = model.features[0][0]  # type: ignore
+        assert first_conv.in_channels == 3  # type: ignore
+        assert first_conv.out_channels == 96  # type: ignore
 
-    def test_convnext_tiny_pretrained_weight_morphing(self, device):
+    def test_convnext_tiny_pretrained_weight_morphing(self, device) -> None:  # type: ignore
         """Verify pretrained weights are loaded and morphed for grayscale."""
         from orchard.architectures import convnext_tiny as convnext_module
 
@@ -87,15 +87,15 @@ class TestConvNeXtTiny:
 
             mock_models.convnext_tiny.assert_called_once_with(weights="mock_weights")
 
-    def test_convnext_tiny_classifier_head_replacement(self, device):
+    def test_convnext_tiny_classifier_head_replacement(self, device) -> None:  # type: ignore
         """Verify classification head is replaced with correct output size."""
         num_classes = 7
         model = build_convnext_tiny(num_classes=num_classes, in_channels=3, pretrained=False)
 
-        assert model.classifier[2].out_features == num_classes
-        assert model.classifier[2].in_features == 768
+        assert model.classifier[2].out_features == num_classes  # type: ignore
+        assert model.classifier[2].in_features == 768  # type: ignore
 
-    def test_convnext_tiny_device_placement(self):
+    def test_convnext_tiny_device_placement(self) -> None:
         """Verify model is placed on correct device."""
         model = build_convnext_tiny(num_classes=10, in_channels=3, pretrained=False)
 

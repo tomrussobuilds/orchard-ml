@@ -14,34 +14,35 @@ import pytest
 import torch
 import torch.nn as nn
 
+from orchard.core import OptunaConfig, TrainingConfig
 from orchard.optimization import MetricExtractor, TrialTrainingExecutor
 from orchard.optimization.objective.training_executor import (
     _FALLBACK_METRICS,
     _MAX_CONSECUTIVE_VAL_FAILURES,
 )
 from orchard.trainer._scheduling import step_scheduler
+from tests.conftest import (
+    TrainingBundle,
+    make_optuna_config,
+    make_training_config,
+)
 
 
 # FIXTURES
 @pytest.fixture
-def mock_cfg():
-    """Mock Config specific for Optuna trials."""
-    cfg = MagicMock()
-    cfg.training.epochs = 5
-    cfg.training.use_amp = False
-    cfg.training.grad_clip = 1.0
-    cfg.training.mixup_alpha = 0
-    cfg.training.mixup_epochs = 0
-    cfg.training.scheduler_type = "step"
-    cfg.training.monitor_metric = "auc"
-
-    cfg.optuna.enable_pruning = True
-    cfg.optuna.pruning_warmup_epochs = 2
-    return cfg
+def training_cfg() -> TrainingConfig:
+    """Real TrainingConfig for Optuna trial tests."""
+    return make_training_config(epochs=5, scheduler_type="step", monitor_metric="auc")
 
 
 @pytest.fixture
-def mock_trial():
+def optuna_cfg() -> OptunaConfig:
+    """Real OptunaConfig for Optuna trial tests."""
+    return make_optuna_config(pruning_warmup_epochs=2)
+
+
+@pytest.fixture
+def mock_trial() -> MagicMock:
     """Mock Optuna trial."""
     trial = MagicMock(spec=optuna.Trial)
     trial.number = 42
@@ -50,31 +51,34 @@ def mock_trial():
 
 
 @pytest.fixture
-def executor(mock_cfg):
-    """TrialTrainingExecutor instance with mocked components."""
-    model = nn.Linear(10, 2)
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1)
-    metric_extractor = MetricExtractor(metric_name="auc")
+def bundle() -> TrainingBundle:
+    """Real PyTorch objects for executor construction."""
+    return TrainingBundle()
 
+
+@pytest.fixture
+def executor(
+    training_cfg: TrainingConfig, optuna_cfg: OptunaConfig, bundle: TrainingBundle
+) -> TrialTrainingExecutor:
+    """TrialTrainingExecutor instance with real components."""
     return TrialTrainingExecutor(
-        model=model,
-        train_loader=MagicMock(),
-        val_loader=MagicMock(),
-        optimizer=optimizer,
-        scheduler=scheduler,
-        criterion=nn.CrossEntropyLoss(),
-        training=mock_cfg.training,
-        optuna=mock_cfg.optuna,
+        model=bundle.model,
+        train_loader=bundle.train_loader,
+        val_loader=bundle.val_loader,
+        optimizer=bundle.optimizer,
+        scheduler=bundle.scheduler,
+        criterion=bundle.criterion,
+        training=training_cfg,
+        optuna=optuna_cfg,
         log_interval=5,
-        device=torch.device("cpu"),
-        metric_extractor=metric_extractor,
+        device=bundle.device,
+        metric_extractor=MetricExtractor(metric_name="auc"),
     )
 
 
 # TESTS: INITIALIZATION
 @pytest.mark.unit
-def test_executor_init(executor):
+def test_executor_init(executor: TrialTrainingExecutor) -> None:
     """Test correctly mapping config to executor attributes."""
     assert executor.epochs == 5
     assert executor.enable_pruning is True
@@ -84,32 +88,23 @@ def test_executor_init(executor):
 
 
 @pytest.mark.unit
-def test_executor_init_with_mixup():
+def test_executor_init_with_mixup() -> None:
     """Test executor initializes MixUp when mixup_alpha > 0."""
-    cfg = MagicMock()
-    cfg.training.epochs = 5
-    cfg.training.use_amp = False
-    cfg.training.grad_clip = 1.0
-    cfg.training.mixup_alpha = 0.2
-    cfg.training.mixup_epochs = 3
-    cfg.training.seed = 42
-    cfg.training.scheduler_type = "step"
-    cfg.optuna.enable_pruning = False
-    cfg.optuna.pruning_warmup_epochs = 0
+    training = make_training_config(epochs=5, mixup_alpha=0.2, mixup_epochs=3)
+    optuna_cfg = make_optuna_config(enable_pruning=False, pruning_warmup_epochs=0)
+    b = TrainingBundle()
 
     executor = TrialTrainingExecutor(
-        model=nn.Linear(10, 2),
-        train_loader=MagicMock(),
-        val_loader=MagicMock(),
-        optimizer=torch.optim.SGD(
-            nn.Linear(10, 2).parameters(), lr=0.01, momentum=0.0, weight_decay=0.0
-        ),
-        scheduler=MagicMock(),
-        criterion=nn.CrossEntropyLoss(),
-        training=cfg.training,
-        optuna=cfg.optuna,
+        model=b.model,
+        train_loader=b.train_loader,
+        val_loader=b.val_loader,
+        optimizer=b.optimizer,
+        scheduler=b.scheduler,
+        criterion=b.criterion,
+        training=training,
+        optuna=optuna_cfg,
         log_interval=5,
-        device=torch.device("cpu"),
+        device=b.device,
         metric_extractor=MetricExtractor("auc"),
     )
 
@@ -118,7 +113,9 @@ def test_executor_init_with_mixup():
 
 # TESTS: OPTUNA INTEGRATION
 @pytest.mark.unit
-def test_should_prune_respects_warmup(executor, mock_trial):
+def test_should_prune_respects_warmup(
+    executor: TrialTrainingExecutor, mock_trial: MagicMock
+) -> None:
     """Ensure pruning is never triggered before warmup_epochs."""
     executor.enable_pruning = True
     executor.warmup_epochs = 3
@@ -129,7 +126,7 @@ def test_should_prune_respects_warmup(executor, mock_trial):
 
 
 @pytest.mark.unit
-def test_should_prune_respects_flag(executor, mock_trial):
+def test_should_prune_respects_flag(executor: TrialTrainingExecutor, mock_trial: MagicMock) -> None:
     """Ensure pruning is disabled if enable_pruning is False."""
     executor.enable_pruning = False
     executor.warmup_epochs = 0
@@ -140,7 +137,7 @@ def test_should_prune_respects_flag(executor, mock_trial):
 
 # TESTS: SCHEDULER LOGIC
 @pytest.mark.unit
-def test_step_scheduler_plateau(executor):
+def test_step_scheduler_plateau(executor: TrialTrainingExecutor) -> None:
     """Test plateau scheduler receives monitor_value."""
     executor.scheduler = MagicMock(spec=torch.optim.lr_scheduler.ReduceLROnPlateau)
 
@@ -149,7 +146,7 @@ def test_step_scheduler_plateau(executor):
 
 
 @pytest.mark.unit
-def test_step_scheduler_standard(executor):
+def test_step_scheduler_standard(executor: TrialTrainingExecutor) -> None:
     """Test standard scheduler (StepLR) is called without arguments."""
     executor.scheduler = MagicMock(spec=torch.optim.lr_scheduler.StepLR)
 
@@ -158,29 +155,30 @@ def test_step_scheduler_standard(executor):
 
 
 @pytest.mark.unit
-def test_return_if_scheduler_is_none(executor):
+def test_return_if_scheduler_is_none(executor: TrialTrainingExecutor) -> None:
     """Ensures the function exits early when the scheduler is not initialized."""
-    result = step_scheduler(None, monitor_value=0.5)
-    assert result is None
+    step_scheduler(None, monitor_value=0.5)  # should be a no-op
 
 
 # TESTS: VALIDATION ERROR HANDLING
 @pytest.mark.unit
-def test_validate_epoch_returns_fallback_on_exception():
+def test_validate_epoch_returns_fallback_on_exception() -> None:
     """Test _validate_epoch returns fallback metrics when exception occurs."""
+    training = make_training_config(epochs=5)
+    optuna_cfg = make_optuna_config(enable_pruning=False, pruning_warmup_epochs=0)
+    b = TrainingBundle()
+
     executor = TrialTrainingExecutor(
-        model=nn.Linear(10, 2),
-        train_loader=MagicMock(),
-        val_loader=MagicMock(),
-        optimizer=torch.optim.SGD(
-            nn.Linear(10, 2).parameters(), lr=0.01, momentum=0.0, weight_decay=0.0
-        ),
-        scheduler=MagicMock(),
-        criterion=nn.CrossEntropyLoss(),
-        training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
-        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        model=b.model,
+        train_loader=b.train_loader,
+        val_loader=b.val_loader,
+        optimizer=b.optimizer,
+        scheduler=b.scheduler,
+        criterion=b.criterion,
+        training=training,
+        optuna=optuna_cfg,
         log_interval=5,
-        device=torch.device("cpu"),
+        device=b.device,
         metric_extractor=MetricExtractor("auc"),
     )
 
@@ -195,7 +193,12 @@ def test_validate_epoch_returns_fallback_on_exception():
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.optimization.objective.training_executor.validate_epoch")
-def test_execute_full_loop(mock_val, mock_train, executor, mock_trial):
+def test_execute_full_loop(
+    mock_val: MagicMock,
+    mock_train: MagicMock,
+    executor: TrialTrainingExecutor,
+    mock_trial: MagicMock,
+) -> None:
     """Test a complete successful execution of the trial."""
     mock_train.return_value = 0.4
     mock_val.return_value = {"loss": 0.3, "accuracy": 0.8, "auc": 0.85}
@@ -212,7 +215,12 @@ def test_execute_full_loop(mock_val, mock_train, executor, mock_trial):
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.optimization.objective.training_executor.validate_epoch")
-def test_execute_pruning_raises(mock_val, mock_train, executor, mock_trial):
+def test_execute_pruning_raises(
+    mock_val: MagicMock,
+    mock_train: MagicMock,
+    executor: TrialTrainingExecutor,
+    mock_trial: MagicMock,
+) -> None:
     """Test that TrialPruned is raised and execution stops."""
     mock_train.return_value = 0.4
     mock_val.return_value = {"loss": 0.3, "auc": 0.5}
@@ -230,13 +238,18 @@ def test_execute_pruning_raises(mock_val, mock_train, executor, mock_trial):
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.optimization.objective.training_executor.validate_epoch")
-def test_execute_logs_completion(mock_val, mock_train, executor, mock_trial):
+def test_execute_logs_completion(
+    mock_val: MagicMock,
+    mock_train: MagicMock,
+    executor: TrialTrainingExecutor,
+    mock_trial: MagicMock,
+) -> None:
     """Test that trial completion is logged correctly."""
     mock_train.return_value = 0.35
     mock_val.return_value = {"loss": 0.25, "accuracy": 0.9, "auc": 0.92}
     executor.epochs = 1
 
-    def train_side_effect(*args, **kwargs):
+    def train_side_effect(*args: object, **kwargs: object) -> float:
         executor.optimizer.step()
         return 0.35
 
@@ -250,21 +263,23 @@ def test_execute_logs_completion(mock_val, mock_train, executor, mock_trial):
 
 
 @pytest.mark.unit
-def test_validate_epoch_reraises_after_consecutive_failures():
+def test_validate_epoch_reraises_after_consecutive_failures() -> None:
     """Test _validate_epoch raises RuntimeError after 3 consecutive failures."""
+    training = make_training_config(epochs=5)
+    optuna_cfg = make_optuna_config(enable_pruning=False, pruning_warmup_epochs=0)
+    b = TrainingBundle()
+
     executor = TrialTrainingExecutor(
-        model=nn.Linear(10, 2),
-        train_loader=MagicMock(),
-        val_loader=MagicMock(),
-        optimizer=torch.optim.SGD(
-            nn.Linear(10, 2).parameters(), lr=0.01, momentum=0.0, weight_decay=0.0
-        ),
-        scheduler=MagicMock(),
-        criterion=nn.CrossEntropyLoss(),
-        training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
-        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        model=b.model,
+        train_loader=b.train_loader,
+        val_loader=b.val_loader,
+        optimizer=b.optimizer,
+        scheduler=b.scheduler,
+        criterion=b.criterion,
+        training=training,
+        optuna=optuna_cfg,
         log_interval=5,
-        device=torch.device("cpu"),
+        device=b.device,
         metric_extractor=MetricExtractor("auc"),
     )
 
@@ -284,13 +299,13 @@ def test_validate_epoch_reraises_after_consecutive_failures():
 # Mutation-killing tests: init attrs, constants, NaN, val failures reset
 # ---------------------------------------------------------------------------
 @pytest.mark.unit
-def test_max_consecutive_val_failures_constant():
+def test_max_consecutive_val_failures_constant() -> None:
     """Assert _MAX_CONSECUTIVE_VAL_FAILURES is exactly 3."""
     assert _MAX_CONSECUTIVE_VAL_FAILURES == 3
 
 
 @pytest.mark.unit
-def test_fallback_metrics_exact_values():
+def test_fallback_metrics_exact_values() -> None:
     """Assert _FALLBACK_METRICS has exact expected values."""
     assert _FALLBACK_METRICS["loss"] == 999.0
     assert _FALLBACK_METRICS["accuracy"] == 0.0
@@ -299,7 +314,7 @@ def test_fallback_metrics_exact_values():
 
 
 @pytest.mark.unit
-def test_executor_init_all_attributes(executor, mock_cfg):
+def test_executor_init_all_attributes(executor: TrialTrainingExecutor) -> None:
     """Assert all init attributes are stored correctly."""
     assert executor.epochs == 5
     assert executor.enable_pruning is True
@@ -313,7 +328,7 @@ def test_executor_init_all_attributes(executor, mock_cfg):
 
 
 @pytest.mark.unit
-def test_executor_loop_use_tqdm_false(executor):
+def test_executor_loop_use_tqdm_false(executor: TrialTrainingExecutor) -> None:
     """Assert the _loop options have use_tqdm=False."""
     assert executor._loop.options.use_tqdm is False
 
@@ -321,7 +336,12 @@ def test_executor_loop_use_tqdm_false(executor):
 @pytest.mark.unit
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.optimization.objective.training_executor.validate_epoch")
-def test_nan_metric_skips_trial_report(mock_val, mock_train, executor, mock_trial):
+def test_nan_metric_skips_trial_report(
+    mock_val: MagicMock,
+    mock_train: MagicMock,
+    executor: TrialTrainingExecutor,
+    mock_trial: MagicMock,
+) -> None:
     """Verify trial.report is NOT called when metric is NaN."""
     mock_train.return_value = 0.4
     mock_val.return_value = {"loss": 0.3, "accuracy": 0.8, "auc": float("nan")}
@@ -338,7 +358,12 @@ def test_nan_metric_skips_trial_report(mock_val, mock_train, executor, mock_tria
 @pytest.mark.unit
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.optimization.objective.training_executor.validate_epoch")
-def test_non_nan_metric_calls_trial_report(mock_val, mock_train, executor, mock_trial):
+def test_non_nan_metric_calls_trial_report(
+    mock_val: MagicMock,
+    mock_train: MagicMock,
+    executor: TrialTrainingExecutor,
+    mock_trial: MagicMock,
+) -> None:
     """Verify trial.report IS called when metric is valid."""
     mock_train.return_value = 0.4
     mock_val.return_value = {"loss": 0.3, "accuracy": 0.8, "auc": 0.85}
@@ -353,21 +378,23 @@ def test_non_nan_metric_calls_trial_report(mock_val, mock_train, executor, mock_
 
 
 @pytest.mark.unit
-def test_consecutive_val_failures_reset_on_success():
+def test_consecutive_val_failures_reset_on_success() -> None:
     """Assert _consecutive_val_failures resets to 0 after a successful validation."""
+    training = make_training_config(epochs=5)
+    optuna_cfg = make_optuna_config(enable_pruning=False, pruning_warmup_epochs=0)
+    b = TrainingBundle()
+
     executor = TrialTrainingExecutor(
-        model=nn.Linear(10, 2),
-        train_loader=MagicMock(),
-        val_loader=MagicMock(),
-        optimizer=torch.optim.SGD(
-            nn.Linear(10, 2).parameters(), lr=0.01, momentum=0.0, weight_decay=0.0
-        ),
-        scheduler=MagicMock(),
-        criterion=nn.CrossEntropyLoss(),
-        training=MagicMock(use_amp=False, epochs=5, mixup_alpha=0),
-        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        model=b.model,
+        train_loader=b.train_loader,
+        val_loader=b.val_loader,
+        optimizer=b.optimizer,
+        scheduler=b.scheduler,
+        criterion=b.criterion,
+        training=training,
+        optuna=optuna_cfg,
         log_interval=5,
-        device=torch.device("cpu"),
+        device=b.device,
         metric_extractor=MetricExtractor("auc"),
     )
 
@@ -384,11 +411,16 @@ def test_consecutive_val_failures_reset_on_success():
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.optimization.objective.training_executor.validate_epoch")
-def test_execute_returns_best_metric_with_increasing(mock_val, mock_train, executor, mock_trial):
+def test_execute_returns_best_metric_with_increasing(
+    mock_val: MagicMock,
+    mock_train: MagicMock,
+    executor: TrialTrainingExecutor,
+    mock_trial: MagicMock,
+) -> None:
     """Verify execute returns the best (highest) metric across epochs."""
     call_count = [0]
 
-    def val_side_effect(*args, **kwargs):
+    def val_side_effect(*args: object, **kwargs: object) -> dict[str, float]:
         call_count[0] += 1
         auc = 0.7 + call_count[0] * 0.05  # 0.75, 0.80, 0.85
         return {"loss": 0.3, "accuracy": 0.8, "auc": auc}
@@ -407,7 +439,12 @@ def test_execute_returns_best_metric_with_increasing(mock_val, mock_train, execu
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.optimization.objective.training_executor.validate_epoch")
-def test_scheduler_receives_monitor_metric_value(mock_val, mock_train, executor, mock_trial):
+def test_scheduler_receives_monitor_metric_value(
+    mock_val: MagicMock,
+    mock_train: MagicMock,
+    executor: TrialTrainingExecutor,
+    mock_trial: MagicMock,
+) -> None:
     """Verify step_scheduler receives val_metrics[monitor_metric]."""
     mock_train.return_value = 0.4
     mock_val.return_value = {"loss": 0.3, "accuracy": 0.8, "auc": 0.85}
@@ -426,74 +463,57 @@ def test_scheduler_receives_monitor_metric_value(mock_val, mock_train, executor,
 
 
 @pytest.mark.unit
-def test_executor_stores_model_identity(executor):
+def test_executor_stores_model_identity(executor: TrialTrainingExecutor) -> None:
     """Assert model attribute is the exact object passed, not None."""
     assert executor.model is not None
     assert isinstance(executor.model, nn.Linear)
 
 
 @pytest.mark.unit
-def test_executor_stores_loader_identities():
+def test_executor_stores_loader_identities() -> None:
     """Assert train_loader and val_loader are stored as-is (not None)."""
-    train_loader = MagicMock()
-    val_loader = MagicMock()
-    model = nn.Linear(10, 2)
+    b = TrainingBundle()
+    training = make_training_config(epochs=5, scheduler_type="step", monitor_metric="auc")
+    optuna_cfg = make_optuna_config(enable_pruning=False, pruning_warmup_epochs=0)
 
     executor = TrialTrainingExecutor(
-        model=model,
-        train_loader=train_loader,
-        val_loader=val_loader,
-        optimizer=torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0),
-        scheduler=MagicMock(),
-        criterion=nn.CrossEntropyLoss(),
-        training=MagicMock(
-            use_amp=False,
-            epochs=5,
-            mixup_alpha=0,
-            grad_clip=1.0,
-            mixup_epochs=0,
-            scheduler_type="step",
-            monitor_metric="auc",
-        ),
-        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        model=b.model,
+        train_loader=b.train_loader,
+        val_loader=b.val_loader,
+        optimizer=b.optimizer,
+        scheduler=b.scheduler,
+        criterion=b.criterion,
+        training=training,
+        optuna=optuna_cfg,
         log_interval=5,
-        device=torch.device("cpu"),
+        device=b.device,
         metric_extractor=MetricExtractor("auc"),
     )
 
-    assert executor.train_loader is train_loader
-    assert executor.val_loader is val_loader
+    assert executor.train_loader is b.train_loader
+    assert executor.val_loader is b.val_loader
     assert executor.criterion is not None
-    assert executor.model is model
+    assert executor.model is b.model
 
 
 @pytest.mark.unit
-def test_validate_epoch_passes_correct_kwargs():
+def test_validate_epoch_passes_correct_kwargs() -> None:
     """Assert _validate_epoch passes self.model, self.val_loader etc. to validate_epoch."""
-    model = nn.Linear(10, 2)
-    val_loader = MagicMock()
-    criterion = nn.CrossEntropyLoss()
-    device = torch.device("cpu")
+    b = TrainingBundle()
+    training = make_training_config(epochs=5, scheduler_type="step", monitor_metric="auc")
+    optuna_cfg = make_optuna_config(enable_pruning=False, pruning_warmup_epochs=0)
 
     executor = TrialTrainingExecutor(
-        model=model,
-        train_loader=MagicMock(),
-        val_loader=val_loader,
-        optimizer=torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0),
-        scheduler=MagicMock(),
-        criterion=criterion,
-        training=MagicMock(
-            use_amp=False,
-            epochs=5,
-            mixup_alpha=0,
-            grad_clip=1.0,
-            mixup_epochs=0,
-            scheduler_type="step",
-            monitor_metric="auc",
-        ),
-        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        model=b.model,
+        train_loader=b.train_loader,
+        val_loader=b.val_loader,
+        optimizer=b.optimizer,
+        scheduler=b.scheduler,
+        criterion=b.criterion,
+        training=training,
+        optuna=optuna_cfg,
         log_interval=5,
-        device=device,
+        device=b.device,
         metric_extractor=MetricExtractor("auc"),
     )
 
@@ -502,20 +522,19 @@ def test_validate_epoch_passes_correct_kwargs():
         executor._validate_epoch()
 
     mock_val.assert_called_once_with(
-        model=model,
-        val_loader=val_loader,
-        criterion=criterion,
-        device=device,
+        model=b.model,
+        val_loader=b.val_loader,
+        criterion=b.criterion,
+        device=b.device,
     )
 
 
 @pytest.mark.unit
-def test_validate_epoch_uses_injected_adapter():
+def test_validate_epoch_uses_injected_adapter() -> None:
     """Assert _validate_epoch delegates to injected TaskValidationMetrics adapter."""
-    model = nn.Linear(10, 2)
-    val_loader = MagicMock()
-    criterion = nn.CrossEntropyLoss()
-    device = torch.device("cpu")
+    b = TrainingBundle()
+    training = make_training_config(epochs=5, scheduler_type="step", monitor_metric="auc")
+    optuna_cfg = make_optuna_config(enable_pruning=False, pruning_warmup_epochs=0)
 
     mock_adapter = MagicMock()
     mock_adapter.compute_validation_metrics.return_value = {
@@ -526,24 +545,16 @@ def test_validate_epoch_uses_injected_adapter():
     }
 
     executor = TrialTrainingExecutor(
-        model=model,
-        train_loader=MagicMock(),
-        val_loader=val_loader,
-        optimizer=torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0),
-        scheduler=MagicMock(),
-        criterion=criterion,
-        training=MagicMock(
-            use_amp=False,
-            epochs=5,
-            mixup_alpha=0,
-            grad_clip=1.0,
-            mixup_epochs=0,
-            scheduler_type="step",
-            monitor_metric="auc",
-        ),
-        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        model=b.model,
+        train_loader=b.train_loader,
+        val_loader=b.val_loader,
+        optimizer=b.optimizer,
+        scheduler=b.scheduler,
+        criterion=b.criterion,
+        training=training,
+        optuna=optuna_cfg,
         log_interval=5,
-        device=device,
+        device=b.device,
         metric_extractor=MetricExtractor("auc"),
         validation_metrics=mock_adapter,
     )
@@ -551,18 +562,21 @@ def test_validate_epoch_uses_injected_adapter():
     result = executor._validate_epoch()
 
     mock_adapter.compute_validation_metrics.assert_called_once_with(
-        model=model,
-        val_loader=val_loader,
-        criterion=criterion,
-        device=device,
+        model=b.model,
+        val_loader=b.val_loader,
+        criterion=b.criterion,
+        device=b.device,
     )
     assert result["auc"] == pytest.approx(0.98)
 
 
 @pytest.mark.unit
-def test_validate_epoch_skips_validate_epoch_when_adapter_injected():
+def test_validate_epoch_skips_validate_epoch_when_adapter_injected() -> None:
     """Assert _validate_epoch does NOT call validate_epoch when adapter is set."""
-    model = nn.Linear(10, 2)
+    b = TrainingBundle()
+    training = make_training_config(epochs=5, scheduler_type="step", monitor_metric="auc")
+    optuna_cfg = make_optuna_config(enable_pruning=False, pruning_warmup_epochs=0)
+
     mock_adapter = MagicMock()
     mock_adapter.compute_validation_metrics.return_value = {
         "loss": 0.2,
@@ -572,24 +586,16 @@ def test_validate_epoch_skips_validate_epoch_when_adapter_injected():
     }
 
     executor = TrialTrainingExecutor(
-        model=model,
-        train_loader=MagicMock(),
-        val_loader=MagicMock(),
-        optimizer=torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0),
-        scheduler=MagicMock(),
-        criterion=nn.CrossEntropyLoss(),
-        training=MagicMock(
-            use_amp=False,
-            epochs=5,
-            mixup_alpha=0,
-            grad_clip=1.0,
-            mixup_epochs=0,
-            scheduler_type="step",
-            monitor_metric="auc",
-        ),
-        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        model=b.model,
+        train_loader=b.train_loader,
+        val_loader=b.val_loader,
+        optimizer=b.optimizer,
+        scheduler=b.scheduler,
+        criterion=b.criterion,
+        training=training,
+        optuna=optuna_cfg,
         log_interval=5,
-        device=torch.device("cpu"),
+        device=b.device,
         metric_extractor=MetricExtractor("auc"),
         validation_metrics=mock_adapter,
     )
@@ -600,30 +606,24 @@ def test_validate_epoch_skips_validate_epoch_when_adapter_injected():
 
 
 @pytest.mark.unit
-def test_executor_stores_validation_metrics():
+def test_executor_stores_validation_metrics() -> None:
     """Assert TrialTrainingExecutor.__init__ stores validation_metrics."""
-    model = nn.Linear(10, 2)
+    b = TrainingBundle()
+    training = make_training_config(epochs=5, scheduler_type="step", monitor_metric="auc")
+    optuna_cfg = make_optuna_config(enable_pruning=False, pruning_warmup_epochs=0)
     mock_adapter = MagicMock()
 
     executor = TrialTrainingExecutor(
-        model=model,
-        train_loader=MagicMock(),
-        val_loader=MagicMock(),
-        optimizer=torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0),
-        scheduler=MagicMock(),
-        criterion=nn.CrossEntropyLoss(),
-        training=MagicMock(
-            use_amp=False,
-            epochs=5,
-            mixup_alpha=0,
-            grad_clip=1.0,
-            mixup_epochs=0,
-            scheduler_type="step",
-            monitor_metric="auc",
-        ),
-        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        model=b.model,
+        train_loader=b.train_loader,
+        val_loader=b.val_loader,
+        optimizer=b.optimizer,
+        scheduler=b.scheduler,
+        criterion=b.criterion,
+        training=training,
+        optuna=optuna_cfg,
         log_interval=5,
-        device=torch.device("cpu"),
+        device=b.device,
         metric_extractor=MetricExtractor("auc"),
         validation_metrics=mock_adapter,
     )
@@ -634,28 +634,25 @@ def test_executor_stores_validation_metrics():
 @pytest.mark.unit
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.optimization.objective.training_executor.validate_epoch")
-def test_log_interval_controls_logging(mock_val, mock_train, mock_trial):
+def test_log_interval_controls_logging(
+    mock_val: MagicMock, mock_train: MagicMock, mock_trial: MagicMock
+) -> None:
     """Verify log_interval logic: epoch % log_interval == 0 OR epoch == epochs."""
-    model = nn.Linear(10, 2)
+    b = TrainingBundle()
+    training = make_training_config(epochs=5, scheduler_type="step", monitor_metric="auc")
+    optuna_cfg = make_optuna_config(enable_pruning=False, pruning_warmup_epochs=0)
+
     executor = TrialTrainingExecutor(
-        model=model,
-        train_loader=MagicMock(),
-        val_loader=MagicMock(),
-        optimizer=torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0),
-        scheduler=MagicMock(),
-        criterion=nn.CrossEntropyLoss(),
-        training=MagicMock(
-            use_amp=False,
-            epochs=5,
-            mixup_alpha=0,
-            grad_clip=1.0,
-            mixup_epochs=0,
-            scheduler_type="step",
-            monitor_metric="auc",
-        ),
-        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        model=b.model,
+        train_loader=b.train_loader,
+        val_loader=b.val_loader,
+        optimizer=b.optimizer,
+        scheduler=b.scheduler,
+        criterion=b.criterion,
+        training=training,
+        optuna=optuna_cfg,
         log_interval=2,
-        device=torch.device("cpu"),
+        device=b.device,
         metric_extractor=MetricExtractor("auc"),
     )
 
@@ -682,28 +679,25 @@ def test_log_interval_controls_logging(mock_val, mock_train, mock_trial):
 @pytest.mark.unit
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.optimization.objective.training_executor.validate_epoch")
-def test_log_interval_only_last_epoch(mock_val, mock_train, mock_trial):
+def test_log_interval_only_last_epoch(
+    mock_val: MagicMock, mock_train: MagicMock, mock_trial: MagicMock
+) -> None:
     """With log_interval=10 and epochs=3, only last epoch logs (epoch==epochs)."""
-    model = nn.Linear(10, 2)
+    b = TrainingBundle()
+    training = make_training_config(epochs=3, scheduler_type="step", monitor_metric="auc")
+    optuna_cfg = make_optuna_config(enable_pruning=False, pruning_warmup_epochs=0)
+
     executor = TrialTrainingExecutor(
-        model=model,
-        train_loader=MagicMock(),
-        val_loader=MagicMock(),
-        optimizer=torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0),
-        scheduler=MagicMock(),
-        criterion=nn.CrossEntropyLoss(),
-        training=MagicMock(
-            use_amp=False,
-            epochs=3,
-            mixup_alpha=0,
-            grad_clip=1.0,
-            mixup_epochs=0,
-            scheduler_type="step",
-            monitor_metric="auc",
-        ),
-        optuna=MagicMock(enable_pruning=False, pruning_warmup_epochs=0),
+        model=b.model,
+        train_loader=b.train_loader,
+        val_loader=b.val_loader,
+        optimizer=b.optimizer,
+        scheduler=b.scheduler,
+        criterion=b.criterion,
+        training=training,
+        optuna=optuna_cfg,
         log_interval=10,
-        device=torch.device("cpu"),
+        device=b.device,
         metric_extractor=MetricExtractor("auc"),
     )
 
@@ -723,19 +717,19 @@ def test_log_interval_only_last_epoch(mock_val, mock_train, mock_trial):
 
 
 @pytest.mark.unit
-def test_loop_options_grad_clip(executor):
+def test_loop_options_grad_clip(executor: TrialTrainingExecutor) -> None:
     """Assert LoopOptions.grad_clip matches training config."""
     assert executor._loop.options.grad_clip == 1.0
 
 
 @pytest.mark.unit
-def test_loop_options_monitor_metric(executor):
+def test_loop_options_monitor_metric(executor: TrialTrainingExecutor) -> None:
     """Assert LoopOptions.monitor_metric matches training config."""
     assert executor._loop.options.monitor_metric == "auc"
 
 
 @pytest.mark.unit
-def test_loop_options_total_epochs(executor):
+def test_loop_options_total_epochs(executor: TrialTrainingExecutor) -> None:
     """Assert LoopOptions.total_epochs matches executor.epochs."""
     assert executor._loop.options.total_epochs == executor.epochs
 

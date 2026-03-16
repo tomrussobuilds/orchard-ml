@@ -8,6 +8,8 @@ These are essential smoke tests to boost coverage from 0% to ~30%.
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -26,9 +28,9 @@ from orchard.evaluation.visualization import (
 
 # FIXTURES
 @pytest.fixture
-def ctx_rgb():
+def ctx_rgb() -> None:
     """PlotContext for RGB 28x28 datasets."""
-    return PlotContext(
+    return PlotContext(  # type: ignore
         arch_name="resnet18",
         resolution=28,
         fig_dpi=200,
@@ -46,9 +48,9 @@ def ctx_rgb():
 
 
 @pytest.fixture
-def ctx_gray():
+def ctx_gray() -> None:
     """PlotContext for grayscale 28x28 datasets."""
-    return PlotContext(
+    return PlotContext(  # type: ignore
         arch_name="model",
         resolution=28,
         fig_dpi=150,
@@ -69,7 +71,9 @@ def ctx_gray():
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.np.savez")
-def test_plot_training_curves_basic(mock_savez, mock_plt, tmp_path, ctx_rgb):
+def test_plot_training_curves_basic(  # type: ignore
+    mock_savez: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_rgb
+) -> None:
     """Test plot_training_curves creates and saves figure."""
     mock_fig = MagicMock()
     mock_ax = MagicMock()
@@ -90,7 +94,9 @@ def test_plot_training_curves_basic(mock_savez, mock_plt, tmp_path, ctx_rgb):
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.np.savez")
-def test_plot_training_curves_empty_lists(mock_savez, mock_plt, tmp_path, ctx_gray):
+def test_plot_training_curves_empty_lists(  # type: ignore
+    mock_savez: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_gray
+) -> None:
     """Test plot_training_curves handles empty metric lists."""
     mock_fig = MagicMock()
     mock_ax = MagicMock()
@@ -110,7 +116,9 @@ def test_plot_training_curves_empty_lists(mock_savez, mock_plt, tmp_path, ctx_gr
 @patch("orchard.evaluation.visualization.ConfusionMatrixDisplay")
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.confusion_matrix")
-def test_plot_confusion_matrix_basic(mock_cm, mock_plt, mock_cmd_cls, tmp_path):
+def test_plot_confusion_matrix_basic(
+    mock_cm: MagicMock, mock_plt: MagicMock, mock_cmd_cls: MagicMock, tmp_path: Path
+) -> None:
     """Test plot_confusion_matrix creates and saves figure."""
     mock_fig = MagicMock()
     mock_ax = MagicMock()
@@ -148,7 +156,9 @@ def test_plot_confusion_matrix_basic(mock_cm, mock_plt, mock_cmd_cls, tmp_path):
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.confusion_matrix")
-def test_plot_confusion_matrix_with_nan(mock_cm, mock_plt, tmp_path, ctx_gray):
+def test_plot_confusion_matrix_with_nan(  # type: ignore
+    mock_cm: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_gray
+) -> None:
     """Test plot_confusion_matrix handles NaN values in matrix."""
     mock_fig = MagicMock()
     mock_ax = MagicMock()
@@ -168,7 +178,9 @@ def test_plot_confusion_matrix_with_nan(mock_cm, mock_plt, tmp_path, ctx_gray):
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization._get_predictions_batch")
-def test_show_predictions_basic(mock_get_batch, mock_plt, tmp_path, ctx_rgb):
+def test_show_predictions_basic(  # type: ignore
+    mock_get_batch: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_rgb
+) -> None:
     """Test show_predictions creates prediction grid."""
     mock_fig = MagicMock()
     mock_axes = [MagicMock() for _ in range(12)]
@@ -200,7 +212,7 @@ def test_show_predictions_basic(mock_get_batch, mock_plt, tmp_path, ctx_rgb):
 
 
 @pytest.mark.unit
-def test_show_predictions_forwards_ctx(tmp_path, ctx_rgb):
+def test_show_predictions_forwards_ctx(tmp_path: Path, ctx_rgb: Any) -> None:
     """Test show_predictions forwards ctx to _plot_single_prediction (not None)."""
     rng = np.random.default_rng(seed=42)
     images = rng.random(size=(12, 3, 28, 28))
@@ -236,7 +248,7 @@ def test_show_predictions_forwards_ctx(tmp_path, ctx_rgb):
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization._get_predictions_batch")
-def test_show_predictions_without_ctx(mock_get_batch, mock_plt):
+def test_show_predictions_without_ctx(mock_get_batch: MagicMock, mock_plt: MagicMock) -> None:
     """Test show_predictions works without PlotContext (uses defaults)."""
     mock_fig = MagicMock()
     mock_axes = np.empty((3, 4), dtype=object)
@@ -266,7 +278,9 @@ def test_show_predictions_without_ctx(mock_get_batch, mock_plt):
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization._get_predictions_batch")
-def test_show_predictions_without_save_path(mock_get_batch, mock_plt, ctx_rgb):
+def test_show_predictions_without_save_path(  # type: ignore
+    mock_get_batch: MagicMock, mock_plt: MagicMock, ctx_rgb
+) -> None:
     """Test show_predictions with save_path=None (interactive mode)."""
     mock_fig = MagicMock()
     mock_axes = [MagicMock() for _ in range(12)]
@@ -291,7 +305,9 @@ def test_show_predictions_without_save_path(mock_get_batch, mock_plt, ctx_rgb):
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization._get_predictions_batch")
-def test_show_predictions_standard_mode(mock_get_batch, mock_plt, tmp_path, ctx_gray):
+def test_show_predictions_standard_mode(  # type: ignore
+    mock_get_batch: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_gray
+) -> None:
     """Test show_predictions with standard mode (neither texture nor anatomical)."""
     mock_fig = MagicMock()
     mock_axes = [MagicMock() for _ in range(6)]
@@ -318,7 +334,9 @@ def test_show_predictions_standard_mode(mock_get_batch, mock_plt, tmp_path, ctx_
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization._get_predictions_batch")
-def test_show_predictions_with_custom_n(mock_get_batch, mock_plt, tmp_path):
+def test_show_predictions_with_custom_n(
+    mock_get_batch: MagicMock, mock_plt: MagicMock, tmp_path: Path
+) -> None:
     """Test show_predictions respects custom n parameter."""
     mock_fig = MagicMock()
     mock_axes = [MagicMock() for _ in range(6)]
@@ -358,7 +376,7 @@ def test_show_predictions_with_custom_n(mock_get_batch, mock_plt, tmp_path):
 
 # HELPER FUNCTIONS - DIRECT TESTS
 @pytest.mark.unit
-def test_get_predictions_batch_directly():
+def test_get_predictions_batch_directly() -> None:
     """Test _get_predictions_batch passes device and images correctly to model."""
     from orchard.evaluation.visualization import _get_predictions_batch
 
@@ -388,7 +406,7 @@ def test_get_predictions_batch_directly():
 
 
 @pytest.mark.unit
-def test_setup_prediction_grid_directly(ctx_rgb):
+def test_setup_prediction_grid_directly(ctx_rgb: Any) -> None:
     """Test _setup_prediction_grid function directly."""
     from orchard.evaluation.visualization import _setup_prediction_grid
 
@@ -408,7 +426,7 @@ def test_setup_prediction_grid_directly(ctx_rgb):
 
 
 @pytest.mark.unit
-def test_finalize_figure_with_save(tmp_path, ctx_rgb):
+def test_finalize_figure_with_save(tmp_path: Path, ctx_rgb: Any) -> None:
     """Test _finalize_figure with save_path."""
     from orchard.evaluation.visualization import _finalize_figure
 
@@ -423,7 +441,7 @@ def test_finalize_figure_with_save(tmp_path, ctx_rgb):
 
 
 @pytest.mark.unit
-def test_finalize_figure_creates_nested_dirs(tmp_path, ctx_rgb):
+def test_finalize_figure_creates_nested_dirs(tmp_path: Path, ctx_rgb: Any) -> None:
     """Test _finalize_figure creates nested parent directories."""
     from orchard.evaluation.visualization import _finalize_figure
 
@@ -437,7 +455,7 @@ def test_finalize_figure_creates_nested_dirs(tmp_path, ctx_rgb):
 
 
 @pytest.mark.unit
-def test_finalize_figure_without_save():
+def test_finalize_figure_without_save() -> None:
     """Test _finalize_figure without save_path (interactive mode)."""
     from orchard.evaluation.visualization import _finalize_figure
 
@@ -463,7 +481,7 @@ def test_finalize_figure_without_save():
 
 # HELPER FUNCTIONS - DENORMALIZE & PREPARE
 @pytest.mark.unit
-def test_denormalize_image():
+def test_denormalize_image() -> None:
     """Test _denormalize_image reverses normalization."""
     img = np.array([[[0.0, 0.0], [0.0, 0.0]]])
 
@@ -487,7 +505,7 @@ def test_denormalize_image():
 
 
 @pytest.mark.unit
-def test_denormalize_image_rgb():
+def test_denormalize_image_rgb() -> None:
     """Test _denormalize_image reverses normalization with non-zero values."""
     # Use non-zero image so * vs / produces different results
     img = np.ones((3, 2, 2)) * 2.0
@@ -515,7 +533,7 @@ def test_denormalize_image_rgb():
 
 
 @pytest.mark.unit
-def test_denormalize_image_clips_values():
+def test_denormalize_image_clips_values() -> None:
     """Test _denormalize_image clips values to [0, 1]."""
     img = np.full((1, 2, 2), 10.0)
 
@@ -538,7 +556,7 @@ def test_denormalize_image_clips_values():
 
 
 @pytest.mark.unit
-def test_prepare_for_plt_chw_to_hwc():
+def test_prepare_for_plt_chw_to_hwc() -> None:
     """Test _prepare_for_plt converts (C, H, W) to (H, W, C) with correct axes."""
     rng = np.random.default_rng(seed=42)
     img = rng.random(size=(3, 28, 28))
@@ -553,7 +571,7 @@ def test_prepare_for_plt_chw_to_hwc():
 
 
 @pytest.mark.unit
-def test_prepare_for_plt_grayscale_squeeze():
+def test_prepare_for_plt_grayscale_squeeze() -> None:
     """Test _prepare_for_plt squeezes single-channel to 2D and preserves values."""
     rng = np.random.default_rng(seed=42)
     img = rng.random(size=(1, 28, 28))
@@ -566,7 +584,7 @@ def test_prepare_for_plt_grayscale_squeeze():
 
 
 @pytest.mark.unit
-def test_prepare_for_plt_already_2d():
+def test_prepare_for_plt_already_2d() -> None:
     """Test _prepare_for_plt handles already 2D images."""
     rng = np.random.default_rng(seed=42)
     img = rng.random(size=(28, 28))
@@ -577,7 +595,7 @@ def test_prepare_for_plt_already_2d():
 
 
 @pytest.mark.unit
-def test_plot_context_from_config():
+def test_plot_context_from_config() -> None:
     """Test PlotContext.from_config builds from a mock Config."""
     mock_cfg = MagicMock()
     mock_cfg.architecture.name = "resnet18"
@@ -606,7 +624,7 @@ def test_plot_context_from_config():
 
 
 @pytest.mark.unit
-def test_plot_context_from_config_no_metadata():
+def test_plot_context_from_config_no_metadata() -> None:
     """Test PlotContext.from_config with metadata=None."""
     mock_cfg = MagicMock()
     mock_cfg.architecture.name = "model"
@@ -632,7 +650,7 @@ def test_plot_context_from_config_no_metadata():
 
 
 @pytest.mark.unit
-def test_plot_single_prediction_calls_denormalize(ctx_rgb):
+def test_plot_single_prediction_calls_denormalize(ctx_rgb: Any) -> None:
     """Test _plot_single_prediction forwards image and ctx to _denormalize_image."""
     from orchard.evaluation.visualization import _plot_single_prediction
 
@@ -651,7 +669,7 @@ def test_plot_single_prediction_calls_denormalize(ctx_rgb):
 
 
 @pytest.mark.unit
-def test_plot_single_prediction_skips_denormalize_without_ctx():
+def test_plot_single_prediction_skips_denormalize_without_ctx() -> None:
     """Test _plot_single_prediction skips denormalization when ctx is None."""
     from orchard.evaluation.visualization import _plot_single_prediction
 
@@ -665,7 +683,7 @@ def test_plot_single_prediction_skips_denormalize_without_ctx():
 
 
 @pytest.mark.unit
-def test_plot_single_prediction_correct_vs_incorrect():
+def test_plot_single_prediction_correct_vs_incorrect() -> None:
     """Test _plot_single_prediction uses green for correct, red for incorrect."""
     from orchard.evaluation.visualization import _plot_single_prediction
 
@@ -686,7 +704,7 @@ def test_plot_single_prediction_correct_vs_incorrect():
 
 
 @pytest.mark.unit
-def test_plot_single_prediction_calls_prepare_for_plt():
+def test_plot_single_prediction_calls_prepare_for_plt() -> None:
     """Test _plot_single_prediction passes denormalized image to _prepare_for_plt."""
     from orchard.evaluation.visualization import _plot_single_prediction
 
@@ -701,7 +719,7 @@ def test_plot_single_prediction_calls_prepare_for_plt():
 
 
 @pytest.mark.unit
-def test_get_predictions_batch_passes_device():
+def test_get_predictions_batch_passes_device() -> None:
     """Test _get_predictions_batch calls .to() with actual device."""
     from orchard.evaluation.visualization import _get_predictions_batch
 
@@ -722,7 +740,7 @@ def test_get_predictions_batch_passes_device():
 
 
 @pytest.mark.unit
-def test_setup_prediction_grid_row_calculation():
+def test_setup_prediction_grid_row_calculation() -> None:
     """Test _setup_prediction_grid computes rows = ceil(n / cols)."""
     from orchard.evaluation.visualization import _setup_prediction_grid
 
@@ -741,7 +759,9 @@ def test_setup_prediction_grid_row_calculation():
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.np.savez")
-def test_plot_training_curves_npz_data(mock_savez, mock_plt, tmp_path, ctx_rgb):
+def test_plot_training_curves_npz_data(  # type: ignore
+    mock_savez: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_rgb
+) -> None:
     """Test plot_training_curves saves correct data in npz file."""
     mock_fig = MagicMock()
     mock_ax = MagicMock()
@@ -762,7 +782,7 @@ def test_plot_training_curves_npz_data(mock_savez, mock_plt, tmp_path, ctx_rgb):
 
 
 @pytest.mark.unit
-def test_denormalize_image_reshape_channels():
+def test_denormalize_image_reshape_channels() -> None:
     """Test _denormalize_image reshapes mean/std per-channel (not -2)."""
     # 3-channel image: if reshape used -2 instead of -1, shape would differ
     img = np.zeros((3, 4, 4))
@@ -787,7 +807,7 @@ def test_denormalize_image_reshape_channels():
 
 
 @pytest.mark.unit
-def test_denormalize_image_clip_lower_bound():
+def test_denormalize_image_clip_lower_bound() -> None:
     """Test _denormalize_image clips negative values to 0."""
     img = np.full((1, 2, 2), -10.0)
     ctx = PlotContext(
@@ -807,7 +827,7 @@ def test_denormalize_image_clip_lower_bound():
 
 
 @pytest.mark.unit
-def test_prepare_for_plt_transpose_axes():
+def test_prepare_for_plt_transpose_axes() -> None:
     """Test _prepare_for_plt transposes (C,H,W) to (H,W,C) not arbitrary."""
     img = np.zeros((3, 4, 5))  # C=3, H=4, W=5
     img[0, :, :] = 1.0  # channel 0 = 1
@@ -820,7 +840,7 @@ def test_prepare_for_plt_transpose_axes():
 
 
 @pytest.mark.unit
-def test_prepare_for_plt_squeeze_axis():
+def test_prepare_for_plt_squeeze_axis() -> None:
     """Test _prepare_for_plt squeezes axis -1 specifically (not None)."""
     # squeeze(None) would also remove other size-1 dims;
     # the function only handles ndim==3, so test with ndim==3

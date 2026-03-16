@@ -21,7 +21,7 @@ from orchard.data_handler.diagnostic import (
 
 # TESTS
 @pytest.mark.unit
-def test_create_synthetic_dataset_returns_metadata():
+def test_create_synthetic_dataset_returns_metadata() -> None:
     """Factory should return a valid DatasetData object."""
     data = create_synthetic_dataset()
 
@@ -34,7 +34,7 @@ def test_create_synthetic_dataset_returns_metadata():
 
 
 @pytest.mark.unit
-def test_synthetic_npz_contains_all_required_keys():
+def test_synthetic_npz_contains_all_required_keys() -> None:
     """Synthetic NPZ file should match MedMNIST format."""
     data = create_synthetic_dataset(samples=50)
 
@@ -52,7 +52,7 @@ def test_synthetic_npz_contains_all_required_keys():
 
 
 @pytest.mark.unit
-def test_synthetic_dataset_shapes_rgb():
+def test_synthetic_dataset_shapes_rgb() -> None:
     """RGB synthetic dataset should have correct shapes."""
     samples = 40
     resolution = 32
@@ -89,7 +89,7 @@ def test_synthetic_dataset_shapes_rgb():
 
 
 @pytest.mark.unit
-def test_synthetic_dataset_label_range():
+def test_synthetic_dataset_label_range() -> None:
     """Labels should be within [0, num_classes)."""
     num_classes = 5
     data = create_synthetic_dataset(num_classes=num_classes)
@@ -102,7 +102,7 @@ def test_synthetic_dataset_label_range():
 
 
 @pytest.mark.unit
-def test_create_synthetic_grayscale_dataset():
+def test_create_synthetic_grayscale_dataset() -> None:
     """Grayscale variant should generate single-channel data."""
     data = create_synthetic_grayscale_dataset(
         num_classes=3,
@@ -120,7 +120,7 @@ def test_create_synthetic_grayscale_dataset():
 
 
 @pytest.mark.unit
-def test_multiple_calls_create_distinct_files():
+def test_multiple_calls_create_distinct_files() -> None:
     """Each synthetic dataset call should create a unique file."""
     d1 = create_synthetic_dataset()
     d2 = create_synthetic_dataset()

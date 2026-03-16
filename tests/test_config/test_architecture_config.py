@@ -15,7 +15,7 @@ from orchard.core.config import ArchitectureConfig
 
 # ARCHITECTURE CONFIG: DEFAULTS
 @pytest.mark.unit
-def test_architecture_config_defaults():
+def test_architecture_config_defaults() -> None:
     """Test ArchitectureConfig with default values."""
     config = ArchitectureConfig()
 
@@ -26,7 +26,7 @@ def test_architecture_config_defaults():
 
 
 @pytest.mark.unit
-def test_architecture_config_custom_values():
+def test_architecture_config_custom_values() -> None:
     """Test ArchitectureConfig with custom parameters."""
     config = ArchitectureConfig(
         name="efficientnet_b0", pretrained=False, dropout=0.3, weight_variant="imagenet"
@@ -40,7 +40,7 @@ def test_architecture_config_custom_values():
 
 # ARCHITECTURE CONFIG: VALIDATION
 @pytest.mark.unit
-def test_dropout_bounds():
+def test_dropout_bounds() -> None:
     """Test dropout must be in [0.0, 0.9]."""
 
     config = ArchitectureConfig(dropout=0.0)
@@ -60,7 +60,7 @@ def test_dropout_bounds():
 
 
 @pytest.mark.unit
-def test_name_accepts_string():
+def test_name_accepts_string() -> None:
     """Test name field accepts arbitrary string."""
     for name in ["resnet18", "vit_tiny", "custom_model", "my-model-v2"]:
         config = ArchitectureConfig(name=name)
@@ -68,7 +68,7 @@ def test_name_accepts_string():
 
 
 @pytest.mark.unit
-def test_pretrained_boolean():
+def test_pretrained_boolean() -> None:
     """Test pretrained field is boolean."""
     config = ArchitectureConfig(pretrained=True)
     assert config.pretrained is True
@@ -79,14 +79,14 @@ def test_pretrained_boolean():
 
 # ARCHITECTURE CONFIG: WEIGHT VARIANTS
 @pytest.mark.unit
-def test_weight_variant_optional():
+def test_weight_variant_optional() -> None:
     """Test weight_variant can be None."""
     config = ArchitectureConfig(weight_variant=None)
     assert config.weight_variant is None
 
 
 @pytest.mark.unit
-def test_weight_variant_string():
+def test_weight_variant_string() -> None:
     """Test weight_variant accepts string values."""
     variants = [
         "vit_tiny_patch16_224.augreg_in21k_ft_in1k",
@@ -101,7 +101,7 @@ def test_weight_variant_string():
 
 
 @pytest.mark.unit
-def test_weight_variant_with_pretrained_false():
+def test_weight_variant_with_pretrained_false() -> None:
     """Test weight_variant can be set even if pretrained=False."""
     config = ArchitectureConfig(pretrained=False, weight_variant="imagenet")
 
@@ -111,7 +111,7 @@ def test_weight_variant_with_pretrained_false():
 
 # ARCHITECTURE CONFIG: ARCHITECTURE NAMES
 @pytest.mark.unit
-def test_common_architecture_names():
+def test_common_architecture_names() -> None:
     """Test ArchitectureConfig accepts common architecture names."""
     architectures = ["resnet_18", "efficientnet_b0", "vit_tiny", "mini_cnn"]
 
@@ -122,7 +122,7 @@ def test_common_architecture_names():
 
 # ARCHITECTURE CONFIG: DESCRIPTION FIELD
 @pytest.mark.unit
-def test_field_descriptions_present():
+def test_field_descriptions_present() -> None:
     """Test all fields have descriptions."""
     for field_name, field_info in ArchitectureConfig.model_fields.items():
         assert field_info.description is not None
@@ -131,7 +131,7 @@ def test_field_descriptions_present():
 
 # ARCHITECTURE CONFIG: IMMUTABILITY
 @pytest.mark.unit
-def test_config_is_frozen():
+def test_config_is_frozen() -> None:
     """Test ArchitectureConfig is immutable after creation."""
     config = ArchitectureConfig()
 
@@ -140,7 +140,7 @@ def test_config_is_frozen():
 
 
 @pytest.mark.unit
-def test_config_forbids_extra_fields():
+def test_config_forbids_extra_fields() -> None:
     """Test ArchitectureConfig rejects unknown fields."""
     with pytest.raises(ValidationError):
         ArchitectureConfig(learning_rate=0.001)
@@ -148,14 +148,14 @@ def test_config_forbids_extra_fields():
 
 # ARCHITECTURE CONFIG: EDGE CASES
 @pytest.mark.unit
-def test_empty_name_rejected():
+def test_empty_name_rejected() -> None:
     """Test empty string for name is rejected."""
     config = ArchitectureConfig(name="")
     assert config.name == ""
 
 
 @pytest.mark.unit
-def test_very_long_weight_variant():
+def test_very_long_weight_variant() -> None:
     """Test very long weight_variant string is accepted."""
     long_variant = "a" * 500
     config = ArchitectureConfig(weight_variant=long_variant)

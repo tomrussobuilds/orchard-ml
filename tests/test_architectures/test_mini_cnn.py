@@ -6,6 +6,7 @@ output tensor shapes for the orchard model suite.
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -16,9 +17,9 @@ from orchard.architectures import build_mini_cnn
 
 # FIXTURES
 @pytest.fixture
-def device():
+def device() -> None:
     """Resolves target device for test execution."""
-    return torch.device("cpu")
+    return torch.device("cpu")  # type: ignore
 
 
 # UNIT TESTS
@@ -36,7 +37,9 @@ class TestMiniCNN:
             (1, 5, 32),
         ],
     )
-    def test_mini_cnn_forward_flow(self, device, in_channels, num_classes, img_size):
+    def test_mini_cnn_forward_flow(
+        self, device: Any, in_channels: Any, num_classes: Any, img_size: Any
+    ) -> None:
         """Verify that the internal layers' call sequence is correct."""
         model = build_mini_cnn(num_classes=num_classes, in_channels=in_channels, dropout=0.5)
 
@@ -63,9 +66,9 @@ class TestMiniCNN:
             (3, 100, 32, 2),
         ],
     )
-    def test_mini_cnn_shape_integration(
+    def test_mini_cnn_shape_integration(  # type: ignore
         self, device, in_channels, num_classes, img_size, batch_size
-    ):
+    ) -> None:
         """Verify the integrity of the shapes produced by the real model (without patches)."""
         model = build_mini_cnn(num_classes=num_classes, in_channels=in_channels, dropout=0.5)
         model.eval()

@@ -8,6 +8,7 @@ Tests to validate YAML serialization and deserialization.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -25,7 +26,7 @@ from orchard.core.io.serialization import (
 
 # SANITIZE FOR YAML
 @pytest.mark.unit
-def test_sanitize_for_yaml_path_objects():
+def test_sanitize_for_yaml_path_objects() -> None:
     """Test _sanitize_for_yaml converts Path objects to strings."""
     data = {"output_dir": Path("/mock/outputs"), "log_file": Path("/mock/log.txt")}
 
@@ -37,7 +38,7 @@ def test_sanitize_for_yaml_path_objects():
 
 
 @pytest.mark.unit
-def test_sanitize_for_yaml_nested_structures():
+def test_sanitize_for_yaml_nested_structures() -> None:
     """Test _sanitize_for_yaml handles nested dicts and lists."""
     data = {
         "paths": {"data": Path("/data"), "models": Path("/models")},
@@ -52,7 +53,7 @@ def test_sanitize_for_yaml_nested_structures():
 
 
 @pytest.mark.unit
-def test_sanitize_for_yaml_primitives():
+def test_sanitize_for_yaml_primitives() -> None:
     """Test _sanitize_for_yaml preserves primitive types."""
     data = {"int": 42, "float": 3.14, "str": "test", "bool": True, "none": None}
 
@@ -62,7 +63,7 @@ def test_sanitize_for_yaml_primitives():
 
 
 @pytest.mark.unit
-def test_sanitize_for_yaml_tuples():
+def test_sanitize_for_yaml_tuples() -> None:
     """Test _sanitize_for_yaml converts tuples to lists."""
     data = {"tuple": (1, 2, Path("/path"))}
 
@@ -74,7 +75,7 @@ def test_sanitize_for_yaml_tuples():
 
 # SAVE CONFIG AS YAML
 @pytest.mark.unit
-def test_save_config_as_yaml_with_dict(tmp_path):
+def test_save_config_as_yaml_with_dict(tmp_path: Path) -> None:
     """Test save_config_as_yaml saves dictionary to YAML."""
     config = {"model": "resnet", "epochs": 10, "lr": 0.001}
     yaml_path = tmp_path / "config.yaml"
@@ -90,7 +91,7 @@ def test_save_config_as_yaml_with_dict(tmp_path):
 
 
 @pytest.mark.unit
-def test_save_config_as_yaml_with_model_dump():
+def test_save_config_as_yaml_with_model_dump() -> None:
     """Test save_config_as_yaml handles Pydantic model_dump."""
     mock_config = MagicMock(spec=["model_dump"])
     mock_config.model_dump.return_value = {"key": "value"}
@@ -106,7 +107,7 @@ def test_save_config_as_yaml_with_model_dump():
 
 
 @pytest.mark.unit
-def test_save_config_as_yaml_with_dump_portable():
+def test_save_config_as_yaml_with_dump_portable() -> None:
     """Test save_config_as_yaml prioritizes dump_portable over model_dump."""
     mock_config = MagicMock()
     mock_config.dump_portable.return_value = {"portable": True}
@@ -124,7 +125,7 @@ def test_save_config_as_yaml_with_dump_portable():
 
 
 @pytest.mark.unit
-def test_save_config_as_yaml_with_paths(tmp_path):
+def test_save_config_as_yaml_with_paths(tmp_path: Path) -> None:
     """Test save_config_as_yaml converts Path objects to strings."""
     config = {"output_dir": Path("/mock/outputs"), "log": Path("/mock/log.txt")}
     yaml_path = tmp_path / "config.yaml"
@@ -139,7 +140,7 @@ def test_save_config_as_yaml_with_paths(tmp_path):
 
 
 @pytest.mark.unit
-def test_save_config_as_yaml_creates_directory(tmp_path):
+def test_save_config_as_yaml_creates_directory(tmp_path: Path) -> None:
     """Test save_config_as_yaml creates parent directories if needed."""
     config = {"test": "value"}
     yaml_path = tmp_path / "nested" / "dir" / "config.yaml"
@@ -151,7 +152,7 @@ def test_save_config_as_yaml_creates_directory(tmp_path):
 
 
 @pytest.mark.unit
-def test_save_config_as_yaml_invalid_data():
+def test_save_config_as_yaml_invalid_data() -> None:
     """Test save_config_as_yaml raises ValueError for unserializable data."""
     mock_config = MagicMock(spec=["model_dump"])
     mock_config.model_dump.side_effect = Exception("Cannot serialize")
@@ -163,7 +164,7 @@ def test_save_config_as_yaml_invalid_data():
 
 
 @pytest.mark.unit
-def test_save_config_as_yaml_io_error(tmp_path):
+def test_save_config_as_yaml_io_error(tmp_path: Path) -> None:
     """Test that save_config_as_yaml logs and raises an OSError / PermissionError."""
 
     config = {"model": "resnet"}
@@ -185,7 +186,7 @@ def test_save_config_as_yaml_io_error(tmp_path):
 
 # LOAD CONFIG FROM YAML
 @pytest.mark.unit
-def test_load_config_from_yaml_success(tmp_path):
+def test_load_config_from_yaml_success(tmp_path: Path) -> None:
     """Test load_config_from_yaml loads valid YAML file."""
     config = {"model": "efficientnet", "batch_size": 32}
     yaml_path = tmp_path / "config.yaml"
@@ -199,7 +200,7 @@ def test_load_config_from_yaml_success(tmp_path):
 
 
 @pytest.mark.unit
-def test_load_config_from_yaml_file_not_found():
+def test_load_config_from_yaml_file_not_found() -> None:
     """Test load_config_from_yaml raises FileNotFoundError for missing file."""
     yaml_path = Path("/nonexistent/config.yaml")
 
@@ -208,7 +209,7 @@ def test_load_config_from_yaml_file_not_found():
 
 
 @pytest.mark.unit
-def test_load_config_from_yaml_complex_structure(tmp_path):
+def test_load_config_from_yaml_complex_structure(tmp_path: Path) -> None:
     """Test load_config_from_yaml handles nested structures."""
     config = {
         "model": {"name": "vit", "pretrained": True},
@@ -228,7 +229,7 @@ def test_load_config_from_yaml_complex_structure(tmp_path):
 
 # PERSIST YAML ATOMIC
 @pytest.mark.unit
-def test_persist_yaml_atomic_creates_file(tmp_path):
+def test_persist_yaml_atomic_creates_file(tmp_path: Path) -> None:
     """Test _persist_yaml_atomic creates file and writes data."""
     data = {"key": "value"}
     yaml_path = tmp_path / "test.yaml"
@@ -242,7 +243,7 @@ def test_persist_yaml_atomic_creates_file(tmp_path):
 
 
 @pytest.mark.unit
-def test_persist_yaml_atomic_creates_parent_dir(tmp_path):
+def test_persist_yaml_atomic_creates_parent_dir(tmp_path: Path) -> None:
     """Test _persist_yaml_atomic creates parent directories."""
     data = {"test": "data"}
     yaml_path = tmp_path / "nested" / "dir" / "config.yaml"
@@ -255,7 +256,7 @@ def test_persist_yaml_atomic_creates_parent_dir(tmp_path):
 
 # DUMP REQUIREMENTS
 @pytest.mark.unit
-def test_dump_requirements_writes_file(tmp_path):
+def test_dump_requirements_writes_file(tmp_path: Path) -> None:
     """Test dump_requirements creates a file with Python version header."""
     output = tmp_path / "requirements.txt"
     dump_requirements(output)
@@ -266,7 +267,7 @@ def test_dump_requirements_writes_file(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_requirements_handles_subprocess_failure(tmp_path):
+def test_dump_requirements_handles_subprocess_failure(tmp_path: Path) -> None:
     """Test dump_requirements gracefully handles subprocess failure."""
     output = tmp_path / "requirements.txt"
 
@@ -278,7 +279,7 @@ def test_dump_requirements_handles_subprocess_failure(tmp_path):
 
 # AUDIT SAVER
 @pytest.mark.unit
-def test_audit_saver_delegates_to_free_functions(tmp_path):
+def test_audit_saver_delegates_to_free_functions(tmp_path: Path) -> None:
     """Test AuditSaver.save_config delegates to save_config_as_yaml."""
     from orchard.core.io.serialization import AuditSaver
 
@@ -294,7 +295,7 @@ def test_audit_saver_delegates_to_free_functions(tmp_path):
 
 
 @pytest.mark.unit
-def test_audit_saver_dump_requirements_delegates(tmp_path):
+def test_audit_saver_dump_requirements_delegates(tmp_path: Path) -> None:
     """Test AuditSaver.dump_requirements delegates to dump_requirements."""
     from orchard.core.io.serialization import AuditSaver
 
@@ -308,7 +309,7 @@ def test_audit_saver_dump_requirements_delegates(tmp_path):
 
 # PERSIST YAML ATOMIC: FORMAT VERIFICATION
 @pytest.mark.unit
-def test_persist_yaml_atomic_uses_block_style(tmp_path):
+def test_persist_yaml_atomic_uses_block_style(tmp_path: Path) -> None:
     """Test _persist_yaml_atomic writes block style (default_flow_style=False)."""
     data = {"nested": {"a": 1, "b": 2}}
     yaml_path = tmp_path / "test.yaml"
@@ -322,7 +323,7 @@ def test_persist_yaml_atomic_uses_block_style(tmp_path):
 
 
 @pytest.mark.unit
-def test_persist_yaml_atomic_preserves_key_order(tmp_path):
+def test_persist_yaml_atomic_preserves_key_order(tmp_path: Path) -> None:
     """Test _persist_yaml_atomic preserves insertion order (sort_keys=False)."""
     from collections import OrderedDict
 
@@ -339,7 +340,7 @@ def test_persist_yaml_atomic_preserves_key_order(tmp_path):
 
 
 @pytest.mark.unit
-def test_persist_yaml_atomic_indent_is_4(tmp_path):
+def test_persist_yaml_atomic_indent_is_4(tmp_path: Path) -> None:
     """Test _persist_yaml_atomic uses 4-space indentation."""
     data = {"parent": {"child": "value"}}
     yaml_path = tmp_path / "test.yaml"
@@ -352,7 +353,7 @@ def test_persist_yaml_atomic_indent_is_4(tmp_path):
 
 
 @pytest.mark.unit
-def test_persist_yaml_atomic_allows_unicode(tmp_path):
+def test_persist_yaml_atomic_allows_unicode(tmp_path: Path) -> None:
     """Test _persist_yaml_atomic writes unicode chars directly (allow_unicode=True)."""
     data = {"name": "café résumé"}
     yaml_path = tmp_path / "test.yaml"
@@ -366,7 +367,7 @@ def test_persist_yaml_atomic_allows_unicode(tmp_path):
 
 
 @pytest.mark.unit
-def test_persist_yaml_atomic_calls_flush_and_fsync(tmp_path):
+def test_persist_yaml_atomic_calls_flush_and_fsync(tmp_path: Path) -> None:
     """Test _persist_yaml_atomic calls flush() and os.fsync()."""
     import os as _os
 
@@ -380,35 +381,35 @@ def test_persist_yaml_atomic_calls_flush_and_fsync(tmp_path):
     class TrackingFile:
         """Wrapper to track flush/fsync calls."""
 
-        def __init__(self, real_file):
+        def __init__(self, real_file: Any) -> None:
             self._real = real_file
 
-        def write(self, data):
-            return self._real.write(data)
+        def write(self, data: Any) -> None:
+            return self._real.write(data)  # type: ignore
 
-        def flush(self):
+        def flush(self) -> None:
             nonlocal flush_called
             flush_called = True
-            return self._real.flush()
+            return self._real.flush()  # type: ignore
 
-        def fileno(self):
-            return self._real.fileno()
+        def fileno(self) -> None:
+            return self._real.fileno()  # type: ignore
 
-        def __enter__(self):
-            return self
+        def __enter__(self) -> None:
+            return self  # type: ignore
 
-        def __exit__(self, *args):
-            return self._real.__exit__(*args)
+        def __exit__(self, *args: object) -> None:
+            return self._real.__exit__(*args)  # type: ignore
 
     original_open = open
 
-    def patched_open(path, mode="r", **kwargs):
-        f = original_open(path, mode, **kwargs)
+    def patched_open(path: Any, mode: Any = "r", **kwargs: object) -> None:
+        f = original_open(path, mode, **kwargs)  # type: ignore
         if "w" in mode:
-            return TrackingFile(f)
-        return f
+            return TrackingFile(f)  # type: ignore
+        return f  # type: ignore
 
-    def tracking_fsync(fd):
+    def tracking_fsync(fd: Any) -> None:
         nonlocal fsync_called
         fsync_called = True
         return original_fsync(fd)
@@ -424,7 +425,7 @@ def test_persist_yaml_atomic_calls_flush_and_fsync(tmp_path):
 
 
 @pytest.mark.unit
-def test_persist_yaml_atomic_creates_nested_parents(tmp_path):
+def test_persist_yaml_atomic_creates_nested_parents(tmp_path: Path) -> None:
     """Test _persist_yaml_atomic creates deeply nested parent dirs (parents=True)."""
     data = {"k": "v"}
     yaml_path = tmp_path / "a" / "b" / "c" / "d" / "config.yaml"
@@ -436,7 +437,7 @@ def test_persist_yaml_atomic_creates_nested_parents(tmp_path):
 
 
 @pytest.mark.unit
-def test_persist_yaml_atomic_existing_dir_ok(tmp_path):
+def test_persist_yaml_atomic_existing_dir_ok(tmp_path: Path) -> None:
     """Test _persist_yaml_atomic doesn't fail on existing dir (exist_ok=True)."""
     data = {"k": "v"}
     yaml_path = tmp_path / "config.yaml"
@@ -449,7 +450,7 @@ def test_persist_yaml_atomic_existing_dir_ok(tmp_path):
 
 
 @pytest.mark.unit
-def test_persist_yaml_atomic_writes_utf8(tmp_path):
+def test_persist_yaml_atomic_writes_utf8(tmp_path: Path) -> None:
     """Test _persist_yaml_atomic writes file with utf-8 encoding."""
     data = {"emoji": "✓", "accents": "àèìòù"}
     yaml_path = tmp_path / "test.yaml"
@@ -465,7 +466,7 @@ def test_persist_yaml_atomic_writes_utf8(tmp_path):
 
 # DUMP REQUIREMENTS: DETAILED VERIFICATION
 @pytest.mark.unit
-def test_dump_requirements_subprocess_args(tmp_path):
+def test_dump_requirements_subprocess_args(tmp_path: Path) -> None:
     """Test dump_requirements calls subprocess.run with correct arguments."""
     import sys
 
@@ -486,7 +487,7 @@ def test_dump_requirements_subprocess_args(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_requirements_header_format(tmp_path):
+def test_dump_requirements_header_format(tmp_path: Path) -> None:
     """Test dump_requirements writes correct Python version header."""
     import sys
 
@@ -499,7 +500,7 @@ def test_dump_requirements_header_format(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_requirements_includes_stdout(tmp_path):
+def test_dump_requirements_includes_stdout(tmp_path: Path) -> None:
     """Test dump_requirements includes pip freeze output after header."""
     output = tmp_path / "requirements.txt"
 
@@ -513,7 +514,7 @@ def test_dump_requirements_includes_stdout(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_requirements_writes_utf8(tmp_path):
+def test_dump_requirements_writes_utf8(tmp_path: Path) -> None:
     """Test dump_requirements writes file with utf-8 encoding."""
     output = tmp_path / "requirements.txt"
 
@@ -527,7 +528,7 @@ def test_dump_requirements_writes_utf8(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_requirements_handles_timeout(tmp_path):
+def test_dump_requirements_handles_timeout(tmp_path: Path) -> None:
     """Test dump_requirements handles TimeoutExpired gracefully."""
     import subprocess
 
@@ -544,7 +545,7 @@ def test_dump_requirements_handles_timeout(tmp_path):
 
 # SAVE CONFIG AS YAML: MODEL_DUMP MODE
 @pytest.mark.unit
-def test_save_config_as_yaml_model_dump_uses_json_mode(tmp_path):
+def test_save_config_as_yaml_model_dump_uses_json_mode(tmp_path: Path) -> None:
     """Test save_config_as_yaml calls model_dump with mode='json'."""
     mock_config = MagicMock(spec=["model_dump"])
     mock_config.model_dump.return_value = {"key": "value"}
@@ -556,7 +557,7 @@ def test_save_config_as_yaml_model_dump_uses_json_mode(tmp_path):
 
 
 @pytest.mark.unit
-def test_save_config_as_yaml_returns_path(tmp_path):
+def test_save_config_as_yaml_returns_path(tmp_path: Path) -> None:
     """Test save_config_as_yaml returns the yaml_path."""
     yaml_path = tmp_path / "config.yaml"
     result = save_config_as_yaml({"a": 1}, yaml_path)
@@ -566,7 +567,7 @@ def test_save_config_as_yaml_returns_path(tmp_path):
 
 
 @pytest.mark.unit
-def test_save_config_as_yaml_raw_dict_passthrough(tmp_path):
+def test_save_config_as_yaml_raw_dict_passthrough(tmp_path: Path) -> None:
     """Test save_config_as_yaml passes raw dict directly (no dump_portable/model_dump)."""
     data = {"raw": True, "nested": {"x": 1}}
     yaml_path = tmp_path / "config.yaml"
@@ -578,7 +579,7 @@ def test_save_config_as_yaml_raw_dict_passthrough(tmp_path):
 
 
 @pytest.mark.unit
-def test_save_config_as_yaml_sanitizes_paths_in_model_dump(tmp_path):
+def test_save_config_as_yaml_sanitizes_paths_in_model_dump(tmp_path: Path) -> None:
     """Test save_config_as_yaml sanitizes Path objects from model_dump output."""
     mock_config = MagicMock(spec=["model_dump"])
     mock_config.model_dump.return_value = {"path": Path("/some/path"), "val": 42}
@@ -592,7 +593,7 @@ def test_save_config_as_yaml_sanitizes_paths_in_model_dump(tmp_path):
 
 
 @pytest.mark.unit
-def test_save_config_as_yaml_error_message_contains_cause():
+def test_save_config_as_yaml_error_message_contains_cause() -> None:
     """Test save_config_as_yaml ValueError message includes original error."""
     mock_config = MagicMock(spec=["model_dump"])
     mock_config.model_dump.side_effect = RuntimeError("custom error XYZ")
@@ -603,7 +604,7 @@ def test_save_config_as_yaml_error_message_contains_cause():
 
 # LOAD CONFIG FROM YAML: EDGE CASES
 @pytest.mark.unit
-def test_load_config_from_yaml_error_message_contains_path():
+def test_load_config_from_yaml_error_message_contains_path() -> None:
     """Test FileNotFoundError message includes the path."""
     yaml_path = Path("/nonexistent/specific_file.yaml")
 
@@ -612,7 +613,7 @@ def test_load_config_from_yaml_error_message_contains_path():
 
 
 @pytest.mark.unit
-def test_load_config_from_yaml_reads_utf8(tmp_path):
+def test_load_config_from_yaml_reads_utf8(tmp_path: Path) -> None:
     """Test load_config_from_yaml reads UTF-8 encoded files correctly."""
     yaml_path = tmp_path / "config.yaml"
     yaml_path.write_text("name: café\n", encoding="utf-8")
@@ -622,7 +623,7 @@ def test_load_config_from_yaml_reads_utf8(tmp_path):
 
 
 @pytest.mark.unit
-def test_load_config_from_yaml_existing_file_does_not_raise(tmp_path):
+def test_load_config_from_yaml_existing_file_does_not_raise(tmp_path: Path) -> None:
     """Test load_config_from_yaml does not raise for existing file (not negated check)."""
     yaml_path = tmp_path / "config.yaml"
     yaml_path.write_text("key: value\n")
@@ -633,19 +634,19 @@ def test_load_config_from_yaml_existing_file_does_not_raise(tmp_path):
 
 # SANITIZE FOR YAML: EDGE CASES
 @pytest.mark.unit
-def test_sanitize_for_yaml_empty_dict():
+def test_sanitize_for_yaml_empty_dict() -> None:
     """Test _sanitize_for_yaml handles empty dict."""
     assert _sanitize_for_yaml({}) == {}
 
 
 @pytest.mark.unit
-def test_sanitize_for_yaml_empty_list():
+def test_sanitize_for_yaml_empty_list() -> None:
     """Test _sanitize_for_yaml handles empty list."""
     assert _sanitize_for_yaml([]) == []
 
 
 @pytest.mark.unit
-def test_sanitize_for_yaml_deeply_nested():
+def test_sanitize_for_yaml_deeply_nested() -> None:
     """Test _sanitize_for_yaml recurses through deeply nested structures."""
     data = {"a": {"b": {"c": {"d": Path("/deep")}}}}
     result = _sanitize_for_yaml(data)
@@ -654,7 +655,7 @@ def test_sanitize_for_yaml_deeply_nested():
 
 
 @pytest.mark.unit
-def test_sanitize_for_yaml_list_of_paths():
+def test_sanitize_for_yaml_list_of_paths() -> None:
     """Test _sanitize_for_yaml converts all paths in a list."""
     data = [Path("/a"), Path("/b"), Path("/c")]
     result = _sanitize_for_yaml(data)
@@ -663,7 +664,7 @@ def test_sanitize_for_yaml_list_of_paths():
 
 
 @pytest.mark.unit
-def test_sanitize_for_yaml_mixed_list():
+def test_sanitize_for_yaml_mixed_list() -> None:
     """Test _sanitize_for_yaml handles mixed types in list."""
     data = [1, "text", Path("/path"), {"key": Path("/val")}, [Path("/nested")]]
     result = _sanitize_for_yaml(data)
@@ -671,7 +672,7 @@ def test_sanitize_for_yaml_mixed_list():
 
 
 @pytest.mark.unit
-def test_sanitize_for_yaml_non_path_non_collection_passthrough():
+def test_sanitize_for_yaml_non_path_non_collection_passthrough() -> None:
     """Test _sanitize_for_yaml returns non-Path scalars unchanged."""
     assert _sanitize_for_yaml(42) == 42
     assert _sanitize_for_yaml(3.14) == 3.14
@@ -681,7 +682,7 @@ def test_sanitize_for_yaml_non_path_non_collection_passthrough():
 
 
 @pytest.mark.unit
-def test_sanitize_for_yaml_tuple_returns_list():
+def test_sanitize_for_yaml_tuple_returns_list() -> None:
     """Test _sanitize_for_yaml converts tuple to list (type check)."""
     result = _sanitize_for_yaml((1, 2, 3))
     assert isinstance(result, list)
@@ -690,7 +691,7 @@ def test_sanitize_for_yaml_tuple_returns_list():
 
 # AUDIT SAVER: FULL INTEGRATION
 @pytest.mark.unit
-def test_audit_saver_save_config_returns_correct_path(tmp_path):
+def test_audit_saver_save_config_returns_correct_path(tmp_path: Path) -> None:
     """Test AuditSaver.save_config returns the yaml_path."""
     from orchard.core.io.serialization import AuditSaver
 
@@ -702,7 +703,7 @@ def test_audit_saver_save_config_returns_correct_path(tmp_path):
 
 
 @pytest.mark.unit
-def test_audit_saver_dump_requirements_actually_writes(tmp_path):
+def test_audit_saver_dump_requirements_actually_writes(tmp_path: Path) -> None:
     """Test AuditSaver.dump_requirements writes a file."""
     from orchard.core.io.serialization import AuditSaver
 
@@ -716,7 +717,7 @@ def test_audit_saver_dump_requirements_actually_writes(tmp_path):
 
 # LOGGER.ERROR MUTANT KILLERS — save_config_as_yaml serialization error
 @pytest.mark.unit
-def test_save_config_as_yaml_serialization_error_logs_exact_message():
+def test_save_config_as_yaml_serialization_error_logs_exact_message() -> None:
     """Kill mutants 24-30: assert exact logger.error message for serialization failures."""
     import logging
 
@@ -736,7 +737,7 @@ def test_save_config_as_yaml_serialization_error_logs_exact_message():
 
 # LOGGER.ERROR MUTANT KILLERS — save_config_as_yaml IO error
 @pytest.mark.unit
-def test_save_config_as_yaml_io_error_logs_exact_message(tmp_path):
+def test_save_config_as_yaml_io_error_logs_exact_message(tmp_path: Path) -> None:
     """Kill mutants 36-44: assert exact logger.error message for IO errors."""
     import logging
 
@@ -761,7 +762,7 @@ def test_save_config_as_yaml_io_error_logs_exact_message(tmp_path):
 
 # LOGGER.ERROR MUTANT KILLERS — dump_requirements error
 @pytest.mark.unit
-def test_dump_requirements_error_logs_exact_message(tmp_path):
+def test_dump_requirements_error_logs_exact_message(tmp_path: Path) -> None:
     """Kill mutants 32-38: assert exact logger.error message for dump_requirements failures."""
     import logging
 
@@ -780,7 +781,7 @@ def test_dump_requirements_error_logs_exact_message(tmp_path):
 
 # LOGGER_NAME MUTANT KILLERS
 @pytest.mark.unit
-def test_save_config_as_yaml_uses_orchard_logger():
+def test_save_config_as_yaml_uses_orchard_logger() -> None:
     """Kill save_config mutmut_2: assert getLogger called with LOGGER_NAME."""
     mock_config = MagicMock(spec=["model_dump"])
     mock_config.model_dump.side_effect = RuntimeError("x")
@@ -794,7 +795,7 @@ def test_save_config_as_yaml_uses_orchard_logger():
 
 
 @pytest.mark.unit
-def test_dump_requirements_uses_orchard_logger(tmp_path):
+def test_dump_requirements_uses_orchard_logger(tmp_path: Path) -> None:
     """Kill dump_requirements mutmut_2: assert getLogger called with LOGGER_NAME."""
     output = tmp_path / "requirements.txt"
 
@@ -810,12 +811,12 @@ def test_dump_requirements_uses_orchard_logger(tmp_path):
 
 # DUMP_PORTABLE STRING MUTANT KILLERS
 @pytest.mark.unit
-def test_save_config_as_yaml_dump_portable_exact_attr_name(tmp_path):
+def test_save_config_as_yaml_dump_portable_exact_attr_name(tmp_path: Path) -> None:
     """Kill mutants 7-8: ensure hasattr checks exact 'dump_portable' string."""
 
     class PortableConfig:
-        def dump_portable(self):
-            return {"from_portable": True}
+        def dump_portable(self) -> None:
+            return {"from_portable": True}  # type: ignore
 
     yaml_path = tmp_path / "config.yaml"
     save_config_as_yaml(PortableConfig(), yaml_path)
@@ -825,12 +826,12 @@ def test_save_config_as_yaml_dump_portable_exact_attr_name(tmp_path):
 
 
 @pytest.mark.unit
-def test_save_config_as_yaml_no_dump_portable_falls_to_model_dump(tmp_path):
+def test_save_config_as_yaml_no_dump_portable_falls_to_model_dump(tmp_path: Path) -> None:
     """Kill mutant 7-8: object WITHOUT dump_portable uses model_dump path."""
 
     class ModelConfig:
-        def model_dump(self, mode=None):
-            return {"from_model": True}
+        def model_dump(self, mode: Any = None) -> None:
+            return {"from_model": True}  # type: ignore
 
     yaml_path = tmp_path / "config.yaml"
     save_config_as_yaml(ModelConfig(), yaml_path)
@@ -841,7 +842,7 @@ def test_save_config_as_yaml_no_dump_portable_falls_to_model_dump(tmp_path):
 
 # PERSIST YAML ATOMIC: STRONGER FORMAT TESTS
 @pytest.mark.unit
-def test_persist_yaml_atomic_sort_keys_false(tmp_path):
+def test_persist_yaml_atomic_sort_keys_false(tmp_path: Path) -> None:
     """Kill mutants 26, 30: sort_keys=False must preserve insertion order, not sort."""
     data = {"z_last": 1, "a_first": 2, "m_middle": 3}
     yaml_path = tmp_path / "test.yaml"
@@ -856,7 +857,7 @@ def test_persist_yaml_atomic_sort_keys_false(tmp_path):
 
 
 @pytest.mark.unit
-def test_persist_yaml_atomic_indent_exactly_4(tmp_path):
+def test_persist_yaml_atomic_indent_exactly_4(tmp_path: Path) -> None:
     """Kill mutant 31: indent must be exactly 4, not 5."""
     data = {"parent": {"child": {"grandchild": "val"}}}
     yaml_path = tmp_path / "test.yaml"
@@ -874,7 +875,7 @@ def test_persist_yaml_atomic_indent_exactly_4(tmp_path):
 
 # ENCODING MUTANT KILLERS — mock open to verify encoding kwarg
 @pytest.mark.unit
-def test_persist_yaml_atomic_passes_utf8_encoding(tmp_path):
+def test_persist_yaml_atomic_passes_utf8_encoding(tmp_path: Path) -> None:
     """Kill mutants 9, 12: verify open() is called with encoding='utf-8'."""
     data = {"k": "v"}
     yaml_path = tmp_path / "test.yaml"
@@ -882,7 +883,7 @@ def test_persist_yaml_atomic_passes_utf8_encoding(tmp_path):
 
     open_calls = []
 
-    def tracking_open(*args, **kwargs):
+    def tracking_open(*args: Any, **kwargs: Any) -> Any:
         open_calls.append(kwargs)
         return original_open(*args, **kwargs)
 
@@ -894,7 +895,7 @@ def test_persist_yaml_atomic_passes_utf8_encoding(tmp_path):
 
 
 @pytest.mark.unit
-def test_load_config_from_yaml_passes_utf8_encoding(tmp_path):
+def test_load_config_from_yaml_passes_utf8_encoding(tmp_path: Path) -> None:
     """Kill mutants load_5, load_8: verify open() with encoding='utf-8'."""
     yaml_path = tmp_path / "config.yaml"
     yaml_path.write_text("key: value\n")
@@ -902,7 +903,7 @@ def test_load_config_from_yaml_passes_utf8_encoding(tmp_path):
     original_open = open
     open_calls = []
 
-    def tracking_open(*args, **kwargs):
+    def tracking_open(*args: Any, **kwargs: Any) -> Any:
         open_calls.append((args, kwargs))
         return original_open(*args, **kwargs)
 
@@ -914,7 +915,7 @@ def test_load_config_from_yaml_passes_utf8_encoding(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_requirements_writes_utf8_encoding(tmp_path):
+def test_dump_requirements_writes_utf8_encoding(tmp_path: Path) -> None:
     """Kill mutants dump_26, dump_28: verify write_text uses encoding='utf-8'."""
     output = tmp_path / "requirements.txt"
 
@@ -932,12 +933,12 @@ def test_dump_requirements_writes_utf8_encoding(tmp_path):
 
 # DUMP GIT INFO
 @pytest.mark.unit
-def test_dump_git_info_writes_commit_and_branch(tmp_path):
+def test_dump_git_info_writes_commit_and_branch(tmp_path: Path) -> None:
     """Test dump_git_info writes commit hash, short hash, branch, and dirty status."""
 
     output = tmp_path / "git_info.txt"
 
-    def fake_run(cmd, **kwargs):
+    def fake_run(cmd: Any, **kwargs: object) -> None:
         result = MagicMock(returncode=0)
         if cmd == ["git", "rev-parse", "HEAD"]:
             result.stdout = "abc123def456\n"
@@ -950,7 +951,7 @@ def test_dump_git_info_writes_commit_and_branch(tmp_path):
         else:
             result.returncode = 1
             result.stdout = ""
-        return result
+        return result  # type: ignore
 
     with patch("subprocess.run", side_effect=fake_run):
         dump_git_info(output)
@@ -972,11 +973,11 @@ def test_dump_git_info_writes_commit_and_branch(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_git_info_clean_working_tree(tmp_path):
+def test_dump_git_info_clean_working_tree(tmp_path: Path) -> None:
     """Test dump_git_info reports dirty: False for clean working tree."""
     output = tmp_path / "git_info.txt"
 
-    def fake_run(cmd, **kwargs):
+    def fake_run(cmd: Any, **kwargs: object) -> None:
         result = MagicMock(returncode=0)
         if cmd == ["git", "rev-parse", "HEAD"]:
             result.stdout = "deadbeef\n"
@@ -989,7 +990,7 @@ def test_dump_git_info_clean_working_tree(tmp_path):
         else:
             result.returncode = 1
             result.stdout = ""
-        return result
+        return result  # type: ignore
 
     with patch("subprocess.run", side_effect=fake_run):
         dump_git_info(output)
@@ -999,7 +1000,7 @@ def test_dump_git_info_clean_working_tree(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_git_info_handles_file_not_found(tmp_path):
+def test_dump_git_info_handles_file_not_found(tmp_path: Path) -> None:
     """Test dump_git_info gracefully handles git not installed (FileNotFoundError)."""
     output = tmp_path / "git_info.txt"
 
@@ -1010,7 +1011,7 @@ def test_dump_git_info_handles_file_not_found(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_git_info_handles_timeout(tmp_path):
+def test_dump_git_info_handles_timeout(tmp_path: Path) -> None:
     """Test dump_git_info gracefully handles subprocess timeout."""
     import subprocess
 
@@ -1026,7 +1027,7 @@ def test_dump_git_info_handles_timeout(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_git_info_handles_os_error(tmp_path):
+def test_dump_git_info_handles_os_error(tmp_path: Path) -> None:
     """Test dump_git_info gracefully handles OSError."""
     output = tmp_path / "git_info.txt"
 
@@ -1037,12 +1038,12 @@ def test_dump_git_info_handles_os_error(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_git_info_no_output_when_all_commands_fail(tmp_path):
+def test_dump_git_info_no_output_when_all_commands_fail(tmp_path: Path) -> None:
     """Test dump_git_info writes nothing when all git commands fail (returncode != 0)."""
     output = tmp_path / "git_info.txt"
 
-    def fake_run(cmd, **kwargs):
-        return MagicMock(returncode=1, stdout="")
+    def fake_run(cmd: Any, **kwargs: object) -> None:
+        return MagicMock(returncode=1, stdout="")  # type: ignore
 
     with patch("subprocess.run", side_effect=fake_run):
         dump_git_info(output)
@@ -1051,11 +1052,11 @@ def test_dump_git_info_no_output_when_all_commands_fail(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_git_info_partial_git_output(tmp_path):
+def test_dump_git_info_partial_git_output(tmp_path: Path) -> None:
     """Test dump_git_info handles partial results (e.g. commit ok, branch fails)."""
     output = tmp_path / "git_info.txt"
 
-    def fake_run(cmd, **kwargs):
+    def fake_run(cmd: Any, **kwargs: object) -> None:
         result = MagicMock()
         if cmd == ["git", "rev-parse", "HEAD"]:
             result.returncode = 0
@@ -1066,7 +1067,7 @@ def test_dump_git_info_partial_git_output(tmp_path):
         else:
             result.returncode = 1
             result.stdout = ""
-        return result
+        return result  # type: ignore
 
     with patch("subprocess.run", side_effect=fake_run):
         dump_git_info(output)
@@ -1079,11 +1080,11 @@ def test_dump_git_info_partial_git_output(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_git_info_writes_utf8(tmp_path):
+def test_dump_git_info_writes_utf8(tmp_path: Path) -> None:
     """Test dump_git_info writes file with utf-8 encoding."""
     output = tmp_path / "git_info.txt"
 
-    def fake_run(cmd, **kwargs):
+    def fake_run(cmd: Any, **kwargs: object) -> None:
         result = MagicMock(returncode=0)
         if cmd == ["git", "rev-parse", "HEAD"]:
             result.stdout = "abc123\n"
@@ -1093,7 +1094,7 @@ def test_dump_git_info_writes_utf8(tmp_path):
             result.stdout = "main\n"
         elif cmd == ["git", "status", "--porcelain"]:
             result.stdout = ""
-        return result
+        return result  # type: ignore
 
     with patch("subprocess.run", side_effect=fake_run):
         with patch.object(type(output), "write_text", wraps=output.write_text) as mock_wt:
@@ -1106,7 +1107,7 @@ def test_dump_git_info_writes_utf8(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_git_info_uses_orchard_logger(tmp_path):
+def test_dump_git_info_uses_orchard_logger(tmp_path: Path) -> None:
     """Test dump_git_info uses the OrchardML logger."""
     import logging
 
@@ -1123,7 +1124,7 @@ def test_dump_git_info_uses_orchard_logger(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_git_info_error_logs_exact_message(tmp_path):
+def test_dump_git_info_error_logs_exact_message(tmp_path: Path) -> None:
     """Kill log string mutants: assert exact logger.debug message for git errors."""
     import logging
 
@@ -1141,14 +1142,14 @@ def test_dump_git_info_error_logs_exact_message(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_git_info_subprocess_args(tmp_path):
+def test_dump_git_info_subprocess_args(tmp_path: Path) -> None:
     """Test dump_git_info calls subprocess.run with correct timeout and kwargs."""
     output = tmp_path / "git_info.txt"
     calls = []
 
-    def tracking_run(cmd, **kwargs):
+    def tracking_run(cmd: Any, **kwargs: object) -> None:
         calls.append((cmd, kwargs))
-        return MagicMock(returncode=1, stdout="")
+        return MagicMock(returncode=1, stdout="")  # type: ignore
 
     with patch("subprocess.run", side_effect=tracking_run):
         dump_git_info(output)
@@ -1161,11 +1162,11 @@ def test_dump_git_info_subprocess_args(tmp_path):
 
 
 @pytest.mark.unit
-def test_dump_git_info_content_ends_with_newline(tmp_path):
+def test_dump_git_info_content_ends_with_newline(tmp_path: Path) -> None:
     """Test dump_git_info output ends with a trailing newline."""
     output = tmp_path / "git_info.txt"
 
-    def fake_run(cmd, **kwargs):
+    def fake_run(cmd: Any, **kwargs: object) -> None:
         result = MagicMock(returncode=0)
         if cmd == ["git", "rev-parse", "HEAD"]:
             result.stdout = "abc\n"
@@ -1175,7 +1176,7 @@ def test_dump_git_info_content_ends_with_newline(tmp_path):
             result.stdout = "main\n"
         elif cmd == ["git", "status", "--porcelain"]:
             result.stdout = ""
-        return result
+        return result  # type: ignore
 
     with patch("subprocess.run", side_effect=fake_run):
         dump_git_info(output)
@@ -1186,7 +1187,7 @@ def test_dump_git_info_content_ends_with_newline(tmp_path):
 
 # AUDIT SAVER: DUMP GIT INFO DELEGATION
 @pytest.mark.unit
-def test_audit_saver_dump_git_info_delegates(tmp_path):
+def test_audit_saver_dump_git_info_delegates(tmp_path: Path) -> None:
     """Test AuditSaver.dump_git_info delegates to module-level dump_git_info."""
     from orchard.core.io.serialization import AuditSaver
 

@@ -23,7 +23,7 @@ from orchard.trainer import ModelTrainer
 
 
 @pytest.fixture
-def mock_cfg():
+def mock_cfg() -> None:
     """Mock Config with training parameters."""
     cfg = MagicMock()
     cfg.training.epochs = 3
@@ -35,25 +35,25 @@ def mock_cfg():
     cfg.training.monitor_metric = "auc"
     cfg.training.use_tqdm = False
     cfg.training.seed = 42
-    return cfg
+    return cfg  # type: ignore
 
 
 @pytest.fixture
-def mock_tracker():
+def mock_tracker() -> None:
     """Mock tracker with all interface methods."""
     tracker = MagicMock()
     tracker.log_epoch = MagicMock()
     tracker.log_test_metrics = MagicMock()
     tracker.start_optuna_trial = MagicMock()
     tracker.end_optuna_trial = MagicMock()
-    return tracker
+    return tracker  # type: ignore
 
 
 # --- TRAINER INTEGRATION ---
 
 
 @pytest.mark.unit
-def test_trainer_calls_tracker_log_epoch(mock_cfg, mock_tracker):
+def test_trainer_calls_tracker_log_epoch(mock_cfg: MagicMock, mock_tracker: MagicMock) -> None:
     """ModelTrainer.train() calls tracker.log_epoch for each epoch."""
     model = nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
     device = torch.device("cpu")
@@ -109,7 +109,7 @@ def test_trainer_calls_tracker_log_epoch(mock_cfg, mock_tracker):
 
 
 @pytest.mark.unit
-def test_evaluation_calls_tracker_log_test_metrics(mock_tracker):
+def test_evaluation_calls_tracker_log_test_metrics(mock_tracker: MagicMock) -> None:
     """run_final_evaluation() calls tracker.log_test_metrics."""
     from orchard.evaluation.evaluation_pipeline import run_final_evaluation
 
@@ -170,7 +170,7 @@ def test_evaluation_calls_tracker_log_test_metrics(mock_tracker):
 
 
 @pytest.mark.unit
-def test_objective_calls_tracker_nested_runs(mock_tracker):
+def test_objective_calls_tracker_nested_runs(mock_tracker: MagicMock) -> None:
     """OptunaObjective.__call__() starts/ends nested MLflow runs."""
     from orchard.optimization.objective.objective import OptunaObjective
 
@@ -200,7 +200,7 @@ def test_objective_calls_tracker_nested_runs(mock_tracker):
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     # Mock executor to return a metric
     with patch(

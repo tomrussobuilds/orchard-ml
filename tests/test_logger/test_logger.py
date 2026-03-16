@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -19,7 +20,7 @@ from orchard.core.paths import LOGGER_NAME
 
 # LOGGER: INITIALIZATION
 @pytest.mark.unit
-def test_logger_init_console_only():
+def test_logger_init_console_only() -> None:
     """Test Logger initializes with console handler only when no log_dir."""
     logger = Logger(name="test_console", log_dir=None, log_to_file=False)
 
@@ -30,7 +31,7 @@ def test_logger_init_console_only():
 
 
 @pytest.mark.unit
-def test_logger_init_with_file(tmp_path):
+def test_logger_init_with_file(tmp_path: Path) -> None:
     """Test Logger initializes with console and file handlers when log_dir provided."""
     log_dir = tmp_path / "logs"
 
@@ -42,7 +43,7 @@ def test_logger_init_with_file(tmp_path):
 
 
 @pytest.mark.unit
-def test_logger_default_name():
+def test_logger_default_name() -> None:
     """Test Logger uses LOGGER_NAME as default."""
     logger = Logger()
 
@@ -50,7 +51,7 @@ def test_logger_default_name():
 
 
 @pytest.mark.unit
-def test_logger_default_level():
+def test_logger_default_level() -> None:
     """Test Logger defaults to INFO level."""
     logger = Logger(name="test_level")
 
@@ -59,7 +60,7 @@ def test_logger_default_level():
 
 # LOGGER: CONFIGURATION
 @pytest.mark.unit
-def test_logger_custom_level():
+def test_logger_custom_level() -> None:
     """Test Logger accepts custom log level."""
     logger = Logger(name="test_debug", level=logging.DEBUG)
 
@@ -67,7 +68,7 @@ def test_logger_custom_level():
 
 
 @pytest.mark.unit
-def test_logger_formatter():
+def test_logger_formatter() -> None:
     """Test Logger applies correct formatter to handlers."""
     logger = Logger(name="test_format")
 
@@ -75,13 +76,13 @@ def test_logger_formatter():
     formatter = handler.formatter
 
     assert formatter is not None
-    assert "%(asctime)s" in formatter._fmt
-    assert "%(levelname)s" in formatter._fmt
-    assert "%(message)s" in formatter._fmt
+    assert "%(asctime)s" in formatter._fmt  # type: ignore
+    assert "%(levelname)s" in formatter._fmt  # type: ignore
+    assert "%(message)s" in formatter._fmt  # type: ignore
 
 
 @pytest.mark.unit
-def test_logger_propagate_false():
+def test_logger_propagate_false() -> None:
     """Test Logger sets propagate to False to prevent duplicate logs."""
     logger = Logger(name="test_propagate")
 
@@ -90,7 +91,7 @@ def test_logger_propagate_false():
 
 # LOGGER: FILE HANDLING
 @pytest.mark.unit
-def test_logger_creates_log_directory(tmp_path):
+def test_logger_creates_log_directory(tmp_path: Path) -> None:
     """Test Logger creates log directory if it doesn't exist."""
     log_dir = tmp_path / "new_logs"
     assert not log_dir.exists()
@@ -102,7 +103,7 @@ def test_logger_creates_log_directory(tmp_path):
 
 
 @pytest.mark.unit
-def test_logger_log_file_naming(tmp_path):
+def test_logger_log_file_naming(tmp_path: Path) -> None:
     """Test Logger creates log file with correct naming pattern."""
     log_dir = tmp_path / "logs"
 
@@ -116,7 +117,7 @@ def test_logger_log_file_naming(tmp_path):
 
 
 @pytest.mark.unit
-def test_logger_rotating_file_handler(tmp_path):
+def test_logger_rotating_file_handler(tmp_path: Path) -> None:
     """Test Logger uses RotatingFileHandler with correct settings."""
     log_dir = tmp_path / "logs"
     max_bytes = 1024
@@ -138,12 +139,12 @@ def test_logger_rotating_file_handler(tmp_path):
 
     assert file_handler is not None
     assert file_handler.maxBytes == max_bytes
-    assert file_handler.backupCount == backup_count
+    assert file_handler.backupCount == backup_count  # type: ignore
 
 
 # LOGGER: RECONFIGURATION
 @pytest.mark.unit
-def test_logger_reconfiguration_removes_old_handlers(tmp_path):
+def test_logger_reconfiguration_removes_old_handlers(tmp_path: Path) -> None:
     """Test Logger removes old handlers when reconfigured."""
     log_dir1 = tmp_path / "logs1"
     log_dir2 = tmp_path / "logs2"
@@ -157,7 +158,7 @@ def test_logger_reconfiguration_removes_old_handlers(tmp_path):
 
 
 @pytest.mark.unit
-def test_logger_singleton_behavior():
+def test_logger_singleton_behavior() -> None:
     """Test Logger maintains singleton-like behavior per name."""
     logger1 = Logger(name="test_singleton")
     logger2 = Logger(name="test_singleton")
@@ -167,7 +168,7 @@ def test_logger_singleton_behavior():
 
 # LOGGER: CLASS METHODS
 @pytest.mark.unit
-def test_get_logger_returns_logger_instance():
+def test_get_logger_returns_logger_instance() -> None:
     """Test get_logger() returns logging.Logger instance."""
     logger = Logger(name="test_get")
 
@@ -178,7 +179,7 @@ def test_get_logger_returns_logger_instance():
 
 
 @pytest.mark.unit
-def test_setup_class_method(tmp_path):
+def test_setup_class_method(tmp_path: Path) -> None:
     """Test setup() class method configures logger correctly."""
     log_dir = tmp_path / "logs"
 
@@ -190,7 +191,7 @@ def test_setup_class_method(tmp_path):
 
 
 @pytest.mark.unit
-def test_setup_level_string_mapping():
+def test_setup_level_string_mapping() -> None:
     """Test setup() correctly maps level strings to logging constants."""
     test_cases = [
         ("INFO", logging.INFO),
@@ -206,7 +207,7 @@ def test_setup_level_string_mapping():
 
 
 @pytest.mark.unit
-def test_setup_invalid_level_defaults_to_info():
+def test_setup_invalid_level_defaults_to_info() -> None:
     """Test setup() defaults to INFO for invalid level strings."""
     logger = Logger.setup(name="test_invalid", level="INVALID")
 
@@ -215,7 +216,7 @@ def test_setup_invalid_level_defaults_to_info():
 
 @pytest.mark.unit
 @patch.dict(os.environ, {"DEBUG": "1"})
-def test_setup_debug_env_var():
+def test_setup_debug_env_var() -> None:
     """Test setup() uses DEBUG level when DEBUG=1 environment variable set."""
     logger = Logger.setup(name="test_debug_env", level="INFO")
 
@@ -224,7 +225,7 @@ def test_setup_debug_env_var():
 
 # LOGGER: LOGGING FUNCTIONALITY
 @pytest.mark.unit
-def test_logger_can_log_messages(tmp_path):
+def test_logger_can_log_messages(tmp_path: Path) -> None:
     """Test Logger can successfully log messages."""
     log_dir = tmp_path / "logs"
 
@@ -240,7 +241,7 @@ def test_logger_can_log_messages(tmp_path):
 
 
 @pytest.mark.unit
-def test_logger_handles_unicode(tmp_path):
+def test_logger_handles_unicode(tmp_path: Path) -> None:
     """Test Logger handles unicode characters correctly."""
     log_dir = tmp_path / "logs"
 
@@ -255,7 +256,7 @@ def test_logger_handles_unicode(tmp_path):
 
 # LOGGER: EDGE CASES
 @pytest.mark.unit
-def test_logger_handles_permission_error(tmp_path):
+def test_logger_handles_permission_error(tmp_path: Path) -> None:
     """Test Logger handles permission errors gracefully."""
     log_dir = tmp_path / "readonly"
     log_dir.mkdir()
@@ -271,7 +272,7 @@ def test_logger_handles_permission_error(tmp_path):
 
 
 @pytest.mark.unit
-def test_logger_multiple_names_independent():
+def test_logger_multiple_names_independent() -> None:
     """Test loggers with different names are independent."""
     logger1 = Logger(name="logger_a")
     logger2 = Logger(name="logger_b")
@@ -282,7 +283,7 @@ def test_logger_multiple_names_independent():
 
 # COLOR FORMATTER
 @pytest.mark.unit
-def test_color_formatter_success_symbol():
+def test_color_formatter_success_symbol() -> None:
     """Test ColorFormatter applies green only to the message, not the prefix."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -309,7 +310,7 @@ def test_color_formatter_success_symbol():
 
 
 @pytest.mark.unit
-def test_color_formatter_new_best_model():
+def test_color_formatter_new_best_model() -> None:
     """Test ColorFormatter applies green to 'New best model' lines."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -329,7 +330,7 @@ def test_color_formatter_new_best_model():
 
 
 @pytest.mark.unit
-def test_color_formatter_separator_dim():
+def test_color_formatter_separator_dim() -> None:
     """Test ColorFormatter dims separator lines."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -349,7 +350,7 @@ def test_color_formatter_separator_dim():
 
 
 @pytest.mark.unit
-def test_color_formatter_header_bold_magenta():
+def test_color_formatter_header_bold_magenta() -> None:
     """Test ColorFormatter applies bold magenta only to the message, not the prefix."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -377,7 +378,7 @@ def test_color_formatter_header_bold_magenta():
 
 
 @pytest.mark.unit
-def test_color_formatter_warning_yellow():
+def test_color_formatter_warning_yellow() -> None:
     """Test ColorFormatter applies yellow only to the message, not the timestamp."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -404,7 +405,7 @@ def test_color_formatter_warning_yellow():
 
 
 @pytest.mark.unit
-def test_color_formatter_early_stopping_green():
+def test_color_formatter_early_stopping_green() -> None:
     """Test ColorFormatter applies green to EARLY STOPPING banner."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -426,7 +427,7 @@ def test_color_formatter_early_stopping_green():
 
 
 @pytest.mark.unit
-def test_color_formatter_plain_info():
+def test_color_formatter_plain_info() -> None:
     """Test ColorFormatter does not add color to plain INFO messages."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -448,7 +449,7 @@ def test_color_formatter_plain_info():
 
 
 @pytest.mark.unit
-def test_color_formatter_failure_symbol_red():
+def test_color_formatter_failure_symbol_red() -> None:
     """Test ColorFormatter applies red to lines containing ✗ (FAILURE symbol)."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -469,7 +470,7 @@ def test_color_formatter_failure_symbol_red():
 
 
 @pytest.mark.unit
-def test_color_formatter_error_red():
+def test_color_formatter_error_red() -> None:
     """Test ColorFormatter applies red to ERROR level prefix."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -489,7 +490,7 @@ def test_color_formatter_error_red():
 
 
 @pytest.mark.unit
-def test_console_uses_color_formatter_on_tty():
+def test_console_uses_color_formatter_on_tty() -> None:
     """Test console handler uses ColorFormatter when stdout is a TTY."""
     from orchard.core.logger.logger import ColorFormatter
 
@@ -501,7 +502,7 @@ def test_console_uses_color_formatter_on_tty():
 
 
 @pytest.mark.unit
-def test_console_uses_plain_formatter_on_pipe():
+def test_console_uses_plain_formatter_on_pipe() -> None:
     """Test console handler uses plain Formatter when stdout is not a TTY."""
     from orchard.core.logger.logger import ColorFormatter
 
@@ -513,7 +514,7 @@ def test_console_uses_plain_formatter_on_pipe():
 
 
 @pytest.mark.unit
-def test_file_handler_uses_plain_formatter(tmp_path):
+def test_file_handler_uses_plain_formatter(tmp_path: Path) -> None:
     """Test file handler always uses plain Formatter, never ColorFormatter."""
     from orchard.core.logger.logger import ColorFormatter
 
@@ -524,7 +525,7 @@ def test_file_handler_uses_plain_formatter(tmp_path):
 
 
 @pytest.mark.unit
-def test_file_output_has_no_ansi_codes(tmp_path):
+def test_file_output_has_no_ansi_codes(tmp_path: Path) -> None:
     """Test log file output contains no ANSI escape codes."""
     log_dir = tmp_path / "logs"
     logger_obj = Logger(name="test_no_ansi", log_dir=log_dir, log_to_file=True)
@@ -540,7 +541,7 @@ def test_file_output_has_no_ansi_codes(tmp_path):
 
 
 @pytest.mark.unit
-def test_color_formatter_subtitle_bold_magenta():
+def test_color_formatter_subtitle_bold_magenta() -> None:
     """Test ColorFormatter applies bold magenta to [Subtitle] tags."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -563,7 +564,7 @@ def test_color_formatter_subtitle_bold_magenta():
 
 
 @pytest.mark.unit
-def test_color_formatter_subtitle_mixed_case():
+def test_color_formatter_subtitle_mixed_case() -> None:
     """Test ColorFormatter colors [Export Settings] style subtitles."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -583,7 +584,7 @@ def test_color_formatter_subtitle_mixed_case():
 
 
 @pytest.mark.unit
-def test_color_formatter_subtitle_ignores_data_brackets():
+def test_color_formatter_subtitle_ignores_data_brackets() -> None:
     """Test ColorFormatter does NOT color data brackets like [T: 0.2131]."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -603,7 +604,7 @@ def test_color_formatter_subtitle_ignores_data_brackets():
 
 
 @pytest.mark.unit
-def test_color_formatter_subtitle_non_info_level():
+def test_color_formatter_subtitle_non_info_level() -> None:
     """Test ColorFormatter applies subtitle coloring to non-INFO levels (e.g. DEBUG)."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -623,7 +624,7 @@ def test_color_formatter_subtitle_non_info_level():
 
 
 @pytest.mark.unit
-def test_color_message_only_fallback_when_msg_not_found():
+def test_color_message_only_fallback_when_msg_not_found() -> None:
     """Test _color_message_only returns formatted unchanged when msg is not found."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -634,7 +635,7 @@ def test_color_message_only_fallback_when_msg_not_found():
 
 
 @pytest.mark.unit
-def test_color_subtitles_fallback_when_msg_not_found():
+def test_color_subtitles_fallback_when_msg_not_found() -> None:
     """Test _color_subtitles returns formatted unchanged when msg is not found."""
     from orchard.core.logger.logger import ColorFormatter
 
@@ -649,7 +650,7 @@ def test_color_subtitles_fallback_when_msg_not_found():
 
 
 @pytest.mark.unit
-def test_color_formatter_warning_replace_count():
+def test_color_formatter_warning_replace_count() -> None:
     """Verify replace(levelname, colored, 1) only colors the level prefix, not the message."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -673,7 +674,7 @@ def test_color_formatter_warning_replace_count():
 
 
 @pytest.mark.unit
-def test_color_formatter_header_boundary_5_chars():
+def test_color_formatter_header_boundary_5_chars() -> None:
     """5-char uppercase string must NOT get header coloring (len > 5 excludes 5)."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -694,7 +695,7 @@ def test_color_formatter_header_boundary_5_chars():
 
 
 @pytest.mark.unit
-def test_color_formatter_header_boundary_6_chars():
+def test_color_formatter_header_boundary_6_chars() -> None:
     """6-char uppercase string SHOULD get header coloring (len > 5 includes 6)."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -715,7 +716,7 @@ def test_color_formatter_header_boundary_6_chars():
 
 
 @pytest.mark.unit
-def test_color_message_only_uses_first_occurrence():
+def test_color_message_only_uses_first_occurrence() -> None:
     """_color_message_only must use find (first), not rfind (last)."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -728,7 +729,7 @@ def test_color_message_only_uses_first_occurrence():
 
 
 @pytest.mark.unit
-def test_color_message_only_preserves_prefix():
+def test_color_message_only_preserves_prefix() -> None:
     """_color_message_only prefix must be the actual text before the message."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -740,7 +741,7 @@ def test_color_message_only_preserves_prefix():
 
 
 @pytest.mark.unit
-def test_color_subtitles_uses_first_occurrence():
+def test_color_subtitles_uses_first_occurrence() -> None:
     """_color_subtitles must use find (first), not rfind (last)."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle
@@ -754,7 +755,7 @@ def test_color_subtitles_uses_first_occurrence():
 
 
 @pytest.mark.unit
-def test_color_subtitles_msg_at_position_one():
+def test_color_subtitles_msg_at_position_one() -> None:
     """_color_subtitles must not bail out when msg is found at index 1."""
     from orchard.core.logger.logger import ColorFormatter
     from orchard.core.paths.constants import LogStyle

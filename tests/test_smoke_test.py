@@ -16,7 +16,7 @@ from tests.smoke_test import _build_smoke_config
 # --- smoke_test ---
 
 
-def test_smoke_config_builds_default():
+def test_smoke_config_builds_default() -> None:
     """Default smoke config should produce a valid frozen Config."""
     cfg = _build_smoke_config()
     assert isinstance(cfg, Config)
@@ -26,13 +26,13 @@ def test_smoke_config_builds_default():
     assert cfg.hardware.device == "cpu"
 
 
-def test_smoke_config_custom_architecture():
+def test_smoke_config_custom_architecture() -> None:
     """Smoke config should accept a custom architecture name."""
     cfg = _build_smoke_config(architecture="resnet_18")
     assert cfg.architecture.name == "resnet_18"
 
 
-def test_smoke_config_custom_dataset():
+def test_smoke_config_custom_dataset() -> None:
     """Smoke config should accept a custom dataset name."""
     cfg = _build_smoke_config(dataset="dermamnist")
     assert cfg.dataset.name == "dermamnist"
@@ -41,7 +41,7 @@ def test_smoke_config_custom_dataset():
 # --- health_check ---
 
 
-def test_health_check_config_28():
+def test_health_check_config_28() -> None:
     """Health check config at 28px should use mini_cnn."""
     cfg = _build_health_check_config("bloodmnist", 28)
     assert isinstance(cfg, Config)
@@ -49,7 +49,7 @@ def test_health_check_config_28():
     assert cfg.dataset.resolution == 28
 
 
-def test_health_check_config_224():
+def test_health_check_config_224() -> None:
     """Health check config at 224px should use efficientnet_b0."""
     cfg = _build_health_check_config("bloodmnist", 224)
     assert cfg.architecture.name == "efficientnet_b0"
@@ -59,7 +59,7 @@ def test_health_check_config_224():
 # --- synthetic (CI data path) ---
 
 
-def test_synthetic_dataset_plugs_into_smoke_config():
+def test_synthetic_dataset_plugs_into_smoke_config() -> None:
     """Synthetic dataset should be compatible with smoke config pipeline."""
     cfg = _build_smoke_config()
     data = create_synthetic_dataset(

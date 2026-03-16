@@ -26,28 +26,28 @@ from orchard.core.logger import (
 
 # LOGSTYLE: CONSTANTS
 @pytest.mark.unit
-def test_logstyle_heavy_separator():
+def test_logstyle_heavy_separator() -> None:
     """Test LogStyle HEAVY separator is 80 characters."""
     assert len(LogStyle.HEAVY) == 80
     assert LogStyle.HEAVY == "━" * 80
 
 
 @pytest.mark.unit
-def test_logstyle_double_separator():
+def test_logstyle_double_separator() -> None:
     """Test LogStyle DOUBLE separator is 80 characters."""
     assert len(LogStyle.DOUBLE) == 80
     assert LogStyle.DOUBLE == "═" * 80
 
 
 @pytest.mark.unit
-def test_logstyle_light_separator():
+def test_logstyle_light_separator() -> None:
     """Test LogStyle LIGHT separator is 80 characters."""
     assert len(LogStyle.LIGHT) == 80
     assert LogStyle.LIGHT == "─" * 80
 
 
 @pytest.mark.unit
-def test_logstyle_symbols():
+def test_logstyle_symbols() -> None:
     """Test LogStyle symbols are defined correctly."""
     assert LogStyle.ARROW == "»"
     assert LogStyle.BULLET == "•"
@@ -56,7 +56,7 @@ def test_logstyle_symbols():
 
 
 @pytest.mark.unit
-def test_logstyle_indentation():
+def test_logstyle_indentation() -> None:
     """Test LogStyle indentation constants."""
     assert LogStyle.INDENT == "  "
     assert LogStyle.DOUBLE_INDENT == "    "
@@ -65,7 +65,7 @@ def test_logstyle_indentation():
 
 # REPORTER: INITIALIZATION
 @pytest.mark.unit
-def test_reporter_init():
+def test_reporter_init() -> None:
     """Test Reporter can be instantiated."""
     reporter = Reporter()
     assert isinstance(reporter, Reporter)
@@ -73,7 +73,7 @@ def test_reporter_init():
 
 # LOG OPTIMIZATION SUMMARY
 @pytest.mark.unit
-def test_log_optimization_summary_completed_trials():
+def test_log_optimization_summary_completed_trials() -> None:
     """Test log_optimization_summary with completed trials."""
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
@@ -105,7 +105,7 @@ def test_log_optimization_summary_completed_trials():
 
 
 @pytest.mark.unit
-def test_log_optimization_summary_no_completed_trials():
+def test_log_optimization_summary_no_completed_trials() -> None:
     """Test log_optimization_summary with no completed trials."""
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
@@ -130,7 +130,7 @@ def test_log_optimization_summary_no_completed_trials():
 
 
 @pytest.mark.unit
-def test_log_optimization_summary_with_failed_trials():
+def test_log_optimization_summary_with_failed_trials() -> None:
     """Test log_optimization_summary includes failed trial count."""
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
@@ -161,7 +161,7 @@ def test_log_optimization_summary_with_failed_trials():
 
 # LOG OPTIMIZATION HEADER
 @pytest.mark.unit
-def test_log_optimization_header_basic():
+def test_log_optimization_header_basic() -> None:
     """Test log_optimization_header logs search configuration (no duplicate header)."""
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
@@ -184,7 +184,7 @@ def test_log_optimization_header_basic():
 
 
 @pytest.mark.unit
-def test_log_optimization_header_with_early_stopping():
+def test_log_optimization_header_with_early_stopping() -> None:
     """Test log_optimization_header includes early stopping info."""
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
@@ -208,7 +208,7 @@ def test_log_optimization_header_with_early_stopping():
 
 
 @pytest.mark.unit
-def test_log_optimization_header_logs_only_search_params():
+def test_log_optimization_header_logs_only_search_params() -> None:
     """Test log_optimization_header logs dataset, model search, and search params."""
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
@@ -232,7 +232,7 @@ def test_log_optimization_header_logs_only_search_params():
 
 
 @pytest.mark.unit
-def test_log_optimization_header_early_stop_auto_threshold():
+def test_log_optimization_header_early_stop_auto_threshold() -> None:
     """Test log_optimization_header with auto early stopping threshold."""
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
@@ -254,7 +254,7 @@ def test_log_optimization_header_early_stop_auto_threshold():
 
 
 @pytest.mark.unit
-def test_log_optimization_header_with_model_pool():
+def test_log_optimization_header_with_model_pool() -> None:
     """Test log_optimization_header logs model pool when active."""
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
@@ -279,7 +279,7 @@ def test_log_optimization_header_with_model_pool():
 
 # LOG TRIAL START
 @pytest.mark.unit
-def test_log_trial_start_basic():
+def test_log_trial_start_basic() -> None:
     """Test log_trial_start logs trial parameters."""
     mock_logger = MagicMock()
     params = {
@@ -298,7 +298,7 @@ def test_log_trial_start_basic():
 
 
 @pytest.mark.unit
-def test_log_trial_start_groups_parameters():
+def test_log_trial_start_groups_parameters() -> None:
     """Test log_trial_start groups parameters by category."""
     mock_logger = MagicMock()
     params = {
@@ -316,7 +316,7 @@ def test_log_trial_start_groups_parameters():
 
 
 @pytest.mark.unit
-def test_log_trial_start_formats_small_floats():
+def test_log_trial_start_formats_small_floats() -> None:
     """Test log_trial_start formats very small floats in scientific notation."""
     mock_logger = MagicMock()
     params = {
@@ -332,7 +332,7 @@ def test_log_trial_start_formats_small_floats():
 
 
 @pytest.mark.unit
-def test_log_trial_start_with_string_params():
+def test_log_trial_start_with_string_params() -> None:
     """Test log_trial_start handles string parameters."""
     mock_logger = MagicMock()
     params = {
@@ -350,7 +350,7 @@ def test_log_trial_start_with_string_params():
 
 
 @pytest.mark.unit
-def test_log_trial_start_with_regular_floats():
+def test_log_trial_start_with_regular_floats() -> None:
     """Test log_trial_start with regular floats (not small)."""
     mock_logger = MagicMock()
     params = {
@@ -369,7 +369,7 @@ def test_log_trial_start_with_regular_floats():
 
 # REPORTER: LOG INITIAL STATUS
 @pytest.mark.unit
-def test_reporter_log_initial_status():
+def test_reporter_log_initial_status() -> None:
     """Test Reporter.log_initial_status logs environment info."""
     reporter = Reporter()
     mock_logger = MagicMock()
@@ -415,7 +415,7 @@ def test_reporter_log_initial_status():
 
 
 @pytest.mark.unit
-def test_reporter_log_initial_status_cpu_device():
+def test_reporter_log_initial_status_cpu_device() -> None:
     """Test Reporter.log_initial_status with CPU device."""
     reporter = Reporter()
     mock_logger = MagicMock()
@@ -461,7 +461,7 @@ def test_reporter_log_initial_status_cpu_device():
 
 
 @pytest.mark.unit
-def test_reporter_log_initial_status_with_weight_variant():
+def test_reporter_log_initial_status_with_weight_variant() -> None:
     """Test Reporter logs weight variant when present."""
     reporter = Reporter()
     mock_logger = MagicMock()
@@ -505,7 +505,7 @@ def test_reporter_log_initial_status_with_weight_variant():
 
 
 @pytest.mark.unit
-def test_reporter_log_hardware_section_device_fallback():
+def test_reporter_log_hardware_section_device_fallback() -> None:
     """Test _log_hardware_section logs warning for device fallback."""
     reporter = Reporter()
     mock_logger = MagicMock()
@@ -528,7 +528,7 @@ def test_reporter_log_hardware_section_device_fallback():
 
 
 @pytest.mark.unit
-def test_reporter_log_hardware_section_cuda_device():
+def test_reporter_log_hardware_section_cuda_device() -> None:
     """Test _log_hardware_section logs GPU info when CUDA available."""
     reporter = Reporter()
     mock_logger = MagicMock()
@@ -557,14 +557,14 @@ def test_reporter_log_hardware_section_cuda_device():
 
 # LOG PIPELINE SUMMARY
 @pytest.mark.unit
-def test_log_pipeline_summary_basic():
+def test_log_pipeline_summary_basic() -> None:
     """Test log_pipeline_summary logs basic pipeline completion info."""
     mock_logger = MagicMock()
 
     log_pipeline_summary(
         test_metrics={"accuracy": 0.9234, "macro_f1": 0.8765},
-        best_model_path="/mock/best_model.pth",
-        run_dir="/mock/outputs/run123",
+        best_model_path="/mock/best_model.pth",  # type: ignore
+        run_dir="/mock/outputs/run123",  # type: ignore
         duration="5m 30s",
         logger_instance=mock_logger,
     )
@@ -581,16 +581,16 @@ def test_log_pipeline_summary_basic():
 
 
 @pytest.mark.unit
-def test_log_pipeline_summary_with_onnx_path():
+def test_log_pipeline_summary_with_onnx_path() -> None:
     """Test log_pipeline_summary includes ONNX path when provided."""
     mock_logger = MagicMock()
 
     log_pipeline_summary(
         test_metrics={"accuracy": 0.85, "f1": 0.80},
-        best_model_path="/mock/best.pth",
-        run_dir="/mock/run",
+        best_model_path="/mock/best.pth",  # type: ignore
+        run_dir="/mock/run",  # type: ignore
         duration="10m 0s",
-        onnx_path="/mock/model.onnx",
+        onnx_path="/mock/model.onnx",  # type: ignore
         logger_instance=mock_logger,
     )
 
@@ -602,14 +602,14 @@ def test_log_pipeline_summary_with_onnx_path():
 
 
 @pytest.mark.unit
-def test_log_pipeline_summary_without_onnx_path():
+def test_log_pipeline_summary_without_onnx_path() -> None:
     """Test log_pipeline_summary omits ONNX line when not provided."""
     mock_logger = MagicMock()
 
     log_pipeline_summary(
         test_metrics={"accuracy": 0.9, "f1": 0.85},
-        best_model_path="/mock/best.pth",
-        run_dir="/mock/run",
+        best_model_path="/mock/best.pth",  # type: ignore
+        run_dir="/mock/run",  # type: ignore
         duration="2m 15s",
         onnx_path=None,
         logger_instance=mock_logger,
@@ -622,13 +622,13 @@ def test_log_pipeline_summary_without_onnx_path():
 
 
 @pytest.mark.unit
-def test_log_pipeline_summary_uses_module_logger_when_none():
+def test_log_pipeline_summary_uses_module_logger_when_none() -> None:
     """Test log_pipeline_summary uses module logger when none provided."""
     with patch("orchard.core.logger.progress.logger") as mock_module_logger:
         log_pipeline_summary(
             test_metrics={"accuracy": 0.9, "f1": 0.85},
-            best_model_path="/mock/best.pth",
-            run_dir="/mock/run",
+            best_model_path="/mock/best.pth",  # type: ignore
+            run_dir="/mock/run",  # type: ignore
             duration="1m 0s",
             logger_instance=None,
         )
@@ -637,14 +637,14 @@ def test_log_pipeline_summary_uses_module_logger_when_none():
 
 
 @pytest.mark.unit
-def test_log_pipeline_summary_with_auc():
+def test_log_pipeline_summary_with_auc() -> None:
     """Test log_pipeline_summary includes AUC line when auc metric is present."""
     mock_logger = MagicMock()
 
     log_pipeline_summary(
         test_metrics={"accuracy": 0.92, "f1": 0.88, "auc": 0.9567},
-        best_model_path="/mock/best.pth",
-        run_dir="/mock/run",
+        best_model_path="/mock/best.pth",  # type: ignore
+        run_dir="/mock/run",  # type: ignore
         duration="3m 0s",
         logger_instance=mock_logger,
     )
@@ -658,7 +658,7 @@ def test_log_pipeline_summary_with_auc():
 
 # REPORTER: TRACKING SECTION
 @pytest.mark.unit
-def test_reporter_log_tracking_section_enabled():
+def test_reporter_log_tracking_section_enabled() -> None:
     """Test _log_tracking_section logs experiment name when tracking is enabled."""
     reporter = Reporter()
     mock_logger = MagicMock()
@@ -676,7 +676,7 @@ def test_reporter_log_tracking_section_enabled():
 
 
 @pytest.mark.unit
-def test_reporter_log_tracking_section_disabled():
+def test_reporter_log_tracking_section_disabled() -> None:
     """Test _log_tracking_section logs disabled status."""
     reporter = Reporter()
     mock_logger = MagicMock()
@@ -692,7 +692,7 @@ def test_reporter_log_tracking_section_disabled():
 
 
 @pytest.mark.unit
-def test_reporter_log_tracking_section_absent():
+def test_reporter_log_tracking_section_absent() -> None:
     """Test _log_tracking_section does nothing when tracking is not configured."""
     reporter = Reporter()
     mock_logger = MagicMock()
@@ -705,7 +705,7 @@ def test_reporter_log_tracking_section_absent():
 
 # REPORTER: OPTIMIZATION SECTION
 @pytest.mark.unit
-def test_reporter_log_optimization_section():
+def test_reporter_log_optimization_section() -> None:
     """Test _log_optimization_section logs optimization parameters."""
     reporter = Reporter()
     mock_logger = MagicMock()
@@ -730,7 +730,7 @@ def test_reporter_log_optimization_section():
 
 
 @pytest.mark.unit
-def test_reporter_log_optimization_section_absent():
+def test_reporter_log_optimization_section_absent() -> None:
     """Test _log_optimization_section does nothing when optuna is not configured."""
     reporter = Reporter()
     mock_logger = MagicMock()
@@ -743,7 +743,7 @@ def test_reporter_log_optimization_section_absent():
 
 # REPORTER: EXPORT SECTION
 @pytest.mark.unit
-def test_reporter_log_export_section_basic():
+def test_reporter_log_export_section_basic() -> None:
     """Test _log_export_section logs format, opset, and validate_export."""
     reporter = Reporter()
     mock_logger = MagicMock()
@@ -764,7 +764,7 @@ def test_reporter_log_export_section_basic():
 
 @pytest.mark.unit
 @pytest.mark.parametrize("qtype", ["int8", "uint8", "int4", "uint4"])
-def test_reporter_log_export_section_quantize_type(qtype):
+def test_reporter_log_export_section_quantize_type(qtype) -> None:  # type: ignore
     """Test _log_export_section shows the actual quantization_type."""
     reporter = Reporter()
     mock_logger = MagicMock()
@@ -785,7 +785,7 @@ def test_reporter_log_export_section_quantize_type(qtype):
 
 
 @pytest.mark.unit
-def test_reporter_log_export_section_absent():
+def test_reporter_log_export_section_absent() -> None:
     """Test _log_export_section does nothing when export is not configured."""
     reporter = Reporter()
     mock_logger = MagicMock()
@@ -798,7 +798,7 @@ def test_reporter_log_export_section_absent():
 
 # _format_param_value
 @pytest.mark.unit
-def test_format_param_value_small_float():
+def test_format_param_value_small_float() -> None:
     """Small floats (<0.001) use scientific notation."""
     from orchard.core.logger.progress import _format_param_value
 
@@ -807,7 +807,7 @@ def test_format_param_value_small_float():
 
 
 @pytest.mark.unit
-def test_format_param_value_regular_float():
+def test_format_param_value_regular_float() -> None:
     """Regular floats (>=0.001) use 4-decimal notation."""
     from orchard.core.logger.progress import _format_param_value
 
@@ -815,7 +815,7 @@ def test_format_param_value_regular_float():
 
 
 @pytest.mark.unit
-def test_format_param_value_integer():
+def test_format_param_value_integer() -> None:
     """Non-float values pass through str()."""
     from orchard.core.logger.progress import _format_param_value
 
@@ -823,7 +823,7 @@ def test_format_param_value_integer():
 
 
 @pytest.mark.unit
-def test_format_param_value_zero():
+def test_format_param_value_zero() -> None:
     """Zero is < 0.001, uses scientific notation."""
     from orchard.core.logger.progress import _format_param_value
 
@@ -831,7 +831,7 @@ def test_format_param_value_zero():
 
 
 @pytest.mark.unit
-def test_format_param_value_boundary():
+def test_format_param_value_boundary() -> None:
     """Exactly 0.001 is NOT < 0.001, uses decimal notation."""
     from orchard.core.logger.progress import _format_param_value
 
@@ -839,7 +839,7 @@ def test_format_param_value_boundary():
 
 
 @pytest.mark.unit
-def test_format_param_value_string():
+def test_format_param_value_string() -> None:
     """String values pass through str()."""
     from orchard.core.logger.progress import _format_param_value
 
@@ -848,7 +848,7 @@ def test_format_param_value_string():
 
 # _count_trial_states
 @pytest.mark.unit
-def test_count_trial_states_all_complete():
+def test_count_trial_states_all_complete() -> None:
     """All trials completed."""
     from orchard.core.logger.progress import _count_trial_states
 
@@ -865,7 +865,7 @@ def test_count_trial_states_all_complete():
 
 
 @pytest.mark.unit
-def test_count_trial_states_mixed():
+def test_count_trial_states_mixed() -> None:
     """Mixed trial states partitioned correctly."""
     from orchard.core.logger.progress import _count_trial_states
 
@@ -883,7 +883,7 @@ def test_count_trial_states_mixed():
 
 
 @pytest.mark.unit
-def test_count_trial_states_empty():
+def test_count_trial_states_empty() -> None:
     """Empty study returns empty lists."""
     from orchard.core.logger.progress import _count_trial_states
 
@@ -903,7 +903,7 @@ def test_count_trial_states_empty():
 
 
 @pytest.mark.unit
-def test_log_trial_start_exact_category_names():
+def test_log_trial_start_exact_category_names() -> None:
     """Verify all 6 exact category names are passed as exact args (not substrings)."""
     mock_logger = MagicMock()
     # Provide at least one param per category
@@ -937,7 +937,7 @@ def test_log_trial_start_exact_category_names():
 
 
 @pytest.mark.unit
-def test_log_trial_start_optimization_keys():
+def test_log_trial_start_optimization_keys() -> None:
     """Verify Optimization category includes all 4 expected keys."""
     mock_logger = MagicMock()
     params = {
@@ -958,7 +958,7 @@ def test_log_trial_start_optimization_keys():
 
 
 @pytest.mark.unit
-def test_log_trial_start_loss_keys():
+def test_log_trial_start_loss_keys() -> None:
     """Verify Loss category includes all 3 expected keys."""
     mock_logger = MagicMock()
     params = {
@@ -978,7 +978,7 @@ def test_log_trial_start_loss_keys():
 
 
 @pytest.mark.unit
-def test_log_trial_start_regularization_keys():
+def test_log_trial_start_regularization_keys() -> None:
     """Verify Regularization category includes mixup_alpha and dropout."""
     mock_logger = MagicMock()
     params = {"mixup_alpha": 0.2, "dropout": 0.3}
@@ -994,7 +994,7 @@ def test_log_trial_start_regularization_keys():
 
 
 @pytest.mark.unit
-def test_log_trial_start_scheduling_keys():
+def test_log_trial_start_scheduling_keys() -> None:
     """Verify Scheduling category includes all 3 expected keys."""
     mock_logger = MagicMock()
     params = {"scheduler_type": "cosine", "scheduler_patience": 5, "batch_size": 32}
@@ -1010,7 +1010,7 @@ def test_log_trial_start_scheduling_keys():
 
 
 @pytest.mark.unit
-def test_log_trial_start_augmentation_keys():
+def test_log_trial_start_augmentation_keys() -> None:
     """Verify Augmentation category includes all 3 expected keys."""
     mock_logger = MagicMock()
     params = {"rotation_angle": 15, "jitter_val": 0.1, "min_scale": 0.8}
@@ -1026,7 +1026,7 @@ def test_log_trial_start_augmentation_keys():
 
 
 @pytest.mark.unit
-def test_log_trial_start_architecture_keys():
+def test_log_trial_start_architecture_keys() -> None:
     """Verify Architecture category includes all 3 expected keys."""
     mock_logger = MagicMock()
     params = {"model_name": "vit_tiny", "pretrained": True, "weight_variant": "DEFAULT"}
@@ -1042,7 +1042,7 @@ def test_log_trial_start_architecture_keys():
 
 
 @pytest.mark.unit
-def test_log_trial_start_empty_category_not_shown():
+def test_log_trial_start_empty_category_not_shown() -> None:
     """Category with no matching params should not appear."""
     mock_logger = MagicMock()
     params = {"learning_rate": 0.01}  # Only Optimization
@@ -1060,7 +1060,7 @@ def test_log_trial_start_empty_category_not_shown():
 
 
 @pytest.mark.unit
-def test_log_trial_start_format_string_uses_key_and_value():
+def test_log_trial_start_format_string_uses_key_and_value() -> None:
     """Verify each param is logged with key and formatted value."""
     mock_logger = MagicMock()
     params = {"learning_rate": 0.5}
@@ -1075,7 +1075,7 @@ def test_log_trial_start_format_string_uses_key_and_value():
 
 
 @pytest.mark.unit
-def test_log_optimization_summary_warning_no_completed():
+def test_log_optimization_summary_warning_no_completed() -> None:
     """log.warning called with exact (fmt, I, W) args when no completed trials."""
     mock_logger = MagicMock()
     mock_study = MagicMock()
@@ -1140,7 +1140,7 @@ def _build_cpu_cfg() -> MagicMock:
     return cfg
 
 
-def _find_call_with_label(calls, label: str):
+def _find_call_with_label(calls, label: str):  # type: ignore
     """Find the call tuple that contains a specific label like 'Weights'.
 
     Logger calls use: logger.info(fmt, I, A, label, value, ...) where
@@ -1155,7 +1155,7 @@ def _find_call_with_label(calls, label: str):
 
 # --- log_initial_status: delegation and argument passing ---
 @pytest.mark.unit
-def test_reporter_initial_status_passes_indent_and_arrow():
+def test_reporter_initial_status_passes_indent_and_arrow() -> None:
     """Kill mutmut I=None and A=None in log_initial_status."""
     reporter = Reporter()
     log = MagicMock()
@@ -1174,7 +1174,7 @@ def test_reporter_initial_status_passes_indent_and_arrow():
 
 
 @pytest.mark.unit
-def test_reporter_initial_status_passes_applied_threads_and_workers():
+def test_reporter_initial_status_passes_applied_threads_and_workers() -> None:
     """Kill mutmut applied_threads=None and num_workers=None in log_initial_status."""
     reporter = Reporter()
     log = MagicMock()
@@ -1196,7 +1196,7 @@ def test_reporter_initial_status_passes_applied_threads_and_workers():
 
 
 @pytest.mark.unit
-def test_reporter_initial_status_lr_formatting():
+def test_reporter_initial_status_lr_formatting() -> None:
     """Kill mutmut lr=None, lr_str=None, and str(None) mutations."""
     reporter = Reporter()
     log = MagicMock()
@@ -1214,7 +1214,7 @@ def test_reporter_initial_status_lr_formatting():
 
 
 @pytest.mark.unit
-def test_reporter_initial_status_lr_string_passthrough():
+def test_reporter_initial_status_lr_string_passthrough() -> None:
     """Kill str(None) mutation — when LR is string, pass through as-is."""
     reporter = Reporter()
     log = MagicMock()
@@ -1232,7 +1232,7 @@ def test_reporter_initial_status_lr_string_passthrough():
 
 
 @pytest.mark.unit
-def test_reporter_initial_status_env_init_header():
+def test_reporter_initial_status_env_init_header() -> None:
     """Kill mutmut XX/lowercase mutations on ENVIRONMENT INITIALIZATION header."""
     reporter = Reporter()
     log = MagicMock()
@@ -1255,7 +1255,7 @@ def test_reporter_initial_status_env_init_header():
 
 
 @pytest.mark.unit
-def test_reporter_initial_status_logs_task_section():
+def test_reporter_initial_status_logs_task_section() -> None:
     """log_initial_status includes [TASK] section with capitalized task_type."""
     reporter = Reporter()
     log = MagicMock()
@@ -1275,7 +1275,7 @@ def test_reporter_initial_status_logs_task_section():
 
 
 @pytest.mark.unit
-def test_reporter_initial_status_delegates_tracking_cfg():
+def test_reporter_initial_status_delegates_tracking_cfg() -> None:
     """Kill mutmut cfg→None mutation for _log_tracking_section."""
     reporter = Reporter()
     log = MagicMock()
@@ -1296,7 +1296,7 @@ def test_reporter_initial_status_delegates_tracking_cfg():
 
 
 @pytest.mark.unit
-def test_reporter_initial_status_delegates_optimization_cfg():
+def test_reporter_initial_status_delegates_optimization_cfg() -> None:
     """Kill mutmut cfg→None mutation for _log_optimization_section."""
     reporter = Reporter()
     log = MagicMock()
@@ -1317,7 +1317,7 @@ def test_reporter_initial_status_delegates_optimization_cfg():
 
 
 @pytest.mark.unit
-def test_reporter_initial_status_delegates_export_cfg():
+def test_reporter_initial_status_delegates_export_cfg() -> None:
     """Kill mutmut cfg→None mutation for _log_export_section."""
     reporter = Reporter()
     log = MagicMock()
@@ -1338,7 +1338,7 @@ def test_reporter_initial_status_delegates_export_cfg():
 
 # --- _log_hardware_section: exact argument assertions ---
 @pytest.mark.unit
-def test_hardware_section_exact_args_cpu():
+def test_hardware_section_exact_args_cpu() -> None:
     """Kill I=None, A=None, device.lower() mutations in hardware section."""
     reporter = Reporter()
     log = MagicMock()
@@ -1370,7 +1370,7 @@ def test_hardware_section_exact_args_cpu():
 
 
 @pytest.mark.unit
-def test_hardware_section_fallback_warning_exact_args():
+def test_hardware_section_fallback_warning_exact_args() -> None:
     """Kill I, LogStyle.WARNING, requested_device arg swap/None mutations."""
     reporter = Reporter()
     log = MagicMock()
@@ -1389,7 +1389,7 @@ def test_hardware_section_fallback_warning_exact_args():
 
 
 @pytest.mark.unit
-def test_hardware_section_no_fallback_when_cpu_requested():
+def test_hardware_section_no_fallback_when_cpu_requested() -> None:
     """Kill 'or' mutation: if requested=='cpu' and active=='cpu', no warning."""
     reporter = Reporter()
     log = MagicMock()
@@ -1403,7 +1403,7 @@ def test_hardware_section_no_fallback_when_cpu_requested():
 
 
 @pytest.mark.unit
-def test_hardware_section_lower_not_upper():
+def test_hardware_section_lower_not_upper() -> None:
     """Kill .upper() mutation on requested_device = cfg.hardware.device.lower()."""
     reporter = Reporter()
     log = MagicMock()
@@ -1420,7 +1420,7 @@ def test_hardware_section_lower_not_upper():
 
 
 @pytest.mark.unit
-def test_hardware_section_mps_no_vram():
+def test_hardware_section_mps_no_vram() -> None:
     """Kill 'MPS'→'XXmpsXX' mutation in active_type in ('cuda', 'mps')."""
     reporter = Reporter()
     log = MagicMock()
@@ -1428,7 +1428,7 @@ def test_hardware_section_mps_no_vram():
     cfg.hardware.device = "mps"
     device = MagicMock()
     device.type = "mps"
-    device.__str__ = lambda _: "mps"
+    device.__str__ = lambda _: "mps"  # type: ignore
 
     with patch("orchard.core.logger.env_reporter.get_accelerator_name", return_value="Apple M2"):
         reporter._log_hardware_section(log, cfg, device, 4, 2)
@@ -1440,7 +1440,7 @@ def test_hardware_section_mps_no_vram():
 
 
 @pytest.mark.unit
-def test_hardware_section_fallback_cpu_string_exact():
+def test_hardware_section_fallback_cpu_string_exact() -> None:
     """Kill 'cpu'→'XXcpuXX' and 'cpu'→'CPU' mutations in condition."""
     reporter = Reporter()
     log = MagicMock()
@@ -1460,7 +1460,7 @@ def test_hardware_section_fallback_cpu_string_exact():
 
 # --- _log_dataset_section: I and A not None ---
 @pytest.mark.unit
-def test_dataset_section_exact_indent_arrow():
+def test_dataset_section_exact_indent_arrow() -> None:
     """Kill I=None, A=None mutations in _log_dataset_section."""
     reporter = Reporter()
     log = MagicMock()
@@ -1484,7 +1484,7 @@ def test_dataset_section_exact_indent_arrow():
 
 # --- _log_strategy_section: exact values for weights, precision, repro, tta ---
 @pytest.mark.unit
-def test_strategy_section_pretrained_weights():
+def test_strategy_section_pretrained_weights() -> None:
     """Kill 'Pretrained'→'XXPretrainedXX'/'pretrained'/'PRETRAINED'/None."""
     reporter = Reporter()
     log = MagicMock()
@@ -1507,7 +1507,7 @@ def test_strategy_section_pretrained_weights():
 
 
 @pytest.mark.unit
-def test_strategy_section_random_weights():
+def test_strategy_section_random_weights() -> None:
     """Kill 'Random'→'XXRandomXX'/'random'/'RANDOM' mutations."""
     reporter = Reporter()
     log = MagicMock()
@@ -1530,7 +1530,7 @@ def test_strategy_section_random_weights():
 
 
 @pytest.mark.unit
-def test_strategy_section_amp_precision():
+def test_strategy_section_amp_precision() -> None:
     """Kill 'AMP (Mixed)'→mutations and None."""
     reporter = Reporter()
     log = MagicMock()
@@ -1553,7 +1553,7 @@ def test_strategy_section_amp_precision():
 
 
 @pytest.mark.unit
-def test_strategy_section_fp32_precision():
+def test_strategy_section_fp32_precision() -> None:
     """Kill 'FP32'→'XXFP32XX'/'fp32' mutations."""
     reporter = Reporter()
     log = MagicMock()
@@ -1576,7 +1576,7 @@ def test_strategy_section_fp32_precision():
 
 
 @pytest.mark.unit
-def test_strategy_section_strict_repro_mode():
+def test_strategy_section_strict_repro_mode() -> None:
     """Kill 'Strict'→mutations and None."""
     reporter = Reporter()
     log = MagicMock()
@@ -1599,7 +1599,7 @@ def test_strategy_section_strict_repro_mode():
 
 
 @pytest.mark.unit
-def test_strategy_section_standard_repro_mode():
+def test_strategy_section_standard_repro_mode() -> None:
     """Kill 'Standard'→mutations."""
     reporter = Reporter()
     log = MagicMock()
@@ -1622,7 +1622,7 @@ def test_strategy_section_standard_repro_mode():
 
 
 @pytest.mark.unit
-def test_strategy_section_tta_mode_exact():
+def test_strategy_section_tta_mode_exact() -> None:
     """Kill tta_status=None and determine_tta_mode arg mutations."""
     reporter = Reporter()
     log = MagicMock()
@@ -1648,7 +1648,7 @@ def test_strategy_section_tta_mode_exact():
 
 
 @pytest.mark.unit
-def test_strategy_section_indent_arrow_not_none():
+def test_strategy_section_indent_arrow_not_none() -> None:
     """Kill I=None, A=None in _log_strategy_section."""
     reporter = Reporter()
     log = MagicMock()
@@ -1673,7 +1673,7 @@ def test_strategy_section_indent_arrow_not_none():
 
 # --- _log_tracking_section: exact status values ---
 @pytest.mark.unit
-def test_tracking_section_active_exact():
+def test_tracking_section_active_exact() -> None:
     """Kill 'Active'→'XXActiveXX' mutation."""
     reporter = Reporter()
     log = MagicMock()
@@ -1691,7 +1691,7 @@ def test_tracking_section_active_exact():
 
 
 @pytest.mark.unit
-def test_tracking_section_disabled_exact():
+def test_tracking_section_disabled_exact() -> None:
     """Kill 'Disabled'→'XXDisabledXX' mutation."""
     reporter = Reporter()
     log = MagicMock()
@@ -1707,7 +1707,7 @@ def test_tracking_section_disabled_exact():
 
 # --- _log_optimization_section: I/A not None ---
 @pytest.mark.unit
-def test_optimization_section_indent_arrow_not_none():
+def test_optimization_section_indent_arrow_not_none() -> None:
     """Kill I=None, A=None in _log_optimization_section."""
     reporter = Reporter()
     log = MagicMock()

@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import warnings
 from pathlib import Path
+from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
 from pydantic import ValidationError
@@ -35,7 +37,7 @@ from orchard.exceptions import OrchardConfigError
 
 # CONFIG: BASIC CONSTRUCTION
 @pytest.mark.unit
-def test_config_defaults():
+def test_config_defaults() -> None:
     """Test Config with all default sub-configs."""
     config = Config()
 
@@ -48,7 +50,7 @@ def test_config_defaults():
 # CONFIG: CROSS-VALIDATION
 @pytest.mark.unit
 @pytest.mark.parametrize("device", ["cpu", "cuda"])
-def test_resnet_18_supports_all_resolutions(device):
+def test_resnet_18_supports_all_resolutions(device: Any) -> None:
     """
     resnet_18 supports 28x28, 64x64, and 224x224 resolutions.
     """
@@ -79,7 +81,7 @@ def test_resnet_18_supports_all_resolutions(device):
 
 @pytest.mark.unit
 @pytest.mark.parametrize("architecture_name", ["efficientnet_b0", "vit_tiny", "convnext_tiny"])
-def test_224_models_require_resolution_224(architecture_name):
+def test_224_models_require_resolution_224(architecture_name: Any) -> None:
     """
     efficientnet_b0 and vit_tiny require 224x224 resolution.
     Using them with 28x28 should raise ValueError.
@@ -103,7 +105,7 @@ def test_224_models_require_resolution_224(architecture_name):
 
 
 @pytest.mark.unit
-def test_mini_cnn_rejects_224():
+def test_mini_cnn_rejects_224() -> None:
     """mini_cnn only supports 28x28 and 64x64 resolutions."""
     with pytest.raises(
         ValidationError,
@@ -118,7 +120,7 @@ def test_mini_cnn_rejects_224():
 
 
 @pytest.mark.unit
-def test_mini_cnn_accepts_32():
+def test_mini_cnn_accepts_32() -> None:
     """mini_cnn accepts 32x32 resolution (CIFAR)."""
     cfg = Config(
         dataset=DatasetConfig(name="cifar10", resolution=32, force_rgb=True),
@@ -130,7 +132,7 @@ def test_mini_cnn_accepts_32():
 
 
 @pytest.mark.unit
-def test_resnet_18_accepts_32():
+def test_resnet_18_accepts_32() -> None:
     """resnet_18 accepts 32x32 resolution (CIFAR)."""
     cfg = Config(
         dataset=DatasetConfig(name="cifar10", resolution=32, force_rgb=True),
@@ -142,7 +144,7 @@ def test_resnet_18_accepts_32():
 
 
 @pytest.mark.unit
-def test_resnet_18_rejects_invalid_resolution():
+def test_resnet_18_rejects_invalid_resolution() -> None:
     """Unsupported resolution is caught by DatasetConfig.validate_resolution."""
     with pytest.raises(
         ValidationError,
@@ -157,7 +159,7 @@ def test_resnet_18_rejects_invalid_resolution():
 
 
 @pytest.mark.unit
-def test_mixup_epochs_cannot_exceed_total_epochs_direct():
+def test_mixup_epochs_cannot_exceed_total_epochs_direct() -> None:
     """
     MixUp scheduling cannot exceed total training epochs.
     """
@@ -177,7 +179,7 @@ def test_mixup_epochs_cannot_exceed_total_epochs_direct():
 
 
 @pytest.mark.unit
-def test_amp_auto_disabled_on_cpu():
+def test_amp_auto_disabled_on_cpu() -> None:
     """Test AMP is automatically disabled on CPU with warning."""
     with pytest.warns(UserWarning, match="AMP.*CPU"):
         cfg = Config(
@@ -191,7 +193,7 @@ def test_amp_auto_disabled_on_cpu():
 
 
 @pytest.mark.unit
-def test_pretrained_requires_rgb():
+def test_pretrained_requires_rgb() -> None:
     """Test pretrained model validation enforces RGB channels."""
     with pytest.raises(ValidationError, match="Pretrained.*requires RGB"):
         Config(
@@ -204,7 +206,7 @@ def test_pretrained_requires_rgb():
 
 @pytest.mark.unit
 @pytest.mark.filterwarnings("ignore:AMP requires GPU.*:UserWarning")
-def test_min_lr_equals_lr_direct_instantiation(mock_metadata_28):
+def test_min_lr_equals_lr_direct_instantiation(mock_metadata_28: MagicMock) -> None:
     """Test min_lr == learning_rate validation via direct instantiation."""
     with pytest.raises(ValidationError):
         Config(
@@ -224,7 +226,7 @@ def test_min_lr_equals_lr_direct_instantiation(mock_metadata_28):
 
 # CONFIG: SERIALIZATION
 @pytest.mark.unit
-def test_dump_portable_converts_paths():
+def test_dump_portable_converts_paths() -> None:
     """Test dump_portable() makes paths relative."""
     config = Config()
 
@@ -235,7 +237,7 @@ def test_dump_portable_converts_paths():
 
 
 @pytest.mark.unit
-def test_dump_serialized_json_compatible():
+def test_dump_serialized_json_compatible() -> None:
     """Test dump_serialized() produces JSON-compatible dict."""
     config = Config()
 
@@ -248,7 +250,7 @@ def test_dump_serialized_json_compatible():
 
 # CONFIG: PROPERTIES
 @pytest.mark.unit
-def test_run_slug_property():
+def test_run_slug_property() -> None:
     """Test run_slug combines dataset and model names."""
     config = Config()
 
@@ -259,7 +261,7 @@ def test_run_slug_property():
 
 
 @pytest.mark.unit
-def test_run_slug_sanitizes_timm_slash():
+def test_run_slug_sanitizes_timm_slash() -> None:
     """Test run_slug replaces / with _ for timm model names."""
     config = Config(
         architecture=ArchitectureConfig(name="timm/convnext_base", pretrained=False),
@@ -274,7 +276,7 @@ def test_run_slug_sanitizes_timm_slash():
 
 
 @pytest.mark.unit
-def test_num_workers_property():
+def test_num_workers_property() -> None:
     """Test num_workers delegates to hardware config."""
     config = Config()
 
@@ -286,7 +288,7 @@ def test_num_workers_property():
 
 # CONFIG: EDGE CASES
 @pytest.mark.unit
-def test_frozen_immutability():
+def test_frozen_immutability() -> None:
     """Test Config is frozen (immutable)."""
     config = Config()
 
@@ -295,7 +297,7 @@ def test_frozen_immutability():
 
 
 @pytest.mark.unit
-def test_min_lr_boundary_condition_line_106(mock_metadata_28):
+def test_min_lr_boundary_condition_line_106(mock_metadata_28: MagicMock) -> None:
     """
     Lines 106-110: msg creation and raise ValueError(msg) for min_lr >= learning_rate
     """
@@ -324,21 +326,21 @@ def test_min_lr_boundary_condition_line_106(mock_metadata_28):
 # Mutation-killing tests
 # ---------------------------------------------------------------------------
 @pytest.mark.unit
-def test_models_low_res_exact_contents():
+def test_models_low_res_exact_contents() -> None:
     """Assert _MODELS_LOW_RES contains exactly mini_cnn."""
     assert _MODELS_LOW_RES == frozenset({"mini_cnn"})
     assert len(_MODELS_LOW_RES) == 1
 
 
 @pytest.mark.unit
-def test_models_224_only_exact_contents():
+def test_models_224_only_exact_contents() -> None:
     """Assert _MODELS_224_ONLY contains exactly the 3 expected models."""
     assert _MODELS_224_ONLY == frozenset({"efficientnet_b0", "vit_tiny", "convnext_tiny"})
     assert len(_MODELS_224_ONLY) == 3
 
 
 @pytest.mark.unit
-def test_resolutions_low_res_exact_contents():
+def test_resolutions_low_res_exact_contents() -> None:
     """Assert _RESOLUTIONS_LOW_RES contains exactly {28, 32, 64}."""
     assert _RESOLUTIONS_LOW_RES == frozenset({28, 32, 64})
     assert 28 in _RESOLUTIONS_LOW_RES
@@ -348,30 +350,30 @@ def test_resolutions_low_res_exact_contents():
 
 
 @pytest.mark.unit
-def test_resolutions_224_only_exact_contents():
+def test_resolutions_224_only_exact_contents() -> None:
     """Assert _RESOLUTIONS_224_ONLY contains exactly {224}."""
     assert _RESOLUTIONS_224_ONLY == frozenset({224})
     assert 28 not in _RESOLUTIONS_224_ONLY
 
 
 @pytest.mark.unit
-def test_deep_set_nested_path():
+def test_deep_set_nested_path() -> None:
     """Test _deep_set creates intermediate dicts for nested dot paths."""
-    data: dict = {}
+    data: dict = {}  # type: ignore
     _deep_set(data, "a.b.c", 42)
     assert data == {"a": {"b": {"c": 42}}}
 
 
 @pytest.mark.unit
-def test_deep_set_single_key():
+def test_deep_set_single_key() -> None:
     """Test _deep_set with a single key (no dots)."""
-    data: dict = {}
+    data: dict = {}  # type: ignore
     _deep_set(data, "key", "value")
     assert data == {"key": "value"}
 
 
 @pytest.mark.unit
-def test_deep_set_overwrites_existing():
+def test_deep_set_overwrites_existing() -> None:
     """Test _deep_set overwrites existing value at path."""
     data = {"a": {"b": 10}}
     _deep_set(data, "a.b", 20)
@@ -379,7 +381,7 @@ def test_deep_set_overwrites_existing():
 
 
 @pytest.mark.unit
-def test_deep_set_preserves_siblings():
+def test_deep_set_preserves_siblings() -> None:
     """Test _deep_set preserves sibling keys in intermediate dicts."""
     data = {"a": {"existing": 99}}
     _deep_set(data, "a.new_key", 42)
@@ -388,11 +390,11 @@ def test_deep_set_preserves_siblings():
 
 
 @pytest.mark.unit
-def test_dump_portable_relative_data_root():
+def test_dump_portable_relative_data_root() -> None:
     """Test dump_portable converts data_root inside PROJECT_ROOT to relative."""
     from orchard.core.config import manifest as manifest_mod
 
-    original_root = manifest_mod.PROJECT_ROOT
+    original_root = manifest_mod.PROJECT_ROOT  # type: ignore
     cfg = Config(
         dataset=DatasetConfig(
             name="bloodmnist",
@@ -409,7 +411,7 @@ def test_dump_portable_relative_data_root():
 
 
 @pytest.mark.unit
-def test_dump_portable_no_data_root():
+def test_dump_portable_no_data_root() -> None:
     """Test dump_portable handles None data_root without crashing."""
     cfg = Config(hardware=HardwareConfig(device="cpu"))
     portable = cfg.dump_portable()
@@ -417,7 +419,7 @@ def test_dump_portable_no_data_root():
 
 
 @pytest.mark.unit
-def test_dump_portable_hardware_is_dict():
+def test_dump_portable_hardware_is_dict() -> None:
     """dump_portable returns hardware as a real dict from hardware.model_dump()."""
     cfg = Config(hardware=HardwareConfig(device="cpu"))
     portable = cfg.dump_portable()
@@ -430,7 +432,7 @@ def test_dump_portable_hardware_is_dict():
 
 
 @pytest.mark.unit
-def test_dump_portable_telemetry_uses_portable_dict():
+def test_dump_portable_telemetry_uses_portable_dict() -> None:
     """dump_portable telemetry comes from to_portable_dict, not raw model_dump."""
     cfg = Config(hardware=HardwareConfig(device="cpu"))
     portable = cfg.dump_portable()
@@ -439,11 +441,11 @@ def test_dump_portable_telemetry_uses_portable_dict():
 
 
 @pytest.mark.unit
-def test_dump_portable_relative_path_value():
+def test_dump_portable_relative_path_value() -> None:
     """dump_portable converts absolute data_root to ./relative string."""
     from orchard.core.config import manifest as manifest_mod
 
-    original_root = manifest_mod.PROJECT_ROOT
+    original_root = manifest_mod.PROJECT_ROOT  # type: ignore
     cfg = Config(
         dataset=DatasetConfig(
             name="bloodmnist",
@@ -458,7 +460,7 @@ def test_dump_portable_relative_path_value():
 
 
 @pytest.mark.unit
-def test_dump_serialized_returns_dict():
+def test_dump_serialized_returns_dict() -> None:
     """Test dump_serialized produces JSON-compatible dict with mode='json'."""
     cfg = Config(hardware=HardwareConfig(device="cpu"))
     serialized = cfg.dump_serialized()
@@ -468,7 +470,7 @@ def test_dump_serialized_returns_dict():
 
 
 @pytest.mark.unit
-def test_dump_serialized_paths_are_strings():
+def test_dump_serialized_paths_are_strings() -> None:
     """dump_serialized with mode='json' converts Path objects to strings."""
     cfg = Config(hardware=HardwareConfig(device="cpu"))
     serialized = cfg.dump_serialized()
@@ -479,7 +481,7 @@ def test_dump_serialized_paths_are_strings():
 
 
 @pytest.mark.unit
-def test_run_slug_exact_format():
+def test_run_slug_exact_format() -> None:
     """Test run_slug produces '{dataset}_{model}' format."""
     cfg = Config(
         dataset=DatasetConfig(name="bloodmnist", resolution=28),
@@ -490,7 +492,7 @@ def test_run_slug_exact_format():
 
 
 @pytest.mark.unit
-def test_num_workers_delegates_to_hardware():
+def test_num_workers_delegates_to_hardware() -> None:
     """Test num_workers property delegates to hardware.effective_num_workers."""
     cfg = Config(
         hardware=HardwareConfig(device="cpu", reproducible=True),
@@ -500,7 +502,7 @@ def test_num_workers_delegates_to_hardware():
 
 
 @pytest.mark.unit
-def test_from_recipe_missing_dataset_name(tmp_path):
+def test_from_recipe_missing_dataset_name(tmp_path: Path) -> None:
     """Test from_recipe raises OrchardConfigError when dataset.name is missing."""
     recipe = tmp_path / "recipe.yaml"
     recipe.write_text("dataset:\n  resolution: 28\n")
@@ -509,7 +511,7 @@ def test_from_recipe_missing_dataset_name(tmp_path):
 
 
 @pytest.mark.unit
-def test_from_recipe_unknown_dataset(tmp_path):
+def test_from_recipe_unknown_dataset(tmp_path: Path) -> None:
     """Test from_recipe raises OrchardConfigError for unknown dataset."""
     recipe = tmp_path / "recipe.yaml"
     recipe.write_text("dataset:\n  name: nonexistent_dataset_xyz\n  resolution: 28\n")
@@ -518,7 +520,7 @@ def test_from_recipe_unknown_dataset(tmp_path):
 
 
 @pytest.mark.unit
-def test_from_recipe_with_overrides(tmp_path):
+def test_from_recipe_with_overrides(tmp_path: Path) -> None:
     """Test from_recipe applies dot-notation overrides."""
     recipe = tmp_path / "recipe.yaml"
     recipe.write_text(
@@ -532,7 +534,7 @@ def test_from_recipe_with_overrides(tmp_path):
 
 
 @pytest.mark.unit
-def test_from_recipe_default_resolution_28(tmp_path):
+def test_from_recipe_default_resolution_28(tmp_path: Path) -> None:
     """Test from_recipe uses resolution=28 as default."""
     recipe = tmp_path / "recipe.yaml"
     recipe.write_text(
@@ -548,7 +550,7 @@ def test_from_recipe_default_resolution_28(tmp_path):
 
 
 @pytest.mark.unit
-def test_quantize_int4_mini_cnn_warns():
+def test_quantize_int4_mini_cnn_warns() -> None:
     """4-bit quantization on mini_cnn emits a UserWarning."""
     from orchard.core import ExportConfig
 
@@ -561,7 +563,7 @@ def test_quantize_int4_mini_cnn_warns():
 
 
 @pytest.mark.unit
-def test_quantize_uint4_mini_cnn_warns():
+def test_quantize_uint4_mini_cnn_warns() -> None:
     """uint4 quantization on mini_cnn also triggers the warning."""
     from orchard.core import ExportConfig
 
@@ -574,7 +576,7 @@ def test_quantize_uint4_mini_cnn_warns():
 
 
 @pytest.mark.unit
-def test_quantize_int8_mini_cnn_no_warning():
+def test_quantize_int8_mini_cnn_no_warning() -> None:
     """int8 quantization on mini_cnn is fine — no warning."""
     from orchard.core import ExportConfig
 
@@ -590,7 +592,7 @@ def test_quantize_int8_mini_cnn_no_warning():
 
 
 @pytest.mark.unit
-def test_quantize_int4_resnet_no_warning():
+def test_quantize_int4_resnet_no_warning() -> None:
     """int4 on a larger model (resnet_18) does not warn."""
     from orchard.core import ExportConfig
 
@@ -606,7 +608,7 @@ def test_quantize_int4_resnet_no_warning():
 
 
 @pytest.mark.unit
-def test_quantize_disabled_no_warning():
+def test_quantize_disabled_no_warning() -> None:
     """quantize=False skips the check entirely."""
     from orchard.core import ExportConfig
 
@@ -622,7 +624,7 @@ def test_quantize_disabled_no_warning():
 
 
 @pytest.mark.unit
-def test_no_export_no_warning():
+def test_no_export_no_warning() -> None:
     """No export config at all — no warning."""
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
@@ -638,7 +640,7 @@ def test_no_export_no_warning():
 
 
 @pytest.mark.unit
-def test_warn_optuna_override_quick_conflict():
+def test_warn_optuna_override_quick_conflict() -> None:
     """Override on a quick-preset param triggers warning."""
     with pytest.warns(UserWarning, match=r"training\.learning_rate.*will be ignored"):
         _warn_optuna_override_conflicts(
@@ -648,7 +650,7 @@ def test_warn_optuna_override_quick_conflict():
 
 
 @pytest.mark.unit
-def test_warn_optuna_override_emits_exactly_one():
+def test_warn_optuna_override_emits_exactly_one() -> None:
     """Verify exactly one UserWarning is emitted per call (kills duplicate/removal mutants)."""
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
@@ -661,7 +663,7 @@ def test_warn_optuna_override_emits_exactly_one():
 
 
 @pytest.mark.unit
-def test_warn_optuna_override_full_conflict():
+def test_warn_optuna_override_full_conflict() -> None:
     """Override on a full-only param triggers warning when preset is 'full'."""
     with pytest.warns(UserWarning, match=r"training\.focal_gamma.*will be ignored"):
         _warn_optuna_override_conflicts(
@@ -671,7 +673,7 @@ def test_warn_optuna_override_full_conflict():
 
 
 @pytest.mark.unit
-def test_no_warn_optuna_override_full_param_quick_preset():
+def test_no_warn_optuna_override_full_param_quick_preset() -> None:
     """Full-only params do NOT warn under quick preset."""
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
@@ -684,7 +686,7 @@ def test_no_warn_optuna_override_full_param_quick_preset():
 
 
 @pytest.mark.unit
-def test_no_warn_optuna_override_safe_keys():
+def test_no_warn_optuna_override_safe_keys() -> None:
     """Overrides on non-tunable keys (e.g. epochs, patience) do not warn."""
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
@@ -697,7 +699,7 @@ def test_no_warn_optuna_override_safe_keys():
 
 
 @pytest.mark.unit
-def test_optuna_override_conflict_from_recipe(tmp_path):
+def test_optuna_override_conflict_from_recipe(tmp_path: Path) -> None:
     """End-to-end: from_recipe warns when --set conflicts with Optuna search space."""
     recipe = tmp_path / "recipe.yaml"
     recipe.write_text(
@@ -711,7 +713,7 @@ def test_optuna_override_conflict_from_recipe(tmp_path):
 
 
 @pytest.mark.unit
-def test_no_optuna_override_conflict_without_optuna(tmp_path):
+def test_no_optuna_override_conflict_without_optuna(tmp_path: Path) -> None:
     """No Optuna config → no warning even for tunable keys."""
     recipe = tmp_path / "recipe.yaml"
     recipe.write_text(
@@ -727,7 +729,7 @@ def test_no_optuna_override_conflict_without_optuna(tmp_path):
 
 
 @pytest.mark.unit
-def test_optuna_quick_keys_constant_contents():
+def test_optuna_quick_keys_constant_contents() -> None:
     """Verify _OPTUNA_QUICK_KEYS contains the expected parameters."""
     assert "training.learning_rate" in _OPTUNA_QUICK_KEYS
     assert "training.batch_size" in _OPTUNA_QUICK_KEYS
@@ -736,7 +738,7 @@ def test_optuna_quick_keys_constant_contents():
 
 
 @pytest.mark.unit
-def test_optuna_full_extra_keys_constant_contents():
+def test_optuna_full_extra_keys_constant_contents() -> None:
     """Verify _OPTUNA_FULL_EXTRA_KEYS contains the expected parameters."""
     assert "training.focal_gamma" in _OPTUNA_FULL_EXTRA_KEYS
     assert "augmentation.rotation_angle" in _OPTUNA_FULL_EXTRA_KEYS
@@ -744,7 +746,7 @@ def test_optuna_full_extra_keys_constant_contents():
 
 
 @pytest.mark.unit
-def test_optuna_quick_and_full_disjoint():
+def test_optuna_quick_and_full_disjoint() -> None:
     """Quick and full-extra key sets must not overlap."""
     assert _OPTUNA_QUICK_KEYS & _OPTUNA_FULL_EXTRA_KEYS == frozenset()
 

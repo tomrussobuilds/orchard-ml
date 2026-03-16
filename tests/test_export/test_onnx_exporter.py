@@ -29,14 +29,14 @@ from orchard.export.onnx_exporter import (  # noqa: E402
 class SimpleTestModel(nn.Module):
     """Minimal CNN for export testing."""
 
-    def __init__(self, in_channels=3, num_classes=10):
+    def __init__(self, in_channels=3, num_classes=10):  # type: ignore
         super().__init__()
         self.conv = nn.Conv2d(in_channels, 16, kernel_size=3, padding=1)
         self.relu = nn.ReLU()
         self.pool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Linear(16, num_classes)
 
-    def forward(self, x):
+    def forward(self, x):  # type: ignore
         x = self.conv(x)
         x = self.relu(x)
         x = self.pool(x)
@@ -47,11 +47,11 @@ class SimpleTestModel(nn.Module):
 
 # ONNX EXPORT: BASIC FUNCTIONALITY
 @pytest.mark.unit
-def test_export_to_onnx_basic(tmp_path):
+def test_export_to_onnx_basic(tmp_path: Path) -> None:
     """Test basic ONNX export with default parameters."""
 
     # Create test model and checkpoint
-    model = SimpleTestModel(in_channels=3, num_classes=10)
+    model = SimpleTestModel(in_channels=3, num_classes=10)  # type: ignore
     checkpoint_path = tmp_path / "test_model.pth"
     output_path = tmp_path / "test_model.onnx"
 
@@ -72,10 +72,10 @@ def test_export_to_onnx_basic(tmp_path):
 
 
 @pytest.mark.unit
-def test_export_with_dynamic_axes(tmp_path):
+def test_export_with_dynamic_axes(tmp_path: Path) -> None:
     """Test ONNX export with dynamic batch dimension."""
 
-    model = SimpleTestModel(in_channels=1, num_classes=5)
+    model = SimpleTestModel(in_channels=1, num_classes=5)  # type: ignore
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model_dynamic.onnx"
 
@@ -94,10 +94,10 @@ def test_export_with_dynamic_axes(tmp_path):
 
 
 @pytest.mark.unit
-def test_export_without_dynamic_axes(tmp_path):
+def test_export_without_dynamic_axes(tmp_path: Path) -> None:
     """Test ONNX export with fixed batch dimension."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model_static.onnx"
 
@@ -116,10 +116,10 @@ def test_export_without_dynamic_axes(tmp_path):
 
 
 @pytest.mark.unit
-def test_export_with_different_input_shapes(tmp_path):
+def test_export_with_different_input_shapes(tmp_path: Path) -> None:
     """Test ONNX export with various input resolutions."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
 
     for resolution in [28, 224]:
         checkpoint_path = tmp_path / f"model_{resolution}.pth"
@@ -139,11 +139,11 @@ def test_export_with_different_input_shapes(tmp_path):
 
 
 @pytest.mark.unit
-def test_export_different_channels(tmp_path):
+def test_export_different_channels(tmp_path: Path) -> None:
     """Test ONNX export with different input channel counts."""
 
     for in_channels in [1, 3]:
-        model = SimpleTestModel(in_channels=in_channels, num_classes=8)
+        model = SimpleTestModel(in_channels=in_channels, num_classes=8)  # type: ignore
         checkpoint_path = tmp_path / f"model_{in_channels}ch.pth"
         output_path = tmp_path / f"model_{in_channels}ch.onnx"
 
@@ -162,10 +162,10 @@ def test_export_different_channels(tmp_path):
 
 # ONNX EXPORT: OPSET VERSIONS
 @pytest.mark.unit
-def test_export_with_opset_13(tmp_path):
+def test_export_with_opset_13(tmp_path: Path) -> None:
     """Test ONNX export with opset version 13 (stable)."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model_opset13.onnx"
 
@@ -184,10 +184,10 @@ def test_export_with_opset_13(tmp_path):
 
 
 @pytest.mark.unit
-def test_export_with_opset_16(tmp_path):
+def test_export_with_opset_16(tmp_path: Path) -> None:
     """Test ONNX export with opset version 16 (latest features)."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model_opset16.onnx"
 
@@ -207,10 +207,10 @@ def test_export_with_opset_16(tmp_path):
 
 # ONNX EXPORT: CONSTANT FOLDING
 @pytest.mark.unit
-def test_export_with_constant_folding(tmp_path):
+def test_export_with_constant_folding(tmp_path: Path) -> None:
     """Test ONNX export with constant folding enabled."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model_folded.onnx"
 
@@ -229,10 +229,10 @@ def test_export_with_constant_folding(tmp_path):
 
 
 @pytest.mark.unit
-def test_export_without_constant_folding(tmp_path):
+def test_export_without_constant_folding(tmp_path: Path) -> None:
     """Test ONNX export without constant folding."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model_unfolded.onnx"
 
@@ -256,10 +256,10 @@ def test_export_without_constant_folding(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_export_with_validation_enabled(tmp_path):
+def test_export_with_validation_enabled(tmp_path: Path) -> None:
     """Test ONNX export with validation (requires onnxruntime)."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model_validated.onnx"
 
@@ -278,10 +278,10 @@ def test_export_with_validation_enabled(tmp_path):
 
 # ONNX EXPORT: ERROR HANDLING
 @pytest.mark.unit
-def test_export_missing_checkpoint_raises_error(tmp_path):
+def test_export_missing_checkpoint_raises_error(tmp_path: Path) -> None:
     """Test ONNX export fails gracefully with missing checkpoint."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     checkpoint_path = tmp_path / "nonexistent.pth"
     output_path = tmp_path / "model.onnx"
 
@@ -296,10 +296,10 @@ def test_export_missing_checkpoint_raises_error(tmp_path):
 
 
 @pytest.mark.unit
-def test_export_creates_output_directory(tmp_path):
+def test_export_creates_output_directory(tmp_path: Path) -> None:
     """Test ONNX export creates output directory if needed."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     checkpoint_path = tmp_path / "model.pth"
     output_dir = tmp_path / "exports" / "nested"
     output_path = output_dir / "model.onnx"
@@ -324,10 +324,10 @@ def test_export_creates_output_directory(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_benchmark_onnx_inference(tmp_path):
+def test_benchmark_onnx_inference(tmp_path: Path) -> None:
     """Test ONNX inference benchmarking (requires onnxruntime)."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model.onnx"
 
@@ -350,10 +350,10 @@ def test_benchmark_onnx_inference(tmp_path):
 
 
 @pytest.mark.unit
-def test_export_with_raw_state_dict(tmp_path):
+def test_export_with_raw_state_dict(tmp_path: Path) -> None:
     """Test ONNX export with raw state_dict (no model_state_dict wrapper)."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model.onnx"
 
@@ -372,10 +372,10 @@ def test_export_with_raw_state_dict(tmp_path):
 
 
 @pytest.mark.unit
-def test_export_without_onnx_validation(tmp_path, monkeypatch):
+def test_export_without_onnx_validation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test export when onnx package not available for validation."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model.onnx"
 
@@ -386,7 +386,7 @@ def test_export_without_onnx_validation(tmp_path, monkeypatch):
 
     real_import = builtins.__import__
 
-    def mock_import(name, *args, **kwargs):
+    def mock_import(name, *args, **kwargs):  # type: ignore
         if name == "onnx":
             raise ImportError("onnx not installed")
         return real_import(name, *args, **kwargs)
@@ -406,10 +406,12 @@ def test_export_without_onnx_validation(tmp_path, monkeypatch):
 
 
 @pytest.mark.unit
-def test_export_with_onnx_validation_failure(tmp_path, monkeypatch):
+def test_export_with_onnx_validation_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test export handles ONNX validation exceptions."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model.onnx"
 
@@ -418,7 +420,7 @@ def test_export_with_onnx_validation_failure(tmp_path, monkeypatch):
     # Mock onnx.checker.check_model to raise an exception
     import onnx
 
-    def mock_check_model(_):
+    def mock_check_model(_):  # type: ignore
         raise RuntimeError("ONNX validation error")
 
     monkeypatch.setattr(onnx.checker, "check_model", mock_check_model)
@@ -434,7 +436,7 @@ def test_export_with_onnx_validation_failure(tmp_path, monkeypatch):
 
 
 @pytest.mark.unit
-def test_benchmark_without_onnxruntime(tmp_path, monkeypatch):
+def test_benchmark_without_onnxruntime(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test benchmark returns -1.0 when onnxruntime not available."""
 
     # Create a dummy ONNX file
@@ -446,7 +448,7 @@ def test_benchmark_without_onnxruntime(tmp_path, monkeypatch):
 
     real_import = builtins.__import__
 
-    def mock_import(name, *args, **kwargs):
+    def mock_import(name, *args, **kwargs):  # type: ignore
         if name == "onnxruntime":
             raise ImportError("onnxruntime not installed")
         return real_import(name, *args, **kwargs)
@@ -458,7 +460,7 @@ def test_benchmark_without_onnxruntime(tmp_path, monkeypatch):
 
 
 @pytest.mark.unit
-def test_benchmark_with_invalid_onnx(tmp_path):
+def test_benchmark_with_invalid_onnx(tmp_path: Path) -> None:
     """Test benchmark returns -1.0 with invalid ONNX file."""
 
     # Create an invalid ONNX file
@@ -470,7 +472,7 @@ def test_benchmark_with_invalid_onnx(tmp_path):
 
 
 @pytest.mark.unit
-def test_benchmark_onnx_inference_success(monkeypatch):
+def test_benchmark_onnx_inference_success(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test benchmark_onnx_inference runs full inference loop."""
 
     mock_session = MagicMock()
@@ -500,9 +502,9 @@ def test_benchmark_onnx_inference_success(monkeypatch):
 
 
 # ONNX QUANTIZATION
-def _export_simple_model(tmp_path):
+def _export_simple_model(tmp_path: Path):  # type: ignore
     """Helper: export a SimpleTestModel and return (model, onnx_path)."""
-    model = SimpleTestModel(in_channels=3, num_classes=10)
+    model = SimpleTestModel(in_channels=3, num_classes=10)  # type: ignore
     checkpoint_path = tmp_path / "model.pth"
     onnx_path = tmp_path / "model.onnx"
     torch.save({"model_state_dict": model.state_dict()}, checkpoint_path)
@@ -521,7 +523,7 @@ def _export_simple_model(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_quantize_model_basic(tmp_path):
+def test_quantize_model_basic(tmp_path: Path) -> None:
     """Test basic INT8 quantization of exported ONNX model."""
     from orchard.export.onnx_exporter import quantize_model
 
@@ -539,7 +541,7 @@ def test_quantize_model_basic(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_quantize_model_default_output_name(tmp_path):
+def test_quantize_model_default_output_name(tmp_path: Path) -> None:
     """Test quantized model uses model_quantized.onnx by default."""
     from orchard.export.onnx_exporter import quantize_model
 
@@ -556,7 +558,7 @@ def test_quantize_model_default_output_name(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_quantize_model_custom_output_path(tmp_path):
+def test_quantize_model_custom_output_path(tmp_path: Path) -> None:
     """Test quantization with custom output path."""
     from orchard.export.onnx_exporter import quantize_model
 
@@ -576,7 +578,7 @@ def test_quantize_model_custom_output_path(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_quantize_model_fbgemm_backend(tmp_path):
+def test_quantize_model_fbgemm_backend(tmp_path: Path) -> None:
     """Test quantization with fbgemm backend (per-channel, x86)."""
     from orchard.export.onnx_exporter import quantize_model
 
@@ -592,7 +594,7 @@ def test_quantize_model_fbgemm_backend(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_quantize_model_qnnpack_backend(tmp_path):
+def test_quantize_model_qnnpack_backend(tmp_path: Path) -> None:
     """Test quantization with qnnpack backend (per-tensor, mobile/ARM)."""
     from orchard.export.onnx_exporter import quantize_model
 
@@ -608,7 +610,7 @@ def test_quantize_model_qnnpack_backend(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_quantize_model_uint8(tmp_path):
+def test_quantize_model_uint8(tmp_path: Path) -> None:
     """Test UINT8 quantization of exported ONNX model."""
     from orchard.export.onnx_exporter import quantize_model
 
@@ -625,7 +627,7 @@ def test_quantize_model_uint8(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_quantize_model_int4(tmp_path):
+def test_quantize_model_int4(tmp_path: Path) -> None:
     """Test INT4 quantization of exported ONNX model (edge deployment)."""
     from onnxruntime.quantization import QuantType
 
@@ -646,7 +648,7 @@ def test_quantize_model_int4(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_quantize_model_uint4(tmp_path):
+def test_quantize_model_uint4(tmp_path: Path) -> None:
     """Test UINT4 quantization of exported ONNX model."""
     from onnxruntime.quantization import QuantType
 
@@ -663,13 +665,15 @@ def test_quantize_model_uint4(tmp_path):
 
 
 @pytest.mark.unit
-def test_quantize_model_without_onnxruntime(tmp_path, monkeypatch):
+def test_quantize_model_without_onnxruntime(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test quantize_model returns None when onnxruntime.quantization unavailable."""
     import builtins
 
     real_import = builtins.__import__
 
-    def mock_import(name, *args, **kwargs):
+    def mock_import(name, *args, **kwargs):  # type: ignore
         if "onnxruntime.quantization" in name:
             raise ImportError("onnxruntime.quantization not installed")
         return real_import(name, *args, **kwargs)
@@ -687,7 +691,9 @@ def test_quantize_model_without_onnxruntime(tmp_path, monkeypatch):
 
 
 @pytest.mark.unit
-def test_quantize_model_cleans_up_on_failure(tmp_path, monkeypatch):
+def test_quantize_model_cleans_up_on_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test quantize_model removes partial output file on failure."""
     from orchard.export.onnx_exporter import quantize_model
 
@@ -700,7 +706,7 @@ def test_quantize_model_cleans_up_on_failure(tmp_path, monkeypatch):
 
     real_import = builtins.__import__
 
-    def mock_import(name, *args, **kwargs):
+    def mock_import(name, *args, **kwargs):  # type: ignore
         if "onnxruntime.quantization" in name:
             # Create partial output before failing
             output_path.write_text("partial")
@@ -720,7 +726,7 @@ def test_quantize_model_cleans_up_on_failure(tmp_path, monkeypatch):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_quantize_4bit_warns_no_gemm_nodes(tmp_path):
+def test_quantize_4bit_warns_no_gemm_nodes(tmp_path: Path) -> None:
     """Test INT4 quantization warns when model has no Gemm/MatMul nodes."""
     from onnxruntime.quantization import QuantType
 
@@ -731,15 +737,15 @@ def test_quantize_4bit_warns_no_gemm_nodes(tmp_path):
 
     # Build a purely-Conv model (no Linear → no Gemm/MatMul in ONNX)
     class _ConvOnlyModel(nn.Module):
-        def __init__(self):
+        def __init__(self):  # type: ignore
             super().__init__()
             self.conv = nn.Conv2d(3, 10, kernel_size=3, padding=1)
             self.pool = nn.AdaptiveAvgPool2d(1)
 
-        def forward(self, x):
+        def forward(self, x):  # type: ignore
             return self.pool(self.conv(x)).flatten(1)
 
-    model = _ConvOnlyModel()
+    model = _ConvOnlyModel()  # type: ignore
     checkpoint_path = tmp_path / "conv_only.pth"
     onnx_path = tmp_path / "conv_only.onnx"
     torch.save({"model_state_dict": model.state_dict()}, checkpoint_path)

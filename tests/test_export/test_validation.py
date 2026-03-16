@@ -7,6 +7,8 @@ exported ONNX models for output consistency.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 import torch
 import torch.nn as nn
@@ -22,14 +24,14 @@ from orchard.export.validation import validate_export  # noqa: E402
 class SimpleTestModel(nn.Module):
     """Minimal CNN for validation testing."""
 
-    def __init__(self, in_channels=3, num_classes=10):
+    def __init__(self, in_channels=3, num_classes=10):  # type: ignore
         super().__init__()
         self.conv = nn.Conv2d(in_channels, 16, kernel_size=3, padding=1)
         self.relu = nn.ReLU()
         self.pool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Linear(16, num_classes)
 
-    def forward(self, x):
+    def forward(self, x):  # type: ignore
         x = self.conv(x)
         x = self.relu(x)
         x = self.pool(x)
@@ -44,18 +46,18 @@ class SimpleTestModel(nn.Module):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_validate_export_basic(tmp_path):
+def test_validate_export_basic(tmp_path: Path) -> None:
     """Test basic export validation with default parameters."""
 
     # Create and export model
-    model = SimpleTestModel(in_channels=3, num_classes=10)
+    model = SimpleTestModel(in_channels=3, num_classes=10)  # type: ignore
     model.eval()
     onnx_path = tmp_path / "model.onnx"
 
     dummy_input = torch.randn(1, 3, 28, 28)
     torch.onnx.export(
         model,
-        dummy_input,
+        dummy_input,  # type: ignore
         str(onnx_path),
         opset_version=13,
         input_names=["input"],
@@ -79,17 +81,17 @@ def test_validate_export_basic(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_validate_with_custom_samples(tmp_path):
+def test_validate_with_custom_samples(tmp_path: Path) -> None:
     """Test validation with custom number of samples."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     model.eval()
     onnx_path = tmp_path / "model.onnx"
 
     dummy_input = torch.randn(1, 3, 28, 28)
     torch.onnx.export(
         model,
-        dummy_input,
+        dummy_input,  # type: ignore
         str(onnx_path),
         opset_version=13,
         input_names=["input"],
@@ -112,10 +114,10 @@ def test_validate_with_custom_samples(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_validate_different_input_shapes(tmp_path):
+def test_validate_different_input_shapes(tmp_path: Path) -> None:
     """Test validation with various input resolutions."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     model.eval()
 
     for resolution in [28, 224]:
@@ -123,7 +125,7 @@ def test_validate_different_input_shapes(tmp_path):
         dummy_input = torch.randn(1, 3, resolution, resolution)
         torch.onnx.export(
             model,
-            dummy_input,
+            dummy_input,  # type: ignore
             str(onnx_path),
             opset_version=13,
             input_names=["input"],
@@ -144,18 +146,18 @@ def test_validate_different_input_shapes(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_validate_different_channels(tmp_path):
+def test_validate_different_channels(tmp_path: Path) -> None:
     """Test validation with different channel counts."""
 
     for in_channels in [1, 3]:
-        model = SimpleTestModel(in_channels=in_channels)
+        model = SimpleTestModel(in_channels=in_channels)  # type: ignore
         model.eval()
         onnx_path = tmp_path / f"model_{in_channels}ch.onnx"
 
         dummy_input = torch.randn(1, in_channels, 28, 28)
         torch.onnx.export(
             model,
-            dummy_input,
+            dummy_input,  # type: ignore
             str(onnx_path),
             opset_version=13,
             input_names=["input"],
@@ -177,17 +179,17 @@ def test_validate_different_channels(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_validate_with_strict_tolerance(tmp_path):
+def test_validate_with_strict_tolerance(tmp_path: Path) -> None:
     """Test validation with very strict tolerance."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     model.eval()
     onnx_path = tmp_path / "model.onnx"
 
     dummy_input = torch.randn(1, 3, 28, 28)
     torch.onnx.export(
         model,
-        dummy_input,
+        dummy_input,  # type: ignore
         str(onnx_path),
         opset_version=13,
         input_names=["input"],
@@ -211,17 +213,17 @@ def test_validate_with_strict_tolerance(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_validate_with_relaxed_tolerance(tmp_path):
+def test_validate_with_relaxed_tolerance(tmp_path: Path) -> None:
     """Test validation with relaxed tolerance."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     model.eval()
     onnx_path = tmp_path / "model.onnx"
 
     dummy_input = torch.randn(1, 3, 28, 28)
     torch.onnx.export(
         model,
-        dummy_input,
+        dummy_input,  # type: ignore
         str(onnx_path),
         opset_version=13,
         input_names=["input"],
@@ -245,10 +247,10 @@ def test_validate_with_relaxed_tolerance(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_validate_missing_onnx_file_raises_error(tmp_path):
+def test_validate_missing_onnx_file_raises_error(tmp_path: Path) -> None:
     """Test validation fails with missing ONNX file."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     onnx_path = tmp_path / "nonexistent.onnx"
 
     with pytest.raises(OrchardExportError):
@@ -260,7 +262,9 @@ def test_validate_missing_onnx_file_raises_error(tmp_path):
 
 
 @pytest.mark.unit
-def test_validate_without_onnxruntime_logs_warning(tmp_path, monkeypatch):
+def test_validate_without_onnxruntime_logs_warning(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test validation logs warning when onnxruntime not available."""
     # This test would need to mock onnxruntime import failure
     # For now, we skip it if onnxruntime is available
@@ -273,17 +277,17 @@ def test_validate_without_onnxruntime_logs_warning(tmp_path, monkeypatch):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_validate_single_sample(tmp_path):
+def test_validate_single_sample(tmp_path: Path) -> None:
     """Test validation with just one sample."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     model.eval()
     onnx_path = tmp_path / "model.onnx"
 
     dummy_input = torch.randn(1, 3, 28, 28)
     torch.onnx.export(
         model,
-        dummy_input,
+        dummy_input,  # type: ignore
         str(onnx_path),
         opset_version=13,
         input_names=["input"],
@@ -305,17 +309,17 @@ def test_validate_single_sample(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_validate_model_in_eval_mode(tmp_path):
+def test_validate_model_in_eval_mode(tmp_path: Path) -> None:
     """Test validation works with model in eval mode."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     model.eval()
 
     onnx_path = tmp_path / "model.onnx"
     dummy_input = torch.randn(1, 3, 28, 28)
     torch.onnx.export(
         model,
-        dummy_input,
+        dummy_input,  # type: ignore
         str(onnx_path),
         opset_version=13,
         input_names=["input"],
@@ -337,13 +341,13 @@ def test_validate_model_in_eval_mode(tmp_path):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_validate_fails_with_large_deviation(tmp_path):
+def test_validate_fails_with_large_deviation(tmp_path: Path) -> None:
     """Test validation fails when outputs differ significantly."""
 
     # Create two different models
-    model1 = SimpleTestModel(in_channels=3, num_classes=10)
+    model1 = SimpleTestModel(in_channels=3, num_classes=10)  # type: ignore
     model1.eval()
-    model2 = SimpleTestModel(in_channels=3, num_classes=10)
+    model2 = SimpleTestModel(in_channels=3, num_classes=10)  # type: ignore
     model2.eval()
 
     onnx_path = tmp_path / "model.onnx"
@@ -351,7 +355,7 @@ def test_validate_fails_with_large_deviation(tmp_path):
     dummy_input = torch.randn(1, 3, 28, 28)
     torch.onnx.export(
         model1,
-        dummy_input,
+        dummy_input,  # type: ignore
         str(onnx_path),
         opset_version=13,
         input_names=["input"],
@@ -371,17 +375,19 @@ def test_validate_fails_with_large_deviation(tmp_path):
 
 
 @pytest.mark.unit
-def test_validate_with_onnxruntime_import_error(tmp_path, monkeypatch):
+def test_validate_with_onnxruntime_import_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Test validation returns None when onnxruntime import fails."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     model.eval()
     onnx_path = tmp_path / "model.onnx"
 
     dummy_input = torch.randn(1, 3, 28, 28)
     torch.onnx.export(
         model,
-        dummy_input,
+        dummy_input,  # type: ignore
         str(onnx_path),
         opset_version=13,
         input_names=["input"],
@@ -393,7 +399,7 @@ def test_validate_with_onnxruntime_import_error(tmp_path, monkeypatch):
 
     original_import = builtins.__import__
 
-    def mock_import(name, *args, **kwargs):
+    def mock_import(name, *args, **kwargs):  # type: ignore
         if "onnxruntime" in name:
             raise ImportError("onnxruntime not installed")
         return original_import(name, *args, **kwargs)
@@ -414,17 +420,17 @@ def test_validate_with_onnxruntime_import_error(tmp_path, monkeypatch):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_validate_with_runtime_error(tmp_path, monkeypatch):
+def test_validate_with_runtime_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test validation raises exception on onnxruntime errors."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     model.eval()
     onnx_path = tmp_path / "model.onnx"
 
     dummy_input = torch.randn(1, 3, 28, 28)
     torch.onnx.export(
         model,
-        dummy_input,
+        dummy_input,  # type: ignore
         str(onnx_path),
         opset_version=18,
         input_names=["input"],
@@ -434,7 +440,7 @@ def test_validate_with_runtime_error(tmp_path, monkeypatch):
     # Mock InferenceSession to raise RuntimeError
     import onnxruntime as ort
 
-    def mock_inference_session(*_args, **_kwargs):
+    def mock_inference_session(*_args, **_kwargs):  # type: ignore
         raise RuntimeError("ONNX Runtime error")
 
     monkeypatch.setattr(ort, "InferenceSession", mock_inference_session)
@@ -452,17 +458,17 @@ def test_validate_with_runtime_error(tmp_path, monkeypatch):
     not pytest.importorskip("onnxruntime", reason="onnxruntime not installed"),
     reason="Requires onnxruntime",
 )
-def test_validate_shape_mismatch_raises(tmp_path, monkeypatch):
+def test_validate_shape_mismatch_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test validation raises OrchardExportError when output shapes differ."""
 
-    model = SimpleTestModel()
+    model = SimpleTestModel()  # type: ignore
     model.eval()
     onnx_path = tmp_path / "model.onnx"
 
     dummy_input = torch.randn(1, 3, 28, 28)
     torch.onnx.export(
         model,
-        dummy_input,
+        dummy_input,  # type: ignore
         str(onnx_path),
         opset_version=13,
         input_names=["input"],
@@ -473,10 +479,10 @@ def test_validate_shape_mismatch_raises(tmp_path, monkeypatch):
 
     _OrigSession = ort.InferenceSession
 
-    class _ShapeMismatchSession(_OrigSession):
+    class _ShapeMismatchSession(_OrigSession):  # type: ignore
         """Proxy that returns wrong-shaped output to trigger the shape guard."""
 
-        def run(self, *args, **kwargs):
+        def run(self, *args, **kwargs):  # type: ignore
             super().run(*args, **kwargs)
             import numpy as np
 

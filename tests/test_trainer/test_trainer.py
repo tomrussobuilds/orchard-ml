@@ -8,37 +8,31 @@ early stopping, and scheduler interaction.
 from __future__ import annotations
 
 import tempfile
+from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
 import torch.nn as nn
 
+from orchard.core import TrainingConfig
 from orchard.exceptions import OrchardExportError
 from orchard.trainer import ModelTrainer
 from orchard.trainer._scheduling import step_scheduler
+from tests.conftest import make_training_config
 
 
 # FIXTURES
 @pytest.fixture
-def mock_cfg():
-    """Mock Config with training parameters."""
-    cfg = MagicMock()
-    cfg.training.epochs = 5
-    cfg.training.patience = 3
-    cfg.training.use_amp = False
-    cfg.training.mixup_alpha = 0.0
-    cfg.training.mixup_epochs = 0
-    cfg.training.grad_clip = 1.0
-    cfg.training.use_tqdm = False
-    cfg.training.seed = 42
-    cfg.training.monitor_metric = "auc"
-    return cfg
+def training_cfg() -> TrainingConfig:
+    """Real TrainingConfig with test-friendly defaults."""
+    return make_training_config(epochs=5, patience=3, monitor_metric="auc")
 
 
 @pytest.fixture
-def simple_model():
+def simple_model() -> nn.Sequential:
     """Simple model for testing."""
     return nn.Sequential(
         nn.Flatten(),
@@ -47,7 +41,7 @@ def simple_model():
 
 
 @pytest.fixture
-def mock_loaders():
+def mock_loaders() -> tuple[MagicMock, MagicMock]:
     """Mock train and val loaders."""
     batch = (torch.randn(4, 1, 28, 28), torch.randint(0, 10, (4,)))
 
@@ -63,13 +57,13 @@ def mock_loaders():
 
 
 @pytest.fixture
-def criterion():
+def criterion() -> nn.CrossEntropyLoss:
     """CrossEntropy loss."""
     return nn.CrossEntropyLoss()
 
 
 @pytest.fixture
-def optimizer(simple_model):
+def optimizer(simple_model: nn.Sequential) -> torch.optim.SGD:
     """SGD optimizer."""
     return torch.optim.SGD(
         simple_model.parameters(),
@@ -80,13 +74,20 @@ def optimizer(simple_model):
 
 
 @pytest.fixture
-def scheduler(optimizer):
+def scheduler(optimizer: torch.optim.SGD) -> torch.optim.lr_scheduler.StepLR:
     """StepLR scheduler."""
     return torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
 
 
 @pytest.fixture
-def trainer(simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cfg):
+def trainer(
+    simple_model: nn.Sequential,
+    mock_loaders: tuple[MagicMock, MagicMock],
+    optimizer: torch.optim.SGD,
+    scheduler: torch.optim.lr_scheduler.StepLR,
+    criterion: nn.CrossEntropyLoss,
+    training_cfg: TrainingConfig,
+) -> Iterator[ModelTrainer]:
     """ModelTrainer instance."""
     train_loader, val_loader = mock_loaders
     device = torch.device("cpu")
@@ -94,7 +95,7 @@ def trainer(simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cf
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "best_model.pth"
 
-        trainer = ModelTrainer(
+        t = ModelTrainer(
             model=simple_model,
             train_loader=train_loader,
             val_loader=val_loader,
@@ -102,21 +103,27 @@ def trainer(simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cf
             scheduler=scheduler,
             criterion=criterion,
             device=device,
-            training=mock_cfg.training,
+            training=training_cfg,
             output_path=output_path,
         )
 
         # Keep tmpdir alive
-        trainer._tmpdir = tmpdir
+        t._tmpdir = tmpdir  # type: ignore
 
-        yield trainer
+        yield t
 
 
 # TESTS: INITIALIZATION
 @pytest.mark.unit
 def test_trainer_init(
-    trainer, simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cfg
-):
+    trainer: ModelTrainer,
+    simple_model: nn.Sequential,
+    mock_loaders: tuple[MagicMock, MagicMock],
+    optimizer: torch.optim.SGD,
+    scheduler: torch.optim.lr_scheduler.StepLR,
+    criterion: nn.CrossEntropyLoss,
+    training_cfg: TrainingConfig,
+) -> None:
     """Test ModelTrainer initializes all attributes correctly."""
     train_loader, val_loader = mock_loaders
 
@@ -128,7 +135,7 @@ def test_trainer_init(
     assert trainer.scheduler is scheduler
     assert trainer.criterion is criterion
     assert trainer.device == torch.device("cpu")
-    assert trainer.training is mock_cfg.training
+    assert trainer.training is training_cfg
     assert trainer.tracker is None
 
     # Hyperparameters from config
@@ -164,9 +171,9 @@ def test_trainer_init(
     assert loop.device == torch.device("cpu")
     # scaler/mixup are None for this config, verified above
     # LoopOptions forwarding
-    assert loop.options.grad_clip == mock_cfg.training.grad_clip
+    assert loop.options.grad_clip == training_cfg.grad_clip
     assert loop.options.total_epochs == trainer.epochs
-    assert loop.options.use_tqdm is mock_cfg.training.use_tqdm
+    assert loop.options.use_tqdm is training_cfg.use_tqdm
     assert loop.options.monitor_metric == "auc"
     # No validation_metrics injected → fallback to validate_epoch
     assert loop._validation_metrics is None
@@ -174,12 +181,18 @@ def test_trainer_init(
 
 @pytest.mark.unit
 def test_trainer_forwards_validation_metrics_to_loop(
-    simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cfg, tmp_path
-):
+    simple_model: nn.Sequential,
+    mock_loaders: tuple[MagicMock, MagicMock],
+    optimizer: torch.optim.SGD,
+    scheduler: torch.optim.lr_scheduler.StepLR,
+    criterion: nn.CrossEntropyLoss,
+    training_cfg: TrainingConfig,
+    tmp_path: Path,
+) -> None:
     """ModelTrainer passes validation_metrics to the inner TrainingLoop."""
     mock_adapter = MagicMock()
     train_loader, val_loader = mock_loaders
-    trainer = ModelTrainer(
+    t = ModelTrainer(
         model=simple_model,
         train_loader=train_loader,
         val_loader=val_loader,
@@ -187,17 +200,22 @@ def test_trainer_forwards_validation_metrics_to_loop(
         scheduler=scheduler,
         criterion=criterion,
         device=torch.device("cpu"),
-        training=mock_cfg.training,
+        training=training_cfg,
         output_path=tmp_path / "best.pth",
         validation_metrics=mock_adapter,
     )
-    assert trainer._loop._validation_metrics is mock_adapter
+    assert t._loop._validation_metrics is mock_adapter
 
 
 @pytest.mark.unit
 def test_trainer_creates_output_dir(
-    simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cfg
-):
+    simple_model: nn.Sequential,
+    mock_loaders: tuple[MagicMock, MagicMock],
+    optimizer: torch.optim.SGD,
+    scheduler: torch.optim.lr_scheduler.StepLR,
+    criterion: nn.CrossEntropyLoss,
+    training_cfg: TrainingConfig,
+) -> None:
     """Test trainer creates output directory."""
     train_loader, val_loader = mock_loaders
 
@@ -215,7 +233,7 @@ def test_trainer_creates_output_dir(
             scheduler=scheduler,
             criterion=criterion,
             device=torch.device("cpu"),
-            training=mock_cfg.training,
+            training=training_cfg,
             output_path=output_path,
         )
 
@@ -225,21 +243,20 @@ def test_trainer_creates_output_dir(
 
 @pytest.mark.filterwarnings("ignore:.*GradScaler is enabled, but CUDA is not available.*")
 @pytest.mark.unit
-def test_trainer_amp_scaler_enabled(simple_model, mock_loaders, optimizer, scheduler, criterion):
+def test_trainer_amp_scaler_enabled(
+    simple_model: nn.Sequential,
+    mock_loaders: tuple[MagicMock, MagicMock],
+    optimizer: torch.optim.SGD,
+    scheduler: torch.optim.lr_scheduler.StepLR,
+    criterion: nn.CrossEntropyLoss,
+) -> None:
     """Test AMP scaler is created when enabled."""
     train_loader, val_loader = mock_loaders
-    cfg = MagicMock()
-    cfg.training.epochs = 1
-    cfg.training.patience = 1
-    cfg.training.use_amp = True
-    cfg.training.mixup_alpha = 0.0
-    cfg.training.mixup_epochs = 0
-    cfg.training.grad_clip = 0.0
-    cfg.training.use_tqdm = False
-    cfg.training.seed = 42
-    cfg.training.monitor_metric = "auc"
+    training = make_training_config(
+        epochs=1, patience=1, use_amp=True, grad_clip=0.0, monitor_metric="auc"
+    )
 
-    trainer = ModelTrainer(
+    t = ModelTrainer(
         model=simple_model,
         train_loader=train_loader,
         val_loader=val_loader,
@@ -247,30 +264,27 @@ def test_trainer_amp_scaler_enabled(simple_model, mock_loaders, optimizer, sched
         scheduler=scheduler,
         criterion=criterion,
         device=torch.device("cpu"),
-        training=cfg.training,
+        training=training,
     )
 
-    assert trainer.scaler is not None
+    assert t.scaler is not None
     # Scaler must be forwarded to the loop kernel (not None)
-    assert trainer._loop.scaler is trainer.scaler
+    assert t._loop.scaler is t.scaler
 
 
 @pytest.mark.unit
 def test_trainer_forwards_device_to_amp_scaler(
-    simple_model, mock_loaders, optimizer, scheduler, criterion
-):
+    simple_model: nn.Sequential,
+    mock_loaders: tuple[MagicMock, MagicMock],
+    optimizer: torch.optim.SGD,
+    scheduler: torch.optim.lr_scheduler.StepLR,
+    criterion: nn.CrossEntropyLoss,
+) -> None:
     """create_amp_scaler receives str(device), not None or default."""
     train_loader, val_loader = mock_loaders
-    cfg = MagicMock()
-    cfg.training.epochs = 1
-    cfg.training.patience = 1
-    cfg.training.use_amp = True
-    cfg.training.mixup_alpha = 0.0
-    cfg.training.mixup_epochs = 0
-    cfg.training.grad_clip = 0.0
-    cfg.training.use_tqdm = False
-    cfg.training.seed = 42
-    cfg.training.monitor_metric = "auc"
+    training = make_training_config(
+        epochs=1, patience=1, use_amp=True, grad_clip=0.0, monitor_metric="auc"
+    )
 
     with patch("orchard.trainer.trainer.create_amp_scaler") as mock_cas:
         mock_cas.return_value = None
@@ -282,18 +296,23 @@ def test_trainer_forwards_device_to_amp_scaler(
             scheduler=scheduler,
             criterion=criterion,
             device=torch.device("cpu"),
-            training=cfg.training,
+            training=training,
         )
-        mock_cas.assert_called_once_with(cfg.training, device="cpu")
+        mock_cas.assert_called_once_with(training, device="cpu")
 
 
 @pytest.mark.unit
 def test_trainer_default_best_path(
-    simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cfg
-):
+    simple_model: nn.Sequential,
+    mock_loaders: tuple[MagicMock, MagicMock],
+    optimizer: torch.optim.SGD,
+    scheduler: torch.optim.lr_scheduler.StepLR,
+    criterion: nn.CrossEntropyLoss,
+    training_cfg: TrainingConfig,
+) -> None:
     """When output_path is None, best_path defaults to ./best_model.pth (exact name)."""
     train_loader, val_loader = mock_loaders
-    trainer = ModelTrainer(
+    t = ModelTrainer(
         model=simple_model,
         train_loader=train_loader,
         val_loader=val_loader,
@@ -301,16 +320,21 @@ def test_trainer_default_best_path(
         scheduler=scheduler,
         criterion=criterion,
         device=torch.device("cpu"),
-        training=mock_cfg.training,
+        training=training_cfg,
         output_path=None,
     )
-    assert trainer.best_path == Path("./best_model.pth")
+    assert t.best_path == Path("./best_model.pth")
 
 
 @pytest.mark.unit
 def test_trainer_creates_nested_output_dir(
-    simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cfg
-):
+    simple_model: nn.Sequential,
+    mock_loaders: tuple[MagicMock, MagicMock],
+    optimizer: torch.optim.SGD,
+    scheduler: torch.optim.lr_scheduler.StepLR,
+    criterion: nn.CrossEntropyLoss,
+    training_cfg: TrainingConfig,
+) -> None:
     """mkdir(parents=True) creates nested directories (kills parents=False/None mutants)."""
     train_loader, val_loader = mock_loaders
 
@@ -326,7 +350,7 @@ def test_trainer_creates_nested_output_dir(
             scheduler=scheduler,
             criterion=criterion,
             device=torch.device("cpu"),
-            training=mock_cfg.training,
+            training=training_cfg,
             output_path=output_path,
         )
 
@@ -335,9 +359,9 @@ def test_trainer_creates_nested_output_dir(
 
 # TESTS: CHECKPOINTING
 @pytest.mark.unit
-def test_handle_checkpointing_improves(trainer):
+def test_handle_checkpointing_improves(trainer: ModelTrainer) -> None:
     """Test checkpointing saves when AUC improves."""
-    val_metrics = {"accuracy": 0.9, "auc": 0.85}
+    val_metrics: dict[str, Any] = {"accuracy": 0.9, "auc": 0.85}
 
     should_stop = trainer._handle_checkpointing(val_metrics)
 
@@ -353,10 +377,10 @@ def test_handle_checkpointing_improves(trainer):
 
 
 @pytest.mark.unit
-def test_handle_checkpointing_strict_greater(trainer):
+def test_handle_checkpointing_strict_greater(trainer: ModelTrainer) -> None:
     """Test checkpointing requires strictly greater, not equal."""
     trainer.best_metric = 0.85
-    val_metrics = {"accuracy": 0.9, "auc": 0.85}
+    val_metrics: dict[str, Any] = {"accuracy": 0.9, "auc": 0.85}
 
     should_stop = trainer._handle_checkpointing(val_metrics)
 
@@ -367,11 +391,11 @@ def test_handle_checkpointing_strict_greater(trainer):
 
 
 @pytest.mark.unit
-def test_handle_checkpointing_no_improve(trainer):
+def test_handle_checkpointing_no_improve(trainer: ModelTrainer) -> None:
     """Test checkpointing increments patience when no improvement."""
     trainer.best_metric = 0.9
 
-    val_metrics = {"accuracy": 0.8, "auc": 0.85}
+    val_metrics: dict[str, Any] = {"accuracy": 0.8, "auc": 0.85}
 
     should_stop = trainer._handle_checkpointing(val_metrics)
 
@@ -381,12 +405,12 @@ def test_handle_checkpointing_no_improve(trainer):
 
 
 @pytest.mark.unit
-def test_handle_checkpointing_early_stop(trainer):
+def test_handle_checkpointing_early_stop(trainer: ModelTrainer) -> None:
     """Test early stopping triggers after patience exhausted."""
     trainer.best_metric = 0.95
     trainer.epochs_no_improve = 2
 
-    val_metrics = {"accuracy": 0.8, "auc": 0.85}
+    val_metrics: dict[str, Any] = {"accuracy": 0.8, "auc": 0.85}
 
     should_stop = trainer._handle_checkpointing(val_metrics)
 
@@ -397,36 +421,40 @@ def test_handle_checkpointing_early_stop(trainer):
 # TESTS: SCHEDULER
 @pytest.mark.unit
 def test_step_scheduler_reduce_on_plateau(
-    simple_model, mock_loaders, optimizer, criterion, mock_cfg
-):
+    simple_model: nn.Sequential,
+    mock_loaders: tuple[MagicMock, MagicMock],
+    optimizer: torch.optim.SGD,
+    criterion: nn.CrossEntropyLoss,
+    training_cfg: TrainingConfig,
+) -> None:
     """Test scheduler step with ReduceLROnPlateau."""
     train_loader, val_loader = mock_loaders
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min")
+    rop_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min")
 
-    trainer = ModelTrainer(
+    t = ModelTrainer(
         model=simple_model,
         train_loader=train_loader,
         val_loader=val_loader,
         optimizer=optimizer,
-        scheduler=scheduler,
+        scheduler=rop_scheduler,
         criterion=criterion,
         device=torch.device("cpu"),
-        training=mock_cfg.training,
+        training=training_cfg,
     )
 
-    step_scheduler(trainer.scheduler, 0.5)
+    step_scheduler(t.scheduler, 0.5)
 
 
 @pytest.mark.unit
-def test_step_scheduler_step_lr(trainer):
+def test_step_scheduler_step_lr(trainer: ModelTrainer) -> None:
     """Test scheduler step with StepLR."""
-    trainer.optimizer.step = MagicMock()
+    trainer.optimizer.step = MagicMock()  # type: ignore
     step_scheduler(trainer.scheduler, 0.5)
 
 
 # TESTS: LOAD BEST WEIGHTS
 @pytest.mark.unit
-def test_load_best_weights_success(trainer):
+def test_load_best_weights_success(trainer: ModelTrainer) -> None:
     """Test loading best weights from checkpoint."""
     torch.save(trainer.model.state_dict(), trainer.best_path)
 
@@ -442,7 +470,7 @@ def test_load_best_weights_success(trainer):
 
 
 @pytest.mark.unit
-def test_load_best_weights_restores_device(trainer):
+def test_load_best_weights_restores_device(trainer: ModelTrainer) -> None:
     """Test load_best_weights passes correct device to load_model_weights."""
     torch.save(trainer.model.state_dict(), trainer.best_path)
 
@@ -454,7 +482,7 @@ def test_load_best_weights_restores_device(trainer):
 
 
 @pytest.mark.unit
-def test_load_best_weights_reraises_runtime_error(trainer):
+def test_load_best_weights_reraises_runtime_error(trainer: ModelTrainer) -> None:
     """Test load_best_weights re-raises RuntimeError from incompatible state dict."""
     torch.save(trainer.model.state_dict(), trainer.best_path)
 
@@ -464,7 +492,7 @@ def test_load_best_weights_reraises_runtime_error(trainer):
 
 
 @pytest.mark.unit
-def test_load_best_weights_file_not_found(trainer):
+def test_load_best_weights_file_not_found(trainer: ModelTrainer) -> None:
     """Test load_best_weights raises when file doesn't exist."""
 
     if trainer.best_path.exists():
@@ -475,7 +503,7 @@ def test_load_best_weights_file_not_found(trainer):
 
 
 @pytest.mark.unit
-def test_load_best_weights_error_logging(trainer):
+def test_load_best_weights_error_logging(trainer: ModelTrainer) -> None:
     """load_best_weights logs error with LogStyle args and the exception (not None)."""
     from orchard.core import LogStyle
 
@@ -499,7 +527,9 @@ def test_load_best_weights_error_logging(trainer):
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")
-def test_train_full_loop(mock_validate, mock_train, trainer):
+def test_train_full_loop(
+    mock_validate: MagicMock, mock_train: MagicMock, trainer: ModelTrainer
+) -> None:
     """Test full training loop executes all epochs without early stopping."""
     mock_train.return_value = 0.5
     mock_validate.side_effect = [
@@ -510,7 +540,7 @@ def test_train_full_loop(mock_validate, mock_train, trainer):
         {"loss": 0.3, "accuracy": 0.9, "auc": 0.84},
     ]
 
-    trainer.optimizer.step = MagicMock()
+    trainer.optimizer.step = MagicMock()  # type: ignore
     trainer.optimizer.step()
     best_path, train_losses, val_metrics = trainer.train()
 
@@ -522,7 +552,9 @@ def test_train_full_loop(mock_validate, mock_train, trainer):
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")
-def test_train_early_stopping(mock_validate, mock_train, trainer):
+def test_train_early_stopping(
+    mock_validate: MagicMock, mock_train: MagicMock, trainer: ModelTrainer
+) -> None:
     """Test training stops early when patience is exhausted."""
 
     # --- 1. Mock training and validation ---
@@ -534,7 +566,7 @@ def test_train_early_stopping(mock_validate, mock_train, trainer):
     trainer.epochs_no_improve = 0
 
     # --- 3. Mock optimizer step to suppress PyTorch warnings ---
-    trainer.optimizer.step = MagicMock()
+    trainer.optimizer.step = MagicMock()  # type: ignore
     trainer.optimizer.step()
 
     # --- 4. Run trainer ---
@@ -554,24 +586,28 @@ def test_train_early_stopping(mock_validate, mock_train, trainer):
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")
 def test_train_mixup_cutoff(
-    mock_validate, mock_train, simple_model, mock_loaders, optimizer, scheduler, criterion
-):
+    mock_validate: MagicMock,
+    mock_train: MagicMock,
+    simple_model: nn.Sequential,
+    mock_loaders: tuple[MagicMock, MagicMock],
+    optimizer: torch.optim.SGD,
+    scheduler: torch.optim.lr_scheduler.StepLR,
+    criterion: nn.CrossEntropyLoss,
+) -> None:
     """Test MixUp is disabled after mixup_epochs."""
     train_loader, val_loader = mock_loaders
 
-    cfg = MagicMock()
-    cfg.training.epochs = 10
-    cfg.training.patience = 20
-    cfg.training.use_amp = False
-    cfg.training.mixup_alpha = 1.0
-    cfg.training.mixup_epochs = 5
-    cfg.training.grad_clip = 0.0
-    cfg.training.seed = 42
-    cfg.training.use_tqdm = False
-    cfg.training.monitor_metric = "auc"
+    training = make_training_config(
+        epochs=10,
+        patience=20,
+        mixup_alpha=1.0,
+        mixup_epochs=5,
+        grad_clip=0.0,
+        monitor_metric="auc",
+    )
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        trainer = ModelTrainer(
+        t = ModelTrainer(
             model=simple_model,
             train_loader=train_loader,
             val_loader=val_loader,
@@ -579,14 +615,14 @@ def test_train_mixup_cutoff(
             scheduler=scheduler,
             criterion=criterion,
             device=torch.device("cpu"),
-            training=cfg.training,
+            training=training,
             output_path=Path(tmpdir) / "best.pth",
         )
 
         mock_train.return_value = 0.5
         mock_validate.return_value = {"loss": 0.3, "accuracy": 0.9, "auc": 0.85}
 
-        trainer.train()
+        t.train()
 
         calls = mock_train.call_args_list
 
@@ -598,33 +634,37 @@ def test_train_mixup_cutoff(
 @pytest.mark.unit
 @pytest.mark.filterwarnings("ignore:.*lr_scheduler.step.*before.*optimizer.step.*:UserWarning")
 def test_step_scheduler_calls_step_for_non_plateau(
-    simple_model, mock_loaders, optimizer, criterion, mock_cfg
-):
+    simple_model: nn.Sequential,
+    mock_loaders: tuple[MagicMock, MagicMock],
+    optimizer: torch.optim.SGD,
+    criterion: nn.CrossEntropyLoss,
+    training_cfg: TrainingConfig,
+) -> None:
     """Test scheduler.step() is called for non-plateau schedulers."""
     train_loader, val_loader = mock_loaders
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2)
+    step_sched = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2)
 
-    trainer = ModelTrainer(
+    t = ModelTrainer(
         model=simple_model,
         train_loader=train_loader,
         val_loader=val_loader,
         optimizer=optimizer,
-        scheduler=scheduler,
+        scheduler=step_sched,
         criterion=criterion,
         device=torch.device("cpu"),
-        training=mock_cfg.training,
+        training=training_cfg,
     )
 
-    original_step = trainer.scheduler.step
+    original_step = t.scheduler.step
     call_count = [0]
 
-    def mock_step(*args, **kwargs):
+    def mock_step(*args: Any, **kwargs: Any) -> None:
         call_count[0] += 1
-        return original_step(*args, **kwargs)
+        original_step(*args, **kwargs)
 
-    trainer.scheduler.step = mock_step
+    t.scheduler.step = mock_step  # type: ignore
 
-    step_scheduler(trainer.scheduler, 0.5)
+    step_scheduler(t.scheduler, 0.5)
 
     assert call_count[0] == 1, "scheduler.step() should be called for non-plateau schedulers"
 
@@ -633,8 +673,15 @@ def test_step_scheduler_calls_step_for_non_plateau(
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")
 def test_train_loads_existing_checkpoint_when_no_improvement(
-    mock_validate, mock_train, simple_model, mock_loaders, optimizer, scheduler, criterion, mock_cfg
-):
+    mock_validate: MagicMock,
+    mock_train: MagicMock,
+    simple_model: nn.Sequential,
+    mock_loaders: tuple[MagicMock, MagicMock],
+    optimizer: torch.optim.SGD,
+    scheduler: torch.optim.lr_scheduler.StepLR,
+    criterion: nn.CrossEntropyLoss,
+    training_cfg: TrainingConfig,
+) -> None:
     """Test training loads existing checkpoint when model never improves.
 
     This covers the case where best_path exists (from previous run) but
@@ -648,7 +695,7 @@ def test_train_loads_existing_checkpoint_when_no_improvement(
         # Pre-create a checkpoint file (simulating previous run)
         torch.save(simple_model.state_dict(), output_path)
 
-        trainer = ModelTrainer(
+        t = ModelTrainer(
             model=simple_model,
             train_loader=train_loader,
             val_loader=val_loader,
@@ -656,23 +703,23 @@ def test_train_loads_existing_checkpoint_when_no_improvement(
             scheduler=scheduler,
             criterion=criterion,
             device=torch.device("cpu"),
-            training=mock_cfg.training,
+            training=training_cfg,
             output_path=output_path,
         )
 
         # set best_metric very high so model never improves
-        trainer.best_metric = 0.9999
+        t.best_metric = 0.9999
 
         mock_train.return_value = 0.5
         # Return constant metrics that won't improve best_auc
         mock_validate.return_value = {"loss": 0.3, "accuracy": 0.9, "auc": 0.5}
 
-        trainer.optimizer.step = MagicMock()
+        t.optimizer.step = MagicMock()  # type: ignore
 
-        best_path, _, _ = trainer.train()
+        best_path, _, _ = t.train()
 
         # Verify checkpoint was loaded (not saved during training)
-        assert trainer._checkpoint_saved is False
+        assert t._checkpoint_saved is False
         assert best_path.exists()
 
 
@@ -680,24 +727,26 @@ def test_train_loads_existing_checkpoint_when_no_improvement(
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")
 def test_train_raises_on_missing_monitor_metric(
-    mock_validate, mock_train, simple_model, mock_loaders, optimizer, scheduler, criterion
-):
+    mock_validate: MagicMock,
+    mock_train: MagicMock,
+    simple_model: nn.Sequential,
+    mock_loaders: tuple[MagicMock, MagicMock],
+    optimizer: torch.optim.SGD,
+    scheduler: torch.optim.lr_scheduler.StepLR,
+    criterion: nn.CrossEntropyLoss,
+) -> None:
     """Test training raises KeyError when monitor_metric is not in val_metrics."""
     train_loader, val_loader = mock_loaders
 
-    cfg = MagicMock()
-    cfg.training.epochs = 1
-    cfg.training.patience = 3
-    cfg.training.use_amp = False
-    cfg.training.mixup_alpha = 0.0
-    cfg.training.mixup_epochs = 0
-    cfg.training.grad_clip = 0.0
-    cfg.training.use_tqdm = False
-    cfg.training.seed = 42
-    cfg.training.monitor_metric = "nonexistent_metric"
+    training = make_training_config(
+        epochs=1,
+        patience=3,
+        grad_clip=0.0,
+        monitor_metric="f1",
+    )
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        trainer = ModelTrainer(
+        t = ModelTrainer(
             model=simple_model,
             train_loader=train_loader,
             val_loader=val_loader,
@@ -705,19 +754,20 @@ def test_train_raises_on_missing_monitor_metric(
             scheduler=scheduler,
             criterion=criterion,
             device=torch.device("cpu"),
-            training=cfg.training,
+            training=training,
             output_path=Path(tmpdir) / "best.pth",
         )
 
         mock_train.return_value = 0.5
+        # val_metrics does NOT contain "f1" → KeyError expected
         mock_validate.return_value = {"loss": 0.3, "accuracy": 0.9, "auc": 0.85}
 
-        with pytest.raises(KeyError, match="nonexistent_metric"):
-            trainer.train()
+        with pytest.raises(KeyError, match="f1"):
+            t.train()
 
 
 @pytest.mark.unit
-def test_finalize_weights_loads_best_when_checkpoint_saved(trainer):
+def test_finalize_weights_loads_best_when_checkpoint_saved(trainer: ModelTrainer) -> None:
     """Test _finalize_weights loads best weights when checkpoint was saved."""
     torch.save(trainer.model.state_dict(), trainer.best_path)
     trainer._checkpoint_saved = True
@@ -731,7 +781,7 @@ def test_finalize_weights_loads_best_when_checkpoint_saved(trainer):
 
 
 @pytest.mark.unit
-def test_finalize_weights_loads_existing_when_no_improvement(trainer):
+def test_finalize_weights_loads_existing_when_no_improvement(trainer: ModelTrainer) -> None:
     """Test _finalize_weights loads existing checkpoint when no improvement."""
     torch.save(trainer.model.state_dict(), trainer.best_path)
     trainer._checkpoint_saved = False
@@ -744,7 +794,7 @@ def test_finalize_weights_loads_existing_when_no_improvement(trainer):
 
 
 @pytest.mark.unit
-def test_finalize_weights_saves_fallback_when_no_checkpoint(trainer):
+def test_finalize_weights_saves_fallback_when_no_checkpoint(trainer: ModelTrainer) -> None:
     """Test _finalize_weights saves current state when no checkpoint exists."""
     if trainer.best_path.exists():
         trainer.best_path.unlink()
@@ -757,7 +807,7 @@ def test_finalize_weights_saves_fallback_when_no_checkpoint(trainer):
 
 
 @pytest.mark.unit
-def test_finalize_weights_fallback_saves_valid_state_dict(trainer):
+def test_finalize_weights_fallback_saves_valid_state_dict(trainer: ModelTrainer) -> None:
     """Fallback branch saves model.state_dict() (not None) to best_path."""
     if trainer.best_path.exists():
         trainer.best_path.unlink()
@@ -772,7 +822,7 @@ def test_finalize_weights_fallback_saves_valid_state_dict(trainer):
 
 
 @pytest.mark.unit
-def test_finalize_weights_no_improve_logs_warning_with_message(trainer):
+def test_finalize_weights_no_improve_logs_warning_with_message(trainer: ModelTrainer) -> None:
     """_finalize_weights logs the no-improvement message in the warning (not None)."""
     torch.save(trainer.model.state_dict(), trainer.best_path)
     trainer._checkpoint_saved = False
@@ -789,7 +839,7 @@ def test_finalize_weights_no_improve_logs_warning_with_message(trainer):
 
 
 @pytest.mark.unit
-def test_finalize_weights_fallback_logs_warning_with_message(trainer):
+def test_finalize_weights_fallback_logs_warning_with_message(trainer: ModelTrainer) -> None:
     """_finalize_weights fallback branch logs warning with no_improve_msg."""
     if trainer.best_path.exists():
         trainer.best_path.unlink()
@@ -805,7 +855,7 @@ def test_finalize_weights_fallback_logs_warning_with_message(trainer):
 
 
 @pytest.mark.unit
-def test_finalize_requires_both_saved_and_exists(trainer):
+def test_finalize_requires_both_saved_and_exists(trainer: ModelTrainer) -> None:
     """Test _finalize_weights requires BOTH _checkpoint_saved AND best_path.exists().
 
     When _checkpoint_saved=True but file doesn't exist, should NOT take the
@@ -824,7 +874,9 @@ def test_finalize_requires_both_saved_and_exists(trainer):
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")
-def test_train_tracks_best_acc(mock_validate, mock_train, trainer):
+def test_train_tracks_best_acc(
+    mock_validate: MagicMock, mock_train: MagicMock, trainer: ModelTrainer
+) -> None:
     """Test train() updates best_acc correctly."""
     mock_train.return_value = 0.5
     mock_validate.side_effect = [
@@ -835,7 +887,7 @@ def test_train_tracks_best_acc(mock_validate, mock_train, trainer):
         {"loss": 0.3, "accuracy": 0.91, "auc": 0.84},
     ]
 
-    trainer.optimizer.step = MagicMock()
+    trainer.optimizer.step = MagicMock()  # type: ignore
 
     trainer.train()
 
@@ -845,7 +897,9 @@ def test_train_tracks_best_acc(mock_validate, mock_train, trainer):
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")
-def test_train_records_val_loss_and_monitor(mock_validate, mock_train, trainer):
+def test_train_records_val_loss_and_monitor(
+    mock_validate: MagicMock, mock_train: MagicMock, trainer: ModelTrainer
+) -> None:
     """Test train() correctly reads val_loss and monitor_value from metrics."""
     mock_train.return_value = 0.5
     mock_validate.side_effect = [
@@ -856,7 +910,7 @@ def test_train_records_val_loss_and_monitor(mock_validate, mock_train, trainer):
         {"loss": 0.2, "accuracy": 0.93, "auc": 0.92},
     ]
 
-    trainer.optimizer.step = MagicMock()
+    trainer.optimizer.step = MagicMock()  # type: ignore
 
     _, train_losses, val_metrics = trainer.train()
 
@@ -873,7 +927,9 @@ def test_train_records_val_loss_and_monitor(mock_validate, mock_train, trainer):
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")
-def test_train_calls_tracker(mock_validate, mock_train, trainer):
+def test_train_calls_tracker(
+    mock_validate: MagicMock, mock_train: MagicMock, trainer: ModelTrainer
+) -> None:
     """Test train() calls tracker.log_epoch when tracker is set."""
     mock_train.return_value = 0.5
     # Increasing AUC so no early stopping
@@ -881,7 +937,7 @@ def test_train_calls_tracker(mock_validate, mock_train, trainer):
         {"loss": 0.3, "accuracy": 0.9, "auc": 0.80 + i * 0.01} for i in range(trainer.epochs)
     ]
 
-    trainer.optimizer.step = MagicMock()
+    trainer.optimizer.step = MagicMock()  # type: ignore
 
     mock_tracker = MagicMock()
     trainer.tracker = mock_tracker
@@ -898,13 +954,15 @@ def test_train_calls_tracker(mock_validate, mock_train, trainer):
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")
-def test_train_early_stop_warning(mock_validate, mock_train, trainer):
+def test_train_early_stop_warning(
+    mock_validate: MagicMock, mock_train: MagicMock, trainer: ModelTrainer
+) -> None:
     """Test train() logs warning on early stopping."""
     mock_train.return_value = 0.5
     mock_validate.return_value = {"loss": 0.5, "accuracy": 0.5, "auc": 0.5}
 
     trainer.best_metric = 0.95
-    trainer.optimizer.step = MagicMock()
+    trainer.optimizer.step = MagicMock()  # type: ignore
 
     with patch("orchard.trainer.trainer.logger") as mock_logger:
         trainer.train()
@@ -920,13 +978,15 @@ def test_train_early_stop_warning(mock_validate, mock_train, trainer):
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")
-def test_train_early_stop_warning_includes_epoch(mock_validate, mock_train, trainer):
+def test_train_early_stop_warning_includes_epoch(
+    mock_validate: MagicMock, mock_train: MagicMock, trainer: ModelTrainer
+) -> None:
     """Early stopping warning includes the actual epoch number (not None)."""
     mock_train.return_value = 0.5
     mock_validate.return_value = {"loss": 0.5, "accuracy": 0.5, "auc": 0.5}
 
     trainer.best_metric = 0.95
-    trainer.optimizer.step = MagicMock()
+    trainer.optimizer.step = MagicMock()  # type: ignore
 
     with patch("orchard.trainer.trainer.logger") as mock_logger:
         trainer.train()
@@ -943,7 +1003,9 @@ def test_train_early_stop_warning_includes_epoch(mock_validate, mock_train, trai
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")
-def test_train_best_acc_strict_greater(mock_validate, mock_train, trainer):
+def test_train_best_acc_strict_greater(
+    mock_validate: MagicMock, mock_train: MagicMock, trainer: ModelTrainer
+) -> None:
     """best_acc updates only on strict > (not >=), kills > to >= mutant.
 
     With >=, best_acc would be reset to 0.80 on the very first epoch
@@ -959,7 +1021,7 @@ def test_train_best_acc_strict_greater(mock_validate, mock_train, trainer):
         {"loss": 0.3, "accuracy": 0.90, "auc": 0.80 + i * 0.01} for i in range(trainer.epochs)
     ]
 
-    trainer.optimizer.step = MagicMock()
+    trainer.optimizer.step = MagicMock()  # type: ignore
     # Set best_acc = val_acc so the > condition should be False
     trainer.best_acc = 0.90
 
@@ -975,14 +1037,16 @@ def test_train_best_acc_strict_greater(mock_validate, mock_train, trainer):
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")
-def test_train_log_epoch_summary_receives_real_values(mock_validate, mock_train, trainer):
+def test_train_log_epoch_summary_receives_real_values(
+    mock_validate: MagicMock, mock_train: MagicMock, trainer: ModelTrainer
+) -> None:
     """_log_epoch_summary receives actual values (not None) for all arguments."""
     mock_train.return_value = 0.42
     mock_validate.side_effect = [
         {"loss": 0.3, "accuracy": 0.9, "auc": 0.80 + i * 0.01} for i in range(trainer.epochs)
     ]
 
-    trainer.optimizer.step = MagicMock()
+    trainer.optimizer.step = MagicMock()  # type: ignore
 
     with patch.object(trainer, "_log_epoch_summary") as mock_log:
         trainer.train()
@@ -1002,7 +1066,9 @@ def test_train_log_epoch_summary_receives_real_values(mock_validate, mock_train,
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")
-def test_train_val_loss_extracted_from_metrics(mock_validate, mock_train, trainer):
+def test_train_val_loss_extracted_from_metrics(
+    mock_validate: MagicMock, mock_train: MagicMock, trainer: ModelTrainer
+) -> None:
     """val_loss is read from val_metrics[METRIC_LOSS] (not set to None)."""
     mock_train.return_value = 0.5
     mock_validate.return_value = {"loss": 0.25, "accuracy": 0.9, "auc": 0.85}
@@ -1015,7 +1081,7 @@ def test_train_val_loss_extracted_from_metrics(mock_validate, mock_train, traine
         use_tqdm=trainer._loop.options.use_tqdm,
         monitor_metric=trainer._loop.options.monitor_metric,
     )
-    trainer.optimizer.step = MagicMock()
+    trainer.optimizer.step = MagicMock()  # type: ignore
 
     with patch.object(trainer, "_log_epoch_summary") as mock_log:
         trainer.train()

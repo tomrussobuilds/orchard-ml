@@ -48,21 +48,21 @@ def _make_builder(
 
 
 @pytest.mark.unit
-def test_init_stores_base_cfg():
+def test_init_stores_base_cfg() -> None:
     """Assert base_cfg reference is stored."""
     builder, mock_cfg = _make_builder()
     assert builder.base_cfg is mock_cfg
 
 
 @pytest.mark.unit
-def test_init_stores_optuna_epochs():
+def test_init_stores_optuna_epochs() -> None:
     """Assert optuna_epochs is read from base_cfg.optuna.epochs."""
     builder, _ = _make_builder(optuna_epochs=42)
     assert builder.optuna_epochs == 42
 
 
 @pytest.mark.unit
-def test_init_stores_base_metadata():
+def test_init_stores_base_metadata() -> None:
     """Assert base_metadata is read from dataset._ensure_metadata."""
     builder, mock_cfg = _make_builder()
     assert builder.base_metadata is mock_cfg.dataset._ensure_metadata
@@ -74,7 +74,7 @@ def test_init_stores_base_metadata():
 
 
 @pytest.mark.unit
-def test_build_injects_metadata_into_config():
+def test_build_injects_metadata_into_config() -> None:
     """Assert build() injects base_metadata into the dataset dict."""
     builder, mock_cfg = _make_builder()
     sentinel_meta = mock_cfg.dataset._ensure_metadata
@@ -91,7 +91,7 @@ def test_build_injects_metadata_into_config():
 
 
 @pytest.mark.unit
-def test_build_overrides_epochs_to_optuna_epochs():
+def test_build_overrides_epochs_to_optuna_epochs() -> None:
     """Assert build() sets training.epochs to optuna_epochs."""
     builder, _ = _make_builder(optuna_epochs=7, training_epochs=100)
 
@@ -107,7 +107,7 @@ def test_build_overrides_epochs_to_optuna_epochs():
 
 
 @pytest.mark.unit
-def test_build_caps_mixup_epochs_when_exceeds_optuna():
+def test_build_caps_mixup_epochs_when_exceeds_optuna() -> None:
     """Assert mixup_epochs is capped to min(original, optuna_epochs)."""
     builder, _ = _make_builder(optuna_epochs=5, mixup_epochs=20)
 
@@ -118,7 +118,7 @@ def test_build_caps_mixup_epochs_when_exceeds_optuna():
 
 
 @pytest.mark.unit
-def test_build_keeps_mixup_epochs_when_already_lower():
+def test_build_keeps_mixup_epochs_when_already_lower() -> None:
     """Assert mixup_epochs stays when already <= optuna_epochs."""
     builder, _ = _make_builder(optuna_epochs=15, mixup_epochs=3)
 
@@ -129,7 +129,7 @@ def test_build_keeps_mixup_epochs_when_already_lower():
 
 
 @pytest.mark.unit
-def test_build_mixup_equals_optuna_epochs():
+def test_build_mixup_equals_optuna_epochs() -> None:
     """Boundary: mixup_epochs == optuna_epochs → stays equal."""
     builder, _ = _make_builder(optuna_epochs=10, mixup_epochs=10)
 
@@ -145,7 +145,7 @@ def test_build_mixup_equals_optuna_epochs():
 
 
 @pytest.mark.unit
-def test_build_preserves_resolution_when_none():
+def test_build_preserves_resolution_when_none() -> None:
     """Assert resolution is set from base_cfg when model_dump returns None."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
@@ -168,7 +168,7 @@ def test_build_preserves_resolution_when_none():
 
 
 @pytest.mark.unit
-def test_build_keeps_existing_resolution():
+def test_build_keeps_existing_resolution() -> None:
     """Assert resolution is NOT overridden when already present."""
     builder, _ = _make_builder(resolution=28)
 
@@ -184,7 +184,7 @@ def test_build_keeps_existing_resolution():
 
 
 @pytest.mark.unit
-def test_build_returns_config_instance():
+def test_build_returns_config_instance() -> None:
     """Assert build() returns the Config constructor result."""
     builder, _ = _make_builder()
     sentinel = object()
@@ -203,7 +203,7 @@ def test_build_returns_config_instance():
 
 
 @pytest.mark.unit
-def test_apply_overrides_maps_to_correct_sections():
+def test_apply_overrides_maps_to_correct_sections() -> None:
     """Assert params are placed in their correct config sections."""
     builder, _ = _make_builder()
 
@@ -218,9 +218,9 @@ def test_apply_overrides_maps_to_correct_sections():
         {"learning_rate": 0.005, "dropout": 0.5, "rotation_angle": 30},
     )
 
-    assert config_dict["training"]["learning_rate"] == 0.005
-    assert config_dict["architecture"]["dropout"] == 0.5
-    assert config_dict["augmentation"]["rotation_angle"] == 30
+    assert config_dict["training"]["learning_rate"] == 0.005  # type: ignore
+    assert config_dict["architecture"]["dropout"] == 0.5  # type: ignore
+    assert config_dict["augmentation"]["rotation_angle"] == 30  # type: ignore
 
 
 # ---------------------------------------------------------------------------
@@ -229,7 +229,7 @@ def test_apply_overrides_maps_to_correct_sections():
 
 
 @pytest.mark.unit
-def test_apply_overrides_special_param_model_name():
+def test_apply_overrides_special_param_model_name() -> None:
     """Assert model_name maps to architecture.name via SPECIAL_PARAMS."""
     builder, _ = _make_builder()
 
@@ -245,7 +245,7 @@ def test_apply_overrides_special_param_model_name():
 
 
 @pytest.mark.unit
-def test_apply_overrides_skips_none_weight_variant():
+def test_apply_overrides_skips_none_weight_variant() -> None:
     """Assert weight_variant=None is skipped (non-ViT models)."""
     builder, _ = _make_builder()
 
@@ -260,7 +260,7 @@ def test_apply_overrides_skips_none_weight_variant():
 
 
 @pytest.mark.unit
-def test_apply_overrides_applies_non_none_weight_variant():
+def test_apply_overrides_applies_non_none_weight_variant() -> None:
     """Assert weight_variant with a value IS applied."""
     builder, _ = _make_builder()
 
@@ -280,11 +280,11 @@ def test_apply_overrides_applies_non_none_weight_variant():
 
 
 @pytest.mark.unit
-def test_apply_overrides_unknown_param_not_added():
+def test_apply_overrides_unknown_param_not_added() -> None:
     """Unknown param not in any mapping is silently skipped."""
     builder, _ = _make_builder()
 
-    config_dict = {"training": {}, "architecture": {}, "augmentation": {}}
+    config_dict = {"training": {}, "architecture": {}, "augmentation": {}}  # type: ignore
     builder._apply_param_overrides(config_dict, {"totally_unknown": 99})
 
     assert "totally_unknown" not in config_dict["training"]
@@ -298,11 +298,11 @@ def test_apply_overrides_unknown_param_not_added():
 
 
 @pytest.mark.unit
-def test_apply_overrides_does_not_duplicate_across_sections():
+def test_apply_overrides_does_not_duplicate_across_sections() -> None:
     """Assert a param is placed in exactly one section (break works)."""
     builder, _ = _make_builder()
 
-    config_dict = {"training": {}, "architecture": {}, "augmentation": {}}
+    config_dict = {"training": {}, "architecture": {}, "augmentation": {}}  # type: ignore
     builder._apply_param_overrides(config_dict, {"learning_rate": 0.001})
 
     # learning_rate belongs to "training" only

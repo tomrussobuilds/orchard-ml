@@ -26,7 +26,7 @@ from orchard.optimization.orchestrator.visualizers import (
 
 
 @pytest.fixture
-def completed_trial():
+def completed_trial():  # type: ignore
     """Mock completed trial."""
     import optuna
 
@@ -46,7 +46,7 @@ def completed_trial():
 
 
 @pytest.mark.unit
-def test_save_plot_success(completed_trial):
+def test_save_plot_success(completed_trial) -> None:  # type: ignore
     """Test save_plot saves HTML file."""
     study = MagicMock()
     study.trials = [completed_trial]
@@ -66,7 +66,7 @@ def test_save_plot_success(completed_trial):
 
 @pytest.mark.unit
 @patch("orchard.optimization.orchestrator.visualizers.logger")
-def test_save_plot_handles_exception(mock_logger, completed_trial):
+def test_save_plot_handles_exception(mock_logger: MagicMock, completed_trial) -> None:  # type: ignore
     """Test save_plot logs warning with plot_name and exception on failure."""
     study = MagicMock()
     study.trials = [completed_trial]
@@ -91,7 +91,7 @@ def test_save_plot_handles_exception(mock_logger, completed_trial):
 
 
 @pytest.mark.unit
-def test_generate_visualizations_no_completed_trials():
+def test_generate_visualizations_no_completed_trials() -> None:
     """Test generate_visualizations skips when no completed trials."""
     from orchard.optimization.orchestrator.visualizers import generate_visualizations
 
@@ -109,7 +109,9 @@ def test_generate_visualizations_no_completed_trials():
 
 @pytest.mark.unit
 @patch("orchard.optimization.orchestrator.visualizers.has_completed_trials")
-def test_generate_visualizations_plotly_not_installed(mock_has_trials, completed_trial):
+def test_generate_visualizations_plotly_not_installed(  # type: ignore
+    mock_has_trials: MagicMock, completed_trial
+) -> None:
     """Test generate_visualizations handles missing plotly gracefully."""
     from orchard.optimization.orchestrator.visualizers import generate_visualizations
 
@@ -124,7 +126,7 @@ def test_generate_visualizations_plotly_not_installed(mock_has_trials, completed
             __builtins__.__import__ if hasattr(__builtins__, "__import__") else __import__
         )
 
-        def _selective_import(name, *args, **kwargs):
+        def _selective_import(name, *args, **kwargs):  # type: ignore
             if name == "optuna.visualization" or name.startswith("optuna.visualization."):
                 raise ImportError("No module named 'plotly'")
             return original_import(name, *args, **kwargs)
@@ -136,9 +138,9 @@ def test_generate_visualizations_plotly_not_installed(mock_has_trials, completed
 @pytest.mark.unit
 @patch("orchard.optimization.orchestrator.visualizers.has_completed_trials")
 @patch("orchard.optimization.orchestrator.visualizers.save_plot")
-def test_generate_visualizations_creates_all_plots(
-    mock_save_plot, mock_has_trials, completed_trial
-):
+def test_generate_visualizations_creates_all_plots(  # type: ignore
+    mock_save_plot: MagicMock, mock_has_trials: MagicMock, completed_trial
+) -> None:
     """Test generate_visualizations creates all four plot types."""
     from orchard.optimization.orchestrator.visualizers import generate_visualizations
 
@@ -184,7 +186,7 @@ def test_generate_visualizations_creates_all_plots(
 
 @pytest.mark.unit
 @patch("orchard.optimization.orchestrator.visualizers.logging")
-def test_save_plot_applies_and_removes_filter(mock_logging, completed_trial):
+def test_save_plot_applies_and_removes_filter(mock_logging: MagicMock, completed_trial) -> None:  # type: ignore
     """Test save_plot adds/removes _missing_params_filter on the correct logger."""
     study = MagicMock()
     study.trials = [completed_trial]
@@ -205,7 +207,7 @@ def test_save_plot_applies_and_removes_filter(mock_logging, completed_trial):
 
 @pytest.mark.unit
 @patch("orchard.optimization.orchestrator.visualizers.logging")
-def test_save_plot_removes_filter_on_exception(mock_logging, completed_trial):
+def test_save_plot_removes_filter_on_exception(mock_logging: MagicMock, completed_trial) -> None:  # type: ignore
     """Test save_plot removes filter even when plot_fn raises."""
     study = MagicMock()
     study.trials = [completed_trial]
@@ -227,7 +229,7 @@ def test_save_plot_removes_filter_on_exception(mock_logging, completed_trial):
 
 
 @pytest.mark.unit
-def test_missing_params_filter_suppresses_matching():
+def test_missing_params_filter_suppresses_matching() -> None:
     """Test _MissingParamsFilter suppresses 'missing parameters' messages."""
     record = logging.LogRecord(
         name="optuna.visualization._parallel_coordinate",
@@ -242,7 +244,7 @@ def test_missing_params_filter_suppresses_matching():
 
 
 @pytest.mark.unit
-def test_missing_params_filter_passes_other_messages():
+def test_missing_params_filter_passes_other_messages() -> None:
     """Test _MissingParamsFilter passes unrelated messages through."""
     record = logging.LogRecord(
         name="optuna.visualization._parallel_coordinate",

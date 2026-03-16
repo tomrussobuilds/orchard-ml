@@ -22,7 +22,7 @@ from orchard.data_handler.data_explorer import (
 # SHOW SAMPLE IMAGES: SMOKE TESTS
 @pytest.mark.unit
 @patch("orchard.data_handler.data_explorer.plt")
-def test_show_sample_images_basic(mock_plt, tmp_path):
+def test_show_sample_images_basic(mock_plt: MagicMock, tmp_path: Path) -> None:
     """Test show_sample_images creates and saves a figure."""
     mock_loader = MagicMock()
     mock_images = torch.rand(16, 3, 28, 28)
@@ -44,7 +44,7 @@ def test_show_sample_images_basic(mock_plt, tmp_path):
 
 @pytest.mark.unit
 @patch("orchard.data_handler.data_explorer.plt")
-def test_show_sample_images_with_denorm(mock_plt, tmp_path):
+def test_show_sample_images_with_denorm(mock_plt: MagicMock, tmp_path: Path) -> None:
     """Test show_sample_images applies denormalization with explicit mean/std."""
     mock_loader = MagicMock()
     mock_images = torch.rand(8, 3, 28, 28)
@@ -68,7 +68,7 @@ def test_show_sample_images_with_denorm(mock_plt, tmp_path):
 
 @pytest.mark.unit
 @patch("orchard.data_handler.data_explorer.plt")
-def test_show_sample_images_grayscale(mock_plt, tmp_path):
+def test_show_sample_images_grayscale(mock_plt: MagicMock, tmp_path: Path) -> None:
     """Test show_sample_images handles grayscale images."""
     mock_loader = MagicMock()
     mock_images = torch.rand(4, 1, 28, 28)
@@ -89,7 +89,7 @@ def test_show_sample_images_grayscale(mock_plt, tmp_path):
 @pytest.mark.unit
 @patch("orchard.data_handler.data_explorer.plt")
 @patch("orchard.data_handler.data_explorer.logger")
-def test_show_sample_images_empty_loader(mock_logger, mock_plt):
+def test_show_sample_images_empty_loader(mock_logger: MagicMock, mock_plt: MagicMock) -> None:
     """Test show_sample_images handles empty loader gracefully."""
     mock_loader = MagicMock()
     mock_loader.__iter__ = MagicMock(return_value=iter([]))
@@ -108,7 +108,9 @@ def test_show_sample_images_empty_loader(mock_logger, mock_plt):
 
 @pytest.mark.unit
 @patch("orchard.data_handler.data_explorer.plt")
-def test_show_sample_images_fewer_samples_than_requested(mock_plt, tmp_path):
+def test_show_sample_images_fewer_samples_than_requested(
+    mock_plt: MagicMock, tmp_path: Path
+) -> None:
     """Test show_sample_images handles fewer samples than requested."""
     mock_loader = MagicMock()
     mock_images = torch.rand(5, 3, 28, 28)
@@ -128,7 +130,7 @@ def test_show_sample_images_fewer_samples_than_requested(mock_plt, tmp_path):
 
 @pytest.mark.unit
 @patch("orchard.data_handler.data_explorer.plt")
-def test_show_sample_images_with_title_prefix(mock_plt, tmp_path):
+def test_show_sample_images_with_title_prefix(mock_plt: MagicMock, tmp_path: Path) -> None:
     """Test show_sample_images includes title prefix."""
     mock_loader = MagicMock()
     mock_images = torch.rand(4, 3, 28, 28)
@@ -149,7 +151,7 @@ def test_show_sample_images_with_title_prefix(mock_plt, tmp_path):
 
 @pytest.mark.unit
 @patch("orchard.data_handler.data_explorer.plt")
-def test_show_sample_images_grayscale_line80(mock_plt, tmp_path):
+def test_show_sample_images_grayscale_line80(mock_plt: MagicMock, tmp_path: Path) -> None:
     """Force grayscale path to hit line 80 in show_sample_images."""
     mock_loader = MagicMock()
     mock_images = torch.rand(1, 1, 28, 28)
@@ -172,7 +174,7 @@ def test_show_sample_images_grayscale_line80(mock_plt, tmp_path):
 # SHOW SAMPLES FOR DATASET: SMOKE TESTS
 @pytest.mark.unit
 @patch("orchard.data_handler.data_explorer.show_sample_images")
-def test_show_samples_for_dataset_basic(mock_show_images, tmp_path):
+def test_show_samples_for_dataset_basic(mock_show_images: MagicMock, tmp_path: Path) -> None:
     """Test show_samples_for_dataset calls show_sample_images correctly."""
     mock_loader = MagicMock()
     mock_run_paths = MagicMock()
@@ -198,7 +200,9 @@ def test_show_samples_for_dataset_basic(mock_show_images, tmp_path):
 
 @pytest.mark.unit
 @patch("orchard.data_handler.data_explorer.show_sample_images")
-def test_show_samples_for_dataset_with_resolution(mock_show_images, tmp_path):
+def test_show_samples_for_dataset_with_resolution(
+    mock_show_images: MagicMock, tmp_path: Path
+) -> None:
     """Test show_samples_for_dataset includes resolution in filename."""
     mock_loader = MagicMock()
     mock_run_paths = MagicMock()
@@ -220,7 +224,9 @@ def test_show_samples_for_dataset_with_resolution(mock_show_images, tmp_path):
 
 @pytest.mark.unit
 @patch("orchard.data_handler.data_explorer.show_sample_images")
-def test_show_samples_for_dataset_forwards_mean_std_dpi(mock_show_images, tmp_path):
+def test_show_samples_for_dataset_forwards_mean_std_dpi(
+    mock_show_images: MagicMock, tmp_path: Path
+) -> None:
     """mean, std, and fig_dpi must be forwarded to show_sample_images."""
     mock_loader = MagicMock()
     mock_run_paths = MagicMock()
@@ -243,7 +249,9 @@ def test_show_samples_for_dataset_forwards_mean_std_dpi(mock_show_images, tmp_pa
 
 @pytest.mark.unit
 @patch("orchard.data_handler.data_explorer.show_sample_images")
-def test_show_samples_for_dataset_creates_directory(mock_show_images, tmp_path):
+def test_show_samples_for_dataset_creates_directory(
+    mock_show_images: MagicMock, tmp_path: Path
+) -> None:
     """Test show_samples_for_dataset creates parent directory."""
     mock_loader = MagicMock()
     mock_run_paths = MagicMock()

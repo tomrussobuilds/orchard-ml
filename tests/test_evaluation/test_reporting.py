@@ -8,6 +8,7 @@ the Excel export logic, and the factory function for report generation.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import ANY, MagicMock, patch
 
 import pandas as pd
@@ -18,7 +19,7 @@ from orchard.evaluation import TrainingReport, create_structured_report
 
 # MOCKS
 @pytest.fixture
-def mock_config():
+def mock_config() -> None:
     """Provides a mocked Config object with necessary nested attributes."""
     cfg = MagicMock()
     cfg.architecture.name = "mini_cnn"
@@ -31,13 +32,13 @@ def mock_config():
     cfg.training.batch_size = 32
     cfg.training.seed = 42
     cfg.augmentation.model_dump.return_value = {"horizontal_flip": True, "rotation": 15}
-    return cfg
+    return cfg  # type: ignore
 
 
 @pytest.fixture
-def sample_report_data():
+def sample_report_data() -> None:
     """Provides a valid dictionary of data for TrainingReport instantiation."""
-    return {
+    return {  # type: ignore
         "architecture": "mini_cnn",
         "dataset": "PathMNIST",
         "best_val_accuracy": 0.95,
@@ -62,7 +63,7 @@ def sample_report_data():
 
 # UNIT TESTS
 @pytest.mark.unit
-def test_training_report_instantiation(sample_report_data):
+def test_training_report_instantiation(sample_report_data: Any) -> None:
     """Test if TrainingReport correctly validates and stores input data."""
     report = TrainingReport(**sample_report_data)
     assert report.architecture == "mini_cnn"
@@ -71,7 +72,7 @@ def test_training_report_instantiation(sample_report_data):
 
 
 @pytest.mark.unit
-def test_to_vertical_df(sample_report_data):
+def test_to_vertical_df(sample_report_data: Any) -> None:
     """Test the conversion of the Pydantic model to a vertical DataFrame."""
     report = TrainingReport(**sample_report_data)
     df = report.to_vertical_df()
@@ -85,7 +86,9 @@ def test_to_vertical_df(sample_report_data):
 @pytest.mark.unit
 @patch("pandas.ExcelWriter")
 @patch("pathlib.Path.mkdir")
-def test_report_save_success(mock_mkdir, mock_writer, sample_report_data):
+def test_report_save_success(  # type: ignore
+    mock_mkdir: MagicMock, mock_writer: MagicMock, sample_report_data
+) -> None:
     """Test the save method to ensure ExcelWriter is called with correct parameters."""
     report = TrainingReport(**sample_report_data)
     test_path = Path("test_report.xlsx")
@@ -99,7 +102,9 @@ def test_report_save_success(mock_mkdir, mock_writer, sample_report_data):
 @pytest.mark.unit
 @patch("orchard.evaluation.reporting.logger")
 @patch("pathlib.Path.mkdir")
-def test_report_save_failure(mock_mkdir, mock_logger, sample_report_data):
+def test_report_save_failure(  # type: ignore
+    mock_mkdir: MagicMock, mock_logger: MagicMock, sample_report_data
+) -> None:
     """Test error handling: logger.error receives the exception."""
     report = TrainingReport(**sample_report_data)
 
@@ -112,7 +117,7 @@ def test_report_save_failure(mock_mkdir, mock_logger, sample_report_data):
 
 
 @pytest.mark.unit
-def test_create_structured_report(mock_config):
+def test_create_structured_report(mock_config: MagicMock) -> None:
     """Test the factory function that aggregates metrics into a TrainingReport."""
     val_metrics = [
         {"accuracy": 0.8, "auc": 0.85, "f1": 0.78},
@@ -142,7 +147,7 @@ def test_create_structured_report(mock_config):
 
 
 @pytest.mark.unit
-def test_excel_formatting_logic(sample_report_data):
+def test_excel_formatting_logic(sample_report_data: Any) -> None:
     """Test the internal _apply_excel_formatting helper using mocks for XlsxWriter."""
     report = TrainingReport(**sample_report_data)
     df = report.to_vertical_df()
@@ -162,7 +167,7 @@ def test_excel_formatting_logic(sample_report_data):
 
 
 @pytest.mark.unit
-def test_report_save_creates_xlsx_file(sample_report_data, tmp_path):
+def test_report_save_creates_xlsx_file(sample_report_data: Any, tmp_path: Path) -> None:
     """Test that save() actually creates an .xlsx file with correct suffix."""
     report = TrainingReport(**sample_report_data)
 
@@ -180,7 +185,7 @@ def test_report_save_creates_xlsx_file(sample_report_data, tmp_path):
 
 
 @pytest.mark.unit
-def test_report_save_with_existing_xlsx_suffix(sample_report_data, tmp_path):
+def test_report_save_with_existing_xlsx_suffix(sample_report_data: Any, tmp_path: Path) -> None:
     """Test that save() handles path that already has .xlsx suffix."""
     report = TrainingReport(**sample_report_data)
 
@@ -192,7 +197,7 @@ def test_report_save_with_existing_xlsx_suffix(sample_report_data, tmp_path):
 
 
 @pytest.mark.unit
-def test_report_save_csv(sample_report_data, tmp_path):
+def test_report_save_csv(sample_report_data: Any, tmp_path: Path) -> None:
     """Test save() creates a .csv with correct format (no index column)."""
     report = TrainingReport(**sample_report_data)
     path = tmp_path / "report"
@@ -210,7 +215,7 @@ def test_report_save_csv(sample_report_data, tmp_path):
 
 
 @pytest.mark.unit
-def test_report_save_json(sample_report_data, tmp_path):
+def test_report_save_json(sample_report_data: Any, tmp_path: Path) -> None:
     """Test save() creates .json with orient='records' and indent=2."""
     import json
 
@@ -232,7 +237,7 @@ def test_report_save_json(sample_report_data, tmp_path):
 
 
 @pytest.mark.unit
-def test_create_structured_report_aug_info_none_fallback(mock_config):
+def test_create_structured_report_aug_info_none_fallback(mock_config: MagicMock) -> None:
     """Test aug_info=None falls back to 'N/A'."""
     val_metrics = [{"accuracy": 0.8, "auc": 0.85, "f1": 0.78}]
     test_metrics = {"accuracy": 0.88, "auc": 0.91}
@@ -253,7 +258,7 @@ def test_create_structured_report_aug_info_none_fallback(mock_config):
 
 
 @pytest.mark.unit
-def test_create_structured_report_resolves_paths(mock_config, tmp_path):
+def test_create_structured_report_resolves_paths(mock_config: MagicMock, tmp_path: Path) -> None:
     """Test model_path and log_path are resolved to absolute paths."""
     model_file = tmp_path / "best.pth"
     model_file.touch()
@@ -279,7 +284,7 @@ def test_create_structured_report_resolves_paths(mock_config, tmp_path):
 
 
 @pytest.mark.unit
-def test_report_save_creates_nested_parent_dirs(sample_report_data, tmp_path):
+def test_report_save_creates_nested_parent_dirs(sample_report_data: Any, tmp_path: Path) -> None:
     """Test save() creates nested parent directories (parents=True)."""
     report = TrainingReport(**sample_report_data)
     path = tmp_path / "deep" / "nested" / "report"
@@ -290,9 +295,9 @@ def test_report_save_creates_nested_parent_dirs(sample_report_data, tmp_path):
 
 
 @pytest.mark.unit
-def test_create_structured_report_handles_empty_val_metrics(mock_config):
+def test_create_structured_report_handles_empty_val_metrics(mock_config: MagicMock) -> None:
     """Test create_structured_report with empty validation metrics."""
-    val_metrics = []
+    val_metrics = []  # type: ignore
     test_metrics = {"accuracy": 0.88, "auc": 0.91}
     train_losses = [0.5]
 
@@ -312,7 +317,7 @@ def test_create_structured_report_handles_empty_val_metrics(mock_config):
 
 
 @pytest.mark.unit
-def test_create_structured_report_filters_nan_auc(mock_config):
+def test_create_structured_report_filters_nan_auc(mock_config: MagicMock) -> None:
     """Test best_val_auc filters NaN values, picks valid max."""
     val_metrics = [
         {"accuracy": 0.8, "auc": float("nan"), "f1": 0.78},
@@ -338,7 +343,7 @@ def test_create_structured_report_filters_nan_auc(mock_config):
 
 
 @pytest.mark.unit
-def test_create_structured_report_all_nan_auc(mock_config):
+def test_create_structured_report_all_nan_auc(mock_config: MagicMock) -> None:
     """Test best_val_auc defaults to 0.0 when all AUC values are NaN."""
     val_metrics = [
         {"accuracy": 0.8, "auc": float("nan"), "f1": 0.78},
@@ -363,7 +368,7 @@ def test_create_structured_report_all_nan_auc(mock_config):
 
 
 @pytest.mark.unit
-def test_report_save_default_fmt_is_xlsx(sample_report_data, tmp_path):
+def test_report_save_default_fmt_is_xlsx(sample_report_data: Any, tmp_path: Path) -> None:
     """Test save() defaults to xlsx format when fmt is not specified."""
     report = TrainingReport(**sample_report_data)
     path = tmp_path / "report"
@@ -375,7 +380,9 @@ def test_report_save_default_fmt_is_xlsx(sample_report_data, tmp_path):
 
 @pytest.mark.unit
 @patch("orchard.evaluation.reporting.logger")
-def test_report_save_xlsx_no_error_logged(mock_logger, sample_report_data, tmp_path):
+def test_report_save_xlsx_no_error_logged(  # type: ignore
+    mock_logger: MagicMock, sample_report_data, tmp_path: Path
+) -> None:
     """Test save() does not log errors on success (catches _apply_excel_formatting regressions)."""
     report = TrainingReport(**sample_report_data)
     path = tmp_path / "report"
@@ -386,7 +393,7 @@ def test_report_save_xlsx_no_error_logged(mock_logger, sample_report_data, tmp_p
 
 
 @pytest.mark.unit
-def test_report_save_json_indent(sample_report_data, tmp_path):
+def test_report_save_json_indent(sample_report_data: Any, tmp_path: Path) -> None:
     """Test save() json uses indent=2 specifically (not 3)."""
     report = TrainingReport(**sample_report_data)
     path = tmp_path / "report"

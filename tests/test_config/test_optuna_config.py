@@ -19,7 +19,7 @@ from orchard.core.config import OptunaConfig
 # Do not perform equality checks with floating point values.
 # OPTUNA CONFIG: DEFAULTS
 @pytest.mark.unit
-def test_optuna_config_defaults():
+def test_optuna_config_defaults() -> None:
     """Test OptunaConfig with default values."""
     config = OptunaConfig()
 
@@ -33,7 +33,7 @@ def test_optuna_config_defaults():
 
 
 @pytest.mark.unit
-def test_optuna_config_custom_values():
+def test_optuna_config_custom_values() -> None:
     """Test OptunaConfig with custom parameters."""
     config = OptunaConfig(
         study_name="custom_study",
@@ -49,21 +49,21 @@ def test_optuna_config_custom_values():
 
 # OPTUNA CONFIG: VALIDATION
 @pytest.mark.unit
-def test_pruning_warmup_exceeds_epochs_rejected():
+def test_pruning_warmup_exceeds_epochs_rejected() -> None:
     """Test pruning_warmup_epochs >= epochs is rejected."""
     with pytest.raises(ValidationError, match="pruning_warmup"):
         OptunaConfig(epochs=10, pruning_warmup_epochs=10)
 
 
 @pytest.mark.unit
-def test_pruning_warmup_valid():
+def test_pruning_warmup_valid() -> None:
     """Test valid pruning_warmup_epochs configuration."""
     config = OptunaConfig(epochs=20, pruning_warmup_epochs=5)
     assert config.pruning_warmup_epochs == 5
 
 
 @pytest.mark.unit
-def test_n_trials_positive():
+def test_n_trials_positive() -> None:
     """Test n_trials must be positive."""
     config = OptunaConfig(n_trials=1)
     assert config.n_trials == 1
@@ -76,7 +76,7 @@ def test_n_trials_positive():
 
 
 @pytest.mark.unit
-def test_epochs_positive():
+def test_epochs_positive() -> None:
     """Test epochs must be positive and > warmup."""
     config = OptunaConfig(epochs=10, pruning_warmup_epochs=2)
     assert config.epochs == 10
@@ -86,7 +86,7 @@ def test_epochs_positive():
 
 
 @pytest.mark.unit
-def test_show_progress_bar_warning():
+def test_show_progress_bar_warning() -> None:
     """Test that a warning is issued if show_progress_bar=True and n_jobs>1."""
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
@@ -96,7 +96,7 @@ def test_show_progress_bar_warning():
 
 # OPTUNA CONFIG: EARLY STOPPING
 @pytest.mark.unit
-def test_early_stopping_configuration():
+def test_early_stopping_configuration() -> None:
     """Test early stopping parameter configuration."""
     config = OptunaConfig(
         enable_early_stopping=True, early_stopping_threshold=0.999, early_stopping_patience=2
@@ -108,7 +108,7 @@ def test_early_stopping_configuration():
 
 
 @pytest.mark.unit
-def test_early_stopping_threshold_bounds():
+def test_early_stopping_threshold_bounds() -> None:
     """Test early_stopping_threshold accepts values >= 0."""
     # Valid
     config = OptunaConfig(early_stopping_threshold=0.0)
@@ -125,7 +125,7 @@ def test_early_stopping_threshold_bounds():
 
 
 @pytest.mark.unit
-def test_early_stopping_patience_positive():
+def test_early_stopping_patience_positive() -> None:
     """Test early_stopping_patience must be positive."""
     config = OptunaConfig(early_stopping_patience=1)
     assert config.early_stopping_patience == 1
@@ -136,7 +136,7 @@ def test_early_stopping_patience_positive():
 
 # OPTUNA CONFIG: SAMPLER AND PRUNER
 @pytest.mark.unit
-def test_sampler_types():
+def test_sampler_types() -> None:
     """Test valid sampler types are accepted."""
     for sampler in ["tpe", "cmaes", "random"]:
         config = OptunaConfig(sampler_type=sampler)
@@ -144,7 +144,7 @@ def test_sampler_types():
 
 
 @pytest.mark.unit
-def test_pruner_types():
+def test_pruner_types() -> None:
     """Test valid pruner types are accepted."""
     for pruner in ["median", "percentile", "hyperband", "none"]:
         config = OptunaConfig(pruner_type=pruner)
@@ -152,7 +152,7 @@ def test_pruner_types():
 
 
 @pytest.mark.unit
-def test_pruning_can_be_disabled():
+def test_pruning_can_be_disabled() -> None:
     """Test pruning can be disabled."""
     config = OptunaConfig(enable_pruning=False)
 
@@ -161,7 +161,7 @@ def test_pruning_can_be_disabled():
 
 # OPTUNA CONFIG: STORAGE BACKEND
 @pytest.mark.unit
-def test_storage_type_options():
+def test_storage_type_options() -> None:
     """Test valid storage types are accepted."""
     for storage in ["memory", "sqlite", "postgresql"]:
         if storage == "postgresql":
@@ -172,14 +172,14 @@ def test_storage_type_options():
 
 
 @pytest.mark.unit
-def test_postgresql_without_url_rejected():
+def test_postgresql_without_url_rejected() -> None:
     """Test PostgreSQL storage requires postgresql_url."""
     with pytest.raises(ValidationError, match="PostgreSQL.*postgresql_url"):
         OptunaConfig(storage_type="postgresql")
 
 
 @pytest.mark.unit
-def test_postgresql_with_url_valid():
+def test_postgresql_with_url_valid() -> None:
     """Test PostgreSQL with postgresql_url is valid."""
     config = OptunaConfig(
         storage_type="postgresql", postgresql_url="postgresql://user:pass@localhost/db"
@@ -190,40 +190,40 @@ def test_postgresql_with_url_valid():
 
 
 @pytest.mark.unit
-def test_postgresql_url_invalid_scheme_rejected():
+def test_postgresql_url_invalid_scheme_rejected() -> None:
     """Test postgresql_url must start with postgresql:// or postgresql+."""
     with pytest.raises(ValidationError, match="must start with"):
         OptunaConfig(storage_type="postgresql", postgresql_url="mysql://localhost/db")
 
 
 @pytest.mark.unit
-def test_postgresql_url_without_postgresql_storage_rejected():
+def test_postgresql_url_without_postgresql_storage_rejected() -> None:
     """Test postgresql_url cannot be set when storage_type is not postgresql."""
     with pytest.raises(ValidationError, match="postgresql_url is set but"):
         OptunaConfig(storage_type="sqlite", postgresql_url="postgresql://localhost/db")
 
 
 @pytest.mark.unit
-def test_get_storage_url_memory():
+def test_get_storage_url_memory() -> None:
     """Test get_storage_url() for memory backend."""
     config = OptunaConfig(storage_type="memory")
 
     class MockPaths:
-        def get_db_path(self):
-            return Path("/mock/study.db")
+        def get_db_path(self) -> None:
+            return Path("/mock/study.db")  # type: ignore
 
     url = config.get_storage_url(MockPaths())
     assert url is None
 
 
 @pytest.mark.unit
-def test_get_storage_url_sqlite():
+def test_get_storage_url_sqlite() -> None:
     """Test get_storage_url() for SQLite backend."""
     config = OptunaConfig(storage_type="sqlite")
 
     class MockPaths:
-        def get_db_path(self):
-            return Path("/mock/test_study.db")
+        def get_db_path(self) -> None:
+            return Path("/mock/test_study.db")  # type: ignore
 
     url = config.get_storage_url(MockPaths())
     assert url.startswith("sqlite:///")
@@ -231,7 +231,7 @@ def test_get_storage_url_sqlite():
 
 
 @pytest.mark.unit
-def test_get_storage_url_postgresql():
+def test_get_storage_url_postgresql() -> None:
     """Test get_storage_url() for PostgreSQL backend."""
     config = OptunaConfig(storage_type="postgresql", postgresql_url="postgresql://localhost/optuna")
 
@@ -244,14 +244,14 @@ def test_get_storage_url_postgresql():
 
 
 @pytest.mark.unit
-def test_get_storage_url_sqlite_with_custom_path(tmp_path):
+def test_get_storage_url_sqlite_with_custom_path(tmp_path: Path) -> None:
     """Test get_storage_url() for SQLite with custom storage_path."""
     custom_db = tmp_path / "custom.db"
     config = OptunaConfig(storage_type="sqlite", storage_path=str(custom_db))
 
     class MockPaths:
-        def get_db_path(self):
-            return Path("/mock/default_study.db")
+        def get_db_path(self) -> None:
+            return Path("/mock/default_study.db")  # type: ignore
 
     url = config.get_storage_url(MockPaths())
 
@@ -261,15 +261,15 @@ def test_get_storage_url_sqlite_with_custom_path(tmp_path):
 
 
 @pytest.mark.unit
-def test_get_storage_url_unknown_storage_type():
+def test_get_storage_url_unknown_storage_type() -> None:
     """Test get_storage_url() raises ValueError for unknown storage type."""
     config = OptunaConfig(storage_type="sqlite")
 
     object.__setattr__(config, "storage_type", "invalid_backend")
 
     class MockPaths:
-        def get_db_path(self):
-            return Path("/mock/study.db")
+        def get_db_path(self) -> None:
+            return Path("/mock/study.db")  # type: ignore
 
     with pytest.raises(ValueError, match="Unknown storage type"):
         config.get_storage_url(MockPaths())
@@ -277,14 +277,14 @@ def test_get_storage_url_unknown_storage_type():
 
 # OPTUNA CONFIG: DIRECTION
 @pytest.mark.unit
-def test_direction_maximize():
+def test_direction_maximize() -> None:
     """Test direction='maximize' is accepted."""
     config = OptunaConfig(direction="maximize")
     assert config.direction == "maximize"
 
 
 @pytest.mark.unit
-def test_direction_minimize():
+def test_direction_minimize() -> None:
     """Test direction='minimize' is accepted."""
     config = OptunaConfig(direction="minimize")
     assert config.direction == "minimize"
@@ -292,14 +292,14 @@ def test_direction_minimize():
 
 # OPTUNA CONFIG: MODEL SEARCH
 @pytest.mark.unit
-def test_enable_model_search_default():
+def test_enable_model_search_default() -> None:
     """Test enable_model_search defaults to False."""
     config = OptunaConfig()
     assert config.enable_model_search is False
 
 
 @pytest.mark.unit
-def test_enable_model_search_can_be_enabled():
+def test_enable_model_search_can_be_enabled() -> None:
     """Test enable_model_search can be set to True."""
     config = OptunaConfig(enable_model_search=True)
     assert config.enable_model_search is True
@@ -307,14 +307,14 @@ def test_enable_model_search_can_be_enabled():
 
 # OPTUNA CONFIG: MODEL POOL
 @pytest.mark.unit
-def test_model_pool_defaults_to_none():
+def test_model_pool_defaults_to_none() -> None:
     """Test model_pool defaults to None."""
     config = OptunaConfig()
     assert config.model_pool is None
 
 
 @pytest.mark.unit
-def test_model_pool_valid_with_model_search():
+def test_model_pool_valid_with_model_search() -> None:
     """Test model_pool is accepted when enable_model_search=True."""
     config = OptunaConfig(
         enable_model_search=True,
@@ -324,7 +324,7 @@ def test_model_pool_valid_with_model_search():
 
 
 @pytest.mark.unit
-def test_model_pool_without_model_search_rejected():
+def test_model_pool_without_model_search_rejected() -> None:
     """Test model_pool requires enable_model_search=True."""
     with pytest.raises(ValidationError, match="model_pool requires enable_model_search"):
         OptunaConfig(
@@ -334,7 +334,7 @@ def test_model_pool_without_model_search_rejected():
 
 
 @pytest.mark.unit
-def test_model_pool_single_entry_rejected():
+def test_model_pool_single_entry_rejected() -> None:
     """Test model_pool must contain at least 2 architectures."""
     with pytest.raises(ValidationError, match="at least 2 architectures"):
         OptunaConfig(
@@ -344,7 +344,7 @@ def test_model_pool_single_entry_rejected():
 
 
 @pytest.mark.unit
-def test_model_pool_empty_list_rejected():
+def test_model_pool_empty_list_rejected() -> None:
     """Test model_pool rejects empty list."""
     with pytest.raises(ValidationError, match="at least 2 architectures"):
         OptunaConfig(
@@ -354,7 +354,7 @@ def test_model_pool_empty_list_rejected():
 
 
 @pytest.mark.unit
-def test_model_pool_with_timm_prefix():
+def test_model_pool_with_timm_prefix() -> None:
     """Test model_pool accepts timm/ prefixed names."""
     config = OptunaConfig(
         enable_model_search=True,
@@ -365,7 +365,7 @@ def test_model_pool_with_timm_prefix():
 
 # OPTUNA CONFIG: IMMUTABILITY
 @pytest.mark.unit
-def test_config_is_frozen():
+def test_config_is_frozen() -> None:
     """Test OptunaConfig is immutable after creation."""
     config = OptunaConfig()
 
@@ -374,7 +374,7 @@ def test_config_is_frozen():
 
 
 @pytest.mark.unit
-def test_config_forbids_extra_fields():
+def test_config_forbids_extra_fields() -> None:
     """Test OptunaConfig rejects unknown fields."""
     with pytest.raises(ValidationError):
         OptunaConfig(unknown_param="value")
@@ -382,7 +382,7 @@ def test_config_forbids_extra_fields():
 
 # OPTUNA CONFIG: SEARCH SPACE OVERRIDES
 @pytest.mark.unit
-def test_search_space_overrides_default():
+def test_search_space_overrides_default() -> None:
     """Test OptunaConfig includes default SearchSpaceOverrides."""
     config = OptunaConfig()
 
@@ -394,7 +394,7 @@ def test_search_space_overrides_default():
 
 
 @pytest.mark.unit
-def test_search_space_overrides_custom():
+def test_search_space_overrides_custom() -> None:
     """Test OptunaConfig accepts custom SearchSpaceOverrides."""
     from orchard.core.config.optuna_config import FloatRange, SearchSpaceOverrides
 
@@ -410,7 +410,7 @@ def test_search_space_overrides_custom():
 
 
 @pytest.mark.unit
-def test_search_space_overrides_from_dict():
+def test_search_space_overrides_from_dict() -> None:
     """Test SearchSpaceOverrides can be constructed from nested dict (YAML-style)."""
     config = OptunaConfig(
         search_space_overrides={

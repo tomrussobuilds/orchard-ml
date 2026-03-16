@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -19,40 +20,42 @@ from orchard.trainer.engine import mixup_data, train_one_epoch, validate_epoch
 
 # FIXTURES
 @pytest.fixture
-def simple_model():
+def simple_model() -> None:
     """Simple 2-layer network for testing."""
-    return nn.Sequential(
+    return nn.Sequential(  # type: ignore
         nn.Flatten(),
         nn.Linear(28 * 28, 10),
     )
 
 
 @pytest.fixture
-def simple_loader():
+def simple_loader() -> None:
     """Mock dataloader with 2 batches."""
     batch1 = (torch.randn(4, 1, 28, 28), torch.randint(0, 10, (4,)))
     batch2 = (torch.randn(4, 1, 28, 28), torch.randint(0, 10, (4,)))
     loader = MagicMock()
     loader.__iter__ = MagicMock(return_value=iter([batch1, batch2]))
     loader.__len__ = MagicMock(return_value=2)
-    return loader
+    return loader  # type: ignore
 
 
 @pytest.fixture
-def criterion():
+def criterion() -> None:
     """CrossEntropy loss."""
-    return nn.CrossEntropyLoss()
+    return nn.CrossEntropyLoss()  # type: ignore
 
 
 @pytest.fixture
-def optimizer(simple_model):
+def optimizer(simple_model: Any) -> None:
     """SGD optimizer."""
-    return torch.optim.SGD(simple_model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0)
+    return torch.optim.SGD(simple_model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0)  # type: ignore
 
 
 # TESTS: train_one_epoch
 @pytest.mark.unit
-def test_train_one_epoch_basic(simple_model, simple_loader, criterion, optimizer):
+def test_train_one_epoch_basic(
+    simple_model: Any, simple_loader: Any, criterion: Any, optimizer: Any
+) -> None:
     """Test train_one_epoch completes without errors."""
     device = torch.device("cpu")
     loss = train_one_epoch(
@@ -70,7 +73,9 @@ def test_train_one_epoch_basic(simple_model, simple_loader, criterion, optimizer
 
 
 @pytest.mark.unit
-def test_train_one_epoch_with_tqdm(simple_model, simple_loader, criterion, optimizer):
+def test_train_one_epoch_with_tqdm(
+    simple_model: Any, simple_loader: Any, criterion: Any, optimizer: Any
+) -> None:
     """Test train_one_epoch with tqdm enabled."""
     device = torch.device("cpu")
     loss = train_one_epoch(
@@ -88,7 +93,9 @@ def test_train_one_epoch_with_tqdm(simple_model, simple_loader, criterion, optim
 
 
 @pytest.mark.unit
-def test_train_one_epoch_with_grad_clip(simple_model, simple_loader, criterion, optimizer):
+def test_train_one_epoch_with_grad_clip(
+    simple_model: Any, simple_loader: Any, criterion: Any, optimizer: Any
+) -> None:
     """Test train_one_epoch with gradient clipping."""
     device = torch.device("cpu")
     loss = train_one_epoch(
@@ -105,12 +112,12 @@ def test_train_one_epoch_with_grad_clip(simple_model, simple_loader, criterion, 
 
 @pytest.mark.unit
 @pytest.mark.filterwarnings("ignore::UserWarning")
-def test_train_one_epoch_scaler_grad_clip_coverage(
+def test_train_one_epoch_scaler_grad_clip_coverage(  # type: ignore
     simple_model, simple_loader, criterion, optimizer
-):
+) -> None:
     """Test scaler + grad_clip branch coverage."""
     device = torch.device("cpu")
-    scaler = torch.amp.GradScaler(enabled=True)
+    scaler = torch.amp.GradScaler(enabled=True)  # type: ignore
 
     with patch("torch.nn.utils.clip_grad_norm_") as mock_clip:
         loss = train_one_epoch(
@@ -132,7 +139,7 @@ def test_train_one_epoch_scaler_grad_clip_coverage(
 @pytest.mark.filterwarnings(
     "ignore:torch.cuda.amp.GradScaler is enabled, but CUDA is not available:UserWarning"
 )
-def test_train_one_epoch_scaler_grad_clip_minimal():
+def test_train_one_epoch_scaler_grad_clip_minimal() -> None:
     """Test scaler + grad_clip branch with minimal setup."""
     model = nn.Linear(10, 2)
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0)
@@ -147,15 +154,15 @@ def test_train_one_epoch_scaler_grad_clip_minimal():
     original_unscale = scaler.unscale_
     unscale_called = [False]
 
-    def tracked_unscale(optimizer):
+    def tracked_unscale(optimizer: Any) -> None:
         unscale_called[0] = True
         return original_unscale(optimizer)
 
-    scaler.unscale_ = tracked_unscale
+    scaler.unscale_ = tracked_unscale  # type: ignore
 
     loss = train_one_epoch(
         model=model,
-        loader=loader,
+        loader=loader,  # type: ignore
         criterion=criterion,
         optimizer=optimizer,
         device=device,
@@ -172,9 +179,9 @@ def test_train_one_epoch_scaler_grad_clip_minimal():
 @pytest.mark.filterwarnings(
     "ignore:torch.cuda.amp.GradScaler is enabled, but CUDA is not available:UserWarning"
 )
-def test_train_one_epoch_with_scaler_and_grad_clip(
+def test_train_one_epoch_with_scaler_and_grad_clip(  # type: ignore
     simple_model, simple_loader, criterion, optimizer
-):
+) -> None:
     """Test train_one_epoch with AMP scaler AND gradient clipping."""
     device = torch.device("cpu")
     scaler = torch.amp.grad_scaler.GradScaler()
@@ -193,12 +200,14 @@ def test_train_one_epoch_with_scaler_and_grad_clip(
 
 
 @pytest.mark.unit
-def test_train_one_epoch_with_mixup(simple_model, simple_loader, criterion, optimizer):
+def test_train_one_epoch_with_mixup(
+    simple_model: Any, simple_loader: Any, criterion: Any, optimizer: Any
+) -> None:
     """Test train_one_epoch with MixUp."""
     device = torch.device("cpu")
 
-    def mock_mixup(x, y):
-        return x, y, y, 0.5
+    def mock_mixup(x: Any, y: Any) -> None:
+        return x, y, y, 0.5  # type: ignore
 
     loss = train_one_epoch(
         model=simple_model,
@@ -214,7 +223,7 @@ def test_train_one_epoch_with_mixup(simple_model, simple_loader, criterion, opti
 
 @pytest.mark.unit
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA required for this branch")
-def test_mixup_data_cuda_indexing():
+def test_mixup_data_cuda_indexing() -> None:
     """Test mixup_data handles CUDA tensor indexing (lines 225-226)."""
     x = torch.randn(4, 3, 32, 32).cuda()
     y = torch.randint(0, 10, (4,)).cuda()
@@ -227,7 +236,9 @@ def test_mixup_data_cuda_indexing():
 
 
 @pytest.mark.unit
-def test_train_one_epoch_updates_tqdm_postfix(simple_model, simple_loader, criterion, optimizer):
+def test_train_one_epoch_updates_tqdm_postfix(  # type: ignore
+    simple_model, simple_loader, criterion, optimizer
+) -> None:
     """Test that tqdm postfix is updated with loss."""
     device = torch.device("cpu")
 
@@ -252,7 +263,7 @@ def test_train_one_epoch_updates_tqdm_postfix(simple_model, simple_loader, crite
 
 
 @pytest.mark.unit
-def test_train_one_epoch_nan_loss_raises(simple_model, criterion, optimizer):
+def test_train_one_epoch_nan_loss_raises(simple_model: Any, criterion: Any, optimizer: Any) -> None:
     """Test train_one_epoch raises RuntimeError when loss is NaN."""
     device = torch.device("cpu")
 
@@ -279,7 +290,7 @@ def test_train_one_epoch_nan_loss_raises(simple_model, criterion, optimizer):
 
 # TESTS: VALIDATE EPOCH
 @pytest.mark.unit
-def test_validate_epoch_basic(simple_model, simple_loader, criterion):
+def test_validate_epoch_basic(simple_model: Any, simple_loader: Any, criterion: Any) -> None:
     """Test validate_epoch returns correct metrics."""
     device = torch.device("cpu")
     metrics = validate_epoch(
@@ -297,7 +308,7 @@ def test_validate_epoch_basic(simple_model, simple_loader, criterion):
 
 
 @pytest.mark.unit
-def test_validate_epoch_binary_classification(simple_model, criterion):
+def test_validate_epoch_binary_classification(simple_model: Any, criterion: Any) -> None:
     """Test validate_epoch with binary classification."""
     device = torch.device("cpu")
 
@@ -322,7 +333,7 @@ def test_validate_epoch_binary_classification(simple_model, criterion):
 
 
 @pytest.mark.unit
-def test_validate_epoch_auc_error_handling(simple_model, criterion):
+def test_validate_epoch_auc_error_handling(simple_model: Any, criterion: Any) -> None:
     """Test validate_epoch handles AUC calculation errors."""
     device = torch.device("cpu")
 
@@ -342,7 +353,7 @@ def test_validate_epoch_auc_error_handling(simple_model, criterion):
 
 # TESTS: MIXUP DATA
 @pytest.mark.unit
-def test_mixup_data_basic():
+def test_mixup_data_basic() -> None:
     """Test mixup_data creates proper blends."""
     x = torch.randn(4, 3, 32, 32)
     y = torch.randint(0, 10, (4,))
@@ -356,7 +367,7 @@ def test_mixup_data_basic():
 
 
 @pytest.mark.unit
-def test_mixup_data_disabled():
+def test_mixup_data_disabled() -> None:
     """Test mixup_data with alpha=0 returns original data."""
     x = torch.randn(4, 3, 32, 32)
     y = torch.randint(0, 10, (4,))
@@ -369,7 +380,7 @@ def test_mixup_data_disabled():
 
 
 @pytest.mark.unit
-def test_mixup_data_cuda_aware():
+def test_mixup_data_cuda_aware() -> None:
     """Test mixup_data handles CUDA tensors if available."""
     x = torch.randn(4, 3, 32, 32)
     y = torch.randint(0, 10, (4,))
@@ -386,7 +397,7 @@ def test_mixup_data_cuda_aware():
 
 # TESTS: EMPTY LOADER GUARDS
 @pytest.mark.unit
-def test_train_one_epoch_empty_loader(simple_model, criterion, optimizer):
+def test_train_one_epoch_empty_loader(simple_model: Any, criterion: Any, optimizer: Any) -> None:
     """Test train_one_epoch handles empty loader gracefully."""
     device = torch.device("cpu")
 
@@ -408,7 +419,7 @@ def test_train_one_epoch_empty_loader(simple_model, criterion, optimizer):
 
 
 @pytest.mark.unit
-def test_validate_epoch_empty_loader(simple_model, criterion):
+def test_validate_epoch_empty_loader(simple_model: Any, criterion: Any) -> None:
     """Test validate_epoch handles empty loader gracefully."""
     device = torch.device("cpu")
 

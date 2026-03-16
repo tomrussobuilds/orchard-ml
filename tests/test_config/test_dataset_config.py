@@ -7,6 +7,9 @@ force_rgb logic, and resolution handling.
 
 from __future__ import annotations
 
+from pathlib import Path
+from unittest.mock import MagicMock
+
 import pytest
 from pydantic import ValidationError
 
@@ -15,7 +18,7 @@ from orchard.core.config import DatasetConfig
 
 # UNIT TESTS: CONSTRUCTION
 @pytest.mark.unit
-def test_dataset_config_defaults():
+def test_dataset_config_defaults() -> None:
     """Test DatasetConfig with default values."""
     config = DatasetConfig()
 
@@ -27,7 +30,7 @@ def test_dataset_config_defaults():
 
 
 @pytest.mark.unit
-def test_dataset_config_with_metadata(mock_metadata_28):
+def test_dataset_config_with_metadata(mock_metadata_28: MagicMock) -> None:
     """Test DatasetConfig with explicit metadata."""
     config = DatasetConfig(name="bloodmnist", metadata=mock_metadata_28, resolution=28)
 
@@ -37,7 +40,7 @@ def test_dataset_config_with_metadata(mock_metadata_28):
 
 
 @pytest.mark.unit
-def test_img_size_auto_sync_from_resolution():
+def test_img_size_auto_sync_from_resolution() -> None:
     """Test that img_size auto-syncs with resolution when not provided."""
     config = DatasetConfig(resolution=224)
 
@@ -45,7 +48,7 @@ def test_img_size_auto_sync_from_resolution():
 
 
 @pytest.mark.unit
-def test_img_size_explicit_override():
+def test_img_size_explicit_override() -> None:
     """Test that explicit img_size overrides resolution."""
     config = DatasetConfig(resolution=28, img_size=64)
 
@@ -54,7 +57,7 @@ def test_img_size_explicit_override():
 
 
 # UNIT TESTS: FORCE_RGB LOGIC
-def test_force_rgb_disabled_keeps_grayscale(mock_grayscale_metadata):
+def test_force_rgb_disabled_keeps_grayscale(mock_grayscale_metadata: MagicMock) -> None:
     """Test force_rgb=False preserves grayscale channels."""
     config = DatasetConfig(metadata=mock_grayscale_metadata, force_rgb=False)
 
@@ -68,7 +71,7 @@ def test_force_rgb_disabled_keeps_grayscale(mock_grayscale_metadata):
     assert config.processing_mode == "NATIVE-GRAY"
 
 
-def test_force_rgb_grayscale_to_rgb(mock_grayscale_metadata):
+def test_force_rgb_grayscale_to_rgb(mock_grayscale_metadata: MagicMock) -> None:
     """Test force_rgb converts grayscale mean/std to RGB."""
     config = DatasetConfig(metadata=mock_grayscale_metadata, force_rgb=True)
 
@@ -86,7 +89,7 @@ def test_force_rgb_grayscale_to_rgb(mock_grayscale_metadata):
     assert config.processing_mode == "RGB-PROMOTED"
 
 
-def test_force_rgb_native_rgb_noeffect(mock_metadata_28):
+def test_force_rgb_native_rgb_noeffect(mock_metadata_28: MagicMock) -> None:
     """Test force_rgb has no effect on native RGB datasets."""
     config = DatasetConfig(metadata=mock_metadata_28, force_rgb=True)
 
@@ -102,7 +105,7 @@ def test_force_rgb_native_rgb_noeffect(mock_metadata_28):
 
 # UNIT TESTS: PROPERTIES
 @pytest.mark.unit
-def test_ensure_metadata_lazy_loading():
+def test_ensure_metadata_lazy_loading() -> None:
     """Test metadata lazy loading via _ensure_metadata."""
     config = DatasetConfig(name="bloodmnist", resolution=28)
 
@@ -115,7 +118,7 @@ def test_ensure_metadata_lazy_loading():
 
 
 @pytest.mark.unit
-def test_ensure_metadata_rewrites_path_for_custom_data_root(tmp_path):
+def test_ensure_metadata_rewrites_path_for_custom_data_root(tmp_path: Path) -> None:
     """_ensure_metadata rewrites metadata path when data_root differs from DATASET_DIR."""
     config = DatasetConfig(name="bloodmnist", resolution=28, data_root=tmp_path)
 
@@ -126,7 +129,9 @@ def test_ensure_metadata_rewrites_path_for_custom_data_root(tmp_path):
 
 
 @pytest.mark.unit
-def test_processing_mode_classification(mock_grayscale_metadata, mock_metadata_28):
+def test_processing_mode_classification(
+    mock_grayscale_metadata: MagicMock, mock_metadata_28: MagicMock
+) -> None:
     """Test processing_mode property returns correct classification."""
     config_promoted = DatasetConfig(metadata=mock_grayscale_metadata, force_rgb=True)
     assert config_promoted.processing_mode == "RGB-PROMOTED"
@@ -139,28 +144,28 @@ def test_processing_mode_classification(mock_grayscale_metadata, mock_metadata_2
 
 
 @pytest.mark.unit
-def test_effective_is_anatomical_with_metadata(mock_metadata_28):
+def test_effective_is_anatomical_with_metadata(mock_metadata_28: MagicMock) -> None:
     """Test effective_is_anatomical returns metadata flag when present."""
     config = DatasetConfig(metadata=mock_metadata_28)
     assert config.effective_is_anatomical == mock_metadata_28.is_anatomical
 
 
 @pytest.mark.unit
-def test_effective_is_anatomical_without_metadata():
+def test_effective_is_anatomical_without_metadata() -> None:
     """Test effective_is_anatomical lazy-loads from registry when metadata is None."""
     config = DatasetConfig()  # default dataset = bloodmnist (is_anatomical=False)
     assert config.effective_is_anatomical is False
 
 
 @pytest.mark.unit
-def test_effective_is_texture_based_with_metadata(mock_metadata_28):
+def test_effective_is_texture_based_with_metadata(mock_metadata_28: MagicMock) -> None:
     """Test effective_is_texture_based returns metadata flag when present."""
     config = DatasetConfig(metadata=mock_metadata_28)
     assert config.effective_is_texture_based == mock_metadata_28.is_texture_based
 
 
 @pytest.mark.unit
-def test_effective_is_texture_based_without_metadata():
+def test_effective_is_texture_based_without_metadata() -> None:
     """Test effective_is_texture_based lazy-loads from registry when metadata is None."""
     config = DatasetConfig()  # default dataset = bloodmnist (is_texture_based=False)
     assert config.effective_is_texture_based is False
@@ -168,7 +173,7 @@ def test_effective_is_texture_based_without_metadata():
 
 # EDGE CASES & REGRESSION TESTS
 @pytest.mark.unit
-def test_frozen_immutability():
+def test_frozen_immutability() -> None:
     """Test DatasetConfig is frozen (immutable)."""
     config = DatasetConfig()
 
@@ -177,7 +182,7 @@ def test_frozen_immutability():
 
 
 @pytest.mark.unit
-def test_invalid_resolution_rejected():
+def test_invalid_resolution_rejected() -> None:
     """Test invalid resolution values are rejected."""
     with pytest.raises(ValidationError):
         DatasetConfig(resolution=0)
@@ -187,7 +192,7 @@ def test_invalid_resolution_rejected():
 
 
 @pytest.mark.unit
-def test_sync_validator_runs_before_frozen():
+def test_sync_validator_runs_before_frozen() -> None:
     """Test sync_img_size_with_resolution runs during construction."""
     config = DatasetConfig(resolution=224)
 
@@ -196,7 +201,7 @@ def test_sync_validator_runs_before_frozen():
 
 # UNIT TESTS: MAX_SAMPLES VALIDATION
 @pytest.mark.unit
-def test_max_samples_none_allowed():
+def test_max_samples_none_allowed() -> None:
     """Test max_samples=None (load all) is valid."""
     config = DatasetConfig(max_samples=None)
 
@@ -204,7 +209,7 @@ def test_max_samples_none_allowed():
 
 
 @pytest.mark.unit
-def test_max_samples_valid_value():
+def test_max_samples_valid_value() -> None:
     """Test max_samples with valid value >= 20."""
     config = DatasetConfig(max_samples=100)
 
@@ -212,7 +217,7 @@ def test_max_samples_valid_value():
 
 
 @pytest.mark.unit
-def test_max_samples_minimum_boundary():
+def test_max_samples_minimum_boundary() -> None:
     """Test max_samples=20 is accepted (boundary)."""
     config = DatasetConfig(max_samples=20)
 
@@ -220,14 +225,14 @@ def test_max_samples_minimum_boundary():
 
 
 @pytest.mark.unit
-def test_max_samples_too_small_rejected():
+def test_max_samples_too_small_rejected() -> None:
     """Test max_samples < 20 is rejected."""
     with pytest.raises(ValidationError, match="max_samples=19 is too small"):
         DatasetConfig(max_samples=19)
 
 
 @pytest.mark.unit
-def test_max_samples_one_rejected():
+def test_max_samples_one_rejected() -> None:
     """Test max_samples=1 is rejected."""
     with pytest.raises(ValidationError, match="max_samples=1 is too small"):
         DatasetConfig(max_samples=1)

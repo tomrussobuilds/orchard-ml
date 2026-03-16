@@ -15,7 +15,7 @@ from orchard.core.config import TrainingConfig
 
 # UNIT TESTS: DEFAULTS
 @pytest.mark.unit
-def test_training_config_defaults():
+def test_training_config_defaults() -> None:
     """Test TrainingConfig with default values."""
     config = TrainingConfig()
 
@@ -30,7 +30,7 @@ def test_training_config_defaults():
 
 # UNIT TESTS: LEARNING RATE VALIDATION
 @pytest.mark.unit
-def test_lr_within_bounds():
+def test_lr_within_bounds() -> None:
     """Test valid learning rate values."""
     config = TrainingConfig(learning_rate=0.001, min_lr=1e-7)
 
@@ -39,7 +39,7 @@ def test_lr_within_bounds():
 
 
 @pytest.mark.unit
-def test_lr_negative_rejected():
+def test_lr_negative_rejected() -> None:
     """Test negative learning rate is rejected."""
     with pytest.raises(ValidationError):
         TrainingConfig(learning_rate=-0.001)
@@ -47,28 +47,28 @@ def test_lr_negative_rejected():
 
 # UNIT TESTS: BATCH SIZE VALIDATION
 @pytest.mark.unit
-def test_batch_size_valid_range():
+def test_batch_size_valid_range() -> None:
     """Test batch size within valid range."""
     config = TrainingConfig(batch_size=64)
     assert config.batch_size == 64
 
 
 @pytest.mark.unit
-def test_batch_size_too_large_rejected():
+def test_batch_size_too_large_rejected() -> None:
     """Test batch_size > 128 is rejected."""
     with pytest.raises(ValidationError, match="less than or equal to 128"):
         TrainingConfig(batch_size=256)
 
 
 @pytest.mark.unit
-def test_batch_size_zero_rejected():
+def test_batch_size_zero_rejected() -> None:
     """Test batch_size=0 is rejected."""
     with pytest.raises(ValidationError):
         TrainingConfig(batch_size=0)
 
 
 @pytest.mark.unit
-def test_batch_size_negative_rejected():
+def test_batch_size_negative_rejected() -> None:
     """Test negative batch size is rejected."""
     with pytest.raises(ValidationError):
         TrainingConfig(batch_size=-1)
@@ -76,14 +76,14 @@ def test_batch_size_negative_rejected():
 
 # UNIT TESTS: AMP VALIDATION
 @pytest.mark.unit
-def test_amp_with_small_batch_rejected():
+def test_amp_with_small_batch_rejected() -> None:
     """Test AMP + batch_size < 4 is rejected."""
     with pytest.raises(ValidationError, match="AMP.*small batch"):
         TrainingConfig(use_amp=True, batch_size=2)
 
 
 @pytest.mark.unit
-def test_amp_with_sufficient_batch_allowed():
+def test_amp_with_sufficient_batch_allowed() -> None:
     """Test AMP + batch_size >= 4 is allowed."""
     config = TrainingConfig(use_amp=True, batch_size=16)
 
@@ -93,7 +93,7 @@ def test_amp_with_sufficient_batch_allowed():
 
 # UNIT TESTS: REGULARIZATION
 @pytest.mark.unit
-def test_label_smoothing_bounds():
+def test_label_smoothing_bounds() -> None:
     """Test label_smoothing within valid range."""
     config = TrainingConfig(label_smoothing=0.1)
     assert config.label_smoothing == pytest.approx(0.1)
@@ -104,21 +104,21 @@ def test_label_smoothing_bounds():
 
 
 @pytest.mark.unit
-def test_label_smoothing_too_large_rejected():
+def test_label_smoothing_too_large_rejected() -> None:
     """Test label_smoothing > 0.3 is rejected."""
     with pytest.raises(ValidationError):
         TrainingConfig(label_smoothing=0.5)
 
 
 @pytest.mark.unit
-def test_label_smoothing_negative_rejected():
+def test_label_smoothing_negative_rejected() -> None:
     """Test negative label_smoothing is rejected."""
     with pytest.raises(ValidationError):
         TrainingConfig(label_smoothing=-0.1)
 
 
 @pytest.mark.unit
-def test_mixup_alpha_non_negative():
+def test_mixup_alpha_non_negative() -> None:
     """Test mixup_alpha >= 0."""
     config = TrainingConfig(mixup_alpha=0.2)
     assert config.mixup_alpha == pytest.approx(0.2)
@@ -129,7 +129,7 @@ def test_mixup_alpha_non_negative():
 
 
 @pytest.mark.unit
-def test_weight_decay_bounds():
+def test_weight_decay_bounds() -> None:
     """Test weight_decay within valid range."""
     config = TrainingConfig(weight_decay=1e-4)
     assert config.weight_decay == pytest.approx(1e-4)
@@ -140,7 +140,7 @@ def test_weight_decay_bounds():
 
 
 @pytest.mark.unit
-def test_weight_decay_too_large_rejected():
+def test_weight_decay_too_large_rejected() -> None:
     """Test weight_decay > 0.2 is rejected."""
     with pytest.raises(ValidationError):
         TrainingConfig(weight_decay=0.5)
@@ -148,7 +148,7 @@ def test_weight_decay_too_large_rejected():
 
 # UNIT TESTS: MOMENTUM
 @pytest.mark.unit
-def test_momentum_bounds():
+def test_momentum_bounds() -> None:
     """Test momentum within valid range [0, 1)."""
     config = TrainingConfig(momentum=0.9)
     assert config.momentum == pytest.approx(0.9)
@@ -157,14 +157,14 @@ def test_momentum_bounds():
 
 
 @pytest.mark.unit
-def test_momentum_one_rejected():
+def test_momentum_one_rejected() -> None:
     """Test momentum=1.0 is rejected."""
     with pytest.raises(ValidationError):
         TrainingConfig(momentum=1.0)
 
 
 @pytest.mark.unit
-def test_momentum_negative_rejected():
+def test_momentum_negative_rejected() -> None:
     """Test negative momentum is rejected."""
     with pytest.raises(ValidationError):
         TrainingConfig(momentum=-0.1)
@@ -172,21 +172,21 @@ def test_momentum_negative_rejected():
 
 # UNIT TESTS: GRADIENT CLIPPING
 @pytest.mark.unit
-def test_grad_clip_valid():
+def test_grad_clip_valid() -> None:
     """Test gradient clipping within valid range."""
     config = TrainingConfig(grad_clip=1.0)
     assert config.grad_clip == pytest.approx(1.0)
 
 
 @pytest.mark.unit
-def test_grad_clip_none_allowed():
+def test_grad_clip_none_allowed() -> None:
     """Test grad_clip=None disables clipping."""
     config = TrainingConfig(grad_clip=None)
     assert config.grad_clip is None
 
 
 @pytest.mark.unit
-def test_grad_clip_too_large_rejected():
+def test_grad_clip_too_large_rejected() -> None:
     """Test grad_clip > 100 is rejected."""
     with pytest.raises(ValidationError):
         TrainingConfig(grad_clip=150.0)
@@ -194,7 +194,7 @@ def test_grad_clip_too_large_rejected():
 
 # EDGE CASES & REGRESSION TESTS
 @pytest.mark.unit
-def test_frozen_immutability():
+def test_frozen_immutability() -> None:
     """Test TrainingConfig is frozen (immutable)."""
     config = TrainingConfig()
 
@@ -203,7 +203,7 @@ def test_frozen_immutability():
 
 
 @pytest.mark.unit
-def test_scheduler_types():
+def test_scheduler_types() -> None:
     """Test valid scheduler types."""
     for scheduler in ["cosine", "plateau", "step", "none"]:
         config = TrainingConfig(scheduler_type=scheduler)
@@ -211,7 +211,7 @@ def test_scheduler_types():
 
 
 @pytest.mark.unit
-def test_criterion_types():
+def test_criterion_types() -> None:
     """Test valid criterion types."""
     for criterion in ["cross_entropy", "focal"]:
         config = TrainingConfig(criterion_type=criterion)
@@ -219,7 +219,7 @@ def test_criterion_types():
 
 
 @pytest.mark.unit
-def test_monitor_metric_values():
+def test_monitor_metric_values() -> None:
     """Test monitor_metric accepts valid values and rejects invalid."""
     for metric in ["auc", "accuracy"]:
         config = TrainingConfig(monitor_metric=metric)
@@ -231,21 +231,21 @@ def test_monitor_metric_values():
 
 # UNIT TESTS: OPTIMIZER TYPE
 @pytest.mark.unit
-def test_optimizer_type_default():
+def test_optimizer_type_default() -> None:
     """Test optimizer_type defaults to sgd."""
     config = TrainingConfig()
     assert config.optimizer_type == "sgd"
 
 
 @pytest.mark.unit
-def test_optimizer_type_adamw():
+def test_optimizer_type_adamw() -> None:
     """Test optimizer_type accepts adamw."""
     config = TrainingConfig(optimizer_type="adamw")
     assert config.optimizer_type == "adamw"
 
 
 @pytest.mark.unit
-def test_optimizer_type_invalid_rejected():
+def test_optimizer_type_invalid_rejected() -> None:
     """Test invalid optimizer_type is rejected by Literal."""
     with pytest.raises(ValidationError):
         TrainingConfig(optimizer_type="adam")

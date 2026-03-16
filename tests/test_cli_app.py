@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -26,47 +27,47 @@ def _strip_ansi(text: str) -> str:
 class TestAutoCast:
     """Tests for _auto_cast string-to-Python type conversion."""
 
-    def test_int(self):
+    def test_int(self) -> None:
         assert _auto_cast("42") == 42
         assert isinstance(_auto_cast("42"), int)
 
-    def test_negative_int(self):
+    def test_negative_int(self) -> None:
         assert _auto_cast("-5") == -5
 
-    def test_zero(self):
+    def test_zero(self) -> None:
         assert _auto_cast("0") == 0
         assert isinstance(_auto_cast("0"), int)
 
-    def test_float(self):
+    def test_float(self) -> None:
         assert _auto_cast("3.14") == pytest.approx(3.14)
         assert isinstance(_auto_cast("3.14"), float)
 
-    def test_scientific_notation(self):
+    def test_scientific_notation(self) -> None:
         assert _auto_cast("1e-5") == pytest.approx(1e-5)
         assert isinstance(_auto_cast("1e-5"), float)
 
-    def test_negative_float(self):
+    def test_negative_float(self) -> None:
         assert _auto_cast("-0.001") == pytest.approx(-0.001)
 
-    def test_bool_true(self):
+    def test_bool_true(self) -> None:
         assert _auto_cast("true") is True
         assert _auto_cast("True") is True
         assert _auto_cast("TRUE") is True
 
-    def test_bool_false(self):
+    def test_bool_false(self) -> None:
         assert _auto_cast("false") is False
         assert _auto_cast("False") is False
 
-    def test_null(self):
+    def test_null(self) -> None:
         assert _auto_cast("null") is None
         assert _auto_cast("None") is None
         assert _auto_cast("none") is None
 
-    def test_string_passthrough(self):
+    def test_string_passthrough(self) -> None:
         assert _auto_cast("hello") == "hello"
         assert _auto_cast("cosine") == "cosine"
 
-    def test_empty_string(self):
+    def test_empty_string(self) -> None:
         assert _auto_cast("") == ""
 
 
@@ -75,11 +76,11 @@ class TestAutoCast:
 class TestParseOverrides:
     """Tests for _parse_overrides CLI flag parsing."""
 
-    def test_single_override(self):
+    def test_single_override(self) -> None:
         result = _parse_overrides(["training.epochs=20"])
         assert result == {"training.epochs": 20}
 
-    def test_multiple_overrides(self):
+    def test_multiple_overrides(self) -> None:
         result = _parse_overrides(
             [
                 "training.epochs=20",
@@ -93,52 +94,52 @@ class TestParseOverrides:
             "training.use_amp": True,
         }
 
-    def test_empty_list(self):
+    def test_empty_list(self) -> None:
         result = _parse_overrides([])
         assert result == {}
 
-    def test_value_with_equals(self):
+    def test_value_with_equals(self) -> None:
         """Values containing = should work (partition on first =)."""
         result = _parse_overrides(["dataset.name=a=b"])
         assert result == {"dataset.name": "a=b"}
 
-    def test_missing_equals_raises(self):
+    def test_missing_equals_raises(self) -> None:
         import typer
 
         with pytest.raises(typer.BadParameter, match="key=value"):
             _parse_overrides(["no_equals_here"])
 
-    def test_empty_key_raises(self):
+    def test_empty_key_raises(self) -> None:
         import typer
 
         with pytest.raises(typer.BadParameter, match="Empty key"):
             _parse_overrides(["=value"])
 
-    def test_whitespace_stripped(self):
+    def test_whitespace_stripped(self) -> None:
         result = _parse_overrides(["  training.epochs  =  42  "])
         assert result == {"training.epochs": 42}
 
-    def test_float_scientific(self):
+    def test_float_scientific(self) -> None:
         result = _parse_overrides(["training.learning_rate=1e-4"])
         assert result["training.learning_rate"] == pytest.approx(1e-4)
 
-    def test_null_value(self):
+    def test_null_value(self) -> None:
         result = _parse_overrides(["dataset.max_samples=null"])
         assert result == {"dataset.max_samples": None}
 
-    def test_invalid_section_raises(self):
+    def test_invalid_section_raises(self) -> None:
         import typer
 
         with pytest.raises(typer.BadParameter, match="Unknown config section"):
             _parse_overrides(["bogus.field=1"])
 
-    def test_invalid_field_raises(self):
+    def test_invalid_field_raises(self) -> None:
         import typer
 
         with pytest.raises(typer.BadParameter, match="Unknown field"):
             _parse_overrides(["training.bogus=1"])
 
-    def test_missing_dot_raises(self):
+    def test_missing_dot_raises(self) -> None:
         import typer
 
         with pytest.raises(typer.BadParameter, match="section.field"):
@@ -150,7 +151,7 @@ class TestParseOverrides:
 class TestCLIHelp:
     """Smoke tests for CLI command registration."""
 
-    def test_app_help(self):
+    def test_app_help(self) -> None:
         from typer.testing import CliRunner
 
         from orchard.cli_app import app
@@ -160,7 +161,7 @@ class TestCLIHelp:
         assert result.exit_code == 0
         assert "run" in result.output
 
-    def test_run_help(self):
+    def test_run_help(self) -> None:
         from typer.testing import CliRunner
 
         from orchard.cli_app import app
@@ -172,7 +173,7 @@ class TestCLIHelp:
         assert "--set" in clean
         assert "RECIPE" in clean
 
-    def test_run_missing_recipe(self):
+    def test_run_missing_recipe(self) -> None:
         from typer.testing import CliRunner
 
         from orchard.cli_app import app
@@ -188,7 +189,7 @@ class TestCLIHelp:
 class TestCLIRun:
     """Tests for the ``run`` command with mocked pipeline components."""
 
-    def test_version_flag(self):
+    def test_version_flag(self) -> None:
         from typer.testing import CliRunner
 
         from orchard.cli_app import app
@@ -200,7 +201,9 @@ class TestCLIRun:
 
     @patch("orchard.RootOrchestrator")
     @patch("orchard.Config")
-    def test_run_raises_when_orchestrator_returns_none(self, mock_cfg_cls, mock_orch_cls, tmp_path):
+    def test_run_raises_when_orchestrator_returns_none(
+        self, mock_cfg_cls: MagicMock, mock_orch_cls: MagicMock, tmp_path: Path
+    ) -> None:
         """Covers RuntimeError when orchestrator paths/logger are None."""
         from typer.testing import CliRunner
 
@@ -227,8 +230,14 @@ class TestCLIRun:
     @patch("orchard.RootOrchestrator")
     @patch("orchard.Config")
     def test_run_training_only(
-        self, mock_cfg_cls, mock_orch_cls, mock_train, mock_summary, mock_tracker_fn, tmp_path
-    ):
+        self,
+        mock_cfg_cls: MagicMock,
+        mock_orch_cls: MagicMock,
+        mock_train: MagicMock,
+        mock_summary: MagicMock,
+        mock_tracker_fn: MagicMock,
+        tmp_path: Path,
+    ) -> None:
         """Covers the main run path: training only (no optuna, no export)."""
         from typer.testing import CliRunner
 
@@ -267,15 +276,15 @@ class TestCLIRun:
     @patch("orchard.Config")
     def test_run_full_pipeline(
         self,
-        mock_cfg_cls,
-        mock_orch_cls,
-        mock_train,
-        mock_optuna,
-        mock_export,
-        _mock_summary,
-        mock_tracker_fn,
-        tmp_path,
-    ):
+        mock_cfg_cls: MagicMock,
+        mock_orch_cls: MagicMock,
+        mock_train: MagicMock,
+        mock_optuna: MagicMock,
+        mock_export: MagicMock,
+        _mock_summary: MagicMock,
+        mock_tracker_fn: MagicMock,
+        tmp_path: Path,
+    ) -> None:
         """Covers optuna + training + export path."""
         from typer.testing import CliRunner
 
@@ -316,8 +325,13 @@ class TestCLIRun:
     @patch("orchard.RootOrchestrator")
     @patch("orchard.Config")
     def test_run_keyboard_interrupt(
-        self, mock_cfg_cls, mock_orch_cls, mock_train, mock_tracker_fn, tmp_path
-    ):
+        self,
+        mock_cfg_cls: MagicMock,
+        mock_orch_cls: MagicMock,
+        mock_train: MagicMock,
+        mock_tracker_fn: MagicMock,
+        tmp_path: Path,
+    ) -> None:
         """Covers KeyboardInterrupt handling."""
         from typer.testing import CliRunner
 
@@ -344,8 +358,13 @@ class TestCLIRun:
     @patch("orchard.RootOrchestrator")
     @patch("orchard.Config")
     def test_run_pipeline_error(
-        self, mock_cfg_cls, mock_orch_cls, mock_train, mock_tracker_fn, tmp_path
-    ):
+        self,
+        mock_cfg_cls: MagicMock,
+        mock_orch_cls: MagicMock,
+        mock_train: MagicMock,
+        mock_tracker_fn: MagicMock,
+        tmp_path: Path,
+    ) -> None:
         """Covers generic exception handling."""
         from typer.testing import CliRunner
 
@@ -372,8 +391,13 @@ class TestCLIRun:
     @patch("orchard.RootOrchestrator")
     @patch("orchard.Config")
     def test_run_orchard_error_clean_exit(
-        self, mock_cfg_cls, mock_orch_cls, mock_train, mock_tracker_fn, tmp_path
-    ):
+        self,
+        mock_cfg_cls: MagicMock,
+        mock_orch_cls: MagicMock,
+        mock_train: MagicMock,
+        mock_tracker_fn: MagicMock,
+        tmp_path: Path,
+    ) -> None:
         """OrchardError produces clean exit without traceback."""
         from typer.testing import CliRunner
 
@@ -402,7 +426,7 @@ class TestCLIRun:
 class TestCLIInit:
     """Tests for the ``init`` command."""
 
-    def test_init_creates_recipe(self, tmp_path):
+    def test_init_creates_recipe(self, tmp_path: Path) -> None:
         from typer.testing import CliRunner
 
         from orchard.cli_app import app
@@ -421,7 +445,7 @@ class TestCLIInit:
         ):
             assert section in content
 
-    def test_init_custom_filename(self, tmp_path):
+    def test_init_custom_filename(self, tmp_path: Path) -> None:
         from typer.testing import CliRunner
 
         from orchard.cli_app import app
@@ -433,7 +457,7 @@ class TestCLIInit:
         assert out.exists()
         assert "my_recipe.yaml" in result.output
 
-    def test_init_refuses_overwrite(self, tmp_path):
+    def test_init_refuses_overwrite(self, tmp_path: Path) -> None:
         from typer.testing import CliRunner
 
         from orchard.cli_app import app
@@ -446,7 +470,7 @@ class TestCLIInit:
         assert "already exists" in result.output
         assert target.read_text() == "existing"
 
-    def test_init_force_overwrites(self, tmp_path):
+    def test_init_force_overwrites(self, tmp_path: Path) -> None:
         from typer.testing import CliRunner
 
         from orchard.cli_app import app
@@ -459,7 +483,7 @@ class TestCLIInit:
         content = target.read_text()
         assert "dataset:" in content
 
-    def test_init_valid_yaml(self, tmp_path):
+    def test_init_valid_yaml(self, tmp_path: Path) -> None:
         """Generated YAML is parseable via load_config_from_yaml."""
         from typer.testing import CliRunner
 
@@ -474,7 +498,7 @@ class TestCLIInit:
         assert data["dataset"]["name"] == "bloodmnist"
         assert data["training"]["seed"] == 42
 
-    def test_init_no_internal_fields(self, tmp_path):
+    def test_init_no_internal_fields(self, tmp_path: Path) -> None:
         """metadata and img_size must not appear in generated YAML."""
         from typer.testing import CliRunner
 
@@ -487,7 +511,7 @@ class TestCLIInit:
         assert "metadata:" not in content
         assert "img_size:" not in content
 
-    def test_init_device_is_auto(self, tmp_path):
+    def test_init_device_is_auto(self, tmp_path: Path) -> None:
         """Hardware device should be 'auto', not resolved."""
         from typer.testing import CliRunner
 
@@ -500,7 +524,7 @@ class TestCLIInit:
         data = load_config_from_yaml(target)
         assert data["hardware"]["device"] == "auto"
 
-    def test_init_paths_are_portable(self, tmp_path):
+    def test_init_paths_are_portable(self, tmp_path: Path) -> None:
         """Paths should be relative, not absolute."""
         from typer.testing import CliRunner
 
@@ -514,7 +538,7 @@ class TestCLIInit:
         assert data["dataset"]["data_root"] == "./dataset"
         assert data["telemetry"]["output_dir"] == "./outputs"
 
-    def test_init_help(self):
+    def test_init_help(self) -> None:
         from typer.testing import CliRunner
 
         from orchard.cli_app import app
@@ -525,7 +549,7 @@ class TestCLIInit:
         clean = _strip_ansi(result.output)
         assert "OUTPUT" in clean or "output" in clean.lower()
 
-    def test_init_header_present(self, tmp_path):
+    def test_init_header_present(self, tmp_path: Path) -> None:
         """Generated file starts with the header comment."""
         from typer.testing import CliRunner
 
@@ -545,7 +569,7 @@ class TestCommentedYaml:
     """Tests for commented YAML generation in init command."""
 
     @pytest.fixture()
-    def recipe_content(self, tmp_path):
+    def recipe_content(self, tmp_path: Path) -> None:
         """Generate a recipe and return its content."""
         from typer.testing import CliRunner
 
@@ -554,9 +578,9 @@ class TestCommentedYaml:
         runner = CliRunner()
         target = tmp_path / "recipe.yaml"
         runner.invoke(app, ["init", str(target)])
-        return target.read_text()
+        return target.read_text()  # type: ignore
 
-    def test_comments_present(self, recipe_content):
+    def test_comments_present(self, recipe_content: Any) -> None:
         """Generated recipe contains field description comments."""
         assert "# Dataset identifier" in recipe_content
         assert "# Samples per batch" in recipe_content
@@ -564,23 +588,23 @@ class TestCommentedYaml:
         assert "# Initial learning rate" in recipe_content
         assert "# Enable MLflow tracking" in recipe_content
 
-    def test_constraint_ranges(self, recipe_content):
+    def test_constraint_ranges(self, recipe_content: Any) -> None:
         """Comments include constraint ranges with en-dash."""
         assert "(1\u2013128)" in recipe_content  # batch_size
         assert "(0.0\u20130.2)" in recipe_content  # weight_decay
 
-    def test_enum_options(self, recipe_content):
+    def test_enum_options(self, recipe_content: Any) -> None:
         """Comments include enum values in brackets."""
         assert "[sgd, adamw]" in recipe_content
         assert "[auc, accuracy, f1]" in recipe_content
         assert "[cosine, plateau, step, none]" in recipe_content
 
-    def test_one_sided_constraints(self, recipe_content):
+    def test_one_sided_constraints(self, recipe_content: Any) -> None:
         """Comments include one-sided constraints."""
         assert "(\u2265 0)" in recipe_content  # patience
         assert "(> 0)" in recipe_content  # epochs
 
-    def test_roundtrip_values(self, tmp_path):
+    def test_roundtrip_values(self, tmp_path: Path) -> None:
         """Commented YAML parses to correct values."""
         from typer.testing import CliRunner
 
@@ -609,7 +633,7 @@ class TestCommentedYaml:
         assert data["dataset"]["max_samples"] is None
         assert data["evaluation"]["fig_size_predictions"] == [12, 8]
 
-    def test_nested_search_space(self, tmp_path):
+    def test_nested_search_space(self, tmp_path: Path) -> None:
         """Nested search_space_overrides renders correctly."""
         from typer.testing import CliRunner
 
@@ -625,12 +649,12 @@ class TestCommentedYaml:
         assert sso["batch_size_low_res"] == [16, 32, 48, 64]
         assert sso["optimizer_type"] == ["sgd", "adamw"]
 
-    def test_no_floatrange_docstrings(self, recipe_content):
+    def test_no_floatrange_docstrings(self, recipe_content: Any) -> None:
         """FloatRange/IntRange type docstrings must not leak as comments."""
         assert "Typed bounds for" not in recipe_content
         assert "Lower bound (inclusive)" not in recipe_content
 
-    def test_comments_above_fields(self, recipe_content):
+    def test_comments_above_fields(self, recipe_content: Any) -> None:
         """Comments appear on the line immediately above the field at indent=1."""
         lines = recipe_content.split("\n")
         for i, line in enumerate(lines):
@@ -645,28 +669,28 @@ class TestCommentedYaml:
 class TestYamlHelpers:
     """Unit tests for YAML builder helper functions."""
 
-    def test_format_none(self):
+    def test_format_none(self) -> None:
         from orchard.cli_app import _format_yaml_value
 
         assert _format_yaml_value(None) == "null"
 
-    def test_format_bool(self):
+    def test_format_bool(self) -> None:
         from orchard.cli_app import _format_yaml_value
 
         assert _format_yaml_value(True) == "true"
         assert _format_yaml_value(False) == "false"
 
-    def test_format_int(self):
+    def test_format_int(self) -> None:
         from orchard.cli_app import _format_yaml_value
 
         assert _format_yaml_value(42) == "42"
 
-    def test_format_float(self):
+    def test_format_float(self) -> None:
         from orchard.cli_app import _format_yaml_value
 
         assert _format_yaml_value(0.5) == "0.5"
 
-    def test_format_small_float(self):
+    def test_format_small_float(self) -> None:
         from orchard.cli_app import _format_yaml_value
 
         result = _format_yaml_value(1e-6)
@@ -675,75 +699,75 @@ class TestYamlHelpers:
         # Must not contain YAML document-end marker
         assert "..." not in result
 
-    def test_format_string_keyword(self):
+    def test_format_string_keyword(self) -> None:
         from orchard.cli_app import _format_yaml_value
 
         assert _format_yaml_value("true") == "'true'"
         assert _format_yaml_value("null") == "'null'"
 
-    def test_format_plain_string(self):
+    def test_format_plain_string(self) -> None:
         from orchard.cli_app import _format_yaml_value
 
         assert _format_yaml_value("bloodmnist") == "bloodmnist"
 
-    def test_build_comment_description_only(self):
+    def test_build_comment_description_only(self) -> None:
         from orchard.cli_app import _build_comment
 
         assert _build_comment({"description": "Enable tracking"}) == "Enable tracking"
 
-    def test_build_comment_enum(self):
+    def test_build_comment_enum(self) -> None:
         from orchard.cli_app import _build_comment
 
         result = _build_comment({"description": "Optimizer", "enum": ["sgd", "adamw"]})
         assert result == "Optimizer [sgd, adamw]"
 
-    def test_build_comment_range(self):
+    def test_build_comment_range(self) -> None:
         from orchard.cli_app import _build_comment
 
         result = _build_comment({"description": "Batch size", "minimum": 1, "maximum": 128})
-        assert "Batch size" in result
-        assert "1" in result
-        assert "128" in result
+        assert "Batch size" in result  # type: ignore
+        assert "1" in result  # type: ignore
+        assert "128" in result  # type: ignore
 
-    def test_build_comment_no_description(self):
+    def test_build_comment_no_description(self) -> None:
         from orchard.cli_app import _build_comment
 
         assert _build_comment({"minimum": 0, "type": "integer"}) is None
         assert _build_comment({}) is None
 
-    def test_build_comment_exclusive_range(self):
+    def test_build_comment_exclusive_range(self) -> None:
         from orchard.cli_app import _build_comment
 
         result = _build_comment(
             {"description": "LR", "exclusiveMinimum": 1e-8, "exclusiveMaximum": 1.0}
         )
-        assert "LR" in result  # type: ignore[operator]
-        assert "1e-08" in result  # type: ignore[operator]
+        assert "LR" in result  # type: ignore
+        assert "1e-08" in result  # type: ignore
 
-    def test_build_comment_upper_only(self):
+    def test_build_comment_upper_only(self) -> None:
         from orchard.cli_app import _build_comment
 
         assert _build_comment({"description": "Cap", "maximum": 100}) == "Cap (\u2264 100)"
         assert _build_comment({"description": "Lim", "exclusiveMaximum": 5}) == "Lim (< 5)"
 
-    def test_format_string_with_special_chars(self):
+    def test_format_string_with_special_chars(self) -> None:
         from orchard.cli_app import _format_yaml_value
 
         assert _format_yaml_value("a:b") == "'a:b'"
         assert _format_yaml_value("") == "''"
 
-    def test_format_large_float(self):
+    def test_format_large_float(self) -> None:
         from orchard.cli_app import _format_yaml_value
 
         result = _format_yaml_value(1e8)
         assert "..." not in result
 
-    def test_format_zero_float(self):
+    def test_format_zero_float(self) -> None:
         from orchard.cli_app import _format_yaml_value
 
         assert _format_yaml_value(0.0) == "0.0"
 
-    def test_render_list_of_dicts(self, tmp_path):
+    def test_render_list_of_dicts(self, tmp_path: Path) -> None:
         """list-of-dicts branch in _render_fields."""
         from orchard.cli_app import _render_fields
 
@@ -753,7 +777,7 @@ class TestYamlHelpers:
         assert "items:" in text
         assert "a: 1" in text
 
-    def test_format_non_scalar_falls_back_to_yaml_dump(self):
+    def test_format_non_scalar_falls_back_to_yaml_dump(self) -> None:
         """yaml.dump fallback for non-scalar types (tuple, custom objects)."""
         from orchard.cli_app import _format_yaml_value
 
@@ -763,7 +787,7 @@ class TestYamlHelpers:
         assert "2" in result
         assert "..." not in result
 
-    def test_build_commented_yaml_unknown_section(self):
+    def test_build_commented_yaml_unknown_section(self) -> None:
         """Sections with no matching Pydantic model still render fields."""
         from orchard.cli_app import _build_commented_yaml
 
@@ -780,7 +804,7 @@ class TestCLIIntegration:
     """Integration tests that exercise real Config.from_recipe and RootOrchestrator phases."""
 
     @staticmethod
-    def _write_recipe(tmp_path, overrides=None):
+    def _write_recipe(tmp_path: Path, overrides: Any = None) -> None:
         import yaml
 
         content = {
@@ -793,10 +817,10 @@ class TestCLIIntegration:
         if overrides:
             for k, v in overrides.items():
                 section, field = k.split(".", 1)
-                content[section][field] = v
+                content[section][field] = v  # type: ignore
         recipe = tmp_path / "recipe.yaml"
         recipe.write_text(yaml.dump(content), encoding="utf-8")
-        return recipe
+        return recipe  # type: ignore
 
     @patch("orchard.core.io.serialization.dump_requirements")
     @patch("orchard.core.orchestrator.InfrastructureManager")
@@ -804,8 +828,14 @@ class TestCLIIntegration:
     @patch("orchard.create_tracker")
     @patch("orchard.run_training_phase")
     def test_run_real_config_creates_workspace(
-        self, mock_train, mock_tracker_fn, mock_summary, mock_infra_cls, _mock_dump_req, tmp_path
-    ):
+        self,
+        mock_train: MagicMock,
+        mock_tracker_fn: MagicMock,
+        mock_summary: MagicMock,
+        mock_infra_cls: MagicMock,
+        _mock_dump_req: MagicMock,
+        tmp_path: Path,
+    ) -> None:
         """Real Config + RootOrchestrator creates workspace, writes config.yaml."""
         from typer.testing import CliRunner
 
@@ -841,8 +871,14 @@ class TestCLIIntegration:
     @patch("orchard.create_tracker")
     @patch("orchard.run_training_phase")
     def test_run_set_override_reaches_config(
-        self, mock_train, mock_tracker_fn, mock_summary, mock_infra_cls, _mock_dump_req, tmp_path
-    ):
+        self,
+        mock_train: MagicMock,
+        mock_tracker_fn: MagicMock,
+        mock_summary: MagicMock,
+        mock_infra_cls: MagicMock,
+        _mock_dump_req: MagicMock,
+        tmp_path: Path,
+    ) -> None:
         """--set training.seed=99 overrides the recipe value (42) end-to-end."""
         from typer.testing import CliRunner
 
@@ -864,7 +900,7 @@ class TestCLIIntegration:
         passed_cfg = call_kwargs.kwargs.get("cfg") or call_kwargs[1]
         assert passed_cfg.training.seed == 99
 
-    def test_run_missing_recipe_exits_clean(self, tmp_path):
+    def test_run_missing_recipe_exits_clean(self, tmp_path: Path) -> None:
         """Missing recipe exits with code 1, no filesystem side effects."""
         from typer.testing import CliRunner
 
@@ -874,7 +910,7 @@ class TestCLIIntegration:
         assert result.exit_code == 1
         assert "not found" in result.output
 
-    def test_init_produces_loadable_recipe(self, tmp_path):
+    def test_init_produces_loadable_recipe(self, tmp_path: Path) -> None:
         """orchard init generates a YAML parseable by Config.from_recipe."""
         from typer.testing import CliRunner
 
@@ -900,7 +936,7 @@ class TestCLIIntegration:
 class TestInlineRef:
     """Direct tests for _inline_ref to kill schema resolution mutants."""
 
-    def test_ref_key_resolution(self):
+    def test_ref_key_resolution(self) -> None:
         """rsplit("/", 1)[-1] must extract the last path segment."""
         from orchard.cli_app import _inline_ref
 
@@ -911,7 +947,7 @@ class TestInlineRef:
         # description from schema overrides base
         assert result["description"] == "override"
 
-    def test_ref_description_not_inherited(self):
+    def test_ref_description_not_inherited(self) -> None:
         """When property has no description, base description must be removed."""
         from orchard.cli_app import _inline_ref
 
@@ -921,7 +957,7 @@ class TestInlineRef:
         assert "description" not in result
         assert result["type"] == "number"
 
-    def test_ref_excludes_ref_key(self):
+    def test_ref_excludes_ref_key(self) -> None:
         """$ref itself must not appear in the resolved result."""
         from orchard.cli_app import _inline_ref
 
@@ -932,7 +968,7 @@ class TestInlineRef:
         assert result["minimum"] == 0
         assert result["type"] == "integer"
 
-    def test_ref_values_not_nullified(self):
+    def test_ref_values_not_nullified(self) -> None:
         """Schema values must be copied as-is, not replaced with None."""
         from orchard.cli_app import _inline_ref
 
@@ -942,7 +978,7 @@ class TestInlineRef:
         assert result["minimum"] == 5
         assert result["maximum"] == 10
 
-    def test_ref_missing_def_returns_schema_values(self):
+    def test_ref_missing_def_returns_schema_values(self) -> None:
         """Missing $def key should still return schema properties (minus $ref)."""
         from orchard.cli_app import _inline_ref
 
@@ -950,7 +986,7 @@ class TestInlineRef:
         result = _inline_ref(schema, {})
         assert result["description"] == "kept"
 
-    def test_ref_deep_path(self):
+    def test_ref_deep_path(self) -> None:
         """Multi-segment $ref path should still resolve correctly."""
         from orchard.cli_app import _inline_ref
 
@@ -964,7 +1000,7 @@ class TestInlineRef:
 class TestMergeAnyOf:
     """Direct tests for _merge_any_of to kill anyOf merging mutants."""
 
-    def test_excludes_anyof_key(self):
+    def test_excludes_anyof_key(self) -> None:
         """anyOf key must be excluded from merged result."""
         from orchard.cli_app import _merge_any_of
 
@@ -981,7 +1017,7 @@ class TestMergeAnyOf:
         assert result["minimum"] == 1
         assert result["maximum"] == 100
 
-    def test_skips_null_variant(self):
+    def test_skips_null_variant(self) -> None:
         """Null variant must be skipped; constraints come from non-null."""
         from orchard.cli_app import _merge_any_of
 
@@ -994,7 +1030,7 @@ class TestMergeAnyOf:
         result = _merge_any_of(schema)
         assert result["exclusiveMinimum"] == 0.0
 
-    def test_constraint_values_not_none(self):
+    def test_constraint_values_not_none(self) -> None:
         """Constraint values must be copied from variant, not set to None."""
         from orchard.cli_app import _merge_any_of
 
@@ -1009,7 +1045,7 @@ class TestMergeAnyOf:
         assert result["maximum"] == 50
         assert result["enum"] == [5, 10, 50]
 
-    def test_only_non_null_constraints(self):
+    def test_only_non_null_constraints(self) -> None:
         """With == instead of !=, we'd pick null variant (wrong)."""
         from orchard.cli_app import _merge_any_of
 
@@ -1029,7 +1065,7 @@ class TestMergeAnyOf:
 class TestResolveRefs:
     """Direct tests for _resolve_refs to kill string mutation mutants."""
 
-    def test_ref_resolved(self):
+    def test_ref_resolved(self) -> None:
         from orchard.cli_app import _resolve_refs
 
         properties = {"field": {"$ref": "#/$defs/MyType"}}
@@ -1038,7 +1074,7 @@ class TestResolveRefs:
         assert result["field"]["type"] == "string"
         assert "$ref" not in result["field"]
 
-    def test_anyof_merged(self):
+    def test_anyof_merged(self) -> None:
         from orchard.cli_app import _resolve_refs
 
         properties = {
@@ -1053,7 +1089,7 @@ class TestResolveRefs:
         assert "anyOf" not in result["field"]
         assert result["field"]["minimum"] == 1
 
-    def test_plain_passthrough(self):
+    def test_plain_passthrough(self) -> None:
         from orchard.cli_app import _resolve_refs
 
         properties = {"field": {"type": "string", "description": "plain"}}
@@ -1065,7 +1101,7 @@ class TestResolveRefs:
 class TestFormatYamlValueMutants:
     """Tests targeting boundary float formatting mutants."""
 
-    def test_boundary_1e_minus_3(self):
+    def test_boundary_1e_minus_3(self) -> None:
         """Value exactly at 1e-3 should use str(), not yaml.dump."""
         from orchard.cli_app import _format_yaml_value
 
@@ -1073,34 +1109,34 @@ class TestFormatYamlValueMutants:
         result = _format_yaml_value(0.001)
         assert result == "0.001"
 
-    def test_just_below_1e_minus_3(self):
+    def test_just_below_1e_minus_3(self) -> None:
         """Value below 1e-3 should use yaml.dump (scientific notation)."""
         from orchard.cli_app import _format_yaml_value
 
         result = _format_yaml_value(1e-5)
         assert "e" in result.lower() or "E" in result
 
-    def test_boundary_1e7(self):
+    def test_boundary_1e7(self) -> None:
         """Value exactly at 1e7 should use yaml.dump."""
         from orchard.cli_app import _format_yaml_value
 
         result = _format_yaml_value(1e7)
         assert "..." not in result
 
-    def test_just_below_1e7(self):
+    def test_just_below_1e7(self) -> None:
         """Value just below 1e7 should use str()."""
         from orchard.cli_app import _format_yaml_value
 
         result = _format_yaml_value(9999999.0)
         assert result == "9999999.0"
 
-    def test_zero_uses_str(self):
+    def test_zero_uses_str(self) -> None:
         """0.0 should use str(), not yaml.dump (isclose to 0)."""
         from orchard.cli_app import _format_yaml_value
 
         assert _format_yaml_value(0.0) == "0.0"
 
-    def test_and_vs_or_logic(self):
+    def test_and_vs_or_logic(self) -> None:
         """Non-zero value in normal range uses str(), not yaml.dump."""
         from orchard.cli_app import _format_yaml_value
 
@@ -1108,7 +1144,7 @@ class TestFormatYamlValueMutants:
         assert _format_yaml_value(0.5) == "0.5"
         # If `and` were changed to `or`, 0.5 would hit yaml.dump branch
 
-    def test_yaml_dump_flow_style(self):
+    def test_yaml_dump_flow_style(self) -> None:
         """yaml.dump must use default_flow_style=True for inline output."""
         from orchard.cli_app import _format_yaml_value
 
@@ -1117,7 +1153,7 @@ class TestFormatYamlValueMutants:
         assert "\n" not in result
         assert "..." not in result
 
-    def test_split_on_newline(self):
+    def test_split_on_newline(self) -> None:
         """yaml.dump result must be split on \\n, not None or other delimiter."""
         from orchard.cli_app import _format_yaml_value
 
@@ -1127,7 +1163,7 @@ class TestFormatYamlValueMutants:
         assert isinstance(result, str)
         assert len(result) > 0
 
-    def test_special_chars_quoting(self):
+    def test_special_chars_quoting(self) -> None:
         """Strings with special YAML chars must be quoted."""
         from orchard.cli_app import _format_yaml_value
 
@@ -1136,7 +1172,7 @@ class TestFormatYamlValueMutants:
         assert _format_yaml_value("a{b") == "'a{b'"
         assert _format_yaml_value("a}b") == "'a}b'"
 
-    def test_string_without_special_chars_not_quoted(self):
+    def test_string_without_special_chars_not_quoted(self) -> None:
         """Strings without special YAML chars must NOT be quoted."""
         from orchard.cli_app import _format_yaml_value
 
@@ -1144,7 +1180,7 @@ class TestFormatYamlValueMutants:
         assert _format_yaml_value("test_X") == "test_X"
         assert _format_yaml_value("MIXED") == "MIXED"
 
-    def test_non_scalar_split_on_newline(self):
+    def test_non_scalar_split_on_newline(self) -> None:
         """Non-scalar yaml.dump must also split on \\n."""
         from orchard.cli_app import _format_yaml_value
 
@@ -1152,7 +1188,7 @@ class TestFormatYamlValueMutants:
         assert "\n" not in result
         assert "..." not in result
 
-    def test_non_scalar_flow_style(self):
+    def test_non_scalar_flow_style(self) -> None:
         """Non-scalar yaml.dump must use default_flow_style=True."""
         from orchard.cli_app import _format_yaml_value
 
@@ -1165,7 +1201,7 @@ class TestFormatYamlValueMutants:
 class TestAppendWrappedComment:
     """Tests targeting comment wrapping arithmetic mutants."""
 
-    def test_short_comment_no_wrap(self):
+    def test_short_comment_no_wrap(self) -> None:
         from orchard.cli_app import _append_wrapped_comment
 
         lines: list[str] = []
@@ -1173,7 +1209,7 @@ class TestAppendWrappedComment:
         assert len(lines) == 1
         assert lines[0] == "    # Short"
 
-    def test_long_comment_wraps(self):
+    def test_long_comment_wraps(self) -> None:
         from orchard.cli_app import _append_wrapped_comment
 
         lines: list[str] = []
@@ -1184,7 +1220,7 @@ class TestAppendWrappedComment:
         for line in lines:
             assert line.startswith("    # ")
 
-    def test_boundary_exact_max_no_wrap(self):
+    def test_boundary_exact_max_no_wrap(self) -> None:
         """Comment exactly at max_text (with spaces) should NOT wrap."""
         from orchard.cli_app import _COMMENT_MAX_WIDTH, _append_wrapped_comment
 
@@ -1199,7 +1235,7 @@ class TestAppendWrappedComment:
         # With < : len==max_text → False → wraps → 2+ lines
         assert len(lines) == 1
 
-    def test_subtract_2_not_3(self):
+    def test_subtract_2_not_3(self) -> None:
         """max_text = MAX_WIDTH - len(prefix) - 2, not - 3."""
         from orchard.cli_app import _COMMENT_MAX_WIDTH, _append_wrapped_comment
 
@@ -1214,7 +1250,7 @@ class TestAppendWrappedComment:
         # With -3 (mutant): max_text=73, len>73 → wraps
         assert len(lines) == 1
 
-    def test_width_parameter_not_omitted(self):
+    def test_width_parameter_not_omitted(self) -> None:
         """textwrap.wrap must use explicit width=max_text, not default 70."""
         from orchard.cli_app import _COMMENT_MAX_WIDTH, _append_wrapped_comment
 
@@ -1229,7 +1265,7 @@ class TestAppendWrappedComment:
         # With width omitted (default 70): 2+ lines
         assert len(lines) == 1
 
-    def test_width_parameter_in_wrapping_branch(self):
+    def test_width_parameter_in_wrapping_branch(self) -> None:
         """When comment exceeds max_text, textwrap.wrap must use width=max_text.
 
         A comment >max_text enters the wrapping branch. With width=74 we get
@@ -1253,7 +1289,7 @@ class TestAppendWrappedComment:
 class TestBuildCommentedYamlMutants:
     """Tests for _build_commented_yaml schema resolution mutants."""
 
-    def test_defs_resolved(self):
+    def test_defs_resolved(self) -> None:
         """$defs must be fetched from schema for ref resolution."""
         from orchard.cli_app import _build_commented_yaml
 
@@ -1265,7 +1301,7 @@ class TestBuildCommentedYamlMutants:
         assert "training:" in result
         assert "learning_rate: " in result
 
-    def test_properties_key_fetched(self):
+    def test_properties_key_fetched(self) -> None:
         """Schema 'properties' must be fetched for sub-section rendering."""
         from orchard.cli_app import _build_commented_yaml
 
@@ -1275,7 +1311,7 @@ class TestBuildCommentedYamlMutants:
         assert "# Dataset identifier" in result or "# " in result
         assert "name: bloodmnist" in result
 
-    def test_defs_key_resolved_for_ref_types(self):
+    def test_defs_key_resolved_for_ref_types(self) -> None:
         """$defs must use the exact key '$defs' to resolve $ref types.
 
         OptunaConfig has $defs (FloatRange, IntRange, SearchSpaceOverrides).
@@ -1296,7 +1332,7 @@ class TestBuildCommentedYamlMutants:
         # which is only available when $defs resolves SearchSpaceOverrides correctly.
         assert "Optimizer algorithms to explore" in result
 
-    def test_empty_defs_fallback(self):
+    def test_empty_defs_fallback(self) -> None:
         """Missing $defs should not crash (fallback to {})."""
         from orchard.cli_app import _build_commented_yaml
 
@@ -1306,7 +1342,7 @@ class TestBuildCommentedYamlMutants:
         assert "unknown:" in result
         assert "key: val" in result
 
-    def test_fields_at_indent_one(self):
+    def test_fields_at_indent_one(self) -> None:
         """Fields under a section must be at indent=1 (4 spaces), not 2."""
         from orchard.cli_app import _build_commented_yaml
 
@@ -1323,19 +1359,19 @@ class TestBuildCommentedYamlMutants:
 class TestBuildInitDictMutants:
     """Tests for _build_init_dict to kill pop() key mutants."""
 
-    def test_metadata_removed(self):
+    def test_metadata_removed(self) -> None:
         from orchard.cli_app import _build_init_dict
 
         result = _build_init_dict()
         assert "metadata" not in result["dataset"]
 
-    def test_img_size_removed(self):
+    def test_img_size_removed(self) -> None:
         from orchard.cli_app import _build_init_dict
 
         result = _build_init_dict()
         assert "img_size" not in result["dataset"]
 
-    def test_pop_with_none_default(self):
+    def test_pop_with_none_default(self) -> None:
         """pop("img_size", None) — second arg must be None (not omitted)."""
         from orchard.cli_app import _build_init_dict
 
@@ -1349,14 +1385,14 @@ class TestBuildInitDictMutants:
 class TestValidateOverrideKeyMutants:
     """Tests targeting split vs rsplit and maxsplit mutants."""
 
-    def test_nested_dotted_key_accepted(self):
+    def test_nested_dotted_key_accepted(self) -> None:
         """'training.epochs' (one dot) must be accepted."""
         from orchard.cli_app import _validate_override_key
 
         # Should not raise
         _validate_override_key("training.epochs")
 
-    def test_multi_dot_key_uses_split_not_rsplit(self):
+    def test_multi_dot_key_uses_split_not_rsplit(self) -> None:
         """With split('.', maxsplit=1), 'training.x.y' → section='training', field='x.y'.
         With rsplit, section='training.x' (unknown). Error must mention 'Unknown field',
         not 'Unknown config section'.
@@ -1368,7 +1404,7 @@ class TestValidateOverrideKeyMutants:
         with pytest.raises(typer.BadParameter, match="Unknown field"):
             _validate_override_key("training.not_a_real.field")
 
-    def test_maxsplit_1_keeps_two_parts(self):
+    def test_maxsplit_1_keeps_two_parts(self) -> None:
         """With maxsplit=1, 'training.a.b' gives 2 parts (passes len check).
         Without maxsplit (or maxsplit=2), gives 3 parts → 'section.field' format error.
         Error must mention 'Unknown field', not 'section.field'.
@@ -1385,7 +1421,7 @@ class TestValidateOverrideKeyMutants:
 class TestVersionCallbackMutant:
     """Test that version callback uses correct package name casing."""
 
-    def test_version_output_contains_version(self):
+    def test_version_output_contains_version(self) -> None:
         from typer.testing import CliRunner
 
         from orchard.cli_app import app
@@ -1401,7 +1437,7 @@ class TestVersionCallbackMutant:
         # The version part should contain digits
         assert any(c.isdigit() for c in parts[-1])
 
-    def test_pkg_version_called_with_lowercase(self):
+    def test_pkg_version_called_with_lowercase(self) -> None:
         """pkg_version must be called with 'orchard-ml', not 'ORCHARD-ML'."""
         import typer
 
@@ -1417,7 +1453,7 @@ class TestVersionCallbackMutant:
 class TestRenderFieldsMutants:
     """Tests for _render_fields to kill property/indent mutants."""
 
-    def test_nested_dict_properties_key(self):
+    def test_nested_dict_properties_key(self) -> None:
         """Sub-dict must look up 'properties' from schema, not mutated keys."""
         from orchard.cli_app import _render_fields
 
@@ -1437,7 +1473,7 @@ class TestRenderFieldsMutants:
         # Inner field should have its comment
         assert "# Inner field" in text
 
-    def test_nested_dict_indent_increments_by_one(self):
+    def test_nested_dict_indent_increments_by_one(self) -> None:
         """Nested dict should indent by exactly 1 level (not 2)."""
         from orchard.cli_app import _render_fields
 
@@ -1451,7 +1487,7 @@ class TestRenderFieldsMutants:
         b_lines = [ln for ln in lines if "b: 1" in ln]
         assert b_lines[0] == "    b: 1"
 
-    def test_list_of_dicts_indent(self):
+    def test_list_of_dicts_indent(self) -> None:
         """List-of-dict items should use indent+2 for nested fields."""
         from orchard.cli_app import _render_fields
 
@@ -1466,7 +1502,7 @@ class TestRenderFieldsMutants:
         assert len(x_lines) == 1
         assert x_lines[0] == "        x: 1"
 
-    def test_defs_passed_to_recursive_calls(self):
+    def test_defs_passed_to_recursive_calls(self) -> None:
         """defs parameter must propagate to nested _render_fields calls."""
         from orchard.cli_app import _render_fields
 

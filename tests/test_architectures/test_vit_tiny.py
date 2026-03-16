@@ -18,7 +18,7 @@ from orchard.exceptions import OrchardConfigError
 
 # FIXTURES
 @pytest.fixture
-def device():
+def device():  # type: ignore
     """Resolves target device for test execution."""
     return torch.device("cpu")
 
@@ -36,7 +36,7 @@ class TestBuildViTTiny:
         - Error handling for invalid variants
     """
 
-    def test_build_vit_tiny_rgb(self, device):
+    def test_build_vit_tiny_rgb(self, device) -> None:  # type: ignore
         """Ensures standard RGB ViT-Tiny is built with correct dimensions."""
         num_classes = 5
         in_channels = 3
@@ -49,14 +49,14 @@ class TestBuildViTTiny:
         )
 
         assert isinstance(model, nn.Module)
-        assert model.patch_embed.proj.in_channels == 3
-        assert model.head.out_features == num_classes
+        assert model.patch_embed.proj.in_channels == 3  # type: ignore
+        assert model.head.out_features == num_classes  # type: ignore
 
         x = torch.randn(1, 3, 224, 224).to(device)
         output = model(x)
         assert output.shape == (1, num_classes)
 
-    def test_build_vit_tiny_grayscale_morphing(self, device):
+    def test_build_vit_tiny_grayscale_morphing(self, device) -> None:  # type: ignore
         """Validates the 1-channel adaptation and weight morphing (averaging)."""
         num_classes = 2
         in_channels = 1
@@ -68,13 +68,13 @@ class TestBuildViTTiny:
             weight_variant="vit_tiny_patch16_224.augreg_in21k_ft_in1k",
         )
 
-        assert model.patch_embed.proj.in_channels == 1
+        assert model.patch_embed.proj.in_channels == 1  # type: ignore
 
         x = torch.randn(1, 1, 224, 224).to(device)
         output = model(x)
         assert output.shape == (1, num_classes)
 
-    def test_build_vit_tiny_no_pretrained(self):
+    def test_build_vit_tiny_no_pretrained(self) -> None:
         """Tests initialization with random weights when pretrained flag is False."""
         num_classes = 10
         in_channels = 3
@@ -91,12 +91,12 @@ class TestBuildViTTiny:
                 "vit_tiny_patch16_224", pretrained=False, num_classes=num_classes, in_chans=3
             )
 
-    def test_invalid_weight_variant_raises_error(self, device):
+    def test_invalid_weight_variant_raises_error(self, device) -> None:  # type: ignore
         """Verifies that an invalid timm variant triggers a descriptive ValueError."""
         with pytest.raises(OrchardConfigError, match="Invalid ViT weight variant"):
             build_vit_tiny(2, 3, pretrained=True, weight_variant="invalid_vit_model_name")
 
-    def test_weight_copy_consistency(self, device):
+    def test_weight_copy_consistency(self, device) -> None:  # type: ignore
         """Confirms that bias is preserved during patch embedding adaptation."""
         model = build_vit_tiny(
             2,
@@ -105,5 +105,5 @@ class TestBuildViTTiny:
             weight_variant="vit_tiny_patch16_224.augreg_in21k_ft_in1k",
         )
 
-        assert model.patch_embed.proj.bias is not None
-        assert model.patch_embed.proj.weight.shape[1] == 1
+        assert model.patch_embed.proj.bias is not None  # type: ignore
+        assert model.patch_embed.proj.weight.shape[1] == 1  # type: ignore

@@ -14,21 +14,21 @@ from orchard.core.environment import determine_tta_mode
 
 # TTA MODE: DISABLED
 @pytest.mark.unit
-def test_determine_tta_mode_disabled_cpu():
+def test_determine_tta_mode_disabled_cpu() -> None:
     """Test TTA mode returns DISABLED when use_tta is False on CPU."""
     result = determine_tta_mode(use_tta=False, device_type="cpu")
     assert result == "DISABLED"
 
 
 @pytest.mark.unit
-def test_determine_tta_mode_disabled_cuda():
+def test_determine_tta_mode_disabled_cuda() -> None:
     """Test TTA mode returns DISABLED when use_tta is False on CUDA."""
     result = determine_tta_mode(use_tta=False, device_type="cuda")
     assert result == "DISABLED"
 
 
 @pytest.mark.unit
-def test_determine_tta_mode_disabled_mps():
+def test_determine_tta_mode_disabled_mps() -> None:
     """Test TTA mode returns DISABLED when use_tta is False on MPS."""
     result = determine_tta_mode(use_tta=False, device_type="mps")
     assert result == "DISABLED"
@@ -36,7 +36,7 @@ def test_determine_tta_mode_disabled_mps():
 
 # TTA MODE: DEFAULT (FULL)
 @pytest.mark.unit
-def test_determine_tta_mode_cpu_default():
+def test_determine_tta_mode_cpu_default() -> None:
     """Test TTA mode returns FULL for CPU when using default tta_mode."""
     result = determine_tta_mode(use_tta=True, device_type="cpu")
     assert result == "FULL (CPU)"
@@ -44,7 +44,7 @@ def test_determine_tta_mode_cpu_default():
 
 # TTA MODE: EXPLICIT LIGHT
 @pytest.mark.unit
-def test_determine_tta_mode_cpu_light():
+def test_determine_tta_mode_cpu_light() -> None:
     """Test TTA mode returns LIGHT for CPU when tta_mode is explicitly 'light'."""
     result = determine_tta_mode(use_tta=True, device_type="cpu", tta_mode="light")
     assert result == "LIGHT (CPU)"
@@ -52,14 +52,14 @@ def test_determine_tta_mode_cpu_light():
 
 # TTA MODE: ACCELERATED
 @pytest.mark.unit
-def test_determine_tta_mode_cuda_full():
+def test_determine_tta_mode_cuda_full() -> None:
     """Test TTA mode returns FULL for CUDA acceleration."""
     result = determine_tta_mode(use_tta=True, device_type="cuda")
     assert result == "FULL (CUDA)"
 
 
 @pytest.mark.unit
-def test_determine_tta_mode_mps_full():
+def test_determine_tta_mode_mps_full() -> None:
     """Test TTA mode returns FULL for MPS (Apple Silicon) acceleration."""
     result = determine_tta_mode(use_tta=True, device_type="mps")
     assert result == "FULL (MPS)"
@@ -67,7 +67,7 @@ def test_determine_tta_mode_mps_full():
 
 # TTA MODE: EDGE CASES
 @pytest.mark.unit
-def test_determine_tta_mode_case_sensitivity():
+def test_determine_tta_mode_case_sensitivity() -> None:
     """Test device_type case handling (should work with any case)."""
     result = determine_tta_mode(use_tta=True, device_type="cuda")
     assert "CUDA" in result
@@ -77,14 +77,14 @@ def test_determine_tta_mode_case_sensitivity():
 
 
 @pytest.mark.unit
-def test_determine_tta_mode_unknown_device():
+def test_determine_tta_mode_unknown_device() -> None:
     """Test TTA mode with unknown device type."""
     result = determine_tta_mode(use_tta=True, device_type="xpu")
     assert result == "FULL (XPU)"
 
 
 @pytest.mark.unit
-def test_determine_tta_mode_all_devices():
+def test_determine_tta_mode_all_devices() -> None:
     """Test all known device types with TTA enabled (default tta_mode='full')."""
     devices = ["cpu", "cuda", "mps"]
     expected = [

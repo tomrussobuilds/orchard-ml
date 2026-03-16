@@ -20,7 +20,7 @@ from orchard.optimization import SearchSpaceRegistry, get_search_space
 
 # SEARCH SPACE REGISTRY: DEFAULT OVERRIDES
 @pytest.mark.unit
-def test_get_optimization_space():
+def test_get_optimization_space() -> None:
     """Test retrieval of core optimization hyperparameters."""
     registry = SearchSpaceRegistry()
     space = registry.get_optimization_space()
@@ -38,7 +38,7 @@ def test_get_optimization_space():
 
 
 @pytest.mark.unit
-def test_get_loss_space_cross_entropy():
+def test_get_loss_space_cross_entropy() -> None:
     """Test loss space samples label_smoothing for cross_entropy and defaults focal_gamma."""
     registry = SearchSpaceRegistry()
     space = registry.get_loss_space()
@@ -59,7 +59,7 @@ def test_get_loss_space_cross_entropy():
 
 
 @pytest.mark.unit
-def test_get_loss_space_focal():
+def test_get_loss_space_focal() -> None:
     """Test loss space samples focal_gamma for focal and defaults label_smoothing."""
     registry = SearchSpaceRegistry()
     space = registry.get_loss_space()
@@ -76,7 +76,7 @@ def test_get_loss_space_focal():
 
 
 @pytest.mark.unit
-def test_get_regularization_space():
+def test_get_regularization_space() -> None:
     """Test retrieval of regularization strategies."""
     registry = SearchSpaceRegistry()
     space = registry.get_regularization_space()
@@ -92,7 +92,7 @@ def test_get_regularization_space():
 
 
 @pytest.mark.unit
-def test_get_batch_size_space():
+def test_get_batch_size_space() -> None:
     """Test retrieval of batch size space with resolution-aware choices."""
     registry = SearchSpaceRegistry()
 
@@ -114,7 +114,7 @@ def test_get_batch_size_space():
 
 
 @pytest.mark.unit
-def test_get_full_space():
+def test_get_full_space() -> None:
     """Test retrieval of combined full search space."""
     registry = SearchSpaceRegistry()
     space = registry.get_full_space(resolution=28)
@@ -130,7 +130,7 @@ def test_get_full_space():
 
 
 @pytest.mark.unit
-def test_get_quick_space():
+def test_get_quick_space() -> None:
     """Test retrieval of the reduced quick search space."""
     registry = SearchSpaceRegistry()
     space = registry.get_quick_space(resolution=28)
@@ -143,7 +143,7 @@ def test_get_quick_space():
 
 
 @pytest.mark.unit
-def test_get_model_space_224():
+def test_get_model_space_224() -> None:
     """Test retrieval of model space for 224x224 resolution."""
     space = SearchSpaceRegistry.get_model_space_224()
 
@@ -158,7 +158,7 @@ def test_get_model_space_224():
 
 
 @pytest.mark.unit
-def test_get_model_space_28():
+def test_get_model_space_28() -> None:
     """Test retrieval of model space for 28x28 resolution."""
     space = SearchSpaceRegistry.get_model_space_28()
 
@@ -173,14 +173,14 @@ def test_get_model_space_28():
 
 # PRESET FACTORY
 @pytest.mark.unit
-def test_get_search_space_invalid_preset():
+def test_get_search_space_invalid_preset() -> None:
     """Test behavior when an invalid preset is passed to get_search_space."""
     with pytest.raises(OrchardConfigError):
         get_search_space(preset="invalid_preset", resolution=28)
 
 
 @pytest.mark.unit
-def test_get_search_space_valid_presets():
+def test_get_search_space_valid_presets() -> None:
     """Test behavior when valid presets are passed to get_search_space."""
     space_quick = get_search_space(preset="quick", resolution=28)
     assert "learning_rate" in space_quick
@@ -194,7 +194,7 @@ def test_get_search_space_valid_presets():
 
 
 @pytest.mark.unit
-def test_get_search_space_with_models_resolution_224():
+def test_get_search_space_with_models_resolution_224() -> None:
     """Test get_search_space with include_models=True for 224x224 resolution."""
     space = get_search_space(preset="quick", resolution=224, include_models=True)
 
@@ -205,7 +205,7 @@ def test_get_search_space_with_models_resolution_224():
 
 
 @pytest.mark.unit
-def test_get_search_space_with_models_resolution_28():
+def test_get_search_space_with_models_resolution_28() -> None:
     """Test get_search_space with include_models=True for 28x28 resolution."""
     space = get_search_space(preset="quick", resolution=28, include_models=True)
 
@@ -217,7 +217,7 @@ def test_get_search_space_with_models_resolution_28():
 
 # CUSTOM OVERRIDES
 @pytest.mark.unit
-def test_custom_overrides_applied():
+def test_custom_overrides_applied() -> None:
     """Test that custom SearchSpaceOverrides are used by the registry."""
     custom_ov = SearchSpaceOverrides(
         learning_rate=FloatRange(low=1e-3, high=1e-1, log=True),
@@ -235,7 +235,7 @@ def test_custom_overrides_applied():
 
 
 @pytest.mark.unit
-def test_custom_batch_size_overrides():
+def test_custom_batch_size_overrides() -> None:
     """Test custom batch size choices via overrides."""
     custom_ov = SearchSpaceOverrides(
         batch_size_low_res=[32, 64, 128],
@@ -253,7 +253,7 @@ def test_custom_batch_size_overrides():
 
 
 @pytest.mark.unit
-def test_get_search_space_with_overrides():
+def test_get_search_space_with_overrides() -> None:
     """Test get_search_space factory passes overrides to registry."""
     custom_ov = SearchSpaceOverrides(
         batch_size_high_res=[4, 8, 12],
@@ -272,7 +272,7 @@ def test_get_search_space_with_overrides():
 
 # SEARCH SPACE OVERRIDES VALIDATION
 @pytest.mark.unit
-def test_float_range_rejects_invalid_bounds():
+def test_float_range_rejects_invalid_bounds() -> None:
     """Test FloatRange raises ValueError when low >= high."""
     with pytest.raises(ValidationError, match="strictly less than"):
         FloatRange(low=0.5, high=0.5)
@@ -282,7 +282,7 @@ def test_float_range_rejects_invalid_bounds():
 
 
 @pytest.mark.unit
-def test_int_range_rejects_invalid_bounds():
+def test_int_range_rejects_invalid_bounds() -> None:
     """Test IntRange raises ValueError when low >= high."""
     with pytest.raises(ValidationError, match="strictly less than"):
         IntRange(low=10, high=10)
@@ -292,7 +292,7 @@ def test_int_range_rejects_invalid_bounds():
 
 
 @pytest.mark.unit
-def test_search_space_overrides_defaults():
+def test_search_space_overrides_defaults() -> None:
     """Test SearchSpaceOverrides has sensible defaults."""
     ov = SearchSpaceOverrides()
 
@@ -309,15 +309,15 @@ def test_search_space_overrides_defaults():
 
 
 @pytest.mark.unit
-def test_search_space_overrides_forbids_extra():
+def test_search_space_overrides_forbids_extra() -> None:
     """Test SearchSpaceOverrides rejects unknown fields."""
     with pytest.raises(ValidationError):
-        SearchSpaceOverrides(unknown_param=FloatRange(low=0.0, high=1.0))
+        SearchSpaceOverrides(unknown_param=FloatRange(low=0.0, high=1.0))  # type: ignore
 
 
 # MODEL POOL FILTERING
 @pytest.mark.unit
-def test_get_search_space_with_model_pool():
+def test_get_search_space_with_model_pool() -> None:
     """Test get_search_space uses model_pool when provided."""
     pool = ["resnet_18", "mini_cnn"]
     space = get_search_space(
@@ -338,7 +338,7 @@ def test_get_search_space_with_model_pool():
 
 
 @pytest.mark.unit
-def test_get_search_space_model_pool_with_vit():
+def test_get_search_space_model_pool_with_vit() -> None:
     """Test model_pool includes weight_variant when vit_tiny is in pool."""
     pool = ["efficientnet_b0", "vit_tiny"]
     space = get_search_space(
@@ -360,7 +360,7 @@ def test_get_search_space_model_pool_with_vit():
 
 
 @pytest.mark.unit
-def test_get_search_space_model_pool_without_vit():
+def test_get_search_space_model_pool_without_vit() -> None:
     """Test model_pool excludes weight_variant when vit_tiny is absent."""
     pool = ["resnet_18", "efficientnet_b0"]
     space = get_search_space(
@@ -375,7 +375,7 @@ def test_get_search_space_model_pool_without_vit():
 
 
 @pytest.mark.unit
-def test_get_search_space_model_pool_none_uses_defaults():
+def test_get_search_space_model_pool_none_uses_defaults() -> None:
     """Test model_pool=None falls back to resolution-based defaults."""
     space_224 = get_search_space(
         preset="quick", resolution=224, include_models=True, model_pool=None
@@ -389,7 +389,7 @@ def test_get_search_space_model_pool_none_uses_defaults():
 
 
 @pytest.mark.unit
-def test_custom_criterion_type_overrides():
+def test_custom_criterion_type_overrides() -> None:
     """Test custom criterion_type restricts to a single loss type."""
     custom_ov = SearchSpaceOverrides(
         criterion_type=["focal"],
@@ -411,7 +411,7 @@ def test_custom_criterion_type_overrides():
 
 
 @pytest.mark.unit
-def test_get_search_space_model_pool_with_timm():
+def test_get_search_space_model_pool_with_timm() -> None:
     """Test model_pool works with timm/ prefixed names."""
     pool = ["resnet_18", "timm/mobilenetv3_small_100"]
     space = get_search_space(
@@ -433,7 +433,7 @@ def test_get_search_space_model_pool_with_timm():
 
 # MUTATION-RESILIENT: EXACT BOUNDS VERIFICATION
 @pytest.mark.unit
-def test_optimization_space_passes_exact_bounds():
+def test_optimization_space_passes_exact_bounds() -> None:
     """Verify suggest_float receives exact overrides bounds for every optimization param."""
     registry = SearchSpaceRegistry()
     ov = registry.ov
@@ -467,7 +467,7 @@ def test_optimization_space_passes_exact_bounds():
 
 
 @pytest.mark.unit
-def test_regularization_space_passes_exact_bounds():
+def test_regularization_space_passes_exact_bounds() -> None:
     """Verify suggest_float receives exact bounds for mixup_alpha and dropout."""
     registry = SearchSpaceRegistry()
     ov = registry.ov
@@ -485,7 +485,7 @@ def test_regularization_space_passes_exact_bounds():
 
 
 @pytest.mark.unit
-def test_scheduler_space_passes_exact_bounds():
+def test_scheduler_space_passes_exact_bounds() -> None:
     """Verify scheduler space passes correct types and bounds."""
     registry = SearchSpaceRegistry()
     ov = registry.ov
@@ -505,7 +505,7 @@ def test_scheduler_space_passes_exact_bounds():
 
 
 @pytest.mark.unit
-def test_augmentation_space_passes_exact_bounds():
+def test_augmentation_space_passes_exact_bounds() -> None:
     """Verify augmentation space passes correct bounds to suggest_int/suggest_float."""
     registry = SearchSpaceRegistry()
     ov = registry.ov
@@ -529,7 +529,7 @@ def test_augmentation_space_passes_exact_bounds():
 
 
 @pytest.mark.unit
-def test_loss_space_passes_exact_bounds_focal():
+def test_loss_space_passes_exact_bounds_focal() -> None:
     """Verify focal_gamma uses exact overrides bounds when criterion is focal."""
     registry = SearchSpaceRegistry()
     ov = registry.ov
@@ -544,7 +544,7 @@ def test_loss_space_passes_exact_bounds_focal():
 
 
 @pytest.mark.unit
-def test_loss_space_passes_exact_bounds_label_smoothing():
+def test_loss_space_passes_exact_bounds_label_smoothing() -> None:
     """Verify label_smoothing uses exact overrides bounds when criterion is cross_entropy."""
     registry = SearchSpaceRegistry()
     ov = registry.ov
@@ -561,7 +561,7 @@ def test_loss_space_passes_exact_bounds_label_smoothing():
 
 
 @pytest.mark.unit
-def test_loss_space_criterion_type_choices():
+def test_loss_space_criterion_type_choices() -> None:
     """Verify criterion_type passes exact overrides list to suggest_categorical."""
     registry = SearchSpaceRegistry()
     ov = registry.ov
@@ -575,7 +575,7 @@ def test_loss_space_criterion_type_choices():
 
 
 @pytest.mark.unit
-def test_batch_size_resolution_boundary():
+def test_batch_size_resolution_boundary() -> None:
     """Verify resolution=223 uses low_res list and resolution=224 uses high_res list."""
     registry = SearchSpaceRegistry()
     ov = registry.ov
@@ -595,7 +595,7 @@ def test_batch_size_resolution_boundary():
 
 
 @pytest.mark.unit
-def test_model_space_224_exact_model_list():
+def test_model_space_224_exact_model_list() -> None:
     """Verify get_model_space_224 passes the exact list of 224-resolution models."""
     space = SearchSpaceRegistry.get_model_space_224()
 
@@ -609,7 +609,7 @@ def test_model_space_224_exact_model_list():
 
 
 @pytest.mark.unit
-def test_model_space_224_weight_variant_vit():
+def test_model_space_224_weight_variant_vit() -> None:
     """Verify weight_variant is sampled when model_name is vit_tiny, None otherwise."""
     space = SearchSpaceRegistry.get_model_space_224()
 
@@ -632,7 +632,7 @@ def test_model_space_224_weight_variant_vit():
 
 
 @pytest.mark.unit
-def test_model_space_28_exact_model_list():
+def test_model_space_28_exact_model_list() -> None:
     """Verify get_model_space_28 passes exact list of 28-resolution models."""
     space = SearchSpaceRegistry.get_model_space_28()
 
@@ -644,7 +644,7 @@ def test_model_space_28_exact_model_list():
 
 
 @pytest.mark.unit
-def test_quick_space_has_exactly_seven_params():
+def test_quick_space_has_exactly_seven_params() -> None:
     """Verify quick space contains exactly the expected high-impact params."""
     registry = SearchSpaceRegistry()
     space = registry.get_quick_space(resolution=28)
@@ -662,7 +662,7 @@ def test_quick_space_has_exactly_seven_params():
 
 
 @pytest.mark.unit
-def test_full_space_has_all_params():
+def test_full_space_has_all_params() -> None:
     """Verify full space is the union of all sub-spaces."""
     registry = SearchSpaceRegistry()
     space = registry.get_full_space(resolution=28)
@@ -689,7 +689,7 @@ def test_full_space_has_all_params():
 
 
 @pytest.mark.unit
-def test_get_search_space_resolution_224_uses_model_space_224():
+def test_get_search_space_resolution_224_uses_model_space_224() -> None:
     """Verify factory dispatches to model_space_224 for resolution >= 224."""
     space = get_search_space(preset="quick", resolution=224, include_models=True)
     # 224 default includes convnext_tiny which is NOT in 28-resolution space
@@ -701,7 +701,7 @@ def test_get_search_space_resolution_224_uses_model_space_224():
 
 
 @pytest.mark.unit
-def test_build_model_space_from_pool_exact_pool():
+def test_build_model_space_from_pool_exact_pool() -> None:
     """Verify _build_model_space_from_pool passes exact pool list to suggest_categorical."""
     from orchard.optimization.search_spaces import _build_model_space_from_pool
 
@@ -717,7 +717,7 @@ def test_build_model_space_from_pool_exact_pool():
 
 
 @pytest.mark.unit
-def test_build_model_space_from_pool_with_vit_includes_weight_variant():
+def test_build_model_space_from_pool_with_vit_includes_weight_variant() -> None:
     """Verify _build_model_space_from_pool adds weight_variant when vit_tiny in pool."""
     from orchard.optimization.search_spaces import _build_model_space_from_pool
 
@@ -737,7 +737,7 @@ def test_build_model_space_from_pool_with_vit_includes_weight_variant():
 
 
 @pytest.mark.unit
-def test_build_model_space_from_pool_vit_non_vit_returns_none():
+def test_build_model_space_from_pool_vit_non_vit_returns_none() -> None:
     """Verify weight_variant returns None when model_name is not vit_tiny."""
     from orchard.optimization.search_spaces import _build_model_space_from_pool
 
@@ -756,7 +756,7 @@ def test_build_model_space_from_pool_vit_non_vit_returns_none():
 
 
 @pytest.mark.unit
-def test_get_search_space_default_preset_is_quick():
+def test_get_search_space_default_preset_is_quick() -> None:
     """Calling with no preset should use 'quick' (same result as explicit)."""
     default_result = get_search_space()
     explicit_result = get_search_space(preset="quick")
@@ -764,7 +764,7 @@ def test_get_search_space_default_preset_is_quick():
 
 
 @pytest.mark.unit
-def test_get_search_space_default_resolution_is_28():
+def test_get_search_space_default_resolution_is_28() -> None:
     """Default resolution=28 produces low-res batch sizes."""
     space = get_search_space()
     trial = MagicMock(spec=Trial)
@@ -773,21 +773,21 @@ def test_get_search_space_default_resolution_is_28():
 
 
 @pytest.mark.unit
-def test_get_search_space_default_include_models_is_false():
+def test_get_search_space_default_include_models_is_false() -> None:
     """Default include_models=False means no model_name key."""
     space = get_search_space()
     assert "model_name" not in space
 
 
 @pytest.mark.unit
-def test_get_search_space_invalid_preset_error_message():
+def test_get_search_space_invalid_preset_error_message() -> None:
     """ValueError message must mention the bad preset name."""
     with pytest.raises(OrchardConfigError, match="bogus"):
         get_search_space(preset="bogus")
 
 
 @pytest.mark.unit
-def test_get_quick_space_default_resolution_is_28():
+def test_get_quick_space_default_resolution_is_28() -> None:
     """get_quick_space() with no args should use resolution=28."""
     registry = SearchSpaceRegistry()
     space = registry.get_quick_space()
@@ -797,7 +797,7 @@ def test_get_quick_space_default_resolution_is_28():
 
 
 @pytest.mark.unit
-def test_get_full_space_default_resolution_is_28():
+def test_get_full_space_default_resolution_is_28() -> None:
     """get_full_space() with no args should use resolution=28."""
     registry = SearchSpaceRegistry()
     space = registry.get_full_space()
@@ -807,7 +807,7 @@ def test_get_full_space_default_resolution_is_28():
 
 
 @pytest.mark.unit
-def test_get_batch_size_space_default_resolution_is_28():
+def test_get_batch_size_space_default_resolution_is_28() -> None:
     """get_batch_size_space() with no args should use resolution=28."""
     registry = SearchSpaceRegistry()
     space = registry.get_batch_size_space()

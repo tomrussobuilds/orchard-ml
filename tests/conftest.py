@@ -13,9 +13,14 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Any
 
 import pytest
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, TensorDataset
 
+from orchard.core import Config, OptunaConfig, TrainingConfig
 from orchard.core.metadata import DatasetMetadata
 
 
@@ -35,9 +40,78 @@ def mutmut_safe_env(**extra: str) -> dict[str, str]:
     return env
 
 
+# CONFIG FACTORIES
+def make_training_config(**overrides: Any) -> TrainingConfig:
+    """
+    Build a real TrainingConfig with test-friendly defaults.
+
+    Overrides ``use_amp=False`` (no CUDA in tests) and ``mixup_alpha=0``
+    (no augmentation noise).  Callers can override any field.
+    """
+    defaults: dict[str, Any] = {
+        "use_amp": False,
+        "mixup_alpha": 0,
+        "mixup_epochs": 0,
+    }
+    defaults.update(overrides)
+    return TrainingConfig(**defaults)
+
+
+def make_optuna_config(**overrides: Any) -> OptunaConfig:
+    """
+    Build a real OptunaConfig with test-friendly defaults.
+
+    Overrides nothing beyond Pydantic defaults; callers supply
+    only the fields they care about.
+    """
+    return OptunaConfig(**overrides)
+
+
+def make_dummy_loader(
+    in_features: int = 10, num_classes: int = 2, n_samples: int = 4, batch_size: int = 2
+) -> DataLoader[Any]:
+    """
+    Build a real DataLoader with random tensors.
+
+    Useful wherever tests patch ``train_one_epoch`` / ``validate_epoch``
+    so the loader is never actually iterated, but Pylance still wants a
+    correctly-typed object.
+    """
+    x = torch.randn(n_samples, in_features)
+    y = torch.randint(0, num_classes, (n_samples,))
+    return DataLoader(TensorDataset(x, y), batch_size=batch_size)
+
+
+class TrainingBundle:
+    """
+    Convenience container for the objects that almost every
+    TrialTrainingExecutor / ModelTrainer test needs.
+
+    Attributes:
+        model: A small ``nn.Linear`` module.
+        optimizer: SGD on ``model.parameters()``.
+        scheduler: ``StepLR`` with ``step_size=1``.
+        criterion: ``CrossEntropyLoss``.
+        train_loader: Dummy ``DataLoader``.
+        val_loader: Dummy ``DataLoader``.
+        device: ``torch.device("cpu")``.
+    """
+
+    def __init__(self, in_features: int = 10, num_classes: int = 2) -> None:
+        self.model = nn.Linear(in_features, num_classes)
+        self.optimizer = torch.optim.SGD(
+            self.model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0
+        )
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=1)
+        self.criterion = nn.CrossEntropyLoss()
+        self.train_loader: DataLoader[Any] = make_dummy_loader(in_features, num_classes)
+        self.val_loader: DataLoader[Any] = make_dummy_loader(in_features, num_classes)
+        self.device = torch.device("cpu")
+
+
 # DATASET METADATA FIXTURES
 @pytest.fixture
-def mock_metadata_28(tmp_path):
+def mock_metadata_28(tmp_path: Path) -> DatasetMetadata:
     """Mock 28×28 dataset metadata for testing low-resolution workflows."""
     return DatasetMetadata(
         name="bloodmnist",
@@ -56,7 +130,7 @@ def mock_metadata_28(tmp_path):
 
 
 @pytest.fixture
-def mock_metadata_224(tmp_path):
+def mock_metadata_224(tmp_path: Path) -> DatasetMetadata:
     """Mock 224×224 dataset metadata for testing high-resolution workflows."""
     return DatasetMetadata(
         name="organcmnist",
@@ -75,7 +149,7 @@ def mock_metadata_224(tmp_path):
 
 
 @pytest.fixture
-def mock_grayscale_metadata(tmp_path):
+def mock_grayscale_metadata(tmp_path: Path) -> DatasetMetadata:
     """Mock grayscale dataset metadata for testing channel conversion logic."""
     return DatasetMetadata(
         name="pneumoniamnist",
@@ -94,7 +168,7 @@ def mock_grayscale_metadata(tmp_path):
 
 
 @pytest.fixture
-def mock_metadata_many_classes(tmp_path):
+def mock_metadata_many_classes(tmp_path: Path) -> DatasetMetadata:
     """Mock dataset with many classes for min dataset size validation tests."""
     return DatasetMetadata(
         name="organamnist",
@@ -114,10 +188,8 @@ def mock_metadata_many_classes(tmp_path):
 
 # MINIMAL CONFIG
 @pytest.fixture
-def minimal_config():
+def minimal_config() -> Config:
     """Minimal valid Config for testing."""
-    from orchard.core import Config
-
     return Config(
         dataset={"name": "bloodmnist", "resolution": 28},
         architecture={"name": "resnet_18", "pretrained": False},

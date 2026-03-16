@@ -23,12 +23,12 @@ from orchard.evaluation.evaluation_pipeline import run_final_evaluation
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_run_final_evaluation_returns_tuple(
-    mock_report,
-    _mock_show_pred,
-    _mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    _mock_show_pred: MagicMock,
+    _mock_curves: MagicMock,
+    _mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Test run_final_evaluation returns (macro_f1, test_acc, test_auc) tuple."""
     mock_evaluate.return_value = (
         [0, 1, 2],
@@ -89,12 +89,12 @@ def test_run_final_evaluation_returns_tuple(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_run_final_evaluation_calls_evaluate_model(
-    mock_report,
-    _mock_show_pred,
-    _mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    _mock_show_pred: MagicMock,
+    _mock_curves: MagicMock,
+    _mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Test run_final_evaluation calls evaluate_model with correct params."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report.return_value = MagicMock()
@@ -151,12 +151,12 @@ def test_run_final_evaluation_calls_evaluate_model(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_run_final_evaluation_calls_visualizations(
-    mock_report,
-    mock_show_pred,
-    mock_curves,
-    mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    mock_show_pred: MagicMock,
+    mock_curves: MagicMock,
+    mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Test run_final_evaluation calls all visualization functions."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report.return_value = MagicMock()
@@ -220,12 +220,12 @@ def test_run_final_evaluation_calls_visualizations(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_run_final_evaluation_creates_report(
-    mock_report,
-    _mock_show_pred,
-    _mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    _mock_show_pred: MagicMock,
+    _mock_curves: MagicMock,
+    _mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Test run_final_evaluation creates and saves report."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report_obj = MagicMock()
@@ -277,12 +277,12 @@ def test_run_final_evaluation_creates_report(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_confusion_matrix_skipped_when_disabled(
-    mock_report,
-    mock_show_pred,
-    mock_curves,
-    mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    mock_show_pred: MagicMock,
+    mock_curves: MagicMock,
+    mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Verify confusion matrix is NOT called when save_confusion_matrix=False."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report.return_value = MagicMock()
@@ -323,12 +323,12 @@ def test_confusion_matrix_skipped_when_disabled(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_predictions_grid_skipped_when_disabled(
-    mock_report,
-    mock_show_pred,
-    mock_curves,
-    mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    mock_show_pred: MagicMock,
+    mock_curves: MagicMock,
+    mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Verify predictions grid is NOT called when save_predictions_grid=False."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report.return_value = MagicMock()
@@ -369,12 +369,12 @@ def test_predictions_grid_skipped_when_disabled(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_arch_tag_replaces_slash(
-    mock_report,
-    _mock_show_pred,
-    _mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    _mock_show_pred: MagicMock,
+    _mock_curves: MagicMock,
+    _mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Verify arch_name with '/' is converted to '_' in figure paths."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report.return_value = MagicMock()
@@ -417,12 +417,12 @@ def test_arch_tag_replaces_slash(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_tracker_receives_metrics(
-    mock_report,
-    _mock_show_pred,
-    _mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    _mock_show_pred: MagicMock,
+    _mock_curves: MagicMock,
+    _mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Verify tracker.log_test_metrics is called with correct values."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.92, "auc": 0.97}, 0.91)
     mock_report.return_value = MagicMock()
@@ -463,12 +463,12 @@ def test_tracker_receives_metrics(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_tracker_not_called_when_none(
-    mock_report,
-    _mock_show_pred,
-    _mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    _mock_show_pred: MagicMock,
+    _mock_curves: MagicMock,
+    _mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Verify tracker is not accessed when tracker=None."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report.return_value = MagicMock()
@@ -505,12 +505,12 @@ def test_tracker_not_called_when_none(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_val_acc_list_extraction(
-    mock_report,
-    _mock_show_pred,
-    mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    _mock_show_pred: MagicMock,
+    mock_curves: MagicMock,
+    _mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Verify val_acc_list is correctly extracted from val_metrics_history."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report.return_value = MagicMock()
@@ -533,7 +533,7 @@ def test_val_acc_list_extraction(
         model=MagicMock(),
         test_loader=MagicMock(),
         train_losses=[0.5, 0.3, 0.1],
-        val_metrics_history=history,
+        val_metrics_history=history,  # type: ignore
         class_names=["a"],
         paths=mock_paths,
         training=mock_cfg.training,
@@ -555,12 +555,12 @@ def test_val_acc_list_extraction(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_final_log_path(
-    mock_report,
-    _mock_show_pred,
-    _mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    _mock_show_pred: MagicMock,
+    _mock_curves: MagicMock,
+    _mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Verify create_structured_report receives log_path = paths.logs / 'session.log'."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report.return_value = MagicMock()
@@ -598,12 +598,12 @@ def test_final_log_path(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_evaluate_model_receives_resolution(
-    mock_report,
-    _mock_show_pred,
-    _mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    _mock_show_pred: MagicMock,
+    _mock_curves: MagicMock,
+    _mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Verify evaluate_model receives the dataset resolution kwarg."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report.return_value = MagicMock()
@@ -648,13 +648,13 @@ def test_evaluate_model_receives_resolution(
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 @patch("orchard.evaluation.evaluation_pipeline.PlotContext")
 def test_plot_context_receives_exact_kwargs(
-    mock_ctx_cls,
-    mock_report,
-    _mock_show_pred,
-    _mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
+    mock_ctx_cls: MagicMock,
+    mock_report: MagicMock,
+    _mock_show_pred: MagicMock,
+    _mock_curves: MagicMock,
+    _mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Verify PlotContext is constructed with ALL exact kwargs from config."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report.return_value = MagicMock()
@@ -717,12 +717,12 @@ def test_plot_context_receives_exact_kwargs(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_exact_figure_path_strings(
-    mock_report,
-    _mock_show_pred,
-    _mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    _mock_show_pred: MagicMock,
+    _mock_curves: MagicMock,
+    _mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Verify get_fig_path is called with exact f-string values."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report.return_value = MagicMock()
@@ -765,12 +765,12 @@ def test_exact_figure_path_strings(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_evaluate_model_exact_kwargs(
-    mock_report,
-    _mock_show_pred,
-    _mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    _mock_show_pred: MagicMock,
+    _mock_curves: MagicMock,
+    _mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Verify evaluate_model is called with ALL expected kwargs."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report.return_value = MagicMock()
@@ -816,12 +816,12 @@ def test_evaluate_model_exact_kwargs(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_create_report_exact_kwargs(
-    mock_report,
-    _mock_show_pred,
-    _mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    _mock_show_pred: MagicMock,
+    _mock_curves: MagicMock,
+    _mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Verify create_structured_report receives ALL expected kwargs."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report_obj = MagicMock()
@@ -871,12 +871,12 @@ def test_create_report_exact_kwargs(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_aug_info_default_is_na(
-    mock_report,
-    _mock_show_pred,
-    _mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    _mock_show_pred: MagicMock,
+    _mock_curves: MagicMock,
+    _mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Verify aug_info defaults to 'N/A' when not specified."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.9, "auc": 0.95}, 0.88)
     mock_report.return_value = MagicMock()
@@ -914,12 +914,12 @@ def test_aug_info_default_is_na(
 @patch("orchard.evaluation.evaluation_pipeline.show_predictions")
 @patch("orchard.evaluation.evaluation_pipeline.create_structured_report")
 def test_return_tuple_order(
-    mock_report,
-    _mock_show_pred,
-    _mock_curves,
-    _mock_confusion,
-    mock_evaluate,
-):
+    mock_report: MagicMock,
+    _mock_show_pred: MagicMock,
+    _mock_curves: MagicMock,
+    _mock_confusion: MagicMock,
+    mock_evaluate: MagicMock,
+) -> None:
     """Verify return order is (macro_f1, test_acc, test_auc)."""
     mock_evaluate.return_value = ([0], [0], {"accuracy": 0.85, "auc": 0.91}, 0.82)
     mock_report.return_value = MagicMock()

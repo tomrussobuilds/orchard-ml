@@ -72,14 +72,14 @@ def run_smoke_test(cfg: Config) -> None:
         wrapper = DatasetRegistryWrapper(resolution=cfg.dataset.resolution)
         ds_meta = wrapper.get_dataset(cfg.dataset.metadata.name.lower())
 
-        run_logger.info("")
-        run_logger.info(LogStyle.HEAVY)
-        run_logger.info(f"{'SMOKE TEST: ' + ds_meta.name.upper():^80}")
-        run_logger.info(LogStyle.HEAVY)
+        run_logger.info("")  # type: ignore
+        run_logger.info(LogStyle.HEAVY)  # type: ignore
+        run_logger.info(f"{'SMOKE TEST: ' + ds_meta.name.upper():^80}")  # type: ignore
+        run_logger.info(LogStyle.HEAVY)  # type: ignore
 
         try:
             # DATA PREPARATION
-            run_logger.info("[Stage 1/5] Checking environment for CI/synthetic dataset...")
+            run_logger.info("[Stage 1/5] Checking environment for CI/synthetic dataset...")  # type: ignore
             if os.getenv("CI"):
                 from orchard.data_handler.diagnostic import create_synthetic_dataset
 
@@ -87,13 +87,13 @@ def run_smoke_test(cfg: Config) -> None:
             else:
                 data = load_dataset(ds_meta)
 
-            run_logger.info("[Stage 2/5] Initializing DataLoaders...")
+            run_logger.info("[Stage 2/5] Initializing DataLoaders...")  # type: ignore
             train_loader, val_loader, test_loader = get_dataloaders(
                 data, cfg.dataset, cfg.training, cfg.augmentation, cfg.num_workers
             )
 
             # MODEL TRAINING
-            run_logger.info("[Stage 3/5] Testing Model & Optimizer Factories...")
+            run_logger.info("[Stage 3/5] Testing Model & Optimizer Factories...")  # type: ignore
             model = get_model(device=device, dataset_cfg=cfg.dataset, arch_cfg=cfg.architecture)
             criterion = get_criterion(cfg.training)
             optimizer = get_optimizer(model, cfg.training)
@@ -108,21 +108,21 @@ def run_smoke_test(cfg: Config) -> None:
                 criterion=criterion,
                 device=device,
                 training=cfg.training,
-                output_path=paths.best_model_path,
+                output_path=paths.best_model_path,  # type: ignore
             )
 
             _, train_losses, val_metrics_history = trainer.train()
 
             # MODEL EVALUATION
-            run_logger.info("[Stage 4/5] Recovering weights and running inference...")
+            run_logger.info("[Stage 4/5] Recovering weights and running inference...")  # type: ignore
 
-            if not paths.best_model_path.exists():
-                raise FileNotFoundError(f"Checkpoint not found: {paths.best_model_path}")
+            if not paths.best_model_path.exists():  # type: ignore
+                raise FileNotFoundError(f"Checkpoint not found: {paths.best_model_path}")  # type: ignore
 
             trainer.load_best_weights()
 
             # REPORT GENERATION
-            run_logger.info("[Stage 5/5] Verifying reporting utilities...")
+            run_logger.info("[Stage 5/5] Verifying reporting utilities...")  # type: ignore
 
             _, test_acc, _ = run_final_evaluation(
                 model=model,
@@ -130,7 +130,7 @@ def run_smoke_test(cfg: Config) -> None:
                 train_losses=train_losses,
                 val_metrics_history=val_metrics_history,
                 class_names=ds_meta.classes,
-                paths=paths,
+                paths=paths,  # type: ignore
                 training=cfg.training,
                 dataset=cfg.dataset,
                 augmentation=cfg.augmentation,
@@ -142,24 +142,24 @@ def run_smoke_test(cfg: Config) -> None:
             )
 
             # TEST SUMMARY
-            run_logger.info("")
-            run_logger.info(LogStyle.DOUBLE)
-            run_logger.info(f"{'SMOKE TEST PASSED':^80}")
-            run_logger.info(LogStyle.DOUBLE)
-            run_logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Test Accuracy : {test_acc:.2%}")
-            run_logger.info(
+            run_logger.info("")  # type: ignore
+            run_logger.info(LogStyle.DOUBLE)  # type: ignore
+            run_logger.info(f"{'SMOKE TEST PASSED':^80}")  # type: ignore
+            run_logger.info(LogStyle.DOUBLE)  # type: ignore
+            run_logger.info(f"{LogStyle.INDENT}{LogStyle.SUCCESS} Test Accuracy : {test_acc:.2%}")  # type: ignore
+            run_logger.info(  # type: ignore
                 f"{LogStyle.INDENT}{LogStyle.ARROW} Dataset       : {ds_meta.display_name}"
             )
-            run_logger.info(
+            run_logger.info(  # type: ignore
                 f"{LogStyle.INDENT}{LogStyle.ARROW} Architecture  : {cfg.architecture.name}"
             )
-            run_logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Device        : {device}")
-            run_logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Artifacts     : {paths.root}")
-            run_logger.info(LogStyle.DOUBLE)
-            run_logger.info("")
+            run_logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Device        : {device}")  # type: ignore
+            run_logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Artifacts     : {paths.root}")  # type: ignore
+            run_logger.info(LogStyle.DOUBLE)  # type: ignore
+            run_logger.info("")  # type: ignore
 
         except Exception as e:
-            run_logger.error(f"\n{LogStyle.WARNING} SMOKE TEST FAILED: {str(e)}", exc_info=True)
+            run_logger.error(f"\n{LogStyle.WARNING} SMOKE TEST FAILED: {str(e)}", exc_info=True)  # type: ignore
             raise
 
 

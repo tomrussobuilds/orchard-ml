@@ -15,7 +15,7 @@ from orchard.trainer.losses import FocalLoss
 
 # TESTS: FocalLoss
 @pytest.mark.unit
-def test_focal_loss_init_default():
+def test_focal_loss_init_default() -> None:
     """Test FocalLoss initialization with default parameters."""
     loss_fn = FocalLoss()
 
@@ -25,18 +25,18 @@ def test_focal_loss_init_default():
 
 
 @pytest.mark.unit
-def test_focal_loss_init_custom():
+def test_focal_loss_init_custom() -> None:
     """Test FocalLoss initialization with custom parameters."""
     weights = torch.tensor([1.0, 2.0, 3.0])
     loss_fn = FocalLoss(gamma=3.0, alpha=0.5, weight=weights)
     assert loss_fn.gamma == pytest.approx(3.0)
 
     assert loss_fn.alpha == pytest.approx(0.5)
-    assert torch.equal(loss_fn.weight, weights)
+    assert torch.equal(loss_fn.weight, weights)  # type: ignore
 
 
 @pytest.mark.unit
-def test_focal_loss_forward_basic():
+def test_focal_loss_forward_basic() -> None:
     """Test FocalLoss forward pass with simple inputs."""
     loss_fn = FocalLoss()
 
@@ -52,7 +52,7 @@ def test_focal_loss_forward_basic():
 
 
 @pytest.mark.unit
-def test_focal_loss_forward_perfect_predictions():
+def test_focal_loss_forward_perfect_predictions() -> None:
     """Test FocalLoss with perfect predictions (should give very low loss)."""
     loss_fn = FocalLoss()
 
@@ -65,7 +65,7 @@ def test_focal_loss_forward_perfect_predictions():
 
 
 @pytest.mark.unit
-def test_focal_loss_forward_poor_predictions():
+def test_focal_loss_forward_poor_predictions() -> None:
     """Test FocalLoss with poor predictions (should give higher loss)."""
     loss_fn = FocalLoss()
 
@@ -78,7 +78,7 @@ def test_focal_loss_forward_poor_predictions():
 
 
 @pytest.mark.unit
-def test_focal_loss_with_class_weights():
+def test_focal_loss_with_class_weights() -> None:
     """Test FocalLoss with class weights."""
     weights = torch.tensor([1.0, 2.0, 3.0])
     loss_fn = FocalLoss(weight=weights)
@@ -93,7 +93,7 @@ def test_focal_loss_with_class_weights():
 
 
 @pytest.mark.unit
-def test_focal_loss_gamma_effect():
+def test_focal_loss_gamma_effect() -> None:
     """Test that higher gamma reduces loss for well-classified examples."""
     inputs = torch.tensor([[5.0, 1.0, 0.5], [1.0, 6.0, 0.5], [0.5, 1.0, 7.0]])
     targets = torch.tensor([0, 1, 2])
@@ -108,7 +108,7 @@ def test_focal_loss_gamma_effect():
 
 
 @pytest.mark.unit
-def test_focal_loss_alpha_effect():
+def test_focal_loss_alpha_effect() -> None:
     """Test that alpha parameter scales the loss."""
     inputs = torch.tensor([[2.0, 1.0, 0.5], [1.0, 3.0, 0.5], [0.5, 1.0, 2.5]])
     targets = torch.tensor([0, 1, 2])
@@ -123,7 +123,7 @@ def test_focal_loss_alpha_effect():
 
 
 @pytest.mark.unit
-def test_focal_loss_batch_size():
+def test_focal_loss_batch_size() -> None:
     """Test FocalLoss with different batch sizes."""
     loss_fn = FocalLoss()
 
@@ -140,7 +140,7 @@ def test_focal_loss_batch_size():
 
 
 @pytest.mark.unit
-def test_focal_loss_many_classes():
+def test_focal_loss_many_classes() -> None:
     """Test FocalLoss with many classes."""
     loss_fn = FocalLoss()
 
@@ -158,7 +158,7 @@ def test_focal_loss_many_classes():
 
 
 @pytest.mark.unit
-def test_focal_loss_gradient_flow():
+def test_focal_loss_gradient_flow() -> None:
     """Test that FocalLoss allows gradient flow."""
     loss_fn = FocalLoss()
 
@@ -173,7 +173,7 @@ def test_focal_loss_gradient_flow():
 
 
 @pytest.mark.unit
-def test_focal_loss_is_module():
+def test_focal_loss_is_module() -> None:
     """Test that FocalLoss is a proper nn.Module."""
     loss_fn = FocalLoss()
 
@@ -182,7 +182,7 @@ def test_focal_loss_is_module():
 
 
 @pytest.mark.unit
-def test_focal_loss_deterministic():
+def test_focal_loss_deterministic() -> None:
     """Test that FocalLoss gives same result for same inputs."""
     loss_fn = FocalLoss(gamma=2.0, alpha=1.0)
 
@@ -197,7 +197,7 @@ def test_focal_loss_deterministic():
 
 # INTEGRATION TESTS
 @pytest.mark.unit
-def test_focal_loss_comparable_to_ce_when_gamma_zero():
+def test_focal_loss_comparable_to_ce_when_gamma_zero() -> None:
     """Test that FocalLoss with gamma=0 behaves like CrossEntropy."""
     inputs = torch.randn(16, 10)
     targets = torch.randint(0, 10, (16,))
@@ -212,7 +212,7 @@ def test_focal_loss_comparable_to_ce_when_gamma_zero():
 
 
 @pytest.mark.unit
-def test_focal_loss_with_mixed_difficulty():
+def test_focal_loss_with_mixed_difficulty() -> None:
     """Test FocalLoss focuses on hard examples."""
     loss_fn = FocalLoss(gamma=2.0)
 

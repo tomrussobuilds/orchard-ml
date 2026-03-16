@@ -19,7 +19,7 @@ from orchard.core import set_seed, worker_init_fn
 
 # TESTS: set_seed
 @pytest.mark.unit
-def test_set_seed_reproducibility_cpu():
+def test_set_seed_reproducibility_cpu() -> None:
     """set_seed enforces deterministic CPU behavior."""
 
     set_seed(123)
@@ -42,14 +42,14 @@ def test_set_seed_reproducibility_cpu():
 
 
 @pytest.mark.unit
-def test_set_seed_sets_python_hashseed():
+def test_set_seed_sets_python_hashseed() -> None:
     """PYTHONHASHSEED is correctly set."""
     set_seed(999)
     assert os.environ["PYTHONHASHSEED"] == "999"
 
 
 @pytest.mark.unit
-def test_set_seed_strict_mode_with_cuda_available():
+def test_set_seed_strict_mode_with_cuda_available() -> None:
     """Strict mode enables deterministic PyTorch behavior when CUDA is available."""
     with (
         patch("torch.cuda.is_available", return_value=True),
@@ -64,7 +64,7 @@ def test_set_seed_strict_mode_with_cuda_available():
 
 
 @pytest.mark.unit
-def test_set_seed_non_strict_mode_with_cuda_available():
+def test_set_seed_non_strict_mode_with_cuda_available() -> None:
     """Non-strict mode sets cudnn flags but not deterministic algorithms."""
     with (
         patch("torch.cuda.is_available", return_value=True),
@@ -78,7 +78,7 @@ def test_set_seed_non_strict_mode_with_cuda_available():
 
 
 @pytest.mark.unit
-def test_set_seed_strict_mode_without_cuda():
+def test_set_seed_strict_mode_without_cuda() -> None:
     """Strict mode enables deterministic algorithms even without CUDA."""
     with (
         patch("torch.cuda.is_available", return_value=False),
@@ -89,7 +89,7 @@ def test_set_seed_strict_mode_without_cuda():
 
 
 @pytest.mark.unit
-def test_set_seed_non_strict_without_cuda():
+def test_set_seed_non_strict_without_cuda() -> None:
     """Non-strict mode without CUDA skips all backend-specific config."""
     with (
         patch("torch.cuda.is_available", return_value=False),
@@ -100,7 +100,7 @@ def test_set_seed_non_strict_without_cuda():
 
 
 @pytest.mark.unit
-def test_set_seed_cuda_branches_coverage():
+def test_set_seed_cuda_branches_coverage() -> None:
     """Ensures all CUDA-related branches are executed in tests."""
     with patch("torch.cuda.is_available", return_value=True):
         mock_cudnn = MagicMock()
@@ -119,7 +119,7 @@ def test_set_seed_cuda_branches_coverage():
 
 # TESTS: MPS support
 @pytest.mark.unit
-def test_set_seed_with_mps_available():
+def test_set_seed_with_mps_available() -> None:
     """MPS manual seed is called when MPS backend is available."""
     mock_mps_backend = MagicMock()
     mock_mps_backend.is_available.return_value = True
@@ -136,7 +136,7 @@ def test_set_seed_with_mps_available():
 
 
 @pytest.mark.unit
-def test_set_seed_strict_mode_with_mps_available():
+def test_set_seed_strict_mode_with_mps_available() -> None:
     """Strict mode with MPS seeds MPS and enables deterministic algorithms."""
     mock_mps_backend = MagicMock()
     mock_mps_backend.is_available.return_value = True
@@ -155,7 +155,7 @@ def test_set_seed_strict_mode_with_mps_available():
 
 
 @pytest.mark.unit
-def test_set_seed_mps_not_available():
+def test_set_seed_mps_not_available() -> None:
     """MPS seed is skipped when MPS backend is not available."""
     mock_mps_backend = MagicMock()
     mock_mps_backend.is_available.return_value = False
@@ -172,7 +172,7 @@ def test_set_seed_mps_not_available():
 
 # TESTS: worker_init_fn
 @pytest.mark.unit
-def test_worker_init_fn_no_worker_info(monkeypatch):
+def test_worker_init_fn_no_worker_info(monkeypatch: pytest.MonkeyPatch) -> None:
     """worker_init_fn is a no-op outside DataLoader workers."""
     monkeypatch.setattr(torch.utils.data, "get_worker_info", lambda: None)
 
@@ -180,7 +180,7 @@ def test_worker_init_fn_no_worker_info(monkeypatch):
 
 
 @pytest.mark.unit
-def test_worker_init_fn_sets_deterministic_state(monkeypatch):
+def test_worker_init_fn_sets_deterministic_state(monkeypatch: pytest.MonkeyPatch) -> None:
     """worker_init_fn initializes RNGs deterministically for worker."""
 
     class DummyWorkerInfo:
@@ -212,7 +212,7 @@ def test_worker_init_fn_sets_deterministic_state(monkeypatch):
 
 
 @pytest.mark.unit
-def test_worker_init_fn_seed_calculation(monkeypatch):
+def test_worker_init_fn_seed_calculation(monkeypatch: pytest.MonkeyPatch) -> None:
     """worker_init_fn computes seed = (base_seed + worker_id) % 2**32."""
 
     # Use a large seed that wraps around 2**32 to distinguish from % 3**32 or % 2**33
@@ -240,7 +240,7 @@ def test_worker_init_fn_seed_calculation(monkeypatch):
 
 
 @pytest.mark.unit
-def test_worker_init_fn_different_workers_different_seeds(monkeypatch):
+def test_worker_init_fn_different_workers_different_seeds(monkeypatch: pytest.MonkeyPatch) -> None:
     """Different worker_ids produce different RNG states."""
 
     class DummyWorkerInfo:
@@ -262,7 +262,7 @@ def test_worker_init_fn_different_workers_different_seeds(monkeypatch):
 
 
 @pytest.mark.unit
-def test_worker_init_fn_seeds_numpy(monkeypatch):
+def test_worker_init_fn_seeds_numpy(monkeypatch: pytest.MonkeyPatch) -> None:
     """worker_init_fn seeds numpy's legacy PRNG with the computed seed."""
 
     class DummyWorkerInfo:
@@ -286,7 +286,7 @@ def test_worker_init_fn_seeds_numpy(monkeypatch):
 # INTEGRATION TESTS
 @pytest.mark.unit
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
-def test_set_seed_strict_mode_real_cuda():
+def test_set_seed_strict_mode_real_cuda() -> None:
     """Integration test: strict mode with real CUDA hardware."""
     set_seed(42, strict=True)
     assert torch.backends.cudnn.deterministic is True
@@ -295,7 +295,7 @@ def test_set_seed_strict_mode_real_cuda():
 
 @pytest.mark.unit
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
-def test_set_seed_non_strict_mode_real_cuda():
+def test_set_seed_non_strict_mode_real_cuda() -> None:
     """Integration test: non-strict mode with real CUDA hardware."""
     set_seed(42, strict=False)
     assert torch.backends.cudnn.deterministic is True
@@ -307,21 +307,21 @@ _has_mps = hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
 
 @pytest.mark.unit
 @pytest.mark.skipif(not _has_mps, reason="MPS not available")
-def test_set_seed_strict_mode_real_mps():
+def test_set_seed_strict_mode_real_mps() -> None:
     """Integration test: strict mode with real MPS hardware."""
     set_seed(42, strict=True)
 
 
 @pytest.mark.unit
 @pytest.mark.skipif(not _has_mps, reason="MPS not available")
-def test_set_seed_non_strict_mode_real_mps():
+def test_set_seed_non_strict_mode_real_mps() -> None:
     """Integration test: non-strict mode with real MPS hardware."""
     set_seed(42, strict=False)
 
 
 # TESTS: warn_only mode
 @pytest.mark.unit
-def test_set_seed_strict_warn_only_mode():
+def test_set_seed_strict_warn_only_mode() -> None:
     """Strict mode with warn_only passes warn_only=True to PyTorch."""
     with (
         patch("torch.cuda.is_available", return_value=False),
@@ -332,7 +332,7 @@ def test_set_seed_strict_warn_only_mode():
 
 
 @pytest.mark.unit
-def test_set_seed_strict_warn_only_false_by_default():
+def test_set_seed_strict_warn_only_false_by_default() -> None:
     """Strict mode defaults to warn_only=False."""
     with (
         patch("torch.cuda.is_available", return_value=False),
@@ -343,7 +343,7 @@ def test_set_seed_strict_warn_only_false_by_default():
 
 
 @pytest.mark.unit
-def test_set_seed_warn_only_ignored_when_not_strict():
+def test_set_seed_warn_only_ignored_when_not_strict() -> None:
     """warn_only is ignored when strict=False."""
     with (
         patch("torch.cuda.is_available", return_value=False),
@@ -355,7 +355,7 @@ def test_set_seed_warn_only_ignored_when_not_strict():
 
 # TESTS: default parameter values
 @pytest.mark.unit
-def test_set_seed_defaults_strict_false(monkeypatch):
+def test_set_seed_defaults_strict_false(monkeypatch: pytest.MonkeyPatch) -> None:
     """Default strict=False does not enable deterministic algorithms."""
     # Ensure PYTHONHASHSEED is preset to avoid warning side-effects
     monkeypatch.setenv("PYTHONHASHSEED", "42")
@@ -368,7 +368,7 @@ def test_set_seed_defaults_strict_false(monkeypatch):
 
 
 @pytest.mark.unit
-def test_set_seed_defaults_warn_only_false():
+def test_set_seed_defaults_warn_only_false() -> None:
     """Default warn_only=False is passed through in strict mode."""
     with (
         patch("torch.cuda.is_available", return_value=False),
@@ -380,7 +380,7 @@ def test_set_seed_defaults_warn_only_false():
 
 # TESTS: PYTHONHASHSEED warning logic
 @pytest.mark.unit
-def test_set_seed_strict_warns_pythonhashseed_not_preset(monkeypatch):
+def test_set_seed_strict_warns_pythonhashseed_not_preset(monkeypatch: pytest.MonkeyPatch) -> None:
     """Strict mode warns when PYTHONHASHSEED was not already set to the seed."""
     monkeypatch.delenv("PYTHONHASHSEED", raising=False)
     with (
@@ -394,7 +394,9 @@ def test_set_seed_strict_warns_pythonhashseed_not_preset(monkeypatch):
 
 
 @pytest.mark.unit
-def test_set_seed_strict_no_warn_pythonhashseed_already_set(monkeypatch):
+def test_set_seed_strict_no_warn_pythonhashseed_already_set(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """No PYTHONHASHSEED warning when it's already set to the correct value."""
     monkeypatch.setenv("PYTHONHASHSEED", "42")
     with (
@@ -409,7 +411,7 @@ def test_set_seed_strict_no_warn_pythonhashseed_already_set(monkeypatch):
 
 
 @pytest.mark.unit
-def test_set_seed_strict_warns_pythonhashseed_wrong_value(monkeypatch):
+def test_set_seed_strict_warns_pythonhashseed_wrong_value(monkeypatch: pytest.MonkeyPatch) -> None:
     """PYTHONHASHSEED warning fires when set to a different seed value."""
     monkeypatch.setenv("PYTHONHASHSEED", "999")
     with (
@@ -421,7 +423,7 @@ def test_set_seed_strict_warns_pythonhashseed_wrong_value(monkeypatch):
 
 
 @pytest.mark.unit
-def test_set_seed_non_strict_no_pythonhashseed_warning(monkeypatch):
+def test_set_seed_non_strict_no_pythonhashseed_warning(monkeypatch: pytest.MonkeyPatch) -> None:
     """Non-strict mode never emits the PYTHONHASHSEED warning."""
     monkeypatch.delenv("PYTHONHASHSEED", raising=False)
     with patch("torch.cuda.is_available", return_value=False):
@@ -434,7 +436,7 @@ def test_set_seed_non_strict_no_pythonhashseed_warning(monkeypatch):
 
 # TESTS: numpy seeding
 @pytest.mark.unit
-def test_set_seed_seeds_numpy():
+def test_set_seed_seeds_numpy() -> None:
     """set_seed correctly seeds numpy's legacy PRNG."""
     set_seed(42)
     a = np.random.random()
@@ -449,7 +451,7 @@ def test_set_seed_seeds_numpy():
 
 # TESTS: CUBLAS_WORKSPACE_CONFIG
 @pytest.mark.unit
-def test_set_seed_cublas_workspace_config_exact_key():
+def test_set_seed_cublas_workspace_config_exact_key() -> None:
     """Strict CUDA mode sets exactly CUBLAS_WORKSPACE_CONFIG (not a mangled key)."""
     with (
         patch("torch.cuda.is_available", return_value=True),
@@ -463,7 +465,7 @@ def test_set_seed_cublas_workspace_config_exact_key():
 
 # TESTS: MPS strict mode warning
 @pytest.mark.unit
-def test_set_seed_strict_mps_partial_determinism_warning():
+def test_set_seed_strict_mps_partial_determinism_warning() -> None:
     """Strict mode with MPS warns about partial determinism support."""
     mock_mps_backend = MagicMock()
     mock_mps_backend.is_available.return_value = True
@@ -480,7 +482,7 @@ def test_set_seed_strict_mps_partial_determinism_warning():
 
 
 @pytest.mark.unit
-def test_set_seed_strict_mps_warning_message_content():
+def test_set_seed_strict_mps_warning_message_content() -> None:
     """MPS warning contains exact expected substrings about determinism and CPU."""
     mock_mps_backend = MagicMock()
     mock_mps_backend.is_available.return_value = True
@@ -501,7 +503,7 @@ def test_set_seed_strict_mps_warning_message_content():
 
 
 @pytest.mark.unit
-def test_set_seed_strict_pythonhashseed_warning_stacklevel(monkeypatch):
+def test_set_seed_strict_pythonhashseed_warning_stacklevel(monkeypatch: pytest.MonkeyPatch) -> None:
     """PYTHONHASHSEED warning uses stacklevel=2 so caller frame is shown."""
     monkeypatch.delenv("PYTHONHASHSEED", raising=False)
     with (
@@ -515,7 +517,7 @@ def test_set_seed_strict_pythonhashseed_warning_stacklevel(monkeypatch):
 
 
 @pytest.mark.unit
-def test_set_seed_strict_mps_warning_stacklevel():
+def test_set_seed_strict_mps_warning_stacklevel() -> None:
     """MPS partial determinism warning uses stacklevel=2."""
     mock_mps_backend = MagicMock()
     mock_mps_backend.is_available.return_value = True

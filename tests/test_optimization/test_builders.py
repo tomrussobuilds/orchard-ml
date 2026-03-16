@@ -7,6 +7,8 @@ strings, ensuring proper error handling and component instantiation.
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
 import pytest
 from optuna.pruners import HyperbandPruner, MedianPruner, NopPruner, PercentilePruner
 from optuna.samplers import CmaEsSampler, RandomSampler, TPESampler
@@ -19,7 +21,7 @@ from orchard.optimization.orchestrator.builders import (
 
 
 @pytest.mark.unit
-def test_build_sampler_tpe(mock_optuna_cfg):
+def test_build_sampler_tpe(mock_optuna_cfg: MagicMock) -> None:
     """Test building TPE sampler."""
     mock_optuna_cfg.sampler_type = "tpe"
     sampler = build_sampler(mock_optuna_cfg)
@@ -27,7 +29,7 @@ def test_build_sampler_tpe(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_sampler_random(mock_optuna_cfg):
+def test_build_sampler_random(mock_optuna_cfg: MagicMock) -> None:
     """Test building random sampler."""
     mock_optuna_cfg.sampler_type = "random"
     sampler = build_sampler(mock_optuna_cfg)
@@ -35,7 +37,7 @@ def test_build_sampler_random(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_sampler_cmaes(mock_optuna_cfg):
+def test_build_sampler_cmaes(mock_optuna_cfg: MagicMock) -> None:
     """Test building CMA-ES sampler."""
     mock_optuna_cfg.sampler_type = "cmaes"
     sampler = build_sampler(mock_optuna_cfg)
@@ -43,7 +45,7 @@ def test_build_sampler_cmaes(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_sampler_invalid(mock_optuna_cfg):
+def test_build_sampler_invalid(mock_optuna_cfg: MagicMock) -> None:
     """Test building sampler with invalid type raises ValueError."""
     mock_optuna_cfg.sampler_type = "invalid_sampler"
 
@@ -55,7 +57,7 @@ def test_build_sampler_invalid(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_pruner_disabled(mock_optuna_cfg):
+def test_build_pruner_disabled(mock_optuna_cfg: MagicMock) -> None:
     """Test that pruner returns NopPruner when pruning is disabled."""
     mock_optuna_cfg.enable_pruning = False
     mock_optuna_cfg.pruner_type = "median"
@@ -65,7 +67,7 @@ def test_build_pruner_disabled(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_pruner_median(mock_optuna_cfg):
+def test_build_pruner_median(mock_optuna_cfg: MagicMock) -> None:
     """Test building median pruner."""
     mock_optuna_cfg.enable_pruning = True
     mock_optuna_cfg.pruner_type = "median"
@@ -75,7 +77,7 @@ def test_build_pruner_median(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_pruner_percentile(mock_optuna_cfg):
+def test_build_pruner_percentile(mock_optuna_cfg: MagicMock) -> None:
     """Test building percentile pruner."""
     mock_optuna_cfg.enable_pruning = True
     mock_optuna_cfg.pruner_type = "percentile"
@@ -85,7 +87,7 @@ def test_build_pruner_percentile(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_pruner_hyperband(mock_optuna_cfg):
+def test_build_pruner_hyperband(mock_optuna_cfg: MagicMock) -> None:
     """Test building hyperband pruner."""
     mock_optuna_cfg.enable_pruning = True
     mock_optuna_cfg.pruner_type = "hyperband"
@@ -95,7 +97,7 @@ def test_build_pruner_hyperband(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_pruner_invalid(mock_optuna_cfg):
+def test_build_pruner_invalid(mock_optuna_cfg: MagicMock) -> None:
     """Test building pruner with invalid type raises ValueError."""
     mock_optuna_cfg.enable_pruning = True
     mock_optuna_cfg.pruner_type = "invalid_pruner"
@@ -108,7 +110,7 @@ def test_build_pruner_invalid(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_callbacks_with_early_stopping(mock_optuna_cfg):
+def test_build_callbacks_with_early_stopping(mock_optuna_cfg: MagicMock) -> None:
     """Test building callbacks when early stopping is enabled."""
     mock_optuna_cfg.enable_early_stopping = True
     mock_optuna_cfg.early_stopping_threshold = 0.95
@@ -121,7 +123,7 @@ def test_build_callbacks_with_early_stopping(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_callbacks_without_early_stopping(mock_optuna_cfg):
+def test_build_callbacks_without_early_stopping(mock_optuna_cfg: MagicMock) -> None:
     """Test building callbacks when early stopping is disabled."""
     mock_optuna_cfg.enable_early_stopping = False
 
@@ -132,7 +134,7 @@ def test_build_callbacks_without_early_stopping(mock_optuna_cfg):
 
 # FIXTURE
 @pytest.fixture
-def mock_optuna_cfg():
+def mock_optuna_cfg() -> None:
     """Provide a mock OptunaConfig object for testing builders."""
     from unittest.mock import MagicMock
 
@@ -145,7 +147,7 @@ def mock_optuna_cfg():
     optuna_mock.early_stopping_patience = 5
     optuna_mock.direction = "maximize"
 
-    return optuna_mock
+    return optuna_mock  # type: ignore
 
 
 # ---------------------------------------------------------------------------
@@ -154,7 +156,7 @@ def mock_optuna_cfg():
 
 
 @pytest.mark.unit
-def test_build_sampler_returns_sampler_instance(mock_optuna_cfg):
+def test_build_sampler_returns_sampler_instance(mock_optuna_cfg: MagicMock) -> None:
     """Assert build_sampler returns an actual sampler object, not None."""
     mock_optuna_cfg.sampler_type = "tpe"
     result = build_sampler(mock_optuna_cfg)
@@ -162,7 +164,7 @@ def test_build_sampler_returns_sampler_instance(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_sampler_invalid_includes_sampler_name(mock_optuna_cfg):
+def test_build_sampler_invalid_includes_sampler_name(mock_optuna_cfg: MagicMock) -> None:
     """Assert error message includes the invalid sampler name."""
     mock_optuna_cfg.sampler_type = "bogus"
     with pytest.raises(ValueError, match="bogus"):
@@ -170,7 +172,7 @@ def test_build_sampler_invalid_includes_sampler_name(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_pruner_returns_pruner_instance(mock_optuna_cfg):
+def test_build_pruner_returns_pruner_instance(mock_optuna_cfg: MagicMock) -> None:
     """Assert build_pruner returns a pruner, not None."""
     mock_optuna_cfg.enable_pruning = True
     mock_optuna_cfg.pruner_type = "median"
@@ -179,7 +181,7 @@ def test_build_pruner_returns_pruner_instance(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_pruner_disabled_returns_nop_not_none(mock_optuna_cfg):
+def test_build_pruner_disabled_returns_nop_not_none(mock_optuna_cfg: MagicMock) -> None:
     """Assert disabled pruning returns NopPruner specifically, not None."""
     mock_optuna_cfg.enable_pruning = False
     result = build_pruner(mock_optuna_cfg)
@@ -188,7 +190,7 @@ def test_build_pruner_disabled_returns_nop_not_none(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_pruner_invalid_includes_pruner_name(mock_optuna_cfg):
+def test_build_pruner_invalid_includes_pruner_name(mock_optuna_cfg: MagicMock) -> None:
     """Assert error message includes the invalid pruner name."""
     mock_optuna_cfg.enable_pruning = True
     mock_optuna_cfg.pruner_type = "bogus"
@@ -197,7 +199,7 @@ def test_build_pruner_invalid_includes_pruner_name(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_callbacks_returns_list(mock_optuna_cfg):
+def test_build_callbacks_returns_list(mock_optuna_cfg: MagicMock) -> None:
     """Assert build_callbacks always returns a list."""
     mock_optuna_cfg.enable_early_stopping = False
     result = build_callbacks(mock_optuna_cfg, "auc")
@@ -205,7 +207,7 @@ def test_build_callbacks_returns_list(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_callbacks_forwards_direction(mock_optuna_cfg):
+def test_build_callbacks_forwards_direction(mock_optuna_cfg: MagicMock) -> None:
     """Assert build_callbacks passes direction to early stopping factory."""
     from orchard.optimization.early_stopping import StudyEarlyStoppingCallback
 
@@ -221,7 +223,7 @@ def test_build_callbacks_forwards_direction(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_callbacks_forwards_threshold(mock_optuna_cfg):
+def test_build_callbacks_forwards_threshold(mock_optuna_cfg: MagicMock) -> None:
     """Assert build_callbacks passes threshold to early stopping callback."""
     from orchard.optimization.early_stopping import StudyEarlyStoppingCallback
 
@@ -237,7 +239,7 @@ def test_build_callbacks_forwards_threshold(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_callbacks_forwards_patience(mock_optuna_cfg):
+def test_build_callbacks_forwards_patience(mock_optuna_cfg: MagicMock) -> None:
     """Assert build_callbacks passes patience to early stopping callback."""
     from orchard.optimization.early_stopping import StudyEarlyStoppingCallback
 
@@ -253,7 +255,7 @@ def test_build_callbacks_forwards_patience(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_callbacks_forwards_monitor_metric(mock_optuna_cfg):
+def test_build_callbacks_forwards_monitor_metric(mock_optuna_cfg: MagicMock) -> None:
     """Assert build_callbacks passes monitor_metric to the factory."""
     from unittest.mock import patch as _patch
 
@@ -273,7 +275,7 @@ def test_build_callbacks_forwards_monitor_metric(mock_optuna_cfg):
 
 
 @pytest.mark.unit
-def test_build_callbacks_empty_when_factory_returns_none(mock_optuna_cfg):
+def test_build_callbacks_empty_when_factory_returns_none(mock_optuna_cfg: MagicMock) -> None:
     """Assert empty list when early stopping factory returns None."""
     from unittest.mock import patch as _patch
 
