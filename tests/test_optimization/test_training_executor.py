@@ -734,5 +734,34 @@ def test_loop_options_total_epochs(executor: TrialTrainingExecutor) -> None:
     assert executor._loop.options.total_epochs == executor.epochs
 
 
+@pytest.mark.unit
+def test_executor_forwards_training_step_to_loop(
+    training_cfg: TrainingConfig, optuna_cfg: OptunaConfig, bundle: TrainingBundle
+) -> None:
+    """TrialTrainingExecutor passes training_step to the inner TrainingLoop."""
+    mock_step = MagicMock()
+    executor = TrialTrainingExecutor(
+        model=bundle.model,
+        train_loader=bundle.train_loader,
+        val_loader=bundle.val_loader,
+        optimizer=bundle.optimizer,
+        scheduler=bundle.scheduler,
+        criterion=bundle.criterion,
+        training=training_cfg,
+        optuna=optuna_cfg,
+        log_interval=5,
+        device=bundle.device,
+        metric_extractor=MetricExtractor(metric_name="auc"),
+        training_step=mock_step,
+    )
+    assert executor._loop._training_step is mock_step
+
+
+@pytest.mark.unit
+def test_executor_training_step_defaults_to_none(executor: TrialTrainingExecutor) -> None:
+    """TrialTrainingExecutor._loop._training_step is None when not provided."""
+    assert executor._loop._training_step is None
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

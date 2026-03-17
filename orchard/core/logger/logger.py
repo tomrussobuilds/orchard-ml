@@ -99,6 +99,16 @@ class ColorFormatter(logging.Formatter):
         if stripped and all(c in _SEPARATOR_CHARS for c in stripped):
             return self._color_message_only(formatted, msg, LogStyle.DIM)
 
+        # Success lines (✓, New best model) → green
+        # Must come before the UPPER CASE header check, because lines like
+        # "✓ F1 : 0.8803" would match the uppercase heuristic (F1 is all-caps).
+        if "✓" in msg or "New best model" in msg:
+            return self._color_message_only(formatted, msg, LogStyle.GREEN)
+
+        # Failure lines (✗) → red
+        if "✗" in msg:
+            return self._color_message_only(formatted, msg, LogStyle.RED)
+
         # Centered headers (e.g. "ENVIRONMENT INITIALIZATION",
         # "TRAINING PIPELINE - RESNET_18") → bold magenta
         if (
@@ -111,14 +121,6 @@ class ColorFormatter(logging.Formatter):
         # Early stopping banner → green
         if "EARLY STOPPING" in stripped:
             return self._color_message_only(formatted, msg, LogStyle.GREEN)
-
-        # Success lines (✓, New best model) → green
-        if "✓" in msg or "New best model" in msg:
-            return self._color_message_only(formatted, msg, LogStyle.GREEN)
-
-        # Failure lines (✗) → red
-        if "✗" in msg:
-            return self._color_message_only(formatted, msg, LogStyle.RED)
 
         # Subtitle tags [Text] → bold magenta (within message portion only)
         if _SUBTITLE_RE.search(msg):

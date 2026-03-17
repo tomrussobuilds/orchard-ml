@@ -12,10 +12,12 @@ from .classification import (
     ClassificationCriterionAdapter,
     ClassificationEvalPipelineAdapter,
     ClassificationMetricsAdapter,
+    ClassificationTrainingStepAdapter,
 )
 
 __all__ = [
     "ClassificationCriterionAdapter",
     "ClassificationEvalPipelineAdapter",
     "ClassificationMetricsAdapter",
+    "ClassificationTrainingStepAdapter",
 ]

@@ -177,6 +177,36 @@ def test_trainer_init(
     assert loop.options.monitor_metric == "auc"
     # No validation_metrics injected → fallback to validate_epoch
     assert loop._validation_metrics is None
+    # No training_step injected → fallback to default forward logic
+    assert loop._training_step is None
+
+
+@pytest.mark.unit
+def test_trainer_forwards_training_step_to_loop(
+    simple_model: nn.Sequential,
+    mock_loaders: tuple[MagicMock, MagicMock],
+    optimizer: torch.optim.SGD,
+    scheduler: torch.optim.lr_scheduler.StepLR,
+    criterion: nn.CrossEntropyLoss,
+    training_cfg: TrainingConfig,
+    tmp_path: Path,
+) -> None:
+    """ModelTrainer passes training_step to the inner TrainingLoop."""
+    mock_step = MagicMock()
+    train_loader, val_loader = mock_loaders
+    t = ModelTrainer(
+        model=simple_model,
+        train_loader=train_loader,
+        val_loader=val_loader,
+        optimizer=optimizer,
+        scheduler=scheduler,
+        criterion=criterion,
+        device=torch.device("cpu"),
+        training=training_cfg,
+        output_path=tmp_path / "best.pth",
+        training_step=mock_step,
+    )
+    assert t._loop._training_step is mock_step
 
 
 @pytest.mark.unit

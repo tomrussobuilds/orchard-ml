@@ -263,6 +263,7 @@ class OptunaObjective:
                 log_interval=trial_cfg.telemetry.log_interval,
                 device=self.device,
                 metric_extractor=self.metric_extractor,
+                training_step=task.training_step,
                 validation_metrics=task.validation_metrics,
             )
 

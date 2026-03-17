@@ -11,9 +11,11 @@ from __future__ import annotations
 from .criterion_adapter import ClassificationCriterionAdapter
 from .evaluation_adapter import ClassificationEvalPipelineAdapter
 from .metrics_adapter import ClassificationMetricsAdapter
+from .training_step_adapter import ClassificationTrainingStepAdapter
 
 __all__ = [
     "ClassificationCriterionAdapter",
     "ClassificationEvalPipelineAdapter",
     "ClassificationMetricsAdapter",
+    "ClassificationTrainingStepAdapter",
 ]

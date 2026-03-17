@@ -28,6 +28,7 @@ from .tasks import (
     ClassificationCriterionAdapter,
     ClassificationEvalPipelineAdapter,
     ClassificationMetricsAdapter,
+    ClassificationTrainingStepAdapter,
 )
 from .tracking import create_tracker
 
@@ -36,6 +37,7 @@ register_task(
     "classification",
     TaskComponents(
         criterion_factory=ClassificationCriterionAdapter(),
+        training_step=ClassificationTrainingStepAdapter(),
         validation_metrics=ClassificationMetricsAdapter(),
         eval_pipeline=ClassificationEvalPipelineAdapter(),
     ),

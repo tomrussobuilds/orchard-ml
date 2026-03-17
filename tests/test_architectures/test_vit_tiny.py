@@ -6,6 +6,7 @@ and output tensor shapes across various configurations.
 
 from __future__ import annotations
 
+import socket
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -14,6 +15,18 @@ import torch.nn as nn
 
 from orchard.architectures.vit_tiny import build_vit_tiny
 from orchard.exceptions import OrchardConfigError
+
+
+def _has_internet() -> bool:
+    """Return True if a basic TCP connection to the outside world succeeds."""
+    try:
+        socket.create_connection(("huggingface.co", 443), timeout=3)
+    except OSError:
+        return False
+    return True
+
+
+_requires_network = pytest.mark.skipif(not _has_internet(), reason="No network access")
 
 
 # FIXTURES
@@ -36,6 +49,7 @@ class TestBuildViTTiny:
         - Error handling for invalid variants
     """
 
+    @_requires_network
     def test_build_vit_tiny_rgb(self, device) -> None:  # type: ignore
         """Ensures standard RGB ViT-Tiny is built with correct dimensions."""
         num_classes = 5
@@ -56,6 +70,7 @@ class TestBuildViTTiny:
         output = model(x)
         assert output.shape == (1, num_classes)
 
+    @_requires_network
     def test_build_vit_tiny_grayscale_morphing(self, device) -> None:  # type: ignore
         """Validates the 1-channel adaptation and weight morphing (averaging)."""
         num_classes = 2
@@ -96,6 +111,7 @@ class TestBuildViTTiny:
         with pytest.raises(OrchardConfigError, match="Invalid ViT weight variant"):
             build_vit_tiny(2, 3, pretrained=True, weight_variant="invalid_vit_model_name")
 
+    @_requires_network
     def test_weight_copy_consistency(self, device) -> None:  # type: ignore
         """Confirms that bias is preserved during patch embedding adaptation."""
         model = build_vit_tiny(

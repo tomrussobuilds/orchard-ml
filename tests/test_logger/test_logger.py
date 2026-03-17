@@ -767,5 +767,51 @@ def test_color_subtitles_msg_at_position_one() -> None:
     assert expected_colored in result
 
 
+@pytest.mark.unit
+def test_color_formatter_success_takes_priority_over_uppercase_header() -> None:
+    """Test ✓ lines get green even when the text is all-uppercase (e.g. '✓ F1 : 0.88')."""
+    from orchard.core.logger.logger import ColorFormatter
+    from orchard.core.paths.constants import LogStyle
+
+    formatter = ColorFormatter("%(levelname)s - %(message)s")
+    msg = "  ✓ F1             :   0.8803"
+    record = logging.LogRecord(
+        name="test",
+        level=logging.INFO,
+        pathname="",
+        lineno=0,
+        msg=msg,
+        args=(),
+        exc_info=None,
+    )
+    output = formatter.format(record)
+    assert LogStyle.GREEN in output
+    assert LogStyle.MAGENTA not in output
+    assert LogStyle.BOLD not in output
+
+
+@pytest.mark.unit
+def test_color_formatter_failure_takes_priority_over_uppercase_header() -> None:
+    """Test ✗ lines get red even when the text is all-uppercase."""
+    from orchard.core.logger.logger import ColorFormatter
+    from orchard.core.paths.constants import LogStyle
+
+    formatter = ColorFormatter("%(levelname)s - %(message)s")
+    msg = "  ✗ F1             :   0.1200"
+    record = logging.LogRecord(
+        name="test",
+        level=logging.INFO,
+        pathname="",
+        lineno=0,
+        msg=msg,
+        args=(),
+        exc_info=None,
+    )
+    output = formatter.format(record)
+    assert LogStyle.RED in output
+    assert LogStyle.MAGENTA not in output
+    assert LogStyle.BOLD not in output
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

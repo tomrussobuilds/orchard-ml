@@ -33,6 +33,8 @@ from typing import TYPE_CHECKING, Any, Callable
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
 
+    from ..core.task_protocols import TaskTrainingStep
+
 import numpy as np
 import numpy.typing as npt
 import torch
@@ -91,6 +93,7 @@ def train_one_epoch(
     epoch: int = 0,
     total_epochs: int = 1,
     use_tqdm: bool = True,
+    training_step: TaskTrainingStep | None = None,
 ) -> float:
     """
     Performs a single full pass over the training dataset.
@@ -107,6 +110,9 @@ def train_one_epoch(
         epoch: Current epoch index for progress bar
         total_epochs: Total number of epochs (for progress bar)
         use_tqdm: Show progress bar during training
+        training_step: Task-specific forward pass adapter.
+            If provided, used instead of the default classification-specific
+            forward logic. Obtained via ``get_task(task_type).training_step``.
 
     Returns:
         Average training loss for the epoch
@@ -132,8 +138,11 @@ def train_one_epoch(
 
         # Forward pass with optional AMP autocast
         with torch.autocast(device_type=amp_device_type, enabled=amp_enabled):
-            # Apply MixUp if enabled
-            if mixup_fn:
+            if training_step is not None:
+                loss = training_step.compute_training_loss(
+                    model, inputs, targets, criterion, mixup_fn
+                )
+            elif mixup_fn:
                 inputs, y_a, y_b, lam = mixup_fn(inputs, targets)
                 outputs = model(inputs)
                 loss = lam * criterion(outputs, y_a) + (1 - lam) * criterion(outputs, y_b)

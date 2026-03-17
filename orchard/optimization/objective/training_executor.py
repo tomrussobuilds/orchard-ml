@@ -34,7 +34,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
 
-    from ...core.task_protocols import TaskValidationMetrics
+    from ...core.task_protocols import TaskTrainingStep, TaskValidationMetrics
 
 import optuna
 import torch
@@ -129,6 +129,7 @@ class TrialTrainingExecutor:
         log_interval: int,
         device: torch.device,
         metric_extractor: MetricExtractor,
+        training_step: TaskTrainingStep | None = None,
         validation_metrics: TaskValidationMetrics | None = None,
         fallback_metrics: Mapping[str, float] | None = None,
     ) -> None:
@@ -147,6 +148,9 @@ class TrialTrainingExecutor:
             log_interval: Epoch interval for progress logging.
             device: Training device.
             metric_extractor: Metric extraction and tracking handler.
+            training_step: Task-specific forward pass adapter.
+                If provided, used instead of the default classification-specific
+                forward logic. Obtained via ``get_task(task_type).training_step``.
             validation_metrics: Task-specific validation metrics adapter.
                 If provided, used instead of the default ``validate_epoch``.
             fallback_metrics: Metrics returned on validation failure.
@@ -193,6 +197,7 @@ class TrialTrainingExecutor:
                 use_tqdm=False,
                 monitor_metric=self.monitor_metric,
             ),
+            training_step=training_step,
         )
 
     def execute(self, trial: optuna.Trial) -> float:

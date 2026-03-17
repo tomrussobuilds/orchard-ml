@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - add dump_git_info to audit pipeline and harden mutation scores
 - add task abstraction layer with strategy dispatch
+- add TaskTrainingStep protocol for task-agnostic training forward
 
 ### Build
 
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - generalize task eval protocols to Mapping[str, float]
 - inject TaskValidationMetrics into training loop and Optuna executor
+- add strict type annotations across all test files
 
 ### Documentation
 

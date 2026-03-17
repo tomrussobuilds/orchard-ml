@@ -33,6 +33,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from .task_protocols import (
         TaskCriterionFactory,
         TaskEvalPipeline,
+        TaskTrainingStep,
         TaskValidationMetrics,
     )
 
@@ -44,11 +45,13 @@ class TaskComponents:
 
     Attributes:
         criterion_factory: Builds the loss function for this task.
+        training_step: Executes the forward pass and computes training loss.
         validation_metrics: Computes per-epoch validation metrics.
         eval_pipeline: Orchestrates inference, visualization, and reporting.
     """
 
     criterion_factory: TaskCriterionFactory
+    training_step: TaskTrainingStep
     validation_metrics: TaskValidationMetrics
     eval_pipeline: TaskEvalPipeline
 

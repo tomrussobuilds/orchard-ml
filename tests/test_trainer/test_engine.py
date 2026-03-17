@@ -437,5 +437,108 @@ def test_validate_epoch_empty_loader(simple_model: Any, criterion: Any) -> None:
     assert metrics == {"loss": 0.0, "accuracy": 0.0, "auc": 0.0, "f1": 0.0}
 
 
+# TESTS: train_one_epoch with injected TaskTrainingStep
+
+
+@pytest.mark.unit
+def test_train_one_epoch_with_training_step(
+    simple_model: Any, simple_loader: Any, criterion: Any, optimizer: Any
+) -> None:
+    """train_one_epoch delegates to training_step when provided."""
+    device = torch.device("cpu")
+    mock_step = MagicMock()
+    mock_step.compute_training_loss.return_value = torch.tensor(0.5, requires_grad=True)
+
+    loss = train_one_epoch(
+        model=simple_model,
+        loader=simple_loader,
+        criterion=criterion,
+        optimizer=optimizer,
+        device=device,
+        use_tqdm=False,
+        training_step=mock_step,
+    )
+
+    assert mock_step.compute_training_loss.call_count == 2  # 2 batches
+    assert isinstance(loss, float)
+    assert loss > 0
+
+
+@pytest.mark.unit
+def test_train_one_epoch_training_step_receives_correct_args(
+    simple_model: Any, criterion: Any, optimizer: Any
+) -> None:
+    """training_step.compute_training_loss receives model, inputs, targets, criterion, mixup_fn."""
+    device = torch.device("cpu")
+    batch = (torch.randn(4, 1, 28, 28), torch.randint(0, 10, (4,)))
+    loader = MagicMock()
+    loader.__iter__ = MagicMock(return_value=iter([batch]))
+    loader.__len__ = MagicMock(return_value=1)
+
+    mock_step = MagicMock()
+    mock_step.compute_training_loss.return_value = torch.tensor(0.5, requires_grad=True)
+
+    train_one_epoch(
+        model=simple_model,
+        loader=loader,
+        criterion=criterion,
+        optimizer=optimizer,
+        device=device,
+        use_tqdm=False,
+        training_step=mock_step,
+    )
+
+    call_args = mock_step.compute_training_loss.call_args
+    assert call_args[0][0] is simple_model  # model
+    assert isinstance(call_args[0][1], torch.Tensor)  # inputs
+    assert isinstance(call_args[0][2], torch.Tensor)  # targets
+    assert call_args[0][3] is criterion  # criterion
+    assert call_args[0][4] is None  # mixup_fn (not provided)
+
+
+@pytest.mark.unit
+def test_train_one_epoch_training_step_receives_mixup_fn(
+    simple_model: Any, simple_loader: Any, criterion: Any, optimizer: Any
+) -> None:
+    """training_step receives mixup_fn when provided."""
+    device = torch.device("cpu")
+    mock_step = MagicMock()
+    mock_step.compute_training_loss.return_value = torch.tensor(0.5, requires_grad=True)
+    mock_mixup = MagicMock()
+
+    train_one_epoch(
+        model=simple_model,
+        loader=simple_loader,
+        criterion=criterion,
+        optimizer=optimizer,
+        device=device,
+        use_tqdm=False,
+        mixup_fn=mock_mixup,
+        training_step=mock_step,
+    )
+
+    call_args = mock_step.compute_training_loss.call_args
+    assert call_args[0][4] is mock_mixup
+
+
+@pytest.mark.unit
+def test_train_one_epoch_none_training_step_uses_fallback(
+    simple_model: Any, simple_loader: Any, criterion: Any, optimizer: Any
+) -> None:
+    """train_one_epoch with training_step=None uses default classification logic."""
+    device = torch.device("cpu")
+    loss = train_one_epoch(
+        model=simple_model,
+        loader=simple_loader,
+        criterion=criterion,
+        optimizer=optimizer,
+        device=device,
+        use_tqdm=False,
+        training_step=None,
+    )
+    assert isinstance(loss, float)
+    assert loss > 0
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

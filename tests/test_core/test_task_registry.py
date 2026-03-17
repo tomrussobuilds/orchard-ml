@@ -15,6 +15,7 @@ import pytest
 from orchard.core.task_protocols import (
     TaskCriterionFactory,
     TaskEvalPipeline,
+    TaskTrainingStep,
     TaskValidationMetrics,
 )
 from orchard.core.task_registry import (
@@ -43,6 +44,7 @@ def _make_components() -> TaskComponents:
     """Create a TaskComponents bundle with MagicMock adapters."""
     return TaskComponents(
         criterion_factory=MagicMock(spec=TaskCriterionFactory),
+        training_step=MagicMock(spec=TaskTrainingStep),
         validation_metrics=MagicMock(spec=TaskValidationMetrics),
         eval_pipeline=MagicMock(spec=TaskEvalPipeline),
     )
@@ -213,6 +215,18 @@ def test_classification_eval_adapter_satisfies_protocol() -> None:
 
 
 @pytest.mark.unit
+def test_classification_training_step_adapter_satisfies_protocol() -> None:
+    """ClassificationTrainingStepAdapter passes isinstance check."""
+    from orchard.tasks.classification.training_step_adapter import (
+        ClassificationTrainingStepAdapter,
+    )
+
+    adapter = ClassificationTrainingStepAdapter()
+
+    assert isinstance(adapter, TaskTrainingStep)
+
+
+@pytest.mark.unit
 def test_object_without_method_fails_protocol() -> None:
     """An object missing the required method does not satisfy TaskCriterionFactory."""
 
@@ -233,5 +247,6 @@ def test_classification_registered_on_import() -> None:
     task = get_task("classification")
 
     assert task.criterion_factory is not None
+    assert task.training_step is not None
     assert task.validation_metrics is not None
     assert task.eval_pipeline is not None

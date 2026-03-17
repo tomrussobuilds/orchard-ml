@@ -22,6 +22,9 @@ from orchard.tasks.classification.evaluation_adapter import (
 from orchard.tasks.classification.metrics_adapter import (
     ClassificationMetricsAdapter,
 )
+from orchard.tasks.classification.training_step_adapter import (
+    ClassificationTrainingStepAdapter,
+)
 
 # ── ClassificationCriterionAdapter ────────────────────────────────────────────
 
@@ -257,6 +260,108 @@ def test_eval_adapter_returns_mapping(mock_eval: MagicMock) -> None:
     assert result["auc"] == pytest.approx(0.95)
 
 
+# ── ClassificationTrainingStepAdapter ─────────────────────────────────────────
+
+
+@pytest.mark.unit
+def test_training_step_adapter_without_mixup() -> None:
+    """TrainingStepAdapter calls model(inputs) and criterion(outputs, targets)."""
+    model = MagicMock(spec=nn.Module)
+    logits = torch.randn(4, 10)
+    model.return_value = logits
+
+    criterion = MagicMock(spec=nn.Module)
+    loss_val = torch.tensor(0.5)
+    criterion.return_value = loss_val
+
+    inputs = torch.randn(4, 1, 28, 28)
+    targets = torch.randint(0, 10, (4,))
+
+    adapter = ClassificationTrainingStepAdapter()
+    result = adapter.compute_training_loss(model, inputs, targets, criterion)
+
+    model.assert_called_once_with(inputs)
+    criterion.assert_called_once_with(logits, targets)
+    assert result is loss_val
+
+
+@pytest.mark.unit
+def test_training_step_adapter_with_mixup() -> None:
+    """TrainingStepAdapter applies MixUp and computes blended loss."""
+    model = MagicMock(spec=nn.Module)
+    logits = torch.randn(4, 10)
+    model.return_value = logits
+
+    criterion = MagicMock(spec=nn.Module)
+    criterion.return_value = torch.tensor(1.0)
+
+    inputs = torch.randn(4, 1, 28, 28)
+    targets = torch.randint(0, 10, (4,))
+    mixed_inputs = torch.randn(4, 1, 28, 28)
+    y_a = torch.randint(0, 10, (4,))
+    y_b = torch.randint(0, 10, (4,))
+    lam = 0.7
+
+    mixup_fn = MagicMock(return_value=(mixed_inputs, y_a, y_b, lam))
+
+    adapter = ClassificationTrainingStepAdapter()
+    result = adapter.compute_training_loss(model, inputs, targets, criterion, mixup_fn)
+
+    mixup_fn.assert_called_once_with(inputs, targets)
+    model.assert_called_once_with(mixed_inputs)
+    assert criterion.call_count == 2
+    # Verify criterion receives (outputs, y_a) and (outputs, y_b)
+    first_call, second_call = criterion.call_args_list
+    assert torch.equal(first_call[0][0], logits)
+    assert torch.equal(first_call[0][1], y_a)
+    assert torch.equal(second_call[0][0], logits)
+    assert torch.equal(second_call[0][1], y_b)
+
+
+@pytest.mark.unit
+def test_training_step_adapter_mixup_none_means_no_mixup() -> None:
+    """TrainingStepAdapter with mixup_fn=None uses direct forward."""
+    model = MagicMock(spec=nn.Module)
+    logits = torch.randn(4, 10)
+    model.return_value = logits
+
+    criterion = MagicMock(spec=nn.Module)
+    criterion.return_value = torch.tensor(0.3)
+
+    inputs = torch.randn(4, 1, 28, 28)
+    targets = torch.randint(0, 10, (4,))
+
+    adapter = ClassificationTrainingStepAdapter()
+    result = adapter.compute_training_loss(model, inputs, targets, criterion, None)
+
+    model.assert_called_once_with(inputs)
+    criterion.assert_called_once_with(logits, targets)
+    assert result is criterion.return_value
+
+
+@pytest.mark.unit
+def test_training_step_adapter_mixup_blended_loss_value() -> None:
+    """TrainingStepAdapter computes lam * loss_a + (1-lam) * loss_b."""
+    model = MagicMock(spec=nn.Module)
+    model.return_value = torch.randn(4, 10)
+
+    loss_a = torch.tensor(2.0)
+    loss_b = torch.tensor(4.0)
+    criterion = MagicMock(spec=nn.Module, side_effect=[loss_a, loss_b])
+
+    inputs = torch.randn(4, 1, 28, 28)
+    targets = torch.randint(0, 10, (4,))
+    lam = 0.6
+
+    mixup_fn = MagicMock(return_value=(inputs, targets, targets, lam))
+
+    adapter = ClassificationTrainingStepAdapter()
+    result = adapter.compute_training_loss(model, inputs, targets, criterion, mixup_fn)
+
+    expected = 0.6 * 2.0 + 0.4 * 4.0
+    assert result.item() == pytest.approx(expected)
+
+
 # ── Auto-registration ────────────────────────────────────────────────────────
 
 
@@ -271,5 +376,6 @@ def test_tasks_init_triggers_registration() -> None:
 
     components = _TASK_REGISTRY["classification"]
     assert isinstance(components.criterion_factory, ClassificationCriterionAdapter)
+    assert isinstance(components.training_step, ClassificationTrainingStepAdapter)
     assert isinstance(components.validation_metrics, ClassificationMetricsAdapter)
     assert isinstance(components.eval_pipeline, ClassificationEvalPipelineAdapter)

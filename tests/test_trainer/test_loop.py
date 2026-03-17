@@ -343,6 +343,97 @@ def loop_with_validation_metrics() -> tuple[TrainingLoop, MagicMock]:
     )
 
 
+# ── TESTS: TrainingLoop with injected TaskTrainingStep ─────────────────────
+
+
+@pytest.fixture
+def loop_with_training_step() -> tuple[TrainingLoop, MagicMock]:
+    """TrainingLoop instance with a mock TaskTrainingStep adapter."""
+    mock_adapter = MagicMock()
+    mock_adapter.compute_training_loss.return_value = torch.tensor(0.33)
+    return (
+        TrainingLoop(
+            model=MagicMock(spec=nn.Module),
+            train_loader=MagicMock(),
+            val_loader=MagicMock(),
+            optimizer=MagicMock(),
+            scheduler=MagicMock(),
+            criterion=MagicMock(spec=nn.Module),
+            device=torch.device("cpu"),
+            scaler=None,
+            mixup_fn=None,
+            options=LoopOptions(
+                grad_clip=1.0,
+                total_epochs=5,
+                mixup_epochs=3,
+                use_tqdm=False,
+                monitor_metric="auc",
+            ),
+            training_step=mock_adapter,
+        ),
+        mock_adapter,
+    )
+
+
+@pytest.mark.unit
+def test_loop_init_stores_training_step() -> None:
+    """TrainingLoop.__init__ stores training_step when provided."""
+    adapter = MagicMock()
+    tl = TrainingLoop(
+        model=MagicMock(spec=nn.Module),
+        train_loader=MagicMock(),
+        val_loader=MagicMock(),
+        optimizer=MagicMock(),
+        scheduler=MagicMock(),
+        criterion=MagicMock(spec=nn.Module),
+        device=torch.device("cpu"),
+        scaler=None,
+        mixup_fn=None,
+        options=LoopOptions(
+            grad_clip=1.0,
+            total_epochs=5,
+            mixup_epochs=3,
+            use_tqdm=False,
+            monitor_metric="auc",
+        ),
+        training_step=adapter,
+    )
+    assert tl._training_step is adapter
+
+
+@pytest.mark.unit
+def test_loop_init_training_step_defaults_to_none(loop: TrainingLoop) -> None:
+    """TrainingLoop._training_step is None when not provided."""
+    assert loop._training_step is None
+
+
+@pytest.mark.unit
+@patch("orchard.trainer._loop.train_one_epoch", return_value=0.42)
+def test_run_train_step_forwards_training_step(
+    mock_train: MagicMock,
+    loop_with_training_step: tuple[TrainingLoop, MagicMock],
+) -> None:
+    """run_train_step forwards training_step to train_one_epoch."""
+    tl, mock_adapter = loop_with_training_step
+    tl.run_train_step(epoch=1)
+
+    call_kwargs = mock_train.call_args[1]
+    assert call_kwargs["training_step"] is mock_adapter
+
+
+@pytest.mark.unit
+@patch("orchard.trainer._loop.train_one_epoch", return_value=0.42)
+def test_run_train_step_forwards_none_training_step(
+    mock_train: MagicMock,
+    loop: TrainingLoop,
+) -> None:
+    """run_train_step forwards training_step=None when not injected."""
+    loop.run_train_step(epoch=1)
+
+    call_kwargs = mock_train.call_args[1]
+    assert call_kwargs["training_step"] is None
+
+
 @pytest.mark.unit
 def test_loop_init_stores_validation_metrics() -> None:
     """TrainingLoop.__init__ stores validation_metrics when provided."""

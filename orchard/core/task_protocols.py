@@ -16,7 +16,7 @@ and are registered in the :mod:`orchard.core.task_registry`.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Callable, Protocol, runtime_checkable
 
 import torch
 import torch.nn as nn
@@ -31,6 +31,39 @@ if TYPE_CHECKING:  # pragma: no cover
         TrainingConfig,
     )
     from .paths import RunPaths
+
+
+@runtime_checkable
+class TaskTrainingStep(Protocol):
+    """Protocol for task-specific training forward pass and loss computation."""
+
+    def compute_training_loss(
+        self,
+        model: nn.Module,
+        inputs: torch.Tensor,
+        targets: torch.Tensor,
+        criterion: nn.Module,
+        mixup_fn: Callable[..., Any] | None = None,
+    ) -> torch.Tensor:
+        """
+        Execute the forward pass and compute the training loss.
+
+        Encapsulates task-specific differences in how models are called
+        and how losses are computed. For classification, this means
+        ``model(inputs)`` returning logits with optional MixUp blending.
+        For detection, the model returns a loss dict that is summed.
+
+        Args:
+            model: Neural network in training mode.
+            inputs: Batch of input tensors (already on device).
+            targets: Batch of target tensors (already on device).
+            criterion: Loss function module.
+            mixup_fn: Optional MixUp augmentation callable.
+
+        Returns:
+            Scalar loss tensor for backward pass.
+        """
+        ...  # pragma: no cover
 
 
 @runtime_checkable

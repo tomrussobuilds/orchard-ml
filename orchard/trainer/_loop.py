@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any, Callable
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
 
-    from ..core.task_protocols import TaskValidationMetrics
+    from ..core.task_protocols import TaskTrainingStep, TaskValidationMetrics
 
 import numpy as np
 import torch
@@ -132,6 +132,7 @@ class TrainingLoop:
         scaler: torch.amp.grad_scaler.GradScaler | None,
         mixup_fn: Callable[..., Any] | None,
         options: LoopOptions,
+        training_step: TaskTrainingStep | None = None,
         validation_metrics: TaskValidationMetrics | None = None,
     ) -> None:
         self.model = model
@@ -144,6 +145,7 @@ class TrainingLoop:
         self.scaler = scaler
         self.mixup_fn = mixup_fn
         self.options = options
+        self._training_step = training_step
         self._validation_metrics = validation_metrics
 
     def run_train_step(self, epoch: int) -> float:
@@ -172,6 +174,7 @@ class TrainingLoop:
             epoch=epoch,
             total_epochs=self.options.total_epochs,
             use_tqdm=self.options.use_tqdm,
+            training_step=self._training_step,
         )
 
     def run_epoch(self, epoch: int) -> tuple[float, Mapping[str, float]]:
