@@ -180,7 +180,7 @@ class OptunaObjective:
         # optimisation target — shared by trainer checkpointing and Optuna ranking)
         self.config_builder = TrialConfigBuilder(cfg)
         self.metric_extractor = MetricExtractor(
-            cfg.training.monitor_metric, direction=cfg.optuna.direction
+            cfg.training.monitor_metric, direction=cfg.training.monitor_direction
         )
 
         # Load dataset once (reused across all trials)
@@ -325,7 +325,7 @@ class OptunaObjective:
         Returns:
             float("inf") for minimize, -float("inf") for maximize.
         """
-        if self.cfg.optuna.direction == "minimize":
+        if self.cfg.training.monitor_direction == "minimize":
             return float("inf")
         return -float("inf")
 

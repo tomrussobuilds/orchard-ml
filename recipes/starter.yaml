@@ -76,8 +76,10 @@ training:
     use_tta: true
     # LR scheduler type [cosine, plateau, step, none]
     scheduler_type: cosine
-    # Metric for checkpointing and early stopping [auc, accuracy, f1]
+    # Metric for checkpointing and early stopping
     monitor_metric: auc
+    # Optimization direction for monitor_metric [maximize, minimize]
+    monitor_direction: maximize
     # Plateau patience (≥ 0)
     scheduler_patience: 5
     # LR reduction factor (0.0–1.0)
@@ -201,8 +203,6 @@ optuna:
     epochs: 15
     # Max seconds for optimization (None = unlimited) (≥ 0)
     timeout: null
-    # Optimization direction [maximize, minimize]
-    direction: maximize
     # Hyperparameter sampling algorithm [tpe, cmaes, random]
     sampler_type: tpe
     # Predefined search space configuration [quick, full]

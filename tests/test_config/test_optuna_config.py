@@ -26,7 +26,6 @@ def test_optuna_config_defaults() -> None:
     assert config.study_name == "vision_optimization"
     assert config.n_trials == 50
     assert config.epochs == 15
-    assert config.direction == "maximize"
     assert config.sampler_type == "tpe"
     assert config.enable_early_stopping is True
     assert config.enable_pruning is True
@@ -39,7 +38,6 @@ def test_optuna_config_custom_values() -> None:
         study_name="custom_study",
         n_trials=100,
         epochs=30,
-        direction="maximize",
     )
 
     assert config.study_name == "custom_study"
@@ -273,21 +271,6 @@ def test_get_storage_url_unknown_storage_type() -> None:
 
     with pytest.raises(ValueError, match="Unknown storage type"):
         config.get_storage_url(MockPaths())
-
-
-# OPTUNA CONFIG: DIRECTION
-@pytest.mark.unit
-def test_direction_maximize() -> None:
-    """Test direction='maximize' is accepted."""
-    config = OptunaConfig(direction="maximize")
-    assert config.direction == "maximize"
-
-
-@pytest.mark.unit
-def test_direction_minimize() -> None:
-    """Test direction='minimize' is accepted."""
-    config = OptunaConfig(direction="minimize")
-    assert config.direction == "minimize"
 
 
 # OPTUNA CONFIG: MODEL SEARCH

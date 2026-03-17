@@ -108,7 +108,7 @@ class OptunaOrchestrator:
 
         study = optuna.create_study(
             study_name=self.cfg.optuna.study_name,
-            direction=self.cfg.optuna.direction,
+            direction=self.cfg.training.monitor_direction,
             sampler=sampler,
             pruner=pruner,
             storage=storage_url,
@@ -147,7 +147,11 @@ class OptunaOrchestrator:
         # Configure callbacks and log our structured header
         log_optimization_header(self.cfg)
 
-        callbacks = build_callbacks(self.cfg.optuna, self.cfg.training.monitor_metric)
+        callbacks = build_callbacks(
+            self.cfg.optuna,
+            self.cfg.training.monitor_metric,
+            self.cfg.training.monitor_direction,
+        )
 
         study.set_user_attr("n_trials", self.cfg.optuna.n_trials)
 

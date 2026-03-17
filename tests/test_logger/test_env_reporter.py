@@ -713,7 +713,7 @@ def test_reporter_log_optimization_section() -> None:
     mock_cfg.optuna.n_trials = 20
     mock_cfg.optuna.epochs = 15
     mock_cfg.training.monitor_metric = "auc"
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.optuna.sampler_type = "tpe"
     mock_cfg.optuna.enable_pruning = True
     mock_cfg.optuna.pruner_type = "median"

@@ -47,6 +47,7 @@ def base_cfg() -> None:
         focal_gamma=2.0,
         weighted_loss=True,
         criterion_type="cross_entropy",
+        monitor_direction="maximize",
     )
     cfg.architecture = SimpleNamespace(name="resnet_18")
     return cfg  # type: ignore
@@ -293,6 +294,17 @@ def test_get_scheduler_plateau_params(base_cfg: Any, simple_model: Any) -> None:
     assert sched.factor == pytest.approx(0.3)
     assert sched.patience == 5
     assert sched.min_lrs == [pytest.approx(1e-6)]
+
+
+@pytest.mark.unit
+def test_get_scheduler_plateau_minimize(base_cfg: Any, simple_model: Any) -> None:
+    """ReduceLROnPlateau uses mode='min' when monitor_direction is minimize."""
+    base_cfg.training.scheduler_type = "plateau"
+    base_cfg.training.monitor_direction = "minimize"
+    opt = setup.get_optimizer(simple_model, base_cfg.training)
+    sched = setup.get_scheduler(opt, base_cfg.training)
+    assert isinstance(sched, lr_scheduler.ReduceLROnPlateau)
+    assert sched.mode == "min"
 
 
 @pytest.mark.unit

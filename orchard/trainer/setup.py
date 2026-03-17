@@ -8,7 +8,7 @@ training configuration sub-model.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -128,7 +128,7 @@ def get_scheduler(
     Supports multiple LR decay strategies based on TrainingConfig:
 
     - **cosine** — Smooth decay following a cosine curve.
-    - **plateau** — Reduces LR when ``monitor_metric`` stops improving (``mode="max"``).
+    - **plateau** — Reduces LR when ``monitor_metric`` stops improving (direction-aware).
     - **step** — Periodic reduction by a fixed factor.
     - **none** — Maintains a constant learning rate.
 
@@ -150,10 +150,10 @@ def get_scheduler(
         )
 
     elif sched_type == "plateau":
-        # monitor_metric is Literal["auc", "accuracy", "f1"] — all maximize
+        mode: Literal["min", "max"] = "max" if training.monitor_direction == "maximize" else "min"
         return lr_scheduler.ReduceLROnPlateau(
             optimizer,
-            mode="max",
+            mode=mode,
             factor=training.scheduler_factor,
             patience=training.scheduler_patience,
             min_lr=training.min_lr,

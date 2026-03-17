@@ -158,7 +158,6 @@ class OptunaConfig(BaseModel):
         n_trials: Total number of optimization trials to run.
         epochs: Training epochs per trial (typically shorter than final training).
         timeout: Maximum optimization time in seconds (None=unlimited).
-        direction: Whether to 'maximize' or 'minimize' the metric.
         sampler_type: Sampling algorithm ('tpe', 'cmaes', 'random').
         search_space_preset: Predefined search space ('quick', 'full', etc.).
         enable_model_search: Include architecture in search space.
@@ -193,11 +192,6 @@ class OptunaConfig(BaseModel):
 
     timeout: NonNegativeInt | None = Field(
         default=None, description="Max seconds for optimization (None = unlimited)"
-    )
-
-    # ==================== Optimization Target ====================
-    direction: Literal["maximize", "minimize"] = Field(
-        default="maximize", description="Optimization direction"
     )
 
     # ==================== Search Strategy ====================

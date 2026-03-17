@@ -219,14 +219,29 @@ def test_criterion_types() -> None:
 
 
 @pytest.mark.unit
-def test_monitor_metric_values() -> None:
-    """Test monitor_metric accepts valid values and rejects invalid."""
-    for metric in ["auc", "accuracy"]:
+def test_monitor_metric_accepts_any_string() -> None:
+    """Test monitor_metric accepts any non-empty string (task-agnostic)."""
+    for metric in ["auc", "accuracy", "f1", "mAP", "loss", "mae"]:
         config = TrainingConfig(monitor_metric=metric)
         assert config.monitor_metric == metric
 
+
+@pytest.mark.unit
+def test_monitor_direction_values() -> None:
+    """Test monitor_direction accepts maximize/minimize and rejects invalid."""
+    for direction in ["maximize", "minimize"]:
+        config = TrainingConfig(monitor_direction=direction)
+        assert config.monitor_direction == direction
+
     with pytest.raises(ValidationError):
-        TrainingConfig(monitor_metric="loss")
+        TrainingConfig(monitor_direction="invalid")
+
+
+@pytest.mark.unit
+def test_monitor_direction_default() -> None:
+    """Test monitor_direction defaults to maximize."""
+    config = TrainingConfig()
+    assert config.monitor_direction == "maximize"
 
 
 # UNIT TESTS: OPTIMIZER TYPE

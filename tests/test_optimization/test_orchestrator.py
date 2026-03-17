@@ -159,7 +159,9 @@ class TestBuilders:
     def test_build_callbacks(self, mock_callback_fn: MagicMock, mock_cfg: MagicMock) -> None:
         """Test building callbacks list."""
         mock_callback_fn.return_value = None
-        callbacks = build_callbacks(mock_cfg.optuna, mock_cfg.training.monitor_metric)
+        callbacks = build_callbacks(
+            mock_cfg.optuna, mock_cfg.training.monitor_metric, mock_cfg.training.monitor_direction
+        )
         assert isinstance(callbacks, list)
 
 
@@ -426,7 +428,7 @@ class TestOrchestratorMutationKillers:
         """Verify every kwarg passed to optuna.create_study."""
         mock_create.return_value = MagicMock()
         mock_cfg.optuna.study_name = "my_study"
-        mock_cfg.optuna.direction = "minimize"
+        mock_cfg.training.monitor_direction = "minimize"
         mock_cfg.optuna.load_if_exists = True
         storage_sentinel = "sqlite:///test.db"
         mock_cfg.optuna.get_storage_url.return_value = storage_sentinel
@@ -622,7 +624,9 @@ class TestOrchestratorMutationKillers:
         with patch.object(orch, "_post_optimization_processing"):
             orch.optimize()
 
-        mock_build_cb.assert_called_once_with(mock_cfg.optuna, "f1")
+        mock_build_cb.assert_called_once_with(
+            mock_cfg.optuna, "f1", mock_cfg.training.monitor_direction
+        )
 
     # optimize: verify study.set_user_attr called with correct key and value
     @patch("optuna.create_study")

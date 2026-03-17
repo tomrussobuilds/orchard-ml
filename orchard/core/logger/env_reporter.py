@@ -278,7 +278,7 @@ class Reporter(BaseModel):
             A,
             "Metric",
             cfg.training.monitor_metric,
-            optuna_cfg.direction,
+            cfg.training.monitor_direction,
         )
         logger_instance.info("%s%s %-18s: %s", I, A, "Sampler", optuna_cfg.sampler_type.upper())
         if optuna_cfg.enable_pruning:

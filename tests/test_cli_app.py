@@ -596,7 +596,7 @@ class TestCommentedYaml:
     def test_enum_options(self, recipe_content: Any) -> None:
         """Comments include enum values in brackets."""
         assert "[sgd, adamw]" in recipe_content
-        assert "[auc, accuracy, f1]" in recipe_content
+        assert "[maximize, minimize]" in recipe_content
         assert "[cosine, plateau, step, none]" in recipe_content
 
     def test_one_sided_constraints(self, recipe_content: Any) -> None:

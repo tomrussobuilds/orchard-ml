@@ -574,7 +574,7 @@ def test_optuna_objective_call_returns_worst_metric_on_failure() -> None:
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
     search_space: dict[str, Any] = {}
@@ -625,7 +625,7 @@ def test_optuna_objective_call_returns_inf_on_failure_minimize() -> None:
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
-    mock_cfg.optuna.direction = "minimize"
+    mock_cfg.training.monitor_direction = "minimize"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
     search_space: dict[str, Any] = {}
@@ -676,7 +676,7 @@ def test_optuna_objective_failed_trial_logs_worst_metric_to_tracker() -> None:
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
     search_space: dict[str, Any] = {}
@@ -724,7 +724,7 @@ def test_optuna_objective_call_reraises_trial_pruned() -> None:
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
     search_space: dict[str, Any] = {}
@@ -999,7 +999,7 @@ def test_objective_init_stores_all_attributes() -> None:
     """Assert all __init__ attributes are stored correctly."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
@@ -1027,7 +1027,7 @@ def test_objective_init_tracker_default_none() -> None:
     """Assert tracker defaults to None."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
@@ -1046,7 +1046,7 @@ def test_objective_init_metric_extractor_config() -> None:
     """Assert metric_extractor uses correct metric_name and direction."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
-    mock_cfg.optuna.direction = "minimize"
+    mock_cfg.training.monitor_direction = "minimize"
     mock_cfg.training.monitor_metric = "loss"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
@@ -1067,7 +1067,7 @@ def test_objective_call_resets_metric_extractor() -> None:
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.dataset._ensure_metadata = MagicMock()
     mock_cfg.architecture.pretrained = True
 
@@ -1107,7 +1107,7 @@ def test_objective_call_log_params_includes_pretrained() -> None:
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.dataset._ensure_metadata = MagicMock()
     mock_cfg.architecture.pretrained = True
 
@@ -1151,7 +1151,7 @@ def test_objective_tracker_end_with_best_metric_on_success() -> None:
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
     mock_tracker = MagicMock()
@@ -1195,7 +1195,7 @@ def test_objective_worst_metric_maximize() -> None:
     """Assert _worst_metric returns -inf for maximize direction."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
@@ -1214,7 +1214,7 @@ def test_objective_worst_metric_minimize() -> None:
     """Assert _worst_metric returns +inf for minimize direction."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
-    mock_cfg.optuna.direction = "minimize"
+    mock_cfg.training.monitor_direction = "minimize"
     mock_cfg.training.monitor_metric = "loss"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
@@ -1234,7 +1234,7 @@ def test_objective_weighted_loss_calls_compute_class_weights() -> None:
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.dataset._ensure_metadata = MagicMock()
     mock_cfg.dataset._ensure_metadata.num_classes = 5
 
@@ -1284,7 +1284,7 @@ def test_objective_weighted_loss_calls_compute_class_weights() -> None:
 def test_sample_params_uses_sample_params_attr() -> None:
     """Verify _sample_params dispatches to obj.sample_params when attr exists."""
     mock_cfg = MagicMock()
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
@@ -1309,7 +1309,7 @@ def test_sample_params_uses_sample_params_attr() -> None:
 def test_sample_params_dict_fallback() -> None:
     """Verify _sample_params iterates dict items when no sample_params attr."""
     mock_cfg = MagicMock()
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
@@ -1333,7 +1333,7 @@ def test_sample_params_dict_fallback() -> None:
 def test_call_passes_correct_kwargs_to_executor() -> None:
     """Verify TrialTrainingExecutor receives correct wired kwargs."""
     mock_cfg = MagicMock()
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
@@ -1402,7 +1402,7 @@ def test_call_passes_correct_kwargs_to_executor() -> None:
 def test_call_uses_task_registry_for_criterion() -> None:
     """Verify __call__ uses get_task() for criterion and validation_metrics."""
     mock_cfg = MagicMock()
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.training.weighted_loss = False
     mock_cfg.dataset._ensure_metadata = MagicMock()
@@ -1450,7 +1450,7 @@ def test_call_uses_task_registry_for_criterion() -> None:
 def test_call_log_trial_start_receives_correct_args() -> None:
     """Verify log_trial_start is called with trial.number and log_params including pretrained."""
     mock_cfg = MagicMock()
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.architecture.pretrained = True
     mock_cfg.dataset._ensure_metadata = MagicMock()
@@ -1493,7 +1493,7 @@ def test_call_log_trial_start_receives_correct_args() -> None:
 def test_call_tracker_not_called_on_failure() -> None:
     """Verify tracker.end_optuna_trial gets worst metric when trial fails."""
     mock_cfg = MagicMock()
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
@@ -1530,7 +1530,7 @@ def test_call_tracker_not_called_on_failure() -> None:
 def test_call_dataloader_factory_receives_is_optuna() -> None:
     """Verify dataloader_factory is called with is_optuna=True."""
     mock_cfg = MagicMock()
-    mock_cfg.optuna.direction = "maximize"
+    mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 

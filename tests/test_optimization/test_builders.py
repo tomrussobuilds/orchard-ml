@@ -115,8 +115,7 @@ def test_build_callbacks_with_early_stopping(mock_optuna_cfg: MagicMock) -> None
     mock_optuna_cfg.enable_early_stopping = True
     mock_optuna_cfg.early_stopping_threshold = 0.95
     mock_optuna_cfg.early_stopping_patience = 5
-    mock_optuna_cfg.direction = "maximize"
-    callbacks = build_callbacks(mock_optuna_cfg, "auc")
+    callbacks = build_callbacks(mock_optuna_cfg, "auc", "maximize")
 
     assert len(callbacks) == 1
     assert callbacks[0] is not None
@@ -127,7 +126,7 @@ def test_build_callbacks_without_early_stopping(mock_optuna_cfg: MagicMock) -> N
     """Test building callbacks when early stopping is disabled."""
     mock_optuna_cfg.enable_early_stopping = False
 
-    callbacks = build_callbacks(mock_optuna_cfg, "auc")
+    callbacks = build_callbacks(mock_optuna_cfg, "auc", "maximize")
 
     assert len(callbacks) == 0
 
@@ -145,7 +144,6 @@ def mock_optuna_cfg() -> None:
     optuna_mock.enable_early_stopping = False
     optuna_mock.early_stopping_threshold = 0.95
     optuna_mock.early_stopping_patience = 5
-    optuna_mock.direction = "maximize"
 
     return optuna_mock  # type: ignore
 
@@ -202,7 +200,7 @@ def test_build_pruner_invalid_includes_pruner_name(mock_optuna_cfg: MagicMock) -
 def test_build_callbacks_returns_list(mock_optuna_cfg: MagicMock) -> None:
     """Assert build_callbacks always returns a list."""
     mock_optuna_cfg.enable_early_stopping = False
-    result = build_callbacks(mock_optuna_cfg, "auc")
+    result = build_callbacks(mock_optuna_cfg, "auc", "maximize")
     assert isinstance(result, list)
 
 
@@ -214,9 +212,7 @@ def test_build_callbacks_forwards_direction(mock_optuna_cfg: MagicMock) -> None:
     mock_optuna_cfg.enable_early_stopping = True
     mock_optuna_cfg.early_stopping_threshold = 0.99
     mock_optuna_cfg.early_stopping_patience = 3
-    mock_optuna_cfg.direction = "minimize"
-
-    callbacks = build_callbacks(mock_optuna_cfg, "loss")
+    callbacks = build_callbacks(mock_optuna_cfg, "loss", "minimize")
     assert len(callbacks) == 1
     assert isinstance(callbacks[0], StudyEarlyStoppingCallback)
     assert callbacks[0].direction == "minimize"
@@ -230,9 +226,8 @@ def test_build_callbacks_forwards_threshold(mock_optuna_cfg: MagicMock) -> None:
     mock_optuna_cfg.enable_early_stopping = True
     mock_optuna_cfg.early_stopping_threshold = 0.77
     mock_optuna_cfg.early_stopping_patience = 2
-    mock_optuna_cfg.direction = "maximize"
 
-    callbacks = build_callbacks(mock_optuna_cfg, "auc")
+    callbacks = build_callbacks(mock_optuna_cfg, "auc", "maximize")
     assert len(callbacks) == 1
     assert isinstance(callbacks[0], StudyEarlyStoppingCallback)
     assert callbacks[0].threshold == pytest.approx(0.77)
@@ -246,9 +241,8 @@ def test_build_callbacks_forwards_patience(mock_optuna_cfg: MagicMock) -> None:
     mock_optuna_cfg.enable_early_stopping = True
     mock_optuna_cfg.early_stopping_threshold = 0.9
     mock_optuna_cfg.early_stopping_patience = 8
-    mock_optuna_cfg.direction = "maximize"
 
-    callbacks = build_callbacks(mock_optuna_cfg, "auc")
+    callbacks = build_callbacks(mock_optuna_cfg, "auc", "maximize")
     assert len(callbacks) == 1
     assert isinstance(callbacks[0], StudyEarlyStoppingCallback)
     assert callbacks[0].patience == 8
@@ -262,13 +256,12 @@ def test_build_callbacks_forwards_monitor_metric(mock_optuna_cfg: MagicMock) -> 
     mock_optuna_cfg.enable_early_stopping = True
     mock_optuna_cfg.early_stopping_threshold = 0.9
     mock_optuna_cfg.early_stopping_patience = 2
-    mock_optuna_cfg.direction = "maximize"
 
     with _patch(
         "orchard.optimization.orchestrator.builders.get_early_stopping_callback"
     ) as mock_factory:
         mock_factory.return_value = None
-        build_callbacks(mock_optuna_cfg, "custom_metric")
+        build_callbacks(mock_optuna_cfg, "custom_metric", "maximize")
 
     call_kwargs = mock_factory.call_args[1]
     assert call_kwargs["metric_name"] == "custom_metric"
@@ -280,12 +273,11 @@ def test_build_callbacks_empty_when_factory_returns_none(mock_optuna_cfg: MagicM
     from unittest.mock import patch as _patch
 
     mock_optuna_cfg.enable_early_stopping = True
-    mock_optuna_cfg.direction = "maximize"
 
     with _patch(
         "orchard.optimization.orchestrator.builders.get_early_stopping_callback",
         return_value=None,
     ):
-        callbacks = build_callbacks(mock_optuna_cfg, "auc")
+        callbacks = build_callbacks(mock_optuna_cfg, "auc", "maximize")
 
     assert callbacks == []

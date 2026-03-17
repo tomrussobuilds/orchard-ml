@@ -146,7 +146,7 @@ orchard/core/config/manifest.py:
   not_checked: 0
   score: 100.0
 orchard/core/config/optuna_config.py:
-  last_run: '2026-03-16T15:23:04Z'
+  last_run: '2026-03-17T16:03:51Z'
   total: 12
   killed: 12
   survived: 0
@@ -167,7 +167,7 @@ orchard/core/config/tracking_config.py:
   not_checked: 0
   score: 100.0
 orchard/core/config/training_config.py:
-  last_run: '2026-03-16T15:23:04Z'
+  last_run: '2026-03-17T16:03:57Z'
   total: 0
   killed: 0
   survived: 0
@@ -265,7 +265,7 @@ orchard/core/logger/__init__.py:
   not_checked: 0
   score: 100.0
 orchard/core/logger/env_reporter.py:
-  last_run: '2026-03-16T15:23:04Z'
+  last_run: '2026-03-17T16:04:07Z'
   total: 142
   killed: 142
   survived: 0
@@ -629,7 +629,7 @@ orchard/optimization/orchestrator/__init__.py:
   not_checked: 0
   score: 100.0
 orchard/optimization/orchestrator/builders.py:
-  last_run: '2026-03-16T15:23:04Z'
+  last_run: '2026-03-17T16:04:14Z'
   total: 33
   killed: 31
   survived: 2
@@ -643,12 +643,12 @@ orchard/optimization/orchestrator/exporters.py:
   not_checked: 0
   score: 97.7
 orchard/optimization/orchestrator/orchestrator.py:
-  last_run: '2026-03-16T15:23:04Z'
-  total: 123
-  killed: 106
-  survived: 17
+  last_run: '2026-03-17T16:04:38Z'
+  total: 113
+  killed: 108
+  survived: 5
   not_checked: 0
-  score: 86.2
+  score: 95.6
 orchard/optimization/orchestrator/registries.py:
   last_run: '2026-03-16T15:23:04Z'
   total: 0
@@ -783,12 +783,12 @@ orchard/trainer/losses.py:
   not_checked: 0
   score: 100.0
 orchard/trainer/setup.py:
-  last_run: '2026-03-16T15:23:04Z'
-  total: 116
-  killed: 115
+  last_run: '2026-03-17T16:06:32Z'
+  total: 122
+  killed: 121
   survived: 1
   not_checked: 0
-  score: 99.1
+  score: 99.2
 orchard/trainer/trainer.py:
   last_run: '2026-03-17T14:03:47Z'
   total: 167

@@ -10,7 +10,7 @@ construction in ``setup``.
 Key Features:
 
 - Configurable Monitor Metric: Checkpointing and early stopping track
-  a user-chosen metric (auc, accuracy, or f1).
+  a user-chosen metric with direction-aware comparison.
 - Deterministic Restoration: Best model weights are reloaded in-place
   after training completes, guaranteeing consistency.
 - Modern Training Utilities: AMP (GradScaler), gradient clipping, and
@@ -153,8 +153,10 @@ class ModelTrainer:
         self.epochs = training.epochs
         self.patience = training.patience
         self.monitor_metric = training.monitor_metric
+        self.monitor_direction = training.monitor_direction
+        self._is_maximize = training.monitor_direction == "maximize"
         self.best_acc = -1.0  # Logging-only: always shown in summary regardless of monitor_metric
-        self.best_metric = -float("inf")
+        self.best_metric = -float("inf") if self._is_maximize else float("inf")
         self.epochs_no_improve = 0
 
         # AMP and MixUp (shared factories from _loop)
@@ -321,8 +323,8 @@ class ModelTrainer:
         """
         Manage model checkpointing and track early stopping progress.
 
-        Saves the model state if the monitored metric exceeds the
-        previous best. Increments the patience counter otherwise.
+        Saves the model state if the monitored metric improves
+        (direction-aware). Increments the patience counter otherwise.
 
         Args:
             val_metrics: Validation metrics dictionary
@@ -332,7 +334,12 @@ class ModelTrainer:
         """
         current_value = val_metrics[self.monitor_metric]
 
-        if current_value > self.best_metric:
+        improved = (
+            current_value > self.best_metric
+            if self._is_maximize
+            else current_value < self.best_metric
+        )
+        if improved:
             logger.info(
                 "New best model! Val %s: %.4f ↑ Checkpoint saved.",
                 self.monitor_metric,

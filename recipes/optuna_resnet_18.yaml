@@ -111,7 +111,6 @@ optuna:
   timeout: null
   
   # Optimization target
-  direction: "maximize"
   
   # Early stopping config
   enable_early_stopping: true
