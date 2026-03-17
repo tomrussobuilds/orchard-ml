@@ -70,7 +70,7 @@ test = [
 ]
 dev = [
     "orchard-ml[test]",
-    "black>=26.1.0",
+    "black>=26.3.1",
     "ruff>=0.11.0",
     "mypy==1.19.1",
     "bandit[toml]>=1.8.0",

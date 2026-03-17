@@ -316,6 +316,8 @@ def test_training_step_adapter_with_mixup() -> None:
     assert torch.equal(first_call[0][1], y_a)
     assert torch.equal(second_call[0][0], logits)
     assert torch.equal(second_call[0][1], y_b)
+    expected_loss = lam * criterion.return_value + (1 - lam) * criterion.return_value
+    assert torch.isclose(result, expected_loss)
 
 
 @pytest.mark.unit
