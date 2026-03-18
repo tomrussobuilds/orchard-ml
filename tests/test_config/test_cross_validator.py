@@ -362,6 +362,27 @@ class TestCheckMinDatasetSize:
                 hardware=HardwareConfig(device="cpu"),
             )
 
+    def test_detection_skips_min_dataset_check(self, mock_metadata_many_classes: MagicMock) -> None:
+        """Non-classification task_type should skip min dataset size check entirely."""
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            # max_samples=30 < num_classes=50 would raise for classification
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(
+                    name="organamnist",
+                    resolution=28,
+                    metadata=mock_metadata_many_classes,
+                    force_rgb=True,
+                    max_samples=30,
+                ),
+                architecture=ArchitectureConfig(name="resnet_18", pretrained=False),
+                training=TrainingConfig(use_amp=False),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
 
 # DIRECT VALIDATOR CALL
 @pytest.mark.unit

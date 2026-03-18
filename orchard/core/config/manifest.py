@@ -526,7 +526,10 @@ class _CrossDomainValidator:
 
         Emits a UserWarning when max_samples is set but less than 10 per class,
         which may cause unreliable class balancing and noisy metrics.
+        Only applies to classification tasks.
         """
+        if config.task_type != "classification":
+            return
         if config.dataset.max_samples is None:
             return
         num_classes = config.dataset.num_classes

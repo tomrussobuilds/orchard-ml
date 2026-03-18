@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - inject TaskValidationMetrics into training loop and Optuna executor
 - add strict type annotations across all test files
 - unify monitor_metric direction as SSOT in TrainingConfig
+- generalize TrainingReport + fix dump_requirements for uv
 
 ### Documentation
 
