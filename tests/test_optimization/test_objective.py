@@ -1440,8 +1440,9 @@ def test_call_passes_correct_kwargs_to_executor() -> None:
     assert call_kwargs["metric_extractor"] is objective.metric_extractor
     assert call_kwargs["training"] is _mock_trial_cfg.training
     assert call_kwargs["optuna"] is _mock_trial_cfg.optuna
-    assert call_kwargs["training_step"] is not None
-    assert call_kwargs["validation_metrics"] is not None
+    adapters = call_kwargs["task_adapters"]
+    assert adapters.training_step is not None
+    assert adapters.validation_metrics is not None
 
 
 @pytest.mark.unit
@@ -1488,8 +1489,9 @@ def test_call_uses_task_registry_for_criterion() -> None:
     mock_task.criterion_factory.get_criterion.assert_called_once()
     call_kwargs = mock_exec_cls.call_args[1]
     assert call_kwargs["criterion"] is mock_criterion
-    assert call_kwargs["training_step"] is mock_task.training_step
-    assert call_kwargs["validation_metrics"] is mock_task.validation_metrics
+    adapters = call_kwargs["task_adapters"]
+    assert adapters.training_step is mock_task.training_step
+    assert adapters.validation_metrics is mock_task.validation_metrics
 
 
 @pytest.mark.unit

@@ -251,7 +251,7 @@ orchard/core/io/data_io.py:
   not_checked: 0
   score: 100.0
 orchard/core/io/serialization.py:
-  last_run: '2026-03-18T08:42:44Z'
+  last_run: '2026-03-18T14:56:48Z'
   total: 217
   killed: 217
   survived: 0
@@ -608,19 +608,19 @@ orchard/optimization/objective/metric_extractor.py:
   not_checked: 0
   score: 82.9
 orchard/optimization/objective/objective.py:
-  last_run: '2026-03-18T14:05:47Z'
-  total: 143
-  killed: 110
+  last_run: '2026-03-18T14:57:58Z'
+  total: 145
+  killed: 112
   survived: 33
   not_checked: 0
-  score: 76.9
+  score: 77.2
 orchard/optimization/objective/training_executor.py:
-  last_run: '2026-03-18T14:05:57Z'
-  total: 138
-  killed: 125
+  last_run: '2026-03-18T14:57:08Z'
+  total: 140
+  killed: 127
   survived: 13
   not_checked: 0
-  score: 90.6
+  score: 90.7
 orchard/optimization/orchestrator/__init__.py:
   last_run: '2026-03-16T15:23:04Z'
   total: 0

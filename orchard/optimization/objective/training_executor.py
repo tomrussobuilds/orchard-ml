@@ -26,6 +26,7 @@ Key responsibilities:
 
 from __future__ import annotations
 
+import dataclasses
 import logging
 import math
 from types import MappingProxyType
@@ -56,6 +57,22 @@ logger = logging.getLogger(LOGGER_NAME)
 # Module-level constants
 _GENERIC_FALLBACK = MappingProxyType({METRIC_LOSS: 999.0})
 _MAX_CONSECUTIVE_VAL_FAILURES: int = 3
+
+
+@dataclasses.dataclass(frozen=True)
+class TaskAdapters:
+    """
+    Bundle of task-specific adapters injected into the training executor.
+
+    Attributes:
+        training_step (TaskTrainingStep | None): Custom forward pass adapter.
+        validation_metrics (TaskValidationMetrics | None): Custom validation metrics adapter.
+        fallback_metrics (Mapping[str, float] | None): Metrics returned on validation failure.
+    """
+
+    training_step: TaskTrainingStep | None = None
+    validation_metrics: TaskValidationMetrics | None = None
+    fallback_metrics: Mapping[str, float] | None = None
 
 
 # TRAINING EXECUTOR
@@ -105,6 +122,7 @@ class TrialTrainingExecutor:
         ...     log_interval=trial_cfg.telemetry.log_interval,
         ...     device=device,
         ...     metric_extractor=MetricExtractor("auc"),
+        ...     task_adapters=TaskAdapters(training_step=task.training_step),
         ... )
         >>> best_metric = executor.execute(trial)
     """
@@ -122,9 +140,7 @@ class TrialTrainingExecutor:
         log_interval: int,
         device: torch.device,
         metric_extractor: MetricExtractor,
-        training_step: TaskTrainingStep | None = None,
-        validation_metrics: TaskValidationMetrics | None = None,
-        fallback_metrics: Mapping[str, float] | None = None,
+        task_adapters: TaskAdapters | None = None,
     ) -> None:
         """
         Initialize training executor.
@@ -141,14 +157,11 @@ class TrialTrainingExecutor:
             log_interval: Epoch interval for progress logging.
             device: Training device.
             metric_extractor: Metric extraction and tracking handler.
-            training_step: Task-specific forward pass adapter.
-                If provided, used instead of the default forward logic.
-                Obtained via ``get_task(task_type).training_step``.
-            validation_metrics: Task-specific validation metrics adapter.
-                If provided, used instead of the default ``validate_epoch``.
-            fallback_metrics: Metrics returned on validation failure.
-                Defaults to a minimal generic fallback (loss only).
+            task_adapters: Task-specific adapters bundle.
+                Contains training step, validation metrics, and fallback metrics.
         """
+        adapters = task_adapters or TaskAdapters()
+
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -157,8 +170,8 @@ class TrialTrainingExecutor:
         self.criterion = criterion
         self.device = device
         self.metric_extractor = metric_extractor
-        self._validation_metrics = validation_metrics
-        resolved_fallback = fallback_metrics or _GENERIC_FALLBACK
+        self._validation_metrics = adapters.validation_metrics
+        resolved_fallback = adapters.fallback_metrics or _GENERIC_FALLBACK
 
         # Ensure fallback metrics include monitor_metric for scheduler stepping.
         # Task-specific fallback_metrics should always include it; the generic
@@ -200,7 +213,7 @@ class TrialTrainingExecutor:
                 use_tqdm=False,
                 monitor_metric=self.monitor_metric,
             ),
-            training_step=training_step,
+            training_step=adapters.training_step,
         )
 
     def execute(self, trial: optuna.Trial) -> float:

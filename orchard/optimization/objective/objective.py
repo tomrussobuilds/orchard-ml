@@ -65,7 +65,7 @@ from ...trainer import (
 # Relative Imports
 from .config_builder import TrialConfigBuilder
 from .metric_extractor import MetricExtractor
-from .training_executor import TrialTrainingExecutor
+from .training_executor import TaskAdapters, TrialTrainingExecutor
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -263,9 +263,11 @@ class OptunaObjective:
                 log_interval=trial_cfg.telemetry.log_interval,
                 device=self.device,
                 metric_extractor=self.metric_extractor,
-                training_step=task.training_step,
-                validation_metrics=task.validation_metrics,
-                fallback_metrics=task.fallback_metrics,
+                task_adapters=TaskAdapters(
+                    training_step=task.training_step,
+                    validation_metrics=task.validation_metrics,
+                    fallback_metrics=task.fallback_metrics,
+                ),
             )
 
             best_metric = executor.execute(trial)

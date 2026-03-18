@@ -9,10 +9,11 @@ configuration building, metric extraction, and training execution.
 from .config_builder import TrialConfigBuilder
 from .metric_extractor import MetricExtractor
 from .objective import OptunaObjective
-from .training_executor import TrialTrainingExecutor
+from .training_executor import TaskAdapters, TrialTrainingExecutor
 
 __all__ = [
     "OptunaObjective",
+    "TaskAdapters",
     "TrialTrainingExecutor",
     "MetricExtractor",
     "TrialConfigBuilder",

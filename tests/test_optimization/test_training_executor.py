@@ -19,6 +19,7 @@ from orchard.optimization import MetricExtractor, TrialTrainingExecutor
 from orchard.optimization.objective.training_executor import (
     _GENERIC_FALLBACK,
     _MAX_CONSECUTIVE_VAL_FAILURES,
+    TaskAdapters,
 )
 from orchard.trainer._scheduling import step_scheduler
 from tests.conftest import (
@@ -214,7 +215,7 @@ def test_validate_epoch_fallback_with_explicit_metrics() -> None:
         log_interval=5,
         device=b.device,
         metric_extractor=MetricExtractor("auc"),
-        fallback_metrics=explicit_fallback,
+        task_adapters=TaskAdapters(fallback_metrics=explicit_fallback),
     )
 
     with patch("orchard.optimization.objective.training_executor.validate_epoch") as mock_validate:
@@ -589,7 +590,7 @@ def test_validate_epoch_uses_injected_adapter() -> None:
         log_interval=5,
         device=b.device,
         metric_extractor=MetricExtractor("auc"),
-        validation_metrics=mock_adapter,
+        task_adapters=TaskAdapters(validation_metrics=mock_adapter),
     )
 
     result = executor._validate_epoch()
@@ -630,7 +631,7 @@ def test_validate_epoch_skips_validate_epoch_when_adapter_injected() -> None:
         log_interval=5,
         device=b.device,
         metric_extractor=MetricExtractor("auc"),
-        validation_metrics=mock_adapter,
+        task_adapters=TaskAdapters(validation_metrics=mock_adapter),
     )
 
     with patch("orchard.optimization.objective.training_executor.validate_epoch") as mock_val:
@@ -658,7 +659,7 @@ def test_executor_stores_validation_metrics() -> None:
         log_interval=5,
         device=b.device,
         metric_extractor=MetricExtractor("auc"),
-        validation_metrics=mock_adapter,
+        task_adapters=TaskAdapters(validation_metrics=mock_adapter),
     )
 
     assert executor._validation_metrics is mock_adapter
@@ -785,7 +786,7 @@ def test_executor_forwards_training_step_to_loop(
         log_interval=5,
         device=bundle.device,
         metric_extractor=MetricExtractor(metric_name="auc"),
-        training_step=mock_step,
+        task_adapters=TaskAdapters(training_step=mock_step),
     )
     assert executor._loop._training_step is mock_step
 

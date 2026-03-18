@@ -111,7 +111,7 @@ def dump_requirements(output_path: Path) -> None:
             if result.returncode == 0 and result.stdout.strip():
                 output_path.write_text(header + result.stdout, encoding="utf-8")
                 return
-        except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        except (subprocess.TimeoutExpired, OSError):
             continue
 
     # All commands failed — write header-only file and warn
