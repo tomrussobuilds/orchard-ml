@@ -39,6 +39,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from ...tracking import TrackerProtocol
 
+from ...core.task_registry import get_task
 from ..objective.objective import OptunaObjective
 from ..search_spaces import get_search_space
 from .builders import build_callbacks, build_pruner, build_sampler
@@ -147,10 +148,12 @@ class OptunaOrchestrator:
         # Configure callbacks and log our structured header
         log_optimization_header(self.cfg)
 
+        task = get_task(self.cfg.task_type)
         callbacks = build_callbacks(
             self.cfg.optuna,
             self.cfg.training.monitor_metric,
             self.cfg.training.monitor_direction,
+            task_thresholds=task.early_stopping_thresholds,
         )
 
         study.set_user_attr("n_trials", self.cfg.optuna.n_trials)

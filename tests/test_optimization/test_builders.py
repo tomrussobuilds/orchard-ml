@@ -268,6 +268,27 @@ def test_build_callbacks_forwards_monitor_metric(mock_optuna_cfg: MagicMock) -> 
 
 
 @pytest.mark.unit
+def test_build_callbacks_forwards_task_thresholds(mock_optuna_cfg: MagicMock) -> None:
+    """Assert build_callbacks forwards task_thresholds to the factory."""
+    from unittest.mock import patch as _patch
+
+    mock_optuna_cfg.enable_early_stopping = True
+    mock_optuna_cfg.early_stopping_threshold = None
+    mock_optuna_cfg.early_stopping_patience = 2
+
+    thresholds = {"auc": 0.9999, "accuracy": 0.995}
+
+    with _patch(
+        "orchard.optimization.orchestrator.builders.get_early_stopping_callback"
+    ) as mock_factory:
+        mock_factory.return_value = None
+        build_callbacks(mock_optuna_cfg, "auc", "maximize", task_thresholds=thresholds)
+
+    call_kwargs = mock_factory.call_args[1]
+    assert call_kwargs["task_thresholds"] is thresholds
+
+
+@pytest.mark.unit
 def test_build_callbacks_empty_when_factory_returns_none(mock_optuna_cfg: MagicMock) -> None:
     """Assert empty list when early stopping factory returns None."""
     from unittest.mock import patch as _patch

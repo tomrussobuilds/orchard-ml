@@ -24,43 +24,17 @@ Example:
 from __future__ import annotations
 
 import logging
-from types import MappingProxyType
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
 
 from optuna.study import Study
 from optuna.trial import FrozenTrial, TrialState
 
 from ..core import LOGGER_NAME, LogStyle, Reporter
-from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS
 
 logger = logging.getLogger(LOGGER_NAME)
-
-# Default early-stopping thresholds per metric direction.
-# Intentionally aggressive: stop only when near-perfect performance is achieved.
-_THRESH_AUC = 0.9999  # Near-perfect ROC-AUC
-_THRESH_ACCURACY = 0.995  # 99.5% classification accuracy
-_THRESH_F1 = 0.98  # 98% F1 score
-_THRESH_LOSS = 0.01  # Very low cross-entropy loss
-_THRESH_MAE = 0.01  # Mean absolute error
-_THRESH_MSE = 0.001  # Mean squared error
-
-_DEFAULT_THRESHOLDS = MappingProxyType(
-    {
-        "maximize": MappingProxyType(
-            {
-                METRIC_AUC: _THRESH_AUC,
-                METRIC_ACCURACY: _THRESH_ACCURACY,
-                METRIC_F1: _THRESH_F1,
-            }
-        ),
-        "minimize": MappingProxyType(
-            {
-                METRIC_LOSS: _THRESH_LOSS,
-                "mae": _THRESH_MAE,
-                "mse": _THRESH_MSE,
-            }
-        ),
-    }
-)
 
 
 # EARLY STOPPING CALLBACK
@@ -86,7 +60,7 @@ class StudyEarlyStoppingCallback:
         _count: Internal counter for consecutive threshold hits
     """
 
-    def __init__(
+    def __init__(  # pragma: no mutate (defaults: trampoline can't intercept)
         self, threshold: float, direction: str = "maximize", patience: int = 2, enabled: bool = True
     ) -> None:
         """
@@ -200,24 +174,28 @@ class StudyEarlyStoppingCallback:
 
 
 # CONFIGURATION HELPER
-def get_early_stopping_callback(
+def get_early_stopping_callback(  # pragma: no mutate (defaults: trampoline can't intercept)
     metric_name: str,
     direction: str,
     threshold: float | None = None,
     patience: int = 2,
     enabled: bool = True,
+    task_thresholds: Mapping[str, float] | None = None,
 ) -> StudyEarlyStoppingCallback | None:
     """
     Factory function to create appropriate early stopping callback.
 
-    Provides sensible defaults for common metrics.
+    Lookup order: explicit *threshold* → *task_thresholds* from the task
+    registry → ``None`` (disabled with warning).
 
     Args:
         metric_name: Name of metric being optimized (e.g., "auc", "accuracy")
         direction: "maximize" or "minimize"
-        threshold: Custom threshold (if None, uses metric-specific default)
+        threshold: Custom threshold (if None, uses task default)
         patience: Trials meeting threshold before stopping
         enabled: Whether callback is active
+        task_thresholds: Task-specific metric→threshold mapping from the
+            task registry.
 
     Returns:
         Configured callback or None if disabled
@@ -226,12 +204,8 @@ def get_early_stopping_callback(
         return None
 
     if threshold is None:
-        direction_thresholds = _DEFAULT_THRESHOLDS.get(direction)
-        threshold = (
-            direction_thresholds.get(metric_name.lower())
-            if direction_thresholds is not None
-            else None
-        )
+        if task_thresholds is not None:
+            threshold = task_thresholds.get(metric_name.lower())
 
         if threshold is None:
             logger.warning(
@@ -241,6 +215,6 @@ def get_early_stopping_callback(
             )
             return None
 
-    return StudyEarlyStoppingCallback(
+    return StudyEarlyStoppingCallback(  # pragma: no mutate (trampoline can't intercept kwargs)
         threshold=threshold, direction=direction, patience=patience, enabled=enabled
     )

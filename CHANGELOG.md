@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - generalize TrainingReport + fix dump_requirements for uv
 - skip _check_min_dataset_size for non-classification tasks
 - skip compute_class_weights for non-classification tasks
+- derive fallback_metrics from task registry
 
 ### Documentation
 

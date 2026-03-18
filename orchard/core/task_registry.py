@@ -52,6 +52,8 @@ class TaskComponents:
         eval_pipeline: Orchestrates inference, visualization, and reporting.
         fallback_metrics: Metrics returned when validation fails during Optuna
             trials. Must contain at least the monitored metric key.
+        early_stopping_thresholds: Default early-stopping thresholds per metric
+            name (e.g. ``{"accuracy": 0.995, "auc": 0.9999}``).
     """
 
     criterion_factory: TaskCriterionFactory
@@ -59,6 +61,7 @@ class TaskComponents:
     validation_metrics: TaskValidationMetrics
     eval_pipeline: TaskEvalPipeline
     fallback_metrics: Mapping[str, float]
+    early_stopping_thresholds: Mapping[str, float]
 
 
 # Internal mutable store — never exposed directly.

@@ -16,7 +16,10 @@ Functions:
 from __future__ import annotations
 
 import logging
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
 
 import optuna
 from optuna.pruners import HyperbandPruner, MedianPruner, NopPruner, PercentilePruner
@@ -79,7 +82,12 @@ def build_pruner(
     return cast(MedianPruner | PercentilePruner | HyperbandPruner | NopPruner, pruner_factory())
 
 
-def build_callbacks(optuna_cfg: OptunaConfig, monitor_metric: str, direction: str) -> list[Any]:
+def build_callbacks(
+    optuna_cfg: OptunaConfig,
+    monitor_metric: str,
+    direction: str,
+    task_thresholds: Mapping[str, float] | None = None,
+) -> list[Any]:
     """
     Construct list of optimization callbacks from configuration.
 
@@ -91,6 +99,8 @@ def build_callbacks(optuna_cfg: OptunaConfig, monitor_metric: str, direction: st
         optuna_cfg: Optuna sub-config with early stopping parameters
         monitor_metric: Target metric name (from ``training.monitor_metric``)
         direction: Optimization direction ('maximize' or 'minimize')
+        task_thresholds: Task-specific early-stopping thresholds from the
+            task registry (passed through to ``get_early_stopping_callback``).
 
     Returns:
         list of Optuna callback objects (may be empty)
@@ -105,6 +115,7 @@ def build_callbacks(optuna_cfg: OptunaConfig, monitor_metric: str, direction: st
         patience=optuna_cfg.early_stopping_patience,
         enabled=optuna_cfg.enable_early_stopping,
         metric_name=monitor_metric,
+        task_thresholds=task_thresholds,
     )
 
     return [early_stop_callback] if early_stop_callback else []

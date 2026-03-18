@@ -48,6 +48,7 @@ def _make_components() -> TaskComponents:
         validation_metrics=MagicMock(spec=TaskValidationMetrics),
         eval_pipeline=MagicMock(spec=TaskEvalPipeline),
         fallback_metrics={"loss": 999.0},
+        early_stopping_thresholds={"accuracy": 0.995},
     )
 
 

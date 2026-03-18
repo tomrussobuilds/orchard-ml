@@ -40,6 +40,13 @@ _CLASSIFICATION_FALLBACK = {
     METRIC_F1: 0.0,
 }
 
+_CLASSIFICATION_EARLY_STOP = {
+    METRIC_AUC: 0.9999,
+    METRIC_ACCURACY: 0.995,
+    METRIC_F1: 0.98,
+    METRIC_LOSS: 0.01,
+}
+
 register_task(
     "classification",
     TaskComponents(
@@ -48,6 +55,7 @@ register_task(
         validation_metrics=ClassificationMetricsAdapter(),
         eval_pipeline=ClassificationEvalPipelineAdapter(),
         fallback_metrics=_CLASSIFICATION_FALLBACK,
+        early_stopping_thresholds=_CLASSIFICATION_EARLY_STOP,
     ),
 )
 

@@ -384,7 +384,7 @@ orchard/core/task_protocols.py:
   not_checked: 0
   score: 100.0
 orchard/core/task_registry.py:
-  last_run: '2026-03-18T09:35:59Z'
+  last_run: '2026-03-18T10:18:15Z'
   total: 11
   killed: 11
   survived: 0
@@ -580,10 +580,10 @@ orchard/optimization/_param_mapping.py:
   not_checked: 0
   score: 100.0
 orchard/optimization/early_stopping.py:
-  last_run: '2026-03-16T15:23:04Z'
-  total: 72
-  killed: 65
-  survived: 7
+  last_run: '2026-03-18T10:35:09Z'
+  total: 62
+  killed: 56
+  survived: 6
   not_checked: 0
   score: 90.3
 orchard/optimization/objective/__init__.py:
@@ -629,12 +629,12 @@ orchard/optimization/orchestrator/__init__.py:
   not_checked: 0
   score: 100.0
 orchard/optimization/orchestrator/builders.py:
-  last_run: '2026-03-17T16:04:14Z'
-  total: 33
-  killed: 31
+  last_run: '2026-03-18T10:21:27Z'
+  total: 35
+  killed: 33
   survived: 2
   not_checked: 0
-  score: 93.9
+  score: 94.3
 orchard/optimization/orchestrator/exporters.py:
   last_run: '2026-03-16T15:23:04Z'
   total: 257
@@ -643,12 +643,12 @@ orchard/optimization/orchestrator/exporters.py:
   not_checked: 0
   score: 97.7
 orchard/optimization/orchestrator/orchestrator.py:
-  last_run: '2026-03-17T16:04:38Z'
-  total: 113
-  killed: 108
+  last_run: '2026-03-18T10:18:07Z'
+  total: 117
+  killed: 112
   survived: 5
   not_checked: 0
-  score: 95.6
+  score: 95.7
 orchard/optimization/orchestrator/registries.py:
   last_run: '2026-03-16T15:23:04Z'
   total: 0

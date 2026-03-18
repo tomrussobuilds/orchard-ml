@@ -56,6 +56,7 @@ def mock_cfg() -> None:
     cfg.optuna.save_plots = False
     cfg.optuna.save_best_config = False
     cfg.training.monitor_metric = "auc"
+    cfg.task_type = "classification"
     cfg.optuna.search_space_preset = "quick"
     cfg.optuna.load_if_exists = False
     cfg.optuna.get_storage_url = MagicMock(return_value=None)
@@ -602,8 +603,10 @@ class TestOrchestratorMutationKillers:
     @patch("orchard.optimization.orchestrator.orchestrator.OptunaObjective")
     @patch("orchard.optimization.orchestrator.orchestrator.log_optimization_header")
     @patch("orchard.optimization.orchestrator.orchestrator.build_callbacks")
+    @patch("orchard.optimization.orchestrator.orchestrator.get_task")
     def test_optimize_build_callbacks_args(
         self,
+        mock_get_task: MagicMock,
         mock_build_cb: MagicMock,
         mock_log_header: MagicMock,
         mock_obj: MagicMock,
@@ -612,7 +615,7 @@ class TestOrchestratorMutationKillers:
         mock_cfg: MagicMock,
         mock_paths: MagicMock,
     ) -> None:
-        """Verify build_callbacks receives optuna config and monitor_metric."""
+        """Verify build_callbacks receives optuna config, monitor_metric, and task_thresholds."""
         mock_study = MagicMock()
         mock_study.trials = []
         mock_create.return_value = mock_study
@@ -620,12 +623,19 @@ class TestOrchestratorMutationKillers:
         mock_build_cb.return_value = []
         mock_cfg.training.monitor_metric = "f1"
 
+        mock_task = MagicMock()
+        mock_task.early_stopping_thresholds = {"f1": 0.98}
+        mock_get_task.return_value = mock_task
+
         orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
         with patch.object(orch, "_post_optimization_processing"):
             orch.optimize()
 
         mock_build_cb.assert_called_once_with(
-            mock_cfg.optuna, "f1", mock_cfg.training.monitor_direction
+            mock_cfg.optuna,
+            "f1",
+            mock_cfg.training.monitor_direction,
+            task_thresholds={"f1": 0.98},
         )
 
     # optimize: verify study.set_user_attr called with correct key and value
