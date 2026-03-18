@@ -19,13 +19,12 @@ import logging
 import os
 from typing import Any, Protocol
 
-import torch
 from pydantic import BaseModel, ConfigDict
 
 from ..environment import (
     DuplicateProcessCleaner,
     ensure_single_instance,
-    has_mps_backend,
+    flush_accelerator_cache,
     release_single_instance,
 )
 from ..paths.constants import LOGGER_NAME, LogStyle
@@ -175,15 +174,5 @@ class InfrastructureManager(BaseModel):
             log: Logger for debug output (defaults to 'Infrastructure' logger).
         """
         log = log or logging.getLogger(LOGGER_NAME)
-
-        # Full session teardown (see also OptunaObjective._cleanup for per-trial flush)
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            log.debug(" %s CUDA cache cleared.", LogStyle.ARROW)
-
-        if has_mps_backend():
-            try:
-                torch.mps.empty_cache()
-                log.debug(" %s MPS cache cleared.", LogStyle.ARROW)
-            except RuntimeError:
-                log.warning(" %s MPS cache cleanup failed (non-fatal).", LogStyle.ARROW)
+        if flush_accelerator_cache():
+            log.debug(" %s Accelerator cache cleared.", LogStyle.ARROW)

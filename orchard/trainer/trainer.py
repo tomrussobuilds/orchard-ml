@@ -31,7 +31,7 @@ from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 
 from ..core import LOGGER_NAME, LogStyle, TrainingConfig, load_model_weights
-from ..core.paths import METRIC_ACCURACY, METRIC_LOSS
+from ..core.paths import METRIC_LOSS
 from ..exceptions import OrchardExportError
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -75,7 +75,6 @@ class ModelTrainer:
         training: Training hyperparameters sub-config.
         epochs: Total number of training epochs.
         patience: Early stopping patience (epochs without improvement).
-        best_acc: Best validation accuracy achieved.
         best_metric: Best value of the monitored metric.
         epochs_no_improve: Consecutive epochs without monitored metric improvement.
         scaler: AMP scaler (``None`` when ``use_amp`` is ``False``).
@@ -153,10 +152,8 @@ class ModelTrainer:
         self.epochs = training.epochs
         self.patience = training.patience
         self.monitor_metric = training.monitor_metric
-        self.monitor_direction = training.monitor_direction
         self._is_maximize = training.monitor_direction == "maximize"
-        self.best_acc = -1.0  # Logging-only: always shown in summary regardless of monitor_metric
-        self.best_metric = -float("inf") if self._is_maximize else float("inf")
+        self.best_metric = -float("inf") if self._is_maximize else float("inf")  # pragma: no mutate
         self.epochs_no_improve = 0
 
         # AMP and MixUp (shared factories from _loop)
@@ -212,7 +209,7 @@ class ModelTrainer:
         Performs iterative training across configured epochs, executing:
 
         - Forward/backward passes with optional Mixup augmentation
-        - Validation metric computation (loss, accuracy, AUC)
+        - Validation metric computation (task-specific metrics)
         - Learning rate scheduling (plateau-aware or step-based)
         - Automated checkpointing on monitor_metric improvement
         - Early stopping with patience-based criteria
@@ -222,7 +219,7 @@ class ModelTrainer:
 
         - Path: Filesystem path to best model checkpoint
         - list[float]: Training loss history per epoch
-        - list[dict]: Validation metrics history (loss, accuracy, AUC per epoch)
+        - list[dict]: Validation metrics history per epoch
 
         Notes:
 
@@ -239,12 +236,8 @@ class ModelTrainer:
             self.train_losses.append(epoch_loss)
             self.val_metrics_history.append(val_metrics)
 
-            val_acc = val_metrics[METRIC_ACCURACY]
             val_loss = val_metrics[METRIC_LOSS]  # Informational: logged but not used for decisions
             monitor_value = val_metrics[self.monitor_metric]
-
-            if val_acc > self.best_acc:
-                self.best_acc = val_acc
 
             # --- 2. Checkpointing ---
             early_stop = self._handle_checkpointing(val_metrics)
@@ -255,7 +248,6 @@ class ModelTrainer:
                 epoch,
                 epoch_loss,
                 val_loss,
-                val_acc,
                 monitor_value,
                 current_lr,
             )
@@ -279,7 +271,6 @@ class ModelTrainer:
         epoch: int,
         train_loss: float,
         val_loss: float,
-        val_acc: float,
         monitor_value: float,
         lr: float,
     ) -> None:
@@ -301,21 +292,18 @@ class ModelTrainer:
             self.best_metric,
         )
         logger.info("%s%s Loss  : T %.4f / V %.4f", I, A, train_loss, val_loss)
-        logger.info("%s%s Acc   : %.4f (Best: %.4f)", I, A, val_acc, self.best_acc)
         logger.info("%s%s LR    : %.2e %s Patience: %d", I, A, lr, B, remaining)
 
     def _log_training_complete(self) -> None:  # pragma: no mutate
         """Log final training summary banner."""
         logger.info(LogStyle.DOUBLE)
         logger.info(
-            "%s%s Training Complete %s Best %s: %.4f %s Best Acc: %.4f",
+            "%s%s Training Complete %s Best %s: %.4f",
             LogStyle.INDENT,
             LogStyle.SUCCESS,
             LogStyle.BULLET,
             self.monitor_metric.upper(),
             self.best_metric,
-            LogStyle.BULLET,
-            self.best_acc,
         )
         logger.info(LogStyle.DOUBLE)
 

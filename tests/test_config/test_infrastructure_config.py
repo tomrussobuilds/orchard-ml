@@ -348,7 +348,7 @@ def test_flush_compute_cache_with_cuda(monkeypatch: pytest.MonkeyPatch) -> None:
     manager._flush_compute_cache(log=logger)
 
     assert cuda_cache_cleared
-    assert any("CUDA cache cleared" in msg for msg in logger.debug_messages)
+    assert any("Accelerator cache cleared" in msg for msg in logger.debug_messages)
 
 
 @pytest.mark.unit
@@ -391,12 +391,12 @@ def test_flush_compute_cache_with_mps(monkeypatch: pytest.MonkeyPatch) -> None:
     manager._flush_compute_cache(log=logger)
 
     assert mps_cache_cleared
-    assert any("MPS cache cleared" in msg for msg in logger.debug_messages)
+    assert any("Accelerator cache cleared" in msg for msg in logger.debug_messages)
 
 
 @pytest.mark.unit
 def test_flush_compute_cache_mps_failure(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test _flush_compute_cache() handles MPS failures gracefully."""
+    """Test _flush_compute_cache() handles MPS failures gracefully (no crash)."""
     manager = InfrastructureManager()
 
     def mock_mps_empty_cache_fail() -> None:
@@ -422,20 +422,14 @@ def test_flush_compute_cache_mps_failure(monkeypatch: pytest.MonkeyPatch) -> Non
 
     class MockLogger:
         def __init__(self) -> None:
-            self.warning_messages: list[str] = []
             self.debug_messages: list[str] = []
 
         def debug(self, msg: str, *args: Any) -> None:
             self.debug_messages.append(msg % args if args else msg)
 
-        def warning(self, msg: str, *args: Any) -> None:
-            self.warning_messages.append(msg % args if args else msg)
-
     logger = MockLogger()
+    # Should not raise — MPS failure is swallowed inside flush_accelerator_cache()
     manager._flush_compute_cache(log=logger)
-
-    assert any("MPS cache cleanup failed" in msg for msg in logger.warning_messages)
-    assert any(str(LogStyle.ARROW) in msg for msg in logger.warning_messages)
 
 
 @pytest.mark.unit
@@ -679,8 +673,9 @@ def test_flush_compute_cache_default_logger_fallback(monkeypatch: pytest.MonkeyP
     """Test _flush_compute_cache uses default logger with LOGGER_NAME when None is passed."""
     manager = InfrastructureManager()
 
-    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
-    monkeypatch.setattr("orchard.core.config.infrastructure_config.has_mps_backend", lambda: False)
+    monkeypatch.setattr(
+        "orchard.core.config.infrastructure_config.flush_accelerator_cache", lambda: None
+    )
 
     with patch("logging.getLogger") as mock_get_logger:
         mock_get_logger.return_value = SimpleNamespace(
@@ -927,8 +922,9 @@ def test_flush_compute_cache_no_cuda_no_mps_no_log(monkeypatch: pytest.MonkeyPat
     """Test _flush_compute_cache does not log when neither CUDA nor MPS available."""
     manager = InfrastructureManager()
 
-    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
-    monkeypatch.setattr("orchard.core.config.infrastructure_config.has_mps_backend", lambda: False)
+    monkeypatch.setattr(
+        "orchard.core.config.infrastructure_config.flush_accelerator_cache", lambda: False
+    )
 
     debug_calls: list[str] = []
 

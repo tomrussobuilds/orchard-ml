@@ -158,7 +158,17 @@ class TrialTrainingExecutor:
         self.device = device
         self.metric_extractor = metric_extractor
         self._validation_metrics = validation_metrics
-        self._fallback_metrics = fallback_metrics or _GENERIC_FALLBACK
+        resolved_fallback = fallback_metrics or _GENERIC_FALLBACK
+
+        # Ensure fallback metrics include monitor_metric for scheduler stepping.
+        # Task-specific fallback_metrics should always include it; the generic
+        # fallback is augmented automatically with a neutral value.
+        if training.monitor_metric not in resolved_fallback:
+            augmented = dict(resolved_fallback)
+            augmented[training.monitor_metric] = 0.0
+            self._fallback_metrics: Mapping[str, float] = MappingProxyType(augmented)
+        else:
+            self._fallback_metrics = resolved_fallback
 
         # Pruning config
         self.enable_pruning = optuna.enable_pruning

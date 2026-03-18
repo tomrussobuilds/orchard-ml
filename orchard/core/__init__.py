@@ -31,6 +31,7 @@ from .environment import (
     detect_best_device,
     determine_tta_mode,
     ensure_single_instance,
+    flush_accelerator_cache,
     get_accelerator_name,
     get_num_workers,
     has_mps_backend,
@@ -120,6 +121,7 @@ __all__ = [
     # Environment
     "set_seed",
     "detect_best_device",
+    "flush_accelerator_cache",
     "get_num_workers",
     "get_accelerator_name",
     "has_mps_backend",

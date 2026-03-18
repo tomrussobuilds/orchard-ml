@@ -43,7 +43,7 @@ from sklearn.metrics import f1_score, roc_auc_score
 from tqdm.auto import tqdm
 
 from ..core import LOGGER_NAME
-from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS
+from ..core.paths import DEFAULT_SEED, METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS
 
 # Module-level logger (avoid dynamic imports in exception handlers)
 logger = logging.getLogger(LOGGER_NAME)
@@ -188,9 +188,11 @@ def validate_epoch(
     """
     Evaluates model performance on held-out validation set.
 
-    Computes validation loss, accuracy, and ROC-AUC score under no_grad context.
-    AUC calculated using One-vs-Rest (OvR) strategy with macro-averaging for
-    robust performance estimation on potentially imbalanced datasets.
+    Classification-specific: computes softmax, argmax, accuracy, F1, and AUC.
+    This function is the default fallback when no ``TaskValidationMetrics``
+    adapter is injected. Non-classification tasks **must** provide their own
+    adapter via the task registry; this fallback will produce meaningless
+    metrics for tasks that do not output class logits.
 
     Args:
         model: Neural network model to evaluate
@@ -289,7 +291,7 @@ def mixup_data(
     if rng is None:
         # Defensive fallback — production path always provides a seeded rng
         # via ModelTrainer (seeded from cfg.training.seed).
-        rng = np.random.default_rng(seed=42)
+        rng = np.random.default_rng(seed=DEFAULT_SEED)
 
     # Draw mixing coefficient from Beta distribution
     lam: float = float(rng.beta(alpha, alpha))

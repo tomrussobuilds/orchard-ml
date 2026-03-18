@@ -186,7 +186,42 @@ def test_validate_epoch_returns_fallback_on_exception() -> None:
         mock_validate.side_effect = RuntimeError("Validation error")
         result = executor._validate_epoch()
 
-        assert result == _GENERIC_FALLBACK
+        # Generic fallback (loss=999.0) augmented with monitor_metric (auc=0.0)
+        assert result == {"loss": 999.0, "auc": 0.0}
+
+
+@pytest.mark.unit
+def test_validate_epoch_fallback_with_explicit_metrics() -> None:
+    """Fallback uses explicit fallback_metrics when monitor_metric is present.
+
+    Kills mutant ``self._fallback_metrics = resolved_fallback`` → ``None``.
+    """
+    training = make_training_config(epochs=5, monitor_metric="auc")
+    optuna_cfg = make_optuna_config(enable_pruning=False, pruning_warmup_epochs=0)
+    b = TrainingBundle()
+
+    explicit_fallback = {"loss": 0.0, "auc": -1.0}
+
+    executor = TrialTrainingExecutor(
+        model=b.model,
+        train_loader=b.train_loader,
+        val_loader=b.val_loader,
+        optimizer=b.optimizer,
+        scheduler=b.scheduler,
+        criterion=b.criterion,
+        training=training,
+        optuna=optuna_cfg,
+        log_interval=5,
+        device=b.device,
+        metric_extractor=MetricExtractor("auc"),
+        fallback_metrics=explicit_fallback,
+    )
+
+    with patch("orchard.optimization.objective.training_executor.validate_epoch") as mock_validate:
+        mock_validate.side_effect = RuntimeError("Validation error")
+        result = executor._validate_epoch()
+
+        assert result == {"loss": 0.0, "auc": -1.0}
 
 
 # TESTS: FULL EXECUTION LOOP

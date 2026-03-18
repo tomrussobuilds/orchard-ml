@@ -491,11 +491,11 @@ def test_optuna_worker_constants() -> None:
 
 
 @pytest.mark.unit
-def test_min_subsampled_split_constant() -> None:
-    """Verify _MIN_SUBSAMPLED_SPLIT floor constant."""
-    from orchard.data_handler.loader import _MIN_SUBSAMPLED_SPLIT
+def test_min_split_samples_constant() -> None:
+    """Verify MIN_SPLIT_SAMPLES floor constant (centralized in constants.py)."""
+    from orchard.core.paths import MIN_SPLIT_SAMPLES
 
-    assert _MIN_SUBSAMPLED_SPLIT == 10
+    assert MIN_SPLIT_SAMPLES == 10
 
 
 @pytest.mark.unit
@@ -800,7 +800,7 @@ def test_balancing_sampler_inverse_frequency_weights(
 
 @pytest.mark.unit
 def test_build_sub_samples_calculation(mock_metadata: MagicMock) -> None:
-    """Verify val/test sub_samples = max(_MIN_SUBSAMPLED_SPLIT, max_samples * val_ratio)."""
+    """Verify val/test sub_samples = max(MIN_SPLIT_SAMPLES, max_samples * val_ratio)."""
     mock_ds_meta = MagicMock(in_channels=1)
     cfg = MagicMock()
     cfg.dataset.dataset_name = "mock_dataset"
@@ -851,7 +851,7 @@ def test_build_sub_samples_calculation(mock_metadata: MagicMock) -> None:
 
 @pytest.mark.unit
 def test_build_sub_samples_floor(mock_metadata: MagicMock) -> None:
-    """Verify sub_samples floors at _MIN_SUBSAMPLED_SPLIT when max_samples * val_ratio < 10."""
+    """Verify sub_samples floors at MIN_SPLIT_SAMPLES when max_samples * val_ratio < 10."""
     mock_ds_meta = MagicMock(in_channels=1)
     cfg = MagicMock()
     cfg.dataset.dataset_name = "mock_dataset"

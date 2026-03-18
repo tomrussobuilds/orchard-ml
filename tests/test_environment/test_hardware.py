@@ -538,5 +538,32 @@ def test_to_device_obj_cuda_error_message_exact(mock_cuda: MagicMock) -> None:
         to_device_obj("cuda")
 
 
+@pytest.mark.unit
+def test_flush_accelerator_cache_returns_false_without_accelerator(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """flush_accelerator_cache returns False when no CUDA/MPS available."""
+    from orchard.core.environment.hardware import flush_accelerator_cache
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    monkeypatch.setattr("orchard.core.environment.hardware.has_mps_backend", lambda: False)
+    result = flush_accelerator_cache()
+    assert result is False
+
+
+@pytest.mark.unit
+def test_flush_accelerator_cache_returns_true_with_cuda(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """flush_accelerator_cache returns True when CUDA cache was flushed."""
+    from orchard.core.environment.hardware import flush_accelerator_cache
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(torch.cuda, "empty_cache", lambda: None)
+    monkeypatch.setattr("orchard.core.environment.hardware.has_mps_backend", lambda: False)
+    result = flush_accelerator_cache()
+    assert result is True
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

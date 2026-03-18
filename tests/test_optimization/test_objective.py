@@ -350,7 +350,8 @@ def test_training_executor_validate_epoch_error_handling() -> None:
     ):
         result = executor._validate_epoch()
 
-    assert result == {"loss": 999.0}
+    # Generic fallback (loss=999.0) augmented with monitor_metric (auc=0.0)
+    assert result == {"loss": 999.0, "auc": 0.0}
 
 
 # OPTUNA OBJECTIVE TESTS
@@ -1232,6 +1233,7 @@ def test_objective_worst_metric_minimize() -> None:
 def test_objective_weighted_loss_calls_compute_class_weights() -> None:
     """Verify compute_class_weights is called when weighted_loss=True."""
     mock_cfg = MagicMock()
+    mock_cfg.task_type = "classification"
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.training.monitor_direction = "maximize"
@@ -1272,6 +1274,50 @@ def test_objective_weighted_loss_calls_compute_class_weights() -> None:
         objective(mock_trial)
 
     mock_cw.assert_called_once()
+
+
+@pytest.mark.unit
+def test_objective_non_classification_skips_class_weights() -> None:
+    """Verify compute_class_weights is NOT called for non-classification tasks.
+
+    Kills ``and`` → ``or`` mutant on the task_type guard.
+    """
+    mock_cfg = MagicMock()
+    mock_cfg.task_type = "detection"
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.training.monitor_direction = "maximize"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
+        model_factory=MagicMock(return_value=MagicMock()),
+    )
+    objective._cleanup = MagicMock()  # type: ignore
+
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = True
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
+
+    mock_trial = MagicMock()
+    mock_trial.number = 0
+
+    with (
+        patch("orchard.optimization.objective.objective.get_optimizer"),
+        patch("orchard.optimization.objective.objective.get_scheduler"),
+        patch("orchard.optimization.objective.objective.get_task"),
+        patch("orchard.optimization.objective.objective.log_trial_start"),
+        patch("orchard.optimization.objective.objective.compute_class_weights") as mock_cw,
+        patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec,
+    ):
+        mock_exec.return_value.execute.return_value = 0.9
+        objective(mock_trial)
+
+    mock_cw.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

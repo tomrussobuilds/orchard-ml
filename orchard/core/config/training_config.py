@@ -23,6 +23,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ...exceptions import OrchardConfigError
+from ..paths import DEFAULT_SEED
 from .types import (
     BatchSize,
     GradNorm,
@@ -77,7 +78,7 @@ class TrainingConfig(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     # ==================== Reproducibility ====================
-    seed: int = Field(default=42, description="Random seed")
+    seed: int = Field(default=DEFAULT_SEED, description="Random seed")
 
     # ==================== Training Loop ====================
     batch_size: BatchSize = Field(default=16, description="Samples per batch")

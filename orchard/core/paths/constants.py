@@ -32,6 +32,12 @@ METRIC_AUC: Final[str] = "auc"
 METRIC_LOSS: Final[str] = "loss"
 METRIC_F1: Final[str] = "f1"
 
+# Default random seed for deterministic subsampling, data splitting, and fallback RNGs
+DEFAULT_SEED: Final[int] = 42
+
+# Minimum number of samples per split (val/test) — used by data loaders and synthetic datasets
+MIN_SPLIT_SAMPLES: Final[int] = 10
+
 # Global logger identity used by all modules to ensure log synchronization
 LOGGER_NAME: Final[str] = "OrchardML"
 

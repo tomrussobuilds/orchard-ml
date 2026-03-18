@@ -27,6 +27,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 
+from ..core.paths import DEFAULT_SEED
 from ..exceptions import OrchardDatasetError
 
 
@@ -78,7 +79,7 @@ class VisionDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
         *,
         transform: transforms.Compose | None = None,
         max_samples: int | None = None,
-        seed: int = 42,
+        seed: int = DEFAULT_SEED,
     ) -> VisionDataset:
         """
         Eagerly load a split from an NPZ archive into RAM.
@@ -119,7 +120,7 @@ class VisionDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
         *,
         transform: transforms.Compose | None = None,
         max_samples: int | None = None,
-        seed: int = 42,
+        seed: int = DEFAULT_SEED,
     ) -> VisionDataset:
         """
         Memory-mapped load from an NPZ archive (no full RAM copy).

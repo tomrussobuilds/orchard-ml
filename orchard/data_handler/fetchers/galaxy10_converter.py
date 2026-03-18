@@ -18,7 +18,7 @@ import requests
 from PIL import Image
 
 from ...core.metadata import DatasetMetadata
-from ...core.paths import LOGGER_NAME
+from ...core.paths import DEFAULT_SEED, LOGGER_NAME
 from ...core.paths.constants import LogStyle
 from ...exceptions import OrchardDatasetError
 
@@ -102,7 +102,7 @@ def convert_galaxy10_to_npz(
     h5_path: Path,
     output_npz: Path,
     target_size: int = 224,
-    seed: int = 42,
+    seed: int = DEFAULT_SEED,
 ) -> None:
     """
     Converts Galaxy10 HDF5 to NPZ format with train/val/test splits.
@@ -197,7 +197,7 @@ def convert_galaxy10_to_npz(
 def _create_splits(
     images: npt.NDArray[Any],
     labels: npt.NDArray[Any],
-    seed: int = 42,
+    seed: int = DEFAULT_SEED,
     train_ratio: float = 0.7,
     val_ratio: float = 0.15,
 ) -> tuple[

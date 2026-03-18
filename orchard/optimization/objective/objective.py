@@ -41,7 +41,7 @@ from ...core import (
     DatasetConfig,
     LogStyle,
     TrainingConfig,
-    has_mps_backend,
+    flush_accelerator_cache,
     log_trial_start,
 )
 
@@ -241,7 +241,7 @@ class OptunaObjective:
             task = get_task(self.cfg.task_type)
 
             class_weights = None
-            if trial_cfg.training.weighted_loss:
+            if self.cfg.task_type == "classification" and trial_cfg.training.weighted_loss:
                 train_labels = train_loader.dataset.labels.flatten()  # type: ignore[attr-defined]
                 num_classes = self.config_builder.base_metadata.num_classes
                 class_weights = compute_class_weights(train_labels, num_classes, self.device)
@@ -336,11 +336,4 @@ class OptunaObjective:
 
         Note: Orchestrator handles full resource cleanup. This only clears accelerator cache.
         """
-        # Per-trial cache flush — intentionally inlined (not calling InfraManager)
-        # to avoid a dependency on the orchestrator layer from within the objective.
-        # The 4-line cost is lower than the coupling cost of importing InfraManager.
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-
-        if has_mps_backend():
-            torch.mps.empty_cache()
+        flush_accelerator_cache()

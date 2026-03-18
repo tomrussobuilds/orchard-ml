@@ -49,6 +49,7 @@ from ..export import (
     validate_export,
 )
 from ..optimization import run_optimization
+from ..optimization.orchestrator.exporters import BEST_CONFIG_FILENAME
 from ..trainer import (
     ModelTrainer,
     compute_class_weights,
@@ -119,7 +120,7 @@ def run_optimization_phase(
     )
 
     # Best config path is in reports dir (exported by orchestrator if save_best_config=True)
-    candidate = paths.reports / "best_config.yaml"
+    candidate = paths.reports / BEST_CONFIG_FILENAME
     best_config_path: Path | None = candidate if candidate.exists() else None
 
     return study, best_config_path

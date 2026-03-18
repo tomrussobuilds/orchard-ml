@@ -46,6 +46,33 @@ def has_mps_backend() -> bool:
     return hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
 
 
+def flush_accelerator_cache() -> bool:
+    """
+    Clear GPU/MPS memory caches.
+
+    Called between Optuna trials and at session teardown to prevent
+    memory fragmentation.  Non-fatal: MPS cache flush failures are
+    silently ignored (macOS limitation on some OS versions).
+
+    Returns:
+        True if at least one accelerator cache was flushed.
+    """
+    flushed = False
+
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        flushed = True
+
+    if has_mps_backend():
+        try:
+            torch.mps.empty_cache()
+            flushed = True
+        except RuntimeError:
+            pass  # Non-fatal on macOS
+
+    return flushed
+
+
 def detect_best_device() -> str:
     """
     Detects the most performant accelerator (CUDA > MPS > CPU).

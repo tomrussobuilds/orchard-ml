@@ -27,6 +27,7 @@ from .hardware import (
     apply_cpu_threads,
     configure_system_libraries,
     detect_best_device,
+    flush_accelerator_cache,
     get_accelerator_name,
     get_num_workers,
     get_vram_info,
@@ -45,6 +46,7 @@ __all__ = [
     # Hardware & Policy
     "configure_system_libraries",
     "detect_best_device",
+    "flush_accelerator_cache",
     "to_device_obj",
     "get_num_workers",
     "apply_cpu_threads",

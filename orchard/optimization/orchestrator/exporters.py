@@ -33,6 +33,9 @@ from .utils import get_completed_trials, has_completed_trials
 
 logger = logging.getLogger(LOGGER_NAME)
 
+# Canonical filename for the best-trial config export (used here and in phases.py)
+BEST_CONFIG_FILENAME = "best_config.yaml"
+
 
 # ==================== DATA STRUCTURES ====================
 
@@ -130,7 +133,7 @@ def export_best_config(study: optuna.Study, cfg: Config, paths: RunPaths) -> Pat
     best_config = Config(**config_dict)
 
     # Save to YAML
-    output_path = paths.reports / "best_config.yaml"
+    output_path = paths.reports / BEST_CONFIG_FILENAME
     save_config_as_yaml(best_config, output_path)
 
     return output_path
@@ -337,7 +340,7 @@ def build_best_config_dict(best_params: dict[str, Any], cfg: Config) -> dict[str
     # Restore normal epochs for final training (not Optuna short epochs)
     config_dict["training"]["epochs"] = cfg.training.epochs
 
-    return cast(dict[str, Any], config_dict)
+    return cast(dict[str, Any], config_dict)  # pragma: no mutate
 
 
 def build_best_trial_data(

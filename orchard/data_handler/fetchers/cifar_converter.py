@@ -16,7 +16,7 @@ import numpy as np
 import numpy.typing as npt
 
 from ...core.metadata import DatasetMetadata
-from ...core.paths import LOGGER_NAME
+from ...core.paths import DEFAULT_SEED, LOGGER_NAME
 from ...core.paths.constants import LogStyle
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -26,7 +26,7 @@ def _create_stratified_split(
     images: npt.NDArray[Any],
     labels: npt.NDArray[Any],
     val_ratio: float = 0.15,
-    seed: int = 42,
+    seed: int = DEFAULT_SEED,
 ) -> tuple[npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any]]:
     """
     Splits training data into train and validation sets using stratified sampling.

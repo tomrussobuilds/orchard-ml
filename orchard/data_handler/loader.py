@@ -49,6 +49,7 @@ from ..core import (
     has_mps_backend,
     worker_init_fn,
 )
+from ..core.paths import MIN_SPLIT_SAMPLES
 from ..exceptions import OrchardDatasetError
 from .dataset import VisionDataset
 from .fetcher import DatasetData
@@ -57,8 +58,6 @@ from .transforms import get_pipeline_transforms
 # Optuna mode: cap workers to prevent file descriptor exhaustion during trials
 _OPTUNA_WORKERS_HIGHRES = 4  # Max workers for resolution >= HIGHRES_THRESHOLD
 _OPTUNA_WORKERS_LOWRES = 6  # Max workers for resolution < HIGHRES_THRESHOLD
-
-_MIN_SUBSAMPLED_SPLIT = 10  # Floor for val/test splits under max_samples
 
 
 # DATALOADER FACTORY
@@ -252,7 +251,7 @@ class DataLoaderFactory:
         sub_samples = None
         if self.dataset_cfg.max_samples:
             sub_samples = max(
-                _MIN_SUBSAMPLED_SPLIT,
+                MIN_SPLIT_SAMPLES,
                 int(self.dataset_cfg.max_samples * self.dataset_cfg.val_ratio),
             )
 

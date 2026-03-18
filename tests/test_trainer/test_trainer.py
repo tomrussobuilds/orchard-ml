@@ -142,7 +142,6 @@ def test_trainer_init(
     assert trainer.epochs == 5
     assert trainer.patience == 3
     assert trainer.monitor_metric == "auc"
-    assert trainer.best_acc == -1.0
     assert trainer.best_metric == -float("inf")
     assert trainer.epochs_no_improve == 0
 
@@ -904,29 +903,6 @@ def test_finalize_requires_both_saved_and_exists(trainer: ModelTrainer) -> None:
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")
-def test_train_tracks_best_acc(
-    mock_validate: MagicMock, mock_train: MagicMock, trainer: ModelTrainer
-) -> None:
-    """Test train() updates best_acc correctly."""
-    mock_train.return_value = 0.5
-    mock_validate.side_effect = [
-        {"loss": 0.3, "accuracy": 0.85, "auc": 0.80},
-        {"loss": 0.3, "accuracy": 0.90, "auc": 0.81},
-        {"loss": 0.3, "accuracy": 0.88, "auc": 0.82},
-        {"loss": 0.3, "accuracy": 0.92, "auc": 0.83},
-        {"loss": 0.3, "accuracy": 0.91, "auc": 0.84},
-    ]
-
-    trainer.optimizer.step = MagicMock()  # type: ignore
-
-    trainer.train()
-
-    assert trainer.best_acc == pytest.approx(0.92)
-
-
-@pytest.mark.integration
-@patch("orchard.trainer._loop.train_one_epoch")
-@patch("orchard.trainer._loop.validate_epoch")
 def test_train_records_val_loss_and_monitor(
     mock_validate: MagicMock, mock_train: MagicMock, trainer: ModelTrainer
 ) -> None:
@@ -1033,40 +1009,6 @@ def test_train_early_stop_warning_includes_epoch(
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")
-def test_train_best_acc_strict_greater(
-    mock_validate: MagicMock, mock_train: MagicMock, trainer: ModelTrainer
-) -> None:
-    """best_acc updates only on strict > (not >=), kills > to >= mutant.
-
-    With >=, best_acc would be reset to 0.80 on the very first epoch
-    (0.80 >= -1.0) — which is the same as >. But the real difference is
-    visible on second epoch where acc == best_acc: with > it stays, with
-    >= it would re-assign redundantly. We test a scenario where initial
-    best_acc is set to the exact val_acc and count how many times the
-    assignment body executes.
-    """
-    mock_train.return_value = 0.5
-    # All epochs return the same accuracy
-    mock_validate.side_effect = [
-        {"loss": 0.3, "accuracy": 0.90, "auc": 0.80 + i * 0.01} for i in range(trainer.epochs)
-    ]
-
-    trainer.optimizer.step = MagicMock()  # type: ignore
-    # Set best_acc = val_acc so the > condition should be False
-    trainer.best_acc = 0.90
-
-    trainer.train()
-
-    # With >, best_acc stays at 0.90 (no epoch is strictly >)
-    # With >=, best_acc would be reassigned each epoch (but still 0.90)
-    # This test alone can't distinguish, so we count _log_epoch_summary calls
-    # and verify best_acc value remains what we set
-    assert trainer.best_acc == pytest.approx(0.90)
-
-
-@pytest.mark.integration
-@patch("orchard.trainer._loop.train_one_epoch")
-@patch("orchard.trainer._loop.validate_epoch")
 def test_train_log_epoch_summary_receives_real_values(
     mock_validate: MagicMock, mock_train: MagicMock, trainer: ModelTrainer
 ) -> None:
@@ -1084,11 +1026,10 @@ def test_train_log_epoch_summary_receives_real_values(
         assert mock_log.call_count == trainer.epochs
         # Check first call args are all non-None and correct types
         first_call_args = mock_log.call_args_list[0][0]
-        epoch, train_loss, val_loss, val_acc, monitor_value, lr = first_call_args
+        epoch, train_loss, val_loss, monitor_value, lr = first_call_args
         assert epoch == 1
         assert train_loss == pytest.approx(0.42)
         assert isinstance(val_loss, float) and val_loss is not None
-        assert isinstance(val_acc, float) and val_acc is not None
         assert isinstance(monitor_value, float) and monitor_value is not None
         assert isinstance(lr, float) and lr is not None
 
@@ -1118,6 +1059,49 @@ def test_train_val_loss_extracted_from_metrics(
         # val_loss (3rd positional arg, index 2) must be 0.25
         val_loss_arg = mock_log.call_args[0][2]
         assert val_loss_arg == pytest.approx(0.25)
+
+
+@pytest.mark.integration
+@patch("orchard.trainer._loop.train_one_epoch")
+@patch("orchard.trainer._loop.validate_epoch")
+def test_handle_checkpointing_minimize_strict_less_than(
+    mock_validate: MagicMock, mock_train: MagicMock, tmp_path: Path
+) -> None:
+    """Checkpointing uses strict < for minimize: equal value must NOT improve.
+
+    Kills mutant ``current_value < self.best_metric`` → ``<=``.
+    With <=, equal value would count as improvement (wrong); with <, it does not.
+    """
+    cfg = make_training_config(epochs=2, monitor_metric="loss", monitor_direction="minimize")
+    model = nn.Linear(4, 2)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10)
+
+    trainer = ModelTrainer(
+        model=model,
+        train_loader=MagicMock(),
+        val_loader=MagicMock(),
+        optimizer=optimizer,
+        scheduler=scheduler,
+        criterion=nn.CrossEntropyLoss(),
+        device=torch.device("cpu"),
+        training=cfg,
+        output_path=tmp_path / "best.pth",
+    )
+
+    mock_train.return_value = 0.5
+    # Both epochs return identical loss — second epoch must NOT improve
+    mock_validate.side_effect = [
+        {"loss": 0.30, "accuracy": 0.9, "auc": 0.8},
+        {"loss": 0.30, "accuracy": 0.9, "auc": 0.8},
+    ]
+    trainer.optimizer.step = MagicMock()  # type: ignore
+
+    trainer.train()
+
+    # With strict <: epoch 1 improves (0.30 < inf), epoch 2 does NOT (0.30 < 0.30 = False)
+    # With <=:      epoch 1 improves, epoch 2 also "improves" (0.30 <= 0.30 = True) — wrong
+    assert trainer.epochs_no_improve == 1
 
 
 if __name__ == "__main__":

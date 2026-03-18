@@ -30,6 +30,7 @@ import torch
 import torch.nn as nn
 
 from ..core import LOGGER_NAME, LogStyle
+from ..core.paths import DEFAULT_SEED
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -363,7 +364,7 @@ def benchmark_onnx_inference(
     onnx_path: Path,
     input_shape: tuple[int, int, int],
     num_runs: int = 100,
-    seed: int = 42,
+    seed: int = DEFAULT_SEED,
     label: str = "ONNX",
 ) -> float:
     """
