@@ -41,12 +41,8 @@ def sample_report_data() -> None:
     return {  # type: ignore
         "architecture": "mini_cnn",
         "dataset": "PathMNIST",
-        "best_val_accuracy": 0.95,
-        "best_val_auc": 0.98,
-        "best_val_f1": 0.94,
-        "test_accuracy": 0.94,
-        "test_auc": 0.97,
-        "test_macro_f1": 0.93,
+        "best_val_metrics": {"accuracy": 0.95, "auc": 0.98, "f1": 0.94},
+        "test_metrics": {"accuracy": 0.94, "auc": 0.97, "f1": 0.93},
         "is_texture_based": True,
         "is_anatomical": False,
         "use_tta": False,
@@ -67,7 +63,7 @@ def test_training_report_instantiation(sample_report_data: Any) -> None:
     """Test if TrainingReport correctly validates and stores input data."""
     report = TrainingReport(**sample_report_data)
     assert report.architecture == "mini_cnn"
-    assert report.best_val_accuracy == pytest.approx(0.95)
+    assert report.best_val_metrics["accuracy"] == pytest.approx(0.95)
     assert isinstance(report.timestamp, str)
 
 
@@ -79,6 +75,7 @@ def test_to_vertical_df(sample_report_data: Any) -> None:
 
     assert isinstance(df, pd.DataFrame)
     assert list(df.columns) == ["Parameter", "Value"]
+    # Metric dicts are flattened: best_val_metrics.accuracy → best_val_accuracy
     assert "best_val_accuracy" in df["Parameter"].values
     assert 0.95 in df["Value"].values
 
@@ -123,13 +120,12 @@ def test_create_structured_report(mock_config: MagicMock) -> None:
         {"accuracy": 0.8, "auc": 0.85, "f1": 0.78},
         {"accuracy": 0.9, "auc": 0.92, "f1": 0.89},
     ]
-    test_metrics = {"accuracy": 0.88, "auc": 0.91}
+    test_metrics = {"accuracy": 0.88, "auc": 0.91, "f1": 0.87}
     train_losses = [0.5, 0.4, 0.3]
 
     report = create_structured_report(
         val_metrics=val_metrics,
         test_metrics=test_metrics,
-        macro_f1=0.87,
         train_losses=train_losses,
         best_path=Path("/models/best.pth"),
         log_path=Path("/logs/run.log"),
@@ -140,9 +136,9 @@ def test_create_structured_report(mock_config: MagicMock) -> None:
     )
 
     assert isinstance(report, TrainingReport)
-    assert report.best_val_accuracy == pytest.approx(0.9)
+    assert report.best_val_metrics["accuracy"] == pytest.approx(0.9)
     assert report.epochs_trained == 3
-    assert report.test_accuracy == pytest.approx(0.88)
+    assert report.test_metrics["accuracy"] == pytest.approx(0.88)
     assert "HFlip" in report.augmentations
 
 
@@ -240,12 +236,11 @@ def test_report_save_json(sample_report_data: Any, tmp_path: Path) -> None:
 def test_create_structured_report_aug_info_none_fallback(mock_config: MagicMock) -> None:
     """Test aug_info=None falls back to 'N/A'."""
     val_metrics = [{"accuracy": 0.8, "auc": 0.85, "f1": 0.78}]
-    test_metrics = {"accuracy": 0.88, "auc": 0.91}
+    test_metrics = {"accuracy": 0.88, "auc": 0.91, "f1": 0.87}
 
     report = create_structured_report(
         val_metrics=val_metrics,
         test_metrics=test_metrics,
-        macro_f1=0.87,
         train_losses=[0.5],
         best_path=Path("/models/best.pth"),
         log_path=Path("/logs/run.log"),
@@ -266,12 +261,11 @@ def test_create_structured_report_resolves_paths(mock_config: MagicMock, tmp_pat
     log_file.touch()
 
     val_metrics = [{"accuracy": 0.8, "auc": 0.85, "f1": 0.78}]
-    test_metrics = {"accuracy": 0.88, "auc": 0.91}
+    test_metrics = {"accuracy": 0.88, "auc": 0.91, "f1": 0.87}
 
     report = create_structured_report(
         val_metrics=val_metrics,
         test_metrics=test_metrics,
-        macro_f1=0.87,
         train_losses=[0.5],
         best_path=model_file,
         log_path=log_file,
@@ -298,13 +292,12 @@ def test_report_save_creates_nested_parent_dirs(sample_report_data: Any, tmp_pat
 def test_create_structured_report_handles_empty_val_metrics(mock_config: MagicMock) -> None:
     """Test create_structured_report with empty validation metrics."""
     val_metrics = []  # type: ignore
-    test_metrics = {"accuracy": 0.88, "auc": 0.91}
+    test_metrics = {"accuracy": 0.88, "auc": 0.91, "f1": 0.87}
     train_losses = [0.5]
 
     report = create_structured_report(
         val_metrics=val_metrics,
         test_metrics=test_metrics,
-        macro_f1=0.87,
         train_losses=train_losses,
         best_path=Path("/models/best.pth"),
         log_path=Path("/logs/run.log"),
@@ -314,22 +307,22 @@ def test_create_structured_report_handles_empty_val_metrics(mock_config: MagicMo
         aug_info="N/A",
     )
     assert isinstance(report, TrainingReport)
+    assert report.best_val_metrics == {}
 
 
 @pytest.mark.unit
 def test_create_structured_report_filters_nan_auc(mock_config: MagicMock) -> None:
-    """Test best_val_auc filters NaN values, picks valid max."""
+    """Test best_val_metrics filters NaN values, picks valid max."""
     val_metrics = [
         {"accuracy": 0.8, "auc": float("nan"), "f1": 0.78},
         {"accuracy": 0.9, "auc": 0.92, "f1": 0.89},
         {"accuracy": 0.85, "auc": float("nan"), "f1": 0.82},
     ]
-    test_metrics = {"accuracy": 0.88, "auc": 0.91}
+    test_metrics = {"accuracy": 0.88, "auc": 0.91, "f1": 0.87}
 
     report = create_structured_report(
         val_metrics=val_metrics,
         test_metrics=test_metrics,
-        macro_f1=0.87,
         train_losses=[0.5, 0.4, 0.3],
         best_path=Path("/models/best.pth"),
         log_path=Path("/logs/run.log"),
@@ -339,22 +332,21 @@ def test_create_structured_report_filters_nan_auc(mock_config: MagicMock) -> Non
         aug_info="N/A",
     )
 
-    assert report.best_val_auc == pytest.approx(0.92)
+    assert report.best_val_metrics["auc"] == pytest.approx(0.92)
 
 
 @pytest.mark.unit
 def test_create_structured_report_all_nan_auc(mock_config: MagicMock) -> None:
-    """Test best_val_auc defaults to 0.0 when all AUC values are NaN."""
+    """Test best_val_metrics defaults to 0.0 when all AUC values are NaN."""
     val_metrics = [
         {"accuracy": 0.8, "auc": float("nan"), "f1": 0.78},
         {"accuracy": 0.9, "auc": float("nan"), "f1": 0.89},
     ]
-    test_metrics = {"accuracy": 0.88, "auc": 0.91}
+    test_metrics = {"accuracy": 0.88, "auc": 0.91, "f1": 0.87}
 
     report = create_structured_report(
         val_metrics=val_metrics,
         test_metrics=test_metrics,
-        macro_f1=0.87,
         train_losses=[0.5, 0.4],
         best_path=Path("/models/best.pth"),
         log_path=Path("/logs/run.log"),
@@ -364,7 +356,7 @@ def test_create_structured_report_all_nan_auc(mock_config: MagicMock) -> None:
         aug_info="N/A",
     )
 
-    assert report.best_val_auc == pytest.approx(0.0)
+    assert report.best_val_metrics["auc"] == pytest.approx(0.0)
 
 
 @pytest.mark.unit

@@ -159,7 +159,7 @@ def test_evaluation_calls_tracker_log_test_metrics(mock_tracker: MagicMock) -> N
         )
 
     mock_tracker.log_test_metrics.assert_called_once_with(
-        {"accuracy": 0.92, "f1": 0.88, "auc": 0.96}
+        {"accuracy": 0.92, "auc": 0.96, "f1": 0.88}
     )
     assert test_acc == pytest.approx(0.92, abs=1e-5)
     assert macro_f1 == pytest.approx(0.88, abs=1e-5)

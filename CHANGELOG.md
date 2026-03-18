@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Build
 
 - bump black in the uv group across 1 directory (#3)
+- bump pyasn1 in the uv group across 1 directory (#4)
 
 ### Changed
 
@@ -40,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - remove redundant FileNotFoundError catch in serialization
 - remove requirements.txt, use pyproject.toml as single source of truth
 - harden evaluation pipeline, param mapping, and config safety
+- bump black>=26.3.1 (CVE-2026-32274) and dismiss onnx hub.load alert
 
 ## [0.2.1] - 2026-03-09
 

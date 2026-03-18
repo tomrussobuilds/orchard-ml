@@ -22,7 +22,6 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..core import LOGGER_NAME, DatasetConfig, LogStyle, TrainingConfig
-from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -40,12 +39,8 @@ class TrainingReport(BaseModel):
         timestamp (str): ISO formatted execution time.
         architecture (str): Identifier of the architecture used.
         dataset (str): Name of the dataset.
-        best_val_accuracy (float): Peak accuracy achieved on validation set.
-        best_val_auc (float): Peak ROC-AUC achieved on validation set.
-        best_val_f1 (float): Peak macro-averaged F1 on validation set.
-        test_accuracy (float): Final accuracy on the unseen test set.
-        test_auc (float): Final ROC-AUC on the unseen test set.
-        test_macro_f1 (float): Macro-averaged F1 score (key for imbalanced data).
+        best_val_metrics (dict[str, float]): Peak values for each validation metric.
+        test_metrics (dict[str, float]): Final metric values on the unseen test set.
         is_texture_based (bool): Whether texture-preserving logic was applied.
         is_anatomical (bool): Whether anatomical orientation constraints were enforced.
         use_tta (bool): Indicates if Test-Time Augmentation was active.
@@ -67,13 +62,9 @@ class TrainingReport(BaseModel):
     architecture: str
     dataset: str
 
-    # Core Metrics
-    best_val_accuracy: float
-    best_val_auc: float
-    best_val_f1: float
-    test_accuracy: float
-    test_auc: float
-    test_macro_f1: float
+    # Core Metrics (task-agnostic)
+    best_val_metrics: dict[str, float]
+    test_metrics: dict[str, float]
 
     # Domain Logic Flags
     is_texture_based: bool
@@ -96,11 +87,21 @@ class TrainingReport(BaseModel):
         """
         Converts the Pydantic model into a vertical pandas DataFrame.
 
+        Metric dict fields (``best_val_metrics``, ``test_metrics``) are flattened
+        into prefixed rows (e.g. ``best_val_accuracy``, ``test_f1``).
+
         Returns:
             pd.DataFrame: A two-column DataFrame (Parameter, Value) for Excel export.
         """
-        data = self.model_dump()
-        return pd.DataFrame(list(data.items()), columns=["Parameter", "Value"])
+        rows: list[tuple[str, object]] = []
+        for key, value in self.model_dump().items():
+            if isinstance(value, dict):
+                prefix = key.removesuffix("_metrics")
+                for sub_key, sub_value in value.items():
+                    rows.append((f"{prefix}_{sub_key}", sub_value))
+            else:
+                rows.append((key, value))
+        return pd.DataFrame(rows, columns=["Parameter", "Value"])
 
     def save(
         self, path: Path, fmt: str = "xlsx"  # pragma: no mutate  # .lower() normalizes any case
@@ -199,8 +200,7 @@ class TrainingReport(BaseModel):
 
 def create_structured_report(
     val_metrics: Sequence[Mapping[str, float]],
-    test_metrics: dict[str, float],
-    macro_f1: float,
+    test_metrics: Mapping[str, float],
     train_losses: Sequence[float],
     best_path: Path,
     log_path: Path,
@@ -217,8 +217,7 @@ def create_structured_report(
 
     Args:
         val_metrics: History of per-epoch validation metric dicts.
-        test_metrics: Final test-set metric dict (accuracy, auc, etc.).
-        macro_f1: Final Macro F1 score on test set.
+        test_metrics: Final test-set metric mapping (all task metrics included).
         train_losses: History of per-epoch training losses.
         best_path: Path to the saved model weights.
         log_path: Path to the run log file.
@@ -238,19 +237,17 @@ def create_structured_report(
         values = [m[key] for m in val_metrics if not math.isnan(m[key])]
         return max(values, default=0.0)
 
-    best_val_acc = _safe_max(METRIC_ACCURACY)
-    best_val_auc = _safe_max(METRIC_AUC)
-    best_val_f1 = _safe_max(METRIC_F1)
+    # Build best-val metrics generically from all keys present in history
+    all_keys: set[str] = set()
+    for m in val_metrics:
+        all_keys.update(m.keys())
+    best_val_metrics = {key: _safe_max(key) for key in sorted(all_keys)}
 
     return TrainingReport(
         architecture=arch_name,
         dataset=dataset.dataset_name,
-        best_val_accuracy=best_val_acc,
-        best_val_auc=best_val_auc,
-        best_val_f1=best_val_f1,
-        test_accuracy=test_metrics[METRIC_ACCURACY],
-        test_auc=test_metrics[METRIC_AUC],
-        test_macro_f1=macro_f1,
+        best_val_metrics=best_val_metrics,
+        test_metrics=dict(test_metrics),
         is_texture_based=dataset.metadata.is_texture_based,
         is_anatomical=dataset.metadata.is_anatomical,
         use_tta=training.use_tta,

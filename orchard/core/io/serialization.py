@@ -80,29 +80,43 @@ def dump_requirements(output_path: Path) -> None:
     """
     Freeze installed packages to a requirements file for reproducibility.
 
-    Invokes ``pip freeze --local`` to capture the exact dependency versions
-    of the current environment. The output is prefixed with a Python version
+    Tries ``uv pip freeze`` first (uv-managed environments), then falls back
+    to ``pip freeze --local``. The output is prefixed with a Python version
     header for auditability.
 
     Args:
         output_path: Filesystem path where the requirements file is written.
     """
+    import shutil
     import subprocess  # nosec B404
     import sys
 
     logger = logging.getLogger(LOGGER_NAME)
 
-    try:
-        result = subprocess.run(  # nosec B603
-            [sys.executable, "-m", "pip", "freeze", "--local"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        header = f"# Python {sys.version.split()[0]}\n"
-        output_path.write_text(header + result.stdout, encoding="utf-8")
-    except (subprocess.TimeoutExpired, OSError) as e:
-        logger.error("Failed to dump requirements: %s", e)
+    freeze_commands: list[list[str]] = []
+    if shutil.which("uv"):
+        freeze_commands.append(["uv", "pip", "freeze", "--python", sys.executable])
+    freeze_commands.append([sys.executable, "-m", "pip", "freeze", "--local"])
+
+    header = f"# Python {sys.version.split()[0]}\n"
+
+    for cmd in freeze_commands:
+        try:
+            result = subprocess.run(  # nosec B603
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                output_path.write_text(header + result.stdout, encoding="utf-8")
+                return
+        except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+            continue
+
+    # All commands failed — write header-only file and warn
+    output_path.write_text(header, encoding="utf-8")
+    logger.warning("Failed to freeze requirements: neither uv nor pip produced output")
 
 
 def dump_git_info(output_path: Path) -> None:

@@ -452,7 +452,7 @@ def test_tracker_receives_metrics(
     )
 
     mock_tracker.log_test_metrics.assert_called_once_with(
-        {"accuracy": 0.92, "f1": 0.91, "auc": 0.97}
+        {"accuracy": 0.92, "auc": 0.97, "f1": 0.91}
     )
 
 
@@ -853,8 +853,8 @@ def test_create_report_exact_kwargs(
 
     kw = mock_report.call_args.kwargs
     assert kw["val_metrics"] == [{"accuracy": 0.8}, {"accuracy": 0.9}]
-    assert kw["test_metrics"] == {"accuracy": 0.9, "auc": 0.95}
-    assert kw["macro_f1"] == pytest.approx(0.88)
+    assert kw["test_metrics"] == {"accuracy": 0.9, "auc": 0.95, "f1": 0.88}
+    assert "macro_f1" not in kw
     assert kw["train_losses"] == [0.5, 0.3]
     assert kw["best_path"] == Path("/mock/model.pth")
     assert kw["log_path"] == Path("/mock/logs/session.log")

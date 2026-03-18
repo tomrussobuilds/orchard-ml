@@ -268,13 +268,17 @@ def test_dump_requirements_writes_file(tmp_path: Path) -> None:
 
 @pytest.mark.unit
 def test_dump_requirements_handles_subprocess_failure(tmp_path: Path) -> None:
-    """Test dump_requirements gracefully handles subprocess failure."""
+    """Test dump_requirements writes header-only when all commands fail."""
     output = tmp_path / "requirements.txt"
 
-    with patch("subprocess.run", side_effect=OSError("mock pip failure")):
+    with patch("subprocess.run", side_effect=OSError("mock failure")):
         dump_requirements(output)  # should not raise
 
-    assert not output.exists()
+    assert output.exists()
+    content = output.read_text()
+    assert content.startswith("# Python")
+    # Only header — no package lines
+    assert content.strip().count("\n") == 0
 
 
 # AUDIT SAVER
@@ -466,24 +470,142 @@ def test_persist_yaml_atomic_writes_utf8(tmp_path: Path) -> None:
 
 # DUMP REQUIREMENTS: DETAILED VERIFICATION
 @pytest.mark.unit
-def test_dump_requirements_subprocess_args(tmp_path: Path) -> None:
-    """Test dump_requirements calls subprocess.run with correct arguments."""
+def test_dump_requirements_pip_fallback_args(tmp_path: Path) -> None:
+    """Test dump_requirements falls back to pip when uv is not available."""
     import sys
 
     output = tmp_path / "requirements.txt"
 
-    with patch("subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(stdout="package==1.0\n")
+    with (
+        patch("shutil.which", return_value=None),
+        patch("subprocess.run") as mock_run,
+    ):
+        mock_run.return_value = MagicMock(stdout="package==1.0\n", returncode=0)
         dump_requirements(output)
 
         mock_run.assert_called_once()
         call_args = mock_run.call_args
-        # Verify the command
         assert call_args.args[0] == [sys.executable, "-m", "pip", "freeze", "--local"]
-        # Verify kwargs
         assert call_args.kwargs["capture_output"] is True
         assert call_args.kwargs["text"] is True
         assert call_args.kwargs["timeout"] == 30
+
+
+@pytest.mark.unit
+def test_dump_requirements_uv_first_when_available(tmp_path: Path) -> None:
+    """Test dump_requirements tries uv first when available."""
+    import sys
+
+    output = tmp_path / "requirements.txt"
+
+    with (
+        patch("shutil.which", return_value="/usr/bin/uv"),
+        patch("subprocess.run") as mock_run,
+    ):
+        mock_run.return_value = MagicMock(stdout="package==1.0\n", returncode=0)
+        dump_requirements(output)
+
+        # uv succeeds on first call — pip not tried
+        mock_run.assert_called_once()
+        call_args = mock_run.call_args
+        assert call_args.args[0] == ["uv", "pip", "freeze", "--python", sys.executable]
+
+
+@pytest.mark.unit
+def test_dump_requirements_uv_fails_falls_to_pip(tmp_path: Path) -> None:
+    """Test dump_requirements falls back to pip when uv returns non-zero."""
+    import sys
+
+    output = tmp_path / "requirements.txt"
+
+    uv_fail = MagicMock(stdout="", returncode=1)
+    pip_ok = MagicMock(stdout="torch==2.0\n", returncode=0)
+
+    with (
+        patch("shutil.which", return_value="/usr/bin/uv"),
+        patch("subprocess.run", side_effect=[uv_fail, pip_ok]) as mock_run,
+    ):
+        dump_requirements(output)
+
+    assert mock_run.call_count == 2
+    assert output.exists()
+    assert "torch==2.0" in output.read_text()
+    # Second call should be pip
+    pip_call = mock_run.call_args_list[1]
+    assert pip_call.args[0] == [sys.executable, "-m", "pip", "freeze", "--local"]
+
+
+@pytest.mark.unit
+def test_dump_requirements_returncode_nonzero_skips(tmp_path: Path) -> None:
+    """Test dump_requirements skips command with non-zero returncode."""
+    output = tmp_path / "requirements.txt"
+
+    with (
+        patch("shutil.which", return_value=None),
+        patch("subprocess.run") as mock_run,
+    ):
+        mock_run.return_value = MagicMock(stdout="bad\n", returncode=1)
+        dump_requirements(output)
+
+    # Header-only file — returncode != 0 means output not trusted
+    content = output.read_text()
+    assert "bad" not in content
+
+
+@pytest.mark.unit
+def test_dump_requirements_checks_uv_exact_string() -> None:
+    """Kill mutmut_5/6: shutil.which must receive exact string 'uv'."""
+
+    with (
+        patch("shutil.which") as mock_which,
+        patch("subprocess.run") as mock_run,
+    ):
+        mock_which.return_value = "/usr/bin/uv"
+        mock_run.return_value = MagicMock(stdout="pkg==1.0\n", returncode=0)
+        dump_requirements(Path("/dev/null"))
+
+    mock_which.assert_called_once_with("uv")
+
+
+@pytest.mark.unit
+def test_dump_requirements_uv_exception_falls_to_pip(tmp_path: Path) -> None:
+    """Kill mutmut_49: continue in except allows pip fallback after uv raises."""
+
+    output = tmp_path / "requirements.txt"
+
+    def side_effect(cmd: list[str], **kwargs: object) -> MagicMock:
+        if cmd[0] == "uv":
+            raise FileNotFoundError("uv not found")
+        return MagicMock(stdout="numpy==1.0\n", returncode=0)
+
+    with (
+        patch("shutil.which", return_value="/usr/bin/uv"),
+        patch("subprocess.run", side_effect=side_effect) as mock_run,
+    ):
+        dump_requirements(output)
+
+    assert output.exists()
+    assert "numpy==1.0" in output.read_text()
+    assert mock_run.call_count == 2
+
+
+@pytest.mark.unit
+def test_dump_requirements_fallback_header_uses_utf8(tmp_path: Path) -> None:
+    """Kill mutmut_51/53/55: header-only path must use encoding='utf-8'."""
+    output = tmp_path / "requirements.txt"
+
+    with (
+        patch("subprocess.run", side_effect=OSError("fail")),
+        patch.object(type(output), "write_text", wraps=output.write_text) as mock_wt,
+    ):
+        dump_requirements(output)
+
+    # The fallback write_text call (header-only)
+    mock_wt.assert_called_once()
+    call_kwargs = mock_wt.call_args
+    assert call_kwargs.kwargs.get("encoding") == "utf-8" or (
+        len(call_kwargs.args) >= 2 and "utf-8" in str(call_kwargs)
+    )
 
 
 @pytest.mark.unit
@@ -501,11 +623,11 @@ def test_dump_requirements_header_format(tmp_path: Path) -> None:
 
 @pytest.mark.unit
 def test_dump_requirements_includes_stdout(tmp_path: Path) -> None:
-    """Test dump_requirements includes pip freeze output after header."""
+    """Test dump_requirements includes freeze output after header."""
     output = tmp_path / "requirements.txt"
 
     with patch("subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(stdout="torch==2.0.0\nnumpy==1.24.0\n")
+        mock_run.return_value = MagicMock(stdout="torch==2.0.0\nnumpy==1.24.0\n", returncode=0)
         dump_requirements(output)
 
     content = output.read_text()
@@ -519,7 +641,7 @@ def test_dump_requirements_writes_utf8(tmp_path: Path) -> None:
     output = tmp_path / "requirements.txt"
 
     with patch("subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(stdout="pkg==1.0\n")
+        mock_run.return_value = MagicMock(stdout="pkg==1.0\n", returncode=0)
         dump_requirements(output)
 
     # Verify it's valid UTF-8
@@ -529,18 +651,21 @@ def test_dump_requirements_writes_utf8(tmp_path: Path) -> None:
 
 @pytest.mark.unit
 def test_dump_requirements_handles_timeout(tmp_path: Path) -> None:
-    """Test dump_requirements handles TimeoutExpired gracefully."""
+    """Test dump_requirements writes header-only when all commands timeout."""
     import subprocess
 
     output = tmp_path / "requirements.txt"
 
     with patch(
         "subprocess.run",
-        side_effect=subprocess.TimeoutExpired(cmd="pip", timeout=30),
+        side_effect=subprocess.TimeoutExpired(cmd="freeze", timeout=30),
     ):
         dump_requirements(output)  # Should not raise
 
-    assert not output.exists()
+    assert output.exists()
+    content = output.read_text()
+    assert content.startswith("# Python")
+    assert content.strip().count("\n") == 0
 
 
 # SAVE CONFIG AS YAML: MODEL_DUMP MODE
@@ -760,23 +885,24 @@ def test_save_config_as_yaml_io_error_logs_exact_message(tmp_path: Path) -> None
     )
 
 
-# LOGGER.ERROR MUTANT KILLERS — dump_requirements error
+# LOGGER.WARNING MUTANT KILLERS — dump_requirements fallback warning
 @pytest.mark.unit
-def test_dump_requirements_error_logs_exact_message(tmp_path: Path) -> None:
-    """Kill mutants 32-38: assert exact logger.error message for dump_requirements failures."""
+def test_dump_requirements_all_fail_logs_warning(tmp_path: Path) -> None:
+    """Assert exact logger.warning message when all freeze commands fail."""
     import logging
 
     output = tmp_path / "requirements.txt"
     logger = logging.getLogger("OrchardML")
 
-    err = OSError("pip not found")
     with (
-        patch("subprocess.run", side_effect=err),
-        patch.object(logger, "error") as mock_error,
+        patch("subprocess.run", side_effect=OSError("not found")),
+        patch.object(logger, "warning") as mock_warning,
     ):
         dump_requirements(output)
 
-    mock_error.assert_called_once_with("Failed to dump requirements: %s", err)
+    mock_warning.assert_called_once_with(
+        "Failed to freeze requirements: neither uv nor pip produced output"
+    )
 
 
 # LOGGER_NAME MUTANT KILLERS
@@ -806,7 +932,8 @@ def test_dump_requirements_uses_orchard_logger(tmp_path: Path) -> None:
         mock_gl.return_value = MagicMock()
         dump_requirements(output)
 
-    mock_gl.assert_called_once_with("OrchardML")
+    # getLogger may be called multiple times (module-level + inside function)
+    assert any(call.args == ("OrchardML",) for call in mock_gl.call_args_list)
 
 
 # DUMP_PORTABLE STRING MUTANT KILLERS
@@ -920,7 +1047,7 @@ def test_dump_requirements_writes_utf8_encoding(tmp_path: Path) -> None:
     output = tmp_path / "requirements.txt"
 
     with patch("subprocess.run") as mock_run:
-        mock_run.return_value = MagicMock(stdout="pkg==1.0\n")
+        mock_run.return_value = MagicMock(stdout="pkg==1.0\n", returncode=0)
 
         with patch.object(type(output), "write_text", wraps=output.write_text) as mock_wt:
             dump_requirements(output)

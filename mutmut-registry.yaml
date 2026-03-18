@@ -251,9 +251,9 @@ orchard/core/io/data_io.py:
   not_checked: 0
   score: 100.0
 orchard/core/io/serialization.py:
-  last_run: '2026-03-16T15:23:04Z'
-  total: 195
-  killed: 195
+  last_run: '2026-03-18T08:42:44Z'
+  total: 217
+  killed: 217
   survived: 0
   not_checked: 0
   score: 100.0
@@ -489,9 +489,9 @@ orchard/evaluation/__init__.py:
   not_checked: 0
   score: 100.0
 orchard/evaluation/evaluation_pipeline.py:
-  last_run: '2026-03-16T15:23:04Z'
-  total: 120
-  killed: 120
+  last_run: '2026-03-18T08:20:22Z'
+  total: 119
+  killed: 119
   survived: 0
   not_checked: 0
   score: 100.0
@@ -517,9 +517,9 @@ orchard/evaluation/plot_context.py:
   not_checked: 0
   score: 100.0
 orchard/evaluation/reporting.py:
-  last_run: '2026-03-16T15:23:04Z'
-  total: 115
-  killed: 115
+  last_run: '2026-03-18T08:20:03Z'
+  total: 113
+  killed: 113
   survived: 0
   not_checked: 0
   score: 100.0

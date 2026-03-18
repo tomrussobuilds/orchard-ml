@@ -157,13 +157,14 @@ def run_final_evaluation(
         )
 
     # --- 3) Structured Reporting ---
-    # Aggregates everything into a formatted report (xlsx/csv/json)
+    # Merge all test metrics (evaluate_model returns f1 separately)
+    full_test_metrics = {**test_metrics, METRIC_F1: macro_f1}
+
     final_log = paths.logs / "session.log"
 
     report = create_structured_report(
         val_metrics=val_metrics_history,
-        test_metrics=test_metrics,
-        macro_f1=macro_f1,
+        test_metrics=full_test_metrics,
         train_losses=train_losses,
         best_path=paths.best_model_path,
         log_path=final_log,
@@ -179,9 +180,7 @@ def run_final_evaluation(
 
     # Log test metrics to experiment tracker
     if tracker is not None:
-        tracker.log_test_metrics(
-            {METRIC_ACCURACY: test_acc, METRIC_F1: macro_f1, METRIC_AUC: test_auc}
-        )
+        tracker.log_test_metrics(full_test_metrics)
 
     logger.info("%s%s Final Evaluation Phase Complete.", LogStyle.INDENT, LogStyle.SUCCESS)
 
