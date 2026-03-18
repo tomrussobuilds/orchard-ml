@@ -43,7 +43,7 @@ class StudyEarlyStoppingCallback:
     Callback to stop Optuna study when target metric is achieved.
 
     Prevents wasteful computation when near-perfect performance is reached
-    (e.g., AUC > 0.9999 for classification tasks).
+    (e.g., AUC > 0.9999).
 
     Usage:
         callback = StudyEarlyStoppingCallback(

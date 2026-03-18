@@ -142,8 +142,8 @@ class TrialTrainingExecutor:
             device: Training device.
             metric_extractor: Metric extraction and tracking handler.
             training_step: Task-specific forward pass adapter.
-                If provided, used instead of the default classification-specific
-                forward logic. Obtained via ``get_task(task_type).training_step``.
+                If provided, used instead of the default forward logic.
+                Obtained via ``get_task(task_type).training_step``.
             validation_metrics: Task-specific validation metrics adapter.
                 If provided, used instead of the default ``validate_epoch``.
             fallback_metrics: Metrics returned on validation failure.

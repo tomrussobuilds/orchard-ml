@@ -23,7 +23,7 @@ def test_optuna_config_defaults() -> None:
     """Test OptunaConfig with default values."""
     config = OptunaConfig()
 
-    assert config.study_name == "vision_optimization"
+    assert config.study_name == "orchard_optimization"
     assert config.n_trials == 50
     assert config.epochs == 15
     assert config.sampler_type == "tpe"

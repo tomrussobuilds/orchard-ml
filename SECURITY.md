@@ -4,7 +4,8 @@
 
 | Version | Supported          |
 |---------|--------------------|
-| 0.1.x   | Yes                |
+| 0.2.x   | Yes                |
+| 0.1.x   | No                 |
 | < 0.1   | No                 |
 
 We recommend running the latest release or installing from the `main` branch

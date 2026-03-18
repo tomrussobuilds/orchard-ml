@@ -12,7 +12,7 @@ Key Features:
     * TTA ensemble strategy: Pixel shifts, scaling, and Gaussian blur for
       stable predictions through stochastic averaging
     * Validation guards: Domain-specific types ensuring physically plausible
-      ranges for image classification
+      ranges for image processing
 """
 
 from __future__ import annotations

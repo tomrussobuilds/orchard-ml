@@ -196,7 +196,7 @@ export:
 
 optuna:
     # Name of the Optuna study
-    study_name: vision_optimization
+    study_name: orchard_optimization
     # Number of optimization trials to run (> 0)
     n_trials: 50
     # Epochs per trial (shorter than final training) (> 0)

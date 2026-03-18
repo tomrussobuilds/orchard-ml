@@ -47,7 +47,7 @@ def compute_class_weights(
 # FACTORIES
 def get_criterion(training: TrainingConfig, class_weights: torch.Tensor | None = None) -> nn.Module:
     """
-    Universal Vision Criterion Factory.
+    Universal Criterion Factory.
 
     Args:
         training: Training sub-config with criterion parameters.

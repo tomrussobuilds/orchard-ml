@@ -38,7 +38,7 @@ orchard/
 │   │   └── data_io.py          # Dataset validation
 │   ├── logger/                 # Telemetry system
 │   │   ├── logger.py           # Logger setup
-│   │   ├── reporter.py         # Environment reporting
+│   │   ├── env_reporter.py     # Environment reporting
 │   │   └── progress.py         # Progress tracking utilities
 │   ├── metadata/               # Dataset registry
 │   │   ├── base.py             # DatasetMetadata schema
@@ -52,6 +52,8 @@ orchard/
 │   │   ├── constants.py        # Metric keys, log styles, static values
 │   │   ├── root.py             # Project root discovery, derived paths
 │   │   └── run_paths.py        # Dynamic workspace paths
+│   ├── task_protocols.py       # Task abstraction protocols (runtime_checkable)
+│   ├── task_registry.py        # Task component registry (register_task/get_task)
 │   └── orchestrator.py         # RootOrchestrator (7-phase lifecycle)
 ├── data_handler/               # Data loading pipeline
 │   ├── fetcher.py              # Fetch dispatcher + loading interface
@@ -97,6 +99,12 @@ orchard/
 │   └── validation.py           # PyTorch vs ONNX validation
 ├── tracking/                   # Experiment tracking
 │   └── tracker.py              # MLflow integration (optional, local SQLite)
+├── tasks/                      # Task-specific adapters
+│   └── classification/         # Classification task implementation
+│       ├── criterion_adapter.py    # Loss function adapter (CrossEntropy/Focal)
+│       ├── metrics_adapter.py      # Validation metrics (accuracy, F1, AUC)
+│       ├── evaluation_adapter.py   # Full evaluation pipeline adapter
+│       └── training_step_adapter.py # Training forward pass adapter
 └── optimization/               # Optuna integration
     ├── _param_mapping.py       # Shared PARAM_MAPPING / SPECIAL_PARAMS registries
     ├── objective/              # Trial execution logic
@@ -142,6 +150,7 @@ trainer = ModelTrainer(model=model, cfg=cfg, ...)
 - **evaluation/**: Metrics & visualization only
 - **pipeline/**: Phase orchestration (training, optimization, export)
 - **export/**: ONNX export and validation
+- **tasks/**: Task-specific adapters (strategy pattern via registry)
 - **tracking/**: MLflow experiment tracking (optional)
 - **optimization/**: Optuna wrapper only
 

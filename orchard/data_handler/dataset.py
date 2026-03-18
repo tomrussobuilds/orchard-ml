@@ -1,7 +1,7 @@
 """
 PyTorch Dataset Definition Module.
 
-This module contains the custom Dataset class for NPZ-based vision datasets,
+This module contains the custom Dataset class for NPZ-based image datasets,
 handling the conversion from NumPy arrays to PyTorch tensors and applying
 image transformations for training and inference.
 
@@ -34,7 +34,7 @@ from ..exceptions import OrchardDatasetError
 # DATASET CLASS
 class VisionDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
     """
-    PyTorch Dataset for NPZ-based vision data.
+    PyTorch Dataset for NPZ-based image data.
 
     The constructor accepts raw NumPy arrays directly (no I/O).
     Use the classmethod factories to load from disk:

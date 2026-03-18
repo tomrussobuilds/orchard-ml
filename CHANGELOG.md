@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - skip compute_class_weights for non-classification tasks
 - derive fallback_metrics from task registry
 - derive early-stopping thresholds from task registry
+- pre-release audit — task-agnostic fixes, constant consolidation, mutant killers
 
 ### Documentation
 

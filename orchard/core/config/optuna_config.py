@@ -85,7 +85,7 @@ class SearchSpaceOverrides(BaseModel):
     """
     Configurable bounds for Optuna hyperparameter search ranges.
 
-    Provides sensible defaults for image classification while allowing
+    Provides sensible defaults for computer vision tasks while allowing
     full customization via YAML. Each field maps 1:1 to a parameter
     sampled by SearchSpaceRegistry.
 
@@ -182,7 +182,7 @@ class OptunaConfig(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     # ==================== Study Basics ====================
-    study_name: str = Field(default="vision_optimization", description="Name of the Optuna study")
+    study_name: str = Field(default="orchard_optimization", description="Name of the Optuna study")
 
     n_trials: PositiveInt = Field(default=50, description="Number of optimization trials to run")
 

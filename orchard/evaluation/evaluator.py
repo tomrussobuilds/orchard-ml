@@ -2,8 +2,8 @@
 Evaluation Engine Module.
 
 Runs batch-level inference on a labelled test set and consolidates
-predictions into global classification metrics (accuracy, macro F1,
-macro AUC). Supports optional Test-Time Augmentation via the ``tta``
+predictions into global performance metrics (accuracy, macro F1,
+macro AUC for classification; task-specific metrics for other tasks). Supports optional Test-Time Augmentation via the ``tta``
 sub-module, applying domain-aware transforms (anatomical, texture)
 and averaging softmax outputs across the ensemble.
 

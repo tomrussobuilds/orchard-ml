@@ -132,11 +132,11 @@ class ModelTrainer:
             output_path: Path for best model checkpoint (default: ``./best_model.pth``).
             tracker: Optional experiment tracker for MLflow metric logging.
             training_step: Task-specific forward pass adapter.
-                If provided, used instead of the default classification-specific
-                forward logic. Obtained via ``get_task(task_type).training_step``.
+                If provided, used instead of the default forward logic.
+                Obtained via ``get_task(task_type).training_step``.
             validation_metrics: Task-specific validation metrics adapter.
-                If provided, used instead of the default classification-specific
-                ``validate_epoch``. Obtained via ``get_task(task_type).validation_metrics``.
+                If provided, used instead of the default ``validate_epoch``.
+                Obtained via ``get_task(task_type).validation_metrics``.
         """
         self.model = model
         self.train_loader = train_loader

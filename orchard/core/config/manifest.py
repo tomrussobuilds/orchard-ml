@@ -1,5 +1,5 @@
 """
-Vision Pipeline Configuration Manifest.
+Training Pipeline Configuration Manifest.
 
 Defines the hierarchical ``Config`` schema that aggregates specialized
 sub-configs (Hardware, Dataset, Architecture, Training, Evaluation,

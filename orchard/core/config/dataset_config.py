@@ -194,7 +194,7 @@ class DatasetConfig(BaseModel):
         Get number of target classes.
 
         Returns:
-            Integer count of classification classes.
+            Integer count of target classes.
         """
         return self._ensure_metadata.num_classes
 

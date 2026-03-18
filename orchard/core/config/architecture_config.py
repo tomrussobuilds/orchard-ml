@@ -26,7 +26,7 @@ class ArchitectureConfig(BaseModel):
     Attributes:
         name: Model architecture identifier (e.g., 'efficientnet_b0', 'vit_tiny').
         pretrained: Whether to initialize with pretrained ImageNet weights.
-        dropout: Dropout probability for the classification head (0.0-0.9).
+        dropout: Dropout probability for the output head (0.0-0.9).
         weight_variant: Specific pretrained weight variant for architectures
             with multiple options (e.g., ViT variants with different pretraining).
     """
@@ -45,7 +45,7 @@ class ArchitectureConfig(BaseModel):
     dropout: DropoutRate = Field(
         default=0.2,
         description=(
-            "Dropout probability for the classification head. "
+            "Dropout probability for the output head. "
             "Only wired for mini_cnn; ignored by resnet_18, "
             "efficientnet_b0, convnext_tiny, vit_tiny, and timm/* models."
         ),

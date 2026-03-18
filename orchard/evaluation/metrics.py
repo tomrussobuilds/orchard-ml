@@ -1,7 +1,7 @@
 """
 Metrics Computation Module.
 
-Provides a standardized interface for calculating classification performance
+Provides a standardized interface for calculating task-specific performance
 metrics from model outputs. Isolates statistical logic from inference loops.
 """
 

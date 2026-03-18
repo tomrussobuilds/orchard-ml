@@ -109,7 +109,7 @@ class DataLoaderFactory:
 
     def _get_transformation_pipelines(self) -> tuple[torch.nn.Module, torch.nn.Module]:
         """
-        Retrieves specialized vision pipelines.
+        Retrieves specialized transform pipelines.
 
         Returns:
             A tuple containing (train_transform, val_transform).

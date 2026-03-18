@@ -1,5 +1,5 @@
 """
-Optuna Objective Function for Vision Pipeline.
+Optuna Objective Function for Training Pipeline.
 
 Provides ``OptunaObjective``, the callable that Optuna invokes for each
 trial. It orchestrates the full trial lifecycle — config sampling, data

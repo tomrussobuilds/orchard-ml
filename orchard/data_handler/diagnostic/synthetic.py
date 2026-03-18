@@ -43,7 +43,7 @@ def create_synthetic_dataset(
     with the existing data pipeline.
 
     Args:
-        num_classes: Number of classification categories (default: 8)
+        num_classes: Number of target categories (default: 8)
         samples: Number of training samples (default: 100)
         resolution: Image resolution (HxW) (default: 28)
         channels: Number of color channels (default: 3 for RGB)
@@ -132,7 +132,7 @@ def create_synthetic_grayscale_dataset(
     Convenience function for creating single-channel (grayscale) synthetic data.
 
     Args:
-        num_classes: Number of classification categories (default: 8)
+        num_classes: Number of target categories (default: 8)
         samples: Number of training samples (default: 100)
         resolution: Image resolution (HxW) (default: 28)
 

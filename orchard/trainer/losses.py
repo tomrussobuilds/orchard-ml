@@ -1,10 +1,10 @@
 """
 Custom Loss Functions Module.
 
-This module implements advanced objective functions for computer vision tasks,
+This module implements advanced objective functions for deep learning tasks,
 extending standard PyTorch criteria. It includes specialized losses like
 Focal Loss to handle extreme class imbalances and difficult samples
-often encountered in imbalanced datasets and fine-grained classification.
+often encountered in imbalanced datasets and fine-grained recognition.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ import torch.nn.functional as F
 # CUSTOM LOSSES
 class FocalLoss(nn.Module):
     """
-    Implementation of Focal Loss for multi-class classification.
+    Implementation of Focal Loss for multi-class tasks.
 
     Focal Loss reshapes the standard Cross Entropy loss such that it
     down-weights the loss assigned to well-classified (easy) examples,
