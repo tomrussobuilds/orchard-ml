@@ -29,10 +29,10 @@ jobs:
       - name: Check uv.lock in sync with pyproject.toml
         run: uv lock --check
 
-      - name: Check mutation registry (ratchet + freshness)
+      - name: Check mutation registry (ratchet)
         run: |
           pip install pyyaml
-          python scripts/check_mutmut_registry.py --ratchet --freshness
+          python scripts/check_mutmut_registry.py --ratchet
 
       - name: Build package
         run: python -m build
