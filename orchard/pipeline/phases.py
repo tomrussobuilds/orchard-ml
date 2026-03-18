@@ -189,7 +189,7 @@ def run_training_phase(
     model = get_model(device=device, dataset_cfg=cfg.dataset, arch_cfg=cfg.architecture)
 
     class_weights = None
-    if cfg.training.weighted_loss:
+    if cfg.task_type == "classification" and cfg.training.weighted_loss:
         train_labels = train_loader.dataset.labels.flatten()  # type: ignore[attr-defined]
         class_weights = compute_class_weights(train_labels, ds_meta.num_classes, device)
 

@@ -946,6 +946,59 @@ def test_run_training_phase_weighted_loss(
 
 
 @pytest.mark.unit
+@patch("orchard.pipeline.phases.compute_class_weights")
+@patch("orchard.pipeline.phases.load_dataset")
+@patch("orchard.pipeline.phases.get_dataloaders")
+@patch("orchard.pipeline.phases.show_samples_for_dataset")
+@patch("orchard.pipeline.phases.get_model")
+@patch("orchard.pipeline.phases.get_task")
+@patch("orchard.pipeline.phases.get_optimizer")
+@patch("orchard.pipeline.phases.get_scheduler")
+@patch("orchard.pipeline.phases.ModelTrainer")
+@patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
+@patch("orchard.pipeline.phases.get_augmentations_description")
+def test_run_training_phase_detection_skips_class_weights(
+    mock_aug_desc: MagicMock,
+    mock_final_eval: MagicMock,
+    mock_trainer_cls: MagicMock,
+    mock_get_scheduler: MagicMock,
+    mock_get_optimizer: MagicMock,
+    mock_get_task: MagicMock,
+    mock_get_model: MagicMock,
+    mock_show_samples: MagicMock,
+    mock_get_loaders: MagicMock,
+    mock_load_dataset: MagicMock,
+    mock_compute_weights: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
+    """Test non-classification task_type skips class weights even with weighted_loss=True."""
+    ds_meta = MagicMock(classes=["a", "b"], num_classes=2)
+    mock_orchestrator.cfg.dataset._ensure_metadata = ds_meta
+    mock_orchestrator.cfg.task_type = "detection"
+    mock_orchestrator.cfg.training.weighted_loss = True
+
+    mock_task = MagicMock()
+    mock_task.eval_pipeline.run_evaluation.return_value = {"accuracy": 0.8}
+    mock_get_task.return_value = mock_task
+
+    mock_get_loaders.return_value = (MagicMock(), MagicMock(), MagicMock())
+    mock_get_model.return_value = MagicMock()
+
+    mock_trainer = MagicMock()
+    mock_trainer.train.return_value = (Path("/mock/best.pth"), [], [])
+    mock_trainer_cls.return_value = mock_trainer
+    mock_aug_desc.return_value = ""
+
+    run_training_phase(mock_orchestrator)
+
+    mock_compute_weights.assert_not_called()
+    # criterion_factory.get_criterion called with class_weights=None
+    mock_task.criterion_factory.get_criterion.assert_called_once_with(
+        mock_orchestrator.cfg.training, class_weights=None
+    )
+
+
+@pytest.mark.unit
 @patch("orchard.pipeline.phases.load_dataset")
 @patch("orchard.pipeline.phases.get_dataloaders")
 @patch("orchard.pipeline.phases.show_samples_for_dataset")
