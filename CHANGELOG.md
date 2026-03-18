@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
 - fix notebook setup cells and add edge deploy notebook
+- task-agnostic docstring cleanup + package structure update
 
 ### Fixed
 
