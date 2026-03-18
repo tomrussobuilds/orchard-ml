@@ -13,7 +13,7 @@ __version__ = _pkg_version("orchard-ml")
 
 from .architectures import get_model
 from .core import Config, LogStyle, RootOrchestrator, log_pipeline_summary
-from .core.paths import MLRUNS_DB
+from .core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS, MLRUNS_DB
 from .core.task_registry import TaskComponents, register_task
 from .exceptions import (
     OrchardConfigError,
@@ -33,6 +33,13 @@ from .tasks import (
 from .tracking import create_tracker
 
 # ── Task Registration ─────────────────────────────────────────────────────
+_CLASSIFICATION_FALLBACK = {
+    METRIC_LOSS: 999.0,
+    METRIC_ACCURACY: 0.0,
+    METRIC_AUC: 0.0,
+    METRIC_F1: 0.0,
+}
+
 register_task(
     "classification",
     TaskComponents(
@@ -40,6 +47,7 @@ register_task(
         training_step=ClassificationTrainingStepAdapter(),
         validation_metrics=ClassificationMetricsAdapter(),
         eval_pipeline=ClassificationEvalPipelineAdapter(),
+        fallback_metrics=_CLASSIFICATION_FALLBACK,
     ),
 )
 

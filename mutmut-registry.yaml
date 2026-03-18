@@ -384,7 +384,7 @@ orchard/core/task_protocols.py:
   not_checked: 0
   score: 100.0
 orchard/core/task_registry.py:
-  last_run: '2026-03-16T15:23:04Z'
+  last_run: '2026-03-18T09:35:59Z'
   total: 11
   killed: 11
   survived: 0
@@ -608,14 +608,14 @@ orchard/optimization/objective/metric_extractor.py:
   not_checked: 0
   score: 82.9
 orchard/optimization/objective/objective.py:
-  last_run: '2026-03-17T14:07:30Z'
-  total: 144
-  killed: 104
-  survived: 40
+  last_run: '2026-03-18T09:45:54Z'
+  total: 139
+  killed: 106
+  survived: 33
   not_checked: 0
-  score: 72.2
+  score: 76.3
 orchard/optimization/objective/training_executor.py:
-  last_run: '2026-03-17T14:06:12Z'
+  last_run: '2026-03-18T09:36:35Z'
   total: 130
   killed: 117
   survived: 13

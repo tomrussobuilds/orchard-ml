@@ -350,7 +350,7 @@ def test_training_executor_validate_epoch_error_handling() -> None:
     ):
         result = executor._validate_epoch()
 
-    assert result == {"loss": 999.0, "accuracy": 0.0, "auc": 0.0, "f1": 0.0}
+    assert result == {"loss": 999.0}
 
 
 # OPTUNA OBJECTIVE TESTS
@@ -1574,6 +1574,207 @@ def test_call_dataloader_factory_receives_is_optuna() -> None:
         assert kwargs["is_optuna"] is True
     else:
         assert args[5] is True  # is_optuna is the 6th positional arg
+
+
+# ---------------------------------------------------------------------------
+# MUTANT KILLERS: __call__ exact args, trial_succeeded, _sample_params
+# ---------------------------------------------------------------------------
+
+
+def _make_objective_with_tracker() -> tuple[OptunaObjective, MagicMock, MagicMock]:
+    """Helper: build OptunaObjective with mock tracker + mock trial cfg."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.training.monitor_direction = "maximize"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    mock_tracker = MagicMock()
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
+        model_factory=MagicMock(return_value=MagicMock()),
+        tracker=mock_tracker,
+    )
+    objective._cleanup = MagicMock()  # type: ignore
+
+    mock_trial_cfg = MagicMock()
+    mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=mock_trial_cfg)  # type: ignore
+
+    mock_trial = MagicMock()
+    mock_trial.number = 1
+
+    return objective, mock_tracker, mock_trial
+
+
+@pytest.mark.unit
+def test_successful_trial_sends_best_metric_to_tracker() -> None:
+    """Kill mutmut_17/18: trial_succeeded=True → end_optuna_trial(best_metric)."""
+    objective, mock_tracker, mock_trial = _make_objective_with_tracker()
+
+    with (
+        patch("orchard.optimization.objective.objective.get_optimizer"),
+        patch("orchard.optimization.objective.objective.get_scheduler"),
+        patch("orchard.optimization.objective.objective.get_task"),
+        patch("orchard.optimization.objective.objective.log_trial_start"),
+        patch(
+            "orchard.optimization.objective.objective.TrialTrainingExecutor"
+        ) as mock_executor_cls,
+    ):
+        mock_executor_cls.return_value.execute.return_value = 0.92
+        objective(mock_trial)
+
+    # trial_succeeded=True → end_optuna_trial(best_metric), NOT worst_metric
+    mock_tracker.end_optuna_trial.assert_called_once_with(objective.metric_extractor.best_metric)
+
+
+@pytest.mark.unit
+def test_pruned_trial_sends_best_metric_to_tracker() -> None:
+    """Kill mutmut_100/101: trial_succeeded=True after pruning → end_optuna_trial(best_metric)."""
+    objective, mock_tracker, mock_trial = _make_objective_with_tracker()
+
+    with (
+        patch("orchard.optimization.objective.objective.get_optimizer"),
+        patch("orchard.optimization.objective.objective.get_scheduler"),
+        patch("orchard.optimization.objective.objective.get_task"),
+        patch("orchard.optimization.objective.objective.log_trial_start"),
+        patch(
+            "orchard.optimization.objective.objective.TrialTrainingExecutor"
+        ) as mock_executor_cls,
+    ):
+        mock_executor_cls.return_value.execute.side_effect = optuna.TrialPruned()
+
+        with pytest.raises(optuna.TrialPruned):
+            objective(mock_trial)
+
+    # Pruned but trial_succeeded=True → best_metric, not worst
+    mock_tracker.end_optuna_trial.assert_called_once_with(objective.metric_extractor.best_metric)
+
+
+@pytest.mark.unit
+def test_call_passes_exact_args_to_model_factory() -> None:
+    """Kill mutmut_34/35: verify model_factory receives (device, dataset, arch)."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    device = torch.device("cpu")
+    mock_model_factory = MagicMock(return_value=MagicMock())
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=device,
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
+        model_factory=mock_model_factory,
+    )
+    objective._cleanup = MagicMock()  # type: ignore
+
+    mock_trial_cfg = MagicMock()
+    mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=mock_trial_cfg)  # type: ignore
+
+    mock_trial = MagicMock()
+    mock_trial.number = 1
+
+    with (
+        patch("orchard.optimization.objective.objective.get_optimizer"),
+        patch("orchard.optimization.objective.objective.get_scheduler"),
+        patch("orchard.optimization.objective.objective.get_task"),
+        patch("orchard.optimization.objective.objective.log_trial_start"),
+        patch(
+            "orchard.optimization.objective.objective.TrialTrainingExecutor"
+        ) as mock_executor_cls,
+    ):
+        mock_executor_cls.return_value.execute.return_value = 0.9
+        objective(mock_trial)
+
+    mock_model_factory.assert_called_once_with(
+        device, mock_trial_cfg.dataset, mock_trial_cfg.architecture
+    )
+
+
+@pytest.mark.unit
+def test_call_passes_trial_to_sample_params() -> None:
+    """Kill mutmut_2: _sample_params receives the actual trial, not None."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    mock_suggest = MagicMock(return_value=0.01)
+    search_space = {"lr": mock_suggest}
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space=search_space,
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
+        model_factory=MagicMock(return_value=MagicMock()),
+    )
+    objective._cleanup = MagicMock()  # type: ignore
+
+    mock_trial_cfg = MagicMock()
+    mock_trial_cfg.training.weighted_loss = False
+    objective.config_builder.build = MagicMock(return_value=mock_trial_cfg)  # type: ignore
+
+    mock_trial = MagicMock()
+    mock_trial.number = 1
+
+    with (
+        patch("orchard.optimization.objective.objective.get_optimizer"),
+        patch("orchard.optimization.objective.objective.get_scheduler"),
+        patch("orchard.optimization.objective.objective.get_task"),
+        patch("orchard.optimization.objective.objective.log_trial_start"),
+        patch(
+            "orchard.optimization.objective.objective.TrialTrainingExecutor"
+        ) as mock_executor_cls,
+    ):
+        mock_executor_cls.return_value.execute.return_value = 0.9
+        objective(mock_trial)
+
+    # The suggest function should have been called with the actual trial
+    mock_suggest.assert_called_once_with(mock_trial)
+
+
+@pytest.mark.unit
+def test_sample_params_hasattr_exact_string() -> None:
+    """Kill mutmut_5 in _sample_params: hasattr checks exact 'sample_params'."""
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    # Object WITHOUT sample_params → falls back to dict iteration
+    search_space_no_method: dict[str, Any] = {"lr": MagicMock(return_value=0.01)}
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space=search_space_no_method,
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+    )
+
+    mock_trial = MagicMock()
+    result = objective._sample_params(mock_trial)
+    assert "lr" in result
+
+    # Object WITH sample_params → uses it
+    mock_search_space = MagicMock()
+    mock_search_space.sample_params.return_value = {"lr": 0.001}
+    objective.search_space = mock_search_space  # type: ignore
+
+    result2 = objective._sample_params(mock_trial)
+    assert result2 == {"lr": 0.001}
+    mock_search_space.sample_params.assert_called_once_with(mock_trial)
 
 
 if __name__ == "__main__":

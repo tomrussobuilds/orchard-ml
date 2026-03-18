@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - unify monitor_metric direction as SSOT in TrainingConfig
 - generalize TrainingReport + fix dump_requirements for uv
 - skip _check_min_dataset_size for non-classification tasks
+- skip compute_class_weights for non-classification tasks
 
 ### Documentation
 

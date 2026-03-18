@@ -17,7 +17,7 @@ import torch.nn as nn
 from orchard.core import OptunaConfig, TrainingConfig
 from orchard.optimization import MetricExtractor, TrialTrainingExecutor
 from orchard.optimization.objective.training_executor import (
-    _FALLBACK_METRICS,
+    _GENERIC_FALLBACK,
     _MAX_CONSECUTIVE_VAL_FAILURES,
 )
 from orchard.trainer._scheduling import step_scheduler
@@ -186,7 +186,7 @@ def test_validate_epoch_returns_fallback_on_exception() -> None:
         mock_validate.side_effect = RuntimeError("Validation error")
         result = executor._validate_epoch()
 
-        assert result == _FALLBACK_METRICS
+        assert result == _GENERIC_FALLBACK
 
 
 # TESTS: FULL EXECUTION LOOP
@@ -305,12 +305,10 @@ def test_max_consecutive_val_failures_constant() -> None:
 
 
 @pytest.mark.unit
-def test_fallback_metrics_exact_values() -> None:
-    """Assert _FALLBACK_METRICS has exact expected values."""
-    assert _FALLBACK_METRICS["loss"] == 999.0
-    assert _FALLBACK_METRICS["accuracy"] == 0.0
-    assert _FALLBACK_METRICS["auc"] == 0.0
-    assert _FALLBACK_METRICS["f1"] == 0.0
+def test_generic_fallback_exact_values() -> None:
+    """Assert _GENERIC_FALLBACK has exact expected values."""
+    assert _GENERIC_FALLBACK["loss"] == 999.0
+    assert len(_GENERIC_FALLBACK) == 1
 
 
 @pytest.mark.unit

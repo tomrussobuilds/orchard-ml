@@ -30,6 +30,8 @@ from typing import TYPE_CHECKING
 from ..exceptions import OrchardConfigError
 
 if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
+
     from .task_protocols import (
         TaskCriterionFactory,
         TaskEvalPipeline,
@@ -48,12 +50,15 @@ class TaskComponents:
         training_step: Executes the forward pass and computes training loss.
         validation_metrics: Computes per-epoch validation metrics.
         eval_pipeline: Orchestrates inference, visualization, and reporting.
+        fallback_metrics: Metrics returned when validation fails during Optuna
+            trials. Must contain at least the monitored metric key.
     """
 
     criterion_factory: TaskCriterionFactory
     training_step: TaskTrainingStep
     validation_metrics: TaskValidationMetrics
     eval_pipeline: TaskEvalPipeline
+    fallback_metrics: Mapping[str, float]
 
 
 # Internal mutable store — never exposed directly.

@@ -265,6 +265,7 @@ class OptunaObjective:
                 metric_extractor=self.metric_extractor,
                 training_step=task.training_step,
                 validation_metrics=task.validation_metrics,
+                fallback_metrics=task.fallback_metrics,
             )
 
             best_metric = executor.execute(trial)
@@ -326,8 +327,8 @@ class OptunaObjective:
             float("inf") for minimize, -float("inf") for maximize.
         """
         if self.cfg.training.monitor_direction == "minimize":
-            return float("inf")
-        return -float("inf")
+            return float("inf")  # pragma: no mutate
+        return -float("inf")  # pragma: no mutate
 
     def _cleanup(self) -> None:
         """

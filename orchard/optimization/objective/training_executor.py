@@ -40,7 +40,7 @@ import optuna
 import torch
 
 from ...core import LOGGER_NAME, LogStyle, OptunaConfig, TrainingConfig
-from ...core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS
+from ...core.paths import METRIC_LOSS
 from ...trainer import validate_epoch
 from ...trainer._loop import (
     LoopOptions,
@@ -54,14 +54,7 @@ from .metric_extractor import MetricExtractor
 logger = logging.getLogger(LOGGER_NAME)
 
 # Module-level constants
-_FALLBACK_METRICS = MappingProxyType(
-    {
-        METRIC_LOSS: 999.0,
-        METRIC_ACCURACY: 0.0,
-        METRIC_AUC: 0.0,
-        METRIC_F1: 0.0,
-    }
-)
+_GENERIC_FALLBACK = MappingProxyType({METRIC_LOSS: 999.0})
 _MAX_CONSECUTIVE_VAL_FAILURES: int = 3
 
 
@@ -154,7 +147,7 @@ class TrialTrainingExecutor:
             validation_metrics: Task-specific validation metrics adapter.
                 If provided, used instead of the default ``validate_epoch``.
             fallback_metrics: Metrics returned on validation failure.
-                Defaults to classification-specific fallback if not provided.
+                Defaults to a minimal generic fallback (loss only).
         """
         self.model = model
         self.train_loader = train_loader
@@ -165,7 +158,7 @@ class TrialTrainingExecutor:
         self.device = device
         self.metric_extractor = metric_extractor
         self._validation_metrics = validation_metrics
-        self._fallback_metrics = fallback_metrics or _FALLBACK_METRICS
+        self._fallback_metrics = fallback_metrics or _GENERIC_FALLBACK
 
         # Pruning config
         self.enable_pruning = optuna.enable_pruning
