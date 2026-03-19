@@ -40,10 +40,11 @@ class TaskTrainingStep(Protocol):
     def compute_training_loss(
         self,
         model: nn.Module,
-        inputs: torch.Tensor,
-        targets: torch.Tensor,
+        inputs: Any,
+        targets: Any,
         criterion: nn.Module,
         mixup_fn: Callable[..., Any] | None = None,
+        device: torch.device | None = None,
     ) -> torch.Tensor:
         """
         Execute the forward pass and compute the training loss.
@@ -53,12 +54,19 @@ class TaskTrainingStep(Protocol):
         ``model(inputs)`` returning logits with optional MixUp blending.
         For detection, the model returns a loss dict that is summed.
 
+        The adapter is responsible for moving inputs/targets to the
+        correct device — ``train_one_epoch`` passes raw batch data
+        when a training step adapter is present.
+
         Args:
             model: Neural network in training mode.
-            inputs: Batch of input tensors (already on device).
-            targets: Batch of target tensors (already on device).
+            inputs: Batch inputs (Tensor for classification,
+                list[Tensor] for detection).
+            targets: Batch targets (Tensor for classification,
+                list[dict] for detection).
             criterion: Loss function module.
             mixup_fn: Optional MixUp augmentation callable.
+            device: Target device for tensor placement.
 
         Returns:
             Scalar loss tensor for backward pass.

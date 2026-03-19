@@ -468,7 +468,7 @@ def test_train_one_epoch_with_training_step(
 def test_train_one_epoch_training_step_receives_correct_args(
     simple_model: Any, criterion: Any, optimizer: Any
 ) -> None:
-    """training_step.compute_training_loss receives model, inputs, targets, criterion, mixup_fn."""
+    """training_step.compute_training_loss receives model, inputs, targets, criterion, mixup_fn, device."""
     device = torch.device("cpu")
     batch = (torch.randn(4, 1, 28, 28), torch.randint(0, 10, (4,)))
     loader = MagicMock()
@@ -490,10 +490,11 @@ def test_train_one_epoch_training_step_receives_correct_args(
 
     call_args = mock_step.compute_training_loss.call_args
     assert call_args[0][0] is simple_model  # model
-    assert isinstance(call_args[0][1], torch.Tensor)  # inputs
-    assert isinstance(call_args[0][2], torch.Tensor)  # targets
+    assert isinstance(call_args[0][1], torch.Tensor)  # inputs (raw batch data)
+    assert isinstance(call_args[0][2], torch.Tensor)  # targets (raw batch data)
     assert call_args[0][3] is criterion  # criterion
     assert call_args[0][4] is None  # mixup_fn (not provided)
+    assert call_args[1]["device"] is device  # device kwarg
 
 
 @pytest.mark.unit
@@ -519,6 +520,7 @@ def test_train_one_epoch_training_step_receives_mixup_fn(
 
     call_args = mock_step.compute_training_loss.call_args
     assert call_args[0][4] is mock_mixup
+    assert call_args[1]["device"] == torch.device("cpu")
 
 
 @pytest.mark.unit

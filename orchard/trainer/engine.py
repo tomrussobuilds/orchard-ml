@@ -132,23 +132,30 @@ def train_one_epoch(
     amp_device_type = device.type if amp_enabled else "cpu"
 
     # Training loop - iterate directly without enumerate
-    for inputs, targets in iterator:
-        inputs, targets = inputs.to(device), targets.to(device)
+    for batch in iterator:
+        inputs_raw, targets_raw = batch[0], batch[1]
         optimizer.zero_grad()
 
         # Forward pass with optional AMP autocast
         with torch.autocast(device_type=amp_device_type, enabled=amp_enabled):
             if training_step is not None:
+                # Adapter handles device transfer (supports both Tensor and list)
                 loss = training_step.compute_training_loss(
-                    model, inputs, targets, criterion, mixup_fn
+                    model, inputs_raw, targets_raw, criterion, mixup_fn, device=device
                 )
-            elif mixup_fn:
-                inputs, y_a, y_b, lam = mixup_fn(inputs, targets)
-                outputs = model(inputs)
-                loss = lam * criterion(outputs, y_a) + (1 - lam) * criterion(outputs, y_b)
+                batch_size = len(inputs_raw)
             else:
-                outputs = model(inputs)
-                loss = criterion(outputs, targets)
+                # Fallback: classification-specific forward pass
+                inputs = inputs_raw.to(device)
+                targets = targets_raw.to(device)
+                if mixup_fn:
+                    inputs, y_a, y_b, lam = mixup_fn(inputs, targets)
+                    outputs = model(inputs)
+                    loss = lam * criterion(outputs, y_a) + (1 - lam) * criterion(outputs, y_b)
+                else:
+                    outputs = model(inputs)
+                    loss = criterion(outputs, targets)
+                batch_size = inputs.size(0)
 
         # Guard: halt on diverged loss to prevent saving corrupted weights
         if torch.isnan(loss) or torch.isinf(loss):
@@ -162,7 +169,6 @@ def train_one_epoch(
 
         # Accumulate loss (extract scalar once to avoid repeated GPU→CPU sync)
         loss_val = loss.item()
-        batch_size = inputs.size(0)
         running_loss += loss_val * batch_size
         total_samples += batch_size
 

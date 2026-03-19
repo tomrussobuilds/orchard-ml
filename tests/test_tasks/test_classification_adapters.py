@@ -342,6 +342,75 @@ def test_training_step_adapter_mixup_none_means_no_mixup() -> None:
 
 
 @pytest.mark.unit
+def test_training_step_adapter_device_transfer() -> None:
+    """TrainingStepAdapter moves inputs and targets to device when device is provided."""
+    model = MagicMock(spec=nn.Module)
+    model.return_value = torch.randn(4, 10)
+
+    criterion = MagicMock(spec=nn.Module)
+    criterion.return_value = torch.tensor(0.5)
+
+    inputs = MagicMock(spec=torch.Tensor)
+    inputs.to.return_value = torch.randn(4, 1, 28, 28)
+    targets = MagicMock(spec=torch.Tensor)
+    targets.to.return_value = torch.randint(0, 10, (4,))
+
+    device = torch.device("cpu")
+    adapter = ClassificationTrainingStepAdapter()
+    adapter.compute_training_loss(model, inputs, targets, criterion, device=device)
+
+    inputs.to.assert_called_once_with(device)
+    targets.to.assert_called_once_with(device)
+
+
+@pytest.mark.unit
+def test_training_step_adapter_no_device_skips_transfer() -> None:
+    """TrainingStepAdapter does NOT call .to() when device is None."""
+    model = MagicMock(spec=nn.Module)
+    model.return_value = torch.randn(4, 10)
+
+    criterion = MagicMock(spec=nn.Module)
+    criterion.return_value = torch.tensor(0.5)
+
+    inputs = MagicMock(spec=torch.Tensor)
+    targets = MagicMock(spec=torch.Tensor)
+
+    adapter = ClassificationTrainingStepAdapter()
+    adapter.compute_training_loss(model, inputs, targets, criterion, device=None)
+
+    inputs.to.assert_not_called()
+    targets.to.assert_not_called()
+
+
+@pytest.mark.unit
+def test_training_step_adapter_device_transfer_with_mixup() -> None:
+    """TrainingStepAdapter moves to device BEFORE applying MixUp."""
+    model = MagicMock(spec=nn.Module)
+    model.return_value = torch.randn(4, 10)
+
+    criterion = MagicMock(spec=nn.Module)
+    criterion.return_value = torch.tensor(1.0)
+
+    moved_inputs = torch.randn(4, 1, 28, 28)
+    moved_targets = torch.randint(0, 10, (4,))
+    inputs = MagicMock(spec=torch.Tensor)
+    inputs.to.return_value = moved_inputs
+    targets = MagicMock(spec=torch.Tensor)
+    targets.to.return_value = moved_targets
+
+    mixup_fn = MagicMock(return_value=(moved_inputs, moved_targets, moved_targets, 0.7))
+    device = torch.device("cpu")
+
+    adapter = ClassificationTrainingStepAdapter()
+    adapter.compute_training_loss(model, inputs, targets, criterion, mixup_fn, device=device)
+
+    inputs.to.assert_called_once_with(device)
+    targets.to.assert_called_once_with(device)
+    # MixUp should receive the device-transferred tensors
+    mixup_fn.assert_called_once_with(moved_inputs, moved_targets)
+
+
+@pytest.mark.unit
 def test_training_step_adapter_mixup_blended_loss_value() -> None:
     """TrainingStepAdapter computes lam * loss_a + (1-lam) * loss_b."""
     model = MagicMock(spec=nn.Module)
