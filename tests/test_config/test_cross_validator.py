@@ -454,6 +454,23 @@ class TestCheckDetectionConfig:
                 hardware=HardwareConfig(device="cpu"),
             )
 
+    def test_detection_with_label_smoothing_warns(self) -> None:
+        """Detection + label_smoothing > 0 emits UserWarning."""
+        import warnings
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0, label_smoothing=0.1),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+        smoothing_warnings = [w for w in caught if "label_smoothing is ignored" in str(w.message)]
+        assert len(smoothing_warnings) == 1
+
     def test_classification_skips_detection_check(self) -> None:
         """Classification task_type skips detection-specific checks entirely."""
         # resnet_18 is not a detection arch but should pass for classification

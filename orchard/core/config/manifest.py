@@ -584,3 +584,14 @@ class _CrossDomainValidator:
                 "MixUp (mixup_alpha > 0) is not compatible with detection tasks. "
                 "Set mixup_alpha: 0.0 in training config."
             )
+
+        # Warn about classification-only training params that are silently ignored
+        if config.training.label_smoothing > 0:
+            import warnings
+
+            warnings.warn(
+                "label_smoothing is ignored for detection tasks "
+                "(detection models compute losses internally).",
+                UserWarning,
+                stacklevel=4,
+            )

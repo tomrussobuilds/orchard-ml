@@ -146,7 +146,7 @@ orchard/core/config/infrastructure_config.py:
   not_checked: 0
   score: 100.0
 orchard/core/config/manifest.py:
-  last_run: '2026-03-19T13:19:43Z'
+  last_run: '2026-03-19T19:18:32Z'
   total: 45
   killed: 45
   survived: 0
@@ -776,7 +776,7 @@ orchard/tasks/detection/criterion_adapter.py:
   not_checked: 0
   score: 100.0
 orchard/tasks/detection/evaluation_adapter.py:
-  last_run: '2026-03-19T13:45:06Z'
+  last_run: '2026-03-19T19:07:40Z'
   total: 46
   killed: 39
   survived: 7

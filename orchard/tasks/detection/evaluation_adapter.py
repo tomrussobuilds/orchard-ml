@@ -124,7 +124,7 @@ class DetectionEvalPipelineAdapter:
         )
         plot_training_curves(
             train_losses=train_losses,
-            val_accuracies=val_losses,
+            val_accuracies=val_losses,  # param name is classification-legacy; contains losses here
             out_path=paths.figures / "training_curves.png",  # pragma: no mutate
             ctx=ctx,
         )

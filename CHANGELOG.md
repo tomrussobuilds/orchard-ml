@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add Faster R-CNN builder and register in model factory
 - add detection config validation, ONNX guard, recipe, and CLI init
 - wire DetectionDataset into DataLoaderFactory
+- Optuna detection guard + remove unused in_channels from fasterrcnn
 
 ### Changed
 
