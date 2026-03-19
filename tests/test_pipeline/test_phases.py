@@ -1486,5 +1486,55 @@ def test_run_export_phase_quantized_failure_uses_log_style(
     assert error_call.args[1] is LogStyle.FAILURE
 
 
+@pytest.mark.unit
+@patch("orchard.pipeline.phases.load_dataset")
+@patch("orchard.pipeline.phases.get_dataloaders")
+@patch("orchard.pipeline.phases.show_samples_for_dataset")
+@patch("orchard.pipeline.phases.get_model")
+@patch("orchard.tasks.classification.criterion_adapter.get_criterion")
+@patch("orchard.pipeline.phases.get_optimizer")
+@patch("orchard.pipeline.phases.get_scheduler")
+@patch("orchard.pipeline.phases.ModelTrainer")
+@patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
+@patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
+@patch("orchard.pipeline.phases.get_augmentations_description")
+def test_run_training_phase_detection_skips_show_samples(
+    mock_aug_desc: MagicMock,
+    _mock_plot: MagicMock,
+    mock_map_cls: MagicMock,
+    mock_trainer_cls: MagicMock,
+    _mock_get_scheduler: MagicMock,
+    _mock_get_optimizer: MagicMock,
+    _mock_get_criterion: MagicMock,
+    mock_get_model: MagicMock,
+    mock_show_samples: MagicMock,
+    mock_get_loaders: MagicMock,
+    _mock_load_dataset: MagicMock,
+    mock_orchestrator: MagicMock,
+) -> None:
+    """Detection task_type skips show_samples_for_dataset."""
+    import torch
+
+    mock_get_loaders.return_value = (MagicMock(), MagicMock(), MagicMock())
+    mock_model = MagicMock()
+    mock_model.parameters.return_value = iter([torch.randn(1)])
+    mock_get_model.return_value = mock_model
+    mock_trainer = MagicMock()
+    mock_trainer.train.return_value = (Path("/mock/best.pth"), [0.5], [{"map": 0.4}])
+    mock_trainer_cls.return_value = mock_trainer
+    mock_map_cls.return_value.compute.return_value = {
+        "map": torch.tensor(0.5),
+        "map_50": torch.tensor(0.7),
+        "map_75": torch.tensor(0.4),
+    }
+    mock_aug_desc.return_value = "test_aug"
+
+    mock_orchestrator.cfg.task_type = "detection"
+
+    run_training_phase(mock_orchestrator)
+
+    mock_show_samples.assert_not_called()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

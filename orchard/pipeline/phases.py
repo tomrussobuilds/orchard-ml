@@ -177,20 +177,20 @@ def run_training_phase(
     )
     train_loader, val_loader, test_loader = loaders
 
-    # TODO(detection): show_samples_for_dataset assumes stacked Tensor batches.
-    # Detection batches (list[Tensor]) will crash on denormalization. Guard or
-    # skip for detection tasks when wiring the full detection pipeline.
-    show_samples_for_dataset(
-        loader=train_loader,
-        dataset_name=cfg.dataset.dataset_name,
-        run_paths=paths,
-        mean=cfg.dataset.mean,
-        std=cfg.dataset.std,
-        arch_name=cfg.architecture.name,
-        fig_dpi=cfg.evaluation.fig_dpi,
-        num_samples=cfg.evaluation.n_samples,
-        resolution=cfg.dataset.resolution,
-    )
+    # show_samples_for_dataset assumes stacked Tensor batches — detection
+    # batches (list[Tensor]) would crash on denormalization.
+    if cfg.task_type != "detection":  # pragma: no mutate
+        show_samples_for_dataset(
+            loader=train_loader,
+            dataset_name=cfg.dataset.dataset_name,
+            run_paths=paths,
+            mean=cfg.dataset.mean,
+            std=cfg.dataset.std,
+            arch_name=cfg.architecture.name,
+            fig_dpi=cfg.evaluation.fig_dpi,
+            num_samples=cfg.evaluation.n_samples,
+            resolution=cfg.dataset.resolution,
+        )
 
     # MODEL TRAINING
     Reporter.log_phase_header(
