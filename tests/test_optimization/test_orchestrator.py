@@ -526,6 +526,7 @@ class TestOrchestratorMutationKillers:
             include_models=True,
             model_pool=["resnet18", "vit"],
             overrides=overrides_sentinel,
+            task_type=mock_cfg.task_type,
         )
 
     # optimize: verify OptunaObjective constructed with exact kwargs

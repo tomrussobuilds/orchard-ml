@@ -18,7 +18,6 @@ from torchvision.models.detection.faster_rcnn import FasterRCNN, FastRCNNPredict
 
 def build_fasterrcnn(
     num_classes: int,
-    in_channels: int = 3,  # noqa: ARG001  # pragma: no mutate
     pretrained: bool = True,  # pragma: no mutate
 ) -> nn.Module:
     """
@@ -28,10 +27,11 @@ def build_fasterrcnn(
     head to match the target number of classes. Background is added
     automatically (``num_classes + 1``).
 
+    Unlike classification builders, this does not accept ``in_channels``
+    because Faster R-CNN always uses RGB (3-channel) input internally.
+
     Args:
         num_classes: Number of object categories (excluding background).
-        in_channels: Input channels (accepted for API compatibility,
-            FasterRCNN uses RGB internally).
         pretrained: If True, load COCO-pretrained weights for the backbone.
 
     Returns:

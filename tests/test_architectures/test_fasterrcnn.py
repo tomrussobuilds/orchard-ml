@@ -62,14 +62,6 @@ class TestFasterRCNN:
 
         mock_fn.assert_called_once_with(weights=None)
 
-    def test_in_channels_accepted(self) -> None:
-        """Builder accepts in_channels for API compatibility."""
-        with patch("orchard.architectures.fasterrcnn.fasterrcnn_resnet50_fpn_v2") as mock_fn:
-            mock_fn.return_value = _make_mock_fasterrcnn()
-            model = build_fasterrcnn(num_classes=5, in_channels=1, pretrained=False)
-
-        assert isinstance(model, nn.Module)
-
 
 @pytest.mark.unit
 def test_factory_dispatches_fasterrcnn() -> None:
@@ -94,15 +86,6 @@ def test_factory_dispatches_fasterrcnn() -> None:
     # Verify it went through fasterrcnn builder (not other builders)
     mock_tv.assert_called_once()
     assert isinstance(model, nn.Module)
-
-
-@pytest.mark.unit
-def test_fasterrcnn_default_in_channels() -> None:
-    """Builder default in_channels is 3 (RGB)."""
-    import inspect
-
-    sig = inspect.signature(build_fasterrcnn)
-    assert sig.parameters["in_channels"].default == 3
 
 
 @pytest.mark.unit

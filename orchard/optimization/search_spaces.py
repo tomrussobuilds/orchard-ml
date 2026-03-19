@@ -41,12 +41,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 _SamplerFn = Callable[..., Any]
 
-
-def _default_overrides() -> SearchSpaceOverrides:
-    """Lazy import to avoid circular dependency at module level."""
-    from ..core.config.optuna_config import SearchSpaceOverrides
-
-    return SearchSpaceOverrides()
+# Parameters that only apply to classification (detection ignores them)
+_CLASSIFICATION_ONLY_PARAMS: frozenset[str] = frozenset(
+    {"criterion_type", "focal_gamma", "label_smoothing", "mixup_alpha"}
+)
 
 
 _VIT_WEIGHT_VARIANTS: list[str | None] = [
@@ -54,6 +52,13 @@ _VIT_WEIGHT_VARIANTS: list[str | None] = [
     "vit_tiny_patch16_224.augreg_in21k_ft_in1k",
     "vit_tiny_patch16_224.augreg_in21k",
 ]
+
+
+def _default_overrides() -> SearchSpaceOverrides:
+    """Lazy import to avoid circular dependency at module level."""
+    from ..core.config.optuna_config import SearchSpaceOverrides
+
+    return SearchSpaceOverrides()
 
 
 def _vit_weight_variant_sampler(trial: Any) -> str | None:
@@ -335,6 +340,7 @@ def get_search_space(
     include_models: bool = False,
     model_pool: list[str] | None = None,
     overrides: SearchSpaceOverrides | None = None,
+    task_type: str = "classification",  # pragma: no mutate
 ) -> Mapping[str, Any]:
     """
     Factory function to retrieve a search space preset.
@@ -346,6 +352,9 @@ def get_search_space(
         model_pool: Restrict model search to these architectures.
             When None, uses all built-in models for the target resolution.
         overrides: Configurable search range bounds (uses defaults if None)
+        task_type: Task type. Detection tasks exclude classification-only
+            parameters (criterion_type, focal_gamma, label_smoothing,
+            mixup_alpha).
 
     Returns:
         Immutable mapping of parameter samplers keyed by parameter name
@@ -369,6 +378,11 @@ def get_search_space(
             space.update(registry.get_model_space_224())
         else:
             space.update(registry.get_model_space_28())
+
+    # Detection: remove classification-only search parameters
+    if task_type == "detection":  # pragma: no mutate
+        for key in _CLASSIFICATION_ONLY_PARAMS:
+            space.pop(key, None)  # pragma: no mutate
 
     return MappingProxyType(space)
 

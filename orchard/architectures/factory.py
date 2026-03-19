@@ -214,6 +214,7 @@ def _dispatch_builder(
         )
 
     builder = _MODEL_REGISTRY.get(model_name_lower)
+
     if builder is None:
         error_msg = f"Architecture '{arch_cfg.name}' is not registered in the Factory."
         logger.error(" %s %s", LogStyle.FAILURE, error_msg)
@@ -222,7 +223,6 @@ def _dispatch_builder(
     if builder is build_fasterrcnn:
         return build_fasterrcnn(
             num_classes=num_classes,
-            in_channels=in_channels,
             pretrained=arch_cfg.pretrained,
         )
     if builder is build_mini_cnn:

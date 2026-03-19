@@ -816,5 +816,30 @@ def test_get_batch_size_space_default_resolution_is_28() -> None:
     trial.suggest_categorical.assert_called_once_with("batch_size", [16, 32, 48, 64])
 
 
+@pytest.mark.unit
+def test_detection_task_excludes_classification_params() -> None:
+    """Detection task_type removes criterion_type, focal_gamma, label_smoothing, mixup_alpha."""
+    space = get_search_space(preset="full", resolution=224, task_type="detection")
+
+    assert "criterion_type" not in space
+    assert "focal_gamma" not in space
+    assert "label_smoothing" not in space
+    assert "mixup_alpha" not in space
+
+    # Core params still present
+    assert "learning_rate" in space
+    assert "batch_size" in space
+
+
+@pytest.mark.unit
+def test_classification_task_keeps_all_params() -> None:
+    """Classification (default) keeps all search space params."""
+    space = get_search_space(preset="full", resolution=224, task_type="classification")
+
+    assert "criterion_type" in space
+    assert "mixup_alpha" in space
+    assert "learning_rate" in space
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
