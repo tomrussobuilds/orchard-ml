@@ -461,7 +461,7 @@ orchard/data_handler/diagnostic/temp_loader.py:
   not_checked: 0
   score: 100.0
 orchard/data_handler/fetcher.py:
-  last_run: '2026-03-16T15:23:04Z'
+  last_run: '2026-03-19T14:21:20Z'
   total: 51
   killed: 46
   survived: 5
@@ -496,12 +496,12 @@ orchard/data_handler/fetchers/medmnist_fetcher.py:
   not_checked: 0
   score: 90.6
 orchard/data_handler/loader.py:
-  last_run: '2026-03-19T11:51:26Z'
-  total: 199
-  killed: 183
-  survived: 16
+  last_run: '2026-03-19T14:21:37Z'
+  total: 265
+  killed: 246
+  survived: 19
   not_checked: 0
-  score: 92.0
+  score: 92.8
 orchard/data_handler/transforms.py:
   last_run: '2026-03-16T15:23:04Z'
   total: 107

@@ -28,12 +28,21 @@ class DatasetData:
     Metadata container for a loaded dataset.
 
     Stores path and format info instead of raw arrays to save RAM.
+
+    Attributes:
+        path (Path): Path to images NPZ.
+        name (str): Dataset identifier.
+        is_rgb (bool): Whether images are RGB (3 channels).
+        num_classes (int): Number of categories.
+        annotation_path (Path | None): Path to annotations NPZ
+            (detection datasets only; None for classification).
     """
 
     path: Path
     name: str
     is_rgb: bool
     num_classes: int
+    annotation_path: Path | None = None
 
 
 logger = logging.getLogger(LOGGER_NAME)

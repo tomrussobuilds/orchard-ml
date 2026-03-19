@@ -222,6 +222,73 @@ class DataLoaderFactory:
             }
         )
 
+    def _build_classification_splits(
+        self,
+        train_trans: torch.nn.Module,
+        val_trans: torch.nn.Module,
+        sub_samples: int | None,
+    ) -> tuple[VisionDataset, VisionDataset, VisionDataset]:
+        """Build train/val/test VisionDataset splits for classification."""
+        _build = VisionDataset.lazy if self.dataset_cfg.lazy_loading else VisionDataset.from_npz
+        train_ds = _build(
+            path=self.metadata.path,
+            split="train",
+            transform=train_trans,
+            max_samples=self.dataset_cfg.max_samples,
+            seed=self.training_cfg.seed,
+        )
+        val_ds = _build(
+            path=self.metadata.path,
+            split="val",
+            transform=val_trans,
+            max_samples=sub_samples,
+            seed=self.training_cfg.seed,
+        )
+        test_ds = _build(
+            path=self.metadata.path,
+            split="test",
+            transform=val_trans,
+            max_samples=sub_samples,
+            seed=self.training_cfg.seed,
+        )
+        return train_ds, val_ds, test_ds
+
+    def _build_detection_splits(
+        self,
+        train_trans: torch.nn.Module,
+        val_trans: torch.nn.Module,
+        sub_samples: int | None,
+    ) -> tuple[Any, Any, Any]:
+        """Build train/val/test DetectionDataset splits for detection."""
+        from .detection_dataset import DetectionDataset
+
+        assert self.metadata.annotation_path is not None  # nosec B101
+        train_ds = DetectionDataset.from_npz(
+            image_path=self.metadata.path,
+            annotation_path=self.metadata.annotation_path,
+            split="train",
+            transform=train_trans,
+            max_samples=self.dataset_cfg.max_samples,
+            seed=self.training_cfg.seed,
+        )
+        val_ds = DetectionDataset.from_npz(
+            image_path=self.metadata.path,
+            annotation_path=self.metadata.annotation_path,
+            split="val",
+            transform=val_trans,
+            max_samples=sub_samples,
+            seed=self.training_cfg.seed,
+        )
+        test_ds = DetectionDataset.from_npz(
+            image_path=self.metadata.path,
+            annotation_path=self.metadata.annotation_path,
+            split="test",
+            transform=val_trans,
+            max_samples=sub_samples,
+            seed=self.training_cfg.seed,
+        )
+        return train_ds, val_ds, test_ds
+
     def build(
         self, is_optuna: bool = False
     ) -> tuple[DataLoader[Any], DataLoader[Any], DataLoader[Any]]:
@@ -241,21 +308,9 @@ class DataLoaderFactory:
         # 1. Setup transforms
         train_trans, val_trans = self._get_transformation_pipelines()
 
-        # 2. Instantiate Dataset splits (lazy=mmap, eager=full RAM copy)
-        # TODO(detection): Use DetectionDataset when is_detection=True.
-        # Currently uses VisionDataset for all tasks — detection will need
-        # separate image/annotation NPZ loading via DetectionDataset.from_npz.
-        _build = VisionDataset.lazy if self.dataset_cfg.lazy_loading else VisionDataset.from_npz
-        ds_params = {"path": self.metadata.path, "seed": self.training_cfg.seed}
+        # 2. Instantiate Dataset splits
+        is_detection = self._task_type == "detection"  # pragma: no mutate
 
-        train_ds = _build(
-            **ds_params,
-            split="train",
-            transform=train_trans,
-            max_samples=self.dataset_cfg.max_samples,
-        )
-
-        # Proportional downsizing for validation/testing if max_samples is set
         sub_samples = None
         if self.dataset_cfg.max_samples:
             sub_samples = max(
@@ -263,11 +318,16 @@ class DataLoaderFactory:
                 int(self.dataset_cfg.max_samples * self.dataset_cfg.val_ratio),
             )
 
-        val_ds = _build(**ds_params, split="val", transform=val_trans, max_samples=sub_samples)
-        test_ds = _build(**ds_params, split="test", transform=val_trans, max_samples=sub_samples)
+        if is_detection and self.metadata.annotation_path is not None:
+            train_ds, val_ds, test_ds = self._build_detection_splits(
+                train_trans, val_trans, sub_samples
+            )
+        else:
+            train_ds, val_ds, test_ds = self._build_classification_splits(
+                train_trans, val_trans, sub_samples
+            )
 
         # 3. Resolve Sampler, Collate, and Infrastructure
-        is_detection = self._task_type == "detection"  # pragma: no mutate
         sampler = None if is_detection else self._get_balancing_sampler(train_ds)
         collate_fn = detection_collate_fn if is_detection else None
         infra_kwargs = self._get_infrastructure_kwargs(is_optuna=is_optuna)
