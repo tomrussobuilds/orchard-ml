@@ -24,6 +24,7 @@ echo "✓ Bandit passed"
 echo ""
 
 echo "🔍 MyPy --strict (type checking)..."
+rm -rf .mypy_cache
 mypy --strict orchard/
 echo "✓ MyPy --strict passed"
 echo ""

@@ -839,9 +839,9 @@ orchard/trainer/_scheduling.py:
   not_checked: 0
   score: 100.0
 orchard/trainer/engine.py:
-  last_run: '2026-03-19T09:00:43Z'
-  total: 290
-  killed: 290
+  last_run: '2026-03-19T19:33:15Z'
+  total: 303
+  killed: 303
   survived: 0
   not_checked: 0
   score: 100.0

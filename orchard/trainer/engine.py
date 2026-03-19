@@ -138,24 +138,15 @@ def train_one_epoch(
 
         # Forward pass with optional AMP autocast
         with torch.autocast(device_type=amp_device_type, enabled=amp_enabled):
-            if training_step is not None:
-                # Adapter handles device transfer (supports both Tensor and list)
-                loss = training_step.compute_training_loss(
-                    model, inputs_raw, targets_raw, criterion, mixup_fn, device=device
-                )
-                batch_size = len(inputs_raw)
-            else:
-                # Fallback: classification-specific forward pass
-                inputs = inputs_raw.to(device)
-                targets = targets_raw.to(device)
-                if mixup_fn:
-                    inputs, y_a, y_b, lam = mixup_fn(inputs, targets)
-                    outputs = model(inputs)
-                    loss = lam * criterion(outputs, y_a) + (1 - lam) * criterion(outputs, y_b)
-                else:
-                    outputs = model(inputs)
-                    loss = criterion(outputs, targets)
-                batch_size = inputs.size(0)
+            loss, batch_size = _forward_and_loss(
+                model,
+                inputs_raw,
+                targets_raw,
+                criterion,
+                mixup_fn,
+                device,
+                training_step,
+            )
 
         # Guard: halt on diverged loss to prevent saving corrupted weights
         if torch.isnan(loss) or torch.isinf(loss):
@@ -354,3 +345,39 @@ def _backward_step(
         if grad_clip is not None and grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
         optimizer.step()
+
+
+def _forward_and_loss(
+    model: nn.Module,
+    inputs_raw: Any,
+    targets_raw: Any,
+    criterion: nn.Module,
+    mixup_fn: Callable[..., Any] | None,
+    device: torch.device,
+    training_step: TaskTrainingStep | None,
+) -> tuple[torch.Tensor, int]:
+    """
+    Compute forward pass and loss for a single batch.
+
+    Routes to the task-specific adapter when available, otherwise uses
+    the built-in classification forward pass with optional MixUp.
+
+    Returns:
+        Tuple of (scalar loss tensor, batch size).
+    """
+    if training_step is not None:
+        loss = training_step.compute_training_loss(
+            model, inputs_raw, targets_raw, criterion, mixup_fn, device=device
+        )
+        return loss, len(inputs_raw)
+
+    inputs = inputs_raw.to(device)
+    targets = targets_raw.to(device)
+    if mixup_fn:
+        inputs, y_a, y_b, lam = mixup_fn(inputs, targets)
+        outputs = model(inputs)
+        loss = lam * criterion(outputs, y_a) + (1 - lam) * criterion(outputs, y_b)
+    else:
+        outputs = model(inputs)
+        loss = criterion(outputs, targets)
+    return loss, inputs.size(0)

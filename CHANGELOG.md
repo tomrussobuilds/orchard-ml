@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - guard show_samples_for_dataset for detection tasks
+- detection config warnings and eval adapter cleanup
 
 ## [0.2.2] - 2026-03-18
 
