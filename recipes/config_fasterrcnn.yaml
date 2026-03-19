@@ -52,7 +52,9 @@ training:
   weighted_loss: false
 
 augmentation:
-  hflip: 0.5
+  # Spatial augmentations (hflip, rotation, min_scale<1) are auto-disabled
+  # for detection — they transform the image but not the bounding boxes.
+  hflip: 0.0
   rotation_angle: 0
   jitter_val: 0.0
   min_scale: 1.0

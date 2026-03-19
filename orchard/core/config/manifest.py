@@ -26,7 +26,14 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from ...exceptions import OrchardConfigError
 from ..io import load_config_from_yaml
 from ..metadata.wrapper import DatasetRegistryWrapper
-from ..paths import HIGHRES_THRESHOLD, PROJECT_ROOT
+from ..paths import (
+    HIGHRES_THRESHOLD,
+    METRIC_LOSS,
+    METRIC_MAP,
+    METRIC_MAP_50,
+    METRIC_MAP_75,
+    PROJECT_ROOT,
+)
 from .architecture_config import ArchitectureConfig
 from .augmentation_config import AugmentationConfig
 from .dataset_config import DatasetConfig
@@ -578,11 +585,46 @@ class _CrossDomainValidator:
                 f"got {config.dataset.resolution}."
             )
 
+        # monitor_metric must be a detection metric
+        _valid_detection_metrics = frozenset(
+            {METRIC_LOSS, METRIC_MAP, METRIC_MAP_50, METRIC_MAP_75}
+        )
+        if config.training.monitor_metric not in _valid_detection_metrics:
+            raise OrchardConfigError(
+                f"monitor_metric '{config.training.monitor_metric}' is not valid "
+                f"for detection tasks. Use one of: {sorted(_valid_detection_metrics)}."
+            )
+
         # MixUp is not meaningful for bounding-box tasks
         if config.training.mixup_alpha > 0:
             raise OrchardConfigError(
                 "MixUp (mixup_alpha > 0) is not compatible with detection tasks. "
                 "Set mixup_alpha: 0.0 in training config."
+            )
+
+        # Spatial augmentations modify images but NOT bounding boxes,
+        # producing misaligned targets.  Auto-disable with warning
+        # (same pattern as AMP-on-CPU auto-disable).
+        overrides: list[str] = []
+        aug = config.augmentation
+        if aug.hflip > 0:
+            object.__setattr__(aug, "hflip", 0.0)
+            overrides.append("hflip → 0.0")
+        if aug.rotation_angle > 0:
+            object.__setattr__(aug, "rotation_angle", 0)
+            overrides.append("rotation_angle → 0")
+        if aug.min_scale < 1.0:
+            object.__setattr__(aug, "min_scale", 1.0)
+            overrides.append("min_scale → 1.0")
+        if overrides:
+            import warnings
+
+            warnings.warn(
+                "Spatial augmentations are not compatible with detection "
+                "(they transform the image but not the bounding boxes). "
+                f"Auto-disabled: {', '.join(overrides)}.",
+                UserWarning,
+                stacklevel=4,
             )
 
         # Warn about classification-only training params that are silently ignored

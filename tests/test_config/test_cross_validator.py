@@ -14,6 +14,7 @@ from pydantic import ValidationError
 
 from orchard.core.config import (
     ArchitectureConfig,
+    AugmentationConfig,
     Config,
     DatasetConfig,
     HardwareConfig,
@@ -381,7 +382,8 @@ class TestCheckMinDatasetSize:
                     max_samples=30,
                 ),
                 architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
-                training=TrainingConfig(use_amp=False, mixup_alpha=0.0),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0, monitor_metric="map"),
+                augmentation=AugmentationConfig(hflip=0.0, rotation_angle=0, min_scale=1.0),
                 hardware=HardwareConfig(device="cpu"),
             )
 
@@ -430,7 +432,35 @@ class TestCheckDetectionConfig:
                 task_type="detection",
                 dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
                 architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
-                training=TrainingConfig(use_amp=False, mixup_alpha=0.4),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.4, monitor_metric="map"),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+    def test_detection_with_invalid_monitor_metric_raises(self) -> None:
+        """Detection + classification monitor_metric raises error."""
+        with pytest.raises(ValidationError, match="monitor_metric 'auc' is not valid"):
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0, monitor_metric="auc"),
+                augmentation=AugmentationConfig(hflip=0.0, rotation_angle=0, min_scale=1.0),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+    def test_detection_with_map_monitor_metric_passes(self) -> None:
+        """Detection + monitor_metric='map' passes validation."""
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            warnings.filterwarnings("ignore", message="Training at resolution.*on CPU")
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0, monitor_metric="map"),
+                augmentation=AugmentationConfig(hflip=0.0, rotation_angle=0, min_scale=1.0),
                 hardware=HardwareConfig(device="cpu"),
             )
 
@@ -450,7 +480,8 @@ class TestCheckDetectionConfig:
                     force_rgb=True,
                 ),
                 architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
-                training=TrainingConfig(use_amp=False, mixup_alpha=0.0),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0, monitor_metric="map"),
+                augmentation=AugmentationConfig(hflip=0.0, rotation_angle=0, min_scale=1.0),
                 hardware=HardwareConfig(device="cpu"),
             )
 
@@ -464,12 +495,87 @@ class TestCheckDetectionConfig:
                 task_type="detection",
                 dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
                 architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
-                training=TrainingConfig(use_amp=False, mixup_alpha=0.0, label_smoothing=0.1),
+                training=TrainingConfig(
+                    use_amp=False, mixup_alpha=0.0, label_smoothing=0.1, monitor_metric="map"
+                ),
+                augmentation=AugmentationConfig(hflip=0.0, rotation_angle=0, min_scale=1.0),
                 hardware=HardwareConfig(device="cpu"),
             )
 
         smoothing_warnings = [w for w in caught if "label_smoothing is ignored" in str(w.message)]
         assert len(smoothing_warnings) == 1
+
+    def test_detection_spatial_aug_hflip_auto_disabled(self) -> None:
+        """Detection + hflip > 0 auto-disables with warning."""
+        with pytest.warns(UserWarning, match="hflip.*0.0"):
+            cfg = Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0, monitor_metric="map"),
+                augmentation=AugmentationConfig(hflip=0.5, rotation_angle=0, min_scale=1.0),
+                hardware=HardwareConfig(device="cpu"),
+            )
+        assert cfg.augmentation.hflip == 0.0
+
+    def test_detection_spatial_aug_rotation_auto_disabled(self) -> None:
+        """Detection + rotation > 0 auto-disables with warning."""
+        with pytest.warns(UserWarning, match="rotation_angle.*0"):
+            cfg = Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0, monitor_metric="map"),
+                augmentation=AugmentationConfig(hflip=0.0, rotation_angle=15, min_scale=1.0),
+                hardware=HardwareConfig(device="cpu"),
+            )
+        assert cfg.augmentation.rotation_angle == 0
+
+    def test_detection_spatial_aug_min_scale_auto_disabled(self) -> None:
+        """Detection + min_scale < 1.0 auto-disables with warning."""
+        with pytest.warns(UserWarning, match="min_scale.*1.0"):
+            cfg = Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0, monitor_metric="map"),
+                augmentation=AugmentationConfig(hflip=0.0, rotation_angle=0, min_scale=0.8),
+                hardware=HardwareConfig(device="cpu"),
+            )
+        assert cfg.augmentation.min_scale == 1.0
+
+    def test_detection_spatial_aug_multiple_auto_disabled(self) -> None:
+        """Detection + multiple spatial augs auto-disables all with single warning."""
+        with pytest.warns(UserWarning, match="Auto-disabled"):
+            cfg = Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0, monitor_metric="map"),
+                augmentation=AugmentationConfig(hflip=0.5, rotation_angle=10, min_scale=0.9),
+                hardware=HardwareConfig(device="cpu"),
+            )
+        assert cfg.augmentation.hflip == 0.0
+        assert cfg.augmentation.rotation_angle == 0
+        assert cfg.augmentation.min_scale == 1.0
+
+    def test_detection_safe_augmentation_no_warning(self) -> None:
+        """Detection with safe augmentations (jitter only) emits no spatial warning."""
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            warnings.filterwarnings("ignore", message="Training at resolution.*on CPU")
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0, monitor_metric="map"),
+                augmentation=AugmentationConfig(
+                    hflip=0.0, rotation_angle=0, jitter_val=0.3, min_scale=1.0
+                ),
+                hardware=HardwareConfig(device="cpu"),
+            )
 
     def test_classification_skips_detection_check(self) -> None:
         """Classification task_type skips detection-specific checks entirely."""
