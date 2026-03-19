@@ -15,16 +15,11 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchmetrics.detection import MeanAveragePrecision
 
+from ...core.paths import METRIC_LOSS, METRIC_MAP, METRIC_MAP_50, METRIC_MAP_75
+from .helpers import to_cpu
+
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
-
-from ...core.paths import METRIC_LOSS, METRIC_MAP, METRIC_MAP_50, METRIC_MAP_75
-
-
-# TODO(cleanup): Extract to shared _utils.py — duplicated in evaluation_adapter.py
-def _to_cpu(d: dict[str, Any]) -> dict[str, Any]:
-    """Move all tensor values in a dict to CPU."""
-    return {k: v.cpu() if isinstance(v, torch.Tensor) else v for k, v in d.items()}
 
 
 class DetectionMetricsAdapter:
@@ -63,8 +58,8 @@ class DetectionMetricsAdapter:
                 images = [img.to(device) for img in images]
                 predictions = model(images)
                 metric.update(
-                    [_to_cpu(p) for p in predictions],
-                    [_to_cpu(t) for t in targets],
+                    [to_cpu(p) for p in predictions],
+                    [to_cpu(t) for t in targets],
                 )
 
         result = metric.compute()

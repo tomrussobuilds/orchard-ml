@@ -5,8 +5,10 @@ This package manages the end-to-end data pipeline, from downloading raw NPZ file
 using the Dataset Registry to providing fully configured PyTorch DataLoaders.
 """
 
+from .collate import detection_collate_fn
 from .data_explorer import show_sample_images, show_samples_for_dataset
 from .dataset import VisionDataset
+from .detection_dataset import DetectionDataset
 from .diagnostic import (
     create_synthetic_dataset,
     create_synthetic_grayscale_dataset,
@@ -28,6 +30,8 @@ __all__ = [
     "get_augmentations_description",
     "get_pipeline_transforms",
     "VisionDataset",
+    "DetectionDataset",
+    "detection_collate_fn",
     "create_synthetic_dataset",
     "create_synthetic_grayscale_dataset",
 ]

@@ -398,7 +398,7 @@ orchard/core/task_registry.py:
   not_checked: 0
   score: 100.0
 orchard/data_handler/__init__.py:
-  last_run: '2026-03-16T15:23:04Z'
+  last_run: '2026-03-19T13:45:06Z'
   total: 0
   killed: 0
   survived: 0
@@ -776,14 +776,21 @@ orchard/tasks/detection/criterion_adapter.py:
   not_checked: 0
   score: 100.0
 orchard/tasks/detection/evaluation_adapter.py:
-  last_run: '2026-03-19T10:29:42Z'
+  last_run: '2026-03-19T13:45:06Z'
   total: 46
   killed: 39
   survived: 7
   not_checked: 0
   score: 84.8
+orchard/tasks/detection/helpers.py:
+  last_run: '2026-03-19T13:44:49Z'
+  total: 0
+  killed: 0
+  survived: 0
+  not_checked: 0
+  score: 100.0
 orchard/tasks/detection/metrics_adapter.py:
-  last_run: '2026-03-19T10:29:34Z'
+  last_run: '2026-03-19T13:44:58Z'
   total: 26
   killed: 25
   survived: 1

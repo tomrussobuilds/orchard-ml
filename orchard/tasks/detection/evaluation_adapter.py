@@ -22,6 +22,7 @@ from ...core import LOGGER_NAME
 from ...core.paths import METRIC_LOSS, METRIC_MAP, METRIC_MAP_50, METRIC_MAP_75
 from ...evaluation.plot_context import PlotContext
 from ...evaluation.visualization import plot_training_curves
+from .helpers import to_cpu
 
 if TYPE_CHECKING:  # pragma: no cover
     from ...core.config import (
@@ -34,11 +35,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from ...tracking import TrackerProtocol
 
 logger = logging.getLogger(LOGGER_NAME)
-
-
-def _to_cpu(d: dict[str, Any]) -> dict[str, Any]:
-    """Move all tensor values in a dict to CPU."""
-    return {k: v.cpu() if isinstance(v, torch.Tensor) else v for k, v in d.items()}
 
 
 class DetectionEvalPipelineAdapter:
@@ -95,8 +91,8 @@ class DetectionEvalPipelineAdapter:
                 images_on_device = [img.to(device) for img in images]
                 predictions = model(images_on_device)
                 metric.update(
-                    [_to_cpu(p) for p in predictions],
-                    [_to_cpu(t) for t in targets],
+                    [to_cpu(p) for p in predictions],
+                    [to_cpu(t) for t in targets],
                 )
 
         result = metric.compute()
