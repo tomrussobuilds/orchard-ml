@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - widen TaskTrainingStep protocol for detection support
 - extract shared to_cpu helper, export detection classes, update plan
 - extract _forward_and_loss to reduce train_one_epoch complexity
+- extract export validation and benchmark helpers from run_export_phase
 
 ### Fixed
 
