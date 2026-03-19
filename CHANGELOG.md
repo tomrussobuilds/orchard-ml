@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- add detection task adapters and register detection task
+- add detection task adapters and register detection task
+
 ### Changed
 
 - widen TaskTrainingStep protocol for detection support

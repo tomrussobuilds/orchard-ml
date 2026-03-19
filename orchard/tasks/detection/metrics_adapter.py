@@ -21,6 +21,7 @@ if TYPE_CHECKING:  # pragma: no cover
 from ...core.paths import METRIC_LOSS, METRIC_MAP, METRIC_MAP_50, METRIC_MAP_75
 
 
+# TODO(cleanup): Extract to shared _utils.py — duplicated in evaluation_adapter.py
 def _to_cpu(d: dict[str, Any]) -> dict[str, Any]:
     """Move all tensor values in a dict to CPU."""
     return {k: v.cpu() if isinstance(v, torch.Tensor) else v for k, v in d.items()}

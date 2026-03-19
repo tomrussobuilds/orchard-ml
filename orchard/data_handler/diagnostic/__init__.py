@@ -7,10 +7,13 @@ part of the production training pipeline.
 """
 
 from .synthetic import create_synthetic_dataset, create_synthetic_grayscale_dataset
+from .synthetic_detection import SyntheticDetectionData, create_synthetic_detection_dataset
 from .temp_loader import create_temp_loader
 
 __all__ = [
     "create_synthetic_dataset",
     "create_synthetic_grayscale_dataset",
+    "create_synthetic_detection_dataset",
+    "SyntheticDetectionData",
     "create_temp_loader",
 ]

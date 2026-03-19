@@ -395,6 +395,7 @@ def test_get_dataloaders_convenience_function(
             mock_cfg.augmentation,
             mock_cfg.num_workers,
             mock_metadata,
+            task_type="classification",
         )
         mock_factory.build.assert_called_once_with(is_optuna=False)
 
@@ -1388,6 +1389,144 @@ def test_build_train_loader_receives_infra_kwargs(  # type: ignore
         train, _, _ = factory.build()
 
         assert train.num_workers == num_workers
+
+
+# DETECTION TASK TYPE TESTS
+
+
+@pytest.mark.unit
+@patch("orchard.data_handler.loader.DatasetRegistryWrapper")
+@patch("orchard.data_handler.loader.VisionDataset")
+@patch("orchard.data_handler.loader.get_pipeline_transforms")
+def test_detection_task_type_uses_collate_fn(
+    mock_transforms: MagicMock,
+    mock_ds_cls: MagicMock,
+    mock_wrapper: MagicMock,
+    mock_cfg_no_sampler: Any,
+    mock_metadata: Any,
+) -> None:
+    """Detection task_type passes detection_collate_fn to DataLoaders."""
+    mock_transforms.return_value = (MagicMock(), MagicMock())
+    mock_ds = MagicMock(spec=VisionDataset)
+    mock_ds.labels = np.array([0, 1, 0, 1])
+    mock_ds_cls.lazy.return_value = mock_ds
+
+    factory = DataLoaderFactory(
+        mock_cfg_no_sampler.dataset,
+        mock_cfg_no_sampler.training,
+        mock_cfg_no_sampler.augmentation,
+        0,
+        mock_metadata,
+        task_type="detection",
+    )
+
+    with patch("orchard.data_handler.loader.DataLoader") as mock_dl:
+        mock_dl.return_value = MagicMock()
+        factory.build()
+
+        # All 3 DataLoader calls should have collate_fn set
+        from orchard.data_handler.collate import detection_collate_fn
+
+        for call in mock_dl.call_args_list:
+            assert (
+                call.kwargs.get("collate_fn") is detection_collate_fn
+                or call[1].get("collate_fn") is detection_collate_fn
+            )
+
+
+@pytest.mark.unit
+@patch("orchard.data_handler.loader.DatasetRegistryWrapper")
+@patch("orchard.data_handler.loader.VisionDataset")
+@patch("orchard.data_handler.loader.get_pipeline_transforms")
+def test_detection_task_type_skips_sampler(
+    mock_transforms: MagicMock,
+    mock_ds_cls: MagicMock,
+    mock_wrapper: MagicMock,
+    mock_cfg: Any,
+    mock_metadata: Any,
+) -> None:
+    """Detection task_type skips WeightedRandomSampler even when enabled."""
+    mock_transforms.return_value = (MagicMock(), MagicMock())
+    mock_ds = MagicMock(spec=VisionDataset)
+    mock_ds.labels = np.array([0, 1, 0, 1])
+    mock_ds_cls.lazy.return_value = mock_ds
+
+    factory = DataLoaderFactory(
+        mock_cfg.dataset,
+        mock_cfg.training,
+        mock_cfg.augmentation,
+        0,
+        mock_metadata,
+        task_type="detection",
+    )
+
+    with patch("orchard.data_handler.loader.DataLoader") as mock_dl:
+        mock_dl.return_value = MagicMock()
+        factory.build()
+
+        # Train loader should have sampler=None (no WeightedRandomSampler)
+        train_call = mock_dl.call_args_list[0]
+        assert train_call.kwargs.get("sampler") is None or train_call[1].get("sampler") is None
+
+
+@pytest.mark.unit
+@patch("orchard.data_handler.loader.DatasetRegistryWrapper")
+@patch("orchard.data_handler.loader.VisionDataset")
+@patch("orchard.data_handler.loader.get_pipeline_transforms")
+def test_classification_task_type_no_collate_fn(
+    mock_transforms: MagicMock,
+    mock_ds_cls: MagicMock,
+    mock_wrapper: MagicMock,
+    mock_cfg_no_sampler: Any,
+    mock_metadata: Any,
+) -> None:
+    """Classification task_type passes collate_fn=None (default stacking)."""
+    mock_transforms.return_value = (MagicMock(), MagicMock())
+    mock_ds = MagicMock(spec=VisionDataset)
+    mock_ds.labels = np.array([0, 1, 0, 1])
+    mock_ds_cls.lazy.return_value = mock_ds
+
+    factory = DataLoaderFactory(
+        mock_cfg_no_sampler.dataset,
+        mock_cfg_no_sampler.training,
+        mock_cfg_no_sampler.augmentation,
+        0,
+        mock_metadata,
+        task_type="classification",
+    )
+
+    with patch("orchard.data_handler.loader.DataLoader") as mock_dl:
+        mock_dl.return_value = MagicMock()
+        factory.build()
+
+        for call in mock_dl.call_args_list:
+            assert call.kwargs.get("collate_fn") is None or call[1].get("collate_fn") is None
+
+
+@pytest.mark.unit
+@patch("orchard.data_handler.loader.DatasetRegistryWrapper")
+@patch("orchard.data_handler.loader.VisionDataset")
+@patch("orchard.data_handler.loader.get_pipeline_transforms")
+def test_task_type_stored_on_factory(
+    mock_transforms: MagicMock,
+    mock_ds_cls: MagicMock,
+    mock_wrapper: MagicMock,
+    mock_cfg_no_sampler: Any,
+    mock_metadata: Any,
+) -> None:
+    """task_type is stored as _task_type attribute."""
+    mock_transforms.return_value = (MagicMock(), MagicMock())
+
+    factory = DataLoaderFactory(
+        mock_cfg_no_sampler.dataset,
+        mock_cfg_no_sampler.training,
+        mock_cfg_no_sampler.augmentation,
+        0,
+        mock_metadata,
+        task_type="detection",
+    )
+
+    assert factory._task_type == "detection"
 
 
 # MAIN TEST RUNNER

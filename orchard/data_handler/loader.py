@@ -51,6 +51,7 @@ from ..core import (
 )
 from ..core.paths import MIN_SPLIT_SAMPLES
 from ..exceptions import OrchardDatasetError
+from .collate import detection_collate_fn
 from .dataset import VisionDataset
 from .fetcher import DatasetData
 from .transforms import get_pipeline_transforms
@@ -86,6 +87,7 @@ class DataLoaderFactory:
         aug_cfg: AugmentationConfig,
         num_workers: int,
         metadata: DatasetData,
+        task_type: str = "classification",  # pragma: no mutate
     ) -> None:
         """
         Initializes the factory with environment and dataset metadata.
@@ -96,12 +98,15 @@ class DataLoaderFactory:
             aug_cfg: Augmentation sub-config (transforms pipeline).
             num_workers: Resolved worker count from hardware config.
             metadata: Metadata from the data fetcher/downloader.
+            task_type: Task type (``"classification"`` or ``"detection"``).
+                Controls collate function and sampler selection.
         """
         self.dataset_cfg = dataset_cfg
         self.training_cfg = training_cfg
         self.aug_cfg = aug_cfg
         self._num_workers = num_workers
         self.metadata = metadata
+        self._task_type = task_type
 
         wrapper = DatasetRegistryWrapper(resolution=dataset_cfg.resolution)
         self.ds_meta = wrapper.get_dataset(dataset_cfg.dataset_name)
@@ -237,6 +242,9 @@ class DataLoaderFactory:
         train_trans, val_trans = self._get_transformation_pipelines()
 
         # 2. Instantiate Dataset splits (lazy=mmap, eager=full RAM copy)
+        # TODO(detection): Use DetectionDataset when is_detection=True.
+        # Currently uses VisionDataset for all tasks — detection will need
+        # separate image/annotation NPZ loading via DetectionDataset.from_npz.
         _build = VisionDataset.lazy if self.dataset_cfg.lazy_loading else VisionDataset.from_npz
         ds_params = {"path": self.metadata.path, "seed": self.training_cfg.seed}
 
@@ -258,8 +266,10 @@ class DataLoaderFactory:
         val_ds = _build(**ds_params, split="val", transform=val_trans, max_samples=sub_samples)
         test_ds = _build(**ds_params, split="test", transform=val_trans, max_samples=sub_samples)
 
-        # 3. Resolve Sampler and Infrastructure
-        sampler = self._get_balancing_sampler(train_ds)
+        # 3. Resolve Sampler, Collate, and Infrastructure
+        is_detection = self._task_type == "detection"  # pragma: no mutate
+        sampler = None if is_detection else self._get_balancing_sampler(train_ds)
+        collate_fn = detection_collate_fn if is_detection else None
         infra_kwargs = self._get_infrastructure_kwargs(is_optuna=is_optuna)
 
         # 4. Construct DataLoaders
@@ -269,15 +279,24 @@ class DataLoaderFactory:
             shuffle=(sampler is None),
             sampler=sampler,
             drop_last=True,
+            collate_fn=collate_fn,
             **infra_kwargs,
         )
 
         val_loader = DataLoader(
-            val_ds, batch_size=self.training_cfg.batch_size, shuffle=False, **infra_kwargs
+            val_ds,
+            batch_size=self.training_cfg.batch_size,
+            shuffle=False,
+            collate_fn=collate_fn,
+            **infra_kwargs,
         )
 
         test_loader = DataLoader(
-            test_ds, batch_size=self.training_cfg.batch_size, shuffle=False, **infra_kwargs
+            test_ds,
+            batch_size=self.training_cfg.batch_size,
+            shuffle=False,
+            collate_fn=collate_fn,
+            **infra_kwargs,
         )
 
         optuna_str = " (Optuna)" if is_optuna else ""
@@ -303,6 +322,7 @@ def get_dataloaders(
     aug_cfg: AugmentationConfig,
     num_workers: int,
     is_optuna: bool = False,
+    task_type: str = "classification",  # pragma: no mutate
 ) -> tuple[DataLoader[Any], DataLoader[Any], DataLoader[Any]]:
     """
     Convenience function for creating train/val/test DataLoaders.
@@ -318,6 +338,7 @@ def get_dataloaders(
         num_workers: Resolved worker count from hardware config.
         is_optuna: If True, use memory-conservative settings for
             hyperparameter tuning.
+        task_type: Task type (``"classification"`` or ``"detection"``).
 
     Returns:
         A 3-tuple of (train_loader, val_loader, test_loader).
@@ -328,5 +349,7 @@ def get_dataloaders(
         ...     data, cfg.dataset, cfg.training, cfg.augmentation, cfg.num_workers
         ... )
     """
-    factory = DataLoaderFactory(dataset_cfg, training_cfg, aug_cfg, num_workers, metadata)
+    factory = DataLoaderFactory(
+        dataset_cfg, training_cfg, aug_cfg, num_workers, metadata, task_type=task_type
+    )
     return factory.build(is_optuna=is_optuna)

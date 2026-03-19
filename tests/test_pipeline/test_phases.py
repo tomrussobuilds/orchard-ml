@@ -811,6 +811,7 @@ def test_run_training_phase_verifies_all_kwargs(
         cfg.training,
         cfg.augmentation,
         cfg.num_workers,
+        task_type=cfg.task_type,
     )
 
     # show_samples_for_dataset

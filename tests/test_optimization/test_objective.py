@@ -830,6 +830,7 @@ def test_optuna_objective_call_builds_trial_config() -> None:
                 mock_trial_cfg.augmentation,
                 mock_trial_cfg.num_workers,
                 is_optuna=True,
+                task_type=mock_trial_cfg.task_type,
             )
 
 
@@ -1818,7 +1819,7 @@ def test_sample_params_hasattr_exact_string() -> None:
     # Object WITH sample_params → uses it
     mock_search_space = MagicMock()
     mock_search_space.sample_params.return_value = {"lr": 0.001}
-    objective.search_space = mock_search_space  # type: ignore
+    objective.search_space = mock_search_space
 
     result2 = objective._sample_params(mock_trial)
     assert result2 == {"lr": 0.001}

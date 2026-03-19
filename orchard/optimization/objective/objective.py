@@ -90,6 +90,7 @@ class DataloaderFactoryProtocol(Protocol):
         aug_cfg: AugmentationConfig,
         num_workers: int,
         is_optuna: bool = False,
+        task_type: str = "classification",
     ) -> tuple[DataLoader[Any], DataLoader[Any], DataLoader[Any]]:
         """Create train/val/test dataloaders."""
         ...  # pragma: no cover
@@ -233,6 +234,7 @@ class OptunaObjective:
                 trial_cfg.augmentation,
                 trial_cfg.num_workers,
                 is_optuna=True,
+                task_type=trial_cfg.task_type,
             )
             model = self._model_factory(self.device, trial_cfg.dataset, trial_cfg.architecture)
             optimizer = get_optimizer(model, trial_cfg.training)

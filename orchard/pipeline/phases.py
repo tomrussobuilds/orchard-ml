@@ -167,9 +167,19 @@ def run_training_phase(
     Reporter.log_phase_header(run_logger, "DATA PREPARATION")
 
     data = load_dataset(ds_meta)
-    loaders = get_dataloaders(data, cfg.dataset, cfg.training, cfg.augmentation, cfg.num_workers)
+    loaders = get_dataloaders(
+        data,
+        cfg.dataset,
+        cfg.training,
+        cfg.augmentation,
+        cfg.num_workers,
+        task_type=cfg.task_type,
+    )
     train_loader, val_loader, test_loader = loaders
 
+    # TODO(detection): show_samples_for_dataset assumes stacked Tensor batches.
+    # Detection batches (list[Tensor]) will crash on denormalization. Guard or
+    # skip for detection tasks when wiring the full detection pipeline.
     show_samples_for_dataset(
         loader=train_loader,
         dataset_name=cfg.dataset.dataset_name,
