@@ -37,6 +37,7 @@ from ..core import LOGGER_NAME, ArchitectureConfig, DatasetConfig, LogStyle
 from ..exceptions import OrchardConfigError
 from .convnext_tiny import build_convnext_tiny
 from .efficientnet_b0 import build_efficientnet_b0
+from .fasterrcnn import build_fasterrcnn
 from .mini_cnn import build_mini_cnn
 from .resnet_18 import build_resnet_18
 from .timm_backbone import build_timm_model
@@ -55,8 +56,8 @@ _MODEL_REGISTRY: MappingProxyType[str, _BuilderFn] = MappingProxyType(
         "convnext_tiny": build_convnext_tiny,
         "vit_tiny": build_vit_tiny,
         "mini_cnn": build_mini_cnn,
-        # Extension point: register your custom architecture here
-        # "your_model": build_your_model,
+        # Detection architectures
+        "fasterrcnn": build_fasterrcnn,
     }
 )
 
@@ -218,6 +219,12 @@ def _dispatch_builder(
         logger.error(" %s %s", LogStyle.FAILURE, error_msg)
         raise OrchardConfigError(error_msg)
 
+    if builder is build_fasterrcnn:
+        return build_fasterrcnn(
+            num_classes=num_classes,
+            in_channels=in_channels,
+            pretrained=arch_cfg.pretrained,
+        )
     if builder is build_mini_cnn:
         return build_mini_cnn(
             num_classes=num_classes,
