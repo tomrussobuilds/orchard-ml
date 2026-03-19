@@ -14,10 +14,20 @@ from .classification import (
     ClassificationMetricsAdapter,
     ClassificationTrainingStepAdapter,
 )
+from .detection import (
+    DetectionCriterionAdapter,
+    DetectionEvalPipelineAdapter,
+    DetectionMetricsAdapter,
+    DetectionTrainingStepAdapter,
+)
 
 __all__ = [
     "ClassificationCriterionAdapter",
     "ClassificationEvalPipelineAdapter",
     "ClassificationMetricsAdapter",
     "ClassificationTrainingStepAdapter",
+    "DetectionCriterionAdapter",
+    "DetectionEvalPipelineAdapter",
+    "DetectionMetricsAdapter",
+    "DetectionTrainingStepAdapter",
 ]

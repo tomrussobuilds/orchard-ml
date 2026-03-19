@@ -1,5 +1,5 @@
 orchard/__init__.py:
-  last_run: '2026-03-16T15:23:04Z'
+  last_run: '2026-03-19T10:12:27Z'
   total: 0
   killed: 0
   survived: 0
@@ -349,14 +349,14 @@ orchard/core/orchestrator.py:
   not_checked: 0
   score: 100.0
 orchard/core/paths/__init__.py:
-  last_run: '2026-03-16T15:23:04Z'
+  last_run: '2026-03-19T10:12:27Z'
   total: 0
   killed: 0
   survived: 0
   not_checked: 0
   score: 100.0
 orchard/core/paths/constants.py:
-  last_run: '2026-03-18T12:04:15Z'
+  last_run: '2026-03-19T10:12:27Z'
   total: 0
   killed: 0
   survived: 0
@@ -692,7 +692,7 @@ orchard/pipeline/phases.py:
   not_checked: 0
   score: 100.0
 orchard/tasks/__init__.py:
-  last_run: '2026-03-16T15:23:04Z'
+  last_run: '2026-03-19T10:12:27Z'
   total: 0
   killed: 0
   survived: 0
@@ -713,9 +713,9 @@ orchard/tasks/classification/criterion_adapter.py:
   not_checked: 0
   score: 100.0
 orchard/tasks/classification/evaluation_adapter.py:
-  last_run: '2026-03-16T15:23:04Z'
-  total: 27
-  killed: 27
+  last_run: '2026-03-19T09:51:06Z'
+  total: 28
+  killed: 28
   survived: 0
   not_checked: 0
   score: 100.0
@@ -730,6 +730,41 @@ orchard/tasks/classification/training_step_adapter.py:
   last_run: '2026-03-19T09:07:41Z'
   total: 34
   killed: 34
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/tasks/detection/__init__.py:
+  last_run: '2026-03-19T10:12:27Z'
+  total: 0
+  killed: 0
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/tasks/detection/criterion_adapter.py:
+  last_run: '2026-03-19T10:31:05Z'
+  total: 1
+  killed: 1
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/tasks/detection/evaluation_adapter.py:
+  last_run: '2026-03-19T10:29:42Z'
+  total: 46
+  killed: 39
+  survived: 7
+  not_checked: 0
+  score: 84.8
+orchard/tasks/detection/metrics_adapter.py:
+  last_run: '2026-03-19T10:29:34Z'
+  total: 26
+  killed: 25
+  survived: 1
+  not_checked: 0
+  score: 96.2
+orchard/tasks/detection/training_step_adapter.py:
+  last_run: '2026-03-19T09:50:43Z'
+  total: 17
+  killed: 17
   survived: 0
   not_checked: 0
   score: 100.0

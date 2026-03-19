@@ -8,6 +8,7 @@ to satisfy :class:`~orchard.core.task_protocols.TaskEvalPipeline`.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
 import torch.nn as nn
@@ -82,8 +83,10 @@ class ClassificationEvalPipelineAdapter:
             aug_info=aug_info,
             tracker=tracker,
         )
-        return {
-            METRIC_F1: macro_f1,
-            METRIC_ACCURACY: test_acc,
-            METRIC_AUC: test_auc,
-        }
+        return MappingProxyType(
+            {
+                METRIC_F1: macro_f1,
+                METRIC_ACCURACY: test_acc,
+                METRIC_AUC: test_auc,
+            }
+        )

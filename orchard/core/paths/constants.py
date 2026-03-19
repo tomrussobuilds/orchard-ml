@@ -32,6 +32,11 @@ METRIC_AUC: Final[str] = "auc"
 METRIC_LOSS: Final[str] = "loss"
 METRIC_F1: Final[str] = "f1"
 
+# Detection-specific metric keys (mAP family)
+METRIC_MAP: Final[str] = "map"
+METRIC_MAP_50: Final[str] = "map_50"
+METRIC_MAP_75: Final[str] = "map_75"
+
 # Default random seed for deterministic subsampling, data splitting, and fallback RNGs
 DEFAULT_SEED: Final[int] = 42
 

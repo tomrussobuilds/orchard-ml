@@ -13,7 +13,16 @@ __version__ = _pkg_version("orchard-ml")
 
 from .architectures import get_model
 from .core import Config, LogStyle, RootOrchestrator, log_pipeline_summary
-from .core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS, MLRUNS_DB
+from .core.paths import (
+    METRIC_ACCURACY,
+    METRIC_AUC,
+    METRIC_F1,
+    METRIC_LOSS,
+    METRIC_MAP,
+    METRIC_MAP_50,
+    METRIC_MAP_75,
+    MLRUNS_DB,
+)
 from .core.task_registry import TaskComponents, register_task
 from .exceptions import (
     OrchardConfigError,
@@ -29,6 +38,10 @@ from .tasks import (
     ClassificationEvalPipelineAdapter,
     ClassificationMetricsAdapter,
     ClassificationTrainingStepAdapter,
+    DetectionCriterionAdapter,
+    DetectionEvalPipelineAdapter,
+    DetectionMetricsAdapter,
+    DetectionTrainingStepAdapter,
 )
 from .tracking import create_tracker
 
@@ -56,6 +69,32 @@ register_task(
         eval_pipeline=ClassificationEvalPipelineAdapter(),
         fallback_metrics=_CLASSIFICATION_FALLBACK,
         early_stopping_thresholds=_CLASSIFICATION_EARLY_STOP,
+    ),
+)
+
+_DETECTION_FALLBACK = {
+    METRIC_LOSS: 999.0,
+    METRIC_MAP: 0.0,
+    METRIC_MAP_50: 0.0,
+    METRIC_MAP_75: 0.0,
+}
+
+_DETECTION_EARLY_STOP = {
+    METRIC_MAP: 0.95,
+    METRIC_MAP_50: 0.98,
+    METRIC_MAP_75: 0.90,
+    METRIC_LOSS: 0.01,
+}
+
+register_task(
+    "detection",
+    TaskComponents(
+        criterion_factory=DetectionCriterionAdapter(),
+        training_step=DetectionTrainingStepAdapter(),
+        validation_metrics=DetectionMetricsAdapter(),
+        eval_pipeline=DetectionEvalPipelineAdapter(),
+        fallback_metrics=_DETECTION_FALLBACK,
+        early_stopping_thresholds=_DETECTION_EARLY_STOP,
     ),
 )
 
