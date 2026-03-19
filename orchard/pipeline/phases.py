@@ -289,6 +289,17 @@ def run_export_phase(
     if cfg.export is None:
         return None
 
+    # TODO(detection): Remove pragma when ONNX export is implemented for detection
+    if cfg.task_type == "detection":  # pragma: no mutate
+        import warnings  # pragma: no mutate
+
+        warnings.warn(  # pragma: no mutate
+            "ONNX export is not yet supported for detection tasks. Skipping.",  # pragma: no mutate
+            UserWarning,  # pragma: no mutate
+            stacklevel=2,  # pragma: no mutate
+        )
+        return None  # pragma: no mutate
+
     paths = orchestrator.paths
     run_logger = orchestrator.run_logger
 

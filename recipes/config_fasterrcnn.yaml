@@ -1,0 +1,78 @@
+# ==============================================================================
+# FILE: recipes/config_fasterrcnn.yaml
+# Faster R-CNN Object Detection (ResNet-50-FPN v2)
+# ==============================================================================
+# Usage: orchard run recipes/config_fasterrcnn.yaml
+# Note: Detection pipeline requires detection-compatible dataset (not yet wired
+#       to standard NPZ pipeline — this recipe is a template for Phase 4+).
+
+task_type: detection
+
+dataset:
+  name: "pennfudan"
+  data_root: ./dataset
+  resolution: 224
+  force_rgb: true
+  use_weighted_sampler: false
+  max_samples: null
+
+architecture:
+  name: "fasterrcnn"
+  pretrained: true
+
+training:
+  seed: 42
+
+  batch_size: 4
+  learning_rate: 0.005
+  weight_decay: 0.0005
+  momentum: 0.9
+  min_lr: 1e-7
+  optimizer_type: "sgd"
+
+  # No MixUp for detection
+  mixup_alpha: 0.0
+  label_smoothing: 0.0
+
+  epochs: 30
+  patience: 10
+  grad_clip: 1.0
+  mixup_epochs: 0
+
+  monitor_metric: "map"
+  monitor_direction: "maximize"
+  scheduler_type: "cosine"
+  scheduler_patience: 5
+  scheduler_factor: 0.1
+  step_size: 10
+
+  use_amp: true
+  use_tta: false
+  criterion_type: "cross_entropy"
+  weighted_loss: false
+
+augmentation:
+  hflip: 0.5
+  rotation_angle: 0
+  jitter_val: 0.0
+  min_scale: 1.0
+
+hardware:
+  device: "auto"
+  reproducible: false
+
+telemetry:
+  output_dir: ./outputs
+  log_level: "INFO"
+  log_interval: 50
+
+evaluation:
+  n_samples: 12
+  fig_dpi: 200
+  cmap_confusion: Blues
+  plot_style: seaborn-v0_8-muted
+  grid_cols: 4
+  fig_size_predictions: [12, 8]
+  report_format: xlsx
+  save_confusion_matrix: false
+  save_predictions_grid: false

@@ -617,6 +617,7 @@ class TestCommentedYaml:
         data = load_config_from_yaml(target)
 
         assert set(data.keys()) == {
+            "task_type",
             "dataset",
             "architecture",
             "training",

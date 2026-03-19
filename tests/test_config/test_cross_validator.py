@@ -368,18 +368,20 @@ class TestCheckMinDatasetSize:
 
         with warnings.catch_warnings():
             warnings.simplefilter("error")
+            # Allow CPU+highres warning (not relevant to this test)
+            warnings.filterwarnings("ignore", message="Training at resolution.*on CPU")
             # max_samples=30 < num_classes=50 would raise for classification
             Config(
                 task_type="detection",
                 dataset=DatasetConfig(
                     name="organamnist",
-                    resolution=28,
+                    resolution=224,
                     metadata=mock_metadata_many_classes,
                     force_rgb=True,
                     max_samples=30,
                 ),
-                architecture=ArchitectureConfig(name="resnet_18", pretrained=False),
-                training=TrainingConfig(use_amp=False),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0),
                 hardware=HardwareConfig(device="cpu"),
             )
 
@@ -393,6 +395,74 @@ class TestValidatorDirectCall:
         cfg = Config(hardware=HardwareConfig(device="cpu"))
         result = _CrossDomainValidator.validate(cfg)
         assert result is cfg
+
+
+@pytest.mark.unit
+class TestCheckDetectionConfig:
+    """Tests for _check_detection_config validator."""
+
+    def test_detection_with_classification_arch_raises(self) -> None:
+        """Detection + classification architecture raises error."""
+        with pytest.raises(ValidationError, match="not compatible.*detection"):
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="resnet_18", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+    def test_detection_with_low_resolution_raises(self) -> None:
+        """Detection + resolution < 224 raises error."""
+        with pytest.raises(ValidationError, match="resolution >= 224"):
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=28, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+    def test_detection_with_mixup_raises(self) -> None:
+        """Detection + mixup_alpha > 0 raises error."""
+        with pytest.raises(ValidationError, match="MixUp.*not compatible.*detection"):
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.4),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+    def test_detection_valid_config_passes(self, mock_metadata_many_classes: MagicMock) -> None:
+        """Valid detection config passes all checks."""
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            warnings.filterwarnings("ignore", message="Training at resolution.*on CPU")
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(
+                    name="organamnist",
+                    resolution=224,
+                    metadata=mock_metadata_many_classes,
+                    force_rgb=True,
+                ),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+    def test_classification_skips_detection_check(self) -> None:
+        """Classification task_type skips detection-specific checks entirely."""
+        # resnet_18 is not a detection arch but should pass for classification
+        Config(
+            task_type="classification",
+            architecture=ArchitectureConfig(name="resnet_18", pretrained=False),
+            training=TrainingConfig(use_amp=False),
+            hardware=HardwareConfig(device="cpu"),
+        )
 
 
 if __name__ == "__main__":

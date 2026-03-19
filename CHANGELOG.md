@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add detection task adapters and register detection task
 - add detection task adapters and register detection task
 - add detection data loading pipeline
+- add Faster R-CNN builder and register in model factory
 
 ### Changed
 

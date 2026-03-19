@@ -44,6 +44,7 @@ from .types import TaskType
 # keep in sync when adding new resolutions.
 _MODELS_LOW_RES = frozenset({"mini_cnn"})
 _MODELS_224_ONLY = frozenset({"efficientnet_b0", "vit_tiny", "convnext_tiny"})
+_MODELS_DETECTION = frozenset({"fasterrcnn"})
 
 # Resolution constraints (subsets of core.paths.constants.SUPPORTED_RESOLUTIONS)
 _RESOLUTIONS_LOW_RES: Final[frozenset[int]] = frozenset({28, 32, 64})
@@ -360,6 +361,7 @@ class _CrossDomainValidator:
         cls._check_cpu_highres_performance(config)
         cls._check_min_dataset_size(config)
         cls._check_quantization_architecture(config)
+        cls._check_detection_config(config)
         return config
 
     @classmethod
@@ -546,4 +548,39 @@ class _CrossDomainValidator:
                 f"10x num_classes ({num_classes}). Class balancing may be unreliable.",
                 UserWarning,
                 stacklevel=4,
+            )
+
+    @classmethod
+    def _check_detection_config(cls, config: Config) -> None:
+        """
+        Validate detection-specific constraints.
+
+        Enforces that detection tasks use compatible architectures,
+        resolutions, and training settings.
+        """
+        if config.task_type != "detection":
+            return
+
+        model_name = config.architecture.name.lower()
+
+        # Detection requires a detection-capable architecture
+        is_detection_arch = model_name in _MODELS_DETECTION or model_name.startswith("timm/")
+        if not is_detection_arch:
+            raise OrchardConfigError(
+                f"Architecture '{config.architecture.name}' is not compatible with "
+                f"task_type='detection'. Use a detection model (e.g. 'fasterrcnn')."
+            )
+
+        # Detection models need reasonable resolution (FPN expects >= 224)
+        if config.dataset.resolution < HIGHRES_THRESHOLD:
+            raise OrchardConfigError(
+                f"Detection requires resolution >= {HIGHRES_THRESHOLD}, "
+                f"got {config.dataset.resolution}."
+            )
+
+        # MixUp is not meaningful for bounding-box tasks
+        if config.training.mixup_alpha > 0:
+            raise OrchardConfigError(
+                "MixUp (mixup_alpha > 0) is not compatible with detection tasks. "
+                "Set mixup_alpha: 0.0 in training config."
             )

@@ -253,6 +253,27 @@ def test_run_export_phase_returns_none_when_no_export_config(mock_orchestrator: 
 
 
 @pytest.mark.unit
+def test_run_export_phase_skips_for_detection(mock_orchestrator: MagicMock) -> None:
+    """Test run_export_phase returns None with warning for detection tasks."""
+    import warnings
+
+    mock_orchestrator.cfg.export = MagicMock()
+    mock_orchestrator.cfg.task_type = "detection"
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        result = run_export_phase(
+            mock_orchestrator,
+            checkpoint_path=Path("/mock/model.pth"),
+        )
+
+    assert result is None
+    detection_warnings = [w for w in caught if "not yet supported for detection" in str(w.message)]
+    assert len(detection_warnings) == 1
+    assert detection_warnings[0].category is UserWarning
+
+
+@pytest.mark.unit
 @patch("orchard.pipeline.phases.validate_export")
 @patch("orchard.pipeline.phases.get_model")
 @patch("orchard.pipeline.phases.export_to_onnx")

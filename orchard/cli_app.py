@@ -106,7 +106,8 @@ def init(
 
     data = _build_init_dict()
     yaml_body = _build_commented_yaml(data)
-    content = _INIT_HEADER.format(filename=output.name) + yaml_body
+    task_line = "# Task type: 'classification' or 'detection'\ntask_type: classification\n\n"
+    content = _INIT_HEADER.format(filename=output.name) + task_line + yaml_body
 
     output.write_text(content, encoding="utf-8")
     typer.echo(f"Recipe created: {output}")
