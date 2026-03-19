@@ -32,6 +32,7 @@ from ..core import (
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..core import RootOrchestrator
+    from ..core.config import ExportConfig
     from ..tracking import TrackerProtocol
 
 from ..architectures import get_model
@@ -259,6 +260,71 @@ def run_training_phase(
     )
 
 
+def _validate_exported_models(
+    pytorch_model: nn.Module,
+    onnx_path: Path,
+    quantized_path: Path | None,
+    input_shape: tuple[int, int, int],
+    export_cfg: ExportConfig,
+) -> None:
+    """Validate ONNX (and optionally quantized) model against PyTorch outputs."""
+    is_valid = validate_export(
+        pytorch_model=pytorch_model,
+        onnx_path=onnx_path,
+        input_shape=input_shape,
+        num_samples=export_cfg.validation_samples,
+        max_deviation=export_cfg.max_deviation,
+        label=export_cfg.format.upper(),
+    )
+    # `is False` (not `not is_valid`): None means onnxruntime is absent,
+    # which is a skip — only warn when validation actually ran and failed.
+    if is_valid is False:
+        logger.warning(
+            "  %s Numerical validation failed: ONNX outputs diverge from PyTorch model",
+            LogStyle.WARNING,
+        )
+
+    if quantized_path is not None:
+        q_valid = validate_export(
+            pytorch_model=pytorch_model,
+            onnx_path=quantized_path,
+            input_shape=input_shape,
+            num_samples=export_cfg.validation_samples,
+            max_deviation=export_cfg.max_deviation * _QUANTIZED_TOLERANCE_FACTOR,
+            label=export_cfg.quantization_type.upper(),
+        )
+        if q_valid is False:
+            logger.error(
+                "  %s Quantized model validation failed: outputs diverge beyond 10x tolerance",
+                LogStyle.FAILURE,
+            )
+
+
+def _benchmark_exported_models(
+    onnx_path: Path,
+    quantized_path: Path | None,
+    input_shape: tuple[int, int, int],
+    export_cfg: ExportConfig,
+    seed: int,
+) -> None:
+    """Run inference latency benchmarks on ONNX (and optionally quantized) model."""
+    benchmark_onnx_inference(
+        onnx_path=onnx_path,
+        input_shape=input_shape,
+        num_runs=export_cfg.benchmark_runs,
+        seed=seed,
+        label=export_cfg.format.upper(),
+    )
+    if quantized_path:
+        benchmark_onnx_inference(
+            onnx_path=quantized_path,
+            input_shape=input_shape,
+            num_runs=export_cfg.benchmark_runs,
+            seed=seed,
+            label=export_cfg.quantization_type.upper(),
+        )
+
+
 def run_export_phase(
     orchestrator: RootOrchestrator,
     checkpoint_path: Path,
@@ -347,57 +413,13 @@ def run_export_phase(
 
     # Numerical validation: compare PyTorch vs ONNX outputs
     if export_cfg.validate_export:
-        is_valid = validate_export(
-            pytorch_model=export_model,
-            onnx_path=onnx_path,
-            input_shape=input_shape,
-            num_samples=export_cfg.validation_samples,
-            max_deviation=export_cfg.max_deviation,
-            label=export_cfg.format.upper(),
-        )
-        # `is False` (not `not is_valid`): None means onnxruntime is absent,
-        # which is a skip — only warn when validation actually ran and failed.
-        if is_valid is False:
-            logger.warning(
-                "  %s Numerical validation failed: ONNX outputs diverge from PyTorch model",
-                LogStyle.WARNING,
-            )
-
-        # Validate quantized model (expected larger deviations from quantization)
-        if quantized_path is not None:
-            q_valid = validate_export(
-                pytorch_model=export_model,
-                onnx_path=quantized_path,
-                input_shape=input_shape,
-                num_samples=export_cfg.validation_samples,
-                max_deviation=export_cfg.max_deviation * _QUANTIZED_TOLERANCE_FACTOR,
-                label=export_cfg.quantization_type.upper(),
-            )
-            # See comment above: `is False` intentionally excludes None (skipped).
-            if q_valid is False:
-                logger.error(
-                    "  %s Quantized model validation failed: "
-                    "outputs diverge beyond 10x tolerance",
-                    LogStyle.FAILURE,
-                )
+        _validate_exported_models(export_model, onnx_path, quantized_path, input_shape, export_cfg)
 
     # Inference latency benchmark
     if export_cfg.benchmark:
-        benchmark_onnx_inference(
-            onnx_path=onnx_path,
-            input_shape=input_shape,
-            num_runs=export_cfg.benchmark_runs,
-            seed=cfg.training.seed,
-            label=export_cfg.format.upper(),
+        _benchmark_exported_models(
+            onnx_path, quantized_path, input_shape, export_cfg, cfg.training.seed
         )
-        if quantized_path:
-            benchmark_onnx_inference(
-                onnx_path=quantized_path,
-                input_shape=input_shape,
-                num_runs=export_cfg.benchmark_runs,
-                seed=cfg.training.seed,
-                label=export_cfg.quantization_type.upper(),
-            )
 
     logger.info("  %s Export completed", LogStyle.SUCCESS)
     logger.info("    %s Output            : %s", LogStyle.ARROW, onnx_path.name)
