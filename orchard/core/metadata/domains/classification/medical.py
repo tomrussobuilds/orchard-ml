@@ -13,8 +13,8 @@ from typing import Final
 
 import yaml
 
-from ...paths import DATASET_DIR
-from ..base import DatasetMetadata
+from ....paths import DATASET_DIR
+from ...base import DatasetMetadata
 
 _YAML_PATH: Final[Path] = Path(__file__).parent / "medical.yaml"
 

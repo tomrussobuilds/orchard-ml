@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import Final
 
-from ...paths import DATASET_DIR
-from ..base import DatasetMetadata
+from ....paths import DATASET_DIR
+from ...base import DatasetMetadata
 
 # SPACE DATASET REGISTRY (224x224)
 REGISTRY_224: Final[dict[str, DatasetMetadata]] = {

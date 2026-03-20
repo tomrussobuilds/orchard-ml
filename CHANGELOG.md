@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Miscellaneous
 
 - suppress Sonar S1172 for detection adapter protocol params
+- detection cosmetic fixes and missing tests
 
 ## [0.2.2] - 2026-03-18
 

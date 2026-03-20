@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from typing import Final
 
-from ...paths import DATASET_DIR
-from ..base import DatasetMetadata
+from ....paths import DATASET_DIR
+from ...base import DatasetMetadata
 
 # CIFAR-10 CLASS LABELS (index-ordered)
 _CIFAR10_CLASSES: Final[list[str]] = [

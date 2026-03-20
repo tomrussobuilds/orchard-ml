@@ -314,7 +314,7 @@ orchard/core/metadata/base.py:
   not_checked: 0
   score: 100.0
 orchard/core/metadata/domains/__init__.py:
-  last_run: '2026-03-16T15:23:04Z'
+  last_run: '2026-03-20T20:22:25Z'
   total: 0
   killed: 0
   survived: 0
@@ -322,6 +322,20 @@ orchard/core/metadata/domains/__init__.py:
   score: 100.0
 orchard/core/metadata/domains/benchmark.py:
   last_run: '2026-03-16T15:23:04Z'
+  total: 0
+  killed: 0
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/core/metadata/domains/classification/__init__.py:
+  last_run: '2026-03-20T20:22:25Z'
+  total: 0
+  killed: 0
+  survived: 0
+  not_checked: 0
+  score: 100.0
+orchard/core/metadata/domains/detection/__init__.py:
+  last_run: '2026-03-20T20:22:25Z'
   total: 0
   killed: 0
   survived: 0
