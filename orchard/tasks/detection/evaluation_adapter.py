@@ -132,7 +132,7 @@ class DetectionEvalPipelineAdapter:
 
         # Tracker logging
         if tracker is not None:
-            full_metrics = {METRIC_LOSS: 0.0, **test_metrics}
+            full_metrics = {METRIC_LOSS: 0.0, **test_metrics}  # sentinel for tracker schema
             tracker.log_test_metrics(full_metrics)
 
         return MappingProxyType(test_metrics)

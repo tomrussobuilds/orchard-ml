@@ -66,7 +66,7 @@ class DetectionMetricsAdapter:
 
         return MappingProxyType(
             {
-                METRIC_LOSS: 0.0,
+                METRIC_LOSS: 0.0,  # sentinel — detection models don't expose validation loss
                 METRIC_MAP: float(result["map"]),
                 METRIC_MAP_50: float(result["map_50"]),
                 METRIC_MAP_75: float(result["map_75"]),

@@ -48,8 +48,6 @@ training:
 
   use_amp: true
   use_tta: false
-  criterion_type: "cross_entropy"
-  weighted_loss: false
 
 augmentation:
   # Spatial augmentations (hflip, rotation, min_scale<1) are auto-disabled

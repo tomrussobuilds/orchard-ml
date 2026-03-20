@@ -675,4 +675,29 @@ def test_detection_early_stopping_thresholds() -> None:
     task = get_task("detection")
     assert "map" in task.early_stopping_thresholds
     assert "map_50" in task.early_stopping_thresholds
-    assert task.early_stopping_thresholds["map"] == pytest.approx(0.95)
+    assert task.early_stopping_thresholds["map"] == pytest.approx(0.60)
+
+
+# ── to_cpu helper ─────────────────────────────────────────────────────────────
+
+
+@pytest.mark.unit
+def test_to_cpu_moves_tensors() -> None:
+    """to_cpu moves tensor values to CPU."""
+    from orchard.tasks.detection.helpers import to_cpu
+
+    d = {"boxes": torch.tensor([1.0, 2.0]), "labels": torch.tensor([0])}
+    result = to_cpu(d)
+    assert all(v.device.type == "cpu" for v in result.values())
+
+
+@pytest.mark.unit
+def test_to_cpu_preserves_non_tensors() -> None:
+    """to_cpu passes through non-tensor values unchanged."""
+    from orchard.tasks.detection.helpers import to_cpu
+
+    d: dict[str, Any] = {"boxes": torch.tensor([1.0]), "name": "obj", "count": 3}
+    result = to_cpu(d)
+    assert result["name"] == "obj"
+    assert result["count"] == 3
+    assert isinstance(result["boxes"], torch.Tensor)
