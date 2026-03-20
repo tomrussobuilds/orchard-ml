@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - extract _forward_and_loss to reduce train_one_epoch complexity
 - extract export validation and benchmark helpers from run_export_phase
 - reorganize metadata domains into classification/ and detection/ subdirs
+- add annotation_path to metadata and split wrapper by task type
 
 ### Fixed
 

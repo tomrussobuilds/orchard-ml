@@ -6,4 +6,8 @@ registries. Detection datasets provide bounding-box annotations
 alongside images.
 """
 
-__all__: list[str] = []
+from .pennfudan import REGISTRY_224 as PENNFUDAN_224
+
+__all__ = [
+    "PENNFUDAN_224",
+]

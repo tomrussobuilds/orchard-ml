@@ -106,6 +106,16 @@ class TestBuildViTTiny:
                 "vit_tiny_patch16_224", pretrained=False, num_classes=num_classes, in_chans=3
             )
 
+    def test_build_vit_tiny_grayscale_no_pretrained(self) -> None:
+        """Grayscale channel adaptation works without pretrained weights (no network)."""
+        model = build_vit_tiny(num_classes=5, in_channels=1, pretrained=False)
+
+        # patch_embed.proj should be adapted to 1 input channel
+        assert model.patch_embed.proj.in_channels == 1  # type: ignore
+        x = torch.randn(1, 1, 224, 224)
+        output = model(x)
+        assert output.shape == (1, 5)
+
     def test_invalid_weight_variant_raises_error(self, device) -> None:  # type: ignore
         """Verifies that an invalid timm variant triggers a descriptive ValueError."""
         with pytest.raises(OrchardConfigError, match="Invalid ViT weight variant"):

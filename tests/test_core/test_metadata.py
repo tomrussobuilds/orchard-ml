@@ -258,12 +258,24 @@ def test_registry_wrapper_empty_source_registry() -> None:
 
 
 @pytest.mark.unit
-def test_detection_registry_wrapper_empty_raises() -> None:
-    """DetectionRegistryWrapper raises ValueError when no detection datasets exist."""
+def test_detection_registry_wrapper_unsupported_resolution_raises() -> None:
+    """DetectionRegistryWrapper raises ValueError for resolution without detection datasets."""
     from orchard.core.metadata.wrapper import DetectionRegistryWrapper
 
     with pytest.raises(ValueError, match="No datasets available"):
-        DetectionRegistryWrapper(resolution=224)
+        DetectionRegistryWrapper(resolution=28)
+
+
+@pytest.mark.unit
+def test_detection_registry_wrapper_has_pennfudan() -> None:
+    """DetectionRegistryWrapper at 224 contains pennfudan."""
+    from orchard.core.metadata.wrapper import DetectionRegistryWrapper
+
+    wrapper = DetectionRegistryWrapper(resolution=224)
+    meta = wrapper.get_dataset("pennfudan")
+    assert meta.name == "pennfudan"
+    assert meta.classes == ["person"]
+    assert meta.annotation_path is not None
 
 
 @pytest.mark.unit

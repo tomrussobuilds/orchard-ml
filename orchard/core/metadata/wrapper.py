@@ -25,6 +25,7 @@ from .domains import (
     MEDICAL_224,
     SPACE_224,
 )
+from .domains.detection import PENNFUDAN_224
 
 # Classification: resolution → domain registries
 _CLASSIFICATION_REGISTRIES: dict[int, tuple[dict[str, DatasetMetadata], ...]] = {
@@ -35,8 +36,10 @@ _CLASSIFICATION_REGISTRIES: dict[int, tuple[dict[str, DatasetMetadata], ...]] = 
     224: (MEDICAL_224, SPACE_224),
 }
 
-# Detection: resolution → domain registries (populated in 12d)
-_DETECTION_REGISTRIES: dict[int, tuple[dict[str, DatasetMetadata], ...]] = {}
+# Detection: resolution → domain registries
+_DETECTION_REGISTRIES: dict[int, tuple[dict[str, DatasetMetadata], ...]] = {
+    224: (PENNFUDAN_224,),
+}
 
 
 class DatasetRegistryWrapper(BaseModel):
