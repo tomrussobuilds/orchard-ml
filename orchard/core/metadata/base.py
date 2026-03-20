@@ -17,9 +17,9 @@ class DatasetMetadata(BaseModel):
     """
     Immutable metadata container for a dataset entry.
 
-    Ensures dataset-specific constants are grouped and frozen throughout
-    pipeline execution. Serves as static definition feeding into dynamic
-    DatasetConfig.
+    Holds identity, source, image properties, and normalization constants
+    for both classification and detection datasets. Detection datasets
+    additionally specify an ``annotation_path`` for bounding-box labels.
 
     Attributes:
         name: Short identifier (e.g., ``'pathmnist'``, ``'galaxy10'``).
@@ -32,8 +32,7 @@ class DatasetMetadata(BaseModel):
         native_resolution: Native pixel resolution (e.g., 28, 224).
         mean: Channel-wise normalization mean.
         std: Channel-wise normalization standard deviation.
-        is_anatomical: Whether images have fixed anatomical orientation.
-        is_texture_based: Whether classification relies on texture patterns.
+        annotation_path: Local path to annotation ``.npz`` (detection only).
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid", arbitrary_types_allowed=True)
@@ -60,12 +59,17 @@ class DatasetMetadata(BaseModel):
     mean: tuple[float, ...] = Field(..., description="Channel-wise mean")
     std: tuple[float, ...] = Field(..., description="Channel-wise std")
 
-    # Behavioral flags
+    # Behavioral flags (classification)
     is_anatomical: bool = Field(
         default=True, description="Fixed anatomical orientation (e.g., ChestMNIST)"
     )
     is_texture_based: bool = Field(
         default=True, description="Classification relies on texture (e.g., PathMNIST)"
+    )
+
+    # Annotation path (detection only — separate NPZ with bounding boxes)
+    annotation_path: Path | None = Field(
+        default=None, description="Local path to annotation .npz (detection only)"
     )
 
     @property

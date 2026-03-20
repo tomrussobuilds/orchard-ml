@@ -43,12 +43,12 @@ from ..core import (
     LOGGER_NAME,
     AugmentationConfig,
     DatasetConfig,
-    DatasetRegistryWrapper,
     LogStyle,
     TrainingConfig,
     has_mps_backend,
     worker_init_fn,
 )
+from ..core.metadata.wrapper import get_registry
 from ..core.paths import MIN_SPLIT_SAMPLES
 from ..exceptions import OrchardDatasetError
 from .collate import detection_collate_fn
@@ -108,7 +108,8 @@ class DataLoaderFactory:
         self.metadata = metadata
         self._task_type = task_type
 
-        wrapper = DatasetRegistryWrapper(resolution=dataset_cfg.resolution)
+        # task_type→None is unkillable (falls back to classification, same as default)
+        wrapper = get_registry(dataset_cfg.resolution, task_type)  # pragma: no mutate
         self.ds_meta = wrapper.get_dataset(dataset_cfg.dataset_name)
         self.logger = logging.getLogger(LOGGER_NAME)
 

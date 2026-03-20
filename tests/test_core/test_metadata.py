@@ -44,6 +44,45 @@ def test_dataset_metadata_repr_all_components() -> None:
 
 
 @pytest.mark.unit
+def test_dataset_metadata_annotation_path_default_none() -> None:
+    """annotation_path defaults to None for classification datasets."""
+    metadata = DatasetMetadata(
+        name="testmnist",
+        display_name="Test",
+        md5_checksum="abc",
+        url="https://example.com/test.npz",
+        path=Path("/data/test.npz"),
+        classes=["A", "B"],
+        in_channels=1,
+        mean=(0.5,),
+        std=(0.2,),
+    )
+    assert metadata.annotation_path is None
+
+
+@pytest.mark.unit
+def test_dataset_metadata_annotation_path_detection() -> None:
+    """annotation_path can be set for detection datasets."""
+    metadata = DatasetMetadata(
+        name="pennfudan",
+        display_name="PennFudan",
+        md5_checksum="abc",
+        url="https://example.com/pennfudan.zip",
+        path=Path("/data/pennfudan_images.npz"),
+        classes=["person"],
+        in_channels=3,
+        native_resolution=224,
+        mean=(0.485, 0.456, 0.406),
+        std=(0.229, 0.224, 0.225),
+        is_anatomical=False,
+        is_texture_based=False,
+        annotation_path=Path("/data/pennfudan_annotations.npz"),
+    )
+    assert metadata.annotation_path == Path("/data/pennfudan_annotations.npz")
+    assert metadata.num_classes == 1
+
+
+@pytest.mark.unit
 def test_registry_wrapper_get_dataset_not_found() -> None:
     """Test DatasetRegistryWrapper.get_dataset raises KeyError for unknown dataset."""
     wrapper = DatasetRegistryWrapper(resolution=28)
@@ -210,12 +249,52 @@ def test_dataset_metadata_resolution_str_none() -> None:
 def test_registry_wrapper_empty_source_registry() -> None:
     """Test DatasetRegistryWrapper raises ValueError when source registry is empty."""
     empty_table = {28: ({},), 32: ({},), 64: ({},), 128: ({},), 224: ({}, {})}  # type: ignore
-    with patch("orchard.core.metadata.wrapper._RESOLUTION_REGISTRIES", empty_table):
+    with patch("orchard.core.metadata.wrapper._CLASSIFICATION_REGISTRIES", empty_table):
         with pytest.raises(ValueError) as exc_info:
             DatasetRegistryWrapper(resolution=28)
 
         error_msg = str(exc_info.value)
-        assert "Dataset registry for resolution 28 is empty" in error_msg
+        assert "No datasets available at resolution 28" in error_msg
+
+
+@pytest.mark.unit
+def test_detection_registry_wrapper_empty_raises() -> None:
+    """DetectionRegistryWrapper raises ValueError when no detection datasets exist."""
+    from orchard.core.metadata.wrapper import DetectionRegistryWrapper
+
+    with pytest.raises(ValueError, match="No datasets available"):
+        DetectionRegistryWrapper(resolution=224)
+
+
+@pytest.mark.unit
+def test_get_registry_detection_route() -> None:
+    """get_registry with task_type='detection' returns DetectionRegistryWrapper."""
+    from orchard.core.metadata.wrapper import (
+        _DETECTION_REGISTRIES,
+        DetectionRegistryWrapper,
+        get_registry,
+    )
+
+    # Temporarily populate detection registry so construction succeeds
+    fake_meta = DatasetMetadata(
+        name="fake_det",
+        display_name="Fake",
+        md5_checksum="",
+        url="",
+        path=Path("/tmp/fake.npz"),
+        classes=["obj"],
+        in_channels=3,
+        mean=(0.5, 0.5, 0.5),
+        std=(0.2, 0.2, 0.2),
+        native_resolution=224,
+    )
+    _DETECTION_REGISTRIES[224] = ({"fake_det": fake_meta},)
+    try:
+        wrapper = get_registry(224, "detection")
+        assert isinstance(wrapper, DetectionRegistryWrapper)
+        assert "fake_det" in wrapper.registry
+    finally:
+        del _DETECTION_REGISTRIES[224]
 
 
 if __name__ == "__main__":

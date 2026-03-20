@@ -20,7 +20,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from ...exceptions import OrchardConfigError
-from ..metadata import DatasetMetadata, DatasetRegistryWrapper
+from ..metadata import ClassificationRegistryWrapper, DatasetMetadata
 from ..paths import DATASET_DIR, SUPPORTED_RESOLUTIONS
 from .types import ImageSize, PositiveInt, Probability, ValidatedPath
 
@@ -166,7 +166,7 @@ class DatasetConfig(BaseModel):
             DatasetMetadata object for this dataset.
         """
         if self.metadata is None:
-            wrapper = DatasetRegistryWrapper(resolution=self.resolution)
+            wrapper = ClassificationRegistryWrapper(resolution=self.resolution)
             metadata = wrapper.get_dataset(self.name)
             object.__setattr__(self, "metadata", metadata)
 

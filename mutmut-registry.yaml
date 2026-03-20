@@ -111,7 +111,7 @@ orchard/core/config/augmentation_config.py:
   not_checked: 0
   score: 100.0
 orchard/core/config/dataset_config.py:
-  last_run: '2026-03-18T14:06:52Z'
+  last_run: '2026-03-20T21:01:22Z'
   total: 0
   killed: 0
   survived: 0
@@ -146,7 +146,7 @@ orchard/core/config/infrastructure_config.py:
   not_checked: 0
   score: 100.0
 orchard/core/config/manifest.py:
-  last_run: '2026-03-20T13:00:16Z'
+  last_run: '2026-03-20T21:01:05Z'
   total: 45
   killed: 45
   survived: 0
@@ -307,7 +307,7 @@ orchard/core/metadata/__init__.py:
   not_checked: 0
   score: 100.0
 orchard/core/metadata/base.py:
-  last_run: '2026-03-16T15:23:04Z'
+  last_run: '2026-03-20T21:00:55Z'
   total: 0
   killed: 0
   survived: 0
@@ -356,9 +356,9 @@ orchard/core/metadata/domains/space.py:
   not_checked: 0
   score: 100.0
 orchard/core/metadata/wrapper.py:
-  last_run: '2026-03-16T15:23:04Z'
-  total: 6
-  killed: 6
+  last_run: '2026-03-20T21:00:49Z'
+  total: 13
+  killed: 13
   survived: 0
   not_checked: 0
   score: 100.0
@@ -510,9 +510,9 @@ orchard/data_handler/fetchers/medmnist_fetcher.py:
   not_checked: 0
   score: 90.6
 orchard/data_handler/loader.py:
-  last_run: '2026-03-19T14:21:37Z'
-  total: 265
-  killed: 246
+  last_run: '2026-03-20T21:05:29Z'
+  total: 263
+  killed: 244
   survived: 19
   not_checked: 0
   score: 92.8

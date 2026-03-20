@@ -1,9 +1,11 @@
 """
-Pydantic Wrapper for Multi-Domain Dataset Registries.
+Pydantic Wrappers for Multi-Domain Dataset Registries.
 
-type-safe, validated access to multiple dataset domains (medical, space)
-and resolutions (28x28, 32x32, 64x64, 128x128, 224x224). Merges domain registries based on
-selected resolution while avoiding global metadata overwrites.
+Type-safe, validated access to dataset domains organized by task type
+(classification, detection) and resolution. Each wrapper subclass
+merges its own domain registries while avoiding global metadata overwrites.
+
+Use ``get_registry(resolution, task_type)`` to obtain the correct wrapper.
 """
 
 from __future__ import annotations
@@ -24,8 +26,8 @@ from .domains import (
     SPACE_224,
 )
 
-# Resolution → registry merge map (add new resolutions here)
-_RESOLUTION_REGISTRIES: dict[int, tuple[dict[str, DatasetMetadata], ...]] = {
+# Classification: resolution → domain registries
+_CLASSIFICATION_REGISTRIES: dict[int, tuple[dict[str, DatasetMetadata], ...]] = {
     28: (MEDICAL_28,),
     32: (BENCHMARK_32,),
     64: (MEDICAL_64,),
@@ -33,18 +35,20 @@ _RESOLUTION_REGISTRIES: dict[int, tuple[dict[str, DatasetMetadata], ...]] = {
     224: (MEDICAL_224, SPACE_224),
 }
 
+# Detection: resolution → domain registries (populated in 12d)
+_DETECTION_REGISTRIES: dict[int, tuple[dict[str, DatasetMetadata], ...]] = {}
 
-# WRAPPER DEFINITION
+
 class DatasetRegistryWrapper(BaseModel):
     """
-    Pydantic wrapper for multi-domain dataset registries.
+    Base wrapper for dataset registries.
 
-    Merges domain-specific registries (medical, space) based on the
-    selected resolution and provides validated, deep-copied access to
-    dataset metadata entries.
+    Provides resolution validation, deep-copied access, and the
+    ``get_dataset`` lookup method. Subclasses define which domain
+    registries are available.
 
     Attributes:
-        resolution: Target dataset resolution (28, 32, 64, 128, or 224).
+        resolution: Target dataset resolution.
         registry: Deep-copied metadata registry for the selected resolution.
     """
 
@@ -56,11 +60,16 @@ class DatasetRegistryWrapper(BaseModel):
         default_factory=dict, description="Dataset registry for selected resolution"
     )
 
+    @classmethod
+    def _get_dispatch_table(cls) -> dict[int, tuple[dict[str, DatasetMetadata], ...]]:
+        """Return the resolution → registries dispatch table for this wrapper."""
+        return _CLASSIFICATION_REGISTRIES  # pragma: no mutate
+
     @model_validator(mode="before")
     @classmethod
     def _load_registry(cls, values: dict[str, Any]) -> dict[str, Any]:
         """
-        Loads and merges domain registries based on resolution.
+        Load and merge domain registries based on resolution.
 
         Validates resolution and creates deep copy to prevent mutation.
         """
@@ -71,14 +80,14 @@ class DatasetRegistryWrapper(BaseModel):
                 f"Unsupported resolution {res}. Supported: {sorted(SUPPORTED_RESOLUTIONS)}"
             )
 
-        # Merge domain registries via dispatch table
-        registries = _RESOLUTION_REGISTRIES[res]
+        dispatch = cls._get_dispatch_table()
+        registries = dispatch.get(res, ())
         merged: dict[str, DatasetMetadata] = {}
         for registry in registries:
             merged.update(registry)
 
         if not merged:
-            raise ValueError(f"Dataset registry for resolution {res} is empty")
+            raise ValueError(f"No datasets available at resolution {res} for this task type")
 
         values["resolution"] = res
         values["registry"] = copy.deepcopy(merged)
@@ -87,19 +96,56 @@ class DatasetRegistryWrapper(BaseModel):
 
     def get_dataset(self, name: str) -> DatasetMetadata:
         """
-        Retrieves specific DatasetMetadata by name.
+        Retrieve a DatasetMetadata entry by name.
 
         Args:
-            name: Dataset identifier
+            name: Dataset identifier.
 
         Returns:
-            Deep copy of DatasetMetadata
+            Deep copy of the matching DatasetMetadata.
 
         Raises:
-            KeyError: If dataset not found in registry
+            KeyError: If dataset not found in registry.
         """
         if name not in self.registry:
             available = list(self.registry.keys())
             raise KeyError(f"Dataset '{name}' not found. Available: {available}")
 
         return copy.deepcopy(self.registry[name])
+
+
+class ClassificationRegistryWrapper(DatasetRegistryWrapper):
+    """Registry wrapper for classification datasets (medical, space, benchmark)."""
+
+    @classmethod
+    def _get_dispatch_table(cls) -> dict[int, tuple[dict[str, DatasetMetadata], ...]]:
+        """Return classification domain registries."""
+        return _CLASSIFICATION_REGISTRIES  # pragma: no mutate
+
+
+class DetectionRegistryWrapper(DatasetRegistryWrapper):
+    """Registry wrapper for detection datasets."""
+
+    @classmethod
+    def _get_dispatch_table(cls) -> dict[int, tuple[dict[str, DatasetMetadata], ...]]:
+        """Return detection domain registries."""
+        return _DETECTION_REGISTRIES  # pragma: no mutate
+
+
+def get_registry(
+    resolution: int,
+    task_type: str = "classification",
+) -> DatasetRegistryWrapper:
+    """
+    Factory function to obtain the correct registry wrapper for a task.
+
+    Args:
+        resolution: Target image resolution.
+        task_type: ``"classification"`` or ``"detection"``.
+
+    Returns:
+        Registry wrapper with datasets available for the given task and resolution.
+    """
+    if task_type == "detection":
+        return DetectionRegistryWrapper(resolution=resolution)
+    return ClassificationRegistryWrapper(resolution=resolution)

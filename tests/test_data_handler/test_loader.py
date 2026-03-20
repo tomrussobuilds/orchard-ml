@@ -1395,7 +1395,7 @@ def test_build_train_loader_receives_infra_kwargs(  # type: ignore
 
 
 @pytest.mark.unit
-@patch("orchard.data_handler.loader.DatasetRegistryWrapper")
+@patch("orchard.data_handler.loader.get_registry")
 @patch("orchard.data_handler.detection_dataset.DetectionDataset.from_npz")
 @patch("orchard.data_handler.loader.get_pipeline_transforms")
 def test_detection_task_type_uses_collate_fn(
@@ -1433,7 +1433,7 @@ def test_detection_task_type_uses_collate_fn(
 
 
 @pytest.mark.unit
-@patch("orchard.data_handler.loader.DatasetRegistryWrapper")
+@patch("orchard.data_handler.loader.get_registry")
 @patch("orchard.data_handler.detection_dataset.DetectionDataset.from_npz")
 @patch("orchard.data_handler.loader.get_pipeline_transforms")
 def test_detection_task_type_skips_sampler(
@@ -1466,7 +1466,7 @@ def test_detection_task_type_skips_sampler(
 
 
 @pytest.mark.unit
-@patch("orchard.data_handler.loader.DatasetRegistryWrapper")
+@patch("orchard.data_handler.loader.get_registry")
 @patch("orchard.data_handler.loader.VisionDataset")
 @patch("orchard.data_handler.loader.get_pipeline_transforms")
 def test_classification_task_type_no_collate_fn(
@@ -1500,7 +1500,7 @@ def test_classification_task_type_no_collate_fn(
 
 
 @pytest.mark.unit
-@patch("orchard.data_handler.loader.DatasetRegistryWrapper")
+@patch("orchard.data_handler.loader.get_registry")
 @patch("orchard.data_handler.loader.VisionDataset")
 @patch("orchard.data_handler.loader.get_pipeline_transforms")
 def test_task_type_stored_on_factory(

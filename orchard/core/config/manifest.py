@@ -25,7 +25,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ...exceptions import OrchardConfigError
 from ..io import load_config_from_yaml
-from ..metadata.wrapper import DatasetRegistryWrapper
+from ..metadata.wrapper import get_registry
 from ..paths import (
     HIGHRES_THRESHOLD,
     METRIC_LOSS,
@@ -329,7 +329,8 @@ class Config(BaseModel):
             raise OrchardConfigError(f"Recipe '{recipe_path}' must specify 'dataset.name'")
 
         resolution = dataset_section.get("resolution", 28)
-        wrapper = DatasetRegistryWrapper(resolution=resolution)
+        task_type = raw_data.get("task_type", "classification")
+        wrapper = get_registry(resolution, task_type)
 
         if ds_name not in wrapper.registry:
             available = list(wrapper.registry.keys())

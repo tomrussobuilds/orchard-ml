@@ -8,9 +8,17 @@ across the entire pipeline.
 """
 
 from .base import DatasetMetadata
-from .wrapper import DatasetRegistryWrapper
+from .wrapper import (
+    ClassificationRegistryWrapper,
+    DatasetRegistryWrapper,
+    DetectionRegistryWrapper,
+    get_registry,
+)
 
 __all__ = [
+    "ClassificationRegistryWrapper",
     "DatasetMetadata",
     "DatasetRegistryWrapper",
+    "DetectionRegistryWrapper",
+    "get_registry",
 ]
