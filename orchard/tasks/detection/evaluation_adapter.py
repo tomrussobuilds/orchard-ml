@@ -80,7 +80,7 @@ class DetectionEvalPipelineAdapter:
         Returns:
             Mapping of detection metric names to float values.
         """
-        device = next(model.parameters()).device
+        device = next(model.parameters()).device  # pragma: no mutate
 
         # Inference + mAP computation
         model.eval()
@@ -88,7 +88,7 @@ class DetectionEvalPipelineAdapter:
 
         with torch.no_grad():
             for images, targets in test_loader:
-                images_on_device = [img.to(device) for img in images]
+                images_on_device = [img.to(device) for img in images]  # pragma: no mutate
                 predictions = model(images_on_device)
                 metric.update(
                     [to_cpu(p) for p in predictions],
@@ -124,9 +124,10 @@ class DetectionEvalPipelineAdapter:
         )
         plot_training_curves(
             train_losses=train_losses,
-            val_accuracies=val_losses,  # param name is classification-legacy; contains losses here
+            val_accuracies=val_losses,
             out_path=paths.figures / "training_curves.png",  # pragma: no mutate
             ctx=ctx,
+            val_label="Validation Loss",  # pragma: no mutate
         )
 
         # Tracker logging

@@ -90,19 +90,25 @@ def show_predictions(
 
 
 def plot_training_curves(
-    train_losses: Sequence[float], val_accuracies: Sequence[float], out_path: Path, ctx: PlotContext
+    train_losses: Sequence[float],
+    val_accuracies: Sequence[float],
+    out_path: Path,
+    ctx: PlotContext,
+    *,
+    val_label: str,
 ) -> None:
     """
-    Plot training loss and validation accuracy on a dual-axis chart.
+    Plot training loss and a validation metric on a dual-axis chart.
 
     Saves the figure to disk and exports raw numerical data as ``.npz``
     for reproducibility.
 
     Args:
         train_losses: Per-epoch training loss values.
-        val_accuracies: Per-epoch validation accuracy values.
+        val_accuracies: Per-epoch validation metric values.
         out_path: Destination file path for the saved figure.
         ctx: PlotContext with architecture and evaluation settings.
+        val_label: Label for the right y-axis and legend entry.
     """
     # matplotlib cosmetic — colors, fonts, sizes, layout
     with plt.style.context(ctx.plot_style):  # pragma: no mutate
@@ -118,9 +124,9 @@ def plot_training_curves(
         # Right Axis: Validation Accuracy
         ax2 = ax1.twinx()  # pragma: no mutate
         ax2.plot(  # pragma: no mutate
-            val_accuracies, color="#3498db", lw=2, label="Validation Accuracy"  # pragma: no mutate
+            val_accuracies, color="#3498db", lw=2, label=val_label  # pragma: no mutate
         )  # pragma: no mutate
-        ax2.set_ylabel("Accuracy", color="#3498db", fontweight="bold")  # pragma: no mutate
+        ax2.set_ylabel(val_label, color="#3498db", fontweight="bold")  # pragma: no mutate
         ax2.tick_params(axis="y", labelcolor="#3498db")  # pragma: no mutate
 
         fig.suptitle(  # pragma: no mutate

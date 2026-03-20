@@ -143,6 +143,7 @@ def run_final_evaluation(
         val_accuracies=val_acc_list,
         out_path=paths.get_fig_path(f"training_curves_{arch_tag}_{dataset.resolution}.png"),
         ctx=ctx,
+        val_label="Validation Accuracy",
     )
 
     # Lazy-loaded prediction grid (samples from loader)

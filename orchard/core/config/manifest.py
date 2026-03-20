@@ -636,3 +636,13 @@ class _CrossDomainValidator:
                 UserWarning,
                 stacklevel=4,
             )
+
+        if config.training.use_tta:
+            import warnings
+
+            warnings.warn(
+                "use_tta is ignored for detection tasks "
+                "(test-time augmentation is not supported for detection).",
+                UserWarning,
+                stacklevel=4,
+            )

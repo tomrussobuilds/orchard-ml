@@ -371,6 +371,7 @@ class TestCheckMinDatasetSize:
             warnings.simplefilter("error")
             # Allow CPU+highres warning (not relevant to this test)
             warnings.filterwarnings("ignore", message="Training at resolution.*on CPU")
+            warnings.filterwarnings("ignore", message="use_tta is ignored")
             # max_samples=30 < num_classes=50 would raise for classification
             Config(
                 task_type="detection",
@@ -466,6 +467,7 @@ class TestCheckDetectionConfig:
         with warnings.catch_warnings():
             warnings.simplefilter("error")
             warnings.filterwarnings("ignore", message="Training at resolution.*on CPU")
+            warnings.filterwarnings("ignore", message="use_tta is ignored")
             Config(
                 task_type="detection",
                 dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
@@ -482,6 +484,7 @@ class TestCheckDetectionConfig:
         with warnings.catch_warnings():
             warnings.simplefilter("error")
             warnings.filterwarnings("ignore", message="Training at resolution.*on CPU")
+            warnings.filterwarnings("ignore", message="use_tta is ignored")
             Config(
                 task_type="detection",
                 dataset=DatasetConfig(
@@ -515,6 +518,26 @@ class TestCheckDetectionConfig:
 
         smoothing_warnings = [w for w in caught if "label_smoothing is ignored" in str(w.message)]
         assert len(smoothing_warnings) == 1
+
+    def test_detection_with_use_tta_warns(self) -> None:
+        """Detection + use_tta=True emits UserWarning."""
+        import warnings
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(
+                    use_amp=False, mixup_alpha=0.0, use_tta=True, monitor_metric="map"
+                ),
+                augmentation=AugmentationConfig(hflip=0.0, rotation_angle=0, min_scale=1.0),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+        tta_warnings = [w for w in caught if "use_tta is ignored" in str(w.message)]
+        assert len(tta_warnings) == 1
 
     def test_detection_spatial_aug_hflip_auto_disabled(self) -> None:
         """Detection + hflip > 0 auto-disables with warning."""
@@ -577,6 +600,7 @@ class TestCheckDetectionConfig:
         with warnings.catch_warnings():
             warnings.simplefilter("error")
             warnings.filterwarnings("ignore", message="Training at resolution.*on CPU")
+            warnings.filterwarnings("ignore", message="use_tta is ignored")
             Config(
                 task_type="detection",
                 dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),

@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - guard show_samples_for_dataset for detection tasks
 - detection config warnings and eval adapter cleanup
 - validate monitor_metric for detection tasks
+- reject timm/ architectures for detection tasks
 
 ### Miscellaneous
 

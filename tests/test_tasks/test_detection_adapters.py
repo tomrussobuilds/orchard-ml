@@ -511,6 +511,56 @@ def test_eval_adapter_plots_training_curves(mock_map_cls: MagicMock, mock_plot: 
     assert kw["train_losses"] == [0.5]
     assert kw["val_accuracies"] == [0.3]
     assert kw["ctx"] is not None
+    assert kw["val_label"] == "Validation Loss"
+    assert kw["out_path"] == paths.figures / "training_curves.png"
+
+
+@pytest.mark.unit
+@patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
+@patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
+def test_eval_adapter_val_losses_fallback(mock_map_cls: MagicMock, mock_plot: MagicMock) -> None:
+    """val_losses defaults to 0.0 when METRIC_LOSS is missing from history."""
+    mock_map_cls.return_value.compute.return_value = {
+        "map": torch.tensor(0.0),
+        "map_50": torch.tensor(0.0),
+        "map_75": torch.tensor(0.0),
+    }
+
+    model = MagicMock(spec=nn.Module)
+    model.parameters.return_value = iter([torch.randn(1)])
+    test_loader = MagicMock()
+    test_loader.__iter__ = MagicMock(return_value=iter([]))
+    paths = MagicMock()
+    dataset_cfg = MagicMock()
+    dataset_cfg.resolution = 224
+    dataset_cfg.name = "test"
+    eval_cfg = MagicMock()
+    eval_cfg.fig_dpi = 100
+    eval_cfg.plot_style = "default"
+    eval_cfg.cmap_confusion = "Blues"
+    eval_cfg.grid_cols = 4
+    eval_cfg.n_samples = 16
+    eval_cfg.fig_size_predictions = (12, 8)
+
+    adapter = DetectionEvalPipelineAdapter()
+    adapter.run_evaluation(
+        model=model,
+        test_loader=test_loader,
+        train_losses=[0.5],
+        val_metrics_history=[{"map": 0.4}],  # no "loss" key
+        class_names=[],
+        paths=paths,
+        training=MagicMock(),
+        dataset=dataset_cfg,
+        augmentation=MagicMock(),
+        evaluation=eval_cfg,
+        arch_name="fasterrcnn",
+    )
+
+    kw = mock_plot.call_args[1]
+    assert kw["val_accuracies"] == [0.0]
+    assert kw["val_accuracies"] != [1.0]
+    assert kw["val_accuracies"] != [None]
 
 
 @pytest.mark.unit

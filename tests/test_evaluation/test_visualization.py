@@ -83,7 +83,9 @@ def test_plot_training_curves_basic(  # type: ignore
     val_accuracies = [0.6, 0.7, 0.8, 0.9]
     out_path = tmp_path / "curves.png"
 
-    plot_training_curves(train_losses, val_accuracies, out_path, ctx_rgb)
+    plot_training_curves(
+        train_losses, val_accuracies, out_path, ctx_rgb, val_label="Validation Accuracy"
+    )
 
     assert mock_plt.subplots.called
     assert mock_plt.savefig.called
@@ -104,7 +106,7 @@ def test_plot_training_curves_empty_lists(  # type: ignore
 
     out_path = tmp_path / "curves.png"
 
-    plot_training_curves([], [], out_path, ctx_gray)
+    plot_training_curves([], [], out_path, ctx_gray, val_label="Validation Accuracy")
 
     assert mock_plt.subplots.called
     assert mock_plt.savefig.called
@@ -771,7 +773,9 @@ def test_plot_training_curves_npz_data(  # type: ignore
     val_accuracies = [0.6, 0.7, 0.8]
     out_path = tmp_path / "curves.png"
 
-    plot_training_curves(train_losses, val_accuracies, out_path, ctx_rgb)
+    plot_training_curves(
+        train_losses, val_accuracies, out_path, ctx_rgb, val_label="Validation Accuracy"
+    )
 
     # Verify npz called with the correct path and data
     call_args = mock_savez.call_args
