@@ -98,15 +98,27 @@ def init(
         bool,
         typer.Option("--force", "-f", help="Overwrite existing file."),
     ] = False,
+    task: Annotated[
+        str,
+        typer.Option("--task", "-t", help="Task type: 'classification' or 'detection'."),
+    ] = "classification",
 ) -> None:
     """Generate a starter recipe with all config fields and defaults."""
+    valid_tasks = ("classification", "detection")
+    if task not in valid_tasks:
+        typer.echo(
+            f"Error: unknown task '{task}'. Valid tasks: {', '.join(valid_tasks)}",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
     if output.exists() and not force:
         typer.echo(f"Error: '{output}' already exists. Use --force to overwrite.", err=True)
         raise typer.Exit(code=1)
 
-    data = _build_init_dict()
+    data = _build_init_dict(task)
     yaml_body = _build_commented_yaml(data)
-    task_line = "# Task type: 'classification' or 'detection'\ntask_type: classification\n\n"
+    task_line = f"# Task type: 'classification' or 'detection'\ntask_type: {task}\n\n"
     content = _INIT_HEADER.format(filename=output.name) + task_line + yaml_body
 
     output.write_text(content, encoding="utf-8")
@@ -507,9 +519,12 @@ def _build_commented_yaml(data: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _build_init_dict() -> dict[str, Any]:
+def _build_init_dict(task_type: str = "classification") -> dict[str, Any]:
     """
     Build a complete config dict with all defaults for recipe generation.
+
+    Args:
+        task_type: Task type to generate defaults for.
 
     Returns:
         Ordered dict with every config section dumped via ``model_dump(mode="json")``,
@@ -532,7 +547,7 @@ def _build_init_dict() -> dict[str, Any]:
     tel = dump(models["telemetry"]())
     tel["output_dir"] = "./outputs"
 
-    return {
+    sections: dict[str, Any] = {
         "dataset": ds,
         "architecture": dump(models["architecture"]()),
         "training": dump(models["training"]()),
@@ -544,3 +559,35 @@ def _build_init_dict() -> dict[str, Any]:
         "export": dump(models["export"]()),
         "optuna": dump(models["optuna"]()),
     }
+
+    if task_type == "detection":
+        _apply_detection_defaults(sections)
+
+    return sections
+
+
+def _apply_detection_defaults(sections: dict[str, Any]) -> None:
+    """
+    Override classification defaults with detection-safe values.
+
+    Mutates *sections* in place so the generated recipe is immediately
+    valid for a detection pipeline without relying on manifest warnings.
+    """
+    sections["dataset"]["name"] = "pennfudan"
+    sections["dataset"]["resolution"] = 224
+    sections["dataset"]["use_weighted_sampler"] = False
+
+    sections["architecture"]["name"] = "fasterrcnn"
+    sections["architecture"]["pretrained"] = True
+    sections["architecture"]["dropout"] = 0.0
+
+    sections["training"]["monitor_metric"] = "map"
+    sections["training"]["mixup_alpha"] = 0.0
+    sections["training"]["label_smoothing"] = 0.0  # pragma: no mutate
+
+    sections["augmentation"]["hflip"] = 0.0
+    sections["augmentation"]["rotation_angle"] = 0
+    sections["augmentation"]["min_scale"] = 1.0
+
+    # ONNX export is not yet supported for detection
+    del sections["export"]

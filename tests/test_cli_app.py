@@ -565,6 +565,158 @@ class TestCLIInit:
 
 
 @pytest.mark.unit
+class TestCLIInitDetection:
+    """Tests for ``orchard init --task detection``."""
+
+    def test_init_detection_creates_recipe(self, tmp_path: Path) -> None:
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        runner = CliRunner()
+        target = tmp_path / "det.yaml"
+        result = runner.invoke(app, ["init", str(target), "--task", "detection"])
+        assert result.exit_code == 0
+        assert target.exists()
+
+    def test_init_detection_task_type_in_yaml(self, tmp_path: Path) -> None:
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+        from orchard.core.io import load_config_from_yaml
+
+        runner = CliRunner()
+        target = tmp_path / "det.yaml"
+        runner.invoke(app, ["init", str(target), "--task", "detection"])
+        data = load_config_from_yaml(target)
+        assert data["task_type"] == "detection"
+
+    def test_init_detection_architecture(self, tmp_path: Path) -> None:
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+        from orchard.core.io import load_config_from_yaml
+
+        runner = CliRunner()
+        target = tmp_path / "det.yaml"
+        runner.invoke(app, ["init", str(target), "--task", "detection"])
+        data = load_config_from_yaml(target)
+        assert data["architecture"]["name"] == "fasterrcnn"
+        assert data["architecture"]["pretrained"] is True
+
+    def test_init_detection_training_defaults(self, tmp_path: Path) -> None:
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+        from orchard.core.io import load_config_from_yaml
+
+        runner = CliRunner()
+        target = tmp_path / "det.yaml"
+        runner.invoke(app, ["init", str(target), "--task", "detection"])
+        data = load_config_from_yaml(target)
+        assert data["training"]["monitor_metric"] == "map"
+        assert len(data["training"]["monitor_metric"]) == len("map")
+        assert data["training"]["mixup_alpha"] == 0.0
+        # mixup_alpha override differs from classification default (0.2)
+        assert data["training"]["mixup_alpha"] != 0.2
+
+    def test_init_detection_no_spatial_augmentation(self, tmp_path: Path) -> None:
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+        from orchard.core.io import load_config_from_yaml
+
+        runner = CliRunner()
+        target = tmp_path / "det.yaml"
+        runner.invoke(app, ["init", str(target), "--task", "detection"])
+        data = load_config_from_yaml(target)
+        assert data["augmentation"]["hflip"] == 0.0
+        assert data["augmentation"]["rotation_angle"] == 0
+        assert data["augmentation"]["min_scale"] == 1.0
+
+    def test_init_detection_no_export_section(self, tmp_path: Path) -> None:
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+        from orchard.core.io import load_config_from_yaml
+
+        runner = CliRunner()
+        target = tmp_path / "det.yaml"
+        runner.invoke(app, ["init", str(target), "--task", "detection"])
+        data = load_config_from_yaml(target)
+        assert "export" not in data
+
+    def test_init_detection_dataset_defaults(self, tmp_path: Path) -> None:
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+        from orchard.core.io import load_config_from_yaml
+
+        runner = CliRunner()
+        target = tmp_path / "det.yaml"
+        runner.invoke(app, ["init", str(target), "--task", "detection"])
+        data = load_config_from_yaml(target)
+        assert data["dataset"]["name"] == "pennfudan"
+        assert len(data["dataset"]["name"]) == len("pennfudan")
+        assert data["dataset"]["resolution"] == 224
+        assert data["dataset"]["use_weighted_sampler"] is False
+
+    def test_init_detection_dropout_zero(self, tmp_path: Path) -> None:
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+        from orchard.core.io import load_config_from_yaml
+
+        runner = CliRunner()
+        target = tmp_path / "det.yaml"
+        runner.invoke(app, ["init", str(target), "--task", "detection"])
+        data = load_config_from_yaml(target)
+        assert data["architecture"]["dropout"] == 0.0
+        # Kill value-swap mutant (default is 0.2 for classification)
+        assert data["architecture"]["dropout"] != 0.2
+
+    def test_init_invalid_task_rejected(self, tmp_path: Path) -> None:
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        runner = CliRunner()
+        target = tmp_path / "det.yaml"
+        result = runner.invoke(app, ["init", str(target), "--task", "segmentation"])
+        assert result.exit_code == 1
+        assert "unknown task" in result.output
+
+    def test_init_detection_short_flag(self, tmp_path: Path) -> None:
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+        from orchard.core.io import load_config_from_yaml
+
+        runner = CliRunner()
+        target = tmp_path / "det.yaml"
+        result = runner.invoke(app, ["init", str(target), "-t", "detection"])
+        assert result.exit_code == 0
+        data = load_config_from_yaml(target)
+        assert data["task_type"] == "detection"
+
+    def test_init_detection_roundtrip_yaml(self, tmp_path: Path) -> None:
+        """Detection recipe round-trips through YAML parse with correct keys."""
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+        from orchard.core.io import load_config_from_yaml
+
+        target = tmp_path / "det.yaml"
+        result = CliRunner().invoke(app, ["init", str(target), "--task", "detection"])
+        assert result.exit_code == 0
+        data = load_config_from_yaml(target)
+        assert data["task_type"] == "detection"
+        assert data["architecture"]["name"] == "fasterrcnn"
+        assert data["training"]["monitor_metric"] == "map"
+        assert "export" not in data
+
+
+@pytest.mark.unit
 class TestCommentedYaml:
     """Tests for commented YAML generation in init command."""
 
