@@ -436,6 +436,17 @@ class TestCheckDetectionConfig:
                 hardware=HardwareConfig(device="cpu"),
             )
 
+    def test_detection_with_timm_arch_raises(self) -> None:
+        """Detection + timm/ architecture raises (not yet supported by factory)."""
+        with pytest.raises(ValidationError, match="not compatible.*detection"):
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="timm/resnet50", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
     def test_detection_with_invalid_monitor_metric_raises(self) -> None:
         """Detection + classification monitor_metric raises error."""
         with pytest.raises(ValidationError, match="monitor_metric 'auc' is not valid"):

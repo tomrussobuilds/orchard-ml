@@ -571,8 +571,7 @@ class _CrossDomainValidator:
         model_name = config.architecture.name.lower()
 
         # Detection requires a detection-capable architecture
-        is_detection_arch = model_name in _MODELS_DETECTION or model_name.startswith("timm/")
-        if not is_detection_arch:
+        if model_name not in _MODELS_DETECTION:
             raise OrchardConfigError(
                 f"Architecture '{config.architecture.name}' is not compatible with "
                 f"task_type='detection'. Use a detection model (e.g. 'fasterrcnn')."
