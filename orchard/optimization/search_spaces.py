@@ -371,7 +371,7 @@ def get_search_space(
     else:
         raise OrchardConfigError(f"Unknown preset '{preset}'. Available: quick, full")
 
-    if include_models:
+    if include_models and task_type != "detection":
         if model_pool is not None:
             space.update(_build_model_space_from_pool(model_pool))
         elif resolution >= HIGHRES_THRESHOLD:

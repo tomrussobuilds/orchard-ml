@@ -841,5 +841,18 @@ def test_classification_task_keeps_all_params() -> None:
     assert "learning_rate" in space
 
 
+@pytest.mark.unit
+def test_detection_task_skips_model_search() -> None:
+    """Detection + include_models=True does not add model_name to search space."""
+    space = get_search_space(
+        preset="full", resolution=224, include_models=True, task_type="detection"
+    )
+
+    assert "model_name" not in space
+    assert "weight_variant" not in space
+    # Core detection params still present
+    assert "learning_rate" in space
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

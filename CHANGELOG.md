@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - detection config warnings and eval adapter cleanup
 - validate monitor_metric for detection tasks
 - reject timm/ architectures for detection tasks
+- task-aware training curves label and use_tta detection warning
 
 ### Miscellaneous
 

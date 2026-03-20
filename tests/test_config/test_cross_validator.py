@@ -539,6 +539,98 @@ class TestCheckDetectionConfig:
         tta_warnings = [w for w in caught if "use_tta is ignored" in str(w.message)]
         assert len(tta_warnings) == 1
 
+    def test_detection_with_focal_criterion_warns(self) -> None:
+        """Detection + criterion_type='focal' emits UserWarning."""
+        import warnings
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(
+                    use_amp=False,
+                    mixup_alpha=0.0,
+                    criterion_type="focal",
+                    monitor_metric="map",
+                    use_tta=False,
+                ),
+                augmentation=AugmentationConfig(hflip=0.0, rotation_angle=0, min_scale=1.0),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+        criterion_warnings = [w for w in caught if "criterion_type" in str(w.message)]
+        assert len(criterion_warnings) == 1
+
+    def test_detection_with_custom_focal_gamma_warns(self) -> None:
+        """Detection + focal_gamma != 2.0 emits UserWarning."""
+        import warnings
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(
+                    use_amp=False,
+                    mixup_alpha=0.0,
+                    focal_gamma=1.5,
+                    monitor_metric="map",
+                    use_tta=False,
+                ),
+                augmentation=AugmentationConfig(hflip=0.0, rotation_angle=0, min_scale=1.0),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+        gamma_warnings = [w for w in caught if "focal_gamma is ignored" in str(w.message)]
+        assert len(gamma_warnings) == 1
+
+    def test_detection_with_weighted_loss_warns(self) -> None:
+        """Detection + weighted_loss=True emits UserWarning."""
+        import warnings
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(
+                    use_amp=False,
+                    mixup_alpha=0.0,
+                    weighted_loss=True,
+                    monitor_metric="map",
+                    use_tta=False,
+                ),
+                augmentation=AugmentationConfig(hflip=0.0, rotation_angle=0, min_scale=1.0),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+        weighted_warnings = [w for w in caught if "weighted_loss is ignored" in str(w.message)]
+        assert len(weighted_warnings) == 1
+
+    def test_detection_default_criterion_no_warning(self) -> None:
+        """Detection + default criterion_type='cross_entropy' emits no criterion warning."""
+        import warnings
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(
+                    use_amp=False, mixup_alpha=0.0, monitor_metric="map", use_tta=False
+                ),
+                augmentation=AugmentationConfig(hflip=0.0, rotation_angle=0, min_scale=1.0),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+        criterion_warnings = [w for w in caught if "criterion_type" in str(w.message)]
+        assert len(criterion_warnings) == 0
+
     def test_detection_spatial_aug_hflip_auto_disabled(self) -> None:
         """Detection + hflip > 0 auto-disables with warning."""
         with pytest.warns(UserWarning, match="hflip.*0.0"):

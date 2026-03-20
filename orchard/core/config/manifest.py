@@ -646,3 +646,34 @@ class _CrossDomainValidator:
                 UserWarning,
                 stacklevel=4,
             )
+
+        if config.training.criterion_type != "cross_entropy":
+            import warnings
+
+            warnings.warn(
+                f"criterion_type '{config.training.criterion_type}' is ignored for "
+                "detection tasks (detection models use built-in losses).",
+                UserWarning,
+                stacklevel=4,
+            )
+
+        _focal_gamma_default = TrainingConfig.model_fields["focal_gamma"].default
+        if config.training.focal_gamma != _focal_gamma_default:
+            import warnings
+
+            warnings.warn(
+                "focal_gamma is ignored for detection tasks "
+                "(detection models use built-in losses).",
+                UserWarning,
+                stacklevel=4,
+            )
+
+        if config.training.weighted_loss:
+            import warnings
+
+            warnings.warn(
+                "weighted_loss is ignored for detection tasks "
+                "(detection models use built-in losses).",
+                UserWarning,
+                stacklevel=4,
+            )
