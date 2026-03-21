@@ -15,7 +15,7 @@ import numpy as np
 import pytest
 import requests
 
-from orchard.data_handler.fetcher import (
+from orchard.data_handler.dispatcher import (
     ensure_dataset_npz,
     load_dataset,
     load_dataset_health_check,
@@ -489,7 +489,7 @@ def test_load_medmnist_rgb(  # type: ignore
     metadata.path.write_bytes(valid_npz_file.read_bytes())
 
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher.ensure_dataset_npz",
+        "orchard.data_handler.dispatcher.ensure_dataset_npz",
         lambda _: metadata.path,
     )
 
@@ -521,7 +521,7 @@ def test_load_medmnist_grayscale(  # type: ignore
     metadata.path = path
 
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher.ensure_dataset_npz",
+        "orchard.data_handler.dispatcher.ensure_dataset_npz",
         lambda _: path,
     )
 
@@ -539,7 +539,7 @@ def test_load_dataset_health_check_rgb(  # type: ignore
     metadata.path.write_bytes(valid_npz_file.read_bytes())
 
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher.ensure_dataset_npz",
+        "orchard.data_handler.dispatcher.ensure_dataset_npz",
         lambda _: metadata.path,
     )
 
@@ -570,7 +570,7 @@ def test_load_dataset_health_check_grayscale(  # type: ignore
     metadata.path = path
 
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher.ensure_dataset_npz",
+        "orchard.data_handler.dispatcher.ensure_dataset_npz",
         lambda _: path,
     )
 
@@ -602,7 +602,7 @@ def test_load_dataset_health_check_small_chunk(  # type: ignore
     metadata.path = path
 
     monkeypatch.setattr(
-        "orchard.data_handler.fetcher.ensure_dataset_npz",
+        "orchard.data_handler.dispatcher.ensure_dataset_npz",
         lambda _: path,
     )
 
@@ -1142,3 +1142,53 @@ def test_ensure_medmnist_npz_retries_exact_count(
         ensure_medmnist_npz(metadata, retries=3, delay=0.01)
 
     assert call_count["n"] == 3
+
+
+# ── PennFudan dispatcher route ───────────────────────────────────────────────
+
+
+@pytest.mark.unit
+def test_ensure_dataset_npz_routes_pennfudan(tmp_path: Path) -> None:
+    """ensure_dataset_npz routes 'pennfudan' to ensure_pennfudan_npz."""
+    from unittest.mock import patch
+
+    metadata = SimpleNamespace(name="pennfudan", path=tmp_path / "img.npz")
+
+    with patch(
+        "orchard.data_handler.fetchers.ensure_pennfudan_npz",
+        return_value=tmp_path / "img.npz",
+    ) as mock_pf:
+        result = ensure_dataset_npz(metadata)  # type: ignore[arg-type]
+
+    mock_pf.assert_called_once_with(metadata)
+    assert result == tmp_path / "img.npz"
+
+
+@pytest.mark.unit
+def test_load_and_inspect_detection_uses_metadata_num_classes(tmp_path: Path) -> None:
+    """Detection path reads num_classes from metadata, not from labels."""
+    from unittest.mock import patch
+
+    from orchard.data_handler.dispatcher import _load_and_inspect
+
+    # Create a minimal images-only NPZ (no train_labels)
+    images = np.random.randint(0, 255, (5, 32, 32, 3), dtype=np.uint8)
+    npz_path = tmp_path / "images.npz"
+    np.savez(npz_path, train_images=images)
+
+    metadata = SimpleNamespace(
+        name="pennfudan",
+        path=npz_path,
+        annotation_path=tmp_path / "annotations.npz",
+        num_classes=1,
+    )
+
+    with patch(
+        "orchard.data_handler.dispatcher.ensure_dataset_npz",
+        return_value=npz_path,
+    ):
+        result = _load_and_inspect(metadata)  # type: ignore[arg-type]
+
+    assert result.num_classes == 1
+    assert result.annotation_path == tmp_path / "annotations.npz"
+    assert result.is_rgb is True

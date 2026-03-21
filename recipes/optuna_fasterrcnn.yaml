@@ -1,8 +1,11 @@
 # ==============================================================================
-# FILE: recipes/config_fasterrcnn.yaml
-# Faster R-CNN Object Detection (ResNet-50-FPN v2)
+# FILE: recipes/optuna_fasterrcnn.yaml
+# Faster R-CNN Optuna Hyperparameter Search
 # ==============================================================================
-# Usage: orchard run recipes/config_fasterrcnn.yaml
+# Usage: orchard run recipes/optuna_fasterrcnn.yaml
+# Search space: learning_rate, weight_decay, momentum, batch_size, dropout,
+#   scheduler, jitter. Classification-only params (criterion, focal_gamma,
+#   label_smoothing, mixup_alpha) and model search are auto-excluded.
 
 task_type: detection
 
@@ -12,7 +15,6 @@ dataset:
   resolution: 224
   force_rgb: true
   use_weighted_sampler: false
-  max_samples: null
 
 architecture:
   name: "fasterrcnn"
@@ -20,7 +22,6 @@ architecture:
 
 training:
   seed: 42
-
   batch_size: 4
   learning_rate: 0.005
   weight_decay: 0.0005
@@ -28,31 +29,26 @@ training:
   min_lr: 1e-7
   optimizer_type: "sgd"
 
-  # No MixUp for detection
   mixup_alpha: 0.0
   label_smoothing: 0.0
 
-  epochs: 30
-  patience: 10
+  epochs: 15
+  patience: 5
   grad_clip: 1.0
   mixup_epochs: 0
 
   monitor_metric: "map"
   monitor_direction: "maximize"
   scheduler_type: "cosine"
-  scheduler_patience: 5
-  scheduler_factor: 0.1
-  step_size: 10
+  scheduler_patience: 3
 
   use_amp: true
   use_tta: false
 
 augmentation:
-  # Spatial augmentations (hflip, rotation, min_scale<1) are auto-disabled
-  # for detection — they transform the image but not the bounding boxes.
   hflip: 0.0
   rotation_angle: 0
-  jitter_val: 0.0
+  jitter_val: 0.2
   min_scale: 1.0
 
 hardware:
@@ -65,12 +61,11 @@ telemetry:
   log_interval: 50
 
 evaluation:
-  n_samples: 12
   fig_dpi: 200
-  cmap_confusion: Blues
-  plot_style: seaborn-v0_8-muted
-  grid_cols: 4
-  fig_size_predictions: [12, 8]
-  report_format: xlsx
   save_confusion_matrix: false
   save_predictions_grid: false
+
+optuna:
+  n_trials: 20
+  search_space_preset: "full"
+  include_models: false

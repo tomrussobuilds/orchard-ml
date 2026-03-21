@@ -82,6 +82,12 @@ def ensure_dataset_npz(
 
         return ensure_cifar_npz(metadata)
 
+    # PennFudan pedestrian detection (ZIP → 2 NPZ)
+    if metadata.name == "pennfudan":
+        from .fetchers import ensure_pennfudan_npz
+
+        return ensure_pennfudan_npz(metadata)
+
     # Default: standard NPZ download with retries and MD5 check
     from .fetchers import ensure_medmnist_npz
 
@@ -107,15 +113,25 @@ def _load_and_inspect(
     path = ensure_dataset_npz(metadata)
 
     with np.load(path) as data:
-        validate_npz_keys(data)
-
         images = data["train_images"][:chunk_size]  # None → full array
-        labels = data["train_labels"][:chunk_size]
-
         is_rgb = images.ndim == 4 and images.shape[-1] == 3
-        num_classes = len(np.unique(labels))
 
-    return DatasetData(path=path, name=metadata.name, is_rgb=is_rgb, num_classes=num_classes)
+        # Detection datasets store labels in a separate annotation NPZ
+        ann_path = getattr(metadata, "annotation_path", None)
+        if ann_path is not None:
+            num_classes = metadata.num_classes
+        else:
+            validate_npz_keys(data)
+            labels = data["train_labels"][:chunk_size]
+            num_classes = len(np.unique(labels))
+
+    return DatasetData(
+        path=path,
+        name=metadata.name,
+        is_rgb=is_rgb,
+        num_classes=num_classes,
+        annotation_path=ann_path,
+    )
 
 
 def load_dataset(metadata: DatasetMetadata) -> DatasetData:

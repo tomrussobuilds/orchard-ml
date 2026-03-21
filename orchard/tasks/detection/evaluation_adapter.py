@@ -20,6 +20,7 @@ from torchmetrics.detection import MeanAveragePrecision
 
 from ...core import LOGGER_NAME
 from ...core.paths import METRIC_LOSS, METRIC_MAP, METRIC_MAP_50, METRIC_MAP_75
+from ...core.paths.constants import LogStyle
 from ...evaluation.plot_context import PlotContext
 from ...evaluation.visualization import plot_training_curves
 from .helpers import to_cpu
@@ -104,14 +105,17 @@ class DetectionEvalPipelineAdapter:
 
         # Log results
         logger.info(
-            "Detection test metrics: mAP=%.4f  mAP@50=%.4f  mAP@75=%.4f",
+            "%s%s %-18s: mAP=%.4f  mAP@50=%.4f  mAP@75=%.4f",
+            LogStyle.INDENT,
+            LogStyle.ARROW,
+            "Test Metrics",
             test_metrics[METRIC_MAP],
             test_metrics[METRIC_MAP_50],
             test_metrics[METRIC_MAP_75],
         )
 
-        # Training curves (loss only — no accuracy for detection)
-        val_losses = [m.get(METRIC_LOSS, 0.0) for m in val_metrics_history]
+        # Training curves — plot mAP instead of loss (METRIC_LOSS is a 0.0 sentinel)
+        val_map = [m.get(METRIC_MAP, 0.0) for m in val_metrics_history]
         ctx = PlotContext(  # pragma: no mutate
             arch_name=arch_name,
             resolution=dataset.resolution,
@@ -124,10 +128,10 @@ class DetectionEvalPipelineAdapter:
         )
         plot_training_curves(
             train_losses=train_losses,
-            val_accuracies=val_losses,
+            val_accuracies=val_map,
             out_path=paths.figures / "training_curves.png",  # pragma: no mutate
             ctx=ctx,
-            val_label="Validation Loss",  # pragma: no mutate
+            val_label="Validation mAP",  # pragma: no mutate
         )
 
         # Tracker logging

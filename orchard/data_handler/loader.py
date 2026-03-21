@@ -53,7 +53,7 @@ from ..core.paths import MIN_SPLIT_SAMPLES
 from ..exceptions import OrchardDatasetError
 from .collate import detection_collate_fn
 from .dataset import VisionDataset
-from .fetcher import DatasetData
+from .dispatcher import DatasetData
 from .transforms import get_pipeline_transforms
 
 # Optuna mode: cap workers to prevent file descriptor exhaustion during trials

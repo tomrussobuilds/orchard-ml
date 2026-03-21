@@ -474,6 +474,13 @@ orchard/data_handler/diagnostic/temp_loader.py:
   survived: 0
   not_checked: 0
   score: 100.0
+orchard/data_handler/dispatcher.py:
+  last_run: '2026-03-21T09:10:21Z'
+  total: 67
+  killed: 52
+  survived: 15
+  not_checked: 0
+  score: 77.6
 orchard/data_handler/fetcher.py:
   last_run: '2026-03-19T14:21:20Z'
   total: 51
@@ -509,6 +516,13 @@ orchard/data_handler/fetchers/medmnist_fetcher.py:
   survived: 15
   not_checked: 0
   score: 90.6
+orchard/data_handler/fetchers/pennfudan_fetcher.py:
+  last_run: '2026-03-21T09:27:56Z'
+  total: 225
+  killed: 202
+  survived: 23
+  not_checked: 0
+  score: 89.8
 orchard/data_handler/loader.py:
   last_run: '2026-03-20T21:05:29Z'
   total: 263
@@ -790,7 +804,7 @@ orchard/tasks/detection/criterion_adapter.py:
   not_checked: 0
   score: 100.0
 orchard/tasks/detection/evaluation_adapter.py:
-  last_run: '2026-03-20T11:19:34Z'
+  last_run: '2026-03-21T09:10:30Z'
   total: 44
   killed: 44
   survived: 0

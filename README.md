@@ -66,7 +66,7 @@
 
 <h2>Overview</h2>
 
-**Orchard ML** is a research-grade `PyTorch` training framework engineered for reproducible, scalable computer vision experiments across diverse domains. Built on [MedMNIST v2](https://zenodo.org/records/6496656) medical imaging datasets and expanded to astronomical imaging ([Galaxy10 DECals](https://zenodo.org/records/10845026)) and standard benchmarks ([CIFAR-10/100](https://www.cs.toronto.edu/~kriz/cifar.html)), it provides a domain-agnostic platform supporting multi-resolution architectures (28×28, 32×32, 64×64, 128×128, 224×224), automated hyperparameter optimization, and cluster-safe execution.
+**Orchard ML** is a research-grade `PyTorch` training framework engineered for reproducible, scalable computer vision experiments across diverse domains. Supports **image classification** and **object detection** from a single YAML recipe. Built on [MedMNIST v2](https://zenodo.org/records/6496656) medical imaging datasets and expanded to astronomical imaging ([Galaxy10 DECals](https://zenodo.org/records/10845026)), standard benchmarks ([CIFAR-10/100](https://www.cs.toronto.edu/~kriz/cifar.html)), and pedestrian detection ([PennFudan](https://www.cis.upenn.edu/~jshi/ped_html/)), it provides a domain-agnostic platform supporting multi-resolution architectures (28×28, 32×32, 64×64, 128×128, 224×224), automated hyperparameter optimization, and cluster-safe execution.
 
 **Key Differentiators:**
 - **Type-Safe Configuration Engine**: `Pydantic V2`-based declarative manifests eliminate runtime errors
@@ -87,6 +87,7 @@
 | **224×224** | `EfficientNet-B0` | ~4.0M | Efficient compound scaling |
 | **224×224** | `ConvNeXt-Tiny` | ~27.8M | Modern ConvNet design |
 | **224×224** | `ViT-Tiny` | ~5.5M | Patch-based attention, multiple weight variants |
+| **224×224** | `Faster R-CNN` | ~43M | Object detection (ResNet-50-FPN v2) |
 
 > [!TIP]
 > **1000+ additional architectures via [timm](https://huggingface.co/docs/timm)**: Any model in the `timm` registry can be used by prefixing the name with `timm/` in your recipe:
@@ -360,7 +361,7 @@ orchard run my_run.yaml
 <h2>Roadmap</h2>
 
 - **Expanded Dataset Domains**: Climate, remote sensing, microscopy
-- **Multi-modal Support**: Detection, segmentation hooks
+- **Multi-modal Support**: Segmentation hooks, bbox visualization
 - **Distributed Training**: `DDP`, `FSDP` support for multi-GPU
 
 ---

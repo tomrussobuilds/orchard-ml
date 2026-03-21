@@ -14,7 +14,7 @@ from .diagnostic import (
     create_synthetic_grayscale_dataset,
     create_temp_loader,
 )
-from .fetcher import DatasetData, ensure_dataset_npz, load_dataset
+from .dispatcher import DatasetData, ensure_dataset_npz, load_dataset
 from .loader import DataLoaderFactory, get_dataloaders
 from .transforms import get_augmentations_description, get_pipeline_transforms
 

@@ -496,7 +496,7 @@ def test_eval_adapter_plots_training_curves(mock_map_cls: MagicMock, mock_plot: 
         model=model,
         test_loader=test_loader,
         train_losses=[0.5],
-        val_metrics_history=[{"loss": 0.3}],
+        val_metrics_history=[{"loss": 0.3, "map": 0.45}],
         class_names=[],
         paths=paths,
         training=MagicMock(),
@@ -509,17 +509,17 @@ def test_eval_adapter_plots_training_curves(mock_map_cls: MagicMock, mock_plot: 
     mock_plot.assert_called_once()
     kw = mock_plot.call_args[1]
     assert kw["train_losses"] == [0.5]
-    assert kw["val_accuracies"] == [0.3]
+    assert kw["val_accuracies"] == [0.45]
     assert kw["ctx"] is not None
-    assert kw["val_label"] == "Validation Loss"
+    assert kw["val_label"] == "Validation mAP"
     assert kw["out_path"] == paths.figures / "training_curves.png"
 
 
 @pytest.mark.unit
 @patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
 @patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
-def test_eval_adapter_val_losses_fallback(mock_map_cls: MagicMock, mock_plot: MagicMock) -> None:
-    """val_losses defaults to 0.0 when METRIC_LOSS is missing from history."""
+def test_eval_adapter_val_map_fallback(mock_map_cls: MagicMock, mock_plot: MagicMock) -> None:
+    """val_map defaults to 0.0 when METRIC_MAP is missing from history."""
     mock_map_cls.return_value.compute.return_value = {
         "map": torch.tensor(0.0),
         "map_50": torch.tensor(0.0),
@@ -547,7 +547,7 @@ def test_eval_adapter_val_losses_fallback(mock_map_cls: MagicMock, mock_plot: Ma
         model=model,
         test_loader=test_loader,
         train_losses=[0.5],
-        val_metrics_history=[{"map": 0.4}],  # no "loss" key
+        val_metrics_history=[{"loss": 0.3}],  # no "map" key
         class_names=[],
         paths=paths,
         training=MagicMock(),
@@ -675,7 +675,7 @@ def test_detection_early_stopping_thresholds() -> None:
     task = get_task("detection")
     assert "map" in task.early_stopping_thresholds
     assert "map_50" in task.early_stopping_thresholds
-    assert task.early_stopping_thresholds["map"] == pytest.approx(0.60)
+    assert task.early_stopping_thresholds["map"] == pytest.approx(0.85)
 
 
 # ── to_cpu helper ─────────────────────────────────────────────────────────────

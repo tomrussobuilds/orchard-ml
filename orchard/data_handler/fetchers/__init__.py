@@ -16,9 +16,11 @@ fetcher can be removed cleanly.
 from .cifar_converter import ensure_cifar_npz
 from .galaxy10_converter import ensure_galaxy10_npz
 from .medmnist_fetcher import ensure_medmnist_npz
+from .pennfudan_fetcher import ensure_pennfudan_npz
 
 __all__ = [
     "ensure_cifar_npz",
     "ensure_galaxy10_npz",
     "ensure_medmnist_npz",
+    "ensure_pennfudan_npz",
 ]

@@ -21,7 +21,7 @@ from pathlib import Path
 import numpy as np
 
 from ...core.paths import DEFAULT_SEED, MIN_SPLIT_SAMPLES
-from ..fetcher import DatasetData
+from ..dispatcher import DatasetData
 
 _SYNTHETIC_SEED = DEFAULT_SEED  # pragma: no mutate
 _SYNTHETIC_PIXEL_RANGE = 255  # pragma: no mutate
