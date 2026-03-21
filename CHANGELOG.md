@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optuna detection guard + remove unused in_channels from fasterrcnn
 - add --task flag to orchard init for detection recipes
 - register PennFudan detection dataset in metadata registry
+- add PennFudan detection fetcher and wire end-to-end pipeline
 
 ### Changed
 

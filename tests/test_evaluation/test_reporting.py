@@ -139,7 +139,11 @@ def test_create_structured_report(mock_config: MagicMock) -> None:
     assert report.best_val_metrics["accuracy"] == pytest.approx(0.9)
     assert report.epochs_trained == 3
     assert report.test_metrics["accuracy"] == pytest.approx(0.88)
+    assert report.augmentations is not None
     assert "HFlip" in report.augmentations
+    # Kill default task_type mutant: classification keeps domain flags
+    assert report.is_texture_based is not None
+    assert report.is_anatomical is not None
 
 
 @pytest.mark.unit
@@ -400,6 +404,96 @@ def test_report_save_json_indent(sample_report_data: Any, tmp_path: Path) -> Non
     assert all(line.startswith("    ") for line in key_lines)
     # With indent=3 those would start with 6 spaces instead
     assert not all(line.startswith("      ") for line in key_lines)
+
+
+# ── Detection report tests ───────────────────────────────────────────────────
+
+
+@pytest.mark.unit
+def test_to_vertical_df_skips_none_fields() -> None:
+    """None fields are excluded from the vertical DataFrame."""
+    report = TrainingReport(
+        architecture="fasterrcnn",
+        dataset="pennfudan",
+        best_val_metrics={"map": 0.85},
+        test_metrics={"map": 0.80},
+        epochs_trained=10,
+        learning_rate=0.005,
+        batch_size=4,
+        seed=42,
+        normalization="Mean: (0.5,) | Std: (0.2,)",
+        model_path="/tmp/best.pth",
+        log_path="/tmp/session.log",
+        # classification-only fields left as None
+    )
+    df = report.to_vertical_df()
+    params = set(df["Parameter"].tolist())
+    assert "is_texture_based" not in params
+    assert "is_anatomical" not in params
+    assert "use_tta" not in params
+    assert "augmentations" not in params
+    # Task-agnostic fields present (after None fields — kills continue→break mutant)
+    assert "architecture" in params
+    assert "best_val_map" in params
+    assert "test_map" in params
+    assert "normalization" in params
+    assert "model_path" in params
+    assert "seed" in params
+
+
+@pytest.mark.unit
+def test_create_structured_report_detection_excludes_classification_fields(
+    mock_config: MagicMock,
+) -> None:
+    """Detection report excludes is_texture_based, is_anatomical, use_tta, augmentations."""
+    val_metrics = [{"map": 0.7, "loss": 0.0}]
+    test_metrics = {"map": 0.65, "map_50": 0.90}
+
+    report = create_structured_report(
+        val_metrics=val_metrics,
+        test_metrics=test_metrics,
+        train_losses=[0.5, 0.3],
+        best_path=Path("/tmp/best.pth"),
+        log_path=Path("/tmp/session.log"),
+        arch_name="fasterrcnn",
+        dataset=mock_config.dataset,
+        training=mock_config.training,
+        task_type="detection",
+    )
+
+    assert report.is_texture_based is None
+    assert report.is_anatomical is None
+    assert report.use_tta is None
+    assert report.augmentations is None
+    # Loss sentinel dropped
+    assert "loss" not in report.best_val_metrics
+
+
+@pytest.mark.unit
+def test_create_structured_report_classification_keeps_all_fields(
+    mock_config: MagicMock,
+) -> None:
+    """Classification report keeps all fields."""
+    val_metrics = [{"accuracy": 0.9, "auc": 0.92}]
+    test_metrics = {"accuracy": 0.88}
+
+    report = create_structured_report(
+        val_metrics=val_metrics,
+        test_metrics=test_metrics,
+        train_losses=[0.5],
+        best_path=Path("/tmp/best.pth"),
+        log_path=Path("/tmp/session.log"),
+        arch_name="resnet_18",
+        dataset=mock_config.dataset,
+        training=mock_config.training,
+        aug_info="HFlip(0.5)",
+        task_type="classification",
+    )
+
+    assert report.is_texture_based is not None
+    assert report.is_anatomical is not None
+    assert report.use_tta is not None
+    assert report.augmentations == "HFlip(0.5)"
 
 
 # ENTRY POINT

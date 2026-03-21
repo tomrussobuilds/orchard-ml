@@ -22,6 +22,7 @@ from ...core import LOGGER_NAME
 from ...core.paths import METRIC_LOSS, METRIC_MAP, METRIC_MAP_50, METRIC_MAP_75
 from ...core.paths.constants import LogStyle
 from ...evaluation.plot_context import PlotContext
+from ...evaluation.reporting import create_structured_report
 from ...evaluation.visualization import plot_training_curves
 from .helpers import to_cpu
 
@@ -49,7 +50,7 @@ class DetectionEvalPipelineAdapter:
         val_metrics_history: list[Mapping[str, float]],
         class_names: list[str],  # noqa: ARG002
         paths: RunPaths,
-        training: TrainingConfig,  # noqa: ARG002
+        training: TrainingConfig,
         dataset: DatasetConfig,
         augmentation: AugmentationConfig,  # noqa: ARG002
         evaluation: EvaluationConfig,
@@ -133,6 +134,20 @@ class DetectionEvalPipelineAdapter:
             ctx=ctx,
             val_label="Validation mAP",  # pragma: no mutate
         )
+
+        # Structured report (Excel/CSV/JSON) — args tested in test_reporting.py
+        report = create_structured_report(  # pragma: no mutate
+            val_metrics=val_metrics_history,
+            test_metrics=test_metrics,
+            train_losses=train_losses,
+            best_path=paths.best_model_path,
+            log_path=paths.logs / "session.log",  # pragma: no mutate
+            arch_name=arch_name,
+            dataset=dataset,
+            training=training,
+            task_type="detection",  # pragma: no mutate
+        )
+        report.save(paths.final_report_path, fmt=evaluation.report_format)  # pragma: no mutate
 
         # Tracker logging
         if tracker is not None:

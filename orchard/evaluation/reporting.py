@@ -66,10 +66,10 @@ class TrainingReport(BaseModel):
     best_val_metrics: dict[str, float]
     test_metrics: dict[str, float]
 
-    # Domain Logic Flags
-    is_texture_based: bool
-    is_anatomical: bool
-    use_tta: bool
+    # Domain Logic Flags (classification only — None for detection)
+    is_texture_based: bool | None = None
+    is_anatomical: bool | None = None
+    use_tta: bool | None = None
 
     # Hyperparameters
     epochs_trained: int
@@ -78,7 +78,7 @@ class TrainingReport(BaseModel):
     seed: int
 
     # Metadata Strings
-    augmentations: str
+    augmentations: str | None = None
     normalization: str
     model_path: str
     log_path: str
@@ -95,6 +95,8 @@ class TrainingReport(BaseModel):
         """
         rows: list[tuple[str, object]] = []
         for key, value in self.model_dump().items():
+            if value is None:
+                continue
             if isinstance(value, dict):
                 prefix = key.removesuffix("_metrics")
                 for sub_key, sub_value in value.items():
@@ -208,6 +210,7 @@ def create_structured_report(
     dataset: DatasetConfig,
     training: TrainingConfig,
     aug_info: str | None = None,
+    task_type: str = "classification",  # pragma: no mutate
 ) -> TrainingReport:
     """
     Constructs a TrainingReport object using final metrics and configuration.
@@ -225,12 +228,11 @@ def create_structured_report(
         dataset: Dataset sub-config with metadata, name, and normalization info.
         training: Training sub-config with hyperparameters and flags.
         aug_info: Pre-formatted augmentation string.
+        task_type: Task type for conditional field inclusion.
 
     Returns:
         TrainingReport: A validated Pydantic model ready for export.
     """
-    # Augmentation info is expected from caller; fallback to "N/A"
-    aug_info = aug_info or "N/A"
 
     def _safe_max(key: str) -> float:
         """Return the best non-NaN value for *key* across validation epochs."""
@@ -243,18 +245,25 @@ def create_structured_report(
         all_keys.update(m.keys())
     best_val_metrics = {key: _safe_max(key) for key in sorted(all_keys)}
 
+    # Classification-only fields (None → excluded from report)
+    is_classification = task_type == "classification"
+
+    # Detection: drop the METRIC_LOSS sentinel (always 0.0, not meaningful)
+    if not is_classification:
+        best_val_metrics.pop("loss", None)  # pragma: no mutate
+
     return TrainingReport(
         architecture=arch_name,
         dataset=dataset.dataset_name,
         best_val_metrics=best_val_metrics,
         test_metrics=dict(test_metrics),
-        is_texture_based=dataset.metadata.is_texture_based,
-        is_anatomical=dataset.metadata.is_anatomical,
-        use_tta=training.use_tta,
+        is_texture_based=dataset.metadata.is_texture_based if is_classification else None,
+        is_anatomical=dataset.metadata.is_anatomical if is_classification else None,
+        use_tta=training.use_tta if is_classification else None,
         epochs_trained=len(train_losses),
         learning_rate=training.learning_rate,
         batch_size=training.batch_size,
-        augmentations=aug_info,
+        augmentations=(aug_info or "N/A") if is_classification else None,
         normalization=dataset.metadata.normalization_info,
         model_path=str(best_path.resolve()),
         log_path=str(log_path.resolve()),

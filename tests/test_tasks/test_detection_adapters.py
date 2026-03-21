@@ -393,6 +393,10 @@ def test_eval_adapter_real_inference() -> None:
     dataset_cfg = MagicMock()
     dataset_cfg.resolution = 224
     dataset_cfg.name = "test_det"
+    dataset_cfg.dataset_name = "test_det"
+    dataset_cfg.metadata.is_texture_based = False
+    dataset_cfg.metadata.is_anatomical = False
+    dataset_cfg.metadata.normalization_info = "Mean: (0.5,) | Std: (0.2,)"
     eval_cfg = MagicMock()
     eval_cfg.fig_dpi = 100
     eval_cfg.plot_style = "default"
@@ -400,22 +404,29 @@ def test_eval_adapter_real_inference() -> None:
     eval_cfg.grid_cols = 4
     eval_cfg.n_samples = 16
     eval_cfg.fig_size_predictions = (12, 8)
+    eval_cfg.report_format = "xlsx"
+    training_cfg = MagicMock()
+    training_cfg.use_tta = False
+    training_cfg.learning_rate = 0.005
+    training_cfg.batch_size = 4
+    training_cfg.seed = 42
 
     with patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves"):
-        adapter = DetectionEvalPipelineAdapter()
-        result = adapter.run_evaluation(
-            model=model,
-            test_loader=test_loader,
-            train_losses=[0.5],
-            val_metrics_history=[{"loss": 0.3}],
-            class_names=["obj"],
-            paths=paths,
-            training=MagicMock(),
-            dataset=dataset_cfg,
-            augmentation=MagicMock(),
-            evaluation=eval_cfg,
-            arch_name="fasterrcnn",
-        )
+        with patch("orchard.tasks.detection.evaluation_adapter.create_structured_report"):
+            adapter = DetectionEvalPipelineAdapter()
+            result = adapter.run_evaluation(
+                model=model,
+                test_loader=test_loader,
+                train_losses=[0.5],
+                val_metrics_history=[{"loss": 0.3}],
+                class_names=["obj"],
+                paths=paths,
+                training=training_cfg,
+                dataset=dataset_cfg,
+                augmentation=MagicMock(),
+                evaluation=eval_cfg,
+                arch_name="fasterrcnn",
+            )
 
     assert isinstance(result, Mapping)
     assert "map" in result
@@ -424,9 +435,12 @@ def test_eval_adapter_real_inference() -> None:
 
 
 @pytest.mark.unit
+@patch("orchard.tasks.detection.evaluation_adapter.create_structured_report")
 @patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
 @patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
-def test_eval_adapter_returns_metrics(mock_map_cls: MagicMock, mock_plot: MagicMock) -> None:
+def test_eval_adapter_returns_metrics(
+    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock
+) -> None:
     """EvalPipelineAdapter returns mAP metrics from test set."""
     mock_metric = MagicMock()
     mock_metric.compute.return_value = {
@@ -465,9 +479,12 @@ def test_eval_adapter_returns_metrics(mock_map_cls: MagicMock, mock_plot: MagicM
 
 
 @pytest.mark.unit
+@patch("orchard.tasks.detection.evaluation_adapter.create_structured_report")
 @patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
 @patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
-def test_eval_adapter_plots_training_curves(mock_map_cls: MagicMock, mock_plot: MagicMock) -> None:
+def test_eval_adapter_plots_training_curves(
+    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock
+) -> None:
     """EvalPipelineAdapter generates training curves with correct args."""
     mock_map_cls.return_value.compute.return_value = {
         "map": torch.tensor(0.0),
@@ -516,9 +533,12 @@ def test_eval_adapter_plots_training_curves(mock_map_cls: MagicMock, mock_plot: 
 
 
 @pytest.mark.unit
+@patch("orchard.tasks.detection.evaluation_adapter.create_structured_report")
 @patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
 @patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
-def test_eval_adapter_val_map_fallback(mock_map_cls: MagicMock, mock_plot: MagicMock) -> None:
+def test_eval_adapter_val_map_fallback(
+    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock
+) -> None:
     """val_map defaults to 0.0 when METRIC_MAP is missing from history."""
     mock_map_cls.return_value.compute.return_value = {
         "map": torch.tensor(0.0),
@@ -564,9 +584,12 @@ def test_eval_adapter_val_map_fallback(mock_map_cls: MagicMock, mock_plot: Magic
 
 
 @pytest.mark.unit
+@patch("orchard.tasks.detection.evaluation_adapter.create_structured_report")
 @patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
 @patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
-def test_eval_adapter_logs_to_tracker(mock_map_cls: MagicMock, mock_plot: MagicMock) -> None:
+def test_eval_adapter_logs_to_tracker(
+    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock
+) -> None:
     """EvalPipelineAdapter logs metrics to tracker when provided."""
     mock_map_cls.return_value.compute.return_value = {
         "map": torch.tensor(0.5),
@@ -604,9 +627,12 @@ def test_eval_adapter_logs_to_tracker(mock_map_cls: MagicMock, mock_plot: MagicM
 
 
 @pytest.mark.unit
+@patch("orchard.tasks.detection.evaluation_adapter.create_structured_report")
 @patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
 @patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
-def test_eval_adapter_no_tracker_no_error(mock_map_cls: MagicMock, mock_plot: MagicMock) -> None:
+def test_eval_adapter_no_tracker_no_error(
+    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock
+) -> None:
     """EvalPipelineAdapter works without a tracker (tracker=None)."""
     mock_map_cls.return_value.compute.return_value = {
         "map": torch.tensor(0.0),

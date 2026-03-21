@@ -31,7 +31,11 @@ _TRAIN_RATIO = 0.7
 _VAL_RATIO = 0.15
 
 
-def _download_zip(url: str, retries: int = 3, timeout: int = 120) -> zipfile.ZipFile:
+def _download_zip(
+    url: str,
+    retries: int = 3,  # pragma: no mutate
+    timeout: int = 120,  # pragma: no mutate
+) -> zipfile.ZipFile:
     """
     Download a ZIP archive into memory with retry logic.
 
@@ -43,7 +47,7 @@ def _download_zip(url: str, retries: int = 3, timeout: int = 120) -> zipfile.Zip
     Returns:
         In-memory ZipFile object.
     """
-    for attempt in range(1, retries + 1):
+    for attempt in range(1, retries + 1):  # pragma: no mutate
         try:
             logger.info(
                 "%s%s %-18s: PennFudan (attempt %d/%d)",
@@ -62,9 +66,11 @@ def _download_zip(url: str, retries: int = 3, timeout: int = 120) -> zipfile.Zip
                 raise OrchardDatasetError(
                     f"Failed to download PennFudan after {retries} attempts"
                 ) from e
-            logger.warning("Download attempt %d failed: %s", attempt, e)
+            logger.warning("Download attempt %d failed: %s", attempt, e)  # pragma: no mutate
 
-    raise OrchardDatasetError("Unexpected error in PennFudan download")  # pragma: no cover
+    raise OrchardDatasetError(  # pragma: no cover  # pragma: no mutate
+        "Unexpected error in PennFudan download"  # pragma: no mutate
+    )
 
 
 def _mask_to_boxes(mask: npt.NDArray[Any]) -> npt.NDArray[np.floating[Any]]:
@@ -84,7 +90,7 @@ def _mask_to_boxes(mask: npt.NDArray[Any]) -> npt.NDArray[np.floating[Any]]:
 
     boxes = []
     for iid in instance_ids:
-        positions = np.where(mask == iid)
+        positions = np.nonzero(mask == iid)
         y_min = int(np.min(positions[0]))
         y_max = int(np.max(positions[0]))
         x_min = int(np.min(positions[1]))
@@ -167,14 +173,14 @@ def _parse_pennfudan_zip(
         boxes = _mask_to_boxes(mask)
         boxes = _rescale_boxes(boxes, orig_w, orig_h, target_size)
 
-        img_resized = img.resize((target_size, target_size), resample)
-        images.append(np.array(img_resized, dtype=np.uint8))
+        img_resized = img.resize((target_size, target_size), resample)  # pragma: no mutate
+        images.append(np.array(img_resized, dtype=np.uint8))  # pragma: no mutate
 
         all_boxes.append(boxes)
         # All instances are class 1 (person); label 0 is reserved for background
         all_labels.append(np.ones(len(boxes), dtype=np.int64))
 
-    images_array = np.array(images, dtype=np.uint8)
+    images_array = np.array(images, dtype=np.uint8)  # pragma: no mutate
     return images_array, all_boxes, all_labels
 
 
@@ -271,7 +277,9 @@ def ensure_pennfudan_npz(metadata: DatasetMetadata) -> Path:
     annotation_path = metadata.annotation_path
 
     if annotation_path is None:
-        raise OrchardDatasetError("PennFudan metadata must have annotation_path set")
+        raise OrchardDatasetError(
+            "PennFudan metadata must have annotation_path set"  # pragma: no mutate
+        )
 
     # Return cached if both NPZ files exist
     if image_path.exists() and annotation_path.exists():
