@@ -150,7 +150,7 @@ class Config(BaseModel):
     and provides factory methods for YAML and CLI instantiation.
 
     Attributes:
-        task_type: ML task type (currently ``"classification"``)
+        task_type: ML task type (``"classification"`` or ``"detection"``)
         hardware: Device selection, threading, reproducibility settings
         telemetry: Logging, paths, experiment naming
         training: Optimizer, scheduler, epochs, regularization

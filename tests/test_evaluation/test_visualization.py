@@ -80,11 +80,11 @@ def test_plot_training_curves_basic(  # type: ignore
     mock_plt.subplots.return_value = (mock_fig, mock_ax)
 
     train_losses = [0.8, 0.6, 0.4, 0.2]
-    val_accuracies = [0.6, 0.7, 0.8, 0.9]
+    val_metric_values = [0.6, 0.7, 0.8, 0.9]
     out_path = tmp_path / "curves.png"
 
     plot_training_curves(
-        train_losses, val_accuracies, out_path, ctx_rgb, val_label="Validation Accuracy"
+        train_losses, val_metric_values, out_path, ctx_rgb, val_label="Validation Accuracy"
     )
 
     assert mock_plt.subplots.called
@@ -770,11 +770,11 @@ def test_plot_training_curves_npz_data(  # type: ignore
     mock_plt.subplots.return_value = (mock_fig, mock_ax)
 
     train_losses = [0.8, 0.6, 0.4]
-    val_accuracies = [0.6, 0.7, 0.8]
+    val_metric_values = [0.6, 0.7, 0.8]
     out_path = tmp_path / "curves.png"
 
     plot_training_curves(
-        train_losses, val_accuracies, out_path, ctx_rgb, val_label="Validation Accuracy"
+        train_losses, val_metric_values, out_path, ctx_rgb, val_label="Validation Accuracy"
     )
 
     # Verify npz called with the correct path and data
@@ -782,7 +782,7 @@ def test_plot_training_curves_npz_data(  # type: ignore
     npz_path = call_args[0][0]
     assert str(npz_path).endswith(".npz")
     assert call_args[1]["train_losses"] == train_losses
-    assert call_args[1]["val_accuracies"] == val_accuracies
+    assert call_args[1]["val_metric_values"] == val_metric_values
 
 
 @pytest.mark.unit

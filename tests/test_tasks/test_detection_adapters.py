@@ -526,7 +526,7 @@ def test_eval_adapter_plots_training_curves(
     mock_plot.assert_called_once()
     kw = mock_plot.call_args[1]
     assert kw["train_losses"] == [0.5]
-    assert kw["val_accuracies"] == [0.45]
+    assert kw["val_metric_values"] == [0.45]
     assert kw["ctx"] is not None
     assert kw["val_label"] == "Validation mAP"
     assert kw["out_path"] == paths.figures / "training_curves.png"
@@ -578,9 +578,9 @@ def test_eval_adapter_val_map_fallback(
     )
 
     kw = mock_plot.call_args[1]
-    assert kw["val_accuracies"] == [0.0]
-    assert kw["val_accuracies"] != [1.0]
-    assert kw["val_accuracies"] != [None]
+    assert kw["val_metric_values"] == [0.0]
+    assert kw["val_metric_values"] != [1.0]
+    assert kw["val_metric_values"] != [None]
 
 
 @pytest.mark.unit

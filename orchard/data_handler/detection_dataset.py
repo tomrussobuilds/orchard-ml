@@ -145,7 +145,9 @@ class DetectionDataset(Dataset[tuple[torch.Tensor, dict[str, torch.Tensor]]]):
             ``boxes`` (N, 4) float32 and ``labels`` (N,) int64.
         """
         img = self.images[idx]
-        pil_img = Image.fromarray(img.squeeze() if img.shape[-1] == 1 else img)
+        if img.shape[-1] == 1:
+            img = np.repeat(img, 3, axis=-1)
+        pil_img = Image.fromarray(img)
 
         if self.transform:
             img_t: torch.Tensor = self.transform(pil_img)

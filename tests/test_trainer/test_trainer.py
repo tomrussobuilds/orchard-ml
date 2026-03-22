@@ -1061,6 +1061,21 @@ def test_train_val_loss_extracted_from_metrics(
         assert val_loss_arg == pytest.approx(0.25)
 
 
+@pytest.mark.unit
+@patch("orchard.trainer.trainer.logger")
+def test_log_epoch_summary_zero_val_loss_skips_val(
+    mock_logger: MagicMock, trainer: ModelTrainer
+) -> None:
+    """When val_loss is 0.0 (detection sentinel), only train loss is logged."""
+    trainer._log_epoch_summary(1, 0.5, 0.0, 0.85, 1e-3)
+
+    info_calls = [str(c) for c in mock_logger.info.call_args_list]
+    loss_calls = [c for c in info_calls if "Loss" in c]
+    assert len(loss_calls) == 1
+    assert "V " not in loss_calls[0]
+    assert "T %.4f" in loss_calls[0]
+
+
 @pytest.mark.integration
 @patch("orchard.trainer._loop.train_one_epoch")
 @patch("orchard.trainer._loop.validate_epoch")

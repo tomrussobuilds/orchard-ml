@@ -91,7 +91,7 @@ def show_predictions(
 
 def plot_training_curves(
     train_losses: Sequence[float],
-    val_accuracies: Sequence[float],
+    val_metric_values: Sequence[float],
     out_path: Path,
     ctx: PlotContext,
     *,
@@ -105,7 +105,7 @@ def plot_training_curves(
 
     Args:
         train_losses: Per-epoch training loss values.
-        val_accuracies: Per-epoch validation metric values.
+        val_metric_values: Per-epoch validation metric values.
         out_path: Destination file path for the saved figure.
         ctx: PlotContext with architecture and evaluation settings.
         val_label: Label for the right y-axis and legend entry.
@@ -121,10 +121,10 @@ def plot_training_curves(
         ax1.tick_params(axis="y", labelcolor="#e74c3c")  # pragma: no mutate
         ax1.grid(True, linestyle="--", alpha=0.4)  # pragma: no mutate
 
-        # Right Axis: Validation Accuracy
+        # Right Axis: Validation Metric
         ax2 = ax1.twinx()  # pragma: no mutate
         ax2.plot(  # pragma: no mutate
-            val_accuracies, color="#3498db", lw=2, label=val_label  # pragma: no mutate
+            val_metric_values, color="#3498db", lw=2, label=val_label  # pragma: no mutate
         )  # pragma: no mutate
         ax2.set_ylabel(val_label, color="#3498db", fontweight="bold")  # pragma: no mutate
         ax2.tick_params(axis="y", labelcolor="#3498db")  # pragma: no mutate
@@ -144,7 +144,7 @@ def plot_training_curves(
 
         # Export raw data for post-run analysis
         npz_path = out_path.with_suffix(".npz")
-        np.savez(npz_path, train_losses=train_losses, val_accuracies=val_accuracies)
+        np.savez(npz_path, train_losses=train_losses, val_metric_values=val_metric_values)
         plt.close()
 
 

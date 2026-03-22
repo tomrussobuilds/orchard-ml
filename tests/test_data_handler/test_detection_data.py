@@ -285,7 +285,7 @@ def test_dataset_subsampling() -> None:
 
 @pytest.mark.unit
 def test_dataset_grayscale() -> None:
-    """DetectionDataset handles grayscale (H, W) images."""
+    """DetectionDataset converts grayscale (H, W) images to 3-channel RGB."""
     images = np.random.randint(0, 255, (3, 32, 32), dtype=np.uint8)
     annotations: list[dict[str, npt.NDArray[Any]]] = [
         {
@@ -297,7 +297,7 @@ def test_dataset_grayscale() -> None:
 
     ds = DetectionDataset(images, annotations)
     img, _ = ds[0]
-    assert img.shape[0] == 1  # single channel
+    assert img.shape[0] == 3  # grayscale converted to RGB for pretrained backbone
 
 
 @pytest.mark.unit

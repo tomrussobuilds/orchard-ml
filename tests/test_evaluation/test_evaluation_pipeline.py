@@ -544,8 +544,10 @@ def test_val_acc_list_extraction(
     )
 
     call_kwargs = mock_curves.call_args.kwargs
-    assert call_kwargs["val_accuracies"] == [0.7, 0.85, 0.92]
+    assert call_kwargs["val_metric_values"] == [0.7, 0.85, 0.92]
     assert call_kwargs["train_losses"] == [0.5, 0.3, 0.1]
+    assert call_kwargs["val_label"] == "Validation Accuracy"
+    assert call_kwargs["out_path"] is not None
 
 
 @pytest.mark.unit

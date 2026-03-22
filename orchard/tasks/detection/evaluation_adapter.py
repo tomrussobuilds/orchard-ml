@@ -129,7 +129,7 @@ class DetectionEvalPipelineAdapter:
         )
         plot_training_curves(
             train_losses=train_losses,
-            val_accuracies=val_map,
+            val_metric_values=val_map,
             out_path=paths.figures / "training_curves.png",  # pragma: no mutate
             ctx=ctx,
             val_label="Validation mAP",  # pragma: no mutate

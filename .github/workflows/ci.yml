@@ -2,12 +2,12 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths-ignore:
       - '**/*.md'
       - 'LICENSE'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths-ignore:
       - '**/*.md'
       - 'LICENSE'

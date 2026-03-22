@@ -138,10 +138,13 @@ def run_final_evaluation(
 
     # Historical Training Curves
     val_acc_list = [m[METRIC_ACCURACY] for m in val_metrics_history]
+    curves_path = paths.get_fig_path(
+        f"training_curves_{arch_tag}_{dataset.resolution}.png"  # pragma: no mutate
+    )
     plot_training_curves(
         train_losses=train_losses,
-        val_accuracies=val_acc_list,
-        out_path=paths.get_fig_path(f"training_curves_{arch_tag}_{dataset.resolution}.png"),
+        val_metric_values=val_acc_list,
+        out_path=curves_path,
         ctx=ctx,
         val_label="Validation Accuracy",
     )

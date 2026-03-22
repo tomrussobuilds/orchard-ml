@@ -291,7 +291,10 @@ class ModelTrainer:
             monitor_value,
             self.best_metric,
         )
-        logger.info("%s%s Loss  : T %.4f / V %.4f", I, A, train_loss, val_loss)
+        if val_loss > 0.0:  # pragma: no mutate
+            logger.info("%s%s Loss  : T %.4f / V %.4f", I, A, train_loss, val_loss)
+        else:
+            logger.info("%s%s Loss  : T %.4f", I, A, train_loss)
         logger.info("%s%s LR    : %.2e %s Patience: %d", I, A, lr, B, remaining)
 
     def _log_training_complete(self) -> None:  # pragma: no mutate
