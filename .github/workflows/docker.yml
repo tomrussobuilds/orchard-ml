@@ -1,0 +1,32 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docker/Dockerfile'
+      - 'pyproject.toml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docker/Dockerfile'
+      - 'pyproject.toml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4
+
+      - name: Build image
+        run: docker build -f docker/Dockerfile -t orchard-ml:ci .
