@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - handle pre-existing GID 1000 in Docker image
+- remove pip self-upgrade that fails on Ubuntu 24.04
 
 ### Miscellaneous
 
