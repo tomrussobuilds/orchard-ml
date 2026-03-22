@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "orchard-ml"
-version = "0.2.2"
+version = "0.2.3"
 description = "Type-Safe Deep Learning Framework for Computer Vision"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -30,10 +30,10 @@ dependencies = [
     "pandas>=2.0.0,<4",  # floor kept low: pandas 3.x has issues on Python 3.14
     "scikit-learn>=1.5.0,<2",
     "Pillow>=12.1.1,<13",
-    "h5py>=3.12.0,<4",
+    "h5py>=3.15.0,<4",
     "pydantic>=2.10.0,<3",
     "pyyaml>=6.0,<7",
-    "optuna>=4.0.0,<5",
+    "optuna>=4.7.0,<5",
     "plotly>=6.0.0,<7",
     "matplotlib>=3.9.0,<4",
     "xlsxwriter>=3.2.0,<4",
@@ -46,7 +46,7 @@ dependencies = [
     "onnxscript>=0.2.0,<1",
     "onnxruntime>=1.20.0,<2; python_version < '3.14'",
     "typer>=0.9.0,<1",
-    "mlflow>=3.9.0",
+    "mlflow>=3.10.0",
     "torchmetrics>=1.0.0,<2",
     "pycocotools>=2.0.0,<3",
 ]
@@ -67,13 +67,13 @@ notebooks = [
 ]
 test = [
     "pytest>=9.0.0",
-    "pytest-cov>=7.0.0",
+    "pytest-cov>=7.0.1",
     "pytest-xdist>=3.5.0",
 ]
 dev = [
     "orchard-ml[test]",
     "black>=26.3.1",
-    "ruff>=0.11.0",
+    "ruff>=0.15.6",
     "mypy==1.19.1",
     "bandit[toml]>=1.8.0",
     "radon>=6.0.0",
@@ -87,11 +87,11 @@ dev = [
 ]
 docs = [
     "mkdocs>=1.6.0",
-    "mkdocs-material>=9.5.0",
+    "mkdocs-material>=9.7.0",
     "mkdocstrings[python]>=1.0.0",
-    "mkdocs-gen-files>=0.5.0",
-    "mkdocs-literate-nav>=0.6.0",
-    "mkdocs-section-index>=0.3.9",
+    "mkdocs-gen-files>=0.6.0",
+    "mkdocs-literate-nav>=0.6.3",
+    "mkdocs-section-index>=0.3.11",
 ]
 
 [tool.setuptools.packages.find]

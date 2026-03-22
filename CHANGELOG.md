@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - reject timm/ architectures for detection tasks
 - task-aware training curves label and use_tta detection warning
 - warn on ignored classification params for detection tasks
+- pre-release audit — detection logging, grayscale fix, naming cleanup
 
 ### Miscellaneous
 
