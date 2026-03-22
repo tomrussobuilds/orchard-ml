@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- handle pre-existing GID 1000 in Docker image
+
 ### Miscellaneous
 
 - bump git-cliff to v4.7.1, add Docker build CI

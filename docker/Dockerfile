@@ -31,7 +31,6 @@ RUN apt-get update && apt-get install -y \
         python3-pip \
         git \
         procps \
-    && pip3 install --upgrade pip \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
