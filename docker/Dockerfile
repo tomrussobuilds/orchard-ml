@@ -13,10 +13,10 @@ ENV PIP_BREAK_SYSTEM_PACKAGES=1
 ENV PYTHONHASHSEED=0
 ENV CUBLAS_WORKSPACE_CONFIG=:4096:8
 
-# Create non-root user for runtime (UID 1000 for host-mount compatibility).
+# Create non-root user for runtime.
 # Override at runtime with: docker run -u $(id -u):$(id -g) ...
-RUN getent group 1000 || groupadd -g 1000 appuser && \
-    id -u 1000 >/dev/null 2>&1 || useradd -m -u 1000 -g 1000 appuser
+RUN groupadd -g 65532 appuser && \
+    useradd -m -u 65532 -g 65532 appuser
 
 # Headless rendering and cache directories
 ENV HOME=/home/appuser
@@ -51,7 +51,7 @@ COPY . .
 RUN pip3 install -e .
 
 # Hand ownership to non-root user
-RUN chown -R appuser:1000 /app /home/appuser
+RUN chown -R appuser:appuser /app /home/appuser
 
 USER appuser
 
