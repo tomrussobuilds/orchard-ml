@@ -15,7 +15,8 @@ ENV CUBLAS_WORKSPACE_CONFIG=:4096:8
 
 # Create non-root user for runtime (UID 1000 for host-mount compatibility).
 # Override at runtime with: docker run -u $(id -u):$(id -g) ...
-RUN groupadd -g 1000 appuser && useradd -m -u 1000 -g appuser appuser
+RUN groupadd -g 1000 appuser 2>/dev/null || true && \
+    useradd -m -u 1000 -g 1000 appuser 2>/dev/null || true
 
 # Headless rendering and cache directories
 ENV HOME=/home/appuser
