@@ -421,6 +421,147 @@ class TestCLIRun:
         assert result.exit_code != 0
 
 
+# CLI VALIDATE COMMAND
+@pytest.mark.unit
+class TestCLIValidate:
+    """Tests for the ``validate`` command."""
+
+    def test_validate_help(self) -> None:
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["validate", "--help"])
+        assert result.exit_code == 0
+        clean = _strip_ansi(result.output)
+        assert "RECIPE" in clean
+        assert "--set" in clean
+
+    def test_validate_missing_recipe(self) -> None:
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["validate", "nonexistent.yaml"])
+        assert result.exit_code == 1
+        assert "not found" in result.output
+
+    def test_validate_valid_recipe(self, tmp_path: Path) -> None:
+        import yaml
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        recipe = tmp_path / "recipe.yaml"
+        recipe.write_text(
+            yaml.dump(
+                {
+                    "dataset": {"name": "bloodmnist", "resolution": 28, "force_rgb": True},
+                    "architecture": {"name": "mini_cnn", "pretrained": False},
+                    "training": {"epochs": 1, "mixup_epochs": 0, "use_amp": False, "seed": 42},
+                    "hardware": {"device": "cpu"},
+                    "telemetry": {"output_dir": str(tmp_path)},
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["validate", str(recipe)])
+        assert result.exit_code == 0
+        assert "Recipe is valid" in result.output
+
+    def test_validate_invalid_extra_field(self, tmp_path: Path) -> None:
+        import yaml
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        recipe = tmp_path / "recipe.yaml"
+        recipe.write_text(
+            yaml.dump(
+                {
+                    "dataset": {"name": "bloodmnist", "resolution": 28, "force_rgb": True},
+                    "architecture": {"name": "mini_cnn", "pretrained": False},
+                    "training": {"epochs": 1, "mixup_epochs": 0, "use_amp": False, "seed": 42},
+                    "hardware": {"device": "cpu"},
+                    "telemetry": {"output_dir": str(tmp_path)},
+                    "optuna": {"n_trials": 10, "include_models": False},
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["validate", str(recipe)])
+        assert result.exit_code == 1
+        assert "Validation failed" in result.output
+        assert "extra_forbidden" in result.output
+
+    def test_validate_invalid_literal(self, tmp_path: Path) -> None:
+        import yaml
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        recipe = tmp_path / "recipe.yaml"
+        recipe.write_text(
+            yaml.dump(
+                {
+                    "dataset": {"name": "bloodmnist", "resolution": 28, "force_rgb": True},
+                    "architecture": {"name": "mini_cnn", "pretrained": False},
+                    "training": {"epochs": 1, "mixup_epochs": 0, "use_amp": False, "seed": 42},
+                    "hardware": {"device": "cpu"},
+                    "telemetry": {"output_dir": str(tmp_path)},
+                    "optuna": {"n_trials": 10, "sampler_type": "genetic"},
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["validate", str(recipe)])
+        assert result.exit_code == 1
+        assert "Validation failed" in result.output
+
+    def test_validate_with_overrides(self, tmp_path: Path) -> None:
+        import yaml
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        recipe = tmp_path / "recipe.yaml"
+        recipe.write_text(
+            yaml.dump(
+                {
+                    "dataset": {"name": "bloodmnist", "resolution": 28, "force_rgb": True},
+                    "architecture": {"name": "mini_cnn", "pretrained": False},
+                    "training": {"epochs": 1, "mixup_epochs": 0, "use_amp": False, "seed": 42},
+                    "hardware": {"device": "cpu"},
+                    "telemetry": {"output_dir": str(tmp_path)},
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["validate", str(recipe), "--set", "training.epochs=20"])
+        assert result.exit_code == 0
+        assert "Recipe is valid" in result.output
+
+    def test_validate_registered_in_help(self) -> None:
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["--help"])
+        assert result.exit_code == 0
+        assert "validate" in result.output
+
+
 # CLI INIT COMMAND
 @pytest.mark.unit
 class TestCLIInit:

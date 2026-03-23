@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - handle pre-existing GID 1000 in Docker image
 - remove pip self-upgrade that fails on Ubuntu 24.04
+- harden Dockerfile for Ubuntu 24.04 NVIDIA base image
+- harden Dockerfile for Ubuntu 24.04 NVIDIA base image
 
 ### Miscellaneous
 

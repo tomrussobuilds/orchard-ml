@@ -1,10 +1,11 @@
 """
 Orchard ML Command-Line Interface.
 
-Provides the ``orchard`` entry point with two commands:
+Provides the ``orchard`` entry point with three commands:
 
-- ``orchard init`` — generate a starter recipe YAML with all defaults
-- ``orchard run``  — execute a training pipeline from a YAML recipe
+- ``orchard init``      — generate a starter recipe YAML with all defaults
+- ``orchard validate``  — validate a YAML recipe without running the pipeline
+- ``orchard run``       — execute a training pipeline from a YAML recipe
 
 Usage::
 
@@ -124,6 +125,38 @@ def init(
     output.write_text(content, encoding="utf-8")
     typer.echo(f"Recipe created: {output}")
     typer.echo(f"Run it with:   orchard run {output}")
+
+
+@app.command()
+def validate(
+    recipe: Annotated[
+        Path,
+        typer.Argument(help="Path to YAML recipe file."),
+    ],
+    set_: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--set",
+            help="Override config value (repeatable): key.path=value",
+        ),
+    ] = None,
+) -> None:
+    """Validate a YAML recipe without running the pipeline."""
+    from orchard import Config
+
+    if not recipe.exists():
+        typer.echo(f"Error: recipe not found: {recipe}", err=True)
+        raise typer.Exit(code=1)
+
+    overrides = _parse_overrides(set_ or [])
+
+    try:
+        Config.from_recipe(recipe, overrides=overrides or None)
+    except Exception as e:
+        typer.echo(f"Validation failed: {e}", err=True)
+        raise typer.Exit(code=1)
+
+    typer.echo(f"Recipe is valid: {recipe}")
 
 
 @app.command()

@@ -68,4 +68,6 @@ evaluation:
 optuna:
   n_trials: 20
   search_space_preset: "full"
-  include_models: false
+  enable_model_search: false
+  search_space_overrides:
+    batch_size_high_res: [2, 4, 6]

@@ -1,14 +1,10 @@
-# =========================================================================== #
-#                           PYTHON BYTECODE & CACHE                           #
-# =========================================================================== #
+# Python bytecode & cache
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 
-# =========================================================================== #
-#                           DISTRIBUTION & PACKAGING                          #
-# =========================================================================== #
+# Distribution & packaging
 *.egg
 *.egg-info/
 orchard_ml.egg-info/
@@ -29,9 +25,7 @@ share/python-wheels/
 *.manifest
 *.spec
 
-# =========================================================================== #
-#                           VIRTUAL ENVIRONMENTS                              #
-# =========================================================================== #
+# Virtual environments
 .venv/
 venv/
 env/
@@ -41,17 +35,13 @@ venv.bak/
 .python-version
 .conda/
 
-# =========================================================================== #
-#                           JUPYTER NOTEBOOKS                                 #
-# =========================================================================== #
+# Jupyter notebooks
 .ipynb_checkpoints/
 *.ipynb
 *-checkpoint.ipynb
 !notebooks/*.ipynb
 
-# =========================================================================== #
-#                           TESTING & COVERAGE                                #
-# =========================================================================== #
+# Testing & coverage
 .pytest_cache/
 .ruff_cache/
 /.ruff_cache/
@@ -68,9 +58,7 @@ nosetests.xml
 coverage.xml
 *.coveragerc
 
-# =========================================================================== #
-#                           IDE & EDITORS                                     #
-# =========================================================================== #
+# IDE & editors
 # Claude Code
 .claude/
 
@@ -100,9 +88,7 @@ coverage.xml
 \#*\#
 .\#*
 
-# =========================================================================== #
-#                           OPERATING SYSTEMS                                 #
-# =========================================================================== #
+# Operating systems
 # macOS
 .DS_Store
 .AppleDouble
@@ -131,9 +117,7 @@ $RECYCLE.BIN/
 .directory
 .Trash-*
 
-# =========================================================================== #
-#                           PROJECT OUTPUTS                                   #
-# =========================================================================== #
+# Project outputs
 # Experiment outputs (managed by Orchard ML RunPaths)
 outputs/
 runs/
@@ -152,9 +136,7 @@ tmp/
 temp/
 .cache/
 
-# =========================================================================== #
-#                           ML MODEL ARTIFACTS                                #
-# =========================================================================== #
+# ML model artifacts
 # PyTorch
 *.pth
 *.pt
@@ -177,9 +159,7 @@ temp/
 *.npy
 *.safetensors
 
-# =========================================================================== #
-#                           ML EXPERIMENT TRACKING                            #
-# =========================================================================== #
+# ML experiment tracking
 # Weights & Biases
 wandb/
 .wandb/
@@ -200,9 +180,7 @@ events.out.tfevents.*
 # Neptune.ai
 .neptune/
 
-# =========================================================================== #
-#                           SECURITY & SECRETS                                #
-# =========================================================================== #
+# Security & secrets
 # Environment variables
 .env
 .env.local
@@ -216,9 +194,7 @@ events.out.tfevents.*
 secrets/
 credentials/
 
-# =========================================================================== #
-#                           DOCUMENTATION                                     #
-# =========================================================================== #
+# Documentation
 # Sphinx
 docs/_build/
 docs/.doctrees/
@@ -232,9 +208,7 @@ site/
 !docs/artifacts/
 !docs/artifacts/**/*
 
-# =========================================================================== #
-#                           BACKUP & LEGACY                                   #
-# =========================================================================== #
+# Backup & legacy
 backup_*/
 legacy/
 old/
@@ -244,9 +218,7 @@ archive/
 *.old
 *.orig
 
-# =========================================================================== #
-#                           MISCELLANEOUS                                     #
-# =========================================================================== #
+# Miscellaneous
 # Lock files (keep uv.lock for reproducible builds)
 *.lock
 !uv.lock
@@ -276,24 +248,18 @@ archive/
 *.sqlite
 *.sqlite3
 
-# =========================================================================== #
-#                           GITHUB ACTIONS                                    #
-# =========================================================================== #
+# GitHub Actions
 .github/workflows/*.log# Node.js (not used in this Python project)
 node_modules/
 package-lock.json
 package.json
 
-# =========================================================================== #
-#                           VIDEO / DEMO RECORDING                            #
-# =========================================================================== #
+# Video / demo recording
 /scripts/retime_cast.py
 *.cast
 *.gif
 
-# =========================================================================== #
-#                          RUST BUILD ARTIFACTS                               #
-# =========================================================================== #
+# Rust build artifacts
 target/.git-backup/
 target/
 .git-backup
@@ -305,6 +271,9 @@ target/
 
 # Generated recipes (orchard init)
 /recipe.yaml
+
+# Test recipes (manual validation testing)
+recipes/test_invalid.yaml
 
 # Personal notes (non-tracked)
 /notes.txt
