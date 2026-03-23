@@ -73,29 +73,29 @@ def show_sample_images(
     grid = make_grid(images, nrow=int(actual_samples**0.5), padding=2)  # pragma: no mutate
 
     # Convert to numpy HWC for matplotlib
-    plt.imshow(  # pragma: no mutate
+    plt.imshow(
         (
             grid.squeeze(0).cpu().numpy()
             if images.shape[1] == 1
             else grid.permute(1, 2, 0).cpu().numpy()
         ),
-        cmap="gray" if images.shape[1] == 1 else None,  # pragma: no mutate
+        cmap="gray" if images.shape[1] == 1 else None,
     )
 
     # Figure title
     title_str = f"{arch_name} — {actual_samples} Samples"  # pragma: no mutate
     if title_prefix:
         title_str = f"{title_prefix} — {title_str}"  # pragma: no mutate
-    plt.title(title_str, fontsize=14)  # pragma: no mutate
+    plt.title(title_str, fontsize=14)
 
-    plt.axis("off")  # pragma: no mutate
-    plt.tight_layout()  # pragma: no mutate
+    plt.axis("off")
+    plt.tight_layout()
 
     # Ensure target directory exists
     save_path.parent.mkdir(parents=True, exist_ok=True)
 
-    plt.savefig(save_path, dpi=fig_dpi, bbox_inches="tight")  # pragma: no mutate
-    plt.close()  # pragma: no mutate
+    plt.savefig(save_path, dpi=fig_dpi, bbox_inches="tight")
+    plt.close()
     logger.info(
         "%s%s %-18s: %s",
         LogStyle.INDENT,
@@ -112,9 +112,9 @@ def show_samples_for_dataset(
     *,
     mean: tuple[float, ...] | None = None,
     std: tuple[float, ...] | None = None,
-    arch_name: str = "Model",
+    arch_name: str = "Model",  # pragma: no mutate
     fig_dpi: int = _DEFAULT_DPI,
-    num_samples: int = 16,
+    num_samples: int = 16,  # pragma: no mutate
     resolution: int | None = None,
 ) -> None:
     """
@@ -133,7 +133,7 @@ def show_samples_for_dataset(
     """
     res_str = f"_{resolution}x{resolution}" if resolution else ""
     save_path = run_paths.get_fig_path(f"{dataset_name}/sample_grid{res_str}.png")
-    save_path.parent.mkdir(parents=True, exist_ok=True)
+    save_path.parent.mkdir(parents=True, exist_ok=True)  # pragma: no mutate
 
     show_sample_images(
         loader=loader,

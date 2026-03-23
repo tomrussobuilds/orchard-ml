@@ -58,7 +58,7 @@ def show_predictions(
     # cosmetic fallback
     style = ctx.plot_style if ctx else "seaborn-v0_8-muted"  # pragma: no mutate
 
-    with plt.style.context(style):  # pragma: no mutate
+    with plt.style.context(style):
         # 1. Parameter Resolution & Batch Inference
         # cosmetic fallback
         num_samples = n or (ctx.n_samples if ctx else 12)  # pragma: no mutate
@@ -78,11 +78,11 @@ def show_predictions(
                 _plot_single_prediction(
                     ax, images[i], labels[i], preds[i], classes, ctx  # pragma: no mutate
                 )
-            ax.axis("off")  # pragma: no mutate
+            ax.axis("off")
 
         # 4. Suptitle
         if ctx:
-            plt.suptitle(_build_suptitle(ctx), fontsize=14)  # pragma: no mutate
+            plt.suptitle(_build_suptitle(ctx), fontsize=14)
 
         # 5. Export and Cleanup
         # forwarding; tested in _finalize_figure
@@ -111,33 +111,31 @@ def plot_training_curves(
         val_label: Label for the right y-axis and legend entry.
     """
     # matplotlib cosmetic — colors, fonts, sizes, layout
-    with plt.style.context(ctx.plot_style):  # pragma: no mutate
-        fig, ax1 = plt.subplots(figsize=(9, 6))  # pragma: no mutate
+    with plt.style.context(ctx.plot_style):
+        fig, ax1 = plt.subplots(figsize=(9, 6))
 
         # Left Axis: Training Loss
-        ax1.plot(train_losses, color="#e74c3c", lw=2, label="Training Loss")  # pragma: no mutate
-        ax1.set_xlabel("Epoch")  # pragma: no mutate
-        ax1.set_ylabel("Loss", color="#e74c3c", fontweight="bold")  # pragma: no mutate
-        ax1.tick_params(axis="y", labelcolor="#e74c3c")  # pragma: no mutate
-        ax1.grid(True, linestyle="--", alpha=0.4)  # pragma: no mutate
+        ax1.plot(train_losses, color="#e74c3c", lw=2, label="Training Loss")
+        ax1.set_xlabel("Epoch")
+        ax1.set_ylabel("Loss", color="#e74c3c", fontweight="bold")
+        ax1.tick_params(axis="y", labelcolor="#e74c3c")
+        ax1.grid(True, linestyle="--", alpha=0.4)
 
         # Right Axis: Validation Metric
-        ax2 = ax1.twinx()  # pragma: no mutate
-        ax2.plot(  # pragma: no mutate
-            val_metric_values, color="#3498db", lw=2, label=val_label  # pragma: no mutate
-        )  # pragma: no mutate
-        ax2.set_ylabel(val_label, color="#3498db", fontweight="bold")  # pragma: no mutate
-        ax2.tick_params(axis="y", labelcolor="#3498db")  # pragma: no mutate
+        ax2 = ax1.twinx()
+        ax2.plot(val_metric_values, color="#3498db", lw=2, label=val_label)
+        ax2.set_ylabel(val_label, color="#3498db", fontweight="bold")
+        ax2.tick_params(axis="y", labelcolor="#3498db")
 
-        fig.suptitle(  # pragma: no mutate
+        fig.suptitle(
             f"Training Metrics — {ctx.arch_name} | Resolution — {ctx.resolution}",
-            fontsize=14,  # pragma: no mutate
-            y=1.02,  # pragma: no mutate
+            fontsize=14,
+            y=1.02,
         )
 
-        fig.tight_layout()  # pragma: no mutate
+        fig.tight_layout()
 
-        plt.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")  # pragma: no mutate
+        plt.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")
         logger.info(
             "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Training Curves", out_path.name
         )
@@ -166,7 +164,7 @@ def plot_confusion_matrix(
         ctx: PlotContext with architecture and evaluation settings.
     """
     # matplotlib cosmetic — confusion matrix rendering and styling
-    with plt.style.context(ctx.plot_style):  # pragma: no mutate
+    with plt.style.context(ctx.plot_style):
         cm = confusion_matrix(  # pragma: no mutate
             all_labels,
             all_preds,
@@ -175,26 +173,24 @@ def plot_confusion_matrix(
         )
         cm = np.nan_to_num(cm)
 
-        disp = ConfusionMatrixDisplay(
-            confusion_matrix=cm, display_labels=classes  # pragma: no mutate
-        )
-        fig, ax = plt.subplots(figsize=(11, 9))  # pragma: no mutate
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=classes)
+        fig, ax = plt.subplots(figsize=(11, 9))
 
-        disp.plot(  # pragma: no mutate
+        disp.plot(
             ax=ax,
             cmap=ctx.cmap_confusion,
-            xticks_rotation=45,  # pragma: no mutate
-            values_format=".3f",  # pragma: no mutate
-        )  # pragma: no mutate
-        plt.title(  # pragma: no mutate
+            xticks_rotation=45,
+            values_format=".3f",
+        )
+        plt.title(
             f"Confusion Matrix — {ctx.arch_name} | Resolution — {ctx.resolution}",
-            fontsize=12,  # pragma: no mutate
-            pad=20,  # pragma: no mutate
+            fontsize=12,
+            pad=20,
         )
 
-        plt.tight_layout()  # pragma: no mutate
+        plt.tight_layout()
 
-        fig.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")  # pragma: no mutate
+        fig.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")
         plt.close()
         logger.info(
             "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Confusion Matrix", out_path.name
@@ -224,13 +220,13 @@ def _plot_single_prediction(
     display_img = _prepare_for_plt(img)
 
     # cosmetic — imshow cmap and title styling
-    ax.imshow(display_img, cmap="gray" if display_img.ndim == 2 else None)  # pragma: no mutate
+    ax.imshow(display_img, cmap="gray" if display_img.ndim == 2 else None)
 
     is_correct = label == pred
-    ax.set_title(  # pragma: no mutate
+    ax.set_title(
         f"T:{classes[label]}\nP:{classes[pred]}",  # pragma: no mutate
-        color="green" if is_correct else "red",  # pragma: no mutate
-        fontsize=9,  # pragma: no mutate
+        color="green" if is_correct else "red",
+        fontsize=9,
     )
 
 
@@ -304,11 +300,11 @@ def _setup_prediction_grid(
     # cosmetic fallback and layout
     base_w, base_h = ctx.fig_size_predictions if ctx else (12, 8)  # pragma: no mutate
 
-    fig, axes = plt.subplots(  # pragma: no mutate
+    fig, axes = plt.subplots(
         rows,
         cols,
-        figsize=(base_w, (base_h / 3) * rows),  # pragma: no mutate
-        constrained_layout=True,  # pragma: no mutate
+        figsize=(base_w, (base_h / 3) * rows),
+        constrained_layout=True,
     )
     # Ensure axes is always an array even for 1x1 grids
     return fig, np.atleast_1d(axes).flatten()
@@ -327,9 +323,7 @@ def _finalize_figure(plt_obj: Any, save_path: Path | None, ctx: PlotContext | No
         save_path.parent.mkdir(parents=True, exist_ok=True)
         # cosmetic — dpi fallback and savefig styling
         dpi = ctx.fig_dpi if ctx else 200  # pragma: no mutate
-        plt_obj.savefig(  # pragma: no mutate
-            save_path, dpi=dpi, bbox_inches="tight", facecolor="white"  # pragma: no mutate
-        )
+        plt_obj.savefig(save_path, dpi=dpi, bbox_inches="tight", facecolor="white")
         logger.info(
             "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Predictions Grid", save_path.name
         )

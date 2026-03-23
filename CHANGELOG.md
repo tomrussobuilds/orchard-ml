@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- add `orchard validate` command for recipe validation
+
 ### Fixed
 
 - handle pre-existing GID 1000 in Docker image

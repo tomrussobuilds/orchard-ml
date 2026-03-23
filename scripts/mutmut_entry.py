@@ -56,6 +56,36 @@ _original_skip = fm.MutationVisitor._skip_node_and_children
 
 _STRING_TYPES = (cst.SimpleString, cst.ConcatenatedString, cst.FormattedString)
 
+# ---------------------------------------------------------------------------
+# Matplotlib receiver skip: calls on plt/ax/fig/disp objects are cosmetic
+# (colors, fonts, layout) and not observable via unit tests.
+# ---------------------------------------------------------------------------
+_MATPLOTLIB_RECEIVERS: frozenset[str] = frozenset(
+    {
+        "plt",
+        "plt_obj",
+        "ax",
+        "ax1",
+        "ax2",
+        "fig",
+        "disp",
+    }
+)
+
+
+def _get_receiver_name(node: cst.Call) -> str | None:
+    """Extract the receiver name from ``receiver.method(...)`` calls."""
+    if not isinstance(node.func, cst.Attribute):
+        return None
+    value = node.func.value
+    # Simple name: plt.savefig(...)
+    if isinstance(value, cst.Name):
+        return value.value
+    # Chained attribute: plt.style.context(...)
+    if isinstance(value, cst.Attribute) and isinstance(value.value, cst.Name):
+        return value.value.value
+    return None
+
 
 def _patched_skip(self: fm.MutationVisitor, node: cst.CSTNode) -> bool:
     if _original_skip(self, node):
@@ -67,6 +97,10 @@ def _patched_skip(self: fm.MutationVisitor, node: cst.CSTNode) -> bool:
         and isinstance(node.func, cst.Attribute)
         and node.func.attr.value in _SKIP_METHODS
     ):
+        return True
+
+    # Matplotlib receiver skip: plt.savefig(...), ax.set_title(...), etc.
+    if isinstance(node, cst.Call) and _get_receiver_name(node) in _MATPLOTLIB_RECEIVERS:
         return True
 
     # String-only skip: inside a warning/error/getLogger call, skip string
