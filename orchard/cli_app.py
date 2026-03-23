@@ -10,6 +10,7 @@ Provides the ``orchard`` entry point with three commands:
 Usage::
 
     orchard init
+    orchard validate recipes/config_mini_cnn.yaml
     orchard run recipes/config_mini_cnn.yaml
     orchard run recipes/optuna_mini_cnn.yaml --set training.epochs=30
 """
@@ -142,6 +143,8 @@ def validate(
     ] = None,
 ) -> None:
     """Validate a YAML recipe without running the pipeline."""
+    from pydantic import ValidationError
+
     from orchard import Config
 
     if not recipe.exists():
@@ -152,8 +155,11 @@ def validate(
 
     try:
         Config.from_recipe(recipe, overrides=overrides or None)
-    except Exception as e:
+    except (OrchardError, ValidationError) as e:
         typer.echo(f"Validation failed: {e}", err=True)
+        raise typer.Exit(code=1)
+    except Exception as e:
+        typer.echo(f"Unexpected error during validation: {e}", err=True)
         raise typer.Exit(code=1)
 
     typer.echo(f"Recipe is valid: {recipe}")

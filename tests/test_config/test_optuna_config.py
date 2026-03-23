@@ -144,9 +144,13 @@ def test_sampler_types() -> None:
 @pytest.mark.unit
 def test_pruner_types() -> None:
     """Test valid pruner types are accepted."""
-    for pruner in ["median", "percentile", "hyperband", "none"]:
+    for pruner in ["median", "percentile", "hyperband"]:
         config = OptunaConfig(pruner_type=pruner)
         assert config.pruner_type == pruner
+
+    # "none" requires enable_pruning=False
+    config = OptunaConfig(pruner_type="none", enable_pruning=False)
+    assert config.pruner_type == "none"
 
 
 @pytest.mark.unit
@@ -408,6 +412,50 @@ def test_search_space_overrides_from_dict() -> None:
     assert config.search_space_overrides.dropout.high == pytest.approx(0.7)
     # Non-overridden fields keep defaults
     assert config.search_space_overrides.momentum.low == pytest.approx(0.85)
+
+
+# OPTUNA CONFIG: PRUNER + ENABLE_PRUNING CROSS-VALIDATION
+@pytest.mark.unit
+def test_pruner_none_with_enable_pruning_rejected() -> None:
+    """Test pruner_type='none' + enable_pruning=True raises."""
+    with pytest.raises(ValidationError, match="enable_pruning=True but pruner_type='none'"):
+        OptunaConfig(pruner_type="none", enable_pruning=True)
+
+
+@pytest.mark.unit
+def test_pruner_none_with_pruning_disabled_accepted() -> None:
+    """Test pruner_type='none' + enable_pruning=False passes."""
+    config = OptunaConfig(pruner_type="none", enable_pruning=False)
+    assert config.pruner_type == "none"
+    assert config.enable_pruning is False
+
+
+# SEARCH SPACE OVERRIDES: BATCH SIZE BOUNDS
+@pytest.mark.unit
+def test_batch_size_low_res_out_of_range_rejected() -> None:
+    """Test batch_size_low_res values outside 1–128 are rejected."""
+    from orchard.core.config.optuna_config import SearchSpaceOverrides
+
+    with pytest.raises(ValidationError, match="out of range"):
+        SearchSpaceOverrides(batch_size_low_res=[16, 256])
+
+
+@pytest.mark.unit
+def test_batch_size_high_res_out_of_range_rejected() -> None:
+    """Test batch_size_high_res values outside 1–128 are rejected."""
+    from orchard.core.config.optuna_config import SearchSpaceOverrides
+
+    with pytest.raises(ValidationError, match="out of range"):
+        SearchSpaceOverrides(batch_size_high_res=[0, 8])
+
+
+@pytest.mark.unit
+def test_batch_size_low_res_valid_passes() -> None:
+    """Test valid batch_size_low_res values pass."""
+    from orchard.core.config.optuna_config import SearchSpaceOverrides
+
+    ov = SearchSpaceOverrides(batch_size_low_res=[1, 64, 128])
+    assert ov.batch_size_low_res == [1, 64, 128]
 
 
 if __name__ == "__main__":

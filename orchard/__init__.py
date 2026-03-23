@@ -105,16 +105,35 @@ __all__ = [
     "LogStyle",
     "RootOrchestrator",
     "log_pipeline_summary",
-    # Paths
+    # Paths / Metrics
     "MLRUNS_DB",
+    "METRIC_ACCURACY",
+    "METRIC_AUC",
+    "METRIC_F1",
+    "METRIC_LOSS",
+    "METRIC_MAP",
+    "METRIC_MAP_50",
+    "METRIC_MAP_75",
     # Architectures
     "get_model",
+    # Task Registry
+    "TaskComponents",
+    "register_task",
     # Pipeline
     "run_export_phase",
     "run_optimization_phase",
     "run_training_phase",
     # Tracking
     "create_tracker",
+    # Task Adapters
+    "ClassificationCriterionAdapter",
+    "ClassificationEvalPipelineAdapter",
+    "ClassificationMetricsAdapter",
+    "ClassificationTrainingStepAdapter",
+    "DetectionCriterionAdapter",
+    "DetectionEvalPipelineAdapter",
+    "DetectionMetricsAdapter",
+    "DetectionTrainingStepAdapter",
     # Exceptions
     "OrchardError",
     "OrchardConfigError",

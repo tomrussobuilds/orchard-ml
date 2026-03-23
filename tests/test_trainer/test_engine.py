@@ -420,7 +420,7 @@ def test_train_one_epoch_empty_loader(simple_model: Any, criterion: Any, optimiz
 
 @pytest.mark.unit
 def test_validate_epoch_empty_loader(simple_model: Any, criterion: Any) -> None:
-    """Test validate_epoch handles empty loader gracefully."""
+    """Test validate_epoch returns NaN for all metrics when loader is empty."""
     device = torch.device("cpu")
 
     # Empty loader (returns no batches)
@@ -434,7 +434,10 @@ def test_validate_epoch_empty_loader(simple_model: Any, criterion: Any) -> None:
         device=device,
     )
 
-    assert metrics == {"loss": 0.0, "accuracy": 0.0, "auc": 0.0, "f1": 0.0}
+    assert math.isnan(metrics["loss"])
+    assert math.isnan(metrics["accuracy"])
+    assert math.isnan(metrics["auc"])
+    assert math.isnan(metrics["f1"])
 
 
 # TESTS: train_one_epoch with injected TaskTrainingStep

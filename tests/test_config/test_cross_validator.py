@@ -715,5 +715,52 @@ class TestCheckDetectionConfig:
         )
 
 
+# CLASSIFICATION MONITOR METRIC
+@pytest.mark.unit
+class TestCheckClassificationMonitorMetric:
+    """Tests for _check_classification_monitor_metric."""
+
+    def test_invalid_monitor_metric_raises(self) -> None:
+        """Classification + unknown monitor_metric raises error."""
+        with pytest.raises(
+            ValidationError,
+            match="monitor_metric 'pippo' is not valid.*classification",
+        ):
+            Config(
+                training=TrainingConfig(use_amp=False, monitor_metric="pippo"),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+    def test_valid_classification_metrics_pass(self) -> None:
+        """All valid classification metrics pass validation."""
+        for metric in ["accuracy", "auc", "f1", "loss"]:
+            direction = "minimize" if metric == "loss" else "maximize"
+            Config(
+                training=TrainingConfig(
+                    use_amp=False,
+                    monitor_metric=metric,
+                    monitor_direction=direction,
+                ),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+    def test_detection_skips_classification_check(self) -> None:
+        """Detection tasks skip classification monitor_metric check."""
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            warnings.filterwarnings("ignore", message="Training at resolution.*on CPU")
+            warnings.filterwarnings("ignore", message="use_tta is ignored")
+            Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0, monitor_metric="map"),
+                augmentation=AugmentationConfig(hflip=0.0, rotation_angle=0, min_scale=1.0),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

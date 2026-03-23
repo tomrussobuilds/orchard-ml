@@ -7,6 +7,8 @@ and cross-field validation logic.
 
 from __future__ import annotations
 
+import warnings
+
 import pytest
 from pydantic import ValidationError
 
@@ -264,3 +266,26 @@ def test_optimizer_type_invalid_rejected() -> None:
     """Test invalid optimizer_type is rejected by Literal."""
     with pytest.raises(ValidationError):
         TrainingConfig(optimizer_type="adam")
+
+
+# UNIT TESTS: SCHEDULER TYPE 'NONE' WARNING
+@pytest.mark.unit
+def test_scheduler_none_with_non_default_params_warns() -> None:
+    """Test scheduler_type='none' + non-default scheduler params emits warning."""
+    with pytest.warns(UserWarning, match="scheduler_type='none'"):
+        TrainingConfig(scheduler_type="none", scheduler_patience=10)
+
+
+@pytest.mark.unit
+def test_scheduler_none_with_non_default_step_size_warns() -> None:
+    """Test scheduler_type='none' + non-default step_size emits warning."""
+    with pytest.warns(UserWarning, match="scheduler_type='none'"):
+        TrainingConfig(scheduler_type="none", step_size=5)
+
+
+@pytest.mark.unit
+def test_scheduler_none_with_defaults_no_warning() -> None:
+    """Test scheduler_type='none' with all-default params emits no warning."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        TrainingConfig(scheduler_type="none")

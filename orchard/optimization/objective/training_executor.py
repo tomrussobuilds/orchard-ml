@@ -26,9 +26,9 @@ Key responsibilities:
 
 from __future__ import annotations
 
-import dataclasses
 import logging
 import math
+from dataclasses import dataclass
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
@@ -59,7 +59,7 @@ _GENERIC_FALLBACK = MappingProxyType({METRIC_LOSS: 999.0})
 _MAX_CONSECUTIVE_VAL_FAILURES: int = 3
 
 
-@dataclasses.dataclass(frozen=True)
+@dataclass(frozen=True)
 class TaskAdapters:
     """
     Bundle of task-specific adapters injected into the training executor.
@@ -154,7 +154,7 @@ class TrialTrainingExecutor:
             criterion: Loss function.
             training: Training hyperparameters sub-config.
             optuna: Optuna pruning/warmup sub-config.
-            log_interval: Epoch interval for progress logging.
+            log_interval: Epoch interval for progress logging.IN
             device: Training device.
             metric_extractor: Metric extraction and tracking handler.
             task_adapters: Task-specific adapters bundle.

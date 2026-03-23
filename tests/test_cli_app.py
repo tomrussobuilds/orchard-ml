@@ -561,6 +561,54 @@ class TestCLIValidate:
         assert result.exit_code == 0
         assert "validate" in result.output
 
+    def test_validate_orchard_error_message(self, tmp_path: Path) -> None:
+        """OrchardError produces 'Validation failed' message."""
+        import yaml
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        recipe = tmp_path / "recipe.yaml"
+        recipe.write_text(
+            yaml.dump(
+                {
+                    "dataset": {"name": "bloodmnist", "resolution": 28, "force_rgb": True},
+                    "architecture": {"name": "mini_cnn", "pretrained": False},
+                    "training": {
+                        "epochs": 1,
+                        "mixup_epochs": 0,
+                        "use_amp": False,
+                        "seed": 42,
+                        "monitor_metric": "pippo",
+                    },
+                    "hardware": {"device": "cpu"},
+                    "telemetry": {"output_dir": str(tmp_path)},
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["validate", str(recipe)])
+        assert result.exit_code == 1
+        assert "Validation failed" in result.output
+
+    def test_validate_unexpected_error_message(self, tmp_path: Path) -> None:
+        """Non-OrchardError/ValidationError produces 'Unexpected error' message."""
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+
+        recipe = tmp_path / "recipe.yaml"
+        recipe.write_text("valid: true\n", encoding="utf-8")
+
+        runner = CliRunner()
+        with patch("orchard.Config.from_recipe", side_effect=TypeError("boom")):
+            result = runner.invoke(app, ["validate", str(recipe)])
+
+        assert result.exit_code == 1
+        assert "Unexpected error" in result.output
+
 
 # CLI INIT COMMAND
 @pytest.mark.unit

@@ -236,10 +236,13 @@ def validate_epoch(
             correct += (predicted == targets).sum().item()
 
     # Handle empty validation set (defensive guard)
+    # Return NaN for all metrics so MetricExtractor.update_best ignores
+    # this epoch (NaN is filtered) instead of treating 0.0 as a valid result.
     if total == 0 or len(all_targets) == 0:
-        logger.warning("Empty validation set: no samples processed. Returning zero metrics.")
+        _nan = float("nan")
+        logger.warning("Empty validation set: no samples processed. Returning NaN metrics.")
         return MappingProxyType(
-            {METRIC_LOSS: 0.0, METRIC_ACCURACY: 0.0, METRIC_AUC: 0.0, METRIC_F1: 0.0}
+            {METRIC_LOSS: _nan, METRIC_ACCURACY: _nan, METRIC_AUC: _nan, METRIC_F1: _nan}
         )
 
     # Global metric computation

@@ -18,6 +18,7 @@ training states before first batch processing.
 
 from __future__ import annotations
 
+import warnings
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -139,5 +140,32 @@ class TrainingConfig(BaseModel):
         if self.use_amp and self.batch_size < 4:
             raise OrchardConfigError(
                 "AMP enabled with very small batch size (<4) can cause NaN gradients."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def warn_scheduler_none_params(self) -> "TrainingConfig":
+        """
+        Warn when scheduler_type='none' but scheduler parameters differ from defaults.
+
+        Returns:
+            Validated TrainingConfig instance (with warning if applicable).
+        """
+        if self.scheduler_type != "none":
+            return self
+
+        fields = TrainingConfig.model_fields
+        defaults = {
+            "scheduler_patience": fields["scheduler_patience"].default,
+            "scheduler_factor": fields["scheduler_factor"].default,
+            "step_size": fields["step_size"].default,
+        }
+        overridden = [name for name, default in defaults.items() if getattr(self, name) != default]
+        if overridden:
+            warnings.warn(
+                f"scheduler_type='none' but {overridden} are set to non-default values. "
+                "These parameters are ignored when no scheduler is active.",
+                UserWarning,
+                stacklevel=2,
             )
         return self

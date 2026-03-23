@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - add matplotlib receiver rule to mutmut, remove 46 redundant pragmas
+- add LogStyle/Reporter rules to mutmut, remove 21 log/format pragmas
 
 ### Fixed
 

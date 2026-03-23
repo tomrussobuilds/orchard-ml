@@ -28,6 +28,9 @@ from ..io import load_config_from_yaml
 from ..metadata.wrapper import get_registry
 from ..paths import (
     HIGHRES_THRESHOLD,
+    METRIC_ACCURACY,
+    METRIC_AUC,
+    METRIC_F1,
     METRIC_LOSS,
     METRIC_MAP,
     METRIC_MAP_50,
@@ -369,6 +372,7 @@ class _CrossDomainValidator:
         cls._check_cpu_highres_performance(config)
         cls._check_min_dataset_size(config)
         cls._check_quantization_architecture(config)
+        cls._check_classification_monitor_metric(config)
         cls._check_detection_config(config)
         return config
 
@@ -556,6 +560,31 @@ class _CrossDomainValidator:
                 f"10x num_classes ({num_classes}). Class balancing may be unreliable.",
                 UserWarning,
                 stacklevel=4,
+            )
+
+    @classmethod
+    def _check_classification_monitor_metric(cls, config: Config) -> None:
+        """
+        Validate monitor_metric is a known classification metric.
+
+        Prevents runtime KeyError when the trainer looks up
+        ``val_metrics[monitor_metric]`` after a validation epoch.
+
+        Raises:
+            OrchardConfigError: If monitor_metric is not a valid
+                classification metric.
+        """
+        if config.task_type != "classification":
+            return
+
+        _valid_classification_metrics = frozenset(
+            {METRIC_LOSS, METRIC_ACCURACY, METRIC_AUC, METRIC_F1}
+        )
+        if config.training.monitor_metric not in _valid_classification_metrics:
+            raise OrchardConfigError(
+                f"monitor_metric '{config.training.monitor_metric}' is not valid "
+                f"for classification tasks. "
+                f"Use one of: {sorted(_valid_classification_metrics)}."
             )
 
     @classmethod

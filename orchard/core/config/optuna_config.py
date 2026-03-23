@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Literal
 if TYPE_CHECKING:  # pragma: no cover
     from ..paths import RunPaths
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from ...exceptions import OrchardConfigError
 from .types import NonNegativeInt, PositiveInt, ValidatedPath
@@ -143,6 +143,17 @@ class SearchSpaceOverrides(BaseModel):
     # ---- Batch size (categorical, resolution-aware) ----
     batch_size_low_res: list[int] = Field(default=[16, 32, 48, 64])
     batch_size_high_res: list[int] = Field(default=[8, 12, 16])
+
+    @field_validator("batch_size_low_res", "batch_size_high_res", mode="after")
+    @classmethod
+    def _validate_batch_sizes(cls, v: list[int]) -> list[int]:
+        """
+        Validate each batch size is within the allowed range (1–128).
+        """
+        for bs in v:
+            if bs < 1 or bs > 128:
+                raise OrchardConfigError(f"Batch size {bs} is out of range (1–128)")
+        return v
 
 
 # OPTUNA CONFIGURATION
@@ -339,14 +350,21 @@ class OptunaConfig(BaseModel):
     @model_validator(mode="after")
     def check_pruning(self) -> "OptunaConfig":
         """
-        Validate pruning warmup is less than total epochs.
+        Validate pruning configuration consistency.
 
         Raises:
-            OrchardConfigError: If pruning_warmup_epochs >= epochs.
+            OrchardConfigError: If pruning_warmup_epochs >= epochs,
+                or enable_pruning=True with pruner_type='none'.
 
         Returns:
             Validated OptunaConfig instance.
         """
+        if self.enable_pruning and self.pruner_type == "none":
+            raise OrchardConfigError(
+                "enable_pruning=True but pruner_type='none'. "
+                "Either set enable_pruning=False or choose a pruner "
+                "(median, percentile, hyperband)."
+            )
         if self.enable_pruning and self.pruning_warmup_epochs >= self.epochs:
             raise OrchardConfigError(
                 f"pruning_warmup_epochs ({self.pruning_warmup_epochs}) "

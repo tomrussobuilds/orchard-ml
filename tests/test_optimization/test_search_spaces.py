@@ -221,7 +221,7 @@ def test_custom_overrides_applied() -> None:
     """Test that custom SearchSpaceOverrides are used by the registry."""
     custom_ov = SearchSpaceOverrides(
         learning_rate=FloatRange(low=1e-3, high=1e-1, log=True),
-        batch_size_low_res=[64, 128, 256],
+        batch_size_low_res=[64, 96, 128],
     )
     registry = SearchSpaceRegistry(custom_ov)
 
