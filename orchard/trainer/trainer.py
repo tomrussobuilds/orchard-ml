@@ -275,9 +275,9 @@ class ModelTrainer:
         lr: float,
     ) -> None:
         """Log structured per-epoch metrics using project LogStyle."""
-        I = LogStyle.INDENT  # noqa: E741  # pragma: no mutate
-        A = LogStyle.ARROW  # pragma: no mutate
-        B = LogStyle.BULLET  # pragma: no mutate
+        I = LogStyle.INDENT  # noqa: E741
+        A = LogStyle.ARROW
+        B = LogStyle.BULLET
         remaining = self.patience - self.epochs_no_improve  # pragma: no mutate
         label = self.monitor_metric.upper()  # pragma: no mutate
 

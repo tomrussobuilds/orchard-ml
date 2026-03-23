@@ -72,8 +72,8 @@ def log_optimization_header(cfg: "Config", logger_instance: logging.Logger | Non
 
     # Search configuration (no duplicate header - phase header already shown)
     log.info("")
-    I = LogStyle.INDENT  # noqa: E741  # pragma: no mutate
-    A = LogStyle.ARROW  # pragma: no mutate
+    I = LogStyle.INDENT  # noqa: E741
+    A = LogStyle.ARROW
     log.info("%s%s Dataset      : %s", I, A, cfg.dataset.dataset_name)
     model_search = "Enabled" if cfg.optuna.enable_model_search else "Disabled"  # pragma: no mutate
     log.info("%s%s Model Search : %s", I, A, model_search)
@@ -160,12 +160,12 @@ def log_optimization_summary(
     log = logger_instance or logger
     completed, pruned, failed = _count_trial_states(study)
 
-    I = LogStyle.INDENT  # noqa: E741  # pragma: no mutate
-    A = LogStyle.ARROW  # pragma: no mutate
-    S = LogStyle.SUCCESS  # pragma: no mutate
-    W = LogStyle.WARNING  # pragma: no mutate
+    I = LogStyle.INDENT  # noqa: E741
+    A = LogStyle.ARROW
+    S = LogStyle.SUCCESS
+    W = LogStyle.WARNING
 
-    Reporter.log_phase_header(log, "OPTIMIZATION SUMMARY", LogStyle.DOUBLE)  # pragma: no mutate
+    Reporter.log_phase_header(log, "OPTIMIZATION SUMMARY", LogStyle.DOUBLE)
     log.info("%s%s Dataset        : %s", I, A, cfg.dataset.dataset_name)
     log.info("%s%s Search Space   : %s", I, A, cfg.optuna.search_space_preset)
     log.info("%s%s Total Trials   : %d", I, A, len(study.trials))
@@ -185,10 +185,8 @@ def log_optimization_summary(
                 study.best_value,
             )
             log.info("%s%s Best Trial     : %d", I, S, study.best_trial.number)
-        except ValueError:  # pragma: no cover
-            # fmt: off
-            log.error("%s%s Best trial lookup failed (check study integrity)", I, W)  # pragma: no mutate
-            # fmt: on
+        except ValueError:
+            log.error("%s%s Best trial lookup failed (check study integrity)", I, W)
     else:
         log.warning("%s%s No trials completed", I, W)
 
@@ -222,11 +220,11 @@ def log_pipeline_summary(
     """
     log = logger_instance or logger
 
-    I = LogStyle.INDENT  # noqa: E741  # pragma: no mutate
-    A = LogStyle.ARROW  # pragma: no mutate
-    S = LogStyle.SUCCESS  # pragma: no mutate
+    I = LogStyle.INDENT  # noqa: E741
+    A = LogStyle.ARROW
+    S = LogStyle.SUCCESS
 
-    Reporter.log_phase_header(log, "PIPELINE COMPLETE", LogStyle.DOUBLE)  # pragma: no mutate
+    Reporter.log_phase_header(log, "PIPELINE COMPLETE", LogStyle.DOUBLE)
     for key, value in test_metrics.items():
         label = key.replace("_", " ").title()
         if key == METRIC_ACCURACY:

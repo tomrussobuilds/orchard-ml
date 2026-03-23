@@ -1107,6 +1107,36 @@ def test_log_optimization_summary_warning_no_completed() -> None:
     assert found, "No 'No trials completed' warning call found"
 
 
+@pytest.mark.unit
+def test_log_optimization_summary_best_trial_value_error() -> None:
+    """log.error called when study.best_value raises ValueError."""
+    mock_logger = MagicMock()
+    mock_study = MagicMock()
+    mock_trial = MagicMock(state=optuna.trial.TrialState.COMPLETE)
+    mock_study.trials = [mock_trial]
+    mock_study.best_value = property(lambda self: (_ for _ in ()).throw(ValueError))
+    type(mock_study).best_value = property(lambda self: (_ for _ in ()).throw(ValueError))
+
+    mock_cfg = MagicMock()
+    mock_cfg.dataset.dataset_name = "test"
+    mock_cfg.optuna.search_space_preset = "default"
+    mock_cfg.training.monitor_metric = "auc"
+
+    log_optimization_summary(
+        study=mock_study,
+        cfg=mock_cfg,
+        device=MagicMock(__str__=lambda _: "cpu"),
+        paths=MagicMock(root="/tmp/test"),
+        logger_instance=mock_logger,
+    )
+
+    mock_logger.error.assert_called_once()
+    args = mock_logger.error.call_args[0]
+    assert "Best trial lookup failed" in args[0]
+    assert args[1] == LogStyle.INDENT
+    assert args[2] == LogStyle.WARNING
+
+
 # ---------------------------------------------------------------------------
 # Mutation-killing: Reporter exact argument assertions
 # ---------------------------------------------------------------------------

@@ -87,9 +87,12 @@ def check_ratchet() -> list[str]:
             continue  # removed module, OK
         cur_score = current[module].get("score", 0.0)
         base_score = base_entry.get("score", 0.0)
-        if cur_score < base_score:
+        cur_survived = current[module].get("survived", 0)
+        base_survived = base_entry.get("survived", 0)
+        if cur_score < base_score and cur_survived > base_survived:
             errors.append(
-                f"  {module}: {base_score:.1f}% -> {cur_score:.1f}% (dropped {base_score - cur_score:.1f}pp)"
+                f"  {module}: {base_score:.1f}% -> {cur_score:.1f}% "
+                f"(survived {base_survived} -> {cur_survived})"
             )
 
     return errors

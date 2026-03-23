@@ -138,10 +138,10 @@ class StudyEarlyStoppingCallback:
             trials_saved = "N/A"
 
         # Use LogStyle for consistent formatting
-        Reporter.log_phase_header(  # pragma: no mutate
+        Reporter.log_phase_header(
             logger,
             "EARLY STOPPING: Target performance achieved!",
-            LogStyle.DOUBLE,  # pragma: no mutate
+            LogStyle.DOUBLE,
         )
         logger.info(
             "%s%s Metric           : %.6f",

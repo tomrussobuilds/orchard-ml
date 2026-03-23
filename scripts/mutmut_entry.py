@@ -72,6 +72,34 @@ _MATPLOTLIB_RECEIVERS: frozenset[str] = frozenset(
     }
 )
 
+# ---------------------------------------------------------------------------
+# Cosmetic receiver skip: calls on these receivers are display-only.
+# ---------------------------------------------------------------------------
+_COSMETIC_RECEIVERS: frozenset[str] = frozenset(
+    _MATPLOTLIB_RECEIVERS
+    | {
+        "Reporter",  # Reporter.log_phase_header(...)
+    }
+)
+
+# ---------------------------------------------------------------------------
+# LogStyle attribute skip: assignments like ``I = LogStyle.INDENT`` are
+# cosmetic aliases.  We skip the ``LogStyle.X`` Attribute node itself.
+# ---------------------------------------------------------------------------
+_LOGSTYLE_ATTRS: frozenset[str] = frozenset(
+    {
+        "INDENT",
+        "ARROW",
+        "BULLET",
+        "SUCCESS",
+        "WARNING",
+        "FAILURE",
+        "DOUBLE",
+        "LIGHT",
+        "HEADER_WIDTH",
+    }
+)
+
 
 def _get_receiver_name(node: cst.Call) -> str | None:
     """Extract the receiver name from ``receiver.method(...)`` calls."""
@@ -87,6 +115,17 @@ def _get_receiver_name(node: cst.Call) -> str | None:
     return None
 
 
+def _is_logstyle_assign(node: cst.Assign) -> bool:
+    """Return True if *node* is ``X = LogStyle.ATTR`` with ATTR in _LOGSTYLE_ATTRS."""
+    val = node.value
+    return (
+        isinstance(val, cst.Attribute)
+        and isinstance(val.value, cst.Name)
+        and val.value.value == "LogStyle"
+        and val.attr.value in _LOGSTYLE_ATTRS
+    )
+
+
 def _patched_skip(self: fm.MutationVisitor, node: cst.CSTNode) -> bool:
     if _original_skip(self, node):
         return True
@@ -99,8 +138,21 @@ def _patched_skip(self: fm.MutationVisitor, node: cst.CSTNode) -> bool:
     ):
         return True
 
-    # Matplotlib receiver skip: plt.savefig(...), ax.set_title(...), etc.
-    if isinstance(node, cst.Call) and _get_receiver_name(node) in _MATPLOTLIB_RECEIVERS:
+    # Cosmetic receiver skip: plt.savefig(...), ax.set_title(...),
+    # Reporter.log_phase_header(...), etc.
+    if isinstance(node, cst.Call) and _get_receiver_name(node) in _COSMETIC_RECEIVERS:
+        return True
+
+    # LogStyle attribute skip: ``LogStyle.INDENT`` and similar constants,
+    # plus assignments like ``I = LogStyle.INDENT`` → ``I = None``.
+    if (
+        isinstance(node, cst.Attribute)
+        and isinstance(node.value, cst.Name)
+        and node.value.value == "LogStyle"
+        and node.attr.value in _LOGSTYLE_ATTRS
+    ):
+        return True
+    if isinstance(node, cst.Assign) and _is_logstyle_assign(node):
         return True
 
     # String-only skip: inside a warning/error/getLogger call, skip string

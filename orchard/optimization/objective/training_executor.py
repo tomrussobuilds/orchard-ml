@@ -313,8 +313,8 @@ class TrialTrainingExecutor:
             self._consecutive_val_failures += 1
             logger.error(  # pragma: no mutate
                 "%s%s Validation failed (x%d): %s",
-                LogStyle.INDENT,  # pragma: no mutate
-                LogStyle.FAILURE,  # pragma: no mutate
+                LogStyle.INDENT,
+                LogStyle.FAILURE,
                 self._consecutive_val_failures,  # pragma: no mutate
                 e,  # pragma: no mutate
             )
