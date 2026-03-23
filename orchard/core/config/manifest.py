@@ -598,6 +598,17 @@ class _CrossDomainValidator:
         if config.task_type != "detection":
             return
 
+        cls._check_detection_constraints(config)
+        cls._auto_disable_spatial_aug(config)
+        cls._warn_ignored_classification_params(config)
+
+    @classmethod
+    def _check_detection_constraints(cls, config: Config) -> None:
+        """
+        Raise on invalid detection constraints.
+
+        Checks architecture, resolution, metric, and mixup settings.
+        """
         model_name = config.architecture.name.lower()
 
         # Detection requires a detection-capable architecture
@@ -631,9 +642,14 @@ class _CrossDomainValidator:
                 "Set mixup_alpha: 0.0 in training config."
             )
 
-        # Spatial augmentations modify images but NOT bounding boxes,
-        # producing misaligned targets.  Auto-disable with warning
-        # (same pattern as AMP-on-CPU auto-disable).
+    @classmethod
+    def _auto_disable_spatial_aug(cls, config: Config) -> None:
+        """
+        Auto-disable spatial augmentations for detection.
+
+        Spatial transforms modify images but not bounding boxes,
+        producing misaligned targets.
+        """
         overrides: list[str] = []
         aug = config.augmentation
         if aug.hflip > 0:
@@ -656,7 +672,14 @@ class _CrossDomainValidator:
                 stacklevel=4,
             )
 
-        # Warn about classification-only training params that are silently ignored
+    @classmethod
+    def _warn_ignored_classification_params(cls, config: Config) -> None:
+        """
+        Warn about classification-only params ignored in detection.
+
+        Flags label_smoothing, use_tta, criterion_type, focal_gamma,
+        and weighted_loss when set for detection tasks.
+        """
         if config.training.label_smoothing > 0:
             import warnings
 
