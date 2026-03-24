@@ -128,11 +128,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  # Job 3: Smoke Test
+  # Job 3: Smoke Tests (classification + detection in parallel)
   test-smoke:
-    name: Smoke Test (1-Epoch Validation)
+    name: Smoke Test (${{ matrix.task }})
     runs-on: ubuntu-latest
     needs: test-pytest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - task: classification
+            command: python -m tests.smoke_test --dataset bloodmnist --architecture mini_cnn
+            timeout: 10
+          - task: detection
+            command: python -m tests.smoke_test_detection
+            timeout: 15
 
     steps:
       - name: Checkout code
@@ -149,18 +159,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
 
-      - name: Run smoke test
-        run: |
-          python -m tests.smoke_test \
-            --dataset bloodmnist \
-            --architecture mini_cnn
-        timeout-minutes: 10
+      - name: Run smoke test (${{ matrix.task }})
+        run: ${{ matrix.command }}
+        timeout-minutes: ${{ matrix.timeout }}
 
       - name: Upload smoke test artifacts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
         with:
-          name: smoke-test-outputs
+          name: smoke-test-${{ matrix.task }}-outputs
           path: outputs/
           retention-days: 7
 
