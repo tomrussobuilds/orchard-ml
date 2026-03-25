@@ -544,6 +544,13 @@ orchard/evaluation/__init__.py:
   survived: 0
   not_checked: 0
   score: 100.0
+orchard/evaluation/detection_visualization.py:
+  last_run: '2026-03-25T12:43:23Z'
+  total: 67
+  killed: 65
+  survived: 2
+  not_checked: 0
+  score: 97.0
 orchard/evaluation/evaluation_pipeline.py:
   last_run: '2026-03-22T08:06:02Z'
   total: 125
@@ -804,7 +811,7 @@ orchard/tasks/detection/criterion_adapter.py:
   not_checked: 0
   score: 100.0
 orchard/tasks/detection/evaluation_adapter.py:
-  last_run: '2026-03-22T07:12:35Z'
+  last_run: '2026-03-25T12:46:14Z'
   total: 44
   killed: 44
   survived: 0

@@ -8,6 +8,7 @@ Augmentation (TTA), while automating the generation of artifacts
 (plots, reports) for experimental tracking.
 """
 
+from .detection_visualization import show_detections
 from .evaluation_pipeline import run_final_evaluation
 from .evaluator import evaluate_model
 from .metrics import compute_auc, compute_classification_metrics
@@ -24,6 +25,7 @@ __all__ = [
     "PlotContext",
     "plot_confusion_matrix",
     "plot_training_curves",
+    "show_detections",
     "show_predictions",
     # Reporting
     "TrainingReport",

@@ -1,9 +1,8 @@
 """
 Detection Evaluation Pipeline Adapter.
 
-Minimal MVP evaluation for detection: inference + mAP computation +
-training loss curves + structured report. Bbox visualization deferred
-to a later release.
+Full evaluation for detection: inference + mAP computation +
+training loss curves + bbox visualization + structured report.
 """
 
 from __future__ import annotations
@@ -21,6 +20,7 @@ from torchmetrics.detection import MeanAveragePrecision
 from ...core import LOGGER_NAME
 from ...core.paths import METRIC_LOSS, METRIC_MAP, METRIC_MAP_50, METRIC_MAP_75
 from ...core.paths.constants import LogStyle
+from ...evaluation.detection_visualization import show_detections
 from ...evaluation.plot_context import PlotContext
 from ...evaluation.reporting import create_structured_report
 from ...evaluation.visualization import plot_training_curves
@@ -48,7 +48,7 @@ class DetectionEvalPipelineAdapter:
         test_loader: DataLoader[Any],
         train_losses: list[float],
         val_metrics_history: list[Mapping[str, float]],
-        class_names: list[str],  # noqa: ARG002
+        class_names: list[str],
         paths: RunPaths,
         training: TrainingConfig,
         dataset: DatasetConfig,
@@ -114,6 +114,29 @@ class DetectionEvalPipelineAdapter:
             test_metrics[METRIC_MAP_50],
             test_metrics[METRIC_MAP_75],
         )
+
+        # Bbox visualization grid
+        if evaluation.save_predictions_grid:
+            show_detections(
+                model=model,
+                loader=test_loader,
+                device=device,
+                classes=class_names,
+                save_path=paths.figures
+                / f"detection_samples_{arch_name}_{dataset.resolution}.png",  # pragma: no mutate
+                ctx=PlotContext(  # pragma: no mutate
+                    arch_name=arch_name,
+                    resolution=dataset.resolution,
+                    fig_dpi=evaluation.fig_dpi,
+                    plot_style=evaluation.plot_style,
+                    cmap_confusion=evaluation.cmap_confusion,
+                    grid_cols=evaluation.grid_cols,
+                    n_samples=evaluation.n_samples,
+                    fig_size_predictions=evaluation.fig_size_predictions,
+                    mean=dataset.mean,
+                    std=dataset.std,
+                ),
+            )
 
         # Training curves — plot mAP instead of loss (METRIC_LOSS is a 0.0 sentinel)
         val_map = [m.get(METRIC_MAP, 0.0) for m in val_metrics_history]

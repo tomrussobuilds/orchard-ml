@@ -73,4 +73,4 @@ evaluation:
   fig_size_predictions: [12, 8]
   report_format: xlsx
   save_confusion_matrix: false
-  save_predictions_grid: false
+  save_predictions_grid: true

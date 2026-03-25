@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - add `orchard validate` command for recipe validation
+- add detection smoke test with parallel CI matrix
 
 ### Changed
 

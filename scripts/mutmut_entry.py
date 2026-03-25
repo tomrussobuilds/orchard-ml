@@ -83,6 +83,20 @@ _COSMETIC_RECEIVERS: frozenset[str] = frozenset(
 )
 
 # ---------------------------------------------------------------------------
+# Cosmetic function skip: bare function calls whose args are purely visual.
+# Unlike receivers, these are called as ``func(...)`` not ``obj.method(...)``.
+# ---------------------------------------------------------------------------
+_COSMETIC_FUNCTIONS: frozenset[str] = frozenset(
+    {
+        "_draw_box",  # forwards color/lw/linestyle to Rectangle
+        "_draw_label",  # forwards text/color/position to ax.text
+        "Rectangle",  # matplotlib.patches.Rectangle constructor
+        "show_detections",  # forwards model/loader/ctx to visualization
+        "show_predictions",  # classification equivalent
+    }
+)
+
+# ---------------------------------------------------------------------------
 # LogStyle attribute skip: assignments like ``I = LogStyle.INDENT`` are
 # cosmetic aliases.  We skip the ``LogStyle.X`` Attribute node itself.
 # ---------------------------------------------------------------------------
@@ -141,6 +155,14 @@ def _patched_skip(self: fm.MutationVisitor, node: cst.CSTNode) -> bool:
     # Cosmetic receiver skip: plt.savefig(...), ax.set_title(...),
     # Reporter.log_phase_header(...), etc.
     if isinstance(node, cst.Call) and _get_receiver_name(node) in _COSMETIC_RECEIVERS:
+        return True
+
+    # Cosmetic function skip: _draw_box(...), _draw_label(...), etc.
+    if (
+        isinstance(node, cst.Call)
+        and isinstance(node.func, cst.Name)
+        and node.func.value in _COSMETIC_FUNCTIONS
+    ):
         return True
 
     # LogStyle attribute skip: ``LogStyle.INDENT`` and similar constants,

@@ -411,22 +411,25 @@ def test_eval_adapter_real_inference() -> None:
     training_cfg.batch_size = 4
     training_cfg.seed = 42
 
-    with patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves"):
-        with patch("orchard.tasks.detection.evaluation_adapter.create_structured_report"):
-            adapter = DetectionEvalPipelineAdapter()
-            result = adapter.run_evaluation(
-                model=model,
-                test_loader=test_loader,
-                train_losses=[0.5],
-                val_metrics_history=[{"loss": 0.3}],
-                class_names=["obj"],
-                paths=paths,
-                training=training_cfg,
-                dataset=dataset_cfg,
-                augmentation=MagicMock(),
-                evaluation=eval_cfg,
-                arch_name="fasterrcnn",
-            )
+    with (
+        patch("orchard.tasks.detection.evaluation_adapter.show_detections"),
+        patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves"),
+        patch("orchard.tasks.detection.evaluation_adapter.create_structured_report"),
+    ):
+        adapter = DetectionEvalPipelineAdapter()
+        result = adapter.run_evaluation(
+            model=model,
+            test_loader=test_loader,
+            train_losses=[0.5],
+            val_metrics_history=[{"loss": 0.3}],
+            class_names=["obj"],
+            paths=paths,
+            training=training_cfg,
+            dataset=dataset_cfg,
+            augmentation=MagicMock(),
+            evaluation=eval_cfg,
+            arch_name="fasterrcnn",
+        )
 
     assert isinstance(result, Mapping)
     assert "map" in result
@@ -435,11 +438,12 @@ def test_eval_adapter_real_inference() -> None:
 
 
 @pytest.mark.unit
+@patch("orchard.tasks.detection.evaluation_adapter.show_detections")
 @patch("orchard.tasks.detection.evaluation_adapter.create_structured_report")
 @patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
 @patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
 def test_eval_adapter_returns_metrics(
-    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock
+    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock, mock_show: MagicMock
 ) -> None:
     """EvalPipelineAdapter returns mAP metrics from test set."""
     mock_metric = MagicMock()
@@ -479,11 +483,12 @@ def test_eval_adapter_returns_metrics(
 
 
 @pytest.mark.unit
+@patch("orchard.tasks.detection.evaluation_adapter.show_detections")
 @patch("orchard.tasks.detection.evaluation_adapter.create_structured_report")
 @patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
 @patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
 def test_eval_adapter_plots_training_curves(
-    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock
+    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock, mock_show: MagicMock
 ) -> None:
     """EvalPipelineAdapter generates training curves with correct args."""
     mock_map_cls.return_value.compute.return_value = {
@@ -533,11 +538,12 @@ def test_eval_adapter_plots_training_curves(
 
 
 @pytest.mark.unit
+@patch("orchard.tasks.detection.evaluation_adapter.show_detections")
 @patch("orchard.tasks.detection.evaluation_adapter.create_structured_report")
 @patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
 @patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
 def test_eval_adapter_val_map_fallback(
-    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock
+    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock, mock_show: MagicMock
 ) -> None:
     """val_map defaults to 0.0 when METRIC_MAP is missing from history."""
     mock_map_cls.return_value.compute.return_value = {
@@ -584,11 +590,12 @@ def test_eval_adapter_val_map_fallback(
 
 
 @pytest.mark.unit
+@patch("orchard.tasks.detection.evaluation_adapter.show_detections")
 @patch("orchard.tasks.detection.evaluation_adapter.create_structured_report")
 @patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
 @patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
 def test_eval_adapter_logs_to_tracker(
-    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock
+    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock, mock_show: MagicMock
 ) -> None:
     """EvalPipelineAdapter logs metrics to tracker when provided."""
     mock_map_cls.return_value.compute.return_value = {
@@ -627,11 +634,12 @@ def test_eval_adapter_logs_to_tracker(
 
 
 @pytest.mark.unit
+@patch("orchard.tasks.detection.evaluation_adapter.show_detections")
 @patch("orchard.tasks.detection.evaluation_adapter.create_structured_report")
 @patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
 @patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
 def test_eval_adapter_no_tracker_no_error(
-    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock
+    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock, mock_show: MagicMock
 ) -> None:
     """EvalPipelineAdapter works without a tracker (tracker=None)."""
     mock_map_cls.return_value.compute.return_value = {

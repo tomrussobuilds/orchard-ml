@@ -1498,9 +1498,11 @@ def test_run_export_phase_quantized_failure_uses_log_style(
 @patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
 @patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
 @patch("orchard.tasks.detection.evaluation_adapter.create_structured_report")
+@patch("orchard.tasks.detection.evaluation_adapter.show_detections")
 @patch("orchard.pipeline.phases.get_augmentations_description")
 def test_run_training_phase_detection_skips_show_samples(
     mock_aug_desc: MagicMock,
+    _mock_show_det: MagicMock,
     _mock_report: MagicMock,
     _mock_plot: MagicMock,
     mock_map_cls: MagicMock,

@@ -63,7 +63,7 @@ telemetry:
 evaluation:
   fig_dpi: 200
   save_confusion_matrix: false
-  save_predictions_grid: false
+  save_predictions_grid: true
 
 optuna:
   n_trials: 20
