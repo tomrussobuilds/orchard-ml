@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - harden Dockerfile for Ubuntu 24.04 NVIDIA base image
 - harden Dockerfile for Ubuntu 24.04 NVIDIA base image
 - harden config validation, fix empty-val metrics, clean up public API
+- replace unused `fig` with `_` in detection visualization
 
 ### Miscellaneous
 
