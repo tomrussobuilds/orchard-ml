@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any
 
 import typer
+import yaml
 
 from .exceptions import OrchardError
 
@@ -395,8 +396,6 @@ def _format_yaml_value(value: Any) -> str:
     if isinstance(value, float):
         import math
 
-        import yaml
-
         if not math.isclose(value, 0.0) and (abs(value) < 1e-3 or abs(value) >= 1e7):
             # yaml.dump appends '\n...\n'; take first line only
             return yaml.dump(value, default_flow_style=True).split("\n")[0]
@@ -409,8 +408,6 @@ def _format_yaml_value(value: Any) -> str:
         if any(c in value for c in ":#{}[]|>&*!?,'\""):
             return f"'{value}'"
         return value
-    import yaml
-
     return yaml.dump(value, default_flow_style=True).split("\n")[0]
 
 
@@ -623,6 +620,7 @@ def _apply_detection_defaults(sections: dict[str, Any]) -> None:
     sections["training"]["monitor_metric"] = "map"
     sections["training"]["mixup_alpha"] = 0.0
     sections["training"]["label_smoothing"] = 0.0  # pragma: no mutate
+    sections["training"]["use_tta"] = False
 
     sections["augmentation"]["hflip"] = 0.0
     sections["augmentation"]["rotation_angle"] = 0

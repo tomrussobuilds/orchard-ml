@@ -76,7 +76,7 @@ training:
     # Mixup duration (epochs) (≥ 0)
     mixup_epochs: 20
     # Test-time augmentation
-    use_tta: true
+    use_tta: false
     # LR scheduler type [cosine, plateau, step, none]
     scheduler_type: cosine
     # Metric for checkpointing and early stopping

@@ -850,6 +850,20 @@ class TestCLIInitDetection:
         assert data["dataset"]["resolution"] == 224
         assert data["dataset"]["use_weighted_sampler"] is False
 
+    def test_init_detection_use_tta_disabled(self, tmp_path: Path) -> None:
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+        from orchard.core.io import load_config_from_yaml
+
+        runner = CliRunner()
+        target = tmp_path / "det.yaml"
+        runner.invoke(app, ["init", str(target), "--task", "detection"])
+        data = load_config_from_yaml(target)
+        assert data["training"]["use_tta"] is False
+        # Classification default is True — detection must override
+        assert data["training"]["use_tta"] != True  # noqa: E712
+
     def test_init_detection_dropout_zero(self, tmp_path: Path) -> None:
         from typer.testing import CliRunner
 
