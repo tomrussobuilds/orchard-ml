@@ -381,6 +381,67 @@ def test_show_detections_saves_figure(
 
 @pytest.mark.unit
 @patch("orchard.evaluation.detection_visualization._finalize_figure")
+@patch("orchard.evaluation.detection_visualization._get_detection_batch")
+def test_show_detections_forwards_device(
+    mock_batch: MagicMock,
+    mock_finalize: MagicMock,
+    det_ctx: PlotContext,
+) -> None:
+    """show_detections passes the device argument through to _get_detection_batch."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+
+    mock_batch.return_value = (
+        [np.random.rand(3, 32, 32).astype(np.float32)],
+        [{"boxes": np.empty((0, 4)), "labels": np.empty(0, dtype=int)}],
+        [{"boxes": np.empty((0, 4)), "scores": np.empty(0), "labels": np.empty(0, dtype=int)}],
+    )
+    device = torch.device("cpu")
+
+    show_detections(
+        model=_make_det_model(),
+        loader=_make_det_loader(),
+        device=device,
+        classes=["a"],
+        ctx=det_ctx,
+        n=1,
+    )
+
+    assert mock_batch.call_args[0][2] is device
+
+
+@pytest.mark.unit
+@patch("orchard.evaluation.detection_visualization._finalize_figure")
+@patch("orchard.evaluation.detection_visualization._plot_single_detection")
+def test_show_detections_forwards_ctx(
+    mock_plot: MagicMock,
+    mock_finalize: MagicMock,
+    det_ctx: PlotContext,
+) -> None:
+    """show_detections passes ctx through to _plot_single_detection."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+
+    model = _make_det_model()
+    loader = _make_det_loader(batch_size=1)
+
+    show_detections(
+        model=model,
+        loader=loader,
+        device=torch.device("cpu"),
+        classes=["a"],
+        ctx=det_ctx,
+        n=1,
+    )
+
+    assert mock_plot.call_count >= 1
+    assert mock_plot.call_args[0][5] is det_ctx
+
+
+@pytest.mark.unit
+@patch("orchard.evaluation.detection_visualization._finalize_figure")
 def test_show_detections_no_ctx(mock_finalize: MagicMock, tmp_path: Path) -> None:
     """show_detections works without PlotContext (cosmetic fallbacks)."""
     import matplotlib

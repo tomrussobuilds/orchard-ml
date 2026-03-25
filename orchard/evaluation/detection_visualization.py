@@ -76,7 +76,7 @@ def show_detections(
         rows = int(np.ceil(len(images) / grid_cols))  # pragma: no mutate
         base_w, base_h = ctx.fig_size_predictions if ctx else (12, 8)  # pragma: no mutate
 
-        fig, axes = plt.subplots(
+        _, axes = plt.subplots(
             rows,
             grid_cols,
             figsize=(base_w, (base_h / 3) * rows),
