@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple, cast
 
 import optuna
 import torch
@@ -33,6 +33,7 @@ from ..core import (
 if TYPE_CHECKING:  # pragma: no cover
     from ..core import RootOrchestrator
     from ..core.config import ExportConfig
+    from ..data_handler.dataset import VisionDataset
     from ..tracking import TrackerProtocol
 
 from ..architectures import get_model
@@ -202,7 +203,8 @@ def run_training_phase(
 
     class_weights = None
     if cfg.task_type == "classification" and cfg.training.weighted_loss:
-        train_labels = train_loader.dataset.labels.flatten()  # type: ignore[attr-defined]
+        ds = cast("VisionDataset", train_loader.dataset)  # pragma: no mutate
+        train_labels = ds.labels.flatten()
         class_weights = compute_class_weights(train_labels, ds_meta.num_classes, device)
 
     task = get_task(cfg.task_type)
@@ -244,7 +246,7 @@ def run_training_phase(
         arch_name=cfg.architecture.name,
         aug_info=get_augmentations_description(
             cfg.augmentation,
-            cfg.dataset.img_size,  # type: ignore[arg-type]
+            cast(int, cfg.dataset.img_size),  # pragma: no mutate
             cfg.training.mixup_alpha,
             ds_meta=ds_meta,
         ),

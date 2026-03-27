@@ -671,7 +671,7 @@ orchard/optimization/objective/metric_extractor.py:
   not_checked: 0
   score: 82.9
 orchard/optimization/objective/objective.py:
-  last_run: '2026-03-23T12:59:09Z'
+  last_run: '2026-03-27T20:39:01Z'
   total: 149
   killed: 116
   survived: 33
@@ -748,9 +748,9 @@ orchard/pipeline/__init__.py:
   not_checked: 0
   score: 100.0
 orchard/pipeline/phases.py:
-  last_run: '2026-03-19T20:03:19Z'
-  total: 344
-  killed: 344
+  last_run: '2026-03-27T20:37:47Z'
+  total: 308
+  killed: 308
   survived: 0
   not_checked: 0
   score: 100.0
