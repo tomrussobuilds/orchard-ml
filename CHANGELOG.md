@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - bump requests in the uv group across 1 directory
 
+### Changed
+
+- replace type: ignore with typed casts in phases.py and objective.py
+
 ### Fixed
 
 - disable TTA in detection recipe and consolidate yaml import

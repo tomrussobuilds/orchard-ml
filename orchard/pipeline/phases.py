@@ -33,12 +33,12 @@ from ..core import (
 if TYPE_CHECKING:  # pragma: no cover
     from ..core import RootOrchestrator
     from ..core.config import ExportConfig
-    from ..data_handler.dataset import VisionDataset
     from ..tracking import TrackerProtocol
 
 from ..architectures import get_model
 from ..core.task_registry import get_task
 from ..data_handler import (
+    VisionDataset,
     get_augmentations_description,
     get_dataloaders,
     load_dataset,
@@ -203,7 +203,7 @@ def run_training_phase(
 
     class_weights = None
     if cfg.task_type == "classification" and cfg.training.weighted_loss:
-        ds = cast("VisionDataset", train_loader.dataset)  # pragma: no mutate
+        ds = cast(VisionDataset, train_loader.dataset)  # pragma: no mutate
         train_labels = ds.labels.flatten()
         class_weights = compute_class_weights(train_labels, ds_meta.num_classes, device)
 
