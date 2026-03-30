@@ -27,17 +27,29 @@ below for details.
 
 <h2>Running Mutation Tests</h2>
 
+> [!WARNING]
+> **Prerequisites**
+>
+> 1. **Always use `.venv/bin/python`** — never system python.
+> 2. **All tests must pass before running mutmut.** A single test failure
+>    causes ALL mutants to be marked `not_checked`, and batch mode sees
+>    "incomplete results" and skips/restores backup.
+>
+> ```bash
+> .venv/bin/python -m pytest tests/ -x -q
+> ```
+
 **Full repository** (slow — hours on first run):
 
 ```bash
 # Generate mutants and run tests against each one
-mutmut run
+.venv/bin/python scripts/mutmut_entry.py run
 
 # View results summary
-mutmut results
+.venv/bin/python scripts/mutmut_entry.py results
 
 # Inspect a specific survived mutant
-mutmut show <mutant_name>
+.venv/bin/python scripts/mutmut_entry.py show <mutant_name>
 ```
 
 **Single module** (recommended for iterative work):
@@ -46,27 +58,32 @@ mutmut v3 uses dotted-module glob patterns as positional arguments:
 
 ```bash
 # Mutate only the search_spaces module
-mutmut run "orchard.optimization.search_spaces*"
+.venv/bin/python scripts/mutmut_entry.py run "orchard.optimization.search_spaces*"
 
 # Mutate only the loader module
-mutmut run "orchard.data_handler.loader*"
+.venv/bin/python scripts/mutmut_entry.py run "orchard.data_handler.loader*"
 
 # Mutate only the evaluation pipeline
-mutmut run "orchard.evaluation.evaluation_pipeline*"
+.venv/bin/python scripts/mutmut_entry.py run "orchard.evaluation.evaluation_pipeline*"
 ```
 
 **Multiple modules** in one run:
 
 ```bash
-mutmut run "orchard.optimization*" "orchard.trainer*"
+.venv/bin/python scripts/mutmut_entry.py run "orchard.optimization*" "orchard.trainer*"
 ```
 
 **Single class or function:**
 
 ```bash
-mutmut run "orchard.optimization.search_spaces.*SearchSpaceRegistry*"
-mutmut run "*get_optimization_space*"
+.venv/bin/python scripts/mutmut_entry.py run "orchard.optimization.search_spaces.*SearchSpaceRegistry*"
+.venv/bin/python scripts/mutmut_entry.py run "*get_optimization_space*"
 ```
+
+> [!NOTE]
+> Always use `scripts/mutmut_entry.py` instead of bare `mutmut` — the patched
+> entry point suppresses cosmetic mutations on logging calls automatically.
+> `scripts/mutmut_run.py` invokes it internally.
 
 ---
 
@@ -77,25 +94,25 @@ and auto-updates when you test a module. Use `scripts/mutmut_run.py`:
 
 ```bash
 # Run mutmut on a single file and update the registry
-python scripts/mutmut_run.py orchard/cli_app.py
+.venv/bin/python scripts/mutmut_run.py orchard/cli_app.py
 
 # Run mutmut on an entire sub-package
-python scripts/mutmut_run.py orchard/core/config/
+.venv/bin/python scripts/mutmut_run.py orchard/core/config/
 
 # Multiple targets at once
-python scripts/mutmut_run.py orchard/cli_app.py orchard/exceptions.py
+.venv/bin/python scripts/mutmut_run.py orchard/cli_app.py orchard/exceptions.py
 
 # Show the registry report (no mutmut run, just read existing results)
-python scripts/mutmut_run.py --report
+.venv/bin/python scripts/mutmut_run.py --report
 
 # Show report for specific modules
-python scripts/mutmut_run.py --report orchard/core/config/
+.venv/bin/python scripts/mutmut_run.py --report orchard/core/config/
 
 # Batch: run each .py file one by one (cleans cache, updates registry after each)
-python scripts/mutmut_run.py --batch orchard/trainer/
+.venv/bin/python scripts/mutmut_run.py --batch orchard/trainer/
 
 # Batch the whole project
-python scripts/mutmut_run.py --batch orchard/
+.venv/bin/python scripts/mutmut_run.py --batch orchard/
 ```
 
 **Output example:**
@@ -103,10 +120,11 @@ python scripts/mutmut_run.py --batch orchard/
 ```
 Module                                                  Total  Kill  Surv   N/C   Score
 ---------------------------------------------------------------------------------------
-orchard/cli_app.py                                         45    42     3     0   93.3%
-orchard/exceptions.py                                       8     8     0     0  100.0%
+orchard/architectures/factory.py                           80    80     0     0  100.0%
+orchard/cli_app.py                                        507   477    30     0   94.1%
+orchard/core/environment/hardware.py                      133   129     4     0   97.0%
 ---------------------------------------------------------------------------------------
-TOTAL                                                      53    50     3     0   94.3%
+TOTAL                                                     720   686    34     0   95.3%
 ```
 
 The registry YAML is tracked in git so you can see score evolution across commits.
@@ -115,13 +133,13 @@ The registry YAML is tracked in git so you can see score evolution across commit
 
 ```bash
 # Fail if any module score dropped vs HEAD (pre-commit gate)
-python scripts/check_mutmut_registry.py --ratchet
+.venv/bin/python scripts/check_mutmut_registry.py --ratchet
 
 # Fail if any modified module has a stale registry entry (release gate)
-python scripts/check_mutmut_registry.py --freshness
+.venv/bin/python scripts/check_mutmut_registry.py --freshness
 
 # Both
-python scripts/check_mutmut_registry.py --ratchet --freshness
+.venv/bin/python scripts/check_mutmut_registry.py --ratchet --freshness
 ```
 
 ---
@@ -129,35 +147,65 @@ python scripts/check_mutmut_registry.py --ratchet --freshness
 <h2>Cleaning Cache</h2>
 
 mutmut v3 caches trampoline files and metadata in the `mutants/` directory.
-It skips re-generation when the trampoline is newer than the source file.
-To force a fresh run, delete **both** the trampoline and its metadata:
+Always clean the **entire** `mutants/` directory before reruns — deleting
+individual files is error-prone and can leave stale state:
 
 ```bash
-# Clean cache for a specific module
-rm mutants/orchard/optimization/search_spaces.py \
-   mutants/orchard/optimization/search_spaces.py.meta
-
-# Alternative: touch the source file to invalidate the cache
-touch orchard/optimization/search_spaces.py
-
-# Clean all cached results
+# Clean all cached results (recommended)
 rm -rf mutants/
 ```
 
+> [!WARNING]
+> **Uncommitted files and the registry**
+>
+> `--batch` mode uses `_is_fresh` which compares the registry `last_run`
+> timestamp against `git log -1 --format=%aI`. **Uncommitted changes don't
+> update `git log`**, so old registry entries look "newer" and the file gets
+> **skipped silently**.
+>
+> Before running mutmut on uncommitted files, remove their registry entries
+> **and** the cache:
+>
+> ```bash
+> rm -rf mutants/
+> .venv/bin/python -c "
+> import yaml; from pathlib import Path
+> reg_path = Path('mutmut-registry.yaml')
+> reg = yaml.safe_load(reg_path.read_text()) or {}
+> for k in ['orchard/path/to/changed_file.py']:
+>     reg.pop(k, None)
+> reg = dict(sorted(reg.items()))
+> reg_path.write_text(yaml.dump(reg, default_flow_style=False, sort_keys=False))
+> "
+> ```
+
 ---
 
-<h2>Filtering Results</h2>
+<h2>Gotchas</h2>
 
-```bash
-# Show all results (killed + survived)
-mutmut results --all true
+> [!CAUTION]
+> **Never use `--batch` on `__init__.py` files**
+>
+> `_to_mutmut_glob` strips `.__init__` and appends `*`, so
+> `orchard/__init__.py` becomes glob `orchard*` — which matches the
+> **entire codebase**. Use `--report` instead for `__init__.py` and
+> pure-declaration files (constants, re-exports) with no mutable logic:
+>
+> ```bash
+> .venv/bin/python scripts/mutmut_run.py --report orchard/__init__.py orchard/tasks/__init__.py
+> ```
 
-# Show only survived mutants (the ones to fix)
-mutmut results
+> [!NOTE]
+> **Batch timeout**
+>
+> Batch mode has a **600-second (10 min) timeout per file**. If exceeded,
+> previous results are restored from the `.meta.bak` backup.
 
-# Inspect a specific survived mutant
-mutmut show <mutant_name>
-```
+> [!NOTE]
+> **CI does not run mutmut**
+>
+> Mutation testing is a **local quality gate only**. CI runs linting, type
+> checking, and pytest — but not mutmut.
 
 ---
 
@@ -223,7 +271,7 @@ RuntimeError: context has already been set
 ```bash
 # In your mutmut venv
 sed -i "s/set_start_method('fork')/set_start_method('fork', force=True)/" \
-    venv/lib/python3.12/site-packages/mutmut/__main__.py
+    .venv/lib/python3.12/site-packages/mutmut/__main__.py
 ```
 
 This is safe — `force=True` simply allows resetting the already-set context.

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Build
 
 - bump requests in the uv group across 1 directory
+- bump cryptography in the uv group across 1 directory
 
 ### Changed
 
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - disable TTA in detection recipe and consolidate yaml import
+- move VisionDataset to runtime imports in phases.py and objective.py
 
 ## [0.2.4] - 2026-03-25
 
