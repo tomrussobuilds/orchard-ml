@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - replace type: ignore with typed casts in phases.py and objective.py
 
+### Documentation
+
+- align MUTANTS.md with operational workflow and regenerate framework map
+
 ### Fixed
 
 - disable TTA in detection recipe and consolidate yaml import

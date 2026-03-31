@@ -30,7 +30,7 @@ repos:
       - id: test-coverage
         name: test suite + 100% coverage
         language: system
-        entry: pytest tests/ --cov=orchard --cov-fail-under=100 -x -q --tb=short --no-header
+        entry: .venv/bin/pytest tests/ --cov=orchard --cov-fail-under=100 -x -q --tb=short --no-header
         pass_filenames: false
         always_run: true
 
