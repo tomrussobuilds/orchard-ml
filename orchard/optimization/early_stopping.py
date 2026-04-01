@@ -45,7 +45,7 @@ class StudyEarlyStoppingCallback:
     Prevents wasteful computation when near-perfect performance is reached
     (e.g., AUC > 0.9999).
 
-    Usage:
+    Example:
         callback = StudyEarlyStoppingCallback(
             threshold=0.9999,
             direction="maximize",
@@ -54,10 +54,10 @@ class StudyEarlyStoppingCallback:
         study.optimize(objective, callbacks=[callback])
 
     Attributes:
-        threshold: Metric value that triggers early stopping
-        direction: "maximize" or "minimize"
-        patience: Number of trials meeting threshold before stopping
-        _count: Internal counter for consecutive threshold hits
+        threshold (float): Metric value that triggers early stopping.
+        direction (str): "maximize" or "minimize".
+        patience (int): Number of trials meeting threshold before stopping.
+        _count (int): Internal counter for consecutive threshold hits.
     """
 
     def __init__(  # pragma: no mutate (defaults: trampoline can't intercept)

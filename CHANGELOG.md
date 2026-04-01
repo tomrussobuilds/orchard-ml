@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - disable TTA in detection recipe and consolidate yaml import
 - move VisionDataset to runtime imports in phases.py and objective.py
+- bump pygments to 2.20.0 (ReDoS in AdlLexer, CVE-2026-28500)
 
 ## [0.2.4] - 2026-03-25
 

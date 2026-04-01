@@ -136,7 +136,16 @@ def _load_and_inspect(
 
 def load_dataset(metadata: DatasetMetadata) -> DatasetData:
     """
-    Ensures the dataset is present and returns its metadata container.
+    Ensure the dataset is present on disk and return its inspection results.
+
+    Downloads the dataset if missing, then inspects all samples to determine
+    format properties (color mode, class count).
+
+    Args:
+        metadata: Dataset metadata (URL, MD5, name, path).
+
+    Returns:
+        Inspection results with format info derived from the full dataset.
     """
     return _load_and_inspect(metadata)
 

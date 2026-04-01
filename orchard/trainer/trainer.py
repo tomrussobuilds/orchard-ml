@@ -65,25 +65,25 @@ class ModelTrainer:
     5. Early Stopping: Halt training if no improvement for `patience` epochs
 
     Attributes:
-        model: Neural network architecture to train.
-        train_loader: Training data provider.
-        val_loader: Validation data provider.
-        optimizer: Gradient descent optimizer.
-        scheduler: Learning rate scheduler.
-        criterion: Loss function (e.g., CrossEntropyLoss).
-        device: Hardware target (CUDA/MPS/CPU).
-        training: Training hyperparameters sub-config.
-        epochs: Total number of training epochs.
-        patience: Early stopping patience (epochs without improvement).
-        best_metric: Best value of the monitored metric.
-        epochs_no_improve: Consecutive epochs without monitored metric improvement.
-        scaler: AMP scaler (``None`` when ``use_amp`` is ``False``).
-        mixup_fn: Mixup augmentation function (partial of ``mixup_data``).
-        best_path: Filesystem path for best model checkpoint.
-        train_losses: Training loss history per epoch.
-        val_metrics_history: Validation metrics history per epoch.
-        monitor_metric: Name of metric driving checkpointing.
-        _loop: Shared epoch kernel handling train → validate → schedule.
+        model (nn.Module): Neural network architecture to train.
+        train_loader (DataLoader): Training data provider.
+        val_loader (DataLoader): Validation data provider.
+        optimizer (Optimizer): Gradient descent optimizer.
+        scheduler (LRScheduler | None): Learning rate scheduler.
+        criterion (nn.Module): Loss function (e.g., CrossEntropyLoss).
+        device (torch.device): Hardware target (CUDA/MPS/CPU).
+        training (TrainingConfig): Training hyperparameters sub-config.
+        epochs (int): Total number of training epochs.
+        patience (int): Early stopping patience (epochs without improvement).
+        best_metric (float): Best value of the monitored metric.
+        epochs_no_improve (int): Consecutive epochs without monitored metric improvement.
+        scaler (GradScaler | None): AMP scaler (``None`` when ``use_amp`` is ``False``).
+        mixup_fn (Callable | None): Mixup augmentation function (partial of ``mixup_data``).
+        best_path (Path): Filesystem path for best model checkpoint.
+        train_losses (list[float]): Training loss history per epoch.
+        val_metrics_history (list[dict]): Validation metrics history per epoch.
+        monitor_metric (str): Name of metric driving checkpointing.
+        _loop (TrainingLoop): Shared epoch kernel handling train → validate → schedule.
 
     Example:
         >>> from orchard.trainer import ModelTrainer

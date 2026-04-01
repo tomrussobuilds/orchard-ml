@@ -67,7 +67,16 @@ _QUANTIZED_TOLERANCE_FACTOR = 10
 
 
 class TrainingResult(NamedTuple):
-    """Structured return type for :func:`run_training_phase`."""
+    """
+    Structured return type for :func:`run_training_phase`.
+
+    Attributes:
+        best_model_path (Path): Filesystem path to the best checkpoint.
+        train_losses (list[float]): Per-epoch training loss history.
+        val_metrics (list[Mapping[str, float]]): Per-epoch validation metrics.
+        model (nn.Module): Model with best weights restored.
+        test_metrics (Mapping[str, float]): Final metrics on the test set.
+    """
 
     best_model_path: Path
     train_losses: list[float]

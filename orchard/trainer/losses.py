@@ -30,10 +30,10 @@ class FocalLoss(nn.Module):
         where ``pt`` is the probability of the true class.
 
     Attributes:
-        gamma: Focusing parameter. Higher values reduce the relative
+        gamma (float): Focusing parameter. Higher values reduce the relative
             loss for well-classified examples (default: 2.0).
-        alpha: Balancing parameter for class importance.
-        weight: A manual rescaling weight given to each class.
+        alpha (float): Balancing parameter for class importance.
+        weight (Tensor | None): A manual rescaling weight given to each class.
     """
 
     def __init__(

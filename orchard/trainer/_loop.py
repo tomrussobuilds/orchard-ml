@@ -135,6 +135,23 @@ class TrainingLoop:
         training_step: TaskTrainingStep | None = None,
         validation_metrics: TaskValidationMetrics | None = None,
     ) -> None:
+        """
+        Initialize the training loop with model, data, and training components.
+
+        Args:
+            model: Neural network to train.
+            train_loader: Training data provider.
+            val_loader: Validation data provider.
+            optimizer: Gradient descent optimizer.
+            scheduler: Learning rate scheduler (or None).
+            criterion: Loss function.
+            device: Hardware target (CUDA/MPS/CPU).
+            scaler: AMP GradScaler (or None).
+            mixup_fn: MixUp partial function (or None).
+            options: Scalar training options.
+            training_step: Task-specific training step adapter.
+            validation_metrics: Task-specific validation metrics adapter.
+        """
         self.model = model
         self.train_loader = train_loader
         self.val_loader = val_loader

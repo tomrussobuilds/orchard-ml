@@ -35,7 +35,7 @@ def build_fasterrcnn(
         pretrained: If True, load COCO-pretrained weights for the backbone.
 
     Returns:
-        Faster R-CNN model with custom class head, on CPU.
+        Faster R-CNN model with custom class head (device placement handled by factory).
     """
     weights = "DEFAULT" if pretrained else None  # pragma: no mutate
     model = cast(FasterRCNN, fasterrcnn_resnet50_fpn_v2(weights=weights))  # pragma: no mutate

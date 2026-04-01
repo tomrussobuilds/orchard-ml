@@ -32,9 +32,9 @@ class FloatRange(BaseModel):
     Typed bounds for a continuous hyperparameter search range.
 
     Attributes:
-        low: Lower bound (inclusive).
-        high: Upper bound (inclusive).
-        log: If True, sample in log-uniform distribution.
+        low (float): Lower bound (inclusive).
+        high (float): Upper bound (inclusive).
+        log (bool): If True, sample in log-uniform distribution.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -60,8 +60,8 @@ class IntRange(BaseModel):
     Typed bounds for a discrete hyperparameter search range.
 
     Attributes:
-        low: Lower bound (inclusive).
-        high: Upper bound (inclusive).
+        low (int): Lower bound (inclusive).
+        high (int): Upper bound (inclusive).
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")

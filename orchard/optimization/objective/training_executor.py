@@ -154,7 +154,7 @@ class TrialTrainingExecutor:
             criterion: Loss function.
             training: Training hyperparameters sub-config.
             optuna: Optuna pruning/warmup sub-config.
-            log_interval: Epoch interval for progress logging.IN
+            log_interval: Epoch interval for progress logging.
             device: Training device.
             metric_extractor: Metric extraction and tracking handler.
             task_adapters: Task-specific adapters bundle.
