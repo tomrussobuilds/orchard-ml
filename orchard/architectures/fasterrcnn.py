@@ -9,11 +9,14 @@ object categories.
 
 from __future__ import annotations
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import torch.nn as nn
 from torchvision.models.detection import fasterrcnn_resnet50_fpn_v2
-from torchvision.models.detection.faster_rcnn import FasterRCNN, FastRCNNPredictor
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+
+if TYPE_CHECKING:  # pragma: no cover
+    from torchvision.models.detection.faster_rcnn import FasterRCNN
 
 
 def build_fasterrcnn(

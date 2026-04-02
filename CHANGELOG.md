@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - replace type: ignore with typed casts in phases.py and objective.py
+- standardize TYPE_CHECKING placement and add ruff TC006
 
 ### Documentation
 

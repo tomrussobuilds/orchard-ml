@@ -32,7 +32,6 @@ from ..core import (
 )
 from ..core.task_registry import get_task
 from ..data_handler import (
-    VisionDataset,
     get_augmentations_description,
     get_dataloaders,
     load_dataset,
@@ -56,6 +55,7 @@ from ..trainer import (
 if TYPE_CHECKING:  # pragma: no cover
     from ..core import RootOrchestrator
     from ..core.config import ExportConfig
+    from ..data_handler import VisionDataset
     from ..tracking import TrackerProtocol
 
 logger = logging.getLogger(LOGGER_NAME)

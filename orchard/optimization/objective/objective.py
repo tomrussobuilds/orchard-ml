@@ -46,7 +46,7 @@ from ...core import (
     log_trial_start,
 )
 from ...core.task_registry import get_task
-from ...data_handler import DatasetData, VisionDataset, get_dataloaders, load_dataset
+from ...data_handler import get_dataloaders, load_dataset
 from ...trainer import (
     compute_class_weights,
     get_optimizer,
@@ -62,6 +62,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from torch.utils.data import DataLoader
 
     from ...core import DatasetMetadata
+    from ...data_handler import DatasetData, VisionDataset
     from ...tracking import TrackerProtocol
 
 logger = logging.getLogger(LOGGER_NAME)
