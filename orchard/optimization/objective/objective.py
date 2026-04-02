@@ -46,7 +46,7 @@ from ...core import (
     log_trial_start,
 )
 from ...core.task_registry import get_task
-from ...data_handler import get_dataloaders, load_dataset
+from ...data_handler import DatasetData, VisionDataset, get_dataloaders, load_dataset
 from ...trainer import (
     compute_class_weights,
     get_optimizer,
@@ -62,7 +62,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from torch.utils.data import DataLoader
 
     from ...core import DatasetMetadata
-    from ...data_handler import DatasetData, VisionDataset
     from ...tracking import TrackerProtocol
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -242,7 +241,7 @@ class OptunaObjective:
 
             class_weights = None
             if self.cfg.task_type == "classification" and trial_cfg.training.weighted_loss:
-                ds = cast("VisionDataset", train_loader.dataset)  # pragma: no mutate
+                ds = cast(VisionDataset, train_loader.dataset)  # pragma: no mutate
                 train_labels = ds.labels.flatten()
                 num_classes = self.config_builder.base_metadata.num_classes
                 class_weights = compute_class_weights(train_labels, num_classes, self.device)

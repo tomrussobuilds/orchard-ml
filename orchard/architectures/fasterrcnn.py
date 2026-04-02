@@ -9,14 +9,11 @@ object categories.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import torch.nn as nn
 from torchvision.models.detection import fasterrcnn_resnet50_fpn_v2
-from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-
-if TYPE_CHECKING:  # pragma: no cover
-    from torchvision.models.detection.faster_rcnn import FasterRCNN
+from torchvision.models.detection.faster_rcnn import FasterRCNN, FastRCNNPredictor
 
 
 def build_fasterrcnn(
@@ -41,7 +38,7 @@ def build_fasterrcnn(
         Faster R-CNN model with custom class head (device placement handled by factory).
     """
     weights = "DEFAULT" if pretrained else None  # pragma: no mutate
-    model = cast("FasterRCNN", fasterrcnn_resnet50_fpn_v2(weights=weights))  # pragma: no mutate
+    model = cast(FasterRCNN, fasterrcnn_resnet50_fpn_v2(weights=weights))  # pragma: no mutate
 
     # Replace the classification head for the target number of classes
     # (+1 for background, which torchvision expects)
