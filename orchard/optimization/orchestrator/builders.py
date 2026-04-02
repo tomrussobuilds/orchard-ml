@@ -18,15 +18,15 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, cast
 
-if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Mapping
-
 import optuna
 from optuna.pruners import HyperbandPruner, MedianPruner, NopPruner, PercentilePruner
 
 from ...core import LOGGER_NAME, OptunaConfig
 from ..early_stopping import get_early_stopping_callback
 from .registries import PRUNER_REGISTRY, SAMPLER_REGISTRY
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -51,7 +51,7 @@ def build_sampler(optuna_cfg: OptunaConfig) -> optuna.samplers.BaseSampler:
             f"Unknown sampler: {optuna_cfg.sampler_type}. "
             f"Valid options: {list(SAMPLER_REGISTRY.keys())}"
         )
-    return cast(optuna.samplers.BaseSampler, sampler_cls())
+    return cast("optuna.samplers.BaseSampler", sampler_cls())
 
 
 def build_pruner(
@@ -79,7 +79,7 @@ def build_pruner(
             f"Valid options: {list(PRUNER_REGISTRY.keys())}"
         )
     # type narrowing: PRUNER_REGISTRY values are concrete pruner factories
-    return cast(MedianPruner | PercentilePruner | HyperbandPruner | NopPruner, pruner_factory())
+    return cast("MedianPruner | PercentilePruner | HyperbandPruner | NopPruner", pruner_factory())
 
 
 def build_callbacks(

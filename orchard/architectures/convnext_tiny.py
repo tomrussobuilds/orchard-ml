@@ -77,4 +77,4 @@ def build_convnext_tiny(
     # model.classifier[2] is Linear(768, 1000)
     model.classifier[2] = nn.Linear(model.classifier[2].in_features, num_classes)
 
-    return cast(nn.Module, model)
+    return cast("nn.Module", model)

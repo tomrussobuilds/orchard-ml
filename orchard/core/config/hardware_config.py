@@ -93,7 +93,7 @@ class HardwareConfig(BaseModel):
             Resolved device string
         """
         if v == "auto":
-            return cast(DeviceType, detect_best_device())
+            return cast("DeviceType", detect_best_device())
 
         requested = v.lower()
 
@@ -120,7 +120,7 @@ class HardwareConfig(BaseModel):
             )
             return "cpu"
 
-        return cast(DeviceType, requested)
+        return cast("DeviceType", requested)
 
     @property
     def lock_file_path(self) -> Path:

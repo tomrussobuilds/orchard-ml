@@ -56,7 +56,7 @@ class FocalLoss(nn.Module):
             Scalar focal loss averaged over the batch.
         """
         # Calculate standard cross entropy without reduction
-        weight = cast(torch.Tensor | None, self.weight)
+        weight = cast("torch.Tensor | None", self.weight)
         ce_loss = F.cross_entropy(inputs, targets, reduction="none", weight=weight)
 
         # pt is the probability of the correct class

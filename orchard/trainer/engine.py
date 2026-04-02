@@ -30,11 +30,6 @@ import logging
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Callable
 
-if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Mapping
-
-    from ..core.task_protocols import TaskTrainingStep
-
 import numpy as np
 import numpy.typing as npt
 import torch
@@ -44,6 +39,11 @@ from tqdm.auto import tqdm
 
 from ..core import LOGGER_NAME
 from ..core.paths import DEFAULT_SEED, METRIC_ACCURACY, METRIC_AUC, METRIC_F1, METRIC_LOSS
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
+
+    from ..core.task_protocols import TaskTrainingStep
 
 # Module-level logger (avoid dynamic imports in exception handlers)
 logger = logging.getLogger(LOGGER_NAME)

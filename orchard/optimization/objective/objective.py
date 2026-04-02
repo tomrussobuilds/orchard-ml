@@ -33,6 +33,7 @@ from typing import TYPE_CHECKING, Any, Protocol, cast
 import optuna
 import torch
 
+from ...architectures import get_model
 from ...core import (
     LOGGER_NAME,
     ArchitectureConfig,
@@ -44,6 +45,16 @@ from ...core import (
     flush_accelerator_cache,
     log_trial_start,
 )
+from ...core.task_registry import get_task
+from ...data_handler import DatasetData, VisionDataset, get_dataloaders, load_dataset
+from ...trainer import (
+    compute_class_weights,
+    get_optimizer,
+    get_scheduler,
+)
+from .config_builder import TrialConfigBuilder
+from .metric_extractor import MetricExtractor
+from .training_executor import TaskAdapters, TrialTrainingExecutor
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
@@ -52,20 +63,6 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from ...core import DatasetMetadata
     from ...tracking import TrackerProtocol
-
-from ...architectures import get_model
-from ...core.task_registry import get_task
-from ...data_handler import DatasetData, VisionDataset, get_dataloaders, load_dataset
-from ...trainer import (
-    compute_class_weights,
-    get_optimizer,
-    get_scheduler,
-)
-
-# Relative Imports
-from .config_builder import TrialConfigBuilder
-from .metric_extractor import MetricExtractor
-from .training_executor import TaskAdapters, TrialTrainingExecutor
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -244,7 +241,7 @@ class OptunaObjective:
 
             class_weights = None
             if self.cfg.task_type == "classification" and trial_cfg.training.weighted_loss:
-                ds = cast(VisionDataset, train_loader.dataset)  # pragma: no mutate
+                ds = cast("VisionDataset", train_loader.dataset)  # pragma: no mutate
                 train_labels = ds.labels.flatten()
                 num_classes = self.config_builder.base_metadata.num_classes
                 class_weights = compute_class_weights(train_labels, num_classes, self.device)
@@ -318,7 +315,7 @@ class OptunaObjective:
             Dictionary of sampled hyperparameters
         """
         if hasattr(self.search_space, "sample_params"):
-            return cast(dict[str, Any], self.search_space.sample_params(trial))
+            return cast("dict[str, Any]", self.search_space.sample_params(trial))
         return {key: fn(trial) for key, fn in self.search_space.items()}
 
     def _worst_metric(self) -> float:

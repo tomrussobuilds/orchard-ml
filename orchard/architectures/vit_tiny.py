@@ -93,7 +93,7 @@ def build_vit_tiny(
 
         # type-narrow patch_embed.proj to Conv2d for mypy
         # Note: timm VisionTransformer.patch_embed has dynamic type, ignore for type checking
-        old_proj = cast(nn.Conv2d, model.patch_embed.proj)  # type: ignore[union-attr]
+        old_proj = cast("nn.Conv2d", model.patch_embed.proj)  # type: ignore[union-attr]
 
         # Extract attributes (cast to specific types for mypy)
         kernel_size = cast("tuple[int, int]", old_proj.kernel_size)

@@ -32,11 +32,6 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Mapping
-
-    from ...core.task_protocols import TaskTrainingStep, TaskValidationMetrics
-
 import optuna
 import torch
 
@@ -51,6 +46,11 @@ from ...trainer._loop import (
 )
 from ...trainer._scheduling import step_scheduler
 from .metric_extractor import MetricExtractor
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
+
+    from ...core.task_protocols import TaskTrainingStep, TaskValidationMetrics
 
 logger = logging.getLogger(LOGGER_NAME)
 

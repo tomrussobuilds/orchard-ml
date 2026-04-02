@@ -38,11 +38,11 @@ def build_fasterrcnn(
         Faster R-CNN model with custom class head (device placement handled by factory).
     """
     weights = "DEFAULT" if pretrained else None  # pragma: no mutate
-    model = cast(FasterRCNN, fasterrcnn_resnet50_fpn_v2(weights=weights))  # pragma: no mutate
+    model = cast("FasterRCNN", fasterrcnn_resnet50_fpn_v2(weights=weights))  # pragma: no mutate
 
     # Replace the classification head for the target number of classes
     # (+1 for background, which torchvision expects)
     in_features: int = model.roi_heads.box_predictor.cls_score.in_features
     model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes + 1)
 
-    return cast(nn.Module, model)  # pragma: no mutate
+    return cast("nn.Module", model)  # pragma: no mutate

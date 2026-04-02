@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - bump requests in the uv group across 1 directory
 - bump cryptography in the uv group across 1 directory
+- bump onnx in the uv group across 1 directory (#7)
 
 ### Changed
 
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
 - align MUTANTS.md with operational workflow and regenerate framework map
+- fix docstring inconsistencies found during full audit
 
 ### Fixed
 

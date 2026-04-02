@@ -33,14 +33,13 @@ from torch.utils.data import DataLoader
 from ..core import LOGGER_NAME, LogStyle, TrainingConfig, load_model_weights
 from ..core.paths import METRIC_LOSS
 from ..exceptions import OrchardExportError
+from ._loop import LoopOptions, TrainingLoop, create_amp_scaler, create_mixup_fn
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
 
     from ..core.task_protocols import TaskTrainingStep, TaskValidationMetrics
     from ..tracking import TrackerProtocol
-
-from ._loop import LoopOptions, TrainingLoop, create_amp_scaler, create_mixup_fn
 
 # Global logger instance
 logger = logging.getLogger(LOGGER_NAME)

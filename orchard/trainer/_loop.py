@@ -18,11 +18,6 @@ from dataclasses import dataclass
 from functools import partial
 from typing import TYPE_CHECKING, Any, Callable
 
-if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Mapping
-
-    from ..core.task_protocols import TaskTrainingStep, TaskValidationMetrics
-
 import numpy as np
 import torch
 import torch.nn as nn
@@ -31,6 +26,11 @@ from torch.optim.lr_scheduler import LRScheduler
 from ..core import TrainingConfig
 from ._scheduling import step_scheduler
 from .engine import mixup_data, train_one_epoch, validate_epoch
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
+
+    from ..core.task_protocols import TaskTrainingStep, TaskValidationMetrics
 
 # ── Factory Functions ──────────────────────────────────────────────────────
 

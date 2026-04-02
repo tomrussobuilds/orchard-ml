@@ -31,9 +31,6 @@ import logging
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Mapping
-
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, WeightedRandomSampler
@@ -55,6 +52,9 @@ from .collate import detection_collate_fn
 from .dataset import VisionDataset
 from .dispatcher import DatasetData
 from .transforms import get_pipeline_transforms
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
 
 # Optuna mode: cap workers to prevent file descriptor exhaustion during trials
 _OPTUNA_WORKERS_HIGHRES = 4  # Max workers for resolution >= HIGHRES_THRESHOLD

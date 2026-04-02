@@ -26,13 +26,13 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Mapping
-
 from optuna.study import Study
 from optuna.trial import FrozenTrial, TrialState
 
 from ..core import LOGGER_NAME, LogStyle, Reporter
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
 
 logger = logging.getLogger(LOGGER_NAME)
 

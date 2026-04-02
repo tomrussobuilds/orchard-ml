@@ -76,4 +76,4 @@ def build_efficientnet_b0(
     # Replace ImageNet 1000-class head with dataset-specific projection
     model.classifier[1] = nn.Linear(model.classifier[1].in_features, num_classes)  # 1280 features
 
-    return cast(nn.Module, model)
+    return cast("nn.Module", model)

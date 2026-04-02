@@ -31,16 +31,15 @@ from ..core import (
     TrainingConfig,
 )
 from ..core.paths import METRIC_ACCURACY, METRIC_AUC, METRIC_F1
+from .evaluator import evaluate_model
+from .plot_context import PlotContext
+from .reporting import create_structured_report
+from .visualization import plot_confusion_matrix, plot_training_curves, show_predictions
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
 
     from ..tracking import TrackerProtocol
-
-from .evaluator import evaluate_model
-from .plot_context import PlotContext
-from .reporting import create_structured_report
-from .visualization import plot_confusion_matrix, plot_training_curves, show_predictions
 
 # Global logger instance
 logger = logging.getLogger(LOGGER_NAME)

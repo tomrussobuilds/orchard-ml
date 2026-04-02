@@ -17,13 +17,13 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING, Literal
 
-if TYPE_CHECKING:  # pragma: no cover
-    from ..paths import RunPaths
-
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from ...exceptions import OrchardConfigError
 from .types import NonNegativeInt, PositiveInt, ValidatedPath
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ..paths import RunPaths
 
 
 # SEARCH SPACE RANGE MODELS

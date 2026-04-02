@@ -196,7 +196,7 @@ def load_config_from_yaml(yaml_path: Path) -> dict[str, Any]:
 
     # Equivalent mutants: "r" is Python's default open mode; cast() has no runtime effect.
     with open(yaml_path, "r", encoding="utf-8") as f:  # pragma: no mutate
-        return cast(dict[str, Any], yaml.safe_load(f))  # pragma: no mutate
+        return cast("dict[str, Any]", yaml.safe_load(f))  # pragma: no mutate
 
 
 class AuditSaverProtocol(Protocol):

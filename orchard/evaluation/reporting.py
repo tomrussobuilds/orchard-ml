@@ -15,13 +15,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Sequence
 
-if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Mapping
-
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..core import LOGGER_NAME, DatasetConfig, LogStyle, TrainingConfig
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
 
 logger = logging.getLogger(LOGGER_NAME)
 

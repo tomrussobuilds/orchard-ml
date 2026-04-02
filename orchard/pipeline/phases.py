@@ -22,6 +22,7 @@ import optuna
 import torch
 import torch.nn as nn
 
+from ..architectures import get_model
 from ..core import (
     LOGGER_NAME,
     Config,
@@ -29,13 +30,6 @@ from ..core import (
     Reporter,
     log_optimization_summary,
 )
-
-if TYPE_CHECKING:  # pragma: no cover
-    from ..core import RootOrchestrator
-    from ..core.config import ExportConfig
-    from ..tracking import TrackerProtocol
-
-from ..architectures import get_model
 from ..core.task_registry import get_task
 from ..data_handler import (
     VisionDataset,
@@ -58,6 +52,11 @@ from ..trainer import (
     get_optimizer,
     get_scheduler,
 )
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ..core import RootOrchestrator
+    from ..core.config import ExportConfig
+    from ..tracking import TrackerProtocol
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -212,7 +211,7 @@ def run_training_phase(
 
     class_weights = None
     if cfg.task_type == "classification" and cfg.training.weighted_loss:
-        ds = cast(VisionDataset, train_loader.dataset)  # pragma: no mutate
+        ds = cast("VisionDataset", train_loader.dataset)  # pragma: no mutate
         train_labels = ds.labels.flatten()
         class_weights = compute_class_weights(train_labels, ds_meta.num_classes, device)
 
@@ -255,7 +254,7 @@ def run_training_phase(
         arch_name=cfg.architecture.name,
         aug_info=get_augmentations_description(
             cfg.augmentation,
-            cast(int, cfg.dataset.img_size),  # pragma: no mutate
+            cast("int", cfg.dataset.img_size),  # pragma: no mutate
             cfg.training.mixup_alpha,
             ds_meta=ds_meta,
         ),

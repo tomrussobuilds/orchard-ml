@@ -68,7 +68,7 @@ def build_resnet_18(
     # --- Step 3: Replace Classification Head ---
     model.fc = nn.Linear(model.fc.in_features, num_classes)
 
-    return cast(nn.Module, model)
+    return cast("nn.Module", model)
 
 
 # INTERNAL HELPERS
@@ -79,7 +79,7 @@ def _adapt_stem_28(model: nn.Module, in_channels: int, pretrained: bool) -> None
     Replaces 7x7 conv1 with 3x3 stride-1, removes MaxPool, and applies
     bicubic weight interpolation from pretrained 7x7 kernels.
     """
-    old_conv = cast(nn.Conv2d, model.conv1)
+    old_conv = cast("nn.Conv2d", model.conv1)
 
     new_conv = nn.Conv2d(
         in_channels=in_channels,
@@ -107,7 +107,7 @@ def _adapt_stem_standard(model: nn.Module, in_channels: int, pretrained: bool) -
     if in_channels == 3:
         return  # No modification needed for standard RGB
 
-    old_conv = cast(nn.Conv2d, model.conv1)
+    old_conv = cast("nn.Conv2d", model.conv1)
 
     new_conv = nn.Conv2d(
         in_channels=in_channels,

@@ -232,7 +232,7 @@ def export_top_trials(
         for t in completed
         if t.value is not None and not (isinstance(t.value, float) and math.isnan(t.value))
     ]
-    sorted_trials = sorted(valid_trials, key=lambda t: cast(float, t.value), reverse=reverse)[
+    sorted_trials = sorted(valid_trials, key=lambda t: cast("float", t.value), reverse=reverse)[
         :top_k
     ]
 
@@ -340,7 +340,7 @@ def build_best_config_dict(best_params: dict[str, Any], cfg: Config) -> dict[str
     # Restore normal epochs for final training (not Optuna short epochs)
     config_dict["training"]["epochs"] = cfg.training.epochs
 
-    return cast(dict[str, Any], config_dict)  # pragma: no mutate
+    return cast("dict[str, Any]", config_dict)  # pragma: no mutate
 
 
 def build_best_trial_data(

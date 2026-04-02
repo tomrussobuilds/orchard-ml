@@ -33,12 +33,6 @@ from typing import TYPE_CHECKING
 import optuna
 
 from ...core import LOGGER_NAME, Config, RunPaths, log_optimization_header
-
-if TYPE_CHECKING:  # pragma: no cover
-    import torch
-
-    from ...tracking import TrackerProtocol
-
 from ...core.task_registry import get_task
 from ..objective.objective import OptunaObjective
 from ..search_spaces import get_search_space
@@ -46,6 +40,11 @@ from .builders import build_callbacks, build_pruner, build_sampler
 from .exporters import export_best_config, export_study_summary, export_top_trials
 from .utils import has_completed_trials
 from .visualizers import generate_visualizations
+
+if TYPE_CHECKING:  # pragma: no cover
+    import torch
+
+    from ...tracking import TrackerProtocol
 
 logger = logging.getLogger(LOGGER_NAME)
 
