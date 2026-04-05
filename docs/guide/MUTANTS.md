@@ -256,27 +256,31 @@ automatically by the patched entry point — **do not** annotate them manually.
 
 ---
 
-<h2>Known Issue: `set_start_method` Crash</h2>
+<h2>Resolved Issue: `set_start_method` Crash</h2>
 
-mutmut 3.5 calls `multiprocessing.set_start_method('fork')` at module level
-in `mutmut/__main__.py` (line 1152). When the trampoline re-imports this
-module during stats collection, the call fails with:
+mutmut 3.5.0 calls `multiprocessing.set_start_method('fork')` at module level
+in `mutmut/__main__.py`. When the module is re-executed (e.g. via
+`python -m mutmut run`), the call fails with:
 
 ```
 RuntimeError: context has already been set
 ```
 
-**Fix:** patch your local mutmut installation:
+**Status:** fixed upstream in [GH-466](https://github.com/boxed/mutmut/pull/466)
+(merged into `main`). The fix guards the call with `get_start_method(allow_none=True)`
+and is included in mutmut **> 3.5.0**. If you are still on 3.5.0, either install
+from git:
 
 ```bash
-# In your mutmut venv
-sed -i "s/set_start_method('fork')/set_start_method('fork', force=True)/" \
-    .venv/lib/python3.12/site-packages/mutmut/__main__.py
+uv pip install "mutmut @ git+https://github.com/boxed/mutmut.git@main"
 ```
 
-This is safe — `force=True` simply allows resetting the already-set context.
-The bug is masked when stats are cached; it surfaces whenever mutmut needs
-to re-collect stats (new tests added, cache cleaned).
+or apply the local patch:
+
+```bash
+sed -i "s/set_start_method('fork')/set_start_method('fork', force=True)/" \
+    .venv/lib/python3.*/site-packages/mutmut/__main__.py
+```
 
 ---
 
