@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - bump pygments to 2.20.0 (ReDoS in AdlLexer, CVE-2026-28500)
 - move type-only imports behind TYPE_CHECKING (CodeQL py/unused-import)
 - resolve CodeQL py/unused-import by dropping string-form casts
+- bump mlflow lower bound to >=3.11.0 (authorization bypass through 3.10.1)
 
 ## [0.2.4] - 2026-03-25
 
