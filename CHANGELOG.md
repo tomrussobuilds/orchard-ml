@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - align MUTANTS.md with operational workflow and regenerate framework map
 - fix docstring inconsistencies found during full audit
+- mark set_start_method crash as resolved (GH-466)
 
 ### Fixed
 
