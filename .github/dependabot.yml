@@ -1,0 +1,43 @@
+version: 2
+
+updates:
+  # --- GitHub Actions ---
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # --- Python (pip) ---
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    groups:
+      ml-core:
+        patterns: ["torch", "torchvision", "timm", "torchmetrics"]
+      onnx:
+        patterns: ["onnx", "onnxscript", "onnxruntime"]
+      data:
+        patterns: ["numpy", "pandas", "scikit-learn", "h5py", "Pillow"]
+      viz:
+        patterns: ["plotly", "matplotlib", "xlsxwriter", "openpyxl"]
+      infra:
+        patterns: ["pydantic", "pyyaml", "typer", "tqdm", "requests", "psutil"]
+    ignore:
+      # Major version bumps for ML core: review manually
+      - dependency-name: "torch"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "torchvision"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "fix(deps)"
+      include: "scope"
