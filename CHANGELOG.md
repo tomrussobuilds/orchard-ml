@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### CI
 
 - add Dependabot config for Actions and pip version updates
+- bump the actions group with 13 updates (#9)
+- add workflow to sync uv.lock on Dependabot PRs
 
 ### Changed
 
