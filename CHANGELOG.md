@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - bump cryptography in the uv group across 1 directory
 - bump onnx in the uv group across 1 directory (#7)
 
+### CI
+
+- add Dependabot config for Actions and pip version updates
+
 ### Changed
 
 - replace type: ignore with typed casts in phases.py and objective.py
