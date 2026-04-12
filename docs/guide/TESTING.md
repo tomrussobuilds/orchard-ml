@@ -157,9 +157,7 @@ running mutmut, the mutation registry, pragma conventions, and more.
 
 ---
 
-<h2>Testing & Quality Assurance</h2>
-
-<h3>Test Suite</h3>
+<h2>Test Suite</h2>
 
 Orchard ML includes a comprehensive test suite targeting **→100% code coverage**:
 
