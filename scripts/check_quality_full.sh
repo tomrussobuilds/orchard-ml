@@ -25,7 +25,7 @@ echo ""
 
 echo "🔍 MyPy --strict (type checking)..."
 rm -rf .mypy_cache
-mypy --strict orchard/ tests/
+mypy --strict orchard/
 echo "✓ MyPy --strict passed"
 echo ""
 

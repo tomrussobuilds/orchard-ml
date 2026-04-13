@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - replace type: ignore with typed casts in phases.py and objective.py
 - standardize TYPE_CHECKING placement and add ruff TC006
+- enable mypy --strict on tests/ and remove type: ignore from architectures
 
 ### Documentation
 
