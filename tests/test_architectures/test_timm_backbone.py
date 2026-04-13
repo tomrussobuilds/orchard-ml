@@ -7,7 +7,6 @@ and error handling for arbitrary timm models.
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -21,14 +20,14 @@ from orchard.exceptions import OrchardConfigError
 
 # FIXTURES
 @pytest.fixture
-def device() -> None:
-    return torch.device("cpu")  # type: ignore
+def device() -> torch.device:
+    return torch.device("cpu")
 
 
 @pytest.fixture
-def arch_cfg() -> None:
+def arch_cfg() -> ArchitectureConfig:
     """ArchitectureConfig for a lightweight timm model (no pretrained download)."""
-    return ArchitectureConfig(name="timm/resnet10t", pretrained=False, dropout=0.1)  # type: ignore
+    return ArchitectureConfig(name="timm/resnet10t", pretrained=False, dropout=0.1)
 
 
 # UNIT TESTS
@@ -36,36 +35,40 @@ def arch_cfg() -> None:
 class TestBuildTimmModel:
     """Test suite for generic timm backbone construction."""
 
-    def test_build_returns_nn_module(self, device: Any, arch_cfg: Any) -> None:
+    def test_build_returns_nn_module(
+        self, device: torch.device, arch_cfg: ArchitectureConfig
+    ) -> None:
         model = build_timm_model(num_classes=10, in_channels=3, arch_cfg=arch_cfg)
         assert isinstance(model, nn.Module)
 
-    def test_forward_pass_shape(self, device: Any, arch_cfg: Any) -> None:
+    def test_forward_pass_shape(self, device: torch.device, arch_cfg: ArchitectureConfig) -> None:
         num_classes = 8
         model = build_timm_model(num_classes=num_classes, in_channels=3, arch_cfg=arch_cfg)
         x = torch.randn(2, 3, 224, 224, device=device)
         output = model(x)
         assert output.shape == (2, num_classes)
 
-    def test_single_channel_input(self, device: Any, arch_cfg: Any) -> None:
+    def test_single_channel_input(self, device: torch.device, arch_cfg: ArchitectureConfig) -> None:
         """timm handles in_chans=1 with automatic weight morphing."""
         model = build_timm_model(num_classes=5, in_channels=1, arch_cfg=arch_cfg)
         x = torch.randn(1, 1, 224, 224, device=device)
         output = model(x)
         assert output.shape == (1, 5)
 
-    def test_num_classes_respected(self, device: Any, arch_cfg: Any) -> None:
+    def test_num_classes_respected(
+        self, device: torch.device, arch_cfg: ArchitectureConfig
+    ) -> None:
         for n_cls in [2, 10, 100]:
             model = build_timm_model(num_classes=n_cls, in_channels=3, arch_cfg=arch_cfg)
             x = torch.randn(1, 3, 224, 224, device=device)
             assert model(x).shape == (1, n_cls)
 
-    def test_returns_cpu_model(self, arch_cfg: Any) -> None:
+    def test_returns_cpu_model(self, arch_cfg: ArchitectureConfig) -> None:
         """Builder returns model on CPU; device placement is handled by factory."""
         model = build_timm_model(num_classes=10, in_channels=3, arch_cfg=arch_cfg)
         assert next(model.parameters()).device.type == "cpu"
 
-    def test_invalid_model_raises_valueerror(self, device: Any) -> None:
+    def test_invalid_model_raises_valueerror(self, device: torch.device) -> None:
         arch_cfg = ArchitectureConfig(
             name="timm/absolutely_fake_model_xyz", pretrained=False, dropout=0.0
         )
@@ -73,7 +76,7 @@ class TestBuildTimmModel:
         with pytest.raises(ValueError, match="Failed to create timm model"):
             build_timm_model(num_classes=10, in_channels=3, arch_cfg=arch_cfg)
 
-    def test_model_id_extraction(self, device: Any) -> None:
+    def test_model_id_extraction(self, device: torch.device) -> None:
         """Verify the timm/ prefix is correctly stripped."""
         arch_cfg = ArchitectureConfig(
             name="timm/mobilenetv3_small_050", pretrained=False, dropout=0.0
@@ -87,7 +90,7 @@ class TestBuildTimmModel:
 class TestTimmFactoryRouting:
     """Test that the factory correctly routes timm/ names."""
 
-    def test_factory_routes_timm_model(self, device: Any) -> None:
+    def test_factory_routes_timm_model(self, device: torch.device) -> None:
         from orchard.architectures.factory import get_model
 
         cfg = MagicMock()
@@ -101,7 +104,7 @@ class TestTimmFactoryRouting:
         model = get_model(device=device, dataset_cfg=cfg.dataset, arch_cfg=cfg.architecture)
         assert isinstance(model, nn.Module)
 
-    def test_factory_still_routes_builtin(self, device: Any) -> None:
+    def test_factory_still_routes_builtin(self, device: torch.device) -> None:
         from orchard.architectures.factory import get_model
 
         cfg = MagicMock()
@@ -114,7 +117,7 @@ class TestTimmFactoryRouting:
         model = get_model(device=device, dataset_cfg=cfg.dataset, arch_cfg=cfg.architecture)
         assert isinstance(model, nn.Module)
 
-    def test_factory_rejects_unknown_builtin(self, device: Any) -> None:
+    def test_factory_rejects_unknown_builtin(self, device: torch.device) -> None:
         from orchard.architectures.factory import get_model
 
         cfg = MagicMock()

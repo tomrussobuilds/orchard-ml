@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - bump cryptography to 46.0.7 (CVE-2026-39892 buffer overflow)
 - rename codecov `file` input to `files` (v6 breaking change)
 - fix(deps)(deps-dev): bump mypy from 1.19.1 to 1.20.0 (#8)
+- align mypy version in CI and clean up docs formatting
 
 ## [0.2.4] - 2026-03-25
 

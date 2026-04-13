@@ -675,7 +675,7 @@ def _setup_training_mocks(
     mock_trainer_cls: MagicMock,
     mock_final_eval: MagicMock,
     mock_aug_desc: MagicMock,
-) -> None:
+) -> dict[str, MagicMock]:
     """Configure mocks for run_training_phase tests."""
     ds_meta = MagicMock(classes=["a", "b"], num_classes=2)
     mock_orchestrator.cfg.dataset._ensure_metadata = ds_meta
@@ -704,7 +704,7 @@ def _setup_training_mocks(
     mock_final_eval.return_value = (0.85, 0.90, 0.92)
     mock_aug_desc.return_value = "test_aug"
 
-    return {  # type: ignore
+    return {
         "ds_meta": ds_meta,
         "train_loader": train_loader,
         "val_loader": val_loader,
@@ -804,7 +804,7 @@ def test_run_training_phase_verifies_all_kwargs(
     mock_orchestrator: MagicMock,
 ) -> None:
     """Test run_training_phase passes correct kwargs to every dependency."""
-    refs = _setup_training_mocks(  # type: ignore
+    refs = _setup_training_mocks(
         mock_orchestrator,
         mock_load_dataset,
         mock_get_loaders,

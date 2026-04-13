@@ -25,7 +25,7 @@ logger = logging.getLogger(HEALTHCHECK_LOGGER_NAME)
 logging.basicConfig(level=logging.INFO)
 
 
-def parse_health_check_args() -> None:
+def parse_health_check_args() -> argparse.Namespace:
     """Parse command-line arguments for health check."""
     parser = argparse.ArgumentParser(description="Dataset health check utility")
     parser.add_argument(
@@ -41,7 +41,7 @@ def parse_health_check_args() -> None:
         choices=[28, 224],
         help="Target resolution (28 or 224). If not specified, checks both resolutions.",
     )
-    return parser.parse_args()  # type: ignore
+    return parser.parse_args()
 
 
 def _build_health_check_config(dataset: str, resolution: int) -> Config:
@@ -110,24 +110,24 @@ def health_check_single_dataset(ds_meta: Any, orchestrator: Any, resolution: int
 
 def _filter_datasets(
     registry_items: Any, dataset_name: Any, resolution: Any, run_logger: Any
-) -> None:
+) -> list[Any] | None:
     """Filter dataset registry by name, returning None if the requested dataset is not found."""
     if not dataset_name:
-        return list(registry_items)  # type: ignore
+        return list(registry_items)
 
     filtered = [(name, meta) for name, meta in registry_items if name == dataset_name]
     if not filtered:
         run_logger.error(
             f"Dataset '{dataset_name}' not found in {resolution}x{resolution} registry"
         )
-    return filtered or None  # type: ignore
+    return filtered or None
 
 
 def fetch_all_datasets_health_check() -> None:
     """
     Iterates over the MedMNIST dataset registry and performs a health check for each dataset.
     """
-    args = parse_health_check_args()  # type: ignore
+    args = parse_health_check_args()
     resolutions = [args.resolution] if args.resolution is not None else [28, 224]
 
     for resolution in resolutions:
@@ -138,10 +138,11 @@ def fetch_all_datasets_health_check() -> None:
 
         with RootOrchestrator(cfg) as orchestrator:
             run_logger = orchestrator.run_logger
-            run_logger.info(f"Checking datasets with resolution: {resolution}x{resolution}")  # type: ignore
+            assert run_logger is not None
+            run_logger.info(f"Checking datasets with resolution: {resolution}x{resolution}")
 
             dataset_wrapper = DatasetRegistryWrapper(resolution=resolution)
-            datasets_to_check = _filter_datasets(  # type: ignore
+            datasets_to_check = _filter_datasets(
                 dataset_wrapper.registry.items(), args.dataset, resolution, run_logger
             )
             if datasets_to_check is None:
@@ -149,15 +150,15 @@ def fetch_all_datasets_health_check() -> None:
 
             for _, ds_meta in datasets_to_check:
                 try:
-                    run_logger.info(f"Attempting health check for dataset '{ds_meta.name}'")  # type: ignore
+                    run_logger.info(f"Attempting health check for dataset '{ds_meta.name}'")
                     health_check_single_dataset(ds_meta, orchestrator, resolution=resolution)
                 except (FileNotFoundError, ValueError, RuntimeError) as e:
-                    run_logger.warning(  # type: ignore
+                    run_logger.warning(
                         f"Skipping dataset '{ds_meta.name}' due to error, but continuing."
                     )
-                    run_logger.exception(e)  # type: ignore
+                    run_logger.exception(e)
 
-            run_logger.info(f"Health check completed for resolution {resolution}x{resolution}.")  # type: ignore
+            run_logger.info(f"Health check completed for resolution {resolution}x{resolution}.")
 
 
 # ENTRY POINT

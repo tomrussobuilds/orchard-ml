@@ -26,7 +26,7 @@ from __future__ import annotations
 import runpy
 
 import libcst as cst
-import mutmut.file_mutation as fm
+import mutmut.mutation.file_mutation as fm
 
 # ---------------------------------------------------------------------------
 # Full-skip: the entire Call node + children are excluded from mutation.

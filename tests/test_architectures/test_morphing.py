@@ -63,17 +63,21 @@ class TestMorphConvWeights:
 
         morph_conv_weights(old_conv, new_conv, in_channels=3)
 
-        assert torch.equal(new_conv.bias, old_conv.bias)  # type: ignore
+        assert new_conv.bias is not None
+        assert old_conv.bias is not None
+        assert torch.equal(new_conv.bias, old_conv.bias)
 
     def test_no_bias_transfer_old_no_bias(self) -> None:
         """No bias copy when old conv has no bias."""
         old_conv = nn.Conv2d(3, 64, kernel_size=3, bias=False)
         new_conv = nn.Conv2d(3, 64, kernel_size=3, bias=True)
 
-        original_bias = new_conv.bias.clone()  # type: ignore
+        assert new_conv.bias is not None
+        original_bias = new_conv.bias.clone()
         morph_conv_weights(old_conv, new_conv, in_channels=3)
 
-        assert torch.equal(new_conv.bias, original_bias)  # type: ignore
+        assert new_conv.bias is not None
+        assert torch.equal(new_conv.bias, original_bias)
 
     def test_no_bias_transfer_new_no_bias(self) -> None:
         """No crash when new conv has no bias slot."""

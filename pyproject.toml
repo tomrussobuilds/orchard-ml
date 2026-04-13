@@ -177,7 +177,7 @@ skips = ["B101"]
 python_version = "3.10"
 strict = true
 ignore_missing_imports = true
-exclude = ["tests/", "docs/", "build/", "dist/"]
+exclude = ["docs/", "build/", "dist/"]
 
 [tool.mutmut]
 paths_to_mutate = ["orchard/"]

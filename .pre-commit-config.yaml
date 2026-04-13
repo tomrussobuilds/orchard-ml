@@ -19,7 +19,7 @@ repos:
         entry: mypy --strict --cache-dir /dev/null
         types: [python]
         pass_filenames: false
-        args: [orchard/]
+        args: [orchard/, tests/]
 
       - id: bandit
         name: bandit (security scan)
@@ -64,7 +64,7 @@ repos:
       - id: pre-push-quality-gate
         name: pre-push quality gate
         language: system
-        entry: bash -c 'ruff check orchard/ tests/ && bandit -c pyproject.toml -r orchard/ && mypy --strict orchard/'
+        entry: bash -c 'ruff check orchard/ tests/ && bandit -c pyproject.toml -r orchard/ && mypy --strict orchard/ tests/'
         pass_filenames: false
         always_run: true
         stages: [pre-push]

@@ -6,17 +6,19 @@ and 224x224 (standard stem).
 
 from __future__ import annotations
 
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
+import torch.nn as nn
 
 from orchard.architectures import build_resnet_18
 
 
 # FIXTURES
 @pytest.fixture
-def device():  # type: ignore
+def device() -> torch.device:
     """Resolves target device for test execution."""
     return torch.device("cpu")
 
@@ -34,7 +36,9 @@ class TestResNet18Low:
             (3, 100, 2),
         ],
     )
-    def test_output_shape_28(self, device, in_channels, num_classes, batch_size) -> None:  # type: ignore
+    def test_output_shape_28(
+        self, device: torch.device, in_channels: int, num_classes: int, batch_size: int
+    ) -> None:
         """Verify output shape matches expected dimensions for 28x28 inputs."""
         model = build_resnet_18(
             num_classes=num_classes,
@@ -51,28 +55,30 @@ class TestResNet18Low:
 
         assert output.shape == (batch_size, num_classes)
 
-    def test_conv1_modified_to_3x3(self, device) -> None:  # type: ignore
+    def test_conv1_modified_to_3x3(self, device: torch.device) -> None:
         """Verify conv1 layer is modified to 3x3 with stride 1."""
         model = build_resnet_18(num_classes=10, in_channels=3, pretrained=False, resolution=28)
 
-        assert model.conv1.kernel_size == (3, 3)  # type: ignore
-        assert model.conv1.stride == (1, 1)
-        assert model.conv1.out_channels == 64  # type: ignore
+        conv1 = cast(nn.Conv2d, model.conv1)
+        assert conv1.kernel_size == (3, 3)
+        assert conv1.stride == (1, 1)
+        assert conv1.out_channels == 64
 
-    def test_maxpool_removed(self, device) -> None:  # type: ignore
+    def test_maxpool_removed(self, device: torch.device) -> None:
         """Verify maxpool is replaced with Identity layer."""
         model = build_resnet_18(num_classes=10, in_channels=3, pretrained=False, resolution=28)
 
         assert isinstance(model.maxpool, torch.nn.Identity)
 
-    def test_grayscale_input_28(self, device) -> None:  # type: ignore
+    def test_grayscale_input_28(self, device: torch.device) -> None:
         """Verify grayscale input channel adaptation."""
         model = build_resnet_18(num_classes=10, in_channels=1, pretrained=False, resolution=28)
 
-        assert model.conv1.in_channels == 1  # type: ignore
-        assert model.conv1.out_channels == 64  # type: ignore
+        conv1 = cast(nn.Conv2d, model.conv1)
+        assert conv1.in_channels == 1
+        assert conv1.out_channels == 64
 
-    def test_pretrained_weight_morphing_28(self, device) -> None:  # type: ignore
+    def test_pretrained_weight_morphing_28(self, device: torch.device) -> None:
         """Verify pretrained weights are loaded and morphed with bicubic interpolation."""
         from orchard.architectures import resnet_18 as resnet_module
 
@@ -91,7 +97,7 @@ class TestResNet18Low:
 
             mock_models.resnet18.assert_called_once_with(weights="mock_weights")
 
-    def test_spatial_preservation_28(self, device) -> None:  # type: ignore
+    def test_spatial_preservation_28(self, device: torch.device) -> None:
         """Verify spatial dimensions are preserved for 28x28 inputs."""
         model = build_resnet_18(num_classes=10, in_channels=3, pretrained=False, resolution=28)
         model.eval()
@@ -99,15 +105,16 @@ class TestResNet18Low:
         dummy_input = torch.randn(1, 3, 28, 28)
 
         with torch.no_grad():
-            activations = {}
+            activations: dict[str, Any] = {}
 
-            def get_activation(name):  # type: ignore
-                def hook(model, input, output):  # type: ignore
+            def get_activation(name: str) -> Any:
+                def hook(model: Any, input: Any, output: Any) -> None:
                     activations[name] = output.shape
 
                 return hook
 
-            model.conv1.register_forward_hook(get_activation("conv1"))  # type: ignore
+            conv1 = cast(nn.Conv2d, model.conv1)
+            conv1.register_forward_hook(get_activation("conv1"))
             _ = model(dummy_input)
 
             assert activations["conv1"][2] == 28
@@ -126,7 +133,9 @@ class TestResNet18At32:
             (3, 100, 2),
         ],
     )
-    def test_output_shape_32(self, device, in_channels, num_classes, batch_size) -> None:  # type: ignore
+    def test_output_shape_32(
+        self, device: torch.device, in_channels: int, num_classes: int, batch_size: int
+    ) -> None:
         """Verify output shape matches expected dimensions for 32x32 inputs."""
         model = build_resnet_18(
             num_classes=num_classes,
@@ -143,21 +152,22 @@ class TestResNet18At32:
 
         assert output.shape == (batch_size, num_classes)
 
-    def test_adapted_stem_at_32(self, device) -> None:  # type: ignore
+    def test_adapted_stem_at_32(self, device: torch.device) -> None:
         """Verify 32x32 uses adapted 3x3 conv1 with stride 1 (same as 28x28)."""
         model = build_resnet_18(num_classes=10, in_channels=3, pretrained=False, resolution=32)
 
-        assert model.conv1.kernel_size == (3, 3)  # type: ignore
-        assert model.conv1.stride == (1, 1)
-        assert model.conv1.out_channels == 64  # type: ignore
+        conv1 = cast(nn.Conv2d, model.conv1)
+        assert conv1.kernel_size == (3, 3)
+        assert conv1.stride == (1, 1)
+        assert conv1.out_channels == 64
 
-    def test_maxpool_removed_at_32(self, device) -> None:  # type: ignore
+    def test_maxpool_removed_at_32(self, device: torch.device) -> None:
         """Verify maxpool is replaced with Identity at 32x32."""
         model = build_resnet_18(num_classes=10, in_channels=3, pretrained=False, resolution=32)
 
         assert isinstance(model.maxpool, torch.nn.Identity)
 
-    def test_spatial_preservation_32(self, device) -> None:  # type: ignore
+    def test_spatial_preservation_32(self, device: torch.device) -> None:
         """Verify spatial dimensions are preserved for 32x32 inputs after conv1."""
         model = build_resnet_18(num_classes=10, in_channels=3, pretrained=False, resolution=32)
         model.eval()
@@ -165,15 +175,16 @@ class TestResNet18At32:
         dummy_input = torch.randn(1, 3, 32, 32)
 
         with torch.no_grad():
-            activations = {}
+            activations: dict[str, Any] = {}
 
-            def get_activation(name):  # type: ignore
-                def hook(model, input, output):  # type: ignore
+            def get_activation(name: str) -> Any:
+                def hook(model: Any, input: Any, output: Any) -> None:
                     activations[name] = output.shape
 
                 return hook
 
-            model.conv1.register_forward_hook(get_activation("conv1"))  # type: ignore
+            conv1 = cast(nn.Conv2d, model.conv1)
+            conv1.register_forward_hook(get_activation("conv1"))
             _ = model(dummy_input)
 
             assert activations["conv1"][2] == 32
@@ -192,7 +203,9 @@ class TestResNet18Mid:
             (1, 5, 2),
         ],
     )
-    def test_output_shape_64(self, device, in_channels, num_classes, batch_size) -> None:  # type: ignore
+    def test_output_shape_64(
+        self, device: torch.device, in_channels: int, num_classes: int, batch_size: int
+    ) -> None:
         """Verify output shape matches expected dimensions for 64x64 inputs."""
         model = build_resnet_18(
             num_classes=num_classes,
@@ -209,20 +222,22 @@ class TestResNet18Mid:
 
         assert output.shape == (batch_size, num_classes)
 
-    def test_standard_stem_at_64(self, device) -> None:  # type: ignore
+    def test_standard_stem_at_64(self, device: torch.device) -> None:
         """Verify 64x64 uses standard 7x7 conv1 with stride 2 (same as 224)."""
         model = build_resnet_18(num_classes=10, in_channels=3, pretrained=False, resolution=64)
 
-        assert model.conv1.kernel_size == (7, 7)  # type: ignore
-        assert model.conv1.stride == (2, 2)
+        conv1 = cast(nn.Conv2d, model.conv1)
+        assert conv1.kernel_size == (7, 7)
+        assert conv1.stride == (2, 2)
         assert not isinstance(model.maxpool, torch.nn.Identity)
 
-    def test_grayscale_input_64(self, device) -> None:  # type: ignore
+    def test_grayscale_input_64(self, device: torch.device) -> None:
         """Verify grayscale channel adaptation at 64x64."""
         model = build_resnet_18(num_classes=10, in_channels=1, pretrained=False, resolution=64)
 
-        assert model.conv1.kernel_size == (7, 7)  # type: ignore
-        assert model.conv1.in_channels == 1  # type: ignore
+        conv1 = cast(nn.Conv2d, model.conv1)
+        assert conv1.kernel_size == (7, 7)
+        assert conv1.in_channels == 1
 
 
 # UNIT TESTS — 224x224 MODE
@@ -238,7 +253,9 @@ class TestResNet18High:
             (3, 100, 2),
         ],
     )
-    def test_output_shape_224(self, device, in_channels, num_classes, batch_size) -> None:  # type: ignore
+    def test_output_shape_224(
+        self, device: torch.device, in_channels: int, num_classes: int, batch_size: int
+    ) -> None:
         """Verify output shape matches expected dimensions for 224x224 inputs."""
         model = build_resnet_18(
             num_classes=num_classes,
@@ -255,23 +272,25 @@ class TestResNet18High:
 
         assert output.shape == (batch_size, num_classes)
 
-    def test_standard_stem_preserved(self, device) -> None:  # type: ignore
+    def test_standard_stem_preserved(self, device: torch.device) -> None:
         """Verify 224x224 uses standard 7x7 conv1 with stride 2."""
         model = build_resnet_18(num_classes=10, in_channels=3, pretrained=False, resolution=224)
 
-        assert model.conv1.kernel_size == (7, 7)  # type: ignore
-        assert model.conv1.stride == (2, 2)
+        conv1 = cast(nn.Conv2d, model.conv1)
+        assert conv1.kernel_size == (7, 7)
+        assert conv1.stride == (2, 2)
         assert not isinstance(model.maxpool, torch.nn.Identity)
 
-    def test_grayscale_channel_compression_224(self, device) -> None:  # type: ignore
+    def test_grayscale_channel_compression_224(self, device: torch.device) -> None:
         """Verify 224x224 grayscale only modifies channels, not kernel."""
         model = build_resnet_18(num_classes=10, in_channels=1, pretrained=False, resolution=224)
 
-        assert model.conv1.kernel_size == (7, 7)  # type: ignore
-        assert model.conv1.stride == (2, 2)
-        assert model.conv1.in_channels == 1  # type: ignore
+        conv1 = cast(nn.Conv2d, model.conv1)
+        assert conv1.kernel_size == (7, 7)
+        assert conv1.stride == (2, 2)
+        assert conv1.in_channels == 1
 
-    def test_pretrained_weight_morphing_224(self, device) -> None:  # type: ignore
+    def test_pretrained_weight_morphing_224(self, device: torch.device) -> None:
         """Verify pretrained weights are loaded and channel-averaged for grayscale 224x224."""
         from orchard.architectures import resnet_18 as resnet_module
 
@@ -296,14 +315,15 @@ class TestResNet18High:
 class TestResNet18Shared:
     """Tests common to both resolutions."""
 
-    def test_fc_replacement(self, device) -> None:  # type: ignore
+    def test_fc_replacement(self, device: torch.device) -> None:
         """Verify classification head is replaced with correct output size."""
         num_classes = 7
         model = build_resnet_18(
             num_classes=num_classes, in_channels=3, pretrained=False, resolution=28
         )
 
-        assert model.fc.out_features == num_classes  # type: ignore
+        fc = cast(nn.Linear, model.fc)
+        assert fc.out_features == num_classes
 
     def test_device_placement(self) -> None:
         """Verify model is placed on correct device."""
@@ -312,12 +332,13 @@ class TestResNet18Shared:
         for param in model.parameters():
             assert param.device.type == "cpu"
 
-    def test_rgb_input(self, device) -> None:  # type: ignore
+    def test_rgb_input(self, device: torch.device) -> None:
         """Verify RGB input channel configuration."""
         model = build_resnet_18(num_classes=10, in_channels=3, pretrained=False, resolution=28)
 
-        assert model.conv1.in_channels == 3  # type: ignore
-        assert model.conv1.out_channels == 64  # type: ignore
+        conv1 = cast(nn.Conv2d, model.conv1)
+        assert conv1.in_channels == 3
+        assert conv1.out_channels == 64
 
 
 if __name__ == "__main__":

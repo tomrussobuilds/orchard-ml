@@ -7,11 +7,13 @@ training and eval modes.
 
 from __future__ import annotations
 
+from typing import cast
 from unittest.mock import patch
 
 import pytest
 import torch
 import torch.nn as nn
+from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
 from orchard.architectures import build_fasterrcnn
 
@@ -43,8 +45,10 @@ class TestFasterRCNN:
             build_fasterrcnn(num_classes=10, pretrained=False)
 
         # FastRCNNPredictor was set with num_classes + 1 (background)
-        new_predictor = mock_model.roi_heads.box_predictor  # type: ignore[union-attr]
-        assert new_predictor.cls_score.out_features == 11  # type: ignore[union-attr]
+        roi_heads = mock_model.roi_heads
+        assert isinstance(roi_heads, nn.Module)
+        new_predictor = cast(FastRCNNPredictor, roi_heads.box_predictor)
+        assert new_predictor.cls_score.out_features == 11
 
     def test_pretrained_passes_weights(self) -> None:
         """Builder passes 'DEFAULT' weights when pretrained=True."""
@@ -110,8 +114,6 @@ def test_fasterrcnn_in_registry() -> None:
 
 def _make_mock_fasterrcnn(in_features: int = 1024) -> nn.Module:
     """Create a mock FasterRCNN-like module with replaceable box_predictor."""
-    from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
-
     model = nn.Module()
     roi_heads = nn.Module()
     roi_heads.box_predictor = FastRCNNPredictor(in_features, 91)  # COCO default

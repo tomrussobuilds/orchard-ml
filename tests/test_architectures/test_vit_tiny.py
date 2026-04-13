@@ -7,6 +7,7 @@ and output tensor shapes across various configurations.
 from __future__ import annotations
 
 import socket
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -31,7 +32,7 @@ _requires_network = pytest.mark.skipif(not _has_internet(), reason="No network a
 
 # FIXTURES
 @pytest.fixture
-def device():  # type: ignore
+def device() -> torch.device:
     """Resolves target device for test execution."""
     return torch.device("cpu")
 
@@ -50,7 +51,7 @@ class TestBuildViTTiny:
     """
 
     @_requires_network
-    def test_build_vit_tiny_rgb(self, device) -> None:  # type: ignore
+    def test_build_vit_tiny_rgb(self, device: torch.device) -> None:
         """Ensures standard RGB ViT-Tiny is built with correct dimensions."""
         num_classes = 5
         in_channels = 3
@@ -63,15 +64,19 @@ class TestBuildViTTiny:
         )
 
         assert isinstance(model, nn.Module)
-        assert model.patch_embed.proj.in_channels == 3  # type: ignore
-        assert model.head.out_features == num_classes  # type: ignore
+        patch_embed = model.patch_embed
+        assert isinstance(patch_embed, nn.Module)
+        proj = cast(nn.Conv2d, patch_embed.proj)
+        assert proj.in_channels == 3
+        head = cast(nn.Linear, model.head)
+        assert head.out_features == num_classes
 
         x = torch.randn(1, 3, 224, 224).to(device)
         output = model(x)
         assert output.shape == (1, num_classes)
 
     @_requires_network
-    def test_build_vit_tiny_grayscale_morphing(self, device) -> None:  # type: ignore
+    def test_build_vit_tiny_grayscale_morphing(self, device: torch.device) -> None:
         """Validates the 1-channel adaptation and weight morphing (averaging)."""
         num_classes = 2
         in_channels = 1
@@ -83,7 +88,10 @@ class TestBuildViTTiny:
             weight_variant="vit_tiny_patch16_224.augreg_in21k_ft_in1k",
         )
 
-        assert model.patch_embed.proj.in_channels == 1  # type: ignore
+        patch_embed = model.patch_embed
+        assert isinstance(patch_embed, nn.Module)
+        proj = cast(nn.Conv2d, patch_embed.proj)
+        assert proj.in_channels == 1
 
         x = torch.randn(1, 1, 224, 224).to(device)
         output = model(x)
@@ -111,18 +119,21 @@ class TestBuildViTTiny:
         model = build_vit_tiny(num_classes=5, in_channels=1, pretrained=False)
 
         # patch_embed.proj should be adapted to 1 input channel
-        assert model.patch_embed.proj.in_channels == 1  # type: ignore
+        patch_embed = model.patch_embed
+        assert isinstance(patch_embed, nn.Module)
+        proj = cast(nn.Conv2d, patch_embed.proj)
+        assert proj.in_channels == 1
         x = torch.randn(1, 1, 224, 224)
         output = model(x)
         assert output.shape == (1, 5)
 
-    def test_invalid_weight_variant_raises_error(self, device) -> None:  # type: ignore
+    def test_invalid_weight_variant_raises_error(self, device: torch.device) -> None:
         """Verifies that an invalid timm variant triggers a descriptive ValueError."""
         with pytest.raises(OrchardConfigError, match="Invalid ViT weight variant"):
             build_vit_tiny(2, 3, pretrained=True, weight_variant="invalid_vit_model_name")
 
     @_requires_network
-    def test_weight_copy_consistency(self, device) -> None:  # type: ignore
+    def test_weight_copy_consistency(self, device: torch.device) -> None:
         """Confirms that bias is preserved during patch embedding adaptation."""
         model = build_vit_tiny(
             2,
@@ -131,5 +142,8 @@ class TestBuildViTTiny:
             weight_variant="vit_tiny_patch16_224.augreg_in21k_ft_in1k",
         )
 
-        assert model.patch_embed.proj.bias is not None  # type: ignore
-        assert model.patch_embed.proj.weight.shape[1] == 1  # type: ignore
+        patch_embed = model.patch_embed
+        assert isinstance(patch_embed, nn.Module)
+        proj = cast(nn.Conv2d, patch_embed.proj)
+        assert proj.bias is not None
+        assert proj.weight.shape[1] == 1
