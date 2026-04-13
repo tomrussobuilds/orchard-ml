@@ -28,9 +28,9 @@ from orchard.evaluation.visualization import (
 
 # FIXTURES
 @pytest.fixture
-def ctx_rgb() -> None:
+def ctx_rgb() -> PlotContext:
     """PlotContext for RGB 28x28 datasets."""
-    return PlotContext(  # type: ignore
+    return PlotContext(
         arch_name="resnet18",
         resolution=28,
         fig_dpi=200,
@@ -48,9 +48,9 @@ def ctx_rgb() -> None:
 
 
 @pytest.fixture
-def ctx_gray() -> None:
+def ctx_gray() -> PlotContext:
     """PlotContext for grayscale 28x28 datasets."""
-    return PlotContext(  # type: ignore
+    return PlotContext(
         arch_name="model",
         resolution=28,
         fig_dpi=150,
@@ -71,8 +71,8 @@ def ctx_gray() -> None:
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.np.savez")
-def test_plot_training_curves_basic(  # type: ignore
-    mock_savez: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_rgb
+def test_plot_training_curves_basic(
+    mock_savez: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_rgb: PlotContext
 ) -> None:
     """Test plot_training_curves creates and saves figure."""
     mock_fig = MagicMock()
@@ -96,8 +96,8 @@ def test_plot_training_curves_basic(  # type: ignore
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.np.savez")
-def test_plot_training_curves_empty_lists(  # type: ignore
-    mock_savez: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_gray
+def test_plot_training_curves_empty_lists(
+    mock_savez: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_gray: PlotContext
 ) -> None:
     """Test plot_training_curves handles empty metric lists."""
     mock_fig = MagicMock()
@@ -158,8 +158,8 @@ def test_plot_confusion_matrix_basic(
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.confusion_matrix")
-def test_plot_confusion_matrix_with_nan(  # type: ignore
-    mock_cm: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_gray
+def test_plot_confusion_matrix_with_nan(
+    mock_cm: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_gray: PlotContext
 ) -> None:
     """Test plot_confusion_matrix handles NaN values in matrix."""
     mock_fig = MagicMock()
@@ -180,8 +180,8 @@ def test_plot_confusion_matrix_with_nan(  # type: ignore
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization._get_predictions_batch")
-def test_show_predictions_basic(  # type: ignore
-    mock_get_batch: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_rgb
+def test_show_predictions_basic(
+    mock_get_batch: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_rgb: PlotContext
 ) -> None:
     """Test show_predictions creates prediction grid."""
     mock_fig = MagicMock()
@@ -280,8 +280,8 @@ def test_show_predictions_without_ctx(mock_get_batch: MagicMock, mock_plt: Magic
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization._get_predictions_batch")
-def test_show_predictions_without_save_path(  # type: ignore
-    mock_get_batch: MagicMock, mock_plt: MagicMock, ctx_rgb
+def test_show_predictions_without_save_path(
+    mock_get_batch: MagicMock, mock_plt: MagicMock, ctx_rgb: PlotContext
 ) -> None:
     """Test show_predictions with save_path=None (interactive mode)."""
     mock_fig = MagicMock()
@@ -307,8 +307,8 @@ def test_show_predictions_without_save_path(  # type: ignore
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization._get_predictions_batch")
-def test_show_predictions_standard_mode(  # type: ignore
-    mock_get_batch: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_gray
+def test_show_predictions_standard_mode(
+    mock_get_batch: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_gray: PlotContext
 ) -> None:
     """Test show_predictions with standard mode (neither texture nor anatomical)."""
     mock_fig = MagicMock()
@@ -761,8 +761,8 @@ def test_setup_prediction_grid_row_calculation() -> None:
 @pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.np.savez")
-def test_plot_training_curves_npz_data(  # type: ignore
-    mock_savez: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_rgb
+def test_plot_training_curves_npz_data(
+    mock_savez: MagicMock, mock_plt: MagicMock, tmp_path: Path, ctx_rgb: PlotContext
 ) -> None:
     """Test plot_training_curves saves correct data in npz file."""
     mock_fig = MagicMock()

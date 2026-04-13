@@ -7,6 +7,7 @@ These are minimal tests to boost coverage from 0% to ~20%.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -523,7 +524,7 @@ def test_val_acc_list_extraction(
 
     mock_cfg = MagicMock()
 
-    history = [
+    history: list[Mapping[str, float]] = [
         {"accuracy": 0.7, "f1": 0.6},
         {"accuracy": 0.85, "f1": 0.8},
         {"accuracy": 0.92, "f1": 0.9},
@@ -533,7 +534,7 @@ def test_val_acc_list_extraction(
         model=MagicMock(),
         test_loader=MagicMock(),
         train_losses=[0.5, 0.3, 0.1],
-        val_metrics_history=history,  # type: ignore
+        val_metrics_history=history,
         class_names=["a"],
         paths=mock_paths,
         training=mock_cfg.training,

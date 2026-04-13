@@ -24,24 +24,25 @@ class SimpleModel(nn.Module):
         super().__init__()
         self.fc = nn.Linear(10, 2)
 
-    def forward(self, x: Any) -> None:
-        return self.fc(x)  # type: ignore
+    def forward(self, x: Any) -> torch.Tensor:
+        result: torch.Tensor = self.fc(x)
+        return result
 
 
 # FIXTURES
 @pytest.fixture
-def mock_dataloader() -> None:
+def mock_dataloader() -> DataLoader[tuple[torch.Tensor, ...]]:
     """Create a dummy DataLoader with 2 batches of data."""
     x = torch.randn(4, 10)
     y = torch.tensor([0, 1, 0, 1])
     dataset = TensorDataset(x, y)
-    return DataLoader(dataset, batch_size=2, num_workers=0)  # type: ignore
+    return DataLoader(dataset, batch_size=2, num_workers=0)
 
 
 @pytest.fixture
-def aug_cfg() -> None:
+def aug_cfg() -> SimpleNamespace:
     """Augmentation config stub for TTA."""
-    return SimpleNamespace(  # type: ignore
+    return SimpleNamespace(
         tta_mode="full",
         tta_translate=2,
         tta_scale=1.05,
@@ -75,8 +76,11 @@ def test_evaluate_model_standard(mock_compute: MagicMock, mock_dataloader: Magic
 @pytest.mark.unit
 @patch("orchard.evaluation.evaluator.compute_classification_metrics")
 @patch("orchard.evaluation.evaluator.adaptive_tta_predict")
-def test_evaluate_model_with_tta(  # type: ignore
-    mock_tta: MagicMock, mock_compute: MagicMock, mock_dataloader: MagicMock, aug_cfg
+def test_evaluate_model_with_tta(
+    mock_tta: MagicMock,
+    mock_compute: MagicMock,
+    mock_dataloader: MagicMock,
+    aug_cfg: SimpleNamespace,
 ) -> None:
     """Test the execution path when TTA is enabled."""
     device = torch.device("cpu")

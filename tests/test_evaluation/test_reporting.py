@@ -19,7 +19,7 @@ from orchard.evaluation import TrainingReport, create_structured_report
 
 # MOCKS
 @pytest.fixture
-def mock_config() -> None:
+def mock_config() -> MagicMock:
     """Provides a mocked Config object with necessary nested attributes."""
     cfg = MagicMock()
     cfg.architecture.name = "mini_cnn"
@@ -32,13 +32,13 @@ def mock_config() -> None:
     cfg.training.batch_size = 32
     cfg.training.seed = 42
     cfg.augmentation.model_dump.return_value = {"horizontal_flip": True, "rotation": 15}
-    return cfg  # type: ignore
+    return cfg
 
 
 @pytest.fixture
-def sample_report_data() -> None:
+def sample_report_data() -> dict[str, Any]:
     """Provides a valid dictionary of data for TrainingReport instantiation."""
-    return {  # type: ignore
+    return {
         "architecture": "mini_cnn",
         "dataset": "PathMNIST",
         "best_val_metrics": {"accuracy": 0.95, "auc": 0.98, "f1": 0.94},
@@ -83,8 +83,8 @@ def test_to_vertical_df(sample_report_data: Any) -> None:
 @pytest.mark.unit
 @patch("pandas.ExcelWriter")
 @patch("pathlib.Path.mkdir")
-def test_report_save_success(  # type: ignore
-    mock_mkdir: MagicMock, mock_writer: MagicMock, sample_report_data
+def test_report_save_success(
+    mock_mkdir: MagicMock, mock_writer: MagicMock, sample_report_data: dict[str, Any]
 ) -> None:
     """Test the save method to ensure ExcelWriter is called with correct parameters."""
     report = TrainingReport(**sample_report_data)
@@ -99,8 +99,8 @@ def test_report_save_success(  # type: ignore
 @pytest.mark.unit
 @patch("orchard.evaluation.reporting.logger")
 @patch("pathlib.Path.mkdir")
-def test_report_save_failure(  # type: ignore
-    mock_mkdir: MagicMock, mock_logger: MagicMock, sample_report_data
+def test_report_save_failure(
+    mock_mkdir: MagicMock, mock_logger: MagicMock, sample_report_data: dict[str, Any]
 ) -> None:
     """Test error handling: logger.error receives the exception."""
     report = TrainingReport(**sample_report_data)
@@ -295,7 +295,7 @@ def test_report_save_creates_nested_parent_dirs(sample_report_data: Any, tmp_pat
 @pytest.mark.unit
 def test_create_structured_report_handles_empty_val_metrics(mock_config: MagicMock) -> None:
     """Test create_structured_report with empty validation metrics."""
-    val_metrics = []  # type: ignore
+    val_metrics: list[dict[str, float]] = []
     test_metrics = {"accuracy": 0.88, "auc": 0.91, "f1": 0.87}
     train_losses = [0.5]
 
@@ -376,8 +376,8 @@ def test_report_save_default_fmt_is_xlsx(sample_report_data: Any, tmp_path: Path
 
 @pytest.mark.unit
 @patch("orchard.evaluation.reporting.logger")
-def test_report_save_xlsx_no_error_logged(  # type: ignore
-    mock_logger: MagicMock, sample_report_data, tmp_path: Path
+def test_report_save_xlsx_no_error_logged(
+    mock_logger: MagicMock, sample_report_data: dict[str, Any], tmp_path: Path
 ) -> None:
     """Test save() does not log errors on success (catches _apply_excel_formatting regressions)."""
     report = TrainingReport(**sample_report_data)

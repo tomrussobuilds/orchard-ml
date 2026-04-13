@@ -58,6 +58,14 @@ class TestFasterRCNN:
 
         mock_fn.assert_called_once_with(weights="DEFAULT")
 
+    def test_default_pretrained_uses_weights(self) -> None:
+        """Builder defaults to pretrained=True, passing 'DEFAULT' weights."""
+        with patch("orchard.architectures.fasterrcnn.fasterrcnn_resnet50_fpn_v2") as mock_fn:
+            mock_fn.return_value = _make_mock_fasterrcnn()
+            build_fasterrcnn(num_classes=5)
+
+        mock_fn.assert_called_once_with(weights="DEFAULT")
+
     def test_no_pretrained_passes_none(self) -> None:
         """Builder passes None weights when pretrained=False."""
         with patch("orchard.architectures.fasterrcnn.fasterrcnn_resnet50_fpn_v2") as mock_fn:

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add Dependabot config for Actions and pip version updates
 - bump the actions group with 13 updates (#9)
 - add workflow to sync uv.lock on Dependabot PRs
+- bump the actions group with 5 updates (#12)
 
 ### Changed
 
@@ -44,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix(deps)(deps-dev): bump mypy from 1.19.1 to 1.20.0 (#8)
 - align mypy version in CI and clean up docs formatting
 - keep mypy --strict on orchard/ only until test cleanup is complete
+- bump pillow 12.1.1→12.2.0 and pytest 9.0.2→9.0.3 (security)
+- fix(deps)(deps-dev): bump mypy from 1.20.0 to 1.20.1 (#11)
 
 ## [0.2.4] - 2026-03-25
 
