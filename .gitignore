@@ -275,5 +275,6 @@ target/
 # Test recipes (manual validation testing)
 recipes/test_invalid.yaml
 
-# Personal notes (non-tracked)
+# Personal notes and drafts (non-tracked)
 /notes.txt
+/mutmut-issue-draft.md

@@ -284,6 +284,27 @@ sed -i "s/set_start_method('fork')/set_start_method('fork', force=True)/" \
 
 ---
 
+<h2>Known Issue: Name Mangling in Trampoline Generation</h2>
+
+When a class name starts with an underscore (e.g. `_CrossDomainValidator`),
+mutmut generates trampoline function names like
+`__CrossDomainValidator_validate_trampoline`. Inside the class body, Python's
+[name mangling](https://docs.python.org/3/reference/expressions.html#atom-identifiers)
+rewrites `__CrossDomainValidator_validate_trampoline` to
+`_CrossDomainValidator__CrossDomainValidator_validate_trampoline`, causing a
+`NameError` at import time.
+
+**Status:** reported upstream as [boxed/mutmut#498](https://github.com/boxed/mutmut/issues/498).
+Local patch:
+
+```bash
+sed -i "s/prefix = f\"_{class_name}_{method_name}\"/prefix = f\"_{class_name.lstrip('_')}_{method_name}\"/" \
+    .venv/lib/python3.*/site-packages/mutmut/mutation/trampoline_templates.py \
+    .venv/lib/python3.*/site-packages/mutmut/mutation/file_mutation.py
+```
+
+---
+
 <h2>conftest Helper</h2>
 
 When tests use `patch.dict(os.environ, ..., clear=True)`, mutmut v3
