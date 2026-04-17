@@ -146,7 +146,7 @@ class RunPaths(BaseModel):
             raise ValueError(
                 f"Expected string for architecture_name but got {type(architecture_name)}"
             )
-        a_slug = re.sub(r"[^a-zA-Z0-9]", "", architecture_name.lower())
+        a_slug = re.sub(r"[^a-z0-9]", "", architecture_name.lower())
 
         # Determine the unique run ID
         run_id = cls._generate_unique_id(ds_slug, a_slug, training_cfg)

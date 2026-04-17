@@ -391,9 +391,9 @@ orchard/core/paths/root.py:
   not_checked: 0
   score: 100.0
 orchard/core/paths/run_paths.py:
-  last_run: '2026-03-16T15:23:04Z'
-  total: 14
-  killed: 14
+  last_run: '2026-04-17T19:47:45Z'
+  total: 112
+  killed: 112
   survived: 0
   not_checked: 0
   score: 100.0

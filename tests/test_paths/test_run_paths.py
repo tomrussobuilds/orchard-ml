@@ -11,6 +11,7 @@ import hashlib
 import json
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 from pydantic import ValidationError
@@ -102,9 +103,10 @@ def test_runpaths_create_invalid_dataset_type() -> None:
     """Test RunPaths.create() raises ValueError for non-string dataset_slug."""
     training_cfg = {"batch_size": 32}
 
-    with pytest.raises(ValueError, match="Expected string for dataset_slug"):
+    bad_slug: Any = 123
+    with pytest.raises(ValueError, match=r"Expected string for dataset_slug but got.*int"):
         RunPaths.create(
-            dataset_slug=123,  # type: ignore
+            dataset_slug=bad_slug,
             architecture_name="resnet",
             training_cfg=training_cfg,
         )
@@ -115,10 +117,11 @@ def test_runpaths_create_invalid_model_type() -> None:
     """Test RunPaths.create() raises ValueError for non-string architecture_name."""
     training_cfg = {"batch_size": 32}
 
-    with pytest.raises(ValueError, match="Expected string for architecture_name"):
+    bad_name: Any = 123
+    with pytest.raises(ValueError, match=r"Expected string for architecture_name but got.*int"):
         RunPaths.create(
             dataset_slug="test",
-            architecture_name=123,  # type: ignore
+            architecture_name=bad_name,
             training_cfg=training_cfg,
         )
 
@@ -190,7 +193,7 @@ def test_generate_unique_id_empty_config() -> None:
     """Test _generate_unique_id() handles empty config dict."""
     ds_slug = "test"
     a_slug = "architecture"
-    cfg = {}  # type: ignore
+    cfg: dict[str, Any] = {}
 
     run_id = RunPaths._generate_unique_id(ds_slug, a_slug, cfg)
     assert isinstance(run_id, str)
@@ -287,6 +290,7 @@ def test_runpaths_path_attributes(tmp_path: Path) -> None:
     assert run_paths.reports == run_paths.root / "reports"
     assert run_paths.logs == run_paths.root / "logs"
     assert run_paths.database == run_paths.root / "database"
+    assert run_paths.exports == run_paths.root / "exports"
 
 
 # RUNPATHS: DYNAMIC PROPERTIES
@@ -556,6 +560,39 @@ def test_setup_run_directories_creates_parents(tmp_path: Path) -> None:
     for subdir_name in RunPaths.SUB_DIRS:
         subdir_path = run_paths.root / subdir_name
         assert subdir_path.exists(), f"Missing subdirectory: {subdir_name}"
+
+
+@pytest.mark.unit
+def test_create_run_id_contains_architecture_slug(tmp_path: Path) -> None:
+    """Kill mutmut: a_slug must be passed to _generate_unique_id, not None."""
+    training_cfg = {"batch_size": 32, "run_timestamp": 1707400000.0}
+
+    run_paths = RunPaths.create(
+        dataset_slug="test",
+        architecture_name="EfficientNet-B0",
+        training_cfg=training_cfg,
+        base_dir=tmp_path,
+    )
+
+    assert run_paths.architecture_slug in run_paths.run_id
+
+
+@pytest.mark.unit
+def test_generate_unique_id_uses_time_when_no_timestamp() -> None:
+    """Kill mutmut: default for run_timestamp must be time.time(), not None.
+
+    Without a run_timestamp key, two consecutive calls with the same config
+    must produce different IDs because time.time() advances between calls.
+    With the mutant (default=None), both calls produce the same hash.
+    """
+    with patch("orchard.core.paths.run_paths.time") as mock_time:
+        mock_time.time.side_effect = [1_000_000.0, 2_000_000.0]
+        mock_time.strftime.return_value = "20260101"
+
+        id1 = RunPaths._generate_unique_id("test", "arch", {})
+        id2 = RunPaths._generate_unique_id("test", "arch", {})
+
+    assert id1 != id2
 
 
 @pytest.mark.unit
