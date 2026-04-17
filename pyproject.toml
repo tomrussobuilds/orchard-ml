@@ -215,3 +215,8 @@ known-first-party = ["orchard"]
 
 [tool.ruff.lint.flake8-type-checking]
 runtime-evaluated-base-classes = ["pydantic.BaseModel"]
+
+[tool.uv]
+constraint-dependencies = [
+    "mako>=1.3.11",  # CVE-2025-XXXX: path traversal via double-slash URI prefix in TemplateLookup
+]
