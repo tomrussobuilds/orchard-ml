@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - keep mypy --strict on orchard/ only until test cleanup is complete
 - bump pillow 12.1.1→12.2.0 and pytest 9.0.2→9.0.3 (security)
 - fix(deps)(deps-dev): bump mypy from 1.20.0 to 1.20.1 (#11)
+- constrain mako>=1.3.11 (path traversal CVE)
 
 ## [0.2.4] - 2026-03-25
 

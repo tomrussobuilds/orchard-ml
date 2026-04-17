@@ -284,7 +284,7 @@ sed -i "s/set_start_method('fork')/set_start_method('fork', force=True)/" \
 
 ---
 
-<h2>Known Issue: Name Mangling in Trampoline Generation</h2>
+<h2>Resolved Issue: Name Mangling in Trampoline Generation</h2>
 
 When a class name starts with an underscore (e.g. `_CrossDomainValidator`),
 mutmut generates trampoline function names like
@@ -294,11 +294,16 @@ rewrites `__CrossDomainValidator_validate_trampoline` to
 `_CrossDomainValidator__CrossDomainValidator_validate_trampoline`, causing a
 `NameError` at import time.
 
-**Status:** reported upstream as [boxed/mutmut#498](https://github.com/boxed/mutmut/issues/498).
-Local patch:
+**Status:** fixed upstream in [boxed/mutmut#499](https://github.com/boxed/mutmut/pull/499)
+(merged 2026-04-16, reported in [#498](https://github.com/boxed/mutmut/issues/498)).
+The fix uses a `_mutmut_` prefix instead of `_{class_name}_`, which is always
+safe regardless of class name. No local patch needed once you install a release
+that includes this fix.
+
+If you are still on a build that predates the fix, apply the patch manually:
 
 ```bash
-sed -i "s/prefix = f\"_{class_name}_{method_name}\"/prefix = f\"_{class_name.lstrip('_')}_{method_name}\"/" \
+sed -i "s/prefix = f\"_{class_name}_{method_name}\"/prefix = f\"_mutmut_{class_name}_{method_name}\"/" \
     .venv/lib/python3.*/site-packages/mutmut/mutation/trampoline_templates.py \
     .venv/lib/python3.*/site-packages/mutmut/mutation/file_mutation.py
 ```
