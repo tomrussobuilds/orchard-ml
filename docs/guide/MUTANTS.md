@@ -303,7 +303,7 @@ that includes this fix.
 If you are still on a build that predates the fix, apply the patch manually:
 
 ```bash
-sed -i "s/prefix = f\"_{class_name}_{method_name}\"/prefix = f\"_mutmut_{class_name}_{method_name}\"/" \
+sed -i 's/prefix = f"_{class_name}_{method_name}"/prefix = f"_mutmut_{class_name}_{method_name}"/' \
     .venv/lib/python3.*/site-packages/mutmut/mutation/trampoline_templates.py \
     .venv/lib/python3.*/site-packages/mutmut/mutation/file_mutation.py
 ```

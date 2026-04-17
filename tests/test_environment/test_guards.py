@@ -216,7 +216,7 @@ def test_detect_duplicates_no_duplicates() -> None:
     """Test detect_duplicates returns empty list when no duplicates."""
     cleaner = DuplicateProcessCleaner()
 
-    mock_procs = []  # type: ignore
+    mock_procs: list[MagicMock] = []
     with patch("psutil.process_iter", return_value=mock_procs):
         duplicates = cleaner.detect_duplicates()
 
@@ -472,22 +472,12 @@ def test_release_single_instance_close_ioerror_real(tmp_path: Path) -> None:
     lock_file = tmp_path / "test.lock"
     lock_file.touch()
 
-    real_fd = open(lock_file, "a")
-    original_close = real_fd.close
+    mock_fd = MagicMock()
+    mock_fd.close.side_effect = IOError("Close IO failed")
 
-    def mock_close_ioerror() -> None:
-        raise IOError("Close IO failed")
-
-    real_fd.close = mock_close_ioerror  # type: ignore
-
-    with patch("orchard.core.environment.guards._lock_fd", real_fd):
+    with patch("orchard.core.environment.guards._lock_fd", mock_fd):
         with patch("fcntl.flock"):
             release_single_instance(lock_file)
-
-    try:
-        original_close()
-    except OSError:
-        pass
 
     assert not lock_file.exists()
 

@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix docstring inconsistencies found during full audit
 - mark set_start_method crash as resolved (GH-466)
 - document mutmut trampoline name mangling bug (boxed/mutmut#498)
+- mark mutmut name mangling bug as resolved upstream (PR #499)
 
 ### Fixed
 
