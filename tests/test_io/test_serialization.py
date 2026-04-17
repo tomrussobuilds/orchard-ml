@@ -8,7 +8,7 @@ Tests to validate YAML serialization and deserialization.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -388,30 +388,30 @@ def test_persist_yaml_atomic_calls_flush_and_fsync(tmp_path: Path) -> None:
         def __init__(self, real_file: Any) -> None:
             self._real = real_file
 
-        def write(self, data: Any) -> None:
-            return self._real.write(data)  # type: ignore
+        def write(self, data: Any) -> int:
+            return cast(int, self._real.write(data))
 
         def flush(self) -> None:
             nonlocal flush_called
             flush_called = True
-            return self._real.flush()  # type: ignore
+            self._real.flush()
 
-        def fileno(self) -> None:
-            return self._real.fileno()  # type: ignore
+        def fileno(self) -> int:
+            return cast(int, self._real.fileno())
 
-        def __enter__(self) -> None:
-            return self  # type: ignore
+        def __enter__(self) -> TrackingFile:
+            return self
 
-        def __exit__(self, *args: object) -> None:
-            return self._real.__exit__(*args)  # type: ignore
+        def __exit__(self, *args: object) -> bool | None:
+            return cast("bool | None", self._real.__exit__(*args))
 
     original_open = open
 
-    def patched_open(path: Any, mode: Any = "r", **kwargs: object) -> None:
-        f = original_open(path, mode, **kwargs)  # type: ignore
+    def patched_open(path: Any, mode: Any = "r", **kwargs: Any) -> Any:
+        f = original_open(path, mode, **kwargs)
         if "w" in mode:
-            return TrackingFile(f)  # type: ignore
-        return f  # type: ignore
+            return TrackingFile(f)
+        return f
 
     def tracking_fsync(fd: Any) -> None:
         nonlocal fsync_called
@@ -942,8 +942,8 @@ def test_save_config_as_yaml_dump_portable_exact_attr_name(tmp_path: Path) -> No
     """Kill mutants 7-8: ensure hasattr checks exact 'dump_portable' string."""
 
     class PortableConfig:
-        def dump_portable(self) -> None:
-            return {"from_portable": True}  # type: ignore
+        def dump_portable(self) -> dict[str, Any]:
+            return {"from_portable": True}
 
     yaml_path = tmp_path / "config.yaml"
     save_config_as_yaml(PortableConfig(), yaml_path)
@@ -957,8 +957,8 @@ def test_save_config_as_yaml_no_dump_portable_falls_to_model_dump(tmp_path: Path
     """Kill mutant 7-8: object WITHOUT dump_portable uses model_dump path."""
 
     class ModelConfig:
-        def model_dump(self, mode: Any = None) -> None:
-            return {"from_model": True}  # type: ignore
+        def model_dump(self, mode: Any = None) -> dict[str, Any]:
+            return {"from_model": True}
 
     yaml_path = tmp_path / "config.yaml"
     save_config_as_yaml(ModelConfig(), yaml_path)
@@ -1065,7 +1065,7 @@ def test_dump_git_info_writes_commit_and_branch(tmp_path: Path) -> None:
 
     output = tmp_path / "git_info.txt"
 
-    def fake_run(cmd: Any, **kwargs: object) -> None:
+    def fake_run(cmd: Any, **kwargs: object) -> MagicMock:
         result = MagicMock(returncode=0)
         if cmd == ["git", "rev-parse", "HEAD"]:
             result.stdout = "abc123def456\n"
@@ -1078,7 +1078,7 @@ def test_dump_git_info_writes_commit_and_branch(tmp_path: Path) -> None:
         else:
             result.returncode = 1
             result.stdout = ""
-        return result  # type: ignore
+        return result
 
     with patch("subprocess.run", side_effect=fake_run):
         dump_git_info(output)
@@ -1104,7 +1104,7 @@ def test_dump_git_info_clean_working_tree(tmp_path: Path) -> None:
     """Test dump_git_info reports dirty: False for clean working tree."""
     output = tmp_path / "git_info.txt"
 
-    def fake_run(cmd: Any, **kwargs: object) -> None:
+    def fake_run(cmd: Any, **kwargs: object) -> MagicMock:
         result = MagicMock(returncode=0)
         if cmd == ["git", "rev-parse", "HEAD"]:
             result.stdout = "deadbeef\n"
@@ -1117,7 +1117,7 @@ def test_dump_git_info_clean_working_tree(tmp_path: Path) -> None:
         else:
             result.returncode = 1
             result.stdout = ""
-        return result  # type: ignore
+        return result
 
     with patch("subprocess.run", side_effect=fake_run):
         dump_git_info(output)
@@ -1169,8 +1169,8 @@ def test_dump_git_info_no_output_when_all_commands_fail(tmp_path: Path) -> None:
     """Test dump_git_info writes nothing when all git commands fail (returncode != 0)."""
     output = tmp_path / "git_info.txt"
 
-    def fake_run(cmd: Any, **kwargs: object) -> None:
-        return MagicMock(returncode=1, stdout="")  # type: ignore
+    def fake_run(cmd: Any, **kwargs: object) -> MagicMock:
+        return MagicMock(returncode=1, stdout="")
 
     with patch("subprocess.run", side_effect=fake_run):
         dump_git_info(output)
@@ -1183,7 +1183,7 @@ def test_dump_git_info_partial_git_output(tmp_path: Path) -> None:
     """Test dump_git_info handles partial results (e.g. commit ok, branch fails)."""
     output = tmp_path / "git_info.txt"
 
-    def fake_run(cmd: Any, **kwargs: object) -> None:
+    def fake_run(cmd: Any, **kwargs: object) -> MagicMock:
         result = MagicMock()
         if cmd == ["git", "rev-parse", "HEAD"]:
             result.returncode = 0
@@ -1194,7 +1194,7 @@ def test_dump_git_info_partial_git_output(tmp_path: Path) -> None:
         else:
             result.returncode = 1
             result.stdout = ""
-        return result  # type: ignore
+        return result
 
     with patch("subprocess.run", side_effect=fake_run):
         dump_git_info(output)
@@ -1211,7 +1211,7 @@ def test_dump_git_info_writes_utf8(tmp_path: Path) -> None:
     """Test dump_git_info writes file with utf-8 encoding."""
     output = tmp_path / "git_info.txt"
 
-    def fake_run(cmd: Any, **kwargs: object) -> None:
+    def fake_run(cmd: Any, **kwargs: object) -> MagicMock:
         result = MagicMock(returncode=0)
         if cmd == ["git", "rev-parse", "HEAD"]:
             result.stdout = "abc123\n"
@@ -1221,7 +1221,7 @@ def test_dump_git_info_writes_utf8(tmp_path: Path) -> None:
             result.stdout = "main\n"
         elif cmd == ["git", "status", "--porcelain"]:
             result.stdout = ""
-        return result  # type: ignore
+        return result
 
     with patch("subprocess.run", side_effect=fake_run):
         with patch.object(type(output), "write_text", wraps=output.write_text) as mock_wt:
@@ -1274,9 +1274,9 @@ def test_dump_git_info_subprocess_args(tmp_path: Path) -> None:
     output = tmp_path / "git_info.txt"
     calls = []
 
-    def tracking_run(cmd: Any, **kwargs: object) -> None:
+    def tracking_run(cmd: Any, **kwargs: object) -> MagicMock:
         calls.append((cmd, kwargs))
-        return MagicMock(returncode=1, stdout="")  # type: ignore
+        return MagicMock(returncode=1, stdout="")
 
     with patch("subprocess.run", side_effect=tracking_run):
         dump_git_info(output)
@@ -1293,7 +1293,7 @@ def test_dump_git_info_content_ends_with_newline(tmp_path: Path) -> None:
     """Test dump_git_info output ends with a trailing newline."""
     output = tmp_path / "git_info.txt"
 
-    def fake_run(cmd: Any, **kwargs: object) -> None:
+    def fake_run(cmd: Any, **kwargs: object) -> MagicMock:
         result = MagicMock(returncode=0)
         if cmd == ["git", "rev-parse", "HEAD"]:
             result.stdout = "abc\n"
@@ -1303,7 +1303,7 @@ def test_dump_git_info_content_ends_with_newline(tmp_path: Path) -> None:
             result.stdout = "main\n"
         elif cmd == ["git", "status", "--porcelain"]:
             result.stdout = ""
-        return result  # type: ignore
+        return result
 
     with patch("subprocess.run", side_effect=fake_run):
         dump_git_info(output)

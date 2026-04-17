@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - enable mypy --strict on tests/ and remove type: ignore from architectures
 - remove type: ignore from test_evaluation and update mutation registry
 - remove type: ignore from test_environment/test_guards.py
+- remove type: ignore from test_paths/test_run_paths.py
 
 ### Documentation
 
