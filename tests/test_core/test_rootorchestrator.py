@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -168,11 +169,12 @@ def test_context_manager_enter() -> None:
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
-    orch.initialize_core_services = MagicMock(return_value=MagicMock())  # type: ignore
+    mock_init = MagicMock(return_value=MagicMock())
+    cast(Any, orch).initialize_core_services = mock_init
 
     result = orch.__enter__()
 
-    orch.initialize_core_services.assert_called_once()
+    mock_init.assert_called_once()
     assert result == orch
 
 
@@ -185,13 +187,15 @@ def test_context_manager_enter_exception_cleanup() -> None:
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
-    orch.initialize_core_services = MagicMock(side_effect=RuntimeError("Init failed"))  # type: ignore
-    orch.cleanup = MagicMock()  # type: ignore
+    mock_init = MagicMock(side_effect=RuntimeError("Init failed"))
+    mock_cleanup = MagicMock()
+    cast(Any, orch).initialize_core_services = mock_init
+    cast(Any, orch).cleanup = mock_cleanup
 
     with pytest.raises(RuntimeError, match="Init failed"):
         orch.__enter__()
 
-    orch.cleanup.assert_called_once()
+    mock_cleanup.assert_called_once()
 
 
 # CONTEXT MANAGER: __EXIT__
@@ -204,11 +208,12 @@ def test_context_manager_exit_calls_cleanup() -> None:
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
-    orch.cleanup = MagicMock()  # type: ignore
+    mock_cleanup = MagicMock()
+    cast(Any, orch).cleanup = mock_cleanup
 
     result = orch.__exit__(None, None, None)
 
-    orch.cleanup.assert_called_once()
+    mock_cleanup.assert_called_once()
     assert result is False
 
 
@@ -221,7 +226,7 @@ def test_context_manager_exit_propagates_exception() -> None:
     mock_cfg.hardware.effective_num_workers = 4
 
     orch = RootOrchestrator(cfg=mock_cfg)
-    orch.cleanup = MagicMock()  # type: ignore
+    cast(Any, orch).cleanup = MagicMock()
 
     result = orch.__exit__(ValueError, ValueError("test"), None)
 
@@ -239,12 +244,13 @@ def test_context_manager_exit_stops_timer() -> None:
     mock_time_tracker = MagicMock()
 
     orch = RootOrchestrator(cfg=mock_cfg, time_tracker=mock_time_tracker)
-    orch.cleanup = MagicMock()  # type: ignore
+    mock_cleanup = MagicMock()
+    cast(Any, orch).cleanup = mock_cleanup
 
     orch.__exit__(None, None, None)
 
     mock_time_tracker.stop.assert_called_once()
-    orch.cleanup.assert_called_once()
+    mock_cleanup.assert_called_once()
 
 
 # GET DEVICE
@@ -320,7 +326,7 @@ def test_cleanup_handles_infra_release_exception(monkeypatch: pytest.MonkeyPatch
 
 
 @pytest.mark.unit
-def test_cleanup_release_resources_fails_no_logger(caplog) -> None:  # type: ignore
+def test_cleanup_release_resources_fails_no_logger(caplog: pytest.LogCaptureFixture) -> None:
     """Test cleanup logs error if release_resources fails and no logger."""
     import logging
 
@@ -378,11 +384,7 @@ def test_phase_2_runtime_configuration_applies_threads_and_system() -> None:
 
 @pytest.mark.unit
 def test_phase_3_filesystem_provisioning_calls_static_setup_and_runpaths() -> None:
-    import orchard.core.orchestrator as orch_module
-
-    orig_create = orch_module.RunPaths.create  # type: ignore
-    orch_module.RunPaths.create = MagicMock(return_value="runpaths_obj")  # type: ignore
-
+    mock_create = MagicMock(return_value="runpaths_obj")
     mock_cfg = MagicMock()
     mock_cfg.dataset.dataset_name = "ds"
     mock_cfg.architecture.name = "architecture"
@@ -390,18 +392,20 @@ def test_phase_3_filesystem_provisioning_calls_static_setup_and_runpaths() -> No
     mock_cfg.dump_serialized = MagicMock(return_value={"some": "data"})
     mock_static_setup = MagicMock()
 
-    orch = RootOrchestrator(cfg=mock_cfg, static_dir_setup=mock_static_setup)
-    orch._phase_3_filesystem_provisioning()
+    with pytest.MonkeyPatch.context() as m:
+        m.setattr("orchard.core.orchestrator.RunPaths.create", mock_create)
 
-    mock_static_setup.assert_called_once()
-    orch_module.RunPaths.create.assert_called_once_with(  # type: ignore
-        dataset_slug="ds",
-        architecture_name="architecture",
-        training_cfg={"some": "data"},
-        base_dir="/mock/out",
-    )
-    assert orch.paths == "runpaths_obj"  # type: ignore
-    orch_module.RunPaths.create = orig_create  # type: ignore
+        orch = RootOrchestrator(cfg=mock_cfg, static_dir_setup=mock_static_setup)
+        orch._phase_3_filesystem_provisioning()
+
+        mock_static_setup.assert_called_once()
+        mock_create.assert_called_once_with(
+            dataset_slug="ds",
+            architecture_name="architecture",
+            training_cfg={"some": "data"},
+            base_dir="/mock/out",
+        )
+        assert cast(Any, orch.paths) == "runpaths_obj"
 
 
 @pytest.mark.unit
@@ -421,7 +425,7 @@ def test_phase_4_logging_initialization_sets_logger() -> None:
         log_dir="/mock/logs",
         level="INFO",
     )
-    assert orch.run_logger == "logger_obj"  # type: ignore
+    assert cast(Any, orch.run_logger) == "logger_obj"
 
 
 @pytest.mark.unit
@@ -468,7 +472,7 @@ def test_device_resolver_fails_raises_device_error_during_init() -> None:
     mock_cfg.hardware.device = "cuda"
     mock_paths = MagicMock()
 
-    def failing_resolver(**kwargs):  # type: ignore
+    def failing_resolver(**kwargs: object) -> None:
         raise RuntimeError("device fail")
 
     with pytest.MonkeyPatch.context() as m:
@@ -590,7 +594,7 @@ def test_get_device_with_mps_string() -> None:
 
 # PHASE 7: DEVICE RESOLUTION EDGE CASES
 @pytest.mark.unit
-def test_phase_7_device_already_cached_with_logger(caplog) -> None:  # type: ignore
+def test_phase_7_device_already_cached_with_logger(caplog: pytest.LogCaptureFixture) -> None:
     """Test _phase_7 when device is already cached."""
     import logging
 
@@ -737,18 +741,19 @@ def test_context_manager_full_lifecycle() -> None:
     mock_infra = MagicMock()
 
     orch = RootOrchestrator(cfg=mock_cfg, infra_manager=mock_infra)
-    orch.initialize_core_services = MagicMock(return_value=MagicMock())  # type: ignore
+    mock_init = MagicMock(return_value=MagicMock())
+    cast(Any, orch).initialize_core_services = mock_init
     orch._infra_lock_acquired = True
 
     with orch as orchestrator:
         assert orchestrator == orch
-        orch.initialize_core_services.assert_called_once()
+        mock_init.assert_called_once()
 
     mock_infra.release_resources.assert_called_once()
 
 
 # INTEGRATION: REAL DEPENDENCIES
-def _make_integration_cfg(tmp_path: Path):  # type: ignore
+def _make_integration_cfg(tmp_path: Path) -> Config:
     """Build a minimal real Config rooted at tmp_path."""
     return Config(
         dataset={"name": "bloodmnist", "resolution": 28},
@@ -828,7 +833,8 @@ def test_integration_phase_5_writes_real_config_yaml(tmp_path: Path) -> None:
         )
         orch.initialize_core_services()
 
-    config_yaml = orch.paths.get_config_path()  # type: ignore
+    assert orch.paths is not None
+    config_yaml = orch.paths.get_config_path()
     assert config_yaml.exists()
     loaded = load_config_from_yaml(config_yaml)
     assert loaded["dataset"]["name"] == "bloodmnist"
@@ -1670,7 +1676,7 @@ def test_non_main_rank_device_failure_raises() -> None:
     mock_cfg.hardware.effective_num_workers = 2
     mock_cfg.hardware.device = "cuda"
 
-    def failing_resolver(**kwargs):  # type: ignore
+    def failing_resolver(**kwargs: object) -> None:
         raise RuntimeError("GPU gone")
 
     orch = RootOrchestrator(
