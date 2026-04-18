@@ -8,14 +8,24 @@ and singleton-like behavior.
 from __future__ import annotations
 
 import logging
+import logging.handlers
 import os
+from collections.abc import Iterator
 from pathlib import Path
+from typing import Any, cast
 from unittest.mock import patch
 
 import pytest
 
 from orchard.core.logger import Logger
 from orchard.core.paths import LOGGER_NAME
+
+
+@pytest.fixture(autouse=True)
+def clear_logger_cache() -> Iterator[None]:
+    Logger._configured_names.clear()
+    yield
+    Logger._configured_names.clear()
 
 
 # LOGGER: INITIALIZATION
@@ -76,9 +86,10 @@ def test_logger_formatter() -> None:
     formatter = handler.formatter
 
     assert formatter is not None
-    assert "%(asctime)s" in formatter._fmt  # type: ignore
-    assert "%(levelname)s" in formatter._fmt  # type: ignore
-    assert "%(message)s" in formatter._fmt  # type: ignore
+    fmt = cast(Any, formatter)._fmt
+    assert "%(asctime)s" in fmt
+    assert "%(levelname)s" in fmt
+    assert "%(message)s" in fmt
 
 
 @pytest.mark.unit
@@ -138,8 +149,9 @@ def test_logger_rotating_file_handler(tmp_path: Path) -> None:
             break
 
     assert file_handler is not None
-    assert file_handler.maxBytes == max_bytes
-    assert file_handler.backupCount == backup_count  # type: ignore
+    rotating = cast(logging.handlers.RotatingFileHandler, file_handler)
+    assert rotating.maxBytes == max_bytes
+    assert rotating.backupCount == backup_count
 
 
 # LOGGER: RECONFIGURATION
@@ -221,6 +233,91 @@ def test_setup_debug_env_var() -> None:
     logger = Logger.setup(name="test_debug_env", level="INFO")
 
     assert logger.level == logging.DEBUG
+
+
+@pytest.mark.unit
+def test_setup_debug_env_var_not_set() -> None:
+    """Test setup() does NOT override level when DEBUG env var is absent."""
+    with patch.dict(os.environ, {}, clear=False):
+        os.environ.pop("DEBUG", None)
+        logger = Logger.setup(name="test_no_debug_env", level="WARNING")
+
+    assert logger.level == logging.WARNING
+
+
+@pytest.mark.unit
+@patch.dict(os.environ, {"DEBUG": "0"})
+def test_setup_debug_env_var_zero_does_not_override() -> None:
+    """Test setup() does NOT enable debug when DEBUG=0 (only '1' triggers it)."""
+    logger = Logger.setup(name="test_debug_zero", level="WARNING")
+
+    assert logger.level == logging.WARNING
+
+
+@pytest.mark.unit
+@patch.dict(os.environ, {"DEBUG": "2"})
+def test_setup_debug_env_var_two_does_not_override() -> None:
+    """Test setup() does NOT enable debug when DEBUG=2 (only exact '1' triggers it)."""
+    logger = Logger.setup(name="test_debug_two", level="WARNING")
+
+    assert logger.level == logging.WARNING
+
+
+@pytest.mark.unit
+def test_setup_lowercase_level_string() -> None:
+    """Test setup() normalises lowercase level strings via .upper()."""
+    logger = Logger.setup(name="test_lower_info", level="info")
+
+    assert logger.level == logging.INFO
+
+
+@pytest.mark.unit
+def test_setup_mixed_case_level_string() -> None:
+    """Test setup() normalises mixed-case level strings via .upper()."""
+    logger = Logger.setup(name="test_mixed_warn", level="Warning")
+
+    assert logger.level == logging.WARNING
+
+
+@pytest.mark.unit
+def test_setup_default_level_is_info() -> None:
+    """Test setup() defaults to INFO when level argument is omitted."""
+    logger = Logger.setup(name="test_default_level")
+
+    assert logger.level == logging.INFO
+
+
+@pytest.mark.unit
+def test_setup_passes_log_dir_to_constructor(tmp_path: Path) -> None:
+    """Test setup() passes log_dir through so file handler is created."""
+    log_dir = tmp_path / "logs"
+    Logger.setup(name="test_log_dir_passthrough", log_dir=log_dir, level="INFO")
+
+    assert log_dir.exists()
+    log_files = list(log_dir.glob("*.log"))
+    assert len(log_files) == 1
+
+
+@pytest.mark.unit
+def test_setup_passes_kwargs_to_constructor(tmp_path: Path) -> None:
+    """Test setup() passes extra kwargs (max_bytes, backup_count) to Logger.__init__."""
+    log_dir = tmp_path / "logs"
+    Logger.setup(
+        name="test_kwargs",
+        log_dir=log_dir,
+        level="INFO",
+        max_bytes=1024,
+        backup_count=2,
+    )
+
+    root_logger = logging.getLogger("test_kwargs")
+    file_handler = next(
+        (h for h in root_logger.handlers if isinstance(h, logging.handlers.RotatingFileHandler)),
+        None,
+    )
+    assert file_handler is not None
+    assert file_handler.maxBytes == 1024
+    assert file_handler.backupCount == 2
 
 
 # LOGGER: LOGGING FUNCTIONALITY
