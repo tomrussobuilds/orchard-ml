@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -29,14 +30,14 @@ from orchard.export.onnx_exporter import (  # noqa: E402
 class SimpleTestModel(nn.Module):
     """Minimal CNN for export testing."""
 
-    def __init__(self, in_channels=3, num_classes=10):  # type: ignore
+    def __init__(self, in_channels: int = 3, num_classes: int = 10) -> None:
         super().__init__()
         self.conv = nn.Conv2d(in_channels, 16, kernel_size=3, padding=1)
         self.relu = nn.ReLU()
         self.pool = nn.AdaptiveAvgPool2d(1)
         self.fc = nn.Linear(16, num_classes)
 
-    def forward(self, x):  # type: ignore
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.conv(x)
         x = self.relu(x)
         x = self.pool(x)
@@ -51,7 +52,7 @@ def test_export_to_onnx_basic(tmp_path: Path) -> None:
     """Test basic ONNX export with default parameters."""
 
     # Create test model and checkpoint
-    model = SimpleTestModel(in_channels=3, num_classes=10)  # type: ignore
+    model = SimpleTestModel(in_channels=3, num_classes=10)
     checkpoint_path = tmp_path / "test_model.pth"
     output_path = tmp_path / "test_model.onnx"
 
@@ -75,7 +76,7 @@ def test_export_to_onnx_basic(tmp_path: Path) -> None:
 def test_export_with_dynamic_axes(tmp_path: Path) -> None:
     """Test ONNX export with dynamic batch dimension."""
 
-    model = SimpleTestModel(in_channels=1, num_classes=5)  # type: ignore
+    model = SimpleTestModel(in_channels=1, num_classes=5)
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model_dynamic.onnx"
 
@@ -97,7 +98,7 @@ def test_export_with_dynamic_axes(tmp_path: Path) -> None:
 def test_export_without_dynamic_axes(tmp_path: Path) -> None:
     """Test ONNX export with fixed batch dimension."""
 
-    model = SimpleTestModel()  # type: ignore
+    model = SimpleTestModel()
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model_static.onnx"
 
@@ -119,7 +120,7 @@ def test_export_without_dynamic_axes(tmp_path: Path) -> None:
 def test_export_with_different_input_shapes(tmp_path: Path) -> None:
     """Test ONNX export with various input resolutions."""
 
-    model = SimpleTestModel()  # type: ignore
+    model = SimpleTestModel()
 
     for resolution in [28, 224]:
         checkpoint_path = tmp_path / f"model_{resolution}.pth"
@@ -143,7 +144,7 @@ def test_export_different_channels(tmp_path: Path) -> None:
     """Test ONNX export with different input channel counts."""
 
     for in_channels in [1, 3]:
-        model = SimpleTestModel(in_channels=in_channels, num_classes=8)  # type: ignore
+        model = SimpleTestModel(in_channels=in_channels, num_classes=8)
         checkpoint_path = tmp_path / f"model_{in_channels}ch.pth"
         output_path = tmp_path / f"model_{in_channels}ch.onnx"
 
@@ -165,7 +166,7 @@ def test_export_different_channels(tmp_path: Path) -> None:
 def test_export_with_opset_13(tmp_path: Path) -> None:
     """Test ONNX export with opset version 13 (stable)."""
 
-    model = SimpleTestModel()  # type: ignore
+    model = SimpleTestModel()
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model_opset13.onnx"
 
@@ -187,7 +188,7 @@ def test_export_with_opset_13(tmp_path: Path) -> None:
 def test_export_with_opset_16(tmp_path: Path) -> None:
     """Test ONNX export with opset version 16 (latest features)."""
 
-    model = SimpleTestModel()  # type: ignore
+    model = SimpleTestModel()
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model_opset16.onnx"
 
@@ -210,7 +211,7 @@ def test_export_with_opset_16(tmp_path: Path) -> None:
 def test_export_with_constant_folding(tmp_path: Path) -> None:
     """Test ONNX export with constant folding enabled."""
 
-    model = SimpleTestModel()  # type: ignore
+    model = SimpleTestModel()
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model_folded.onnx"
 
@@ -232,7 +233,7 @@ def test_export_with_constant_folding(tmp_path: Path) -> None:
 def test_export_without_constant_folding(tmp_path: Path) -> None:
     """Test ONNX export without constant folding."""
 
-    model = SimpleTestModel()  # type: ignore
+    model = SimpleTestModel()
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model_unfolded.onnx"
 
@@ -259,7 +260,7 @@ def test_export_without_constant_folding(tmp_path: Path) -> None:
 def test_export_with_validation_enabled(tmp_path: Path) -> None:
     """Test ONNX export with validation (requires onnxruntime)."""
 
-    model = SimpleTestModel()  # type: ignore
+    model = SimpleTestModel()
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model_validated.onnx"
 
@@ -281,7 +282,7 @@ def test_export_with_validation_enabled(tmp_path: Path) -> None:
 def test_export_missing_checkpoint_raises_error(tmp_path: Path) -> None:
     """Test ONNX export fails gracefully with missing checkpoint."""
 
-    model = SimpleTestModel()  # type: ignore
+    model = SimpleTestModel()
     checkpoint_path = tmp_path / "nonexistent.pth"
     output_path = tmp_path / "model.onnx"
 
@@ -299,7 +300,7 @@ def test_export_missing_checkpoint_raises_error(tmp_path: Path) -> None:
 def test_export_creates_output_directory(tmp_path: Path) -> None:
     """Test ONNX export creates output directory if needed."""
 
-    model = SimpleTestModel()  # type: ignore
+    model = SimpleTestModel()
     checkpoint_path = tmp_path / "model.pth"
     output_dir = tmp_path / "exports" / "nested"
     output_path = output_dir / "model.onnx"
@@ -327,7 +328,7 @@ def test_export_creates_output_directory(tmp_path: Path) -> None:
 def test_benchmark_onnx_inference(tmp_path: Path) -> None:
     """Test ONNX inference benchmarking (requires onnxruntime)."""
 
-    model = SimpleTestModel()  # type: ignore
+    model = SimpleTestModel()
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model.onnx"
 
@@ -353,7 +354,7 @@ def test_benchmark_onnx_inference(tmp_path: Path) -> None:
 def test_export_with_raw_state_dict(tmp_path: Path) -> None:
     """Test ONNX export with raw state_dict (no model_state_dict wrapper)."""
 
-    model = SimpleTestModel()  # type: ignore
+    model = SimpleTestModel()
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model.onnx"
 
@@ -375,7 +376,7 @@ def test_export_with_raw_state_dict(tmp_path: Path) -> None:
 def test_export_without_onnx_validation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Test export when onnx package not available for validation."""
 
-    model = SimpleTestModel()  # type: ignore
+    model = SimpleTestModel()
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model.onnx"
 
@@ -386,7 +387,7 @@ def test_export_without_onnx_validation(tmp_path: Path, monkeypatch: pytest.Monk
 
     real_import = builtins.__import__
 
-    def mock_import(name, *args, **kwargs):  # type: ignore
+    def mock_import(name: str, *args: Any, **kwargs: Any) -> Any:
         if name == "onnx":
             raise ImportError("onnx not installed")
         return real_import(name, *args, **kwargs)
@@ -411,7 +412,7 @@ def test_export_with_onnx_validation_failure(
 ) -> None:
     """Test export handles ONNX validation exceptions."""
 
-    model = SimpleTestModel()  # type: ignore
+    model = SimpleTestModel()
     checkpoint_path = tmp_path / "model.pth"
     output_path = tmp_path / "model.onnx"
 
@@ -420,7 +421,7 @@ def test_export_with_onnx_validation_failure(
     # Mock onnx.checker.check_model to raise an exception
     import onnx
 
-    def mock_check_model(_):  # type: ignore
+    def mock_check_model(_: Any) -> None:
         raise RuntimeError("ONNX validation error")
 
     monkeypatch.setattr(onnx.checker, "check_model", mock_check_model)
@@ -448,7 +449,7 @@ def test_benchmark_without_onnxruntime(tmp_path: Path, monkeypatch: pytest.Monke
 
     real_import = builtins.__import__
 
-    def mock_import(name, *args, **kwargs):  # type: ignore
+    def mock_import(name: str, *args: Any, **kwargs: Any) -> Any:
         if name == "onnxruntime":
             raise ImportError("onnxruntime not installed")
         return real_import(name, *args, **kwargs)
@@ -502,9 +503,9 @@ def test_benchmark_onnx_inference_success(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 # ONNX QUANTIZATION
-def _export_simple_model(tmp_path: Path):  # type: ignore
+def _export_simple_model(tmp_path: Path) -> tuple[SimpleTestModel, Path]:
     """Helper: export a SimpleTestModel and return (model, onnx_path)."""
-    model = SimpleTestModel(in_channels=3, num_classes=10)  # type: ignore
+    model = SimpleTestModel(in_channels=3, num_classes=10)
     checkpoint_path = tmp_path / "model.pth"
     onnx_path = tmp_path / "model.onnx"
     torch.save({"model_state_dict": model.state_dict()}, checkpoint_path)
@@ -673,7 +674,7 @@ def test_quantize_model_without_onnxruntime(
 
     real_import = builtins.__import__
 
-    def mock_import(name, *args, **kwargs):  # type: ignore
+    def mock_import(name: str, *args: Any, **kwargs: Any) -> Any:
         if "onnxruntime.quantization" in name:
             raise ImportError("onnxruntime.quantization not installed")
         return real_import(name, *args, **kwargs)
@@ -706,7 +707,7 @@ def test_quantize_model_cleans_up_on_failure(
 
     real_import = builtins.__import__
 
-    def mock_import(name, *args, **kwargs):  # type: ignore
+    def mock_import(name: str, *args: Any, **kwargs: Any) -> Any:
         if "onnxruntime.quantization" in name:
             # Create partial output before failing
             output_path.write_text("partial")
@@ -737,15 +738,17 @@ def test_quantize_4bit_warns_no_gemm_nodes(tmp_path: Path) -> None:
 
     # Build a purely-Conv model (no Linear → no Gemm/MatMul in ONNX)
     class _ConvOnlyModel(nn.Module):
-        def __init__(self):  # type: ignore
+        def __init__(self) -> None:
             super().__init__()
             self.conv = nn.Conv2d(3, 10, kernel_size=3, padding=1)
             self.pool = nn.AdaptiveAvgPool2d(1)
 
-        def forward(self, x):  # type: ignore
-            return self.pool(self.conv(x)).flatten(1)
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            x = self.conv(x)
+            x = self.pool(x)
+            return x.flatten(1)
 
-    model = _ConvOnlyModel()  # type: ignore
+    model = _ConvOnlyModel()
     checkpoint_path = tmp_path / "conv_only.pth"
     onnx_path = tmp_path / "conv_only.onnx"
     torch.save({"model_state_dict": model.state_dict()}, checkpoint_path)

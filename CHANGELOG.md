@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - remove type: ignore from test_environment/test_guards.py
 - remove type: ignore from test_paths/test_run_paths.py
 - remove type: ignore from test_io/test_serialization.py
+- remove type: ignore from test_core/test_rootorchestrator.py
+- split test_env_reporter, fix logger test isolation, mutmut 99/100/100
 
 ### Documentation
 
