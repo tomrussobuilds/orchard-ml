@@ -312,7 +312,7 @@ def test_search_space_overrides_defaults() -> None:
 def test_search_space_overrides_forbids_extra() -> None:
     """Test SearchSpaceOverrides rejects unknown fields."""
     with pytest.raises(ValidationError):
-        SearchSpaceOverrides(unknown_param=FloatRange(low=0.0, high=1.0))  # type: ignore
+        SearchSpaceOverrides(unknown_param=FloatRange(low=0.0, high=1.0))  # type: ignore[call-arg]
 
 
 # MODEL POOL FILTERING

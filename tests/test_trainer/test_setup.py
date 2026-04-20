@@ -23,13 +23,13 @@ from orchard.trainer.losses import FocalLoss
 
 # FIXTURES
 @pytest.fixture
-def simple_model() -> None:
+def simple_model() -> nn.Sequential:
     """Simple linear model for testing."""
-    return nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))  # type: ignore
+    return nn.Sequential(nn.Flatten(), nn.Linear(28 * 28, 10))
 
 
 @pytest.fixture
-def base_cfg() -> None:
+def base_cfg() -> SimpleNamespace:
     """Mock Config as a SimpleNamespace to satisfy factories."""
     cfg = SimpleNamespace()
     cfg.training = SimpleNamespace(
@@ -50,7 +50,7 @@ def base_cfg() -> None:
         monitor_direction="maximize",
     )
     cfg.architecture = SimpleNamespace(name="resnet_18")
-    return cfg  # type: ignore
+    return cfg
 
 
 # TESTS: COMPUTE_CLASS_WEIGHTS
@@ -174,7 +174,7 @@ def test_get_criterion_focal_weighted(base_cfg: Any) -> None:
     criterion = setup.get_criterion(base_cfg.training, class_weights=class_weights)
     assert isinstance(criterion, FocalLoss)
     assert criterion.weight is not None
-    assert torch.equal(criterion.weight, class_weights)  # type: ignore
+    assert torch.equal(criterion.weight, class_weights)
 
 
 @pytest.mark.unit

@@ -25,7 +25,7 @@ from orchard.optimization.orchestrator.utils import (
 
 
 @pytest.fixture
-def completed_trial() -> None:
+def completed_trial() -> MagicMock:
     """Mock completed trial."""
     trial = MagicMock()
     trial.state = optuna.trial.TrialState.COMPLETE
@@ -34,7 +34,7 @@ def completed_trial() -> None:
     trial.params = {"learning_rate": 0.001}
     trial.datetime_start = datetime(2024, 1, 1, 0, 0, 0)
     trial.datetime_complete = datetime(2024, 1, 1, 1, 0, 0)
-    return trial  # type: ignore
+    return trial
 
 
 # ---------------------------------------------------------------------------

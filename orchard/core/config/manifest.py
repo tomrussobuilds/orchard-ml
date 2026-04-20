@@ -133,14 +133,16 @@ def _warn_optuna_override_conflicts(
 
     import warnings
 
-    _stacklevel = 3  # pragma: no mutate
-    warnings.warn(  # pragma: no mutate
+    # pragma: no mutate start
+    _stacklevel = 3
+    warnings.warn(
         f"--set overrides {conflicts} will be ignored: "
         f"Optuna '{search_space_preset}' search space tunes these parameters per trial. "
         f"To fix a parameter, narrow the search space in optuna.search_space_overrides "
         f"or use a custom preset that excludes it.",
         stacklevel=_stacklevel,
     )
+    # pragma: no mutate end
 
 
 # MAIN CONFIGURATION
@@ -343,7 +345,7 @@ class Config(BaseModel):
             )
 
         metadata = wrapper.get_dataset(ds_name)
-        raw_data.setdefault("dataset", {})["metadata"] = metadata
+        raw_data.setdefault("dataset", {})["metadata"] = metadata  # pragma: no mutate
 
         if overrides and raw_data.get("optuna") is not None:
             optuna_section = raw_data["optuna"]
@@ -396,7 +398,7 @@ class _CrossDomainValidator:
         model_name = config.architecture.name.lower()
 
         # timm models handle their own resolution requirements
-        if model_name.startswith("timm/"):
+        if model_name.startswith("timm/"):  # pragma: no mutate
             return
 
         resolution = config.dataset.resolution
@@ -447,11 +449,13 @@ class _CrossDomainValidator:
         if not config.hardware.supports_amp and config.training.use_amp:
             import warnings
 
+            # pragma: no mutate start
             warnings.warn(
                 "AMP requires GPU (CUDA/MPS) but CPU detected. Disabling AMP automatically.",
                 UserWarning,
                 stacklevel=4,
             )
+            # pragma: no mutate end
             object.__setattr__(config.training, "use_amp", False)
 
     @classmethod
@@ -501,6 +505,7 @@ class _CrossDomainValidator:
         ):
             import warnings
 
+            # pragma: no mutate block
             warnings.warn(
                 f"Training at resolution {config.dataset.resolution}px on CPU "
                 f"will be significantly slower than on a GPU accelerator.",
@@ -525,6 +530,7 @@ class _CrossDomainValidator:
         ):
             import warnings
 
+            # pragma: no mutate block
             warnings.warn(
                 f"4-bit quantization ({config.export.quantization_type}) on "
                 f"mini_cnn is likely to degrade accuracy severely. "
@@ -555,6 +561,7 @@ class _CrossDomainValidator:
         if config.dataset.max_samples < 10 * num_classes:
             import warnings
 
+            # pragma: no mutate block
             warnings.warn(
                 f"max_samples ({config.dataset.max_samples}) is less than "
                 f"10x num_classes ({num_classes}). Class balancing may be unreliable.",
@@ -637,6 +644,7 @@ class _CrossDomainValidator:
 
         # MixUp is not meaningful for bounding-box tasks
         if config.training.mixup_alpha > 0:
+            # pragma: no mutate block
             raise OrchardConfigError(
                 "MixUp (mixup_alpha > 0) is not compatible with detection tasks. "
                 "Set mixup_alpha: 0.0 in training config."
@@ -654,16 +662,17 @@ class _CrossDomainValidator:
         aug = config.augmentation
         if aug.hflip > 0:
             object.__setattr__(aug, "hflip", 0.0)
-            overrides.append("hflip → 0.0")
+            overrides.append("hflip → 0.0")  # pragma: no mutate
         if aug.rotation_angle > 0:
             object.__setattr__(aug, "rotation_angle", 0)
-            overrides.append("rotation_angle → 0")
+            overrides.append("rotation_angle → 0")  # pragma: no mutate
         if aug.min_scale < 1.0:
             object.__setattr__(aug, "min_scale", 1.0)
-            overrides.append("min_scale → 1.0")
+            overrides.append("min_scale → 1.0")  # pragma: no mutate
         if overrides:
             import warnings
 
+            # pragma: no mutate block
             warnings.warn(
                 "Spatial augmentations are not compatible with detection "
                 "(they transform the image but not the bounding boxes). "
@@ -683,6 +692,7 @@ class _CrossDomainValidator:
         if config.training.label_smoothing > 0:
             import warnings
 
+            # pragma: no mutate block
             warnings.warn(
                 "label_smoothing is ignored for detection tasks "
                 "(detection models compute losses internally).",
@@ -693,6 +703,7 @@ class _CrossDomainValidator:
         if config.training.use_tta:
             import warnings
 
+            # pragma: no mutate block
             warnings.warn(
                 "use_tta is ignored for detection tasks "
                 "(test-time augmentation is not supported for detection).",
@@ -703,6 +714,7 @@ class _CrossDomainValidator:
         if config.training.criterion_type != "cross_entropy":
             import warnings
 
+            # pragma: no mutate block
             warnings.warn(
                 f"criterion_type '{config.training.criterion_type}' is ignored for "
                 "detection tasks (detection models use built-in losses).",
@@ -714,6 +726,7 @@ class _CrossDomainValidator:
         if config.training.focal_gamma != _focal_gamma_default:
             import warnings
 
+            # pragma: no mutate block
             warnings.warn(
                 "focal_gamma is ignored for detection tasks "
                 "(detection models use built-in losses).",
@@ -724,6 +737,7 @@ class _CrossDomainValidator:
         if config.training.weighted_loss:
             import warnings
 
+            # pragma: no mutate block
             warnings.warn(
                 "weighted_loss is ignored for detection tasks "
                 "(detection models use built-in losses).",

@@ -363,6 +363,68 @@ class TestCheckMinDatasetSize:
                 hardware=HardwareConfig(device="cpu"),
             )
 
+    def test_max_samples_equal_to_num_classes_does_not_raise(
+        self, mock_metadata_many_classes: MagicMock
+    ) -> None:
+        """max_samples == num_classes does not raise (< not <=)."""
+        # Kill mutant: < → <= makes 50 <= 50 True → raises
+        # 50 < 10*50 so sparse warning fires — that's acceptable here
+        with pytest.warns(UserWarning, match="less than 10x"):
+            cfg = Config(
+                dataset=DatasetConfig(
+                    name="organamnist",
+                    resolution=28,
+                    metadata=mock_metadata_many_classes,
+                    max_samples=50,
+                ),
+                architecture=ArchitectureConfig(name="resnet_18", pretrained=False),
+                training=TrainingConfig(use_amp=False),
+                hardware=HardwareConfig(device="cpu"),
+            )
+        assert cfg is not None
+
+    def test_max_samples_exactly_ten_times_classes_no_warning(
+        self, mock_metadata_28: MagicMock
+    ) -> None:
+        """max_samples == 10 * num_classes does not warn (< not <=)."""
+        import warnings
+
+        # Kill mutant: < → <= makes 80 <= 80 True → warning
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            Config(
+                dataset=DatasetConfig(
+                    name="bloodmnist",
+                    resolution=28,
+                    metadata=mock_metadata_28,
+                    max_samples=80,  # exactly 10 * 8 classes
+                ),
+                architecture=ArchitectureConfig(name="resnet_18", pretrained=False),
+                training=TrainingConfig(use_amp=False),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
+    def test_max_samples_between_ten_and_eleven_times_classes_no_warning(
+        self, mock_metadata_28: MagicMock
+    ) -> None:
+        """max_samples > 10x but < 11x num_classes does not warn (threshold is 10x not 11x)."""
+        import warnings
+
+        # Kill mutant: 10 * → 11 * makes 85 < 88 True → warning
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            Config(
+                dataset=DatasetConfig(
+                    name="bloodmnist",
+                    resolution=28,
+                    metadata=mock_metadata_28,
+                    max_samples=85,  # between 80 (10*8) and 88 (11*8)
+                ),
+                architecture=ArchitectureConfig(name="resnet_18", pretrained=False),
+                training=TrainingConfig(use_amp=False),
+                hardware=HardwareConfig(device="cpu"),
+            )
+
     def test_detection_skips_min_dataset_check(self, mock_metadata_many_classes: MagicMock) -> None:
         """Non-classification task_type should skip min dataset size check entirely."""
         import warnings
@@ -653,6 +715,20 @@ class TestCheckDetectionConfig:
                 architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
                 training=TrainingConfig(use_amp=False, mixup_alpha=0.0, monitor_metric="map"),
                 augmentation=AugmentationConfig(hflip=0.0, rotation_angle=15, min_scale=1.0),
+                hardware=HardwareConfig(device="cpu"),
+            )
+        assert cfg.augmentation.rotation_angle == 0
+
+    def test_detection_spatial_aug_rotation_angle_1_auto_disabled(self) -> None:
+        """rotation_angle=1 (minimum nonzero) is auto-disabled (> 0 not > 1)."""
+        # Kill mutant: > 0 → > 1 makes 1 > 1 False → not disabled, no warning
+        with pytest.warns(UserWarning, match="rotation_angle"):
+            cfg = Config(
+                task_type="detection",
+                dataset=DatasetConfig(name="organamnist", resolution=224, force_rgb=True),
+                architecture=ArchitectureConfig(name="fasterrcnn", pretrained=False),
+                training=TrainingConfig(use_amp=False, mixup_alpha=0.0, monitor_metric="map"),
+                augmentation=AugmentationConfig(hflip=0.0, rotation_angle=1, min_scale=1.0),
                 hardware=HardwareConfig(device="cpu"),
             )
         assert cfg.augmentation.rotation_angle == 0

@@ -22,7 +22,7 @@ _rng = np.random.default_rng(0)
 
 # FIXTURES
 @pytest.fixture
-def rgb_npz(tmp_path: Path) -> None:
+def rgb_npz(tmp_path: Path) -> Path:
     """Creates a valid RGB MedMNIST-like NPZ."""
     path = tmp_path / "rgb.npz"
     np.savez(
@@ -34,11 +34,11 @@ def rgb_npz(tmp_path: Path) -> None:
         test_images=_rng.integers(0, 255, (10, 28, 28, 3), dtype=np.uint8),
         test_labels=np.arange(10),
     )
-    return path  # type: ignore
+    return path
 
 
 @pytest.fixture
-def grayscale_npz(tmp_path: Path) -> None:
+def grayscale_npz(tmp_path: Path) -> Path:
     """Creates a valid Grayscale MedMNIST-like NPZ."""
     path = tmp_path / "gray.npz"
     np.savez(
@@ -50,7 +50,7 @@ def grayscale_npz(tmp_path: Path) -> None:
         test_images=_rng.integers(0, 255, (10, 28, 28), dtype=np.uint8),
         test_labels=np.arange(10),
     )
-    return path  # type: ignore
+    return path
 
 
 # TEST: Initialization Errors
@@ -252,7 +252,8 @@ def test_lazy_with_max_samples(rgb_npz: Any) -> None:
 
     # Deterministic: same seed produces same indices
     ds2 = VisionDataset.lazy(rgb_npz, max_samples=5, seed=42)
-    assert np.array_equal(ds._indices, ds2._indices)  # type: ignore
+    assert ds2._indices is not None
+    assert np.array_equal(ds._indices, ds2._indices)
     assert np.array_equal(ds.labels, ds2.labels)
 
 

@@ -211,8 +211,8 @@ def test_get_storage_url_memory() -> None:
     config = OptunaConfig(storage_type="memory")
 
     class MockPaths:
-        def get_db_path(self) -> None:
-            return Path("/mock/study.db")  # type: ignore
+        def get_db_path(self) -> Path:
+            return Path("/mock/study.db")
 
     url = config.get_storage_url(MockPaths())
     assert url is None
@@ -224,8 +224,8 @@ def test_get_storage_url_sqlite() -> None:
     config = OptunaConfig(storage_type="sqlite")
 
     class MockPaths:
-        def get_db_path(self) -> None:
-            return Path("/mock/test_study.db")  # type: ignore
+        def get_db_path(self) -> Path:
+            return Path("/mock/test_study.db")
 
     url = config.get_storage_url(MockPaths())
     assert url.startswith("sqlite:///")
@@ -252,8 +252,8 @@ def test_get_storage_url_sqlite_with_custom_path(tmp_path: Path) -> None:
     config = OptunaConfig(storage_type="sqlite", storage_path=str(custom_db))
 
     class MockPaths:
-        def get_db_path(self) -> None:
-            return Path("/mock/default_study.db")  # type: ignore
+        def get_db_path(self) -> Path:
+            return Path("/mock/default_study.db")
 
     url = config.get_storage_url(MockPaths())
 
@@ -270,8 +270,8 @@ def test_get_storage_url_unknown_storage_type() -> None:
     object.__setattr__(config, "storage_type", "invalid_backend")
 
     class MockPaths:
-        def get_db_path(self) -> None:
-            return Path("/mock/study.db")  # type: ignore
+        def get_db_path(self) -> Path:
+            return Path("/mock/study.db")
 
     with pytest.raises(ValueError, match="Unknown storage type"):
         config.get_storage_url(MockPaths())

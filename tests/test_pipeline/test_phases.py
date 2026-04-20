@@ -20,7 +20,7 @@ from orchard.pipeline.phases import (
 
 
 @pytest.fixture
-def mock_orchestrator() -> None:
+def mock_orchestrator() -> MagicMock:
     """Create a mock RootOrchestrator."""
     orch = MagicMock()
     orch.cfg = MagicMock()
@@ -42,7 +42,7 @@ def mock_orchestrator() -> None:
     orch.get_device.return_value = "cpu"
     orch.run_logger = MagicMock()
 
-    return orch  # type: ignore
+    return orch
 
 
 # OPTIMIZATION PHASE TESTS
@@ -728,17 +728,17 @@ def _setup_training_mocks(
 @patch("orchard.pipeline.phases.ModelTrainer")
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
-def test_run_training_phase_asserts_run_logger(  # type: ignore
-    _m1,
-    _m2,
-    _m3,
-    _m4,
-    _m5,
-    _m6,
-    _m7,
-    _m8,
-    _m9,
-    _m10,
+def test_run_training_phase_asserts_run_logger(
+    _m1: MagicMock,
+    _m2: MagicMock,
+    _m3: MagicMock,
+    _m4: MagicMock,
+    _m5: MagicMock,
+    _m6: MagicMock,
+    _m7: MagicMock,
+    _m8: MagicMock,
+    _m9: MagicMock,
+    _m10: MagicMock,
     mock_orchestrator: MagicMock,
 ) -> None:
     """Test run_training_phase raises when run_logger is None."""
@@ -759,17 +759,17 @@ def test_run_training_phase_asserts_run_logger(  # type: ignore
 @patch("orchard.pipeline.phases.ModelTrainer")
 @patch("orchard.tasks.classification.evaluation_adapter.run_final_evaluation")
 @patch("orchard.pipeline.phases.get_augmentations_description")
-def test_run_training_phase_asserts_paths(  # type: ignore
-    _m1,
-    _m2,
-    _m3,
-    _m4,
-    _m5,
-    _m6,
-    _m7,
-    _m8,
-    _m9,
-    _m10,
+def test_run_training_phase_asserts_paths(
+    _m1: MagicMock,
+    _m2: MagicMock,
+    _m3: MagicMock,
+    _m4: MagicMock,
+    _m5: MagicMock,
+    _m6: MagicMock,
+    _m7: MagicMock,
+    _m8: MagicMock,
+    _m9: MagicMock,
+    _m10: MagicMock,
     mock_orchestrator: MagicMock,
 ) -> None:
     """Test run_training_phase raises when paths is None."""

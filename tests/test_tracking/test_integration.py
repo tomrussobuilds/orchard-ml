@@ -23,7 +23,7 @@ from orchard.trainer import ModelTrainer
 
 
 @pytest.fixture
-def mock_cfg() -> None:
+def mock_cfg() -> MagicMock:
     """Mock Config with training parameters."""
     cfg = MagicMock()
     cfg.training.epochs = 3
@@ -35,18 +35,18 @@ def mock_cfg() -> None:
     cfg.training.monitor_metric = "auc"
     cfg.training.use_tqdm = False
     cfg.training.seed = 42
-    return cfg  # type: ignore
+    return cfg
 
 
 @pytest.fixture
-def mock_tracker() -> None:
+def mock_tracker() -> MagicMock:
     """Mock tracker with all interface methods."""
     tracker = MagicMock()
     tracker.log_epoch = MagicMock()
     tracker.log_test_metrics = MagicMock()
     tracker.start_optuna_trial = MagicMock()
     tracker.end_optuna_trial = MagicMock()
-    return tracker  # type: ignore
+    return tracker
 
 
 # --- TRAINER INTEGRATION ---
@@ -200,7 +200,7 @@ def test_objective_calls_tracker_nested_runs(mock_tracker: MagicMock) -> None:
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
+    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore[method-assign]
 
     # Mock executor to return a metric
     with patch(

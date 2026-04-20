@@ -133,7 +133,7 @@ def test_build_callbacks_without_early_stopping(mock_optuna_cfg: MagicMock) -> N
 
 # FIXTURE
 @pytest.fixture
-def mock_optuna_cfg() -> None:
+def mock_optuna_cfg() -> MagicMock:
     """Provide a mock OptunaConfig object for testing builders."""
     from unittest.mock import MagicMock
 
@@ -145,7 +145,7 @@ def mock_optuna_cfg() -> None:
     optuna_mock.early_stopping_threshold = 0.95
     optuna_mock.early_stopping_patience = 5
 
-    return optuna_mock  # type: ignore
+    return optuna_mock
 
 
 # ---------------------------------------------------------------------------

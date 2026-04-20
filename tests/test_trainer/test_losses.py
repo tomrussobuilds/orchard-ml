@@ -32,7 +32,8 @@ def test_focal_loss_init_custom() -> None:
     assert loss_fn.gamma == pytest.approx(3.0)
 
     assert loss_fn.alpha == pytest.approx(0.5)
-    assert torch.equal(loss_fn.weight, weights)  # type: ignore
+    assert loss_fn.weight is not None
+    assert torch.equal(loss_fn.weight, weights)
 
 
 @pytest.mark.unit

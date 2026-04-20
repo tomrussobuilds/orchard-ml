@@ -76,15 +76,15 @@ def health_check_single_dataset(ds_meta: Any, orchestrator: Any, resolution: int
 
         # ---------------- Step 1: Ensure dataset exists ----------------
         dataset_info = load_dataset_health_check(ds_meta)
-        dataset_path = getattr(dataset_info, "path", dataset_info)
+        dataset_path = dataset_info.path
 
-        if not dataset_path.exists():  # type: ignore
+        if not dataset_path.exists():
             raise FileNotFoundError(f"Dataset file not found at {dataset_path}")
 
         run_logger.info(f"Dataset available at: {dataset_path}")
 
         # ---------------- Step 2: Build DataLoader ----------------
-        loader = create_temp_loader(dataset_path, batch_size=32)  # type: ignore
+        loader = create_temp_loader(dataset_path, batch_size=32)
 
         # ---------------- Step 3: Sample batch ----------------
         batch_images, _ = next(iter(loader))

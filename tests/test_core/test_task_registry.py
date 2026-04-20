@@ -7,6 +7,7 @@ and runtime_checkable protocol compliance.
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from types import MappingProxyType
 from unittest.mock import MagicMock
 
@@ -31,7 +32,7 @@ from orchard.exceptions import OrchardConfigError
 
 
 @pytest.fixture(autouse=True)
-def _clean_registry() -> None:  # type: ignore
+def _clean_registry() -> Generator[None, None, None]:
     """Ensure each test starts with a clean registry and restores it after."""
     saved = dict(_TASK_REGISTRY)
     _TASK_REGISTRY.clear()
@@ -141,7 +142,7 @@ def test_get_registry_is_immutable() -> None:
     registry = get_registry()
 
     with pytest.raises(TypeError):
-        registry["y"] = _make_components()  # type: ignore
+        registry["y"] = _make_components()  # type: ignore[index]
 
 
 @pytest.mark.unit
@@ -174,7 +175,7 @@ def test_task_components_frozen() -> None:
     components = _make_components()
 
     with pytest.raises(AttributeError):
-        components.criterion_factory = MagicMock()  # type: ignore
+        components.criterion_factory = MagicMock()  # type: ignore[misc]
 
 
 # ── Protocol isinstance checks ────────────────────────────────────────────────

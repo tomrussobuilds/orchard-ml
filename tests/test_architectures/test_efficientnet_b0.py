@@ -60,7 +60,7 @@ class TestEfficientNetB0:
         """Verify grayscale input channel adaptation."""
         model = build_efficientnet_b0(num_classes=10, in_channels=1, pretrained=False)
 
-        first_conv = cast(nn.Conv2d, model.features[0][0])  # type: ignore[index]
+        first_conv = cast(nn.Conv2d, getattr(model, "features")[0][0])
         assert first_conv.in_channels == 1
         assert first_conv.out_channels == 32
 
@@ -68,7 +68,7 @@ class TestEfficientNetB0:
         """Verify RGB input channel configuration."""
         model = build_efficientnet_b0(num_classes=10, in_channels=3, pretrained=False)
 
-        first_conv = cast(nn.Conv2d, model.features[0][0])  # type: ignore[index]
+        first_conv = cast(nn.Conv2d, getattr(model, "features")[0][0])
         assert first_conv.in_channels == 3
         assert first_conv.out_channels == 32
 
@@ -95,7 +95,7 @@ class TestEfficientNetB0:
         num_classes = 7
         model = build_efficientnet_b0(num_classes=num_classes, in_channels=3, pretrained=False)
 
-        classifier_head = cast(nn.Linear, model.classifier[1])  # type: ignore[index]
+        classifier_head = cast(nn.Linear, getattr(model, "classifier")[1])
         assert classifier_head.out_features == num_classes
         assert classifier_head.in_features == 1280
 

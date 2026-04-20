@@ -148,7 +148,14 @@ def get_registry(
 
     Returns:
         Registry wrapper with datasets available for the given task and resolution.
+
+    Raises:
+        ValueError: If ``task_type`` is not ``"classification"`` or ``"detection"``.
     """
     if task_type == "detection":
         return DetectionRegistryWrapper(resolution=resolution)
+    if task_type != "classification":
+        raise ValueError(
+            f"Unknown task_type: {task_type!r}. Expected 'classification' or 'detection'."
+        )
     return ClassificationRegistryWrapper(resolution=resolution)

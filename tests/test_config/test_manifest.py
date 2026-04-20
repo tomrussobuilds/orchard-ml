@@ -359,7 +359,7 @@ def test_resolutions_224_only_exact_contents() -> None:
 @pytest.mark.unit
 def test_deep_set_nested_path() -> None:
     """Test _deep_set creates intermediate dicts for nested dot paths."""
-    data: dict = {}  # type: ignore
+    data: dict[str, Any] = {}
     _deep_set(data, "a.b.c", 42)
     assert data == {"a": {"b": {"c": 42}}}
 
@@ -367,7 +367,7 @@ def test_deep_set_nested_path() -> None:
 @pytest.mark.unit
 def test_deep_set_single_key() -> None:
     """Test _deep_set with a single key (no dots)."""
-    data: dict = {}  # type: ignore
+    data: dict[str, Any] = {}
     _deep_set(data, "key", "value")
     assert data == {"key": "value"}
 
@@ -394,7 +394,7 @@ def test_dump_portable_relative_data_root() -> None:
     """Test dump_portable converts data_root inside PROJECT_ROOT to relative."""
     from orchard.core.config import manifest as manifest_mod
 
-    original_root = manifest_mod.PROJECT_ROOT  # type: ignore
+    original_root = manifest_mod.PROJECT_ROOT  # type: ignore[attr-defined]
     cfg = Config(
         dataset=DatasetConfig(
             name="bloodmnist",
@@ -445,7 +445,7 @@ def test_dump_portable_relative_path_value() -> None:
     """dump_portable converts absolute data_root to ./relative string."""
     from orchard.core.config import manifest as manifest_mod
 
-    original_root = manifest_mod.PROJECT_ROOT  # type: ignore
+    original_root = manifest_mod.PROJECT_ROOT  # type: ignore[attr-defined]
     cfg = Config(
         dataset=DatasetConfig(
             name="bloodmnist",

@@ -248,7 +248,13 @@ def test_dataset_metadata_resolution_str_none() -> None:
 @pytest.mark.unit
 def test_registry_wrapper_empty_source_registry() -> None:
     """Test DatasetRegistryWrapper raises ValueError when source registry is empty."""
-    empty_table = {28: ({},), 32: ({},), 64: ({},), 128: ({},), 224: ({}, {})}  # type: ignore
+    empty_table: dict[int, tuple[dict[str, DatasetMetadata], ...]] = {
+        28: ({},),
+        32: ({},),
+        64: ({},),
+        128: ({},),
+        224: ({}, {}),
+    }
     with patch("orchard.core.metadata.wrapper._CLASSIFICATION_REGISTRIES", empty_table):
         with pytest.raises(ValueError) as exc_info:
             DatasetRegistryWrapper(resolution=28)
@@ -300,13 +306,35 @@ def test_get_registry_detection_route() -> None:
         std=(0.2, 0.2, 0.2),
         native_resolution=224,
     )
+    original_224 = _DETECTION_REGISTRIES.get(224)
     _DETECTION_REGISTRIES[224] = ({"fake_det": fake_meta},)
     try:
         wrapper = get_registry(224, "detection")
         assert isinstance(wrapper, DetectionRegistryWrapper)
         assert "fake_det" in wrapper.registry
     finally:
-        del _DETECTION_REGISTRIES[224]
+        if original_224 is not None:
+            _DETECTION_REGISTRIES[224] = original_224
+        else:
+            del _DETECTION_REGISTRIES[224]
+
+
+@pytest.mark.unit
+def test_get_registry_default_task_type_is_classification() -> None:
+    """get_registry without task_type defaults to classification."""
+    from orchard.core.metadata.wrapper import ClassificationRegistryWrapper, get_registry
+
+    wrapper = get_registry(28)
+    assert isinstance(wrapper, ClassificationRegistryWrapper)
+
+
+@pytest.mark.unit
+def test_get_registry_unknown_task_type_raises() -> None:
+    """get_registry raises ValueError for unknown task_type strings."""
+    from orchard.core.metadata.wrapper import get_registry
+
+    with pytest.raises(ValueError, match="Unknown task_type"):
+        get_registry(28, "segmentation")
 
 
 if __name__ == "__main__":

@@ -9,8 +9,6 @@ often encountered in imbalanced datasets and fine-grained recognition.
 
 from __future__ import annotations
 
-from typing import cast
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -36,6 +34,8 @@ class FocalLoss(nn.Module):
         weight (Tensor | None): A manual rescaling weight given to each class.
     """
 
+    weight: torch.Tensor | None
+
     def __init__(
         self, gamma: float = 2.0, alpha: float = 1.0, weight: torch.Tensor | None = None
     ) -> None:
@@ -56,7 +56,7 @@ class FocalLoss(nn.Module):
             Scalar focal loss averaged over the batch.
         """
         # Calculate standard cross entropy without reduction
-        weight = cast("torch.Tensor | None", self.weight)
+        weight = self.weight
         ce_loss = F.cross_entropy(inputs, targets, reduction="none", weight=weight)
 
         # pt is the probability of the correct class

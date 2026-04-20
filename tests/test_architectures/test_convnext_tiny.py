@@ -60,7 +60,7 @@ class TestConvNeXtTiny:
         """Verify grayscale input channel adaptation."""
         model = build_convnext_tiny(num_classes=10, in_channels=1, pretrained=False)
 
-        first_conv = cast(nn.Conv2d, model.features[0][0])  # type: ignore[index]
+        first_conv = cast(nn.Conv2d, getattr(model, "features")[0][0])
         assert first_conv.in_channels == 1
         assert first_conv.out_channels == 96
 
@@ -68,7 +68,7 @@ class TestConvNeXtTiny:
         """Verify RGB input channel configuration."""
         model = build_convnext_tiny(num_classes=10, in_channels=3, pretrained=False)
 
-        first_conv = cast(nn.Conv2d, model.features[0][0])  # type: ignore[index]
+        first_conv = cast(nn.Conv2d, getattr(model, "features")[0][0])
         assert first_conv.in_channels == 3
         assert first_conv.out_channels == 96
 
@@ -96,7 +96,7 @@ class TestConvNeXtTiny:
         num_classes = 7
         model = build_convnext_tiny(num_classes=num_classes, in_channels=3, pretrained=False)
 
-        classifier_head = cast(nn.Linear, model.classifier[2])  # type: ignore[index]
+        classifier_head = cast(nn.Linear, getattr(model, "classifier")[2])
         assert classifier_head.out_features == num_classes
         assert classifier_head.in_features == 768
 
