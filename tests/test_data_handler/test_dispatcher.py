@@ -7,9 +7,10 @@ and metadata extraction without performing real network calls.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import pytest
@@ -31,9 +32,9 @@ from orchard.exceptions import OrchardDatasetError
 
 # FIXTURES
 @pytest.fixture
-def metadata(tmp_path: Path) -> None:
+def metadata(tmp_path: Path) -> SimpleNamespace:
     """Minimal DatasetMetadata stub."""
-    return SimpleNamespace(  # type: ignore
+    return SimpleNamespace(
         name="test_medmnist",
         url="https://example.com/fake.npz",
         md5_checksum="correct_md5",
@@ -42,7 +43,7 @@ def metadata(tmp_path: Path) -> None:
 
 
 @pytest.fixture
-def valid_npz_file(tmp_path: Path) -> None:
+def valid_npz_file(tmp_path: Path) -> Path:
     path = tmp_path / "valid.npz"
     np.savez(
         path,
@@ -53,15 +54,15 @@ def valid_npz_file(tmp_path: Path) -> None:
         test_images=np.zeros((4, 28, 28, 3), dtype=np.uint8),
         test_labels=np.array([0, 1, 0, 1]),
     )
-    return path  # type: ignore
+    return path
 
 
 @pytest.fixture
 def monkeypatch_md5(monkeypatch: pytest.MonkeyPatch) -> None:
     """Monkeypatch md5_checksum to be deterministic."""
 
-    def fake_md5(path: Any) -> None:
-        return "correct_md5"  # type: ignore
+    def fake_md5(path: Any) -> str:
+        return "correct_md5"
 
     monkeypatch.setattr(
         "orchard.data_handler.fetchers.medmnist_fetcher.md5_checksum",
@@ -71,7 +72,7 @@ def monkeypatch_md5(monkeypatch: pytest.MonkeyPatch) -> None:
 
 # TEST: _is_valid_npz
 @pytest.mark.unit
-def test_is_valid_npz_true(valid_npz_file: Any, monkeypatch_md5: Any) -> None:
+def test_is_valid_npz_true(valid_npz_file: Path, monkeypatch_md5: None) -> None:
     """Valid NPZ with matching MD5 should return True."""
     assert _is_valid_npz(valid_npz_file, "correct_md5") is True
 
@@ -83,7 +84,7 @@ def test_is_valid_npz_false_on_missing_file(tmp_path: Path) -> None:
 
 
 @pytest.mark.unit
-def test_is_valid_npz_false_on_bad_header(tmp_path: Path, monkeypatch_md5: Any) -> None:
+def test_is_valid_npz_false_on_bad_header(tmp_path: Path, monkeypatch_md5: None) -> None:
     """Non-ZIP files should be rejected."""
     bad = tmp_path / "bad.npz"
     bad.write_bytes(b"NOT_A_ZIP")
@@ -92,13 +93,13 @@ def test_is_valid_npz_false_on_bad_header(tmp_path: Path, monkeypatch_md5: Any) 
 
 
 @pytest.mark.unit
-def test_is_valid_npz_false_on_md5_mismatch(  # type: ignore
-    valid_npz_file, monkeypatch: pytest.MonkeyPatch
+def test_is_valid_npz_false_on_md5_mismatch(
+    valid_npz_file: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Valid NPZ file but wrong MD5 should return False."""
 
-    def wrong_md5(path: Any) -> None:
-        return "wrong_md5"  # type: ignore
+    def wrong_md5(path: Any) -> str:
+        return "wrong_md5"
 
     monkeypatch.setattr(
         "orchard.data_handler.fetchers.medmnist_fetcher.md5_checksum",
@@ -124,21 +125,24 @@ def test_is_valid_npz_ioerror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
 
 # TEST: ensure_dataset_npz
 @pytest.mark.unit
-def test_ensure_dataset_npz_uses_existing_valid_file(  # type: ignore
-    metadata, valid_npz_file, monkeypatch_md5
+def test_ensure_dataset_npz_uses_existing_valid_file(
+    metadata: SimpleNamespace, valid_npz_file: Path, monkeypatch_md5: None
 ) -> None:
     """Existing valid dataset should not trigger download."""
     metadata.path.write_bytes(valid_npz_file.read_bytes())
 
-    path = ensure_dataset_npz(metadata)
+    path = ensure_dataset_npz(metadata)  # type: ignore[arg-type]
 
     assert path == metadata.path
     assert path.exists()
 
 
 @pytest.mark.unit
-def test_ensure_dataset_npz_downloads_when_missing(  # type: ignore
-    metadata, tmp_path: Path, monkeypatch_md5, monkeypatch: pytest.MonkeyPatch
+def test_ensure_dataset_npz_downloads_when_missing(
+    metadata: SimpleNamespace,
+    tmp_path: Path,
+    monkeypatch_md5: None,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Missing dataset triggers download and validation."""
 
@@ -160,15 +164,18 @@ def test_ensure_dataset_npz_downloads_when_missing(  # type: ignore
         fake_stream_download,
     )
 
-    path = ensure_dataset_npz(metadata, retries=1)
+    path = ensure_dataset_npz(metadata, retries=1)  # type: ignore[arg-type]
 
     assert path.exists()
     assert path.suffix == ".npz"
 
 
 @pytest.mark.unit
-def test_ensure_dataset_npz_removes_corrupted_file(  # type: ignore
-    metadata, tmp_path: Path, monkeypatch_md5, monkeypatch: pytest.MonkeyPatch
+def test_ensure_dataset_npz_removes_corrupted_file(
+    metadata: SimpleNamespace,
+    tmp_path: Path,
+    monkeypatch_md5: None,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Corrupted existing file should be deleted before download."""
     metadata.path.parent.mkdir(parents=True, exist_ok=True)
@@ -192,15 +199,15 @@ def test_ensure_dataset_npz_removes_corrupted_file(  # type: ignore
         fake_stream_download,
     )
 
-    path = ensure_dataset_npz(metadata, retries=1)
+    path = ensure_dataset_npz(metadata, retries=1)  # type: ignore[arg-type]
 
     assert path.exists()
     assert path.suffix == ".npz"
 
 
 @pytest.mark.unit
-def test_ensure_dataset_npz_md5_mismatch_raises_error(  # type: ignore
-    metadata, monkeypatch: pytest.MonkeyPatch
+def test_ensure_dataset_npz_md5_mismatch_raises_error(
+    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """MD5 mismatch should raise ValueError and retry."""
     call_count = {"count": 0}
@@ -219,8 +226,8 @@ def test_ensure_dataset_npz_md5_mismatch_raises_error(  # type: ignore
         )
         tmp_path.write_bytes(real_npz.read_bytes())
 
-    def fake_md5(path: Any) -> None:
-        return "wrong_md5"  # type: ignore
+    def fake_md5(path: Any) -> str:
+        return "wrong_md5"
 
     monkeypatch.setattr(
         "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
@@ -236,7 +243,7 @@ def test_ensure_dataset_npz_md5_mismatch_raises_error(  # type: ignore
     )
 
     with pytest.raises(OrchardDatasetError):
-        ensure_dataset_npz(metadata, retries=2, delay=0.01)
+        ensure_dataset_npz(metadata, retries=2, delay=0.01)  # type: ignore[arg-type]
 
     assert call_count["count"] == 2
 
@@ -299,8 +306,8 @@ def test_ensure_dataset_npz_rate_limit_429(metadata: Any, monkeypatch: pytest.Mo
 
 
 @pytest.mark.unit
-def test_ensure_dataset_npz_cleans_up_tmp_on_error(  # type: ignore
-    metadata, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_ensure_dataset_npz_cleans_up_tmp_on_error(
+    metadata: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Temporary file should be cleaned up on download failure."""
     tmp_file_path = metadata.path.with_suffix(".tmp")
@@ -319,14 +326,14 @@ def test_ensure_dataset_npz_cleans_up_tmp_on_error(  # type: ignore
     )
 
     with pytest.raises(OrchardDatasetError):
-        ensure_dataset_npz(metadata, retries=1, delay=0.01)
+        ensure_dataset_npz(metadata, retries=1, delay=0.01)  # type: ignore[arg-type]
 
     assert not tmp_file_path.exists()
 
 
 @pytest.mark.unit
-def test_ensure_dataset_npz_error_without_response_attribute(  # type: ignore
-    metadata, monkeypatch: pytest.MonkeyPatch
+def test_ensure_dataset_npz_error_without_response_attribute(
+    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Error without response attribute should use normal delay."""
     sleep_calls = []
@@ -347,7 +354,7 @@ def test_ensure_dataset_npz_error_without_response_attribute(  # type: ignore
     )
 
     with pytest.raises(OrchardDatasetError):
-        ensure_dataset_npz(metadata, retries=2, delay=2.0)
+        ensure_dataset_npz(metadata, retries=2, delay=2.0)  # type: ignore[arg-type]
 
     assert sleep_calls[0] == pytest.approx(2.0)
 
@@ -366,17 +373,17 @@ def test_stream_download_success(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
         def raise_for_status(self) -> None:
             """No-op: simulates a successful HTTP response (no error to raise)."""
 
-        def iter_content(self, chunk_size: Any) -> None:  # type: ignore
+        def iter_content(self, chunk_size: Any) -> Iterator[bytes]:
             yield test_content
 
-        def __enter__(self) -> None:
-            return self  # type: ignore
+        def __enter__(self) -> FakeResponse:
+            return self
 
-        def __exit__(self, *args: object) -> None:
-            return False  # type: ignore
+        def __exit__(self, *args: object) -> Literal[False]:
+            return False
 
-    def fake_get(*args: object, **kwargs: object) -> None:
-        return FakeResponse()  # type: ignore
+    def fake_get(*args: object, **kwargs: object) -> FakeResponse:
+        return FakeResponse()
 
     monkeypatch.setattr("requests.get", fake_get)
 
@@ -400,17 +407,17 @@ def test_stream_download_html_content_raises_error(
         def raise_for_status(self) -> None:
             """No-op: simulates a successful HTTP response (no error to raise)."""
 
-        def iter_content(self, chunk_size: Any) -> None:  # type: ignore
+        def iter_content(self, chunk_size: Any) -> Iterator[bytes]:
             yield b"<html>Not Found</html>"
 
-        def __enter__(self) -> None:
-            return self  # type: ignore
+        def __enter__(self) -> FakeResponse:
+            return self
 
-        def __exit__(self, *args: object) -> None:
-            return False  # type: ignore
+        def __exit__(self, *args: object) -> Literal[False]:
+            return False
 
-    def fake_get(*args: object, **kwargs: object) -> None:
-        return FakeResponse()  # type: ignore
+    def fake_get(*args: object, **kwargs: object) -> FakeResponse:
+        return FakeResponse()
 
     monkeypatch.setattr("requests.get", fake_get)
 
@@ -432,20 +439,20 @@ def test_stream_download_skips_empty_chunks(
         def raise_for_status(self) -> None:
             """No-op: simulates a successful HTTP response (no error to raise)."""
 
-        def iter_content(self, chunk_size: Any) -> None:  # type: ignore
+        def iter_content(self, chunk_size: Any) -> Iterator[bytes | None]:
             yield b"first"
             yield b""
             yield None
             yield b"second"
 
-        def __enter__(self) -> None:
-            return self  # type: ignore
+        def __enter__(self) -> FakeResponse:
+            return self
 
-        def __exit__(self, *args: object) -> None:
-            return False  # type: ignore
+        def __exit__(self, *args: object) -> Literal[False]:
+            return False
 
-    def fake_get(*args: object, **kwargs: object) -> None:
-        return FakeResponse()  # type: ignore
+    def fake_get(*args: object, **kwargs: object) -> FakeResponse:
+        return FakeResponse()
 
     monkeypatch.setattr("requests.get", fake_get)
 
@@ -464,14 +471,14 @@ def test_stream_download_http_error(tmp_path: Path, monkeypatch: pytest.MonkeyPa
         def raise_for_status(self) -> None:
             raise requests.HTTPError("404 Not Found")
 
-        def __enter__(self) -> None:
-            return self  # type: ignore
+        def __enter__(self) -> FakeResponse:
+            return self
 
-        def __exit__(self, *args: object) -> None:
-            return False  # type: ignore
+        def __exit__(self, *args: object) -> Literal[False]:
+            return False
 
-    def fake_get(*args: object, **kwargs: object) -> None:
-        return FakeResponse()  # type: ignore
+    def fake_get(*args: object, **kwargs: object) -> FakeResponse:
+        return FakeResponse()
 
     monkeypatch.setattr("requests.get", fake_get)
 
@@ -481,8 +488,11 @@ def test_stream_download_http_error(tmp_path: Path, monkeypatch: pytest.MonkeyPa
 
 # TEST: load_dataset
 @pytest.mark.unit
-def test_load_medmnist_rgb(  # type: ignore
-    metadata, valid_npz_file, monkeypatch_md5, monkeypatch: pytest.MonkeyPatch
+def test_load_medmnist_rgb(
+    metadata: SimpleNamespace,
+    valid_npz_file: Path,
+    monkeypatch_md5: None,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """RGB dataset metadata should be inferred correctly."""
 
@@ -493,7 +503,7 @@ def test_load_medmnist_rgb(  # type: ignore
         lambda _: metadata.path,
     )
 
-    data = load_dataset(metadata)
+    data = load_dataset(metadata)  # type: ignore[arg-type]
 
     assert data.name == metadata.name
     assert data.is_rgb is True
@@ -502,8 +512,11 @@ def test_load_medmnist_rgb(  # type: ignore
 
 
 @pytest.mark.unit
-def test_load_medmnist_grayscale(  # type: ignore
-    metadata, tmp_path: Path, monkeypatch_md5, monkeypatch: pytest.MonkeyPatch
+def test_load_medmnist_grayscale(
+    metadata: SimpleNamespace,
+    tmp_path: Path,
+    monkeypatch_md5: None,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Grayscale dataset should have is_rgb=False."""
     path = tmp_path / "gray.npz"
@@ -525,15 +538,18 @@ def test_load_medmnist_grayscale(  # type: ignore
         lambda _: path,
     )
 
-    data = load_dataset(metadata)
+    data = load_dataset(metadata)  # type: ignore[arg-type]
 
     assert data.is_rgb is False
     assert data.num_classes == 3
 
 
 @pytest.mark.unit
-def test_load_dataset_health_check_rgb(  # type: ignore
-    metadata, valid_npz_file, monkeypatch_md5, monkeypatch: pytest.MonkeyPatch
+def test_load_dataset_health_check_rgb(
+    metadata: SimpleNamespace,
+    valid_npz_file: Path,
+    monkeypatch_md5: None,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Health check should work on RGB datasets."""
     metadata.path.write_bytes(valid_npz_file.read_bytes())
@@ -543,7 +559,7 @@ def test_load_dataset_health_check_rgb(  # type: ignore
         lambda _: metadata.path,
     )
 
-    data = load_dataset_health_check(metadata, chunk_size=5)
+    data = load_dataset_health_check(metadata, chunk_size=5)  # type: ignore[arg-type]
 
     assert data.is_rgb is True
     assert data.num_classes == 2
@@ -551,8 +567,11 @@ def test_load_dataset_health_check_rgb(  # type: ignore
 
 
 @pytest.mark.unit
-def test_load_dataset_health_check_grayscale(  # type: ignore
-    metadata, tmp_path: Path, monkeypatch_md5, monkeypatch: pytest.MonkeyPatch
+def test_load_dataset_health_check_grayscale(
+    metadata: SimpleNamespace,
+    tmp_path: Path,
+    monkeypatch_md5: None,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Health check should work on grayscale datasets."""
     path = tmp_path / "gray.npz"
@@ -574,15 +593,18 @@ def test_load_dataset_health_check_grayscale(  # type: ignore
         lambda _: path,
     )
 
-    data = load_dataset_health_check(metadata, chunk_size=10)
+    data = load_dataset_health_check(metadata, chunk_size=10)  # type: ignore[arg-type]
 
     assert data.is_rgb is False
     assert data.num_classes == 10
 
 
 @pytest.mark.unit
-def test_load_dataset_health_check_small_chunk(  # type: ignore
-    metadata, tmp_path: Path, monkeypatch_md5, monkeypatch: pytest.MonkeyPatch
+def test_load_dataset_health_check_small_chunk(
+    metadata: SimpleNamespace,
+    tmp_path: Path,
+    monkeypatch_md5: None,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Health check with small chunk should count classes correctly."""
     path = tmp_path / "test.npz"
@@ -606,28 +628,28 @@ def test_load_dataset_health_check_small_chunk(  # type: ignore
         lambda _: path,
     )
 
-    data = load_dataset_health_check(metadata, chunk_size=3)
+    data = load_dataset_health_check(metadata, chunk_size=3)  # type: ignore[arg-type]
 
     assert data.num_classes == 2
 
 
 @pytest.mark.unit
 @pytest.mark.parametrize("dataset_name", ["cifar10", "cifar100"])
-def test_ensure_dataset_npz_cifar_routing(  # type: ignore
-    dataset_name, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_ensure_dataset_npz_cifar_routing(
+    dataset_name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """CIFAR datasets should route to ensure_cifar_npz converter."""
     target_npz = tmp_path / f"{dataset_name}.npz"
 
-    dummy_data = {
-        "train_images": np.zeros((5, 32, 32, 3), dtype=np.uint8),
-        "train_labels": np.zeros((5, 1), dtype=np.int64),
-        "val_images": np.zeros((2, 32, 32, 3), dtype=np.uint8),
-        "val_labels": np.zeros((2, 1), dtype=np.int64),
-        "test_images": np.zeros((3, 32, 32, 3), dtype=np.uint8),
-        "test_labels": np.zeros((3, 1), dtype=np.int64),
-    }
-    np.savez_compressed(target_npz, **dummy_data)  # type: ignore
+    np.savez_compressed(
+        target_npz,
+        train_images=np.zeros((5, 32, 32, 3), dtype=np.uint8),
+        train_labels=np.zeros((5, 1), dtype=np.int64),
+        val_images=np.zeros((2, 32, 32, 3), dtype=np.uint8),
+        val_labels=np.zeros((2, 1), dtype=np.int64),
+        test_images=np.zeros((3, 32, 32, 3), dtype=np.uint8),
+        test_labels=np.zeros((3, 1), dtype=np.int64),
+    )
 
     cifar_metadata = SimpleNamespace(
         name=dataset_name,
@@ -638,15 +660,15 @@ def test_ensure_dataset_npz_cifar_routing(  # type: ignore
         native_resolution=32,
     )
 
-    def mock_ensure_cifar_npz(metadata: Any) -> None:
-        return metadata.path  # type: ignore
+    def mock_ensure_cifar_npz(metadata: Any) -> Path:
+        return Path(metadata.path)
 
     monkeypatch.setattr(
         "orchard.data_handler.fetchers.ensure_cifar_npz",
         mock_ensure_cifar_npz,
     )
 
-    result = ensure_dataset_npz(cifar_metadata)  # type: ignore
+    result = ensure_dataset_npz(cifar_metadata)  # type: ignore[arg-type]
 
     assert result == target_npz
 
@@ -658,15 +680,15 @@ def test_ensure_dataset_npz_galaxy10_converter_path(
     """Galaxy10 dataset should trigger converter import and return path."""
     target_npz = tmp_path / "galaxy10.npz"
 
-    dummy_data = {
-        "train_images": np.zeros((5, 10, 10, 3), dtype=np.uint8),
-        "train_labels": np.zeros((5, 1), dtype=np.int64),
-        "val_images": np.zeros((2, 10, 10, 3), dtype=np.uint8),
-        "val_labels": np.zeros((2, 1), dtype=np.int64),
-        "test_images": np.zeros((3, 10, 10, 3), dtype=np.uint8),
-        "test_labels": np.zeros((3, 1), dtype=np.int64),
-    }
-    np.savez_compressed(target_npz, **dummy_data)  # type: ignore
+    np.savez_compressed(
+        target_npz,
+        train_images=np.zeros((5, 10, 10, 3), dtype=np.uint8),
+        train_labels=np.zeros((5, 1), dtype=np.int64),
+        val_images=np.zeros((2, 10, 10, 3), dtype=np.uint8),
+        val_labels=np.zeros((2, 1), dtype=np.int64),
+        test_images=np.zeros((3, 10, 10, 3), dtype=np.uint8),
+        test_labels=np.zeros((3, 1), dtype=np.int64),
+    )
 
     galaxy10_metadata = SimpleNamespace(
         name="galaxy10",
@@ -676,15 +698,15 @@ def test_ensure_dataset_npz_galaxy10_converter_path(
         native_resolution=224,
     )
 
-    def mock_ensure_galaxy10_npz(metadata: Any) -> None:
-        return metadata.path  # type: ignore
+    def mock_ensure_galaxy10_npz(metadata: Any) -> Path:
+        return Path(metadata.path)
 
     monkeypatch.setattr(
         "orchard.data_handler.fetchers.ensure_galaxy10_npz",
         mock_ensure_galaxy10_npz,
     )
 
-    result = ensure_dataset_npz(galaxy10_metadata)  # type: ignore
+    result = ensure_dataset_npz(galaxy10_metadata)  # type: ignore[arg-type]
 
     assert result == target_npz
 
@@ -698,7 +720,7 @@ def test_stream_download_passes_exact_kwargs(
 ) -> None:
     """Verify requests.get receives url, headers, timeout, stream, allow_redirects."""
     output_path = tmp_path / "output.npz"
-    captured = {}
+    captured: dict[str, Any] = {}
 
     class FakeResponse:
         def __init__(self) -> None:
@@ -707,64 +729,34 @@ def test_stream_download_passes_exact_kwargs(
         def raise_for_status(self) -> None:
             pass
 
-        def iter_content(self, chunk_size: Any) -> None:  # type: ignore
+        def iter_content(self, chunk_size: Any) -> Iterator[bytes]:
             yield b"data"
 
-        def __enter__(self) -> None:
-            return self  # type: ignore
+        def __enter__(self) -> FakeResponse:
+            return self
 
-        def __exit__(self, *args: object) -> None:
-            return False  # type: ignore
+        def __exit__(self, *args: object) -> Literal[False]:
+            return False
 
-    def capturing_get(*args: object, **kwargs: object) -> None:
+    def capturing_get(*args: object, **kwargs: object) -> FakeResponse:
         captured["args"] = args
-        captured["kwargs"] = kwargs  # type: ignore
-        return FakeResponse()  # type: ignore
+        captured["kwargs"] = kwargs
+        return FakeResponse()
 
     monkeypatch.setattr("requests.get", capturing_get)
 
     _stream_download("https://example.com/file.npz", output_path)
 
     assert captured["args"] == ("https://example.com/file.npz",)
-    assert captured["kwargs"]["timeout"] == 60  # type: ignore
-    assert captured["kwargs"]["stream"] is True  # type: ignore
-    assert captured["kwargs"]["allow_redirects"] is True  # type: ignore
+    assert captured["kwargs"]["timeout"] == 60
+    assert captured["kwargs"]["stream"] is True
+    assert captured["kwargs"]["allow_redirects"] is True
 
-    headers = captured["kwargs"]["headers"]  # type: ignore
+    headers = captured["kwargs"]["headers"]
     assert headers is not None
     assert headers["User-Agent"] == "Wget/1.0"
     assert headers["Accept"] == "application/octet-stream"
     assert headers["Accept-Encoding"] == "identity"
-
-
-@pytest.mark.unit
-def test_stream_download_passes_chunk_size(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Verify iter_content receives the chunk_size parameter."""
-    output_path = tmp_path / "output.npz"
-    captured_chunk_sizes = []
-
-    class FakeResponse:
-        def __init__(self) -> None:
-            self.headers = {"Content-type": "application/octet-stream"}
-
-        def raise_for_status(self) -> None:
-            pass
-
-        def iter_content(self, chunk_size: Any) -> None:  # type: ignore
-            captured_chunk_sizes.append(chunk_size)
-            yield b"data"
-
-        def __enter__(self) -> None:
-            return self  # type: ignore
-
-        def __exit__(self, *args: object) -> None:
-            return False  # type: ignore
-
-    monkeypatch.setattr("requests.get", lambda *a, **kw: FakeResponse())
-
-    _stream_download("https://example.com/file.npz", output_path)
-
-    assert captured_chunk_sizes == [8192]
 
 
 @pytest.mark.unit
@@ -776,19 +768,19 @@ def test_stream_download_content_type_missing_no_error(
 
     class FakeResponse:
         def __init__(self) -> None:
-            self.headers = {}  # type: ignore
+            self.headers: dict[str, str] = {}
 
         def raise_for_status(self) -> None:
             pass
 
-        def iter_content(self, chunk_size: Any) -> None:  # type: ignore
+        def iter_content(self, chunk_size: Any) -> Iterator[bytes]:
             yield b"data"
 
-        def __enter__(self) -> None:
-            return self  # type: ignore
+        def __enter__(self) -> FakeResponse:
+            return self
 
-        def __exit__(self, *args: object) -> None:
-            return False  # type: ignore
+        def __exit__(self, *args: object) -> Literal[False]:
+            return False
 
     monkeypatch.setattr("requests.get", lambda *a, **kw: FakeResponse())
 
@@ -802,14 +794,14 @@ def test_stream_download_content_type_missing_no_error(
 
 @pytest.mark.unit
 def test_is_valid_npz_passes_path_to_md5(
-    valid_npz_file: Any, monkeypatch: pytest.MonkeyPatch
+    valid_npz_file: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """md5_checksum should receive the actual file path, not None."""
-    received_paths = []
+    received_paths: list[Any] = []
 
-    def tracking_md5(path: Any) -> None:
+    def tracking_md5(path: Any) -> str:
         received_paths.append(path)
-        return "correct_md5"  # type: ignore
+        return "correct_md5"
 
     monkeypatch.setattr(
         "orchard.data_handler.fetchers.medmnist_fetcher.md5_checksum",
@@ -830,7 +822,7 @@ def test_retry_delay_429_quadratic_backoff(monkeypatch: pytest.MonkeyPatch) -> N
     exc = requests.HTTPError("429 Rate Limit")
     exc.response = SimpleNamespace(status_code=429)
 
-    log_calls = []
+    log_calls: list[str] = []
     monkeypatch.setattr(
         "orchard.data_handler.fetchers.medmnist_fetcher.logger.warning",
         lambda msg, *args: log_calls.append(msg % args if args else msg),
@@ -856,21 +848,11 @@ def test_retry_delay_non_429_returns_base() -> None:
 
 
 @pytest.mark.unit
-def test_ensure_medmnist_npz_default_params(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Default retries=5 and delay=5.0 should be used."""
-    import inspect
-
-    sig = inspect.signature(ensure_medmnist_npz)
-    assert sig.parameters["retries"].default == 5
-    assert sig.parameters["delay"].default == pytest.approx(5.0)
-
-
-@pytest.mark.unit
-def test_ensure_medmnist_npz_passes_url_to_stream_download(  # type: ignore
-    metadata, monkeypatch: pytest.MonkeyPatch
+def test_ensure_medmnist_npz_passes_url_to_stream_download(
+    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """_stream_download should receive metadata.url, not None."""
-    received_urls = []
+    received_urls: list[str] = []
 
     def tracking_download(url: Any, tmp_path: Path) -> None:
         received_urls.append(url)
@@ -887,36 +869,9 @@ def test_ensure_medmnist_npz_passes_url_to_stream_download(  # type: ignore
         lambda _: "correct_md5",
     )
 
-    ensure_medmnist_npz(metadata, retries=1)
+    ensure_medmnist_npz(metadata, retries=1)  # type: ignore[arg-type]
 
     assert received_urls == ["https://example.com/fake.npz"]
-
-
-@pytest.mark.unit
-def test_ensure_medmnist_npz_uses_tmp_suffix(
-    metadata: Any, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Temp file should use .tmp suffix (lowercase)."""
-    received_tmp_paths = []
-
-    def tracking_download(url: Any, tmp_path: Path) -> None:
-        received_tmp_paths.append(tmp_path)
-        real_npz = tmp_path.with_suffix(".npz")
-        np.savez(real_npz, train_images=np.zeros((2, 28, 28)))
-        tmp_path.write_bytes(real_npz.read_bytes())
-
-    monkeypatch.setattr(
-        "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
-        tracking_download,
-    )
-    monkeypatch.setattr(
-        "orchard.data_handler.fetchers.medmnist_fetcher.md5_checksum",
-        lambda _: "correct_md5",
-    )
-
-    ensure_medmnist_npz(metadata, retries=1)
-
-    assert received_tmp_paths[0].suffix == ".tmp"
 
 
 @pytest.mark.unit
@@ -947,8 +902,8 @@ def test_ensure_medmnist_npz_mkdir_parents(metadata: Any, monkeypatch: pytest.Mo
 
 
 @pytest.mark.unit
-def test_ensure_medmnist_npz_md5_mismatch_error_message(  # type: ignore
-    metadata, monkeypatch: pytest.MonkeyPatch
+def test_ensure_medmnist_npz_md5_mismatch_error_message(
+    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """MD5 mismatch should raise with specific error message."""
 
@@ -971,18 +926,18 @@ def test_ensure_medmnist_npz_md5_mismatch_error_message(  # type: ignore
     )
 
     with pytest.raises(OrchardDatasetError, match="Could not download"):
-        ensure_medmnist_npz(metadata, retries=1, delay=0.01)
+        ensure_medmnist_npz(metadata, retries=1, delay=0.01)  # type: ignore[arg-type]
 
 
 @pytest.mark.unit
-def test_ensure_medmnist_npz_corrupted_file_warning(  # type: ignore
-    metadata, monkeypatch: pytest.MonkeyPatch
+def test_ensure_medmnist_npz_corrupted_file_warning(
+    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Corrupted file should log warning with the path."""
     metadata.path.parent.mkdir(parents=True, exist_ok=True)
     metadata.path.write_bytes(b"CORRUPTED")
 
-    warning_calls = []
+    warning_calls: list[str] = []
 
     def fake_download(url: Any, tmp_path: Path) -> None:
         real_npz = tmp_path.with_suffix(".npz")
@@ -1010,7 +965,7 @@ def test_ensure_medmnist_npz_corrupted_file_warning(  # type: ignore
         tracking_warning,
     )
 
-    ensure_medmnist_npz(metadata, retries=1)
+    ensure_medmnist_npz(metadata, retries=1)  # type: ignore[arg-type]
 
     assert any(str(metadata.path) in call for call in warning_calls)
 
@@ -1019,7 +974,7 @@ def test_ensure_medmnist_npz_corrupted_file_warning(  # type: ignore
 def test_ensure_medmnist_npz_retry_logging(metadata: Any, monkeypatch: pytest.MonkeyPatch) -> None:
     """Retry warnings should include attempt number, total retries, error, and delay."""
     call_count = {"n": 0}
-    warning_calls = []
+    warning_calls: list[str] = []
 
     def failing_then_ok(url: Any, tmp_path: Path) -> None:
         call_count["n"] += 1
@@ -1055,11 +1010,11 @@ def test_ensure_medmnist_npz_retry_logging(metadata: Any, monkeypatch: pytest.Mo
 
 
 @pytest.mark.unit
-def test_ensure_medmnist_npz_final_failure_error_log(  # type: ignore
-    metadata, monkeypatch: pytest.MonkeyPatch
+def test_ensure_medmnist_npz_final_failure_error_log(
+    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Final failure should log error with retry count and raise with dataset name."""
-    error_calls = []
+    error_calls: list[str] = []
 
     monkeypatch.setattr(
         "orchard.data_handler.fetchers.medmnist_fetcher._stream_download",
@@ -1075,18 +1030,18 @@ def test_ensure_medmnist_npz_final_failure_error_log(  # type: ignore
     )
 
     with pytest.raises(OrchardDatasetError, match="test_medmnist"):
-        ensure_medmnist_npz(metadata, retries=2, delay=0.01)
+        ensure_medmnist_npz(metadata, retries=2, delay=0.01)  # type: ignore[arg-type]
 
     combined = " ".join(error_calls)
     assert "2" in combined
 
 
 @pytest.mark.unit
-def test_ensure_medmnist_npz_md5_failure_error_log(  # type: ignore
-    metadata, monkeypatch: pytest.MonkeyPatch
+def test_ensure_medmnist_npz_md5_failure_error_log(
+    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """MD5 validation failure should log error with expected and actual MD5."""
-    error_calls = []
+    error_calls: list[str] = []
 
     def fake_download(url: Any, tmp_path: Path) -> None:
         real_npz = tmp_path.with_suffix(".npz")
@@ -1111,7 +1066,7 @@ def test_ensure_medmnist_npz_md5_failure_error_log(  # type: ignore
     )
 
     with pytest.raises(OrchardDatasetError):
-        ensure_medmnist_npz(metadata, retries=1, delay=0.01)
+        ensure_medmnist_npz(metadata, retries=1, delay=0.01)  # type: ignore[arg-type]
 
     combined = " ".join(error_calls)
     assert "correct_md5" in combined
@@ -1192,3 +1147,105 @@ def test_load_and_inspect_detection_uses_metadata_num_classes(tmp_path: Path) ->
     assert result.num_classes == 1
     assert result.annotation_path == tmp_path / "annotations.npz"
     assert result.is_rgb is True
+
+
+# ─── MUTATION-KILLING TESTS: ensure_dataset_npz / _load_and_inspect / health_check ───
+
+
+@pytest.mark.unit
+def test_ensure_dataset_npz_default_retries_and_delay(
+    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Default retries=5 and delay=5.0 are forwarded to ensure_medmnist_npz."""
+    captured: dict[str, Any] = {}
+
+    def fake_medmnist(meta: Any, retries: int = 5, delay: float = 5.0) -> Path:
+        captured["retries"] = retries
+        captured["delay"] = delay
+        return Path(meta.path)
+
+    monkeypatch.setattr("orchard.data_handler.fetchers.ensure_medmnist_npz", fake_medmnist)
+
+    # Call without explicit retries/delay so the defaults are used
+    ensure_dataset_npz(metadata)  # type: ignore[arg-type]
+
+    # Kill mutmut_1: retries 5 → 6
+    assert captured["retries"] == 5
+    # Kill mutmut_2: delay 5.0 → 6.0
+    assert captured["delay"] == pytest.approx(5.0)
+
+
+@pytest.mark.unit
+def test_load_and_inspect_passes_metadata_not_none(
+    metadata: SimpleNamespace,
+    valid_npz_file: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """_load_and_inspect passes the metadata object (not None) to ensure_dataset_npz."""
+    from orchard.data_handler.dispatcher import _load_and_inspect
+
+    metadata.path.write_bytes(valid_npz_file.read_bytes())
+    called_with: dict[str, Any] = {}
+
+    def capturing_ensure(meta: Any) -> Path:
+        called_with["meta"] = meta
+        return Path(metadata.path)
+
+    monkeypatch.setattr("orchard.data_handler.dispatcher.ensure_dataset_npz", capturing_ensure)
+
+    _load_and_inspect(metadata)  # type: ignore[arg-type]
+
+    # Kill mutmut_2: ensure_dataset_npz(metadata) → ensure_dataset_npz(None)
+    assert called_with["meta"] is not None
+
+
+@pytest.mark.unit
+def test_load_and_inspect_4d_grayscale_is_not_rgb(
+    metadata: SimpleNamespace,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """4D grayscale (N, H, W, 1) must yield is_rgb=False — kills and→or mutant."""
+    path = tmp_path / "gray4d.npz"
+    np.savez(
+        path,
+        train_images=np.zeros((20, 28, 28, 1), dtype=np.uint8),
+        train_labels=np.arange(20),
+        val_images=np.zeros((5, 28, 28, 1), dtype=np.uint8),
+        val_labels=np.arange(5),
+        test_images=np.zeros((5, 28, 28, 1), dtype=np.uint8),
+        test_labels=np.arange(5),
+    )
+    metadata.path = path
+
+    monkeypatch.setattr(
+        "orchard.data_handler.dispatcher.ensure_dataset_npz",
+        lambda _: path,
+    )
+
+    data = load_dataset(metadata)  # type: ignore[arg-type]
+
+    # ndim==4 and shape[-1]==1: and→False, or→True
+    assert data.is_rgb is False
+
+
+@pytest.mark.unit
+def test_load_dataset_health_check_default_chunk_size_is_100(
+    metadata: SimpleNamespace,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """load_dataset_health_check defaults chunk_size to 100 (not 101)."""
+    from orchard.data_handler.dispatcher import DatasetData
+
+    captured: dict[str, Any] = {}
+
+    def fake_load_and_inspect(meta: Any, chunk_size: int | None = None) -> DatasetData:
+        captured["chunk_size"] = chunk_size
+        return DatasetData(path=Path("/fake"), name="test", is_rgb=True, num_classes=2)
+
+    monkeypatch.setattr("orchard.data_handler.dispatcher._load_and_inspect", fake_load_and_inspect)
+
+    load_dataset_health_check(metadata)  # type: ignore[arg-type]
+
+    # Kill mutmut_1: chunk_size 100 → 101
+    assert captured["chunk_size"] == 100

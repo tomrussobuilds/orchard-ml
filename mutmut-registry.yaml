@@ -475,12 +475,12 @@ orchard/data_handler/diagnostic/temp_loader.py:
   not_checked: 0
   score: 100.0
 orchard/data_handler/dispatcher.py:
-  last_run: '2026-03-21T09:10:21Z'
+  last_run: '2026-04-21T10:10:22Z'
   total: 67
-  killed: 52
-  survived: 15
+  killed: 64
+  survived: 3
   not_checked: 0
-  score: 77.6
+  score: 95.5
 orchard/data_handler/fetcher.py:
   last_run: '2026-03-19T14:21:20Z'
   total: 51

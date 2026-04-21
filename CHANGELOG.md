@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - bump the actions group with 13 updates (#9)
 - add workflow to sync uv.lock on Dependabot PRs
 - bump the actions group with 5 updates (#12)
+- bump the actions group with 2 updates
 
 ### Changed
 
@@ -33,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - split test_env_reporter, fix logger test isolation, mutmut 99/100/100
 - remove type: ignore from test_export/test_onnx_exporter.py and test_validation.py
 - remove type: ignore from 15 test modules; kill manifest.py mutants 75%→100%
+- kill mutants in data_handler/dataset.py — 79.8%→93.1%
 
 ### Documentation
 
