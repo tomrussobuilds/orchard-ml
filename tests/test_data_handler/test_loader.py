@@ -11,8 +11,9 @@ Focus:
 from __future__ import annotations
 
 import tempfile
+from collections.abc import Callable, Sized
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -28,7 +29,7 @@ from orchard.exceptions import OrchardDatasetError
 
 # MOCK CONFIG AND METADATA
 @pytest.fixture
-def mock_cfg() -> None:
+def mock_cfg() -> MagicMock:
     cfg = MagicMock()
     cfg.dataset.dataset_name = "mock_dataset"
     cfg.dataset.use_weighted_sampler = True
@@ -38,11 +39,11 @@ def mock_cfg() -> None:
     cfg.dataset.lazy_loading = True
     cfg.training.batch_size = 2
     cfg.num_workers = 0
-    return cfg  # type: ignore
+    return cfg
 
 
 @pytest.fixture
-def mock_cfg_no_sampler() -> None:
+def mock_cfg_no_sampler() -> MagicMock:
     """Config with weighted sampler disabled."""
     cfg = MagicMock()
     cfg.dataset.dataset_name = "mock_dataset"
@@ -52,11 +53,11 @@ def mock_cfg_no_sampler() -> None:
     cfg.dataset.lazy_loading = True
     cfg.training.batch_size = 2
     cfg.num_workers = 0
-    return cfg  # type: ignore
+    return cfg
 
 
 @pytest.fixture
-def mock_cfg_high_res() -> None:
+def mock_cfg_high_res() -> MagicMock:
     """Config with high resolution for Optuna test."""
     cfg = MagicMock()
     cfg.dataset.dataset_name = "mock_dataset"
@@ -66,14 +67,14 @@ def mock_cfg_high_res() -> None:
     cfg.dataset.lazy_loading = True
     cfg.training.batch_size = 2
     cfg.num_workers = 8
-    return cfg  # type: ignore
+    return cfg
 
 
 @pytest.fixture
-def mock_metadata() -> None:
+def mock_metadata() -> MagicMock:
     metadata = MagicMock()
     metadata.path = "/fake/path"
-    return metadata  # type: ignore
+    return metadata
 
 
 # DATA LOADER FACTORY TESTS
@@ -93,15 +94,15 @@ def test_build_loaders_with_weighted_sampler(mock_cfg: MagicMock, mock_metadata:
                     self.labels = np.array([0, 1, 0, 1])
 
                 @classmethod
-                def from_npz(cls: Any, **kwargs: object) -> None:
-                    return cls()  # type: ignore
+                def from_npz(cls: Any, **kwargs: object) -> Any:
+                    return cls()
 
                 @classmethod
-                def lazy(cls: Any, **kwargs: object) -> None:
-                    return cls()  # type: ignore
+                def lazy(cls: Any, **kwargs: object) -> Any:
+                    return cls()
 
-                def __len__(self) -> None:
-                    return 4  # type: ignore
+                def __len__(self) -> int:
+                    return 4
 
             with patch("orchard.data_handler.loader.VisionDataset", FakeDataset):
                 factory = DataLoaderFactory(
@@ -114,9 +115,9 @@ def test_build_loaders_with_weighted_sampler(mock_cfg: MagicMock, mock_metadata:
                 train, val, test = factory.build()
 
                 # Check number of samples
-                assert len(train.dataset) == 4  # type: ignore
-                assert len(val.dataset) == 4  # type: ignore
-                assert len(test.dataset) == 4  # type: ignore
+                assert len(cast(Sized, train.dataset)) == 4
+                assert len(cast(Sized, val.dataset)) == 4
+                assert len(cast(Sized, test.dataset)) == 4
 
                 # Check number of batches
                 assert len(train) == 2
@@ -146,15 +147,15 @@ def test_build_loaders_without_weighted_sampler(
                     self.labels = np.array([0, 1, 0, 1])
 
                 @classmethod
-                def from_npz(cls: Any, **kwargs: object) -> None:
-                    return cls()  # type: ignore
+                def from_npz(cls: Any, **kwargs: object) -> Any:
+                    return cls()
 
                 @classmethod
-                def lazy(cls: Any, **kwargs: object) -> None:
-                    return cls()  # type: ignore
+                def lazy(cls: Any, **kwargs: object) -> Any:
+                    return cls()
 
-                def __len__(self) -> None:
-                    return 4  # type: ignore
+                def __len__(self) -> int:
+                    return 4
 
             with patch("orchard.data_handler.loader.VisionDataset", FakeDataset):
                 factory = DataLoaderFactory(
@@ -266,11 +267,11 @@ def test_vision_dataset_lazy() -> None:
     rng = np.random.default_rng(seed=42)
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir) / "dummy.npz"
-        data = {
-            "train_images": rng.integers(0, 255, (5, 28, 28), dtype=np.uint8),
-            "train_labels": rng.integers(0, 2, (5, 1), dtype=np.int64),
-        }
-        np.savez(tmp_path, **data)  # type: ignore
+        np.savez(
+            tmp_path,
+            train_images=rng.integers(0, 255, (5, 28, 28), dtype=np.uint8),
+            train_labels=rng.integers(0, 2, (5, 1), dtype=np.int64),
+        )
 
         dataset = VisionDataset.lazy(tmp_path)
         assert len(dataset) == 5
@@ -288,11 +289,11 @@ def test_vision_dataset_lazy_rgb() -> None:
     rng = np.random.default_rng(seed=42)
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir) / "dummy_rgb.npz"
-        data = {
-            "train_images": rng.integers(0, 255, (5, 28, 28, 3), dtype=np.uint8),
-            "train_labels": rng.integers(0, 2, (5, 1), dtype=np.int64),
-        }
-        np.savez(tmp_path, **data)  # type: ignore
+        np.savez(
+            tmp_path,
+            train_images=rng.integers(0, 255, (5, 28, 28, 3), dtype=np.uint8),
+            train_labels=rng.integers(0, 2, (5, 1), dtype=np.int64),
+        )
 
         dataset = VisionDataset.lazy(tmp_path)
         assert len(dataset) == 5
@@ -312,11 +313,11 @@ def test_vision_dataset_lazy_grayscale_2d() -> None:
     rng = np.random.default_rng(seed=42)
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir) / "dummy_gray.npz"
-        data = {
-            "train_images": rng.integers(0, 255, (5, 28, 28), dtype=np.uint8),
-            "train_labels": rng.integers(0, 2, (5, 1), dtype=np.int64),
-        }
-        np.savez(tmp_path, **data)  # type: ignore
+        np.savez(
+            tmp_path,
+            train_images=rng.integers(0, 255, (5, 28, 28), dtype=np.uint8),
+            train_labels=rng.integers(0, 2, (5, 1), dtype=np.int64),
+        )
 
         dataset = VisionDataset.lazy(tmp_path)
         img, _ = dataset[0]
@@ -332,11 +333,11 @@ def test_create_temp_loader() -> None:
     rng = np.random.default_rng(seed=42)
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir) / "dummy.npz"
-        data = {
-            "train_images": rng.integers(0, 255, (5, 28, 28), dtype=np.uint8),
-            "train_labels": rng.integers(0, 2, (5, 1), dtype=np.int64),
-        }
-        np.savez(tmp_path, **data)  # type: ignore
+        np.savez(
+            tmp_path,
+            train_images=rng.integers(0, 255, (5, 28, 28), dtype=np.uint8),
+            train_labels=rng.integers(0, 2, (5, 1), dtype=np.int64),
+        )
 
         loader = create_temp_loader(tmp_path, batch_size=2)
         batch_imgs, _ = next(iter(loader))
@@ -350,11 +351,11 @@ def test_create_temp_loader_rgb() -> None:
     rng = np.random.default_rng(seed=42)
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir) / "dummy_rgb.npz"
-        data = {
-            "train_images": rng.integers(0, 255, (8, 32, 32, 3), dtype=np.uint8),
-            "train_labels": rng.integers(0, 3, (8, 1), dtype=np.int64),
-        }
-        np.savez(tmp_path, **data)  # type: ignore
+        np.savez(
+            tmp_path,
+            train_images=rng.integers(0, 255, (8, 32, 32, 3), dtype=np.uint8),
+            train_labels=rng.integers(0, 3, (8, 1), dtype=np.int64),
+        )
 
         loader = create_temp_loader(tmp_path, batch_size=4)
         batch_imgs, _ = next(iter(loader))
@@ -657,11 +658,11 @@ def test_build_train_loader_shuffle_and_drop_last(
                     self.labels = np.array([0, 1, 0, 1])
 
                 @classmethod
-                def lazy(cls: Any, **kwargs: object) -> None:
-                    return cls()  # type: ignore
+                def lazy(cls: Any, **kwargs: object) -> Any:
+                    return cls()
 
-                def __len__(self) -> None:
-                    return 4  # type: ignore
+                def __len__(self) -> int:
+                    return 4
 
             with patch("orchard.data_handler.loader.VisionDataset", FakeDS):
                 factory = DataLoaderFactory(
@@ -702,11 +703,11 @@ def test_build_train_loader_no_shuffle_with_sampler(
                     self.labels = np.array([0, 1, 0, 1])
 
                 @classmethod
-                def lazy(cls: Any, **kwargs: object) -> None:
-                    return cls()  # type: ignore
+                def lazy(cls: Any, **kwargs: object) -> Any:
+                    return cls()
 
-                def __len__(self) -> None:
-                    return 4  # type: ignore
+                def __len__(self) -> int:
+                    return 4
 
             with patch("orchard.data_handler.loader.VisionDataset", FakeDS):
                 factory = DataLoaderFactory(
@@ -764,8 +765,11 @@ def test_balancing_sampler_num_samples(mock_cfg: MagicMock, mock_metadata: Magic
         dataset.labels = np.array([0, 1, 0, 1, 0, 1])
         mock_cfg.dataset.num_classes = 2
 
+        from torch.utils.data import WeightedRandomSampler
+
         sampler = factory._get_balancing_sampler(dataset)
-        assert sampler.num_samples == 6  # type: ignore
+        assert isinstance(sampler, WeightedRandomSampler)
+        assert sampler.num_samples == 6
 
 
 @pytest.mark.unit
@@ -789,8 +793,11 @@ def test_balancing_sampler_inverse_frequency_weights(
         dataset.labels = np.array([0, 0, 0, 1])
         mock_cfg.dataset.num_classes = 2
 
+        from torch.utils.data import WeightedRandomSampler
+
         sampler = factory._get_balancing_sampler(dataset)
-        weights = list(sampler.weights)  # type: ignore
+        assert isinstance(sampler, WeightedRandomSampler)
+        weights = list(sampler.weights)
 
         # class 0: count=3, weight=1/3; class 1: count=1, weight=1.0
         assert weights[0] == pytest.approx(1.0 / 3)
@@ -827,11 +834,11 @@ def test_build_sub_samples_calculation(mock_metadata: MagicMock) -> None:
                     build_calls.append(kwargs)
 
                 @classmethod
-                def lazy(cls: Any, **kwargs: object) -> None:
-                    return cls(**kwargs)  # type: ignore
+                def lazy(cls: Any, **kwargs: object) -> Any:
+                    return cls(**kwargs)
 
-                def __len__(self) -> None:
-                    return 4  # type: ignore
+                def __len__(self) -> int:
+                    return 4
 
             with patch("orchard.data_handler.loader.VisionDataset", SpyDS):
                 factory = DataLoaderFactory(
@@ -877,11 +884,11 @@ def test_build_sub_samples_floor(mock_metadata: MagicMock) -> None:
                     build_calls.append(kwargs)
 
                 @classmethod
-                def lazy(cls: Any, **kwargs: object) -> None:
-                    return cls(**kwargs)  # type: ignore
+                def lazy(cls: Any, **kwargs: object) -> Any:
+                    return cls(**kwargs)
 
-                def __len__(self) -> None:
-                    return 4  # type: ignore
+                def __len__(self) -> int:
+                    return 4
 
             with patch("orchard.data_handler.loader.VisionDataset", SpyDS):
                 factory = DataLoaderFactory(
@@ -917,11 +924,11 @@ def test_build_sub_samples_none_when_no_max_samples(
                     build_calls.append(kwargs)
 
                 @classmethod
-                def lazy(cls: Any, **kwargs: object) -> None:
-                    return cls(**kwargs)  # type: ignore
+                def lazy(cls: Any, **kwargs: object) -> Any:
+                    return cls(**kwargs)
 
-                def __len__(self) -> None:
-                    return 4  # type: ignore
+                def __len__(self) -> int:
+                    return 4
 
             with patch("orchard.data_handler.loader.VisionDataset", SpyDS):
                 factory = DataLoaderFactory(
@@ -943,11 +950,11 @@ def test_create_temp_loader_uses_default_batch_size() -> None:
     rng = np.random.default_rng(seed=42)
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir) / "dummy.npz"
-        data = {
-            "train_images": rng.integers(0, 255, (20, 28, 28), dtype=np.uint8),
-            "train_labels": rng.integers(0, 2, (20, 1), dtype=np.int64),
-        }
-        np.savez(tmp_path, **data)  # type: ignore
+        np.savez(
+            tmp_path,
+            train_images=rng.integers(0, 255, (20, 28, 28), dtype=np.uint8),
+            train_labels=rng.integers(0, 2, (20, 1), dtype=np.int64),
+        )
 
         loader = create_temp_loader(tmp_path)
         assert loader.batch_size == 16
@@ -979,17 +986,17 @@ def test_build_uses_lazy_when_lazy_loading_true(mock_metadata: MagicMock) -> Non
                     self.labels = np.array([0, 1])
 
                 @classmethod
-                def lazy(cls: Any, **kwargs: object) -> None:
+                def lazy(cls: Any, **kwargs: object) -> Any:
                     lazy_called.append(True)
-                    return cls(**kwargs)  # type: ignore
+                    return cls(**kwargs)
 
                 @classmethod
-                def from_npz(cls: Any, **kwargs: object) -> None:
+                def from_npz(cls: Any, **kwargs: object) -> Any:
                     from_npz_called.append(True)
-                    return cls(**kwargs)  # type: ignore
+                    return cls(**kwargs)
 
-                def __len__(self) -> None:
-                    return 4  # type: ignore
+                def __len__(self) -> int:
+                    return 4
 
             with patch("orchard.data_handler.loader.VisionDataset", SpyDS):
                 factory = DataLoaderFactory(
@@ -1027,17 +1034,17 @@ def test_build_uses_from_npz_when_lazy_loading_false(mock_metadata: MagicMock) -
                     self.labels = np.array([0, 1])
 
                 @classmethod
-                def lazy(cls: Any, **kwargs: object) -> None:
+                def lazy(cls: Any, **kwargs: object) -> Any:
                     lazy_called.append(True)
-                    return cls(**kwargs)  # type: ignore
+                    return cls(**kwargs)
 
                 @classmethod
-                def from_npz(cls: Any, **kwargs: object) -> None:
+                def from_npz(cls: Any, **kwargs: object) -> Any:
                     from_npz_called.append(True)
-                    return cls(**kwargs)  # type: ignore
+                    return cls(**kwargs)
 
-                def __len__(self) -> None:
-                    return 4  # type: ignore
+                def __len__(self) -> int:
+                    return 4
 
             with patch("orchard.data_handler.loader.VisionDataset", SpyDS):
                 factory = DataLoaderFactory(
@@ -1051,11 +1058,11 @@ def test_build_uses_from_npz_when_lazy_loading_false(mock_metadata: MagicMock) -
 
 # MUTATION TESTS: argument wiring and DataLoader construction
 @pytest.fixture
-def _spy_ds_factory() -> None:
+def _spy_ds_factory() -> Callable[[], tuple[type, list[Any]]]:
     """Factory that yields a SpyDS class capturing all build calls."""
 
-    def _make() -> None:
-        calls = []
+    def _make() -> tuple[type, list[Any]]:
+        calls: list[Any] = []
 
         class SpyDS:
             def __init__(self, **kwargs: object) -> None:
@@ -1063,34 +1070,36 @@ def _spy_ds_factory() -> None:
                 calls.append(kwargs)
 
             @classmethod
-            def lazy(cls: Any, **kwargs: object) -> None:
-                return cls(**kwargs)  # type: ignore
+            def lazy(cls: Any, **kwargs: object) -> Any:
+                return cls(**kwargs)
 
             @classmethod
-            def from_npz(cls: Any, **kwargs: object) -> None:
-                return cls(**kwargs)  # type: ignore
+            def from_npz(cls: Any, **kwargs: object) -> Any:
+                return cls(**kwargs)
 
-            def __len__(self) -> None:
-                return 4  # type: ignore
+            def __len__(self) -> int:
+                return 4
 
-        return SpyDS, calls  # type: ignore
+        return SpyDS, calls
 
-    return _make  # type: ignore
+    return _make
 
 
-def _build_factory(cfg: Any, mock_metadata: MagicMock, num_workers: Any = 0) -> None:
+def _build_factory(cfg: Any, mock_metadata: MagicMock, num_workers: Any = 0) -> DataLoaderFactory:
     """Helper to build a DataLoaderFactory with standard mocking."""
     mock_ds_meta = MagicMock(in_channels=1)
 
     with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
-        return DataLoaderFactory(  # type: ignore
+        return DataLoaderFactory(
             cfg.dataset, cfg.training, cfg.augmentation, num_workers, mock_metadata
         )
 
 
 @pytest.mark.unit
-def test_build_passes_correct_split_names(  # type: ignore
-    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock, _spy_ds_factory
+def test_build_passes_correct_split_names(
+    mock_cfg_no_sampler: MagicMock,
+    mock_metadata: MagicMock,
+    _spy_ds_factory: Callable[[], tuple[type, list[Any]]],
 ) -> None:
     """Verify build() passes exact split names ('train', 'val', 'test')."""
     SpyDS, calls = _spy_ds_factory()
@@ -1119,8 +1128,10 @@ def test_build_passes_correct_split_names(  # type: ignore
 
 
 @pytest.mark.unit
-def test_build_passes_path_and_seed(  # type: ignore
-    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock, _spy_ds_factory
+def test_build_passes_path_and_seed(
+    mock_cfg_no_sampler: MagicMock,
+    mock_metadata: MagicMock,
+    _spy_ds_factory: Callable[[], tuple[type, list[Any]]],
 ) -> None:
     """Verify build() passes metadata path and training seed to each split."""
     SpyDS, calls = _spy_ds_factory()
@@ -1151,8 +1162,10 @@ def test_build_passes_path_and_seed(  # type: ignore
 
 
 @pytest.mark.unit
-def test_build_passes_transforms(  # type: ignore
-    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock, _spy_ds_factory
+def test_build_passes_transforms(
+    mock_cfg_no_sampler: MagicMock,
+    mock_metadata: MagicMock,
+    _spy_ds_factory: Callable[[], tuple[type, list[Any]]],
 ) -> None:
     """Verify build() passes train transform to train split and val transform to val/test."""
     SpyDS, calls = _spy_ds_factory()
@@ -1183,8 +1196,10 @@ def test_build_passes_transforms(  # type: ignore
 
 
 @pytest.mark.unit
-def test_build_train_loader_drop_last_true(  # type: ignore
-    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock, _spy_ds_factory
+def test_build_train_loader_drop_last_true(
+    mock_cfg_no_sampler: MagicMock,
+    mock_metadata: MagicMock,
+    _spy_ds_factory: Callable[[], tuple[type, list[Any]]],
 ) -> None:
     """Verify train DataLoader has drop_last=True."""
     SpyDS, _ = _spy_ds_factory()
@@ -1211,8 +1226,10 @@ def test_build_train_loader_drop_last_true(  # type: ignore
 
 
 @pytest.mark.unit
-def test_build_val_test_loaders_have_infra_kwargs(  # type: ignore
-    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock, _spy_ds_factory
+def test_build_val_test_loaders_have_infra_kwargs(
+    mock_cfg_no_sampler: MagicMock,
+    mock_metadata: MagicMock,
+    _spy_ds_factory: Callable[[], tuple[type, list[Any]]],
 ) -> None:
     """Verify val/test DataLoaders receive infrastructure kwargs (num_workers, pin_memory)."""
     SpyDS, _ = _spy_ds_factory()
@@ -1268,12 +1285,12 @@ def test_get_transformation_pipelines_passes_correct_args(
     mock_ds_meta = MagicMock(in_channels=1)
     captured = {}
 
-    def spy_transforms(aug_cfg: Any, img_size: Any, meta: Any, **kw: object) -> None:
+    def spy_transforms(aug_cfg: Any, img_size: Any, meta: Any, **kw: object) -> tuple[Any, Any]:
         captured["aug_cfg"] = aug_cfg
         captured["img_size"] = img_size
         captured["meta"] = meta
         captured.update(kw)
-        return (lambda x: x, lambda x: x)  # type: ignore
+        return (lambda x: x, lambda x: x)
 
     with (
         patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta),
@@ -1332,8 +1349,10 @@ def test_init_stores_aug_cfg(mock_cfg: MagicMock, mock_metadata: MagicMock) -> N
 
 
 @pytest.mark.unit
-def test_build_passes_is_optuna_to_infra_kwargs(  # type: ignore
-    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock, _spy_ds_factory
+def test_build_passes_is_optuna_to_infra_kwargs(
+    mock_cfg_no_sampler: MagicMock,
+    mock_metadata: MagicMock,
+    _spy_ds_factory: Callable[[], tuple[type, list[Any]]],
 ) -> None:
     """Verify build() passes is_optuna to _get_infrastructure_kwargs."""
     SpyDS, _ = _spy_ds_factory()
@@ -1363,8 +1382,10 @@ def test_build_passes_is_optuna_to_infra_kwargs(  # type: ignore
 
 
 @pytest.mark.unit
-def test_build_train_loader_receives_infra_kwargs(  # type: ignore
-    mock_cfg_no_sampler: MagicMock, mock_metadata: MagicMock, _spy_ds_factory
+def test_build_train_loader_receives_infra_kwargs(
+    mock_cfg_no_sampler: MagicMock,
+    mock_metadata: MagicMock,
+    _spy_ds_factory: Callable[[], tuple[type, list[Any]]],
 ) -> None:
     """Verify train DataLoader receives infra kwargs (num_workers, pin_memory)."""
     SpyDS, _ = _spy_ds_factory()
@@ -1392,6 +1413,134 @@ def test_build_train_loader_receives_infra_kwargs(  # type: ignore
 
 
 # DETECTION TASK TYPE TESTS
+
+
+@pytest.mark.unit
+@patch("orchard.data_handler.loader.get_registry")
+@patch("orchard.data_handler.detection_dataset.DetectionDataset.from_npz")
+def test_build_detection_splits_passes_correct_args(
+    mock_from_npz: MagicMock,
+    mock_registry: MagicMock,
+    mock_cfg_no_sampler: MagicMock,
+    mock_metadata: MagicMock,
+) -> None:
+    """_build_detection_splits passes correct args to DetectionDataset.from_npz for all splits."""
+    sentinel_train: torch.nn.Module = torch.nn.Identity()
+    sentinel_val: torch.nn.Module = torch.nn.Identity()
+    mock_from_npz.return_value = MagicMock()
+    mock_metadata.annotation_path = Path("/fake/ann.npz")
+    mock_cfg_no_sampler.dataset.max_samples = 50  # non-None so mutations to None are caught
+
+    factory = DataLoaderFactory(
+        mock_cfg_no_sampler.dataset,
+        mock_cfg_no_sampler.training,
+        mock_cfg_no_sampler.augmentation,
+        0,
+        mock_metadata,
+        task_type="detection",
+    )
+    factory._build_detection_splits(sentinel_train, sentinel_val, 15)
+
+    calls = mock_from_npz.call_args_list
+    assert len(calls) == 3
+
+    kw0 = calls[0].kwargs
+    assert kw0["image_path"] == mock_metadata.path
+    assert kw0["annotation_path"] == mock_metadata.annotation_path
+    assert kw0["split"] == "train"
+    assert kw0["transform"] is sentinel_train
+    assert kw0["max_samples"] == 50
+    assert kw0["seed"] == mock_cfg_no_sampler.training.seed
+
+    kw1 = calls[1].kwargs
+    assert kw1["image_path"] == mock_metadata.path
+    assert kw1["annotation_path"] == mock_metadata.annotation_path
+    assert kw1["split"] == "val"
+    assert kw1["transform"] is sentinel_val
+    assert kw1["max_samples"] == 15
+    assert kw1["seed"] == mock_cfg_no_sampler.training.seed
+
+    kw2 = calls[2].kwargs
+    assert kw2["image_path"] == mock_metadata.path
+    assert kw2["annotation_path"] == mock_metadata.annotation_path
+    assert kw2["split"] == "test"
+    assert kw2["transform"] is sentinel_val
+    assert kw2["max_samples"] == 15
+    assert kw2["seed"] == mock_cfg_no_sampler.training.seed
+
+
+@pytest.mark.unit
+@patch("orchard.data_handler.loader.get_registry")
+@patch("orchard.data_handler.detection_dataset.DetectionDataset.from_npz")
+@patch("orchard.data_handler.loader.get_pipeline_transforms")
+def test_build_detection_via_build_passes_transforms_and_sub_samples(
+    mock_transforms: MagicMock,
+    mock_from_npz: MagicMock,
+    mock_registry: MagicMock,
+    mock_cfg_no_sampler: MagicMock,
+    mock_metadata: MagicMock,
+) -> None:
+    """build() passes train_trans/val_trans/sub_samples correctly to _build_detection_splits."""
+    from orchard.core.paths import MIN_SPLIT_SAMPLES
+
+    sentinel_train: torch.nn.Module = torch.nn.Identity()
+    sentinel_val: torch.nn.Module = torch.nn.Identity()
+    mock_transforms.return_value = (sentinel_train, sentinel_val)
+    mock_from_npz.return_value = MagicMock()
+    mock_metadata.annotation_path = Path("/fake/ann.npz")
+    mock_cfg_no_sampler.dataset.max_samples = 100
+    mock_cfg_no_sampler.dataset.val_ratio = 0.2
+
+    factory = DataLoaderFactory(
+        mock_cfg_no_sampler.dataset,
+        mock_cfg_no_sampler.training,
+        mock_cfg_no_sampler.augmentation,
+        0,
+        mock_metadata,
+        task_type="detection",
+    )
+
+    with patch("orchard.data_handler.loader.DataLoader") as mock_dl:
+        mock_dl.return_value = MagicMock()
+        factory.build()
+
+    expected_sub = max(MIN_SPLIT_SAMPLES, int(100 * 0.2))
+    calls = mock_from_npz.call_args_list
+    assert len(calls) == 3
+
+    kw0 = calls[0].kwargs
+    assert kw0["transform"] is sentinel_train
+    assert kw0["max_samples"] == 100
+
+    kw1 = calls[1].kwargs
+    assert kw1["transform"] is sentinel_val
+    assert kw1["max_samples"] == expected_sub
+
+    kw2 = calls[2].kwargs
+    assert kw2["transform"] is sentinel_val
+    assert kw2["max_samples"] == expected_sub
+
+
+@pytest.mark.unit
+def test_factory_logger_uses_orchard_logger_name(
+    mock_cfg_no_sampler: MagicMock,
+    mock_metadata: MagicMock,
+) -> None:
+    """DataLoaderFactory.logger uses LOGGER_NAME, not the root logger (None)."""
+    from orchard.core import LOGGER_NAME
+
+    mock_ds_meta = MagicMock(in_channels=1)
+
+    with patch.object(DatasetRegistryWrapper, "get_dataset", return_value=mock_ds_meta):
+        factory = DataLoaderFactory(
+            mock_cfg_no_sampler.dataset,
+            mock_cfg_no_sampler.training,
+            mock_cfg_no_sampler.augmentation,
+            0,
+            mock_metadata,
+        )
+
+    assert factory.logger.name == LOGGER_NAME
 
 
 @pytest.mark.unit

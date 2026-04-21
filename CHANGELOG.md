@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - remove type: ignore from test_export/test_onnx_exporter.py and test_validation.py
 - remove type: ignore from 15 test modules; kill manifest.py mutants 75%→100%
 - kill mutants in data_handler/dataset.py — 79.8%→93.1%
+- rewrite test_dispatcher.py — remove type: ignore, kill dispatcher.py mutants 77.6%→95.5%
 
 ### Documentation
 

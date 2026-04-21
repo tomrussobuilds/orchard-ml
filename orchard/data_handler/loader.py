@@ -87,7 +87,7 @@ class DataLoaderFactory:
         aug_cfg: AugmentationConfig,
         num_workers: int,
         metadata: DatasetData,
-        task_type: str = "classification",  # pragma: no mutate
+        task_type: str = "classification",
     ) -> None:
         """
         Initializes the factory with environment and dataset metadata.
@@ -383,7 +383,7 @@ def get_dataloaders(
     aug_cfg: AugmentationConfig,
     num_workers: int,
     is_optuna: bool = False,
-    task_type: str = "classification",  # pragma: no mutate
+    task_type: str = "classification",
 ) -> tuple[DataLoader[Any], DataLoader[Any], DataLoader[Any]]:
     """
     Convenience function for creating train/val/test DataLoaders.
