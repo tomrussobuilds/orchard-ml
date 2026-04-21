@@ -264,3 +264,64 @@ def test_lazy_max_samples_larger_than_dataset(rgb_npz: Any) -> None:
 
     assert len(ds) == 20
     assert ds._indices is None
+
+
+@pytest.mark.unit
+def test_init_npz_handle_default_none() -> None:
+    """_npz_handle is None after direct construction (not set by .lazy())."""
+    images = np.random.default_rng(0).integers(0, 255, (5, 28, 28, 3), dtype=np.uint8)
+    labels = np.arange(5)
+    ds = VisionDataset(images, labels)
+    # Kill mutant: _npz_handle = "" instead of None
+    assert ds._npz_handle is None
+
+
+@pytest.mark.unit
+def test_from_npz_transform_produces_normalized_values(rgb_npz: Any) -> None:
+    """Transform passed to from_npz is actually applied (not silently dropped)."""
+    transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+        ]
+    )
+    ds = VisionDataset.from_npz(path=rgb_npz, split="train", transform=transform)
+    img, _ = ds[0]
+    # Kill mutants: transform=None / transform dropped → to_tensor only → min >= 0
+    assert img.min() < 0
+
+
+@pytest.mark.unit
+def test_from_npz_max_samples_equal_total_no_subsampling(rgb_npz: Any) -> None:
+    """max_samples == total does not subsample (condition is < not <=)."""
+    # train has 20 samples; labels are arange(20) so order is detectable
+    ds = VisionDataset.from_npz(path=rgb_npz, split="train", max_samples=20)
+    # Kill mutant: < → <= triggers rng.choice(20, 20, replace=False) → permuted labels
+    assert np.array_equal(ds.labels, np.arange(20))
+
+
+@pytest.mark.unit
+def test_from_npz_subsampling_without_replacement(rgb_npz: Any) -> None:
+    """from_npz subsampling uses replace=False — no duplicate samples."""
+    # max_samples=19 from 20: with replace=True, duplicates are near-certain
+    # labels are arange(20) so unique labels iff unique indices
+    ds = VisionDataset.from_npz(path=rgb_npz, split="train", max_samples=19, seed=0)
+    # Kill mutants: replace=True / replace= removed (default True) → very likely duplicates
+    assert len(np.unique(ds.labels)) == len(ds.labels)
+
+
+@pytest.mark.unit
+def test_lazy_max_samples_equal_total_no_subsampling(rgb_npz: Any) -> None:
+    """max_samples == len(dataset) does not set _indices (condition is < not <=)."""
+    ds = VisionDataset.lazy(rgb_npz, max_samples=20)
+    # Kill mutant: < → <= triggers subsampling → _indices is not None
+    assert ds._indices is None
+
+
+@pytest.mark.unit
+def test_lazy_subsampling_without_replacement(rgb_npz: Any) -> None:
+    """Lazy subsampling uses replace=False — no duplicate indices."""
+    ds = VisionDataset.lazy(rgb_npz, max_samples=19, seed=0)
+    assert ds._indices is not None
+    # Kill mutants: replace=True / replace= removed (default True) → very likely duplicates
+    assert len(np.unique(ds._indices)) == len(ds._indices)

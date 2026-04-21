@@ -199,6 +199,7 @@ class TestFromRecipe:
         # Kill mutants: dataset_section.get("resolution", 28) key → None / wrong string / UPPERCASE
         # Wrong key falls back to default 28 → cifar10 not in 28px registry → error
         assert cfg.dataset.resolution == 32
+        assert cfg.dataset.metadata is not None
         assert cfg.dataset.metadata.native_resolution == 32
 
     def test_default_resolution_when_omitted(self, tmp_path: Path) -> None:

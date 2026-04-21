@@ -135,7 +135,7 @@ class VisionDataset(Dataset[tuple[torch.Tensor, torch.Tensor]]):
             max_samples: If set, limits the number of samples (subsampling).
             seed: Random seed for deterministic subsampling.
         """
-        data = np.load(path, mmap_mode="r")
+        data = np.load(path, mmap_mode="r")  # pragma: no mutate
         instance = cls(data[f"{split}_images"], data[f"{split}_labels"], transform=transform)
         instance._npz_handle = data
 

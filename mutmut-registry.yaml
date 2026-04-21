@@ -433,12 +433,12 @@ orchard/data_handler/data_explorer.py:
   not_checked: 0
   score: 100.0
 orchard/data_handler/dataset.py:
-  last_run: '2026-04-20T19:18:49Z'
-  total: 94
-  killed: 75
-  survived: 19
+  last_run: '2026-04-21T09:29:48Z'
+  total: 87
+  killed: 81
+  survived: 6
   not_checked: 0
-  score: 79.8
+  score: 93.1
 orchard/data_handler/detection_dataset.py:
   last_run: '2026-03-22T07:12:09Z'
   total: 51
