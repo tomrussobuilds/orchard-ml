@@ -113,10 +113,12 @@ def test_create_synthetic_grayscale_dataset() -> None:
     assert isinstance(data, DatasetData)
     assert data.is_rgb is False
     assert data.name == "syntheticmnist_gray"
+    assert data.num_classes == 3
 
     with np.load(data.path) as npz:
         assert npz["train_images"].ndim == 4
         assert npz["train_images"].shape[-1] == 1
+        assert npz["train_images"].shape[0] == 30
 
 
 @pytest.mark.unit

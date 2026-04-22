@@ -454,19 +454,19 @@ orchard/data_handler/diagnostic/__init__.py:
   not_checked: 0
   score: 100.0
 orchard/data_handler/diagnostic/synthetic.py:
-  last_run: '2026-03-18T14:07:19Z'
-  total: 30
-  killed: 30
-  survived: 0
+  last_run: '2026-04-22T11:04:18Z'
+  total: 49
+  killed: 39
+  survived: 10
   not_checked: 0
-  score: 100.0
+  score: 79.6
 orchard/data_handler/diagnostic/synthetic_detection.py:
-  last_run: '2026-03-19T11:41:48Z'
-  total: 96
-  killed: 92
-  survived: 4
+  last_run: '2026-04-22T10:41:11Z'
+  total: 102
+  killed: 96
+  survived: 6
   not_checked: 0
-  score: 95.8
+  score: 94.1
 orchard/data_handler/diagnostic/temp_loader.py:
   last_run: '2026-03-16T15:23:04Z'
   total: 13

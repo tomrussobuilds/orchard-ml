@@ -168,6 +168,33 @@ def test_synthetic_has_val_and_test_splits() -> None:
         assert "test_labels" in f
 
 
+@pytest.mark.unit
+def test_synthetic_test_split_images_have_valid_shape() -> None:
+    """Test split images are arrays with correct spatial dimensions."""
+    data = create_synthetic_detection_dataset(num_classes=2, samples=20, resolution=32)
+
+    with np.load(data.image_path) as f:
+        test_imgs = f["test_images"]
+        assert test_imgs.ndim == 4
+        assert test_imgs.shape[1:3] == (32, 32)
+
+
+@pytest.mark.unit
+def test_synthetic_test_split_annotations_have_valid_structure() -> None:
+    """Test split boxes and labels are non-empty object arrays."""
+    data = create_synthetic_detection_dataset(num_classes=2, samples=20, resolution=32)
+
+    with np.load(data.annotation_path, allow_pickle=True) as f:
+        test_boxes = f["test_boxes"]
+        test_labels = f["test_labels"]
+        assert len(test_boxes) > 0
+        assert len(test_labels) > 0
+        for b, lab in zip(test_boxes, test_labels):
+            assert b.ndim == 2
+            assert b.shape[1] == 4
+            assert len(lab) == len(b)
+
+
 # ── DetectionDataset ─────────────────────────────────────────────────────────
 
 

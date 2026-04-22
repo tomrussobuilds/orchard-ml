@@ -17,11 +17,13 @@ import numpy.typing as npt
 
 from ...core.paths import DEFAULT_SEED, MIN_SPLIT_SAMPLES
 
-_SYNTHETIC_SEED = DEFAULT_SEED  # pragma: no mutate
-_SYNTHETIC_PIXEL_RANGE = 255  # pragma: no mutate
-_MIN_BOXES = 1  # pragma: no mutate
-_MAX_BOXES = 5  # pragma: no mutate
-_MIN_BOX_SIZE = 4  # pragma: no mutate
+# pragma: no mutate start
+_SYNTHETIC_SEED = DEFAULT_SEED
+_SYNTHETIC_PIXEL_RANGE = 255
+_MIN_BOXES = 1
+_MAX_BOXES = 5
+_MIN_BOX_SIZE = 4
+# pragma: no mutate end
 
 
 def _random_boxes(
@@ -40,11 +42,12 @@ def _random_boxes(
     Returns:
         Array of shape ``(num_boxes, 4)`` with valid box coordinates.
     """
-    x1 = rng.integers(0, img_size - _MIN_BOX_SIZE, size=num_boxes)  # pragma: no mutate
-    y1 = rng.integers(0, img_size - _MIN_BOX_SIZE, size=num_boxes)  # pragma: no mutate
-    x2 = rng.integers(x1 + _MIN_BOX_SIZE, img_size, size=num_boxes)  # pragma: no mutate
-    y2 = rng.integers(y1 + _MIN_BOX_SIZE, img_size, size=num_boxes)  # pragma: no mutate
-    return np.stack([x1, y1, x2, y2], axis=1).astype(np.float32)  # pragma: no mutate
+    # pragma: no mutate block
+    x1 = rng.integers(0, img_size - _MIN_BOX_SIZE, size=num_boxes)
+    y1 = rng.integers(0, img_size - _MIN_BOX_SIZE, size=num_boxes)
+    x2 = rng.integers(x1 + _MIN_BOX_SIZE, img_size, size=num_boxes)
+    y2 = rng.integers(y1 + _MIN_BOX_SIZE, img_size, size=num_boxes)
+    return np.stack([x1, y1, x2, y2], axis=1).astype(np.float32)
 
 
 def _generate_split(
@@ -60,12 +63,14 @@ def _generate_split(
     Returns:
         Tuple of (images, boxes_list, labels_list).
     """
-    images = rng.integers(  # pragma: no mutate
+    # pragma: no mutate start
+    images = rng.integers(
         0,
-        _SYNTHETIC_PIXEL_RANGE,  # pragma: no mutate
-        (n_samples, resolution, resolution, channels),  # pragma: no mutate
-        dtype=np.uint8,  # pragma: no mutate
+        _SYNTHETIC_PIXEL_RANGE,
+        (n_samples, resolution, resolution, channels),
+        dtype=np.uint8,
     )
+    # pragma: no mutate end
 
     boxes_list: list[npt.NDArray[np.float32]] = []
     labels_list: list[npt.NDArray[np.int64]] = []
@@ -134,8 +139,10 @@ def create_synthetic_detection_dataset(
     train_imgs, train_boxes, train_labels = _generate_split(
         rng, samples, resolution, channels, num_classes
     )
-    val_samples = max(MIN_SPLIT_SAMPLES, samples // 10)  # pragma: no mutate
-    test_samples = max(MIN_SPLIT_SAMPLES, samples // 10)  # pragma: no mutate
+    # pragma: no mutate start
+    val_samples = max(MIN_SPLIT_SAMPLES, samples // 10)
+    test_samples = max(MIN_SPLIT_SAMPLES, samples // 10)
+    # pragma: no mutate end
 
     val_imgs, val_boxes, val_labels = _generate_split(
         rng, val_samples, resolution, channels, num_classes
@@ -145,9 +152,9 @@ def create_synthetic_detection_dataset(
     )
 
     # Save images NPZ
-    img_file = tempfile.NamedTemporaryFile(  # pragma: no mutate
-        suffix=".npz", delete=False, prefix="det_images_"  # pragma: no mutate
-    )
+    # pragma: no mutate start
+    img_file = tempfile.NamedTemporaryFile(suffix=".npz", delete=False, prefix="det_images_")
+    # pragma: no mutate end
     img_path = Path(img_file.name)
     img_file.close()
     np.savez(
@@ -158,9 +165,9 @@ def create_synthetic_detection_dataset(
     )
 
     # Save annotations NPZ (object arrays for variable-length boxes)
-    ann_file = tempfile.NamedTemporaryFile(  # pragma: no mutate
-        suffix=".npz", delete=False, prefix="det_annotations_"  # pragma: no mutate
-    )
+    # pragma: no mutate start
+    ann_file = tempfile.NamedTemporaryFile(suffix=".npz", delete=False, prefix="det_annotations_")
+    # pragma: no mutate end
     ann_path = Path(ann_file.name)
     ann_file.close()
 

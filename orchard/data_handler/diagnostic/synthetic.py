@@ -23,8 +23,10 @@ import numpy as np
 from ...core.paths import DEFAULT_SEED, MIN_SPLIT_SAMPLES
 from ..dispatcher import DatasetData
 
-_SYNTHETIC_SEED = DEFAULT_SEED  # pragma: no mutate
-_SYNTHETIC_PIXEL_RANGE = 255  # pragma: no mutate
+# pragma: no mutate start
+_SYNTHETIC_SEED = DEFAULT_SEED
+_SYNTHETIC_PIXEL_RANGE = 255
+# pragma: no mutate end
 
 
 # FACTORY FUNCTIONS
@@ -58,43 +60,43 @@ def create_synthetic_dataset(
         ...     data, cfg.dataset, cfg.training, cfg.augmentation, cfg.num_workers
         ... )
     """
-    rng = np.random.default_rng(_SYNTHETIC_SEED)  # pragma: no mutate
+    # pragma: no mutate start
+    rng = np.random.default_rng(_SYNTHETIC_SEED)
 
-    # Generate synthetic image data  # pragma: no mutate
-    train_images = rng.integers(  # pragma: no mutate
-        0,  # pragma: no mutate
-        _SYNTHETIC_PIXEL_RANGE,  # pragma: no mutate
-        (samples, resolution, resolution, channels),  # pragma: no mutate
-        dtype=np.uint8,  # pragma: no mutate
+    # Generate synthetic image data
+    train_images = rng.integers(
+        0,
+        _SYNTHETIC_PIXEL_RANGE,
+        (samples, resolution, resolution, channels),
+        dtype=np.uint8,
     )
-    train_labels = rng.integers(0, num_classes, (samples, 1), dtype=np.uint8)  # pragma: no mutate
+    train_labels = rng.integers(0, num_classes, (samples, 1), dtype=np.uint8)
 
     # Validation and test sets are smaller (10% of training size each)
-    val_samples = max(MIN_SPLIT_SAMPLES, samples // 10)  # pragma: no mutate
-    test_samples = max(MIN_SPLIT_SAMPLES, samples // 10)  # pragma: no mutate
+    val_samples = max(MIN_SPLIT_SAMPLES, samples // 10)
+    test_samples = max(MIN_SPLIT_SAMPLES, samples // 10)
 
-    val_images = rng.integers(  # pragma: no mutate
-        0,  # pragma: no mutate
-        _SYNTHETIC_PIXEL_RANGE,  # pragma: no mutate
-        (val_samples, resolution, resolution, channels),  # pragma: no mutate
-        dtype=np.uint8,  # pragma: no mutate
+    val_images = rng.integers(
+        0,
+        _SYNTHETIC_PIXEL_RANGE,
+        (val_samples, resolution, resolution, channels),
+        dtype=np.uint8,
     )
-    val_labels = rng.integers(0, num_classes, (val_samples, 1), dtype=np.uint8)  # pragma: no mutate
+    val_labels = rng.integers(0, num_classes, (val_samples, 1), dtype=np.uint8)
 
-    test_images = rng.integers(  # pragma: no mutate
-        0,  # pragma: no mutate
-        _SYNTHETIC_PIXEL_RANGE,  # pragma: no mutate
-        (test_samples, resolution, resolution, channels),  # pragma: no mutate
-        dtype=np.uint8,  # pragma: no mutate
+    test_images = rng.integers(
+        0,
+        _SYNTHETIC_PIXEL_RANGE,
+        (test_samples, resolution, resolution, channels),
+        dtype=np.uint8,
     )
-    test_labels = rng.integers(  # pragma: no mutate
-        0, num_classes, (test_samples, 1), dtype=np.uint8  # pragma: no mutate
-    )
+    test_labels = rng.integers(0, num_classes, (test_samples, 1), dtype=np.uint8)
 
     # Create a temporary .npz file with standard format
-    temp_file = tempfile.NamedTemporaryFile(  # pragma: no mutate
-        suffix=".npz", delete=False, prefix="synthetic_dataset_"  # pragma: no mutate
+    temp_file = tempfile.NamedTemporaryFile(
+        suffix=".npz", delete=False, prefix="synthetic_dataset_"
     )
+    # pragma: no mutate end
     temp_path = Path(temp_file.name)
     temp_file.close()
 
@@ -139,10 +141,10 @@ def create_synthetic_grayscale_dataset(
     Returns:
         DatasetData: A grayscale data object compatible with the pipeline
     """
-    return create_synthetic_dataset(  # pragma: no mutate
-        num_classes=num_classes,  # pragma: no mutate
-        samples=samples,  # pragma: no mutate
-        resolution=resolution,  # pragma: no mutate
+    return create_synthetic_dataset(
+        num_classes=num_classes,
+        samples=samples,
+        resolution=resolution,
         channels=1,
         name="syntheticmnist_gray",
     )
