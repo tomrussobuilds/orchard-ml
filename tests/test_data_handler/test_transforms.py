@@ -7,12 +7,15 @@ training/validation pipelines for both RGB and Grayscale datasets.
 
 from __future__ import annotations
 
-from types import SimpleNamespace
-from typing import Any
+from typing import cast
+from unittest.mock import MagicMock
 
 import pytest
 import torch
 from torchvision.transforms import v2
+
+from orchard.core.config import AugmentationConfig
+from orchard.core.metadata import DatasetMetadata
 
 # Internal Import
 from orchard.data_handler import (
@@ -23,66 +26,61 @@ from orchard.data_handler import (
 
 # FIXTURES
 @pytest.fixture
-def aug_cfg() -> None:
+def aug_cfg() -> AugmentationConfig:
     """Minimal augmentation config stub."""
-    return SimpleNamespace(  # type: ignore
-        hflip=0.5,
-        rotation_angle=15,
-        jitter_val=0.2,
-        min_scale=0.8,
-    )
+    return AugmentationConfig(hflip=0.5, rotation_angle=15, jitter_val=0.2, min_scale=0.8)
 
 
 @pytest.fixture
-def img_size() -> None:
-    return (224, 224)  # type: ignore
+def img_size() -> int:
+    return 224
 
 
 @pytest.fixture
-def mixup_alpha() -> None:
-    return 0.4  # type: ignore
+def mixup_alpha() -> float:
+    return 0.4
 
 
 @pytest.fixture
-def rgb_metadata() -> None:
+def rgb_metadata() -> DatasetMetadata:
     """DatasetMetadata stub for RGB datasets."""
-    return SimpleNamespace(  # type: ignore
-        in_channels=3,
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225],
-        is_anatomical=False,
-        is_texture_based=False,
-    )
+    m = MagicMock(spec=DatasetMetadata)
+    m.in_channels = 3
+    m.mean = [0.485, 0.456, 0.406]
+    m.std = [0.229, 0.224, 0.225]
+    m.is_anatomical = False
+    m.is_texture_based = False
+    return cast(DatasetMetadata, m)
 
 
 @pytest.fixture
-def grayscale_metadata() -> None:
+def grayscale_metadata() -> DatasetMetadata:
     """DatasetMetadata stub for Grayscale datasets."""
-    return SimpleNamespace(  # type: ignore
-        in_channels=1,
-        mean=[0.5],
-        std=[0.25],
-        is_anatomical=False,
-        is_texture_based=False,
-    )
+    m = MagicMock(spec=DatasetMetadata)
+    m.in_channels = 1
+    m.mean = [0.5]
+    m.std = [0.25]
+    m.is_anatomical = False
+    m.is_texture_based = False
+    return cast(DatasetMetadata, m)
 
 
 @pytest.fixture
-def dummy_image_rgb() -> None:
+def dummy_image_rgb() -> torch.Tensor:
     """Dummy RGB image tensor (C, H, W)."""
-    return torch.randint(0, 255, (3, 256, 256), dtype=torch.uint8)  # type: ignore
+    return torch.randint(0, 255, (3, 256, 256), dtype=torch.uint8)
 
 
 @pytest.fixture
-def dummy_image_gray() -> None:
+def dummy_image_gray() -> torch.Tensor:
     """Dummy Grayscale image tensor (H, W)."""
-    return torch.randint(0, 255, (256, 256), dtype=torch.uint8)  # type: ignore
+    return torch.randint(0, 255, (256, 256), dtype=torch.uint8)
 
 
 # TEST: AUGMENTATION DESCRIPTION
 @pytest.mark.unit
-def test_get_augmentations_description_contains_all_fields(  # type: ignore
-    aug_cfg, img_size, mixup_alpha, rgb_metadata
+def test_get_augmentations_description_contains_all_fields(
+    aug_cfg: AugmentationConfig, img_size: int, mixup_alpha: float, rgb_metadata: DatasetMetadata
 ) -> None:
     """Augmentation description should include all configured operations."""
     descr = get_augmentations_description(aug_cfg, img_size, mixup_alpha, ds_meta=rgb_metadata)
@@ -96,8 +94,8 @@ def test_get_augmentations_description_contains_all_fields(  # type: ignore
 
 
 @pytest.mark.unit
-def test_get_augmentations_description_conservative_fallback(  # type: ignore
-    aug_cfg, img_size, mixup_alpha
+def test_get_augmentations_description_conservative_fallback(
+    aug_cfg: AugmentationConfig, img_size: int, mixup_alpha: float
 ) -> None:
     """When ds_meta is None, fallback is conservative (skip geometric/photometric)."""
     descr = get_augmentations_description(aug_cfg, img_size, mixup_alpha)
@@ -109,7 +107,9 @@ def test_get_augmentations_description_conservative_fallback(  # type: ignore
 
 
 @pytest.mark.unit
-def test_get_augmentations_description_without_mixup(aug_cfg: Any, img_size: Any) -> None:
+def test_get_augmentations_description_without_mixup(
+    aug_cfg: AugmentationConfig, img_size: int
+) -> None:
     """MixUp should be omitted when alpha <= 0."""
     descr = get_augmentations_description(aug_cfg, img_size, 0.0)
 
@@ -118,7 +118,9 @@ def test_get_augmentations_description_without_mixup(aug_cfg: Any, img_size: Any
 
 # TEST: PIPELINE CONSTRUCTION
 @pytest.mark.unit
-def test_pipeline_returns_compose_objects(aug_cfg: Any, img_size: Any, rgb_metadata: Any) -> None:
+def test_pipeline_returns_compose_objects(
+    aug_cfg: AugmentationConfig, img_size: int, rgb_metadata: DatasetMetadata
+) -> None:
     """Pipeline factory should return torchvision v2 Compose objects."""
     train_tf, val_tf = get_pipeline_transforms(aug_cfg, img_size, rgb_metadata)
 
@@ -128,7 +130,7 @@ def test_pipeline_returns_compose_objects(aug_cfg: Any, img_size: Any, rgb_metad
 
 @pytest.mark.unit
 def test_rgb_pipeline_does_not_include_grayscale(
-    aug_cfg: Any, img_size: Any, rgb_metadata: Any
+    aug_cfg: AugmentationConfig, img_size: int, rgb_metadata: DatasetMetadata
 ) -> None:
     """RGB datasets should not include Grayscale promotion."""
     train_tf, val_tf = get_pipeline_transforms(aug_cfg, img_size, rgb_metadata)
@@ -141,8 +143,8 @@ def test_rgb_pipeline_does_not_include_grayscale(
 
 
 @pytest.mark.unit
-def test_grayscale_pipeline_includes_grayscale_promotion(  # type: ignore
-    aug_cfg, img_size, grayscale_metadata
+def test_grayscale_pipeline_includes_grayscale_promotion(
+    aug_cfg: AugmentationConfig, img_size: int, grayscale_metadata: DatasetMetadata
 ) -> None:
     """Grayscale datasets must be promoted to 3 channels."""
     train_tf, val_tf = get_pipeline_transforms(aug_cfg, img_size, grayscale_metadata)
@@ -155,8 +157,8 @@ def test_grayscale_pipeline_includes_grayscale_promotion(  # type: ignore
 
 
 @pytest.mark.unit
-def test_normalization_stats_replicated_for_grayscale(  # type: ignore
-    aug_cfg, img_size, grayscale_metadata
+def test_normalization_stats_replicated_for_grayscale(
+    aug_cfg: AugmentationConfig, img_size: int, grayscale_metadata: DatasetMetadata
 ) -> None:
     """Grayscale mean/std should be replicated to 3 channels."""
     train_tf, _ = get_pipeline_transforms(aug_cfg, img_size, grayscale_metadata)
@@ -169,7 +171,7 @@ def test_normalization_stats_replicated_for_grayscale(  # type: ignore
 
 @pytest.mark.unit
 def test_grayscale_no_promotion_when_force_rgb_false(
-    aug_cfg: Any, img_size: Any, grayscale_metadata: Any
+    aug_cfg: AugmentationConfig, img_size: int, grayscale_metadata: DatasetMetadata
 ) -> None:
     """Grayscale with force_rgb=False keeps native 1-channel stats."""
     train_tf, val_tf = get_pipeline_transforms(
@@ -190,8 +192,11 @@ def test_grayscale_no_promotion_when_force_rgb_false(
 
 # TEST: PIPELINE EXECUTION (SMOKE TEST)
 @pytest.mark.unit
-def test_train_pipeline_executes_on_rgb_image(  # type: ignore
-    aug_cfg, img_size, rgb_metadata, dummy_image_rgb
+def test_train_pipeline_executes_on_rgb_image(
+    aug_cfg: AugmentationConfig,
+    img_size: int,
+    rgb_metadata: DatasetMetadata,
+    dummy_image_rgb: torch.Tensor,
 ) -> None:
     """Training pipeline should run end-to-end on RGB input."""
     train_tf, _ = get_pipeline_transforms(aug_cfg, img_size, rgb_metadata)
@@ -204,8 +209,11 @@ def test_train_pipeline_executes_on_rgb_image(  # type: ignore
 
 
 @pytest.mark.unit
-def test_val_pipeline_executes_on_grayscale_image(  # type: ignore
-    aug_cfg, img_size, grayscale_metadata, dummy_image_gray
+def test_val_pipeline_executes_on_grayscale_image(
+    aug_cfg: AugmentationConfig,
+    img_size: int,
+    grayscale_metadata: DatasetMetadata,
+    dummy_image_gray: torch.Tensor,
 ) -> None:
     """Validation pipeline should run end-to-end on Grayscale input."""
     _, val_tf = get_pipeline_transforms(aug_cfg, img_size, grayscale_metadata)
@@ -220,7 +228,7 @@ def test_val_pipeline_executes_on_grayscale_image(  # type: ignore
 # TEST: DOMAIN-AWARE AUGMENTATION
 @pytest.mark.unit
 def test_anatomical_disables_flip_and_rotation(
-    aug_cfg: Any, img_size: Any, rgb_metadata: Any
+    aug_cfg: AugmentationConfig, img_size: int, rgb_metadata: DatasetMetadata
 ) -> None:
     """Anatomical datasets should not have RandomHorizontalFlip or RandomRotation."""
     rgb_metadata.is_anatomical = True
@@ -233,7 +241,7 @@ def test_anatomical_disables_flip_and_rotation(
 
 @pytest.mark.unit
 def test_texture_based_disables_color_jitter(
-    aug_cfg: Any, img_size: Any, rgb_metadata: Any
+    aug_cfg: AugmentationConfig, img_size: int, rgb_metadata: DatasetMetadata
 ) -> None:
     """Texture-based datasets should not have ColorJitter."""
     rgb_metadata.is_texture_based = True
@@ -245,7 +253,7 @@ def test_texture_based_disables_color_jitter(
 
 @pytest.mark.unit
 def test_standard_dataset_has_all_augmentations(
-    aug_cfg: Any, img_size: Any, rgb_metadata: Any
+    aug_cfg: AugmentationConfig, img_size: int, rgb_metadata: DatasetMetadata
 ) -> None:
     """Non-anatomical, non-texture datasets should have full augmentations."""
     train_tf, _ = get_pipeline_transforms(aug_cfg, img_size, rgb_metadata)
@@ -258,7 +266,7 @@ def test_standard_dataset_has_all_augmentations(
 
 @pytest.mark.unit
 def test_anatomical_texture_minimal_augmentation(
-    aug_cfg: Any, img_size: Any, rgb_metadata: Any
+    aug_cfg: AugmentationConfig, img_size: int, rgb_metadata: DatasetMetadata
 ) -> None:
     """Anatomical + texture datasets get minimal augmentation (crop + normalize only)."""
     rgb_metadata.is_anatomical = True
@@ -274,7 +282,9 @@ def test_anatomical_texture_minimal_augmentation(
 
 
 @pytest.mark.unit
-def test_norm_mean_std_override(aug_cfg: Any, img_size: Any, grayscale_metadata: Any) -> None:
+def test_norm_mean_std_override(
+    aug_cfg: AugmentationConfig, img_size: int, grayscale_metadata: DatasetMetadata
+) -> None:
     """Pre-computed norm_mean/norm_std override local computation."""
     custom_mean = (0.1, 0.2, 0.3)
     custom_std = (0.4, 0.5, 0.6)
@@ -292,10 +302,14 @@ def test_norm_mean_std_override(aug_cfg: Any, img_size: Any, grayscale_metadata:
 
 
 @pytest.mark.unit
-def test_augmentation_description_anatomical(aug_cfg: Any, img_size: Any, mixup_alpha: Any) -> None:
+def test_augmentation_description_anatomical(
+    aug_cfg: AugmentationConfig, img_size: int, mixup_alpha: float
+) -> None:
     """Anatomical datasets should omit HFlip and Rotation from description."""
-    meta = SimpleNamespace(is_anatomical=True, is_texture_based=False)
-    descr = get_augmentations_description(aug_cfg, img_size, mixup_alpha, ds_meta=meta)  # type: ignore
+    meta = cast(DatasetMetadata, MagicMock(spec=DatasetMetadata))
+    meta.is_anatomical = True
+    meta.is_texture_based = False
+    descr = get_augmentations_description(aug_cfg, img_size, mixup_alpha, ds_meta=meta)
 
     assert "HFlip" not in descr
     assert "Rotation" not in descr
@@ -303,10 +317,14 @@ def test_augmentation_description_anatomical(aug_cfg: Any, img_size: Any, mixup_
 
 
 @pytest.mark.unit
-def test_augmentation_description_texture(aug_cfg: Any, img_size: Any, mixup_alpha: Any) -> None:
+def test_augmentation_description_texture(
+    aug_cfg: AugmentationConfig, img_size: int, mixup_alpha: float
+) -> None:
     """Texture-based datasets should omit Jitter from description."""
-    meta = SimpleNamespace(is_anatomical=False, is_texture_based=True)
-    descr = get_augmentations_description(aug_cfg, img_size, mixup_alpha, ds_meta=meta)  # type: ignore
+    meta = cast(DatasetMetadata, MagicMock(spec=DatasetMetadata))
+    meta.is_anatomical = False
+    meta.is_texture_based = True
+    descr = get_augmentations_description(aug_cfg, img_size, mixup_alpha, ds_meta=meta)
 
     assert "Jitter" not in descr
     assert "HFlip" in descr

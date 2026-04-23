@@ -10,12 +10,14 @@ from __future__ import annotations
 from collections.abc import Iterator
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Literal
+from typing import Any, Literal, cast
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
 import requests
 
+from orchard.core.metadata import DatasetMetadata
 from orchard.data_handler.dispatcher import (
     ensure_dataset_npz,
     load_dataset,
@@ -32,14 +34,14 @@ from orchard.exceptions import OrchardDatasetError
 
 # FIXTURES
 @pytest.fixture
-def metadata(tmp_path: Path) -> SimpleNamespace:
+def metadata(tmp_path: Path) -> DatasetMetadata:
     """Minimal DatasetMetadata stub."""
-    return SimpleNamespace(
-        name="test_medmnist",
-        url="https://example.com/fake.npz",
-        md5_checksum="correct_md5",
-        path=tmp_path / "dataset.npz",
-    )
+    m = MagicMock(spec=DatasetMetadata)
+    m.name = "test_medmnist"
+    m.url = "https://example.com/fake.npz"
+    m.md5_checksum = "correct_md5"
+    m.path = tmp_path / "dataset.npz"
+    return cast(DatasetMetadata, m)
 
 
 @pytest.fixture
@@ -126,20 +128,19 @@ def test_is_valid_npz_ioerror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
 # TEST: ensure_dataset_npz
 @pytest.mark.unit
 def test_ensure_dataset_npz_uses_existing_valid_file(
-    metadata: SimpleNamespace, valid_npz_file: Path, monkeypatch_md5: None
+    metadata: DatasetMetadata, valid_npz_file: Path, monkeypatch_md5: None
 ) -> None:
     """Existing valid dataset should not trigger download."""
     metadata.path.write_bytes(valid_npz_file.read_bytes())
 
-    path = ensure_dataset_npz(metadata)  # type: ignore[arg-type]
-
+    path = ensure_dataset_npz(metadata)
     assert path == metadata.path
     assert path.exists()
 
 
 @pytest.mark.unit
 def test_ensure_dataset_npz_downloads_when_missing(
-    metadata: SimpleNamespace,
+    metadata: DatasetMetadata,
     tmp_path: Path,
     monkeypatch_md5: None,
     monkeypatch: pytest.MonkeyPatch,
@@ -164,15 +165,14 @@ def test_ensure_dataset_npz_downloads_when_missing(
         fake_stream_download,
     )
 
-    path = ensure_dataset_npz(metadata, retries=1)  # type: ignore[arg-type]
-
+    path = ensure_dataset_npz(metadata, retries=1)
     assert path.exists()
     assert path.suffix == ".npz"
 
 
 @pytest.mark.unit
 def test_ensure_dataset_npz_removes_corrupted_file(
-    metadata: SimpleNamespace,
+    metadata: DatasetMetadata,
     tmp_path: Path,
     monkeypatch_md5: None,
     monkeypatch: pytest.MonkeyPatch,
@@ -199,15 +199,14 @@ def test_ensure_dataset_npz_removes_corrupted_file(
         fake_stream_download,
     )
 
-    path = ensure_dataset_npz(metadata, retries=1)  # type: ignore[arg-type]
-
+    path = ensure_dataset_npz(metadata, retries=1)
     assert path.exists()
     assert path.suffix == ".npz"
 
 
 @pytest.mark.unit
 def test_ensure_dataset_npz_md5_mismatch_raises_error(
-    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+    metadata: DatasetMetadata, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """MD5 mismatch should raise ValueError and retry."""
     call_count = {"count": 0}
@@ -243,14 +242,13 @@ def test_ensure_dataset_npz_md5_mismatch_raises_error(
     )
 
     with pytest.raises(OrchardDatasetError):
-        ensure_dataset_npz(metadata, retries=2, delay=0.01)  # type: ignore[arg-type]
-
+        ensure_dataset_npz(metadata, retries=2, delay=0.01)
     assert call_count["count"] == 2
 
 
 @pytest.mark.unit
 def test_ensure_dataset_npz_retries_and_fails(
-    metadata: Any, monkeypatch: pytest.MonkeyPatch
+    metadata: DatasetMetadata, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Repeated failures should raise RuntimeError."""
 
@@ -272,7 +270,9 @@ def test_ensure_dataset_npz_retries_and_fails(
 
 
 @pytest.mark.unit
-def test_ensure_dataset_npz_rate_limit_429(metadata: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ensure_dataset_npz_rate_limit_429(
+    metadata: DatasetMetadata, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Rate limit (429) should trigger exponential backoff."""
     call_count = {"count": 0}
     sleep_calls = []
@@ -307,7 +307,7 @@ def test_ensure_dataset_npz_rate_limit_429(metadata: Any, monkeypatch: pytest.Mo
 
 @pytest.mark.unit
 def test_ensure_dataset_npz_cleans_up_tmp_on_error(
-    metadata: SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    metadata: DatasetMetadata, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Temporary file should be cleaned up on download failure."""
     tmp_file_path = metadata.path.with_suffix(".tmp")
@@ -326,14 +326,13 @@ def test_ensure_dataset_npz_cleans_up_tmp_on_error(
     )
 
     with pytest.raises(OrchardDatasetError):
-        ensure_dataset_npz(metadata, retries=1, delay=0.01)  # type: ignore[arg-type]
-
+        ensure_dataset_npz(metadata, retries=1, delay=0.01)
     assert not tmp_file_path.exists()
 
 
 @pytest.mark.unit
 def test_ensure_dataset_npz_error_without_response_attribute(
-    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+    metadata: DatasetMetadata, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Error without response attribute should use normal delay."""
     sleep_calls = []
@@ -354,8 +353,7 @@ def test_ensure_dataset_npz_error_without_response_attribute(
     )
 
     with pytest.raises(OrchardDatasetError):
-        ensure_dataset_npz(metadata, retries=2, delay=2.0)  # type: ignore[arg-type]
-
+        ensure_dataset_npz(metadata, retries=2, delay=2.0)
     assert sleep_calls[0] == pytest.approx(2.0)
 
 
@@ -489,7 +487,7 @@ def test_stream_download_http_error(tmp_path: Path, monkeypatch: pytest.MonkeyPa
 # TEST: load_dataset
 @pytest.mark.unit
 def test_load_medmnist_rgb(
-    metadata: SimpleNamespace,
+    metadata: DatasetMetadata,
     valid_npz_file: Path,
     monkeypatch_md5: None,
     monkeypatch: pytest.MonkeyPatch,
@@ -503,8 +501,7 @@ def test_load_medmnist_rgb(
         lambda _: metadata.path,
     )
 
-    data = load_dataset(metadata)  # type: ignore[arg-type]
-
+    data = load_dataset(metadata)
     assert data.name == metadata.name
     assert data.is_rgb is True
     assert data.num_classes == 2
@@ -513,7 +510,7 @@ def test_load_medmnist_rgb(
 
 @pytest.mark.unit
 def test_load_medmnist_grayscale(
-    metadata: SimpleNamespace,
+    metadata: DatasetMetadata,
     tmp_path: Path,
     monkeypatch_md5: None,
     monkeypatch: pytest.MonkeyPatch,
@@ -538,15 +535,14 @@ def test_load_medmnist_grayscale(
         lambda _: path,
     )
 
-    data = load_dataset(metadata)  # type: ignore[arg-type]
-
+    data = load_dataset(metadata)
     assert data.is_rgb is False
     assert data.num_classes == 3
 
 
 @pytest.mark.unit
 def test_load_dataset_health_check_rgb(
-    metadata: SimpleNamespace,
+    metadata: DatasetMetadata,
     valid_npz_file: Path,
     monkeypatch_md5: None,
     monkeypatch: pytest.MonkeyPatch,
@@ -559,8 +555,7 @@ def test_load_dataset_health_check_rgb(
         lambda _: metadata.path,
     )
 
-    data = load_dataset_health_check(metadata, chunk_size=5)  # type: ignore[arg-type]
-
+    data = load_dataset_health_check(metadata, chunk_size=5)
     assert data.is_rgb is True
     assert data.num_classes == 2
     assert data.path == metadata.path
@@ -568,7 +563,7 @@ def test_load_dataset_health_check_rgb(
 
 @pytest.mark.unit
 def test_load_dataset_health_check_grayscale(
-    metadata: SimpleNamespace,
+    metadata: DatasetMetadata,
     tmp_path: Path,
     monkeypatch_md5: None,
     monkeypatch: pytest.MonkeyPatch,
@@ -593,15 +588,14 @@ def test_load_dataset_health_check_grayscale(
         lambda _: path,
     )
 
-    data = load_dataset_health_check(metadata, chunk_size=10)  # type: ignore[arg-type]
-
+    data = load_dataset_health_check(metadata, chunk_size=10)
     assert data.is_rgb is False
     assert data.num_classes == 10
 
 
 @pytest.mark.unit
 def test_load_dataset_health_check_small_chunk(
-    metadata: SimpleNamespace,
+    metadata: DatasetMetadata,
     tmp_path: Path,
     monkeypatch_md5: None,
     monkeypatch: pytest.MonkeyPatch,
@@ -628,8 +622,7 @@ def test_load_dataset_health_check_small_chunk(
         lambda _: path,
     )
 
-    data = load_dataset_health_check(metadata, chunk_size=3)  # type: ignore[arg-type]
-
+    data = load_dataset_health_check(metadata, chunk_size=3)
     assert data.num_classes == 2
 
 
@@ -651,9 +644,13 @@ def test_ensure_dataset_npz_cifar_routing(
         test_labels=np.zeros((3, 1), dtype=np.int64),
     )
 
-    cifar_metadata = SimpleNamespace(
+    cifar_metadata = DatasetMetadata(
         name=dataset_name,
         display_name=f"CIFAR-{dataset_name[-2:]}",
+        in_channels=3,
+        classes=["10"],
+        mean=(0.0, 0.0, 0.0),
+        std=(1.0, 1.0, 1.0),
         url="torchvision",
         md5_checksum="",
         path=target_npz,
@@ -668,8 +665,7 @@ def test_ensure_dataset_npz_cifar_routing(
         mock_ensure_cifar_npz,
     )
 
-    result = ensure_dataset_npz(cifar_metadata)  # type: ignore[arg-type]
-
+    result = ensure_dataset_npz(cifar_metadata)
     assert result == target_npz
 
 
@@ -690,7 +686,12 @@ def test_ensure_dataset_npz_galaxy10_converter_path(
         test_labels=np.zeros((3, 1), dtype=np.int64),
     )
 
-    galaxy10_metadata = SimpleNamespace(
+    galaxy10_metadata = DatasetMetadata(
+        display_name="Galaxy10",
+        in_channels=3,
+        mean=(0.0, 0.0, 0.0),
+        std=(1.0, 1.0, 1.0),
+        classes=["10"],
         name="galaxy10",
         url="https://example.com/galaxy10.h5",
         md5_checksum="test_md5",
@@ -706,8 +707,7 @@ def test_ensure_dataset_npz_galaxy10_converter_path(
         mock_ensure_galaxy10_npz,
     )
 
-    result = ensure_dataset_npz(galaxy10_metadata)  # type: ignore[arg-type]
-
+    result = ensure_dataset_npz(galaxy10_metadata)
     assert result == target_npz
 
 
@@ -849,7 +849,7 @@ def test_retry_delay_non_429_returns_base() -> None:
 
 @pytest.mark.unit
 def test_ensure_medmnist_npz_passes_url_to_stream_download(
-    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+    metadata: DatasetMetadata, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """_stream_download should receive metadata.url, not None."""
     received_urls: list[str] = []
@@ -869,13 +869,14 @@ def test_ensure_medmnist_npz_passes_url_to_stream_download(
         lambda _: "correct_md5",
     )
 
-    ensure_medmnist_npz(metadata, retries=1)  # type: ignore[arg-type]
-
+    ensure_medmnist_npz(metadata, retries=1)
     assert received_urls == ["https://example.com/fake.npz"]
 
 
 @pytest.mark.unit
-def test_ensure_medmnist_npz_mkdir_parents(metadata: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ensure_medmnist_npz_mkdir_parents(
+    metadata: DatasetMetadata, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Parent directory creation should use parents=True."""
     # Use a deeply nested path
     deep_path = metadata.path.parent / "sub" / "deep" / "dataset.npz"
@@ -903,7 +904,7 @@ def test_ensure_medmnist_npz_mkdir_parents(metadata: Any, monkeypatch: pytest.Mo
 
 @pytest.mark.unit
 def test_ensure_medmnist_npz_md5_mismatch_error_message(
-    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+    metadata: DatasetMetadata, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """MD5 mismatch should raise with specific error message."""
 
@@ -926,12 +927,12 @@ def test_ensure_medmnist_npz_md5_mismatch_error_message(
     )
 
     with pytest.raises(OrchardDatasetError, match="Could not download"):
-        ensure_medmnist_npz(metadata, retries=1, delay=0.01)  # type: ignore[arg-type]
+        ensure_medmnist_npz(metadata, retries=1, delay=0.01)
 
 
 @pytest.mark.unit
 def test_ensure_medmnist_npz_corrupted_file_warning(
-    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+    metadata: DatasetMetadata, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Corrupted file should log warning with the path."""
     metadata.path.parent.mkdir(parents=True, exist_ok=True)
@@ -965,13 +966,14 @@ def test_ensure_medmnist_npz_corrupted_file_warning(
         tracking_warning,
     )
 
-    ensure_medmnist_npz(metadata, retries=1)  # type: ignore[arg-type]
-
+    ensure_medmnist_npz(metadata, retries=1)
     assert any(str(metadata.path) in call for call in warning_calls)
 
 
 @pytest.mark.unit
-def test_ensure_medmnist_npz_retry_logging(metadata: Any, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ensure_medmnist_npz_retry_logging(
+    metadata: DatasetMetadata, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Retry warnings should include attempt number, total retries, error, and delay."""
     call_count = {"n": 0}
     warning_calls: list[str] = []
@@ -1011,7 +1013,7 @@ def test_ensure_medmnist_npz_retry_logging(metadata: Any, monkeypatch: pytest.Mo
 
 @pytest.mark.unit
 def test_ensure_medmnist_npz_final_failure_error_log(
-    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+    metadata: DatasetMetadata, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Final failure should log error with retry count and raise with dataset name."""
     error_calls: list[str] = []
@@ -1030,15 +1032,14 @@ def test_ensure_medmnist_npz_final_failure_error_log(
     )
 
     with pytest.raises(OrchardDatasetError, match="test_medmnist"):
-        ensure_medmnist_npz(metadata, retries=2, delay=0.01)  # type: ignore[arg-type]
-
+        ensure_medmnist_npz(metadata, retries=2, delay=0.01)
     combined = " ".join(error_calls)
     assert "2" in combined
 
 
 @pytest.mark.unit
 def test_ensure_medmnist_npz_md5_failure_error_log(
-    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+    metadata: DatasetMetadata, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """MD5 validation failure should log error with expected and actual MD5."""
     error_calls: list[str] = []
@@ -1066,8 +1067,7 @@ def test_ensure_medmnist_npz_md5_failure_error_log(
     )
 
     with pytest.raises(OrchardDatasetError):
-        ensure_medmnist_npz(metadata, retries=1, delay=0.01)  # type: ignore[arg-type]
-
+        ensure_medmnist_npz(metadata, retries=1, delay=0.01)
     combined = " ".join(error_calls)
     assert "correct_md5" in combined
     assert "bad_hash_xyz" in combined
@@ -1107,14 +1107,23 @@ def test_ensure_dataset_npz_routes_pennfudan(tmp_path: Path) -> None:
     """ensure_dataset_npz routes 'pennfudan' to ensure_pennfudan_npz."""
     from unittest.mock import patch
 
-    metadata = SimpleNamespace(name="pennfudan", path=tmp_path / "img.npz")
+    metadata = DatasetMetadata(
+        name="pennfudan",
+        display_name="PennFudan Pedestrian Detection",
+        path=tmp_path / "img.npz",
+        md5_checksum="",
+        url="https://example.com/pennfudan.zip",
+        classes=["background", "person"],
+        in_channels=3,
+        mean=(0.0, 0.0, 0.0),
+        std=(1.0, 1.0, 1.0),
+    )
 
     with patch(
         "orchard.data_handler.fetchers.ensure_pennfudan_npz",
         return_value=tmp_path / "img.npz",
     ) as mock_pf:
-        result = ensure_dataset_npz(metadata)  # type: ignore[arg-type]
-
+        result = ensure_dataset_npz(metadata)
     mock_pf.assert_called_once_with(metadata)
     assert result == tmp_path / "img.npz"
 
@@ -1131,19 +1140,24 @@ def test_load_and_inspect_detection_uses_metadata_num_classes(tmp_path: Path) ->
     npz_path = tmp_path / "images.npz"
     np.savez(npz_path, train_images=images)
 
-    metadata = SimpleNamespace(
+    metadata = DatasetMetadata(
         name="pennfudan",
+        display_name="PennFudan Pedestrian Detection",
+        md5_checksum="",
+        url="https://example.com/pennfudan.zip",
+        in_channels=3,
+        mean=(0.0, 0.0, 0.0),
+        std=(1.0, 1.0, 1.0),
         path=npz_path,
         annotation_path=tmp_path / "annotations.npz",
-        num_classes=1,
+        classes=["person"],
     )
 
     with patch(
         "orchard.data_handler.dispatcher.ensure_dataset_npz",
         return_value=npz_path,
     ):
-        result = _load_and_inspect(metadata)  # type: ignore[arg-type]
-
+        result = _load_and_inspect(metadata)
     assert result.num_classes == 1
     assert result.annotation_path == tmp_path / "annotations.npz"
     assert result.is_rgb is True
@@ -1154,7 +1168,7 @@ def test_load_and_inspect_detection_uses_metadata_num_classes(tmp_path: Path) ->
 
 @pytest.mark.unit
 def test_ensure_dataset_npz_default_retries_and_delay(
-    metadata: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+    metadata: DatasetMetadata, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Default retries=5 and delay=5.0 are forwarded to ensure_medmnist_npz."""
     captured: dict[str, Any] = {}
@@ -1167,8 +1181,7 @@ def test_ensure_dataset_npz_default_retries_and_delay(
     monkeypatch.setattr("orchard.data_handler.fetchers.ensure_medmnist_npz", fake_medmnist)
 
     # Call without explicit retries/delay so the defaults are used
-    ensure_dataset_npz(metadata)  # type: ignore[arg-type]
-
+    ensure_dataset_npz(metadata)
     # Kill mutmut_1: retries 5 → 6
     assert captured["retries"] == 5
     # Kill mutmut_2: delay 5.0 → 6.0
@@ -1177,7 +1190,7 @@ def test_ensure_dataset_npz_default_retries_and_delay(
 
 @pytest.mark.unit
 def test_load_and_inspect_passes_metadata_not_none(
-    metadata: SimpleNamespace,
+    metadata: DatasetMetadata,
     valid_npz_file: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1193,15 +1206,14 @@ def test_load_and_inspect_passes_metadata_not_none(
 
     monkeypatch.setattr("orchard.data_handler.dispatcher.ensure_dataset_npz", capturing_ensure)
 
-    _load_and_inspect(metadata)  # type: ignore[arg-type]
-
+    _load_and_inspect(metadata)
     # Kill mutmut_2: ensure_dataset_npz(metadata) → ensure_dataset_npz(None)
     assert called_with["meta"] is not None
 
 
 @pytest.mark.unit
 def test_load_and_inspect_4d_grayscale_is_not_rgb(
-    metadata: SimpleNamespace,
+    metadata: DatasetMetadata,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -1223,15 +1235,14 @@ def test_load_and_inspect_4d_grayscale_is_not_rgb(
         lambda _: path,
     )
 
-    data = load_dataset(metadata)  # type: ignore[arg-type]
-
+    data = load_dataset(metadata)
     # ndim==4 and shape[-1]==1: and→False, or→True
     assert data.is_rgb is False
 
 
 @pytest.mark.unit
 def test_load_dataset_health_check_default_chunk_size_is_100(
-    metadata: SimpleNamespace,
+    metadata: DatasetMetadata,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """load_dataset_health_check defaults chunk_size to 100 (not 101)."""
@@ -1245,7 +1256,6 @@ def test_load_dataset_health_check_default_chunk_size_is_100(
 
     monkeypatch.setattr("orchard.data_handler.dispatcher._load_and_inspect", fake_load_and_inspect)
 
-    load_dataset_health_check(metadata)  # type: ignore[arg-type]
-
+    load_dataset_health_check(metadata)
     # Kill mutmut_1: chunk_size 100 → 101
     assert captured["chunk_size"] == 100
