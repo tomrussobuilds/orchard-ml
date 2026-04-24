@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - rewrite test_dispatcher.py — remove type: ignore, kill dispatcher.py mutants 77.6%→95.5%
 - remove type: ignore from test_loader.py — add missing return types, kill 4 mutants 92.8%→92.9%
 - clean pragma style in synthetic.py and synthetic_detection.py — 94.1% / 79.6%
+- remove type: ignore from test_dispatcher.py and test_transforms.py — scores 95.5% / 91.6%
 
 ### Documentation
 

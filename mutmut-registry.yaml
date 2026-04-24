@@ -699,7 +699,7 @@ orchard/optimization/orchestrator/exporters.py:
   not_checked: 0
   score: 98.0
 orchard/optimization/orchestrator/orchestrator.py:
-  last_run: '2026-03-19T15:12:02Z'
+  last_run: '2026-04-24T11:31:57Z'
   total: 119
   killed: 114
   survived: 5

@@ -9,12 +9,14 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import cast
 from unittest.mock import MagicMock, patch
 
 import optuna
 import pytest
+import torch
 
+from orchard.core import Config, RunPaths
 from orchard.optimization._param_mapping import (
     PARAM_MAPPING,
     map_param_to_config_path,
@@ -37,11 +39,12 @@ from orchard.optimization.orchestrator.utils import (
     get_completed_trials,
     has_completed_trials,
 )
+from orchard.tracking import TrackerProtocol
 
 
 # FIXTURES
 @pytest.fixture
-def mock_cfg() -> None:
+def mock_cfg() -> MagicMock:
     """Minimal mock Config."""
     cfg = MagicMock()
     cfg.optuna.study_name = "test_study"
@@ -70,11 +73,11 @@ def mock_cfg() -> None:
             "augmentation": {},
         }
     )
-    return cfg  # type: ignore
+    return cfg
 
 
 @pytest.fixture
-def mock_paths(tmp_path: Path) -> None:
+def mock_paths(tmp_path: Path) -> MagicMock:
     """Mock RunPaths with temp dirs."""
     paths = MagicMock()
     paths.root = tmp_path
@@ -82,11 +85,11 @@ def mock_paths(tmp_path: Path) -> None:
     paths.figures = tmp_path / "figures"
     paths.reports.mkdir(exist_ok=True)
     paths.figures.mkdir(exist_ok=True)
-    return paths  # type: ignore
+    return paths
 
 
 @pytest.fixture
-def completed_trial() -> None:
+def completed_trial() -> MagicMock:
     """Real completed trial (not mock)."""
     trial = MagicMock()
     trial.state = optuna.trial.TrialState.COMPLETE
@@ -95,11 +98,11 @@ def completed_trial() -> None:
     trial.params = {"learning_rate": 0.001}
     trial.datetime_start = datetime(2024, 1, 1, 0, 0, 0)
     trial.datetime_complete = datetime(2024, 1, 1, 1, 0, 0)
-    return trial  # type: ignore
+    return trial
 
 
 @pytest.fixture
-def study_with_trials(completed_trial: Any) -> None:
+def study_with_trials(completed_trial: MagicMock) -> MagicMock:
     """Mock study with one completed trial."""
     study = MagicMock()
     study.study_name = "test"
@@ -108,7 +111,22 @@ def study_with_trials(completed_trial: Any) -> None:
     study.best_trial = completed_trial
     study.best_params = completed_trial.params
     study.best_value = completed_trial.value
-    return study  # type: ignore
+    return study
+
+
+def _make_orch(
+    mock_cfg: MagicMock,
+    mock_paths: MagicMock,
+    device: torch.device = torch.device("cpu"),
+    tracker: object | None = None,
+) -> OptunaOrchestrator:
+    """Wrap OptunaOrchestrator construction with the casts required by its typed API."""
+    return OptunaOrchestrator(
+        cfg=cast(Config, mock_cfg),
+        device=device,
+        paths=cast(RunPaths, mock_paths),
+        tracker=cast(TrackerProtocol, tracker) if tracker is not None else None,
+    )
 
 
 # UNIT TESTS: config.py
@@ -171,12 +189,12 @@ class TestBuilders:
 class TestUtils:
     """Test utility functions."""
 
-    def test_get_completed_trials(self, study_with_trials: Any) -> None:
+    def test_get_completed_trials(self, study_with_trials: MagicMock) -> None:
         """Test extracting completed trials."""
         completed = get_completed_trials(study_with_trials)
         assert len(completed) == 1
 
-    def test_has_completed_trials_true(self, study_with_trials: Any) -> None:
+    def test_has_completed_trials_true(self, study_with_trials: MagicMock) -> None:
         """Test has_completed_trials returns True."""
         assert has_completed_trials(study_with_trials) is True
 
@@ -192,7 +210,7 @@ class TestUtils:
 class TestExporters:
     """Test exporter functions."""
 
-    def test_trial_data_from_trial(self, completed_trial: Any) -> None:
+    def test_trial_data_from_trial(self, completed_trial: MagicMock) -> None:
         """Test building TrialData from trial."""
         data = TrialData.from_trial(completed_trial)
         assert data.number == 1
@@ -213,9 +231,9 @@ class TestOptunaOrchestrator:
 
     def test_init(self, mock_cfg: MagicMock, mock_paths: MagicMock) -> None:
         """Test orchestrator initialization."""
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         assert orch.cfg == mock_cfg
-        assert orch.device == "cpu"  # type: ignore
+        assert orch.device == torch.device("cpu")
         assert orch.paths == mock_paths
 
     @patch("optuna.create_study")
@@ -226,7 +244,7 @@ class TestOptunaOrchestrator:
         mock_study = MagicMock()
         mock_create.return_value = mock_study
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         study = orch.create_study()
 
         mock_create.assert_called_once()
@@ -243,23 +261,23 @@ class TestOptunaOrchestrator:
         study.direction = MagicMock()
         study.direction.name = "MAXIMIZE"
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         orch._post_optimization_processing(study)
 
         mock_export.assert_called_once()
 
     @patch("orchard.optimization.orchestrator.orchestrator.export_study_summary")
     @patch("orchard.optimization.orchestrator.orchestrator.export_top_trials")
-    def test_post_optimization_with_trials(  # type: ignore
+    def test_post_optimization_with_trials(
         self,
         mock_top_trials: MagicMock,
         mock_summary: MagicMock,
-        study_with_trials,
+        study_with_trials: MagicMock,
         mock_cfg: MagicMock,
         mock_paths: MagicMock,
     ) -> None:
         """Test post-optimization with completed trials."""
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         orch._post_optimization_processing(study_with_trials)
 
         mock_summary.assert_called_once()
@@ -288,7 +306,7 @@ class TestOptunaOrchestrator:
         mock_objective = MagicMock()
         mock_obj.return_value = mock_objective
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
 
         with patch.object(orch, "_post_optimization_processing"):
             result = orch.optimize()
@@ -313,10 +331,14 @@ class TestOptunaOrchestrator:
             run_optimization as run_opt,
         )
 
-        result = run_opt(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        result = run_opt(
+            cfg=cast(Config, mock_cfg),
+            device=torch.device("cpu"),
+            paths=cast(RunPaths, mock_paths),
+        )
 
         mock_orch_class.assert_called_once_with(
-            cfg=mock_cfg, device="cpu", paths=mock_paths, tracker=None
+            cfg=mock_cfg, device=torch.device("cpu"), paths=mock_paths, tracker=None
         )
         mock_orch.optimize.assert_called_once()
         assert result == mock_study
@@ -324,12 +346,12 @@ class TestOptunaOrchestrator:
     @patch("orchard.optimization.orchestrator.orchestrator.generate_visualizations")
     @patch("orchard.optimization.orchestrator.orchestrator.export_best_config")
     @patch("orchard.optimization.orchestrator.orchestrator.export_study_summary")
-    def test_post_optimization_with_save_plots_enabled(  # type: ignore
+    def test_post_optimization_with_save_plots_enabled(
         self,
         mock_export_summary: MagicMock,
         mock_export_best: MagicMock,
         mock_generate_viz: MagicMock,
-        study_with_trials,
+        study_with_trials: MagicMock,
         mock_cfg: MagicMock,
         mock_paths: MagicMock,
     ) -> None:
@@ -337,7 +359,7 @@ class TestOptunaOrchestrator:
         mock_cfg.optuna.save_plots = True
         mock_cfg.optuna.save_best_config = False
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         orch._post_optimization_processing(study_with_trials)
 
         mock_generate_viz.assert_called_once_with(study_with_trials, mock_paths.figures)
@@ -347,12 +369,12 @@ class TestOptunaOrchestrator:
     @patch("orchard.optimization.orchestrator.orchestrator.generate_visualizations")
     @patch("orchard.optimization.orchestrator.orchestrator.export_best_config")
     @patch("orchard.optimization.orchestrator.orchestrator.export_study_summary")
-    def test_post_optimization_with_save_best_config_enabled(  # type: ignore
+    def test_post_optimization_with_save_best_config_enabled(
         self,
         mock_export_summary: MagicMock,
         mock_export_best: MagicMock,
         mock_generate_viz: MagicMock,
-        study_with_trials,
+        study_with_trials: MagicMock,
         mock_cfg: MagicMock,
         mock_paths: MagicMock,
     ) -> None:
@@ -360,7 +382,7 @@ class TestOptunaOrchestrator:
         mock_cfg.optuna.save_plots = False
         mock_cfg.optuna.save_best_config = True
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         orch._post_optimization_processing(study_with_trials)
 
         mock_export_best.assert_called_once_with(study_with_trials, mock_cfg, mock_paths)
@@ -394,7 +416,7 @@ class TestOptunaOrchestrator:
 
         mock_study.optimize.side_effect = KeyboardInterrupt("User stopped")
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
 
         with patch.object(orch, "_post_optimization_processing") as mock_post:
             result = orch.optimize()
@@ -413,12 +435,12 @@ class TestOrchestratorMutationKillers:
     def test_init_stores_tracker(self, mock_cfg: MagicMock, mock_paths: MagicMock) -> None:
         """Verify tracker attribute is stored."""
         sentinel = object()
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths, tracker=sentinel)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths, tracker=sentinel)
         assert orch.tracker is sentinel
 
     def test_init_tracker_defaults_none(self, mock_cfg: MagicMock, mock_paths: MagicMock) -> None:
         """Verify tracker defaults to None."""
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         assert orch.tracker is None
 
     # create_study: verify exact kwargs passed to optuna.create_study
@@ -434,7 +456,7 @@ class TestOrchestratorMutationKillers:
         storage_sentinel = "sqlite:///test.db"
         mock_cfg.optuna.get_storage_url.return_value = storage_sentinel
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         orch.create_study()
 
         call_kwargs = mock_create.call_args[1]
@@ -452,7 +474,7 @@ class TestOrchestratorMutationKillers:
     ) -> None:
         """Verify get_storage_url is called with self.paths."""
         mock_create.return_value = MagicMock()
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         orch.create_study()
         mock_cfg.optuna.get_storage_url.assert_called_once_with(mock_paths)
 
@@ -480,7 +502,7 @@ class TestOrchestratorMutationKillers:
         mock_create.return_value = mock_study
         mock_obj.return_value = MagicMock()
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         with patch.object(orch, "_post_optimization_processing"):
             orch.optimize()
 
@@ -516,7 +538,7 @@ class TestOrchestratorMutationKillers:
         overrides_sentinel = MagicMock()
         mock_cfg.optuna.search_space_overrides = overrides_sentinel
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         with patch.object(orch, "_post_optimization_processing"):
             orch.optimize()
 
@@ -554,12 +576,8 @@ class TestOrchestratorMutationKillers:
         mock_obj_cls.return_value = MagicMock()
 
         tracker_sentinel = object()
-        import torch
-
         device = torch.device("cpu")
-        orch = OptunaOrchestrator(
-            cfg=mock_cfg, device=device, paths=mock_paths, tracker=tracker_sentinel  # type: ignore
-        )
+        orch = _make_orch(mock_cfg, mock_paths, device=device, tracker=tracker_sentinel)
         with patch.object(orch, "_post_optimization_processing"):
             orch.optimize()
 
@@ -592,7 +610,7 @@ class TestOrchestratorMutationKillers:
         mock_create.return_value = mock_study
         mock_obj.return_value = MagicMock()
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         with patch.object(orch, "_post_optimization_processing"):
             orch.optimize()
 
@@ -628,7 +646,7 @@ class TestOrchestratorMutationKillers:
         mock_task.early_stopping_thresholds = {"f1": 0.98}
         mock_get_task.return_value = mock_task
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         with patch.object(orch, "_post_optimization_processing"):
             orch.optimize()
 
@@ -662,7 +680,7 @@ class TestOrchestratorMutationKillers:
         mock_obj.return_value = MagicMock()
         mock_cfg.optuna.n_trials = 10
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         with patch.object(orch, "_post_optimization_processing"):
             orch.optimize()
 
@@ -698,7 +716,7 @@ class TestOrchestratorMutationKillers:
         mock_cfg.optuna.n_jobs = 2
         mock_cfg.optuna.show_progress_bar = True
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         with patch.object(orch, "_post_optimization_processing"):
             orch.optimize()
 
@@ -735,7 +753,7 @@ class TestOrchestratorMutationKillers:
         mock_create.return_value = mock_study
         mock_obj.return_value = MagicMock()
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         with patch.object(orch, "_post_optimization_processing"):
             orch.optimize()
 
@@ -766,7 +784,7 @@ class TestOrchestratorMutationKillers:
         mock_obj.return_value = MagicMock()
         mock_study.optimize.side_effect = KeyboardInterrupt
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         with patch.object(orch, "_post_optimization_processing") as mock_post:
             orch.optimize()
             mock_post.assert_called_once_with(mock_study)
@@ -792,7 +810,7 @@ class TestOrchestratorMutationKillers:
         mock_cfg.optuna.save_plots = True
         mock_cfg.optuna.save_best_config = True
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         orch._post_optimization_processing(study)
 
         mock_summary.assert_called_once_with(study, mock_paths)
@@ -805,13 +823,13 @@ class TestOrchestratorMutationKillers:
     @patch("orchard.optimization.orchestrator.orchestrator.export_top_trials")
     @patch("orchard.optimization.orchestrator.orchestrator.export_study_summary")
     @patch("orchard.optimization.orchestrator.orchestrator.generate_visualizations")
-    def test_post_with_trials_export_top_trials_args(  # type: ignore
+    def test_post_with_trials_export_top_trials_args(
         self,
         mock_viz: MagicMock,
         mock_summary: MagicMock,
         mock_top: MagicMock,
         mock_best: MagicMock,
-        study_with_trials,
+        study_with_trials: MagicMock,
         mock_cfg: MagicMock,
         mock_paths: MagicMock,
     ) -> None:
@@ -820,7 +838,7 @@ class TestOrchestratorMutationKillers:
         mock_cfg.optuna.save_best_config = False
         mock_cfg.training.monitor_metric = "balanced_accuracy"
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         orch._post_optimization_processing(study_with_trials)
 
         mock_top.assert_called_once_with(study_with_trials, mock_paths, "balanced_accuracy")
@@ -830,13 +848,13 @@ class TestOrchestratorMutationKillers:
     @patch("orchard.optimization.orchestrator.orchestrator.export_top_trials")
     @patch("orchard.optimization.orchestrator.orchestrator.export_study_summary")
     @patch("orchard.optimization.orchestrator.orchestrator.generate_visualizations")
-    def test_post_export_best_config_args(  # type: ignore
+    def test_post_export_best_config_args(
         self,
         mock_viz: MagicMock,
         mock_summary: MagicMock,
         mock_top: MagicMock,
         mock_best: MagicMock,
-        study_with_trials,
+        study_with_trials: MagicMock,
         mock_cfg: MagicMock,
         mock_paths: MagicMock,
     ) -> None:
@@ -844,7 +862,7 @@ class TestOrchestratorMutationKillers:
         mock_cfg.optuna.save_plots = False
         mock_cfg.optuna.save_best_config = True
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         orch._post_optimization_processing(study_with_trials)
 
         mock_best.assert_called_once_with(study_with_trials, mock_cfg, mock_paths)
@@ -854,13 +872,13 @@ class TestOrchestratorMutationKillers:
     @patch("orchard.optimization.orchestrator.orchestrator.export_top_trials")
     @patch("orchard.optimization.orchestrator.orchestrator.export_study_summary")
     @patch("orchard.optimization.orchestrator.orchestrator.generate_visualizations")
-    def test_post_viz_uses_figures_path(  # type: ignore
+    def test_post_viz_uses_figures_path(
         self,
         mock_viz: MagicMock,
         mock_summary: MagicMock,
         mock_top: MagicMock,
         mock_best: MagicMock,
-        study_with_trials,
+        study_with_trials: MagicMock,
         mock_cfg: MagicMock,
         mock_paths: MagicMock,
     ) -> None:
@@ -868,7 +886,7 @@ class TestOrchestratorMutationKillers:
         mock_cfg.optuna.save_plots = True
         mock_cfg.optuna.save_best_config = False
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         orch._post_optimization_processing(study_with_trials)
 
         mock_viz.assert_called_once_with(study_with_trials, mock_paths.figures)
@@ -878,13 +896,13 @@ class TestOrchestratorMutationKillers:
     @patch("orchard.optimization.orchestrator.orchestrator.export_top_trials")
     @patch("orchard.optimization.orchestrator.orchestrator.export_study_summary")
     @patch("orchard.optimization.orchestrator.orchestrator.generate_visualizations")
-    def test_post_summary_always_called_with_study_and_paths(  # type: ignore
+    def test_post_summary_always_called_with_study_and_paths(
         self,
         mock_viz: MagicMock,
         mock_summary: MagicMock,
         mock_top: MagicMock,
         mock_best: MagicMock,
-        study_with_trials,
+        study_with_trials: MagicMock,
         mock_cfg: MagicMock,
         mock_paths: MagicMock,
     ) -> None:
@@ -892,7 +910,7 @@ class TestOrchestratorMutationKillers:
         mock_cfg.optuna.save_plots = False
         mock_cfg.optuna.save_best_config = False
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         orch._post_optimization_processing(study_with_trials)
 
         mock_summary.assert_called_once_with(study_with_trials, mock_paths)
@@ -912,10 +930,18 @@ class TestOrchestratorMutationKillers:
         )
 
         tracker_sentinel = object()
-        run_opt(cfg=mock_cfg, device="cpu", paths=mock_paths, tracker=tracker_sentinel)  # type: ignore
+        run_opt(
+            cfg=cast(Config, mock_cfg),
+            device=torch.device("cpu"),
+            paths=cast(RunPaths, mock_paths),
+            tracker=cast(TrackerProtocol, tracker_sentinel),
+        )
 
         mock_orch_class.assert_called_once_with(
-            cfg=mock_cfg, device="cpu", paths=mock_paths, tracker=tracker_sentinel
+            cfg=mock_cfg,
+            device=torch.device("cpu"),
+            paths=mock_paths,
+            tracker=tracker_sentinel,
         )
 
     # optimize: verify the return value is always the study (even on interrupt)
@@ -943,7 +969,7 @@ class TestOrchestratorMutationKillers:
         mock_obj.return_value = MagicMock()
         mock_study.optimize.side_effect = KeyboardInterrupt
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         with patch.object(orch, "_post_optimization_processing"):
             result = orch.optimize()
 
@@ -974,7 +1000,7 @@ class TestOrchestratorMutationKillers:
         mock_obj.return_value = MagicMock()
         mock_study.optimize.side_effect = KeyboardInterrupt
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         with patch.object(orch, "_post_optimization_processing"):
             orch.optimize()
 
@@ -985,13 +1011,13 @@ class TestOrchestratorMutationKillers:
     @patch("orchard.optimization.orchestrator.orchestrator.export_top_trials")
     @patch("orchard.optimization.orchestrator.orchestrator.export_study_summary")
     @patch("orchard.optimization.orchestrator.orchestrator.generate_visualizations")
-    def test_post_both_flags_enabled(  # type: ignore
+    def test_post_both_flags_enabled(
         self,
         mock_viz: MagicMock,
         mock_summary: MagicMock,
         mock_top: MagicMock,
         mock_best: MagicMock,
-        study_with_trials,
+        study_with_trials: MagicMock,
         mock_cfg: MagicMock,
         mock_paths: MagicMock,
     ) -> None:
@@ -999,7 +1025,7 @@ class TestOrchestratorMutationKillers:
         mock_cfg.optuna.save_plots = True
         mock_cfg.optuna.save_best_config = True
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         orch._post_optimization_processing(study_with_trials)
 
         mock_viz.assert_called_once()
@@ -1012,13 +1038,13 @@ class TestOrchestratorMutationKillers:
     @patch("orchard.optimization.orchestrator.orchestrator.export_top_trials")
     @patch("orchard.optimization.orchestrator.orchestrator.export_study_summary")
     @patch("orchard.optimization.orchestrator.orchestrator.generate_visualizations")
-    def test_post_both_flags_disabled(  # type: ignore
+    def test_post_both_flags_disabled(
         self,
         mock_viz: MagicMock,
         mock_summary: MagicMock,
         mock_top: MagicMock,
         mock_best: MagicMock,
-        study_with_trials,
+        study_with_trials: MagicMock,
         mock_cfg: MagicMock,
         mock_paths: MagicMock,
     ) -> None:
@@ -1026,7 +1052,7 @@ class TestOrchestratorMutationKillers:
         mock_cfg.optuna.save_plots = False
         mock_cfg.optuna.save_best_config = False
 
-        orch = OptunaOrchestrator(cfg=mock_cfg, device="cpu", paths=mock_paths)  # type: ignore
+        orch = _make_orch(mock_cfg, mock_paths)
         orch._post_optimization_processing(study_with_trials)
 
         mock_viz.assert_not_called()
