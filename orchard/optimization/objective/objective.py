@@ -241,7 +241,7 @@ class OptunaObjective:
 
             class_weights = None
             if self.cfg.task_type == "classification" and trial_cfg.training.weighted_loss:
-                ds = cast(VisionDataset, train_loader.dataset)  # pragma: no mutate
+                ds = cast(VisionDataset, train_loader.dataset)
                 train_labels = ds.labels.flatten()
                 num_classes = self.config_builder.base_metadata.num_classes
                 class_weights = compute_class_weights(train_labels, num_classes, self.device)
@@ -280,13 +280,13 @@ class OptunaObjective:
             raise
 
         except Exception as e:  # must not crash study
-            logger.error(  # pragma: no mutate
+            logger.error(
                 "%s%s Trial %d failed: %s: %s",
                 LogStyle.INDENT,
                 LogStyle.FAILURE,
-                trial.number,  # pragma: no mutate
-                type(e).__name__,  # pragma: no mutate
-                e,  # pragma: no mutate
+                trial.number,
+                type(e).__name__,
+                e,
             )
             return self._worst_metric()
 
@@ -329,8 +329,8 @@ class OptunaObjective:
             float("inf") for minimize, -float("inf") for maximize.
         """
         if self.cfg.training.monitor_direction == "minimize":
-            return float("inf")  # pragma: no mutate
-        return -float("inf")  # pragma: no mutate
+            return float("inf")
+        return -float("inf")
 
     def _cleanup(self) -> None:
         """

@@ -8,13 +8,14 @@ coverage through isolated and deterministic unit tests.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import optuna
 import pytest
 import torch
 
+from orchard.core import LogStyle
 from orchard.optimization.objective import (
     MetricExtractor,
     OptunaObjective,
@@ -475,7 +476,6 @@ def test_optuna_objective_sample_params_object() -> None:
 @pytest.mark.unit
 def test_optuna_objective_call_with_pruning() -> None:
     """Test OptunaObjective.__call__ handles pruning correctly."""
-
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
@@ -500,23 +500,20 @@ def test_optuna_objective_call_with_pruning() -> None:
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     with (
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
-    ):
-        with patch(
+        patch(
             "orchard.optimization.objective.objective.TrialTrainingExecutor"
-        ) as mock_executor_cls:
-            mock_executor_instance = MagicMock()
-            mock_executor_instance.execute.side_effect = optuna.TrialPruned()
-            mock_executor_cls.return_value = mock_executor_instance
-
-            with pytest.raises(optuna.TrialPruned):
-                objective(mock_trial)
+        ) as mock_executor_cls,
+    ):
+        mock_executor_cls.return_value.execute.side_effect = optuna.TrialPruned()
+        with pytest.raises(optuna.TrialPruned):
+            objective(mock_trial)
 
 
 @pytest.mark.unit
@@ -544,29 +541,26 @@ def test_optuna_objective_call_cleanup_on_success() -> None:
         model_factory=mock_model_factory,
     )
 
-    objective._cleanup = MagicMock()  # type: ignore
-
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     with (
+        patch.object(objective, "_cleanup") as mock_cleanup,
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
-    ):
-        with patch(
+        patch(
             "orchard.optimization.objective.objective.TrialTrainingExecutor"
-        ) as mock_executor_cls:
-            mock_executor_instance = MagicMock()
-            mock_executor_instance.execute.return_value = 0.88
-            mock_executor_cls.return_value = mock_executor_instance
+        ) as mock_executor_cls,
+    ):
+        mock_executor_cls.return_value.execute.return_value = 0.88
 
-            result = objective(mock_trial)
+        result = objective(mock_trial)
 
-            objective._cleanup.assert_called_once()
-            assert result == pytest.approx(0.88)
+        mock_cleanup.assert_called_once()
+        assert result == pytest.approx(0.88)
 
 
 @pytest.mark.unit
@@ -595,29 +589,26 @@ def test_optuna_objective_call_returns_worst_metric_on_failure() -> None:
         model_factory=mock_model_factory,
     )
 
-    objective._cleanup = MagicMock()  # type: ignore
-
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     with (
+        patch.object(objective, "_cleanup") as mock_cleanup,
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
-    ):
-        with patch(
+        patch(
             "orchard.optimization.objective.objective.TrialTrainingExecutor"
-        ) as mock_executor_cls:
-            mock_executor_instance = MagicMock()
-            mock_executor_instance.execute.side_effect = RuntimeError("Training failed")
-            mock_executor_cls.return_value = mock_executor_instance
+        ) as mock_executor_cls,
+    ):
+        mock_executor_cls.return_value.execute.side_effect = RuntimeError("Training failed")
 
-            result = objective(mock_trial)
+        result = objective(mock_trial)
 
-            assert result == -float("inf")
-            objective._cleanup.assert_called_once()
+        assert result == -float("inf")
+        mock_cleanup.assert_called_once()
 
 
 @pytest.mark.unit
@@ -646,29 +637,26 @@ def test_optuna_objective_call_returns_inf_on_failure_minimize() -> None:
         model_factory=mock_model_factory,
     )
 
-    objective._cleanup = MagicMock()  # type: ignore
-
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     with (
+        patch.object(objective, "_cleanup") as mock_cleanup,
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
-    ):
-        with patch(
+        patch(
             "orchard.optimization.objective.objective.TrialTrainingExecutor"
-        ) as mock_executor_cls:
-            mock_executor_instance = MagicMock()
-            mock_executor_instance.execute.side_effect = RuntimeError("OOM")
-            mock_executor_cls.return_value = mock_executor_instance
+        ) as mock_executor_cls,
+    ):
+        mock_executor_cls.return_value.execute.side_effect = RuntimeError("OOM")
 
-            result = objective(mock_trial)
+        result = objective(mock_trial)
 
-            assert result == float("inf")
-            objective._cleanup.assert_called_once()
+        assert result == float("inf")
+        mock_cleanup.assert_called_once()
 
 
 @pytest.mark.unit
@@ -692,27 +680,26 @@ def test_optuna_objective_failed_trial_logs_worst_metric_to_tracker() -> None:
         model_factory=MagicMock(return_value=MagicMock()),
         tracker=mock_tracker,
     )
-    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 5
 
     with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
-    ):
-        with patch(
+        patch(
             "orchard.optimization.objective.objective.TrialTrainingExecutor"
-        ) as mock_executor_cls:
-            mock_executor_cls.return_value.execute.side_effect = RuntimeError("OOM")
-
-            result = objective(mock_trial)
+        ) as mock_executor_cls,
+    ):
+        mock_executor_cls.return_value.execute.side_effect = RuntimeError("OOM")
+        result = objective(mock_trial)
 
     assert result == -float("inf")
     mock_tracker.start_optuna_trial.assert_called_once()
@@ -745,29 +732,26 @@ def test_optuna_objective_call_reraises_trial_pruned() -> None:
         model_factory=mock_model_factory,
     )
 
-    objective._cleanup = MagicMock()  # type: ignore
-
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     with (
+        patch.object(objective, "_cleanup") as mock_cleanup,
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
-    ):
-        with patch(
+        patch(
             "orchard.optimization.objective.objective.TrialTrainingExecutor"
-        ) as mock_executor_cls:
-            mock_executor_instance = MagicMock()
-            mock_executor_instance.execute.side_effect = optuna.TrialPruned()
-            mock_executor_cls.return_value = mock_executor_instance
+        ) as mock_executor_cls,
+    ):
+        mock_executor_cls.return_value.execute.side_effect = optuna.TrialPruned()
 
-            with pytest.raises(optuna.TrialPruned):
-                objective(mock_trial)
+        with pytest.raises(optuna.TrialPruned):
+            objective(mock_trial)
 
-            objective._cleanup.assert_called_once()
+        mock_cleanup.assert_called_once()
 
 
 @pytest.mark.unit
@@ -802,36 +786,33 @@ def test_optuna_objective_call_builds_trial_config() -> None:
     )
 
     mock_trial_cfg = MagicMock()
-    objective.config_builder.build = MagicMock(return_value=mock_trial_cfg)  # type: ignore
+    mock_trial_cfg.training.weighted_loss = False
 
     with (
+        patch.object(objective.config_builder, "build", return_value=mock_trial_cfg) as mock_build,
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
         patch("orchard.optimization.objective.objective.log_trial_start"),
-    ):
-        with patch(
+        patch(
             "orchard.optimization.objective.objective.TrialTrainingExecutor"
-        ) as mock_executor_cls:
-            mock_executor_instance = MagicMock()
-            mock_executor_instance.execute.return_value = 0.92
-            mock_executor_cls.return_value = mock_executor_instance
+        ) as mock_executor_cls,
+    ):
+        mock_executor_cls.return_value.execute.return_value = 0.92
 
-            objective(mock_trial)
+        objective(mock_trial)
 
-            objective.config_builder.build.assert_called_once_with(
-                {"learning_rate": 0.005, "dropout": 0.4}
-            )
+        mock_build.assert_called_once_with({"learning_rate": 0.005, "dropout": 0.4})
 
-            mock_dataloader_factory.assert_called_once_with(
-                objective.dataset_data,
-                mock_trial_cfg.dataset,
-                mock_trial_cfg.training,
-                mock_trial_cfg.augmentation,
-                mock_trial_cfg.num_workers,
-                is_optuna=True,
-                task_type=mock_trial_cfg.task_type,
-            )
+        mock_dataloader_factory.assert_called_once_with(
+            objective.dataset_data,
+            mock_trial_cfg.dataset,
+            mock_trial_cfg.training,
+            mock_trial_cfg.augmentation,
+            mock_trial_cfg.num_workers,
+            is_optuna=True,
+            task_type=mock_trial_cfg.task_type,
+        )
 
 
 # CLEANUP METHOD TESTS
@@ -1081,16 +1062,17 @@ def test_objective_call_resets_metric_extractor() -> None:
         dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
         model_factory=MagicMock(return_value=MagicMock()),
     )
-    objective._cleanup = MagicMock()  # type: ignore
     objective.metric_extractor = MagicMock()
+
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 0
 
     with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
@@ -1124,15 +1106,16 @@ def test_objective_call_log_params_includes_pretrained() -> None:
         dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
         model_factory=MagicMock(return_value=MagicMock()),
     )
-    objective._cleanup = MagicMock()  # type: ignore
+
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 1
 
     with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
@@ -1167,10 +1150,10 @@ def test_objective_tracker_end_with_best_metric_on_success() -> None:
         model_factory=MagicMock(return_value=MagicMock()),
         tracker=mock_tracker,
     )
-    objective._cleanup = MagicMock()  # type: ignore
+
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
+
     mock_trial = MagicMock()
     mock_trial.number = 0
 
@@ -1180,6 +1163,8 @@ def test_objective_tracker_end_with_best_metric_on_success() -> None:
         return 0.95
 
     with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
@@ -1232,7 +1217,9 @@ def test_objective_worst_metric_minimize() -> None:
 
 @pytest.mark.unit
 def test_objective_weighted_loss_calls_compute_class_weights() -> None:
-    """Verify compute_class_weights is called when weighted_loss=True."""
+    """Verify compute_class_weights is called with exact (labels, num_classes, device)."""
+    import numpy as np
+
     mock_cfg = MagicMock()
     mock_cfg.task_type = "classification"
     mock_cfg.optuna.epochs = 10
@@ -1241,40 +1228,58 @@ def test_objective_weighted_loss_calls_compute_class_weights() -> None:
     mock_cfg.dataset._ensure_metadata = MagicMock()
     mock_cfg.dataset._ensure_metadata.num_classes = 5
 
-    import numpy as np
-
+    expected_labels = np.array([0, 1, 2, 3, 4])
     mock_train_loader = MagicMock()
-    mock_train_loader.dataset.labels.flatten.return_value = np.array([0, 1, 2, 3, 4])
+    mock_train_loader.dataset.labels.flatten.return_value = expected_labels
+    mock_returned_weights = MagicMock(name="class_weights_tensor")
 
+    device = torch.device("cpu")
     objective = OptunaObjective(
         cfg=mock_cfg,
         search_space={},
-        device=torch.device("cpu"),
+        device=device,
         dataset_loader=MagicMock(return_value=MagicMock()),
         dataloader_factory=MagicMock(return_value=(mock_train_loader, MagicMock(), MagicMock())),
         model_factory=MagicMock(return_value=MagicMock()),
     )
-    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = True
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 0
 
+    mock_task = MagicMock()
     with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
-        patch("orchard.optimization.objective.objective.get_task"),
+        patch("orchard.optimization.objective.objective.get_task", return_value=mock_task),
         patch("orchard.optimization.objective.objective.log_trial_start"),
-        patch("orchard.optimization.objective.objective.compute_class_weights") as mock_cw,
+        patch(
+            "orchard.optimization.objective.objective.compute_class_weights",
+            return_value=mock_returned_weights,
+        ) as mock_cw,
         patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec,
     ):
         mock_exec.return_value.execute.return_value = 0.9
         objective(mock_trial)
 
+    # Verify compute_class_weights called with EXACT positional args.
+    # Kills mutmut_64, 65, 67, 68, 69, 70, 71 on compute_class_weights call.
     mock_cw.assert_called_once()
+    pos_args = mock_cw.call_args[0]
+    assert len(pos_args) == 3
+    np.testing.assert_array_equal(pos_args[0], expected_labels)
+    assert pos_args[1] == 5
+    assert pos_args[2] == device
+
+    # Verify resulting class_weights is forwarded to criterion factory.
+    # Kills mutmut_54 (None → "") and weighted_loss path of mutmut_75 (class_weights=None).
+    mock_task.criterion_factory.get_criterion.assert_called_once_with(
+        _mock_trial_cfg.training, class_weights=mock_returned_weights
+    )
 
 
 @pytest.mark.unit
@@ -1298,16 +1303,16 @@ def test_objective_non_classification_skips_class_weights() -> None:
         dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
         model_factory=MagicMock(return_value=MagicMock()),
     )
-    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = True
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 0
 
     with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
@@ -1390,46 +1395,59 @@ def test_call_passes_correct_kwargs_to_executor() -> None:
     mock_optimizer = MagicMock()
     mock_scheduler = MagicMock()
     mock_criterion = MagicMock()
+    mock_task = MagicMock()
+    mock_task.criterion_factory.get_criterion.return_value = mock_criterion
 
+    device = torch.device("cpu")
     objective = OptunaObjective(
         cfg=mock_cfg,
         search_space={},
-        device=torch.device("cpu"),
+        device=device,
         dataset_loader=MagicMock(return_value=MagicMock()),
         dataloader_factory=MagicMock(
             return_value=(mock_train_loader, mock_val_loader, MagicMock())
         ),
         model_factory=MagicMock(return_value=mock_model),
     )
-    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 0
 
     with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
         patch(
             "orchard.optimization.objective.objective.get_optimizer", return_value=mock_optimizer
-        ),
+        ) as mock_get_opt,
         patch(
             "orchard.optimization.objective.objective.get_scheduler", return_value=mock_scheduler
-        ),
-        patch(
-            "orchard.optimization.objective.objective.get_task",
-            return_value=MagicMock(
-                criterion_factory=MagicMock(get_criterion=MagicMock(return_value=mock_criterion))
-            ),
-        ),
+        ) as mock_get_sched,
+        patch("orchard.optimization.objective.objective.get_task", return_value=mock_task),
         patch("orchard.optimization.objective.objective.log_trial_start"),
         patch("orchard.optimization.objective.objective.TrialTrainingExecutor") as mock_exec_cls,
     ):
         mock_exec_cls.return_value.execute.return_value = 0.9
         objective(mock_trial)
 
-    # Verify TrialTrainingExecutor was constructed with correct kwargs
+    # Kills mutmut_43, 44, 45 (get_optimizer arg None / drop)
+    mock_get_opt.assert_called_once_with(mock_model, _mock_trial_cfg.training)
+
+    # Kills mutmut_48, 49, 50 (get_scheduler arg None / drop)
+    mock_get_sched.assert_called_once_with(mock_optimizer, _mock_trial_cfg.training)
+
+    # Kills mutmut_74, 75, 76 (criterion get_criterion arg None / drop)
+    mock_task.criterion_factory.get_criterion.assert_called_once_with(
+        _mock_trial_cfg.training, class_weights=None
+    )
+
+    # Kills mutmut_110 (executor.execute(None))
+    mock_exec_cls.return_value.execute.assert_called_once_with(mock_trial)
+
+    # Verify TrialTrainingExecutor was constructed with correct kwargs.
+    # Kills mutmut_87 (log_interval=None) and mutmut_99 (log_interval dropped).
     call_kwargs = mock_exec_cls.call_args[1]
     assert call_kwargs["model"] is mock_model
     assert call_kwargs["train_loader"] is mock_train_loader
@@ -1437,13 +1455,17 @@ def test_call_passes_correct_kwargs_to_executor() -> None:
     assert call_kwargs["optimizer"] is mock_optimizer
     assert call_kwargs["scheduler"] is mock_scheduler
     assert call_kwargs["criterion"] is mock_criterion
-    assert call_kwargs["device"] == torch.device("cpu")
+    assert call_kwargs["device"] is device
     assert call_kwargs["metric_extractor"] is objective.metric_extractor
     assert call_kwargs["training"] is _mock_trial_cfg.training
     assert call_kwargs["optuna"] is _mock_trial_cfg.optuna
+    assert call_kwargs["log_interval"] is _mock_trial_cfg.telemetry.log_interval
+
+    # Kills mutmut_105, 108 (fallback_metrics=None / dropped)
     adapters = call_kwargs["task_adapters"]
-    assert adapters.training_step is not None
-    assert adapters.validation_metrics is not None
+    assert adapters.training_step is mock_task.training_step
+    assert adapters.validation_metrics is mock_task.validation_metrics
+    assert adapters.fallback_metrics is mock_task.fallback_metrics
 
 
 @pytest.mark.unit
@@ -1468,13 +1490,16 @@ def test_call_uses_task_registry_for_criterion() -> None:
         dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
         model_factory=MagicMock(return_value=MagicMock()),
     )
-    objective._cleanup = MagicMock()  # type: ignore
-    objective.config_builder.build = MagicMock(return_value=MagicMock(training=mock_cfg.training))  # type: ignore
+
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training = mock_cfg.training
 
     mock_trial = MagicMock()
     mock_trial.number = 0
 
     with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch(
@@ -1512,16 +1537,16 @@ def test_call_log_trial_start_receives_correct_args() -> None:
         dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
         model_factory=MagicMock(return_value=MagicMock()),
     )
-    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 7
 
     with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
@@ -1540,7 +1565,14 @@ def test_call_log_trial_start_receives_correct_args() -> None:
 
 @pytest.mark.unit
 def test_call_tracker_not_called_on_failure() -> None:
-    """Verify tracker.end_optuna_trial gets worst metric when trial fails."""
+    """Verify tracker.end_optuna_trial gets worst metric (not best) when trial fails.
+
+    Kills mutmut_18: trial_succeeded=False → True at init. With the mutation, the
+    finally clause would route to ``end_optuna_trial(best_metric)`` instead of
+    ``end_optuna_trial(_worst_metric())``. Patching ``_worst_metric`` to a sentinel
+    value (-99.0) distinct from the default ``best_metric`` (-inf) makes the two
+    branches observable.
+    """
     mock_cfg = MagicMock()
     mock_cfg.training.monitor_direction = "maximize"
     mock_cfg.training.monitor_metric = "auc"
@@ -1557,22 +1589,28 @@ def test_call_tracker_not_called_on_failure() -> None:
         model_factory=MagicMock(),
         tracker=mock_tracker,
     )
-    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 0
 
-    with patch("orchard.optimization.objective.objective.log_trial_start"):
+    sentinel_worst = -99.0
+    with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
+        patch.object(objective, "_worst_metric", return_value=sentinel_worst),
+        patch("orchard.optimization.objective.objective.log_trial_start"),
+    ):
         result = objective(mock_trial)
 
-    # Failed trial returns worst metric
-    assert result == -float("inf")
-    # Tracker gets worst metric (not best)
-    mock_tracker.end_optuna_trial.assert_called_once_with(-float("inf"))
+    # Failed trial returns the sentinel worst metric
+    assert result == sentinel_worst
+    # Finally branch goes to else (trial_succeeded=False) → end_optuna_trial(_worst_metric())
+    # If mutmut_18 flips trial_succeeded to True at init, tracker would receive best_metric
+    # (-inf by default) instead of the sentinel.
+    mock_tracker.end_optuna_trial.assert_called_once_with(sentinel_worst)
 
 
 @pytest.mark.unit
@@ -1593,16 +1631,16 @@ def test_call_dataloader_factory_receives_is_optuna() -> None:
         dataloader_factory=mock_factory,
         model_factory=MagicMock(return_value=MagicMock()),
     )
-    objective._cleanup = MagicMock()  # type: ignore
 
     _mock_trial_cfg = MagicMock()
     _mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=_mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 0
 
     with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
@@ -1631,7 +1669,7 @@ def test_call_dataloader_factory_receives_is_optuna() -> None:
 
 
 def _make_objective_with_tracker() -> tuple[OptunaObjective, MagicMock, MagicMock]:
-    """Helper: build OptunaObjective with mock tracker + mock trial cfg."""
+    """Helper: build OptunaObjective with mock tracker."""
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
@@ -1649,11 +1687,6 @@ def _make_objective_with_tracker() -> tuple[OptunaObjective, MagicMock, MagicMoc
         model_factory=MagicMock(return_value=MagicMock()),
         tracker=mock_tracker,
     )
-    objective._cleanup = MagicMock()  # type: ignore
-
-    mock_trial_cfg = MagicMock()
-    mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 1
@@ -1666,7 +1699,12 @@ def test_successful_trial_sends_best_metric_to_tracker() -> None:
     """Kill mutmut_17/18: trial_succeeded=True → end_optuna_trial(best_metric)."""
     objective, mock_tracker, mock_trial = _make_objective_with_tracker()
 
+    mock_trial_cfg = MagicMock()
+    mock_trial_cfg.training.weighted_loss = False
+
     with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
@@ -1684,10 +1722,22 @@ def test_successful_trial_sends_best_metric_to_tracker() -> None:
 
 @pytest.mark.unit
 def test_pruned_trial_sends_best_metric_to_tracker() -> None:
-    """Kill mutmut_100/101: trial_succeeded=True after pruning → end_optuna_trial(best_metric)."""
+    """Kill mutmut_113/114: trial_succeeded=True after pruning → end_optuna_trial(best_metric).
+
+    Patches ``_worst_metric`` to a sentinel distinct from default ``best_metric`` so
+    that mutating ``trial_succeeded = True`` to ``None``/``False`` (which routes to
+    the else branch and calls ``_worst_metric()``) becomes observable.
+    """
     objective, mock_tracker, mock_trial = _make_objective_with_tracker()
 
+    mock_trial_cfg = MagicMock()
+    mock_trial_cfg.training.weighted_loss = False
+
+    sentinel_worst = -99.0
     with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=mock_trial_cfg),
+        patch.object(objective, "_worst_metric", return_value=sentinel_worst),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
@@ -1701,8 +1751,11 @@ def test_pruned_trial_sends_best_metric_to_tracker() -> None:
         with pytest.raises(optuna.TrialPruned):
             objective(mock_trial)
 
-    # Pruned but trial_succeeded=True → best_metric, not worst
+    # Pruned but trial_succeeded=True → if branch → best_metric (-inf default).
+    # If mutated to None/False, tracker would receive sentinel_worst (-99.0).
     mock_tracker.end_optuna_trial.assert_called_once_with(objective.metric_extractor.best_metric)
+    called_value = mock_tracker.end_optuna_trial.call_args[0][0]
+    assert called_value != sentinel_worst
 
 
 @pytest.mark.unit
@@ -1724,16 +1777,16 @@ def test_call_passes_exact_args_to_model_factory() -> None:
         dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
         model_factory=mock_model_factory,
     )
-    objective._cleanup = MagicMock()  # type: ignore
 
     mock_trial_cfg = MagicMock()
     mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 1
 
     with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
@@ -1769,16 +1822,16 @@ def test_call_passes_trial_to_sample_params() -> None:
         dataloader_factory=MagicMock(return_value=(MagicMock(), MagicMock(), MagicMock())),
         model_factory=MagicMock(return_value=MagicMock()),
     )
-    objective._cleanup = MagicMock()  # type: ignore
 
     mock_trial_cfg = MagicMock()
     mock_trial_cfg.training.weighted_loss = False
-    objective.config_builder.build = MagicMock(return_value=mock_trial_cfg)  # type: ignore
 
     mock_trial = MagicMock()
     mock_trial.number = 1
 
     with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=mock_trial_cfg),
         patch("orchard.optimization.objective.objective.get_optimizer"),
         patch("orchard.optimization.objective.objective.get_scheduler"),
         patch("orchard.optimization.objective.objective.get_task"),
@@ -1796,34 +1849,95 @@ def test_call_passes_trial_to_sample_params() -> None:
 
 @pytest.mark.unit
 def test_sample_params_hasattr_exact_string() -> None:
-    """Kill mutmut_5 in _sample_params: hasattr checks exact 'sample_params'."""
+    """Kill mutmut_5/6 in _sample_params: hasattr checks the EXACT string ``sample_params``.
+
+    MagicMock makes ``hasattr(mock, "anything")`` return True, so name-mutations
+    like ``"XXsample_paramsXX"`` and ``"SAMPLE_PARAMS"`` survive against mocks.
+    Using a real class (which only exposes the literal ``sample_params`` attr)
+    forces the mutated lookup to fall through to the dict branch and crash
+    (no ``items()``), making the mutation observable.
+    """
+
+    class RealSearchSpace:
+        def sample_params(self, trial: object) -> dict[str, float]:
+            return {"lr": 0.01, "dropout": 0.3}
+
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
     mock_cfg.training.monitor_metric = "auc"
     mock_cfg.dataset._ensure_metadata = MagicMock()
 
-    # Object WITHOUT sample_params → falls back to dict iteration
-    search_space_no_method: dict[str, Any] = {"lr": MagicMock(return_value=0.01)}
-
     objective = OptunaObjective(
         cfg=mock_cfg,
-        search_space=search_space_no_method,
+        # OptunaObjective is annotated for Mapping but duck-types via hasattr;
+        # the cast keeps the test honest about the runtime contract.
+        search_space=cast("Any", RealSearchSpace()),
         device=torch.device("cpu"),
         dataset_loader=MagicMock(return_value=MagicMock()),
     )
 
     mock_trial = MagicMock()
     result = objective._sample_params(mock_trial)
-    assert "lr" in result
 
-    # Object WITH sample_params → uses it
-    mock_search_space = MagicMock()
-    mock_search_space.sample_params.return_value = {"lr": 0.001}
-    objective.search_space = mock_search_space
+    # Original: hasattr(real_obj, "sample_params") is True → returns real dict.
+    # Mutated to "XXsample_paramsXX"/"SAMPLE_PARAMS": hasattr is False → fallback
+    # tries real_obj.items() and crashes with AttributeError → mutant killed.
+    assert result == {"lr": 0.01, "dropout": 0.3}
 
+    # Sanity: dict fallback also works (covers the other branch)
+    objective.search_space = {"lr": MagicMock(return_value=0.001)}
     result2 = objective._sample_params(mock_trial)
     assert result2 == {"lr": 0.001}
-    mock_search_space.sample_params.assert_called_once_with(mock_trial)
+
+
+@pytest.mark.unit
+def test_call_logger_error_args_on_failure() -> None:
+    """Verify ``logger.error`` is called with the EXACT format args on trial failure.
+
+    Kills mutmut_115-119 (positional args replaced with None) and mutmut_120-125
+    (positional arg drops + ``type(None).__name__``). The patched mutmut entry
+    point auto-skips string-literal mutations on logging calls, so only the
+    non-string args remain mutable here.
+    """
+    mock_cfg = MagicMock()
+    mock_cfg.training.monitor_direction = "maximize"
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    boom_error = RuntimeError("boom")
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(side_effect=boom_error),
+        model_factory=MagicMock(),
+    )
+
+    _mock_trial_cfg = MagicMock()
+    _mock_trial_cfg.training.weighted_loss = False
+
+    mock_trial = MagicMock()
+    mock_trial.number = 42
+
+    with (
+        patch.object(objective, "_cleanup"),
+        patch.object(objective.config_builder, "build", return_value=_mock_trial_cfg),
+        patch("orchard.optimization.objective.objective.log_trial_start"),
+        patch("orchard.optimization.objective.objective.logger") as mock_logger,
+    ):
+        objective(mock_trial)
+
+    mock_logger.error.assert_called_once()
+    call_args = mock_logger.error.call_args[0]
+    assert len(call_args) == 6  # format string + 5 args (kills arg-drop mutants)
+    assert call_args[0] == "%s%s Trial %d failed: %s: %s"
+    assert call_args[1] is LogStyle.INDENT  # kills mutmut_115 (None)
+    assert call_args[2] is LogStyle.FAILURE  # kills mutmut_116 (None)
+    assert call_args[3] == 42  # trial.number — kills mutmut_117 (None)
+    assert call_args[4] == "RuntimeError"  # type(e).__name__ — kills mutmut_118, 125
+    assert call_args[5] is boom_error  # e — kills mutmut_119 (None)
 
 
 if __name__ == "__main__":

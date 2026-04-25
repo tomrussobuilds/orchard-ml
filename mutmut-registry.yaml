@@ -664,12 +664,12 @@ orchard/optimization/objective/metric_extractor.py:
   not_checked: 0
   score: 82.9
 orchard/optimization/objective/objective.py:
-  last_run: '2026-03-27T20:39:01Z'
-  total: 149
-  killed: 116
-  survived: 33
+  last_run: '2026-04-25T19:03:35Z'
+  total: 175
+  killed: 167
+  survived: 8
   not_checked: 0
-  score: 77.9
+  score: 95.4
 orchard/optimization/objective/training_executor.py:
   last_run: '2026-03-23T14:54:17Z'
   total: 140
