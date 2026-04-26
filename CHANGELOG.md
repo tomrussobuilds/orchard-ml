@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - clean pragma style in synthetic.py and synthetic_detection.py — 94.1% / 79.6%
 - remove type: ignore from test_dispatcher.py and test_transforms.py — scores 95.5% / 91.6%
 - remove type: ignore from test_orchestrator.py — 48 annotations
+- clean stray pragmas + strengthen tests — 77.9%→95.4%
 
 ### Documentation
 
