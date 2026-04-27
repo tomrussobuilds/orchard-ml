@@ -310,11 +310,22 @@ sed -i 's/prefix = f"_{class_name}_{method_name}"/prefix = f"_mutmut_{class_name
 
 ---
 
-<h2>conftest Helper</h2>
+<h2>Pending Issue: env scrubbing wipes `MUTANT_UNDER_TEST`</h2>
 
 When tests use `patch.dict(os.environ, ..., clear=True)`, mutmut v3
-trampolines break because `MUTANT_UNDER_TEST` is wiped. Use the
-`mutmut_safe_env()` helper from `tests/conftest.py`:
+trampolines break because `MUTANT_UNDER_TEST` is wiped from the environment.
+Mutants reachable only through such tests are falsely reported as `survived`,
+silently lowering the mutation score (measured impact on
+`orchard/core/environment/hardware.py`: 19 false survivors, 85.7 % vs. the
+true 97.0 %).
+
+**Status:** reported upstream as
+[boxed/mutmut#511](https://github.com/boxed/mutmut/issues/511) with two
+proposed fixes (sticky cache vs. import-time cache, both verified locally).
+Awaiting maintainer review.
+
+**Workaround:** use the `mutmut_safe_env()` helper from `tests/conftest.py`,
+which re-injects `MUTANT_UNDER_TEST` into the patched env:
 
 ```python
 from tests.conftest import mutmut_safe_env
@@ -323,5 +334,8 @@ def test_something():
     with patch.dict(os.environ, mutmut_safe_env(MY_VAR="1"), clear=True):
         ...
 ```
+
+Once the upstream fix lands, the helper can be removed and every
+`mutmut_safe_env(...)` call replaced with a plain dict literal.
 
 ---
