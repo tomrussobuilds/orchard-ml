@@ -918,6 +918,25 @@ class TestCLIInitDetection:
         assert data["training"]["monitor_metric"] == "map"
         assert "export" not in data
 
+    def test_apply_detection_defaults_resets_label_smoothing(self) -> None:
+        """The override must reset label_smoothing to 0.0 even if the seed is non-zero.
+
+        Tested directly against ``_apply_detection_defaults`` (rather than YAML output)
+        because the classification default is already 0.0 — without a non-zero seed,
+        key/value mutations on the override line are masked by the surrounding default.
+        """
+        from orchard.cli_app import _apply_detection_defaults
+
+        sections: dict[str, dict[str, Any]] = {
+            "dataset": {},
+            "architecture": {},
+            "training": {"label_smoothing": 0.99},
+            "augmentation": {},
+            "export": {},
+        }
+        _apply_detection_defaults(sections)
+        assert sections["training"]["label_smoothing"] == pytest.approx(0.0)
+
 
 @pytest.mark.unit
 class TestCommentedYaml:

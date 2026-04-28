@@ -76,12 +76,12 @@ orchard/architectures/vit_tiny.py:
   not_checked: 0
   score: 100.0
 orchard/cli_app.py:
-  last_run: '2026-03-25T21:34:31Z'
-  total: 507
-  killed: 477
+  last_run: '2026-04-28T18:44:07Z'
+  total: 513
+  killed: 483
   survived: 30
   not_checked: 0
-  score: 94.1
+  score: 94.2
 orchard/core/__init__.py:
   last_run: '2026-03-16T15:23:04Z'
   total: 0

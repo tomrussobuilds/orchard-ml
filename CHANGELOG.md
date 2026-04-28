@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - remove type: ignore from test_orchestrator.py — 48 annotations
 - clean stray pragmas + strengthen tests — 77.9%→95.4%
 - consolidate no-mutate pragmas — 97.8%→99.0%
+- block consolidation in reporting + drop dead pragma in loader
 
 ### Documentation
 

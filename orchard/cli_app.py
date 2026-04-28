@@ -619,7 +619,7 @@ def _apply_detection_defaults(sections: dict[str, Any]) -> None:
 
     sections["training"]["monitor_metric"] = "map"
     sections["training"]["mixup_alpha"] = 0.0
-    sections["training"]["label_smoothing"] = 0.0  # pragma: no mutate
+    sections["training"]["label_smoothing"] = 0.0
     sections["training"]["use_tta"] = False
 
     sections["augmentation"]["hflip"] = 0.0
