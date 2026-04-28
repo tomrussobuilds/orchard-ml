@@ -254,7 +254,7 @@ def run_training_phase(
         arch_name=cfg.architecture.name,
         aug_info=get_augmentations_description(
             cfg.augmentation,
-            cast("int", cfg.dataset.img_size),  # pragma: no mutate
+            cast("int", cfg.dataset.img_size),
             cfg.training.mixup_alpha,
             ds_meta=ds_meta,
         ),
@@ -366,15 +366,15 @@ def run_export_phase(
         return None
 
     # TODO(detection): Remove pragma when ONNX export is implemented for detection
-    if cfg.task_type == "detection":  # pragma: no mutate
-        import warnings  # pragma: no mutate
+    if cfg.task_type == "detection":  # pragma: no mutate block
+        import warnings
 
-        warnings.warn(  # pragma: no mutate
-            "ONNX export is not yet supported for detection tasks. Skipping.",  # pragma: no mutate
-            UserWarning,  # pragma: no mutate
-            stacklevel=2,  # pragma: no mutate
+        warnings.warn(
+            "ONNX export is not yet supported for detection tasks. Skipping.",
+            UserWarning,
+            stacklevel=2,
         )
-        return None  # pragma: no mutate
+        return None
 
     paths = orchestrator.paths
     run_logger = orchestrator.run_logger

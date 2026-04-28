@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - mark set_start_method crash as resolved (GH-466)
 - document mutmut trampoline name mangling bug (boxed/mutmut#498)
 - mark mutmut name mangling bug as resolved upstream (PR #499)
+- document upstream issue #511 — env scrubbing wipes MUTANT_UNDER_TEST
 
 ### Fixed
 
