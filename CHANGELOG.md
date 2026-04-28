@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - add workflow to sync uv.lock on Dependabot PRs
 - bump the actions group with 5 updates (#12)
 - bump the actions group with 2 updates
+- bump orhun/git-cliff-action in the actions group (#14)
 
 ### Changed
 
@@ -41,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - remove type: ignore from test_dispatcher.py and test_transforms.py — scores 95.5% / 91.6%
 - remove type: ignore from test_orchestrator.py — 48 annotations
 - clean stray pragmas + strengthen tests — 77.9%→95.4%
+- consolidate no-mutate pragmas — 97.8%→99.0%
 
 ### Documentation
 
@@ -68,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix(deps)(deps-dev): bump mypy from 1.20.0 to 1.20.1 (#11)
 - constrain mako>=1.3.11 (path traversal CVE)
 - constrain gitpython>=3.1.47 — command injection via Git options bypass
+- fix(deps)(deps-dev): bump mypy from 1.20.1 to 1.20.2 (#15)
 
 ## [0.2.4] - 2026-03-25
 

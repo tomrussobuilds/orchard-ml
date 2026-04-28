@@ -105,9 +105,7 @@ class TrainingReport(BaseModel):
                 rows.append((key, value))
         return pd.DataFrame(rows, columns=["Parameter", "Value"])
 
-    def save(
-        self, path: Path, fmt: str = "xlsx"  # pragma: no mutate  # .lower() normalizes any case
-    ) -> None:
+    def save(self, path: Path, fmt: str = "xlsx") -> None:
         """
         Saves the report to disk in the requested format.
 
@@ -127,20 +125,18 @@ class TrainingReport(BaseModel):
             df = self.to_vertical_df()
             if fmt == "csv":
                 path = path.with_suffix(".csv")
-                df.to_csv(path, index=False)  # pragma: no mutate  # None ≡ False in pandas
+                df.to_csv(path, index=False)
             elif fmt == "json":
                 path = path.with_suffix(".json")
                 df.to_json(path, orient="records", indent=2)
             else:
                 path = path.with_suffix(".xlsx")
-                with pd.ExcelWriter(  # pragma: no mutate
+                with pd.ExcelWriter(
                     path,
-                    engine="xlsxwriter",  # pragma: no mutate
-                    engine_kwargs={"options": {"nan_inf_to_errors": True}},  # pragma: no mutate
-                ) as writer:
-                    # fmt: off
-                    df.to_excel(writer, sheet_name="Detailed Report", index=False)  # pragma: no mutate
-                    # fmt: on
+                    engine="xlsxwriter",
+                    engine_kwargs={"options": {"nan_inf_to_errors": True}},
+                ) as writer:  # pragma: no mutate block
+                    df.to_excel(writer, sheet_name="Detailed Report", index=False)
                     self._apply_excel_formatting(writer, df)
 
             logger.info(
@@ -149,18 +145,20 @@ class TrainingReport(BaseModel):
         except Exception as e:  # xlsxwriter raises non-standard exceptions
             logger.error("Failed to generate report: %s", e)
 
-    def _apply_excel_formatting(self, writer: pd.ExcelWriter, df: pd.DataFrame) -> None:
+    def _apply_excel_formatting(
+        self, writer: pd.ExcelWriter, df: pd.DataFrame
+    ) -> None:  # pragma: no mutate block
         """Internal helper to apply styles, formats and column widths to the worksheet."""
-        workbook = writer.book  # pragma: no mutate
-        worksheet = writer.sheets["Detailed Report"]  # pragma: no mutate
+        workbook = writer.book
+        worksheet = writer.sheets["Detailed Report"]
 
         # Formatting Definitions
-        header_format = workbook.add_format(  # pragma: no mutate
+        header_format = workbook.add_format(
             {"bold": True, "bg_color": "#D7E4BC", "border": 1, "align": "center"}
         )
 
         # Base format for Floats.
-        float_format = workbook.add_format(  # pragma: no mutate
+        float_format = workbook.add_format(
             {
                 "border": 1,
                 "align": "left",
@@ -172,32 +170,28 @@ class TrainingReport(BaseModel):
         )
 
         # Base format for Integers.
-        int_format = workbook.add_format(  # pragma: no mutate
-            {"border": 1, "num_format": "0", "align": "left"}
-        )
+        int_format = workbook.add_format({"border": 1, "num_format": "0", "align": "left"})
 
         # String format
-        string_format = workbook.add_format(  # pragma: no mutate
+        string_format = workbook.add_format(
             {"border": 1, "align": "left", "valign": "vcenter", "text_wrap": True}
         )
 
         # Column Setup
-        for row_idx, (_, value) in enumerate(df.values):  # pragma: no mutate
-            if isinstance(value, float):  # pragma: no mutate
-                fmt = float_format  # pragma: no mutate
-            elif isinstance(value, int) and not isinstance(value, bool):  # pragma: no mutate
-                fmt = int_format  # pragma: no mutate
-            else:  # pragma: no mutate
-                fmt = string_format  # pragma: no mutate
-            worksheet.write(row_idx + 1, 1, value, fmt)  # pragma: no mutate
+        for row_idx, (_, value) in enumerate(df.values):
+            if isinstance(value, float):
+                fmt = float_format
+            elif isinstance(value, int) and not isinstance(value, bool):
+                fmt = int_format
+            else:
+                fmt = string_format
+            worksheet.write(row_idx + 1, 1, value, fmt)
 
-        worksheet.set_column(  # pragma: no mutate
-            "A:A", 25, workbook.add_format({"border": 1, "bold": True})
-        )
-        worksheet.set_column("B:B", 70)  # pragma: no mutate
+        worksheet.set_column("A:A", 25, workbook.add_format({"border": 1, "bold": True}))
+        worksheet.set_column("B:B", 70)
 
-        for col_num, value in enumerate(df.columns.values):  # pragma: no mutate
-            worksheet.write(0, col_num, value, header_format)  # pragma: no mutate
+        for col_num, value in enumerate(df.columns.values):
+            worksheet.write(0, col_num, value, header_format)
 
 
 def create_structured_report(

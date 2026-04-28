@@ -310,7 +310,7 @@ class DataLoaderFactory:
         train_trans, val_trans = self._get_transformation_pipelines()
 
         # 2. Instantiate Dataset splits
-        is_detection = self._task_type == "detection"  # pragma: no mutate
+        is_detection = self._task_type == "detection"
 
         sub_samples = None
         if self.dataset_cfg.max_samples:
