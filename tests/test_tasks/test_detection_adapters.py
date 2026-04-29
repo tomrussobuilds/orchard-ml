@@ -7,6 +7,7 @@ Tests that each adapter correctly implements its protocol contract.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -488,7 +489,11 @@ def test_eval_adapter_returns_metrics(
 @patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
 @patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
 def test_eval_adapter_plots_training_curves(
-    mock_map_cls: MagicMock, mock_plot: MagicMock, mock_report: MagicMock, mock_show: MagicMock
+    mock_map_cls: MagicMock,
+    mock_plot: MagicMock,
+    mock_report: MagicMock,
+    mock_show: MagicMock,
+    tmp_path: Path,
 ) -> None:
     """EvalPipelineAdapter generates training curves with correct args."""
     mock_map_cls.return_value.compute.return_value = {
@@ -502,6 +507,7 @@ def test_eval_adapter_plots_training_curves(
     test_loader = MagicMock()
     test_loader.__iter__ = MagicMock(return_value=iter([]))
     paths = MagicMock()
+    paths.figures = tmp_path / "figures"  # real Path so / "..." is comparable
     dataset_cfg = MagicMock()
     dataset_cfg.resolution = 224
     dataset_cfg.name = "test"
@@ -532,9 +538,20 @@ def test_eval_adapter_plots_training_curves(
     kw = mock_plot.call_args[1]
     assert kw["train_losses"] == [0.5]
     assert kw["val_metric_values"] == [0.45]
-    assert kw["ctx"] is not None
     assert kw["val_label"] == "Validation mAP"
-    assert kw["out_path"] == paths.figures / "training_curves.png"
+    assert kw["out_path"] == tmp_path / "figures" / "training_curves.png"
+
+    # Assert each PlotContext kwarg (kills mutmut 37..44: each kwarg → None)
+    ctx = kw["ctx"]
+    assert ctx is not None
+    assert ctx.arch_name == "fasterrcnn"
+    assert ctx.resolution == 224
+    assert ctx.fig_dpi == 100
+    assert ctx.plot_style == "default"
+    assert ctx.cmap_confusion == "Blues"
+    assert ctx.grid_cols == 4
+    assert ctx.n_samples == 16
+    assert ctx.fig_size_predictions == (12, 8)
 
 
 @pytest.mark.unit
@@ -669,6 +686,204 @@ def test_eval_adapter_no_tracker_no_error(
     )
 
     assert isinstance(result, Mapping)
+
+
+# ── Forwarding to orchestrated calls (kill kwarg-mutation survivors) ─────────
+
+
+@pytest.mark.unit
+@patch("orchard.tasks.detection.evaluation_adapter.show_detections")
+@patch("orchard.tasks.detection.evaluation_adapter.create_structured_report")
+@patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
+@patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
+def test_eval_adapter_forwards_show_detections_kwargs(
+    mock_map_cls: MagicMock,
+    mock_plot: MagicMock,
+    mock_report: MagicMock,
+    mock_show: MagicMock,
+    tmp_path: Path,
+) -> None:
+    """run_evaluation forwards every show_detections kwarg and PlotContext kwarg.
+
+    Uses real Path objects (not MagicMock paths) so string mutations on
+    ``"detection_samples_*"`` produce a comparable mismatch."""
+    mock_map_cls.return_value.compute.return_value = {
+        "map": torch.tensor(0.0),
+        "map_50": torch.tensor(0.0),
+        "map_75": torch.tensor(0.0),
+    }
+
+    model = MagicMock(spec=nn.Module)
+    model.parameters.return_value = iter([torch.randn(1)])
+    test_loader = MagicMock()
+    test_loader.__iter__ = MagicMock(return_value=iter([]))
+
+    paths = MagicMock()
+    paths.figures = tmp_path / "figures"  # real Path so / "..." is comparable
+    dataset = MagicMock()
+    dataset.resolution = 224
+    dataset.mean = (0.5, 0.5, 0.5)
+    dataset.std = (0.5, 0.5, 0.5)
+    eval_cfg = MagicMock()
+    eval_cfg.save_predictions_grid = True
+    eval_cfg.fig_dpi = 200
+    eval_cfg.plot_style = "seaborn-v0_8-muted"
+    eval_cfg.cmap_confusion = "Blues"
+    eval_cfg.grid_cols = 4
+    eval_cfg.n_samples = 12
+    eval_cfg.fig_size_predictions = (12, 8)
+
+    adapter = DetectionEvalPipelineAdapter()
+    adapter.run_evaluation(
+        model=model,
+        test_loader=test_loader,
+        train_losses=[],
+        val_metrics_history=[],
+        class_names=["cat", "dog"],
+        paths=paths,
+        training=MagicMock(),
+        dataset=dataset,
+        augmentation=MagicMock(),
+        evaluation=eval_cfg,
+        arch_name="fasterrcnn",
+    )
+
+    mock_show.assert_called_once()
+    kw = mock_show.call_args.kwargs
+    assert kw["model"] is model
+    assert kw["loader"] is test_loader
+    assert kw["classes"] == ["cat", "dog"]
+    assert kw["save_path"] == tmp_path / "figures" / "detection_samples_fasterrcnn_224.png"
+
+    # PlotContext kwargs (kills mutmut_37..44: each PlotContext kwarg → None)
+    ctx = kw["ctx"]
+    assert ctx is not None
+    assert ctx.arch_name == "fasterrcnn"
+    assert ctx.resolution == 224
+    assert ctx.fig_dpi == 200
+    assert ctx.plot_style == "seaborn-v0_8-muted"
+    assert ctx.cmap_confusion == "Blues"
+    assert ctx.grid_cols == 4
+    assert ctx.n_samples == 12
+    assert ctx.fig_size_predictions == (12, 8)
+    assert ctx.mean == (0.5, 0.5, 0.5)
+    assert ctx.std == (0.5, 0.5, 0.5)
+
+
+@pytest.mark.unit
+@patch("orchard.tasks.detection.evaluation_adapter.show_detections")
+@patch("orchard.tasks.detection.evaluation_adapter.create_structured_report")
+@patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
+@patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
+def test_eval_adapter_forwards_create_structured_report_kwargs(
+    mock_map_cls: MagicMock,
+    mock_plot: MagicMock,
+    mock_report: MagicMock,
+    mock_show: MagicMock,
+    tmp_path: Path,
+) -> None:
+    """run_evaluation forwards every create_structured_report kwarg + literal
+    ``task_type='detection'``, plus ``log_path`` derived from real Path.
+
+    Real ``paths.logs`` (not MagicMock) ensures string mutation on
+    ``"session.log"`` produces a comparable mismatch."""
+    mock_map_cls.return_value.compute.return_value = {
+        "map": torch.tensor(0.5),
+        "map_50": torch.tensor(0.7),
+        "map_75": torch.tensor(0.4),
+    }
+    test_metrics_expected = {"map": 0.5, "map_50": 0.7, "map_75": 0.4}
+
+    model = MagicMock(spec=nn.Module)
+    model.parameters.return_value = iter([torch.randn(1)])
+    test_loader = MagicMock()
+    test_loader.__iter__ = MagicMock(return_value=iter([]))
+
+    paths = MagicMock()
+    paths.logs = tmp_path / "logs"  # real Path so / "session.log" is comparable
+    dataset = MagicMock()
+    training = MagicMock()
+    val_history: list[Mapping[str, float]] = [{"loss": 0.3, "map": 0.45}]
+    train_losses = [0.6, 0.5]
+
+    adapter = DetectionEvalPipelineAdapter()
+    adapter.run_evaluation(
+        model=model,
+        test_loader=test_loader,
+        train_losses=train_losses,
+        val_metrics_history=val_history,
+        class_names=["cat"],
+        paths=paths,
+        training=training,
+        dataset=dataset,
+        augmentation=MagicMock(),
+        evaluation=MagicMock(),
+        arch_name="fasterrcnn",
+    )
+
+    mock_report.assert_called_once()
+    kw = mock_report.call_args.kwargs
+    assert kw["val_metrics"] is val_history
+    assert dict(kw["test_metrics"]) == pytest.approx(test_metrics_expected)
+    assert kw["train_losses"] is train_losses
+    assert kw["best_path"] is paths.best_model_path
+    assert kw["log_path"] == tmp_path / "logs" / "session.log"
+    assert kw["arch_name"] == "fasterrcnn"
+    assert kw["dataset"] is dataset
+    assert kw["training"] is training
+    assert kw["task_type"] == "detection"
+
+
+@pytest.mark.unit
+@patch("orchard.tasks.detection.evaluation_adapter.show_detections")
+@patch("orchard.tasks.detection.evaluation_adapter.create_structured_report")
+@patch("orchard.tasks.detection.evaluation_adapter.plot_training_curves")
+@patch("orchard.tasks.detection.evaluation_adapter.MeanAveragePrecision")
+def test_eval_adapter_calls_report_save_with_format(
+    mock_map_cls: MagicMock,
+    mock_plot: MagicMock,
+    mock_report: MagicMock,
+    mock_show: MagicMock,
+) -> None:
+    """run_evaluation calls report.save(final_report_path, fmt=evaluation.report_format).
+
+    Kills mutations that drop the ``fmt`` kwarg or pass a wrong path."""
+    mock_map_cls.return_value.compute.return_value = {
+        "map": torch.tensor(0.0),
+        "map_50": torch.tensor(0.0),
+        "map_75": torch.tensor(0.0),
+    }
+    mock_report_instance = MagicMock()
+    mock_report.return_value = mock_report_instance
+
+    model = MagicMock(spec=nn.Module)
+    model.parameters.return_value = iter([torch.randn(1)])
+    test_loader = MagicMock()
+    test_loader.__iter__ = MagicMock(return_value=iter([]))
+    paths = MagicMock()
+    eval_cfg = MagicMock()
+    eval_cfg.report_format = "xlsx"
+
+    adapter = DetectionEvalPipelineAdapter()
+    adapter.run_evaluation(
+        model=model,
+        test_loader=test_loader,
+        train_losses=[],
+        val_metrics_history=[],
+        class_names=[],
+        paths=paths,
+        training=MagicMock(),
+        dataset=MagicMock(),
+        augmentation=MagicMock(),
+        evaluation=eval_cfg,
+        arch_name="fasterrcnn",
+    )
+
+    mock_report_instance.save.assert_called_once()
+    args = mock_report_instance.save.call_args.args
+    kw = mock_report_instance.save.call_args.kwargs
+    assert args == (paths.final_report_path,)
+    assert kw == {"fmt": "xlsx"}
 
 
 # ── Auto-registration ────────────────────────────────────────────────────────

@@ -28,12 +28,14 @@ from .visualization import _denormalize_image, _finalize_figure, _prepare_for_pl
 logger = logging.getLogger(LOGGER_NAME)
 
 # Cosmetic constants — colours, linewidths, font sizes
-_GT_COLOR = "#2ecc71"  # pragma: no mutate
-_PRED_COLOR = "#e74c3c"  # pragma: no mutate
-_GT_LW = 2.0  # pragma: no mutate
-_PRED_LW = 2.0  # pragma: no mutate
-_SCORE_FONTSIZE = 7  # pragma: no mutate
-_DEFAULT_CONFIDENCE = 0.5  # pragma: no mutate
+# pragma: no mutate start
+_GT_COLOR = "#2ecc71"
+_PRED_COLOR = "#e74c3c"
+_GT_LW = 2.0
+_PRED_LW = 2.0
+_SCORE_FONTSIZE = 7
+_DEFAULT_CONFIDENCE = 0.5
+# pragma: no mutate end
 
 
 def show_detections(
@@ -68,13 +70,13 @@ def show_detections(
 
     with plt.style.context(style):
         num_samples = n or (ctx.n_samples if ctx else 12)  # pragma: no mutate
-        images, targets, predictions = _get_detection_batch(
-            model, loader, device, num_samples  # pragma: no mutate
-        )
+        images, targets, predictions = _get_detection_batch(model, loader, device, num_samples)
 
-        grid_cols = ctx.grid_cols if ctx else 4  # pragma: no mutate
-        rows = int(np.ceil(len(images) / grid_cols))  # pragma: no mutate
-        base_w, base_h = ctx.fig_size_predictions if ctx else (12, 8)  # pragma: no mutate
+        # pragma: no mutate start
+        grid_cols = ctx.grid_cols if ctx else 4
+        rows = int(np.ceil(len(images) / grid_cols))
+        base_w, base_h = ctx.fig_size_predictions if ctx else (12, 8)
+        # pragma: no mutate end
 
         _, axes = plt.subplots(
             rows,
@@ -103,7 +105,7 @@ def show_detections(
                 fontsize=14,
             )
 
-        _finalize_figure(plt, save_path, ctx)  # pragma: no mutate
+        _finalize_figure(plt, save_path, ctx)
 
 
 def _get_detection_batch(
@@ -134,7 +136,7 @@ def _get_detection_batch(
 
     with torch.no_grad():
         for images, targets in loader:
-            images_on_device = [img.to(device) for img in images]  # pragma: no mutate
+            images_on_device = [img.to(device) for img in images]
             preds = model(images_on_device)
 
             for img, tgt, pred in zip(images, targets, preds):
@@ -191,9 +193,11 @@ def _plot_single_detection(
         _draw_label(ax, box, _format_gt_label(classes, int(label)), _GT_COLOR)
 
     # Predicted boxes (red, solid) — filtered by confidence
-    pred_boxes = prediction.get("boxes", np.empty((0, 4)))  # pragma: no mutate
-    pred_scores = prediction.get("scores", np.empty(0))  # pragma: no mutate
-    pred_labels = prediction.get("labels", np.empty(0, dtype=int))  # pragma: no mutate
+    # pragma: no mutate start
+    pred_boxes = prediction.get("boxes", np.empty((0, 4)))
+    pred_scores = prediction.get("scores", np.empty(0))
+    pred_labels = prediction.get("labels", np.empty(0, dtype=int))
+    # pragma: no mutate end
 
     for box, score, label in zip(pred_boxes, pred_scores, pred_labels):
         if float(score) < confidence_threshold:
@@ -214,7 +218,7 @@ def _draw_box(
     color: str,
     lw: float,
     *,
-    linestyle: str = "-",  # pragma: no mutate
+    linestyle: str = "-",
 ) -> None:
     """
     Draw a single bounding box rectangle on the axes.
@@ -245,7 +249,7 @@ def _draw_label(
     text: str,
     color: str,
     *,
-    bottom: bool = False,  # pragma: no mutate
+    bottom: bool = False,
 ) -> None:
     """
     Place a text label near a bounding box.
@@ -283,8 +287,8 @@ def _format_gt_label(classes: list[str], label: int) -> str:
     Returns:
         Formatted label like ``"GT: person"``.
     """
-    name = classes[label] if label < len(classes) else str(label)  # pragma: no mutate
-    return f"GT: {name}"  # pragma: no mutate
+    name = classes[label] if label < len(classes) else str(label)
+    return f"GT: {name}"
 
 
 def _format_pred_label(classes: list[str], label: int, score: float) -> str:
@@ -299,5 +303,5 @@ def _format_pred_label(classes: list[str], label: int, score: float) -> str:
     Returns:
         Formatted label like ``"person 0.92"``.
     """
-    name = classes[label] if label < len(classes) else str(label)  # pragma: no mutate
-    return f"{name} {score:.2f}"  # pragma: no mutate
+    name = classes[label] if label < len(classes) else str(label)
+    return f"{name} {score:.2f}"

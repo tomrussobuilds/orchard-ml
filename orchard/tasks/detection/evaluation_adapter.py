@@ -55,7 +55,7 @@ class DetectionEvalPipelineAdapter:
         augmentation: AugmentationConfig,  # noqa: ARG002
         evaluation: EvaluationConfig,
         arch_name: str,
-        aug_info: str = "N/A",  # pragma: no mutate  # noqa: ARG002
+        aug_info: str = "N/A",  # noqa: ARG002
         tracker: TrackerProtocol | None = None,
     ) -> Mapping[str, float]:
         """
@@ -82,7 +82,7 @@ class DetectionEvalPipelineAdapter:
         Returns:
             Mapping of detection metric names to float values.
         """
-        device = next(model.parameters()).device  # pragma: no mutate
+        device = next(model.parameters()).device
 
         # Inference + mAP computation
         model.eval()
@@ -90,7 +90,7 @@ class DetectionEvalPipelineAdapter:
 
         with torch.no_grad():
             for images, targets in test_loader:
-                images_on_device = [img.to(device) for img in images]  # pragma: no mutate
+                images_on_device = [img.to(device) for img in images]
                 predictions = model(images_on_device)
                 metric.update(
                     [to_cpu(p) for p in predictions],
@@ -122,9 +122,8 @@ class DetectionEvalPipelineAdapter:
                 loader=test_loader,
                 device=device,
                 classes=class_names,
-                save_path=paths.figures
-                / f"detection_samples_{arch_name}_{dataset.resolution}.png",  # pragma: no mutate
-                ctx=PlotContext(  # pragma: no mutate
+                save_path=paths.figures / f"detection_samples_{arch_name}_{dataset.resolution}.png",
+                ctx=PlotContext(
                     arch_name=arch_name,
                     resolution=dataset.resolution,
                     fig_dpi=evaluation.fig_dpi,
@@ -140,7 +139,7 @@ class DetectionEvalPipelineAdapter:
 
         # Training curves — plot mAP instead of loss (METRIC_LOSS is a 0.0 sentinel)
         val_map = [m.get(METRIC_MAP, 0.0) for m in val_metrics_history]
-        ctx = PlotContext(  # pragma: no mutate
+        ctx = PlotContext(
             arch_name=arch_name,
             resolution=dataset.resolution,
             fig_dpi=evaluation.fig_dpi,
@@ -153,24 +152,24 @@ class DetectionEvalPipelineAdapter:
         plot_training_curves(
             train_losses=train_losses,
             val_metric_values=val_map,
-            out_path=paths.figures / "training_curves.png",  # pragma: no mutate
+            out_path=paths.figures / "training_curves.png",
             ctx=ctx,
-            val_label="Validation mAP",  # pragma: no mutate
+            val_label="Validation mAP",
         )
 
         # Structured report (Excel/CSV/JSON) — args tested in test_reporting.py
-        report = create_structured_report(  # pragma: no mutate
+        report = create_structured_report(
             val_metrics=val_metrics_history,
             test_metrics=test_metrics,
             train_losses=train_losses,
             best_path=paths.best_model_path,
-            log_path=paths.logs / "session.log",  # pragma: no mutate
+            log_path=paths.logs / "session.log",
             arch_name=arch_name,
             dataset=dataset,
             training=training,
-            task_type="detection",  # pragma: no mutate
+            task_type="detection",
         )
-        report.save(paths.final_report_path, fmt=evaluation.report_format)  # pragma: no mutate
+        report.save(paths.final_report_path, fmt=evaluation.report_format)
 
         # Tracker logging
         if tracker is not None:

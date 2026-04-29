@@ -28,6 +28,36 @@ from .plot_context import PlotContext
 logger = logging.getLogger(LOGGER_NAME)
 
 
+# Cosmetic constants — colours, line widths, font sizes, layout, defaults
+# pragma: no mutate start
+_LOSS_COLOR = "#e74c3c"
+_METRIC_COLOR = "#3498db"
+_LINE_WIDTH = 2
+_GRID_LINESTYLE = "--"
+_GRID_ALPHA = 0.4
+_TRAINING_FIGSIZE = (9, 6)
+_SUPTITLE_FONTSIZE = 14
+_TRAINING_TITLE_Y = 1.02
+_CM_FIGSIZE = (11, 9)
+_CM_TICKS_ROTATION = 45
+_CM_VALUES_FORMAT = ".3f"
+_CM_TITLE_FONTSIZE = 12
+_CM_TITLE_PAD = 20
+_GRAY_CMAP = "gray"
+_CORRECT_COLOR = "green"
+_INCORRECT_COLOR = "red"
+_CELL_TITLE_FONTSIZE = 9
+_SAVEFIG_BBOX = "tight"
+_SAVEFIG_FACECOLOR = "white"
+_DEFAULT_STYLE = "seaborn-v0_8-muted"
+_DEFAULT_NUM_SAMPLES = 12
+_DEFAULT_GRID_COLS = 4
+_DEFAULT_FIGSIZE = (12, 8)
+_FIGSIZE_HEIGHT_FACTOR = 3
+_DEFAULT_DPI = 200
+# pragma: no mutate end
+
+
 # PUBLIC INTERFACE
 def show_predictions(
     model: nn.Module,
@@ -55,38 +85,30 @@ def show_predictions(
         n: Number of samples to display. Defaults to ``ctx.n_samples``.
     """
     model.eval()
-    # cosmetic fallback
-    style = ctx.plot_style if ctx else "seaborn-v0_8-muted"  # pragma: no mutate
+    style = ctx.plot_style if ctx else _DEFAULT_STYLE
 
     with plt.style.context(style):
         # 1. Parameter Resolution & Batch Inference
-        # cosmetic fallback
-        num_samples = n or (ctx.n_samples if ctx else 12)  # pragma: no mutate
-        images, labels, preds = _get_predictions_batch(
-            model, loader, device, num_samples  # pragma: no mutate
-        )
+        num_samples = n or (ctx.n_samples if ctx else _DEFAULT_NUM_SAMPLES)
+        images, labels, preds = _get_predictions_batch(model, loader, device, num_samples)
 
         # 2. Grid & Figure Setup
-        # cosmetic fallback
-        grid_cols = ctx.grid_cols if ctx else 4  # pragma: no mutate
-        _, axes = _setup_prediction_grid(len(images), grid_cols, ctx)  # pragma: no mutate
+        grid_cols = ctx.grid_cols if ctx else _DEFAULT_GRID_COLS
+        _, axes = _setup_prediction_grid(len(images), grid_cols, ctx)
 
         # 3. Plotting Loop
         for i, ax in enumerate(axes):
             # guard for extra grid cells beyond actual images
-            if i < len(images):  # pragma: no mutate
-                _plot_single_prediction(
-                    ax, images[i], labels[i], preds[i], classes, ctx  # pragma: no mutate
-                )
+            if i < len(images):
+                _plot_single_prediction(ax, images[i], labels[i], preds[i], classes, ctx)
             ax.axis("off")
 
         # 4. Suptitle
         if ctx:
-            plt.suptitle(_build_suptitle(ctx), fontsize=14)
+            plt.suptitle(_build_suptitle(ctx), fontsize=_SUPTITLE_FONTSIZE)
 
         # 5. Export and Cleanup
-        # forwarding; tested in _finalize_figure
-        _finalize_figure(plt, save_path, ctx)  # pragma: no mutate
+        _finalize_figure(plt, save_path, ctx)
 
 
 def plot_training_curves(
@@ -110,32 +132,31 @@ def plot_training_curves(
         ctx: PlotContext with architecture and evaluation settings.
         val_label: Label for the right y-axis and legend entry.
     """
-    # matplotlib cosmetic — colors, fonts, sizes, layout
     with plt.style.context(ctx.plot_style):
-        fig, ax1 = plt.subplots(figsize=(9, 6))
+        fig, ax1 = plt.subplots(figsize=_TRAINING_FIGSIZE)
 
         # Left Axis: Training Loss
-        ax1.plot(train_losses, color="#e74c3c", lw=2, label="Training Loss")
+        ax1.plot(train_losses, color=_LOSS_COLOR, lw=_LINE_WIDTH, label="Training Loss")
         ax1.set_xlabel("Epoch")
-        ax1.set_ylabel("Loss", color="#e74c3c", fontweight="bold")
-        ax1.tick_params(axis="y", labelcolor="#e74c3c")
-        ax1.grid(True, linestyle="--", alpha=0.4)
+        ax1.set_ylabel("Loss", color=_LOSS_COLOR, fontweight="bold")
+        ax1.tick_params(axis="y", labelcolor=_LOSS_COLOR)
+        ax1.grid(True, linestyle=_GRID_LINESTYLE, alpha=_GRID_ALPHA)
 
         # Right Axis: Validation Metric
         ax2 = ax1.twinx()
-        ax2.plot(val_metric_values, color="#3498db", lw=2, label=val_label)
-        ax2.set_ylabel(val_label, color="#3498db", fontweight="bold")
-        ax2.tick_params(axis="y", labelcolor="#3498db")
+        ax2.plot(val_metric_values, color=_METRIC_COLOR, lw=_LINE_WIDTH, label=val_label)
+        ax2.set_ylabel(val_label, color=_METRIC_COLOR, fontweight="bold")
+        ax2.tick_params(axis="y", labelcolor=_METRIC_COLOR)
 
         fig.suptitle(
             f"Training Metrics — {ctx.arch_name} | Resolution — {ctx.resolution}",
-            fontsize=14,
-            y=1.02,
+            fontsize=_SUPTITLE_FONTSIZE,
+            y=_TRAINING_TITLE_Y,
         )
 
         fig.tight_layout()
 
-        plt.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")
+        plt.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches=_SAVEFIG_BBOX)
         logger.info(
             "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Training Curves", out_path.name
         )
@@ -163,34 +184,33 @@ def plot_confusion_matrix(
         out_path: Destination file path for the saved figure.
         ctx: PlotContext with architecture and evaluation settings.
     """
-    # matplotlib cosmetic — confusion matrix rendering and styling
     with plt.style.context(ctx.plot_style):
-        cm = confusion_matrix(  # pragma: no mutate
+        cm = confusion_matrix(
             all_labels,
             all_preds,
             labels=np.arange(len(classes)),
-            normalize="true",  # pragma: no mutate
+            normalize="true",
         )
         cm = np.nan_to_num(cm)
 
         disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=classes)
-        fig, ax = plt.subplots(figsize=(11, 9))
+        fig, ax = plt.subplots(figsize=_CM_FIGSIZE)
 
         disp.plot(
             ax=ax,
             cmap=ctx.cmap_confusion,
-            xticks_rotation=45,
-            values_format=".3f",
+            xticks_rotation=_CM_TICKS_ROTATION,
+            values_format=_CM_VALUES_FORMAT,
         )
         plt.title(
             f"Confusion Matrix — {ctx.arch_name} | Resolution — {ctx.resolution}",
-            fontsize=12,
-            pad=20,
+            fontsize=_CM_TITLE_FONTSIZE,
+            pad=_CM_TITLE_PAD,
         )
 
         plt.tight_layout()
 
-        fig.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches="tight")
+        fig.savefig(out_path, dpi=ctx.fig_dpi, bbox_inches=_SAVEFIG_BBOX)
         plt.close()
         logger.info(
             "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Confusion Matrix", out_path.name
@@ -219,14 +239,13 @@ def _plot_single_prediction(
     img = _denormalize_image(image, ctx) if ctx else image
     display_img = _prepare_for_plt(img)
 
-    # cosmetic — imshow cmap and title styling
-    ax.imshow(display_img, cmap="gray" if display_img.ndim == 2 else None)
+    ax.imshow(display_img, cmap=_GRAY_CMAP if display_img.ndim == 2 else None)
 
     is_correct = label == pred
     ax.set_title(
-        f"T:{classes[label]}\nP:{classes[pred]}",  # pragma: no mutate
-        color="green" if is_correct else "red",
-        fontsize=9,
+        f"T:{classes[label]}\nP:{classes[pred]}",
+        color=_CORRECT_COLOR if is_correct else _INCORRECT_COLOR,
+        fontsize=_CELL_TITLE_FONTSIZE,
     )
 
 
@@ -240,17 +259,17 @@ def _build_suptitle(ctx: PlotContext) -> str:
     Returns:
         Formatted suptitle string.
     """
-    tta_info = f" | TTA: {'ON' if ctx.use_tta else 'OFF'}"  # pragma: no mutate
+    tta_info = f" | TTA: {'ON' if ctx.use_tta else 'OFF'}"
 
     if ctx.is_texture_based:
-        domain_info = " | Mode: Texture"  # pragma: no mutate
+        domain_info = " | Mode: Texture"
     elif ctx.is_anatomical:
-        domain_info = " | Mode: Anatomical"  # pragma: no mutate
+        domain_info = " | Mode: Anatomical"
     else:
-        domain_info = " | Mode: Standard"  # pragma: no mutate
+        domain_info = " | Mode: Standard"
 
     return (
-        f"Sample Predictions — {ctx.arch_name} | "  # pragma: no mutate
+        f"Sample Predictions — {ctx.arch_name} | "
         f"Resolution: {ctx.resolution}"
         f"{domain_info}{tta_info}"
     )
@@ -272,7 +291,7 @@ def _get_predictions_batch(
         tuple of ``(images, labels, preds)`` as numpy arrays.
     """
     batch = next(iter(loader))
-    images_tensor = batch[0][:n].to(device)  # pragma: no mutate
+    images_tensor = batch[0][:n].to(device)
     labels_tensor = batch[1][:n]
 
     with torch.no_grad():
@@ -297,13 +316,12 @@ def _setup_prediction_grid(
         tuple of ``(fig, axes)`` where axes is a flat 1-D array.
     """
     rows = int(np.ceil(num_samples / cols))
-    # cosmetic fallback and layout
-    base_w, base_h = ctx.fig_size_predictions if ctx else (12, 8)  # pragma: no mutate
+    base_w, base_h = ctx.fig_size_predictions if ctx else _DEFAULT_FIGSIZE
 
     fig, axes = plt.subplots(
         rows,
         cols,
-        figsize=(base_w, (base_h / 3) * rows),
+        figsize=(base_w, (base_h / _FIGSIZE_HEIGHT_FACTOR) * rows),
         constrained_layout=True,
     )
     # Ensure axes is always an array even for 1x1 grids
@@ -321,9 +339,8 @@ def _finalize_figure(plt_obj: Any, save_path: Path | None, ctx: PlotContext | No
     """
     if save_path:
         save_path.parent.mkdir(parents=True, exist_ok=True)
-        # cosmetic — dpi fallback and savefig styling
-        dpi = ctx.fig_dpi if ctx else 200  # pragma: no mutate
-        plt_obj.savefig(save_path, dpi=dpi, bbox_inches="tight", facecolor="white")
+        dpi = ctx.fig_dpi if ctx else _DEFAULT_DPI
+        plt_obj.savefig(save_path, dpi=dpi, bbox_inches=_SAVEFIG_BBOX, facecolor=_SAVEFIG_FACECOLOR)
         logger.info(
             "%s%s %-18s: %s", LogStyle.INDENT, LogStyle.ARROW, "Predictions Grid", save_path.name
         )
@@ -345,8 +362,8 @@ def _denormalize_image(img: npt.NDArray[Any], ctx: PlotContext) -> npt.NDArray[A
     Returns:
         Denormalized image clipped to ``[0, 1]``.
     """
-    mean = np.array(ctx.mean).reshape(-1, 1, 1)  # pragma: no mutate
-    std = np.array(ctx.std).reshape(-1, 1, 1)  # pragma: no mutate
+    mean = np.array(ctx.mean).reshape(-1, 1, 1)
+    std = np.array(ctx.std).reshape(-1, 1, 1)
     img = (img * std) + mean
     result: npt.NDArray[Any] = np.clip(img, 0, 1)
     return result
@@ -369,6 +386,6 @@ def _prepare_for_plt(img: npt.NDArray[Any]) -> npt.NDArray[Any]:
         img = np.transpose(img, (1, 2, 0))
 
     if img.ndim == 3 and img.shape[-1] == 1:
-        img = img.squeeze(-1)  # pragma: no mutate
+        img = img.squeeze(-1)
 
     return img

@@ -156,6 +156,38 @@ def test_plot_confusion_matrix_basic(
 
 
 @pytest.mark.unit
+@patch("orchard.evaluation.visualization.ConfusionMatrixDisplay")
+@patch("orchard.evaluation.visualization.plt")
+@patch("orchard.evaluation.visualization.confusion_matrix")
+def test_plot_confusion_matrix_forwards_exact_args_to_sklearn(
+    mock_cm: MagicMock,
+    mock_plt: MagicMock,
+    mock_cmd_cls: MagicMock,
+    tmp_path: Path,
+    ctx_rgb: PlotContext,
+) -> None:
+    """plot_confusion_matrix passes (all_labels, all_preds) positionally and
+    (labels=arange(n), normalize="true") as kwargs to sklearn.confusion_matrix.
+
+    Kills mutations on each positional arg, each kwarg name, and the
+    ``normalize="true"`` value (None / case / gibberish)."""
+    mock_plt.subplots.return_value = (MagicMock(), MagicMock())
+    mock_cm.return_value = np.eye(2)
+
+    all_labels = np.array([0, 1])
+    all_preds = np.array([1, 0])
+    classes = ["c0", "c1"]
+
+    plot_confusion_matrix(all_labels, all_preds, classes, tmp_path / "cm.png", ctx_rgb)
+
+    call = mock_cm.call_args
+    assert call.args[0] is all_labels
+    assert call.args[1] is all_preds
+    np.testing.assert_array_equal(call.kwargs["labels"], np.arange(len(classes)))
+    assert call.kwargs["normalize"] == "true"
+
+
+@pytest.mark.unit
 @patch("orchard.evaluation.visualization.plt")
 @patch("orchard.evaluation.visualization.confusion_matrix")
 def test_plot_confusion_matrix_with_nan(
@@ -855,6 +887,207 @@ def test_prepare_for_plt_squeeze_axis() -> None:
     # After transpose: (4,4,1), then squeeze(-1) -> (4,4)
     assert result.shape == (4, 4)
     assert result[0, 0] == 42.0
+
+
+# _BUILD_SUPTITLE — exact-string assertions kill 17 string-content mutants
+def _suptitle_ctx(*, use_tta: bool, is_texture_based: bool, is_anatomical: bool) -> PlotContext:
+    """Build a PlotContext for _build_suptitle tests with controllable flags."""
+    return PlotContext(
+        arch_name="resnet",
+        resolution=224,
+        fig_dpi=200,
+        plot_style="seaborn-v0_8-muted",
+        cmap_confusion="Blues",
+        grid_cols=4,
+        n_samples=12,
+        fig_size_predictions=(12, 9),
+        mean=(0.5,),
+        std=(0.5,),
+        use_tta=use_tta,
+        is_anatomical=is_anatomical,
+        is_texture_based=is_texture_based,
+    )
+
+
+@pytest.mark.unit
+def test_build_suptitle_texture_mode_tta_on() -> None:
+    """Texture mode with TTA on produces exact suptitle."""
+    from orchard.evaluation.visualization import _build_suptitle
+
+    ctx = _suptitle_ctx(use_tta=True, is_texture_based=True, is_anatomical=False)
+    assert (
+        _build_suptitle(ctx)
+        == "Sample Predictions — resnet | Resolution: 224 | Mode: Texture | TTA: ON"
+    )
+
+
+@pytest.mark.unit
+def test_build_suptitle_anatomical_mode_tta_off() -> None:
+    """Anatomical mode with TTA off produces exact suptitle."""
+    from orchard.evaluation.visualization import _build_suptitle
+
+    ctx = _suptitle_ctx(use_tta=False, is_texture_based=False, is_anatomical=True)
+    assert (
+        _build_suptitle(ctx)
+        == "Sample Predictions — resnet | Resolution: 224 | Mode: Anatomical | TTA: OFF"
+    )
+
+
+@pytest.mark.unit
+def test_build_suptitle_standard_mode_tta_on() -> None:
+    """Standard mode (neither texture nor anatomical) with TTA on produces exact suptitle."""
+    from orchard.evaluation.visualization import _build_suptitle
+
+    ctx = _suptitle_ctx(use_tta=True, is_texture_based=False, is_anatomical=False)
+    assert (
+        _build_suptitle(ctx)
+        == "Sample Predictions — resnet | Resolution: 224 | Mode: Standard | TTA: ON"
+    )
+
+
+# SHOW_PREDICTIONS — kill mutants on style/ctx forwarding and boundary
+@pytest.mark.unit
+def test_show_predictions_uses_ctx_plot_style(tmp_path: Path, ctx_rgb: PlotContext) -> None:
+    """show_predictions passes ctx.plot_style to plt.style.context (not None)."""
+    rng = np.random.default_rng(seed=42)
+    images = rng.random(size=(12, 3, 28, 28))
+    labels = np.array([0] * 12)
+    preds = np.array([0] * 12)
+
+    with (
+        patch("orchard.evaluation.visualization._get_predictions_batch") as mock_get_batch,
+        patch("orchard.evaluation.visualization.plt") as mock_plt,
+    ):
+        mock_axes = np.empty(12, dtype=object)
+        for _idx in range(12):
+            mock_axes[_idx] = MagicMock()
+        mock_plt.subplots.return_value = (MagicMock(), mock_axes)
+        mock_get_batch.return_value = (images, labels, preds)
+
+        show_predictions(
+            MagicMock(),
+            MagicMock(),
+            torch.device("cpu"),
+            ["c0", "c1", "c2"],
+            tmp_path / "out.png",
+            ctx_rgb,
+        )
+
+    mock_plt.style.context.assert_called_once_with(ctx_rgb.plot_style)
+
+
+@pytest.mark.unit
+def test_show_predictions_skips_axes_beyond_image_count(
+    tmp_path: Path, ctx_rgb: PlotContext
+) -> None:
+    """Boundary `i < len(images)`: when grid has more cells than images,
+    extra axes must NOT receive a prediction plot.
+    Kills `<` → `<=` mutation (would cause IndexError on extra cell)."""
+    rng = np.random.default_rng(seed=42)
+    images = rng.random(size=(2, 3, 28, 28))  # only 2 images
+    labels = np.array([0, 1])
+    preds = np.array([0, 1])
+
+    with (
+        patch("orchard.evaluation.visualization._get_predictions_batch") as mock_get_batch,
+        patch("orchard.evaluation.visualization.plt") as mock_plt,
+        patch("orchard.evaluation.visualization._plot_single_prediction") as mock_plot,
+    ):
+        mock_axes = np.empty(4, dtype=object)  # 4 axes, 2 images
+        for _idx in range(4):
+            mock_axes[_idx] = MagicMock()
+        mock_plt.subplots.return_value = (MagicMock(), mock_axes)
+        mock_get_batch.return_value = (images, labels, preds)
+
+        show_predictions(
+            MagicMock(),
+            MagicMock(),
+            torch.device("cpu"),
+            ["c0", "c1"],
+            tmp_path / "out.png",
+            ctx_rgb,
+            n=2,
+        )
+
+    # Only 2 images → _plot_single_prediction called exactly 2 times
+    assert mock_plot.call_count == 2
+
+
+@pytest.mark.unit
+def test_show_predictions_forwards_ctx_to_setup_grid(tmp_path: Path, ctx_rgb: PlotContext) -> None:
+    """show_predictions passes ctx (not None) to _setup_prediction_grid."""
+    rng = np.random.default_rng(seed=42)
+    images = rng.random(size=(12, 3, 28, 28))
+    labels = np.array([0] * 12)
+    preds = np.array([0] * 12)
+
+    with (
+        patch("orchard.evaluation.visualization._get_predictions_batch") as mock_get_batch,
+        patch("orchard.evaluation.visualization.plt"),
+        patch("orchard.evaluation.visualization._setup_prediction_grid") as mock_setup,
+    ):
+        mock_axes = np.empty(12, dtype=object)
+        for _idx in range(12):
+            mock_axes[_idx] = MagicMock()
+        mock_setup.return_value = (MagicMock(), mock_axes)
+        mock_get_batch.return_value = (images, labels, preds)
+
+        show_predictions(
+            MagicMock(),
+            MagicMock(),
+            torch.device("cpu"),
+            ["c0"],
+            tmp_path / "out.png",
+            ctx_rgb,
+        )
+
+    assert mock_setup.call_args[0][2] is ctx_rgb  # third positional arg = ctx
+
+
+@pytest.mark.unit
+def test_show_predictions_forwards_ctx_to_finalize(tmp_path: Path, ctx_rgb: PlotContext) -> None:
+    """show_predictions passes ctx (not None) to _finalize_figure."""
+    rng = np.random.default_rng(seed=42)
+    images = rng.random(size=(12, 3, 28, 28))
+    labels = np.array([0] * 12)
+    preds = np.array([0] * 12)
+
+    with (
+        patch("orchard.evaluation.visualization._get_predictions_batch") as mock_get_batch,
+        patch("orchard.evaluation.visualization.plt") as mock_plt,
+        patch("orchard.evaluation.visualization._finalize_figure") as mock_finalize,
+    ):
+        mock_axes = np.empty(12, dtype=object)
+        for _idx in range(12):
+            mock_axes[_idx] = MagicMock()
+        mock_plt.subplots.return_value = (MagicMock(), mock_axes)
+        mock_get_batch.return_value = (images, labels, preds)
+
+        save_path = tmp_path / "out.png"
+        show_predictions(
+            MagicMock(),
+            MagicMock(),
+            torch.device("cpu"),
+            ["c0"],
+            save_path,
+            ctx_rgb,
+        )
+
+    assert mock_finalize.call_args[0][2] is ctx_rgb
+
+
+# _FINALIZE_FIGURE — kill dpi=None mutant
+@pytest.mark.unit
+def test_finalize_figure_passes_ctx_dpi_to_savefig(tmp_path: Path, ctx_rgb: PlotContext) -> None:
+    """_finalize_figure must pass ctx.fig_dpi to savefig (not None)."""
+    from orchard.evaluation.visualization import _finalize_figure
+
+    save_path = tmp_path / "fig.png"
+    mock_plt = MagicMock()
+    _finalize_figure(mock_plt, save_path, ctx_rgb)
+
+    mock_plt.savefig.assert_called_once()
+    assert mock_plt.savefig.call_args.kwargs["dpi"] == ctx_rgb.fig_dpi
 
 
 if __name__ == "__main__":

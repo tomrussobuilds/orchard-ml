@@ -116,6 +116,24 @@ def test_format_pred_label_out_of_range() -> None:
     assert result == "99 0.50"
 
 
+@pytest.mark.unit
+def test_format_gt_label_at_boundary_uses_fallback() -> None:
+    """At the exact boundary ``label == len(classes)``, GT label uses str(label).
+
+    Kills the ``<`` → ``<=`` mutation: with ``<=``, ``classes[label]`` would
+    raise IndexError (out-of-range access)."""
+    assert _format_gt_label(["cat"], 1) == "GT: 1"
+
+
+@pytest.mark.unit
+def test_format_pred_label_at_boundary_uses_fallback() -> None:
+    """At the exact boundary ``label == len(classes)``, pred label uses str(label).
+
+    Kills the ``<`` → ``<=`` mutation: with ``<=``, ``classes[label]`` would
+    raise IndexError."""
+    assert _format_pred_label(["cat"], 1, 0.7) == "1 0.70"
+
+
 # ── _draw_box ────────────────────────────────────────────────────────────────
 
 
