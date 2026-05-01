@@ -489,14 +489,14 @@ orchard/data_handler/fetchers/__init__.py:
   not_checked: 0
   score: 100.0
 orchard/data_handler/fetchers/cifar_converter.py:
-  last_run: '2026-03-18T12:00:35Z'
+  last_run: '2026-05-01T09:39:48Z'
   total: 131
   killed: 126
   survived: 5
   not_checked: 0
   score: 96.2
 orchard/data_handler/fetchers/galaxy10_converter.py:
-  last_run: '2026-03-18T12:01:26Z'
+  last_run: '2026-05-01T09:44:19Z'
   total: 229
   killed: 201
   survived: 28

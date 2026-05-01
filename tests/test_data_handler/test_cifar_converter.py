@@ -7,9 +7,10 @@ and NPZ output format without performing real network calls.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -21,12 +22,18 @@ from orchard.data_handler.fetchers.cifar_converter import (
     ensure_cifar_npz,
 )
 
+if TYPE_CHECKING:
+    from orchard.core.metadata import DatasetMetadata
+
+# (cifar_cls, train_ds, test_ds) bundle returned by the mock factory.
+MockBundle = tuple[Callable[..., MagicMock], MagicMock, MagicMock]
+
 
 # FIXTURES
 @pytest.fixture
-def cifar10_metadata(tmp_path: Path) -> None:
+def cifar10_metadata(tmp_path: Path) -> SimpleNamespace:
     """Minimal CIFAR-10 metadata stub."""
-    return SimpleNamespace(  # type: ignore
+    return SimpleNamespace(
         name="cifar10",
         display_name="CIFAR-10",
         md5_checksum="",
@@ -37,9 +44,9 @@ def cifar10_metadata(tmp_path: Path) -> None:
 
 
 @pytest.fixture
-def cifar100_metadata(tmp_path: Path) -> None:
+def cifar100_metadata(tmp_path: Path) -> SimpleNamespace:
     """Minimal CIFAR-100 metadata stub."""
-    return SimpleNamespace(  # type: ignore
+    return SimpleNamespace(
         name="cifar100",
         display_name="CIFAR-100",
         md5_checksum="",
@@ -50,10 +57,10 @@ def cifar100_metadata(tmp_path: Path) -> None:
 
 
 @pytest.fixture
-def mock_cifar_cls() -> None:
+def mock_cifar_cls() -> Callable[..., MockBundle]:
     """Creates a mock torchvision CIFAR class with fake data."""
 
-    def _make_mock(num_classes: Any = 10, train_size: Any = 100, test_size: Any = 20) -> None:
+    def _make_mock(num_classes: int = 10, train_size: int = 100, test_size: int = 20) -> MockBundle:
         train_ds = MagicMock()
         train_ds.data = np.random.randint(0, 255, (train_size, 32, 32, 3), dtype=np.uint8)
         train_ds.targets = list(np.random.randint(0, num_classes, train_size))
@@ -62,12 +69,12 @@ def mock_cifar_cls() -> None:
         test_ds.data = np.random.randint(0, 255, (test_size, 32, 32, 3), dtype=np.uint8)
         test_ds.targets = list(np.random.randint(0, num_classes, test_size))
 
-        def cifar_cls(root: Any, train: Any, download: Any) -> None:
-            return train_ds if train else test_ds  # type: ignore
+        def cifar_cls(root: Any, train: Any, download: Any) -> MagicMock:
+            return train_ds if train else test_ds
 
-        return cifar_cls, train_ds, test_ds  # type: ignore
+        return cifar_cls, train_ds, test_ds
 
-    return _make_mock  # type: ignore
+    return _make_mock
 
 
 # TEST: _create_stratified_split
@@ -142,13 +149,15 @@ class TestCreateStratifiedSplit:
 class TestDownloadAndConvert:
     """Tests for _download_and_convert."""
 
-    def test_creates_npz_with_correct_keys(  # type: ignore
-        self, cifar10_metadata, mock_cifar_cls: MagicMock
+    def test_creates_npz_with_correct_keys(
+        self, cifar10_metadata: SimpleNamespace, mock_cifar_cls: Callable[..., MockBundle]
     ) -> None:
         """Converted NPZ should have all 6 standard keys."""
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=100, test_size=20)
 
-        result = _download_and_convert(cifar10_metadata, cifar_cls)
+        result = _download_and_convert(
+            cast("DatasetMetadata", cifar10_metadata), cast(type, cifar_cls)
+        )
 
         assert result.exists()
         with np.load(result) as data:
@@ -241,8 +250,8 @@ class TestEnsureCifarNpz:
 
         assert result == cifar10_metadata.path
 
-    def test_cifar10_routes_to_cifar10_class(  # type: ignore
-        self, cifar10_metadata, mock_cifar_cls: MagicMock
+    def test_cifar10_routes_to_cifar10_class(
+        self, cifar10_metadata: SimpleNamespace, mock_cifar_cls: Callable[..., MockBundle]
     ) -> None:
         """CIFAR-10 metadata should route to torchvision.CIFAR10."""
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10)
@@ -251,12 +260,12 @@ class TestEnsureCifarNpz:
             patch("torchvision.datasets.CIFAR10", cifar_cls),
             patch("torchvision.datasets.CIFAR100", MagicMock()),
         ):
-            result = ensure_cifar_npz(cifar10_metadata)
+            result = ensure_cifar_npz(cast("DatasetMetadata", cifar10_metadata))
 
         assert result.exists()
 
-    def test_cifar100_routes_to_cifar100_class(  # type: ignore
-        self, cifar100_metadata, mock_cifar_cls: MagicMock
+    def test_cifar100_routes_to_cifar100_class(
+        self, cifar100_metadata: SimpleNamespace, mock_cifar_cls: Callable[..., MockBundle]
     ) -> None:
         """CIFAR-100 metadata should route to torchvision.CIFAR100."""
         cifar_cls, _, _ = mock_cifar_cls(num_classes=100, train_size=200, test_size=40)
@@ -265,7 +274,7 @@ class TestEnsureCifarNpz:
             patch("torchvision.datasets.CIFAR100", cifar_cls),
             patch("torchvision.datasets.CIFAR10", MagicMock()),
         ):
-            result = ensure_cifar_npz(cifar100_metadata)
+            result = ensure_cifar_npz(cast("DatasetMetadata", cifar100_metadata))
 
         assert result.exists()
 
@@ -325,14 +334,14 @@ class TestDownloadAndConvertMutations:
         """cifar_cls should be called with root=str(download_dir), train=T/F, download=True."""
         call_log = []
 
-        def tracking_cls(root: Any, train: Any, download: Any) -> None:
+        def tracking_cls(root: Any, train: Any, download: Any) -> MagicMock:
             call_log.append({"root": root, "train": train, "download": download})
             ds = MagicMock()
             ds.data = np.random.randint(0, 255, (50, 32, 32, 3), dtype=np.uint8)
             ds.targets = list(np.random.randint(0, 10, 50))
-            return ds  # type: ignore
+            return ds
 
-        _download_and_convert(cifar10_metadata, tracking_cls)  # type: ignore
+        _download_and_convert(cifar10_metadata, cast(type, tracking_cls))
 
         assert len(call_log) == 2
 
@@ -352,25 +361,27 @@ class TestDownloadAndConvertMutations:
         """Download directory should be parent/.{name}_raw."""
         call_log = []
 
-        def tracking_cls(root: Any, train: Any, download: Any) -> None:
+        def tracking_cls(root: Any, train: Any, download: Any) -> MagicMock:
             call_log.append(root)
             ds = MagicMock()
             ds.data = np.random.randint(0, 255, (50, 32, 32, 3), dtype=np.uint8)
             ds.targets = list(np.random.randint(0, 10, 50))
-            return ds  # type: ignore
+            return ds
 
-        _download_and_convert(cifar10_metadata, tracking_cls)  # type: ignore
+        _download_and_convert(cifar10_metadata, cast(type, tracking_cls))
 
         expected_dir = str(cifar10_metadata.path.parent / ".cifar10_raw")
         assert call_log[0] == expected_dir
 
-    def test_labels_reshaped_to_n_by_1_not_n_by_other(  # type: ignore
-        self, cifar10_metadata, mock_cifar_cls: MagicMock
+    def test_labels_reshaped_to_n_by_1_not_n_by_other(
+        self, cifar10_metadata: SimpleNamespace, mock_cifar_cls: Callable[..., MockBundle]
     ) -> None:
         """Labels must be reshaped to (-1, 1), not (-2, 1) or other."""
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=100, test_size=20)
 
-        result = _download_and_convert(cifar10_metadata, cifar_cls)
+        result = _download_and_convert(
+            cast("DatasetMetadata", cifar10_metadata), cast(type, cifar_cls)
+        )
 
         with np.load(result) as data:
             for key in ["train_labels", "val_labels", "test_labels"]:
@@ -381,7 +392,7 @@ class TestDownloadAndConvertMutations:
                 assert np.all(data[key] < 10)
 
     def test_parent_dir_created_with_parents(
-        self, tmp_path: Path, mock_cifar_cls: MagicMock
+        self, tmp_path: Path, mock_cifar_cls: Callable[..., MockBundle]
     ) -> None:
         """mkdir should use parents=True for nested directories."""
         deep_path = tmp_path / "a" / "b" / "c" / "cifar10.npz"
@@ -395,7 +406,9 @@ class TestDownloadAndConvertMutations:
         )
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=50, test_size=10)
 
-        result = _download_and_convert(deep_metadata, cifar_cls)  # type: ignore
+        result = _download_and_convert(
+            cast("DatasetMetadata", deep_metadata), cast(type, cifar_cls)
+        )
 
         assert result.exists()
 

@@ -6,6 +6,7 @@ Tests download, conversion, splitting, and NPZ creation for Galaxy10 DECals data
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, Mock, patch
@@ -87,7 +88,7 @@ def test_download_galaxy10_h5_cleans_tmp_on_failure(tmp_path: Path) -> None:
     tmp_file = target_h5.with_suffix(".tmp")
     url = "https://example.com/galaxy10.h5"
 
-    def iter_with_failure(*_args: object, **_kwargs: object) -> None:  # type: ignore
+    def iter_with_failure(*_args: object, **_kwargs: object) -> Iterator[bytes]:
         yield b"chunk1"
         raise requests.ConnectionError("Network error during download")
 
@@ -236,11 +237,11 @@ def test_ensure_galaxy10_npz_file_exists_valid_md5(tmp_path: Path) -> None:
     """Test ensure_galaxy10_npz returns existing file with valid MD5."""
     target_npz = tmp_path / "galaxy10.npz"
 
-    dummy_data = {
-        "train_images": np.zeros((5, 10, 10, 3), dtype=np.uint8),
-        "train_labels": np.zeros((5, 1), dtype=np.int64),
-    }
-    np.savez_compressed(target_npz, **dummy_data)  # type: ignore
+    np.savez_compressed(
+        target_npz,
+        train_images=np.zeros((5, 10, 10, 3), dtype=np.uint8),
+        train_labels=np.zeros((5, 1), dtype=np.int64),
+    )
 
     mock_metadata = MagicMock()
     mock_metadata.path = target_npz
@@ -261,11 +262,11 @@ def test_ensure_galaxy10_npz_file_exists_placeholder_md5(tmp_path: Path) -> None
     """Test ensure_galaxy10_npz returns existing file with placeholder MD5."""
     target_npz = tmp_path / "galaxy10.npz"
 
-    dummy_data = {
-        "train_images": np.zeros((5, 10, 10, 3), dtype=np.uint8),
-        "train_labels": np.zeros((5, 1), dtype=np.int64),
-    }
-    np.savez_compressed(target_npz, **dummy_data)  # type: ignore
+    np.savez_compressed(
+        target_npz,
+        train_images=np.zeros((5, 10, 10, 3), dtype=np.uint8),
+        train_labels=np.zeros((5, 1), dtype=np.int64),
+    )
 
     mock_metadata = MagicMock()
     mock_metadata.path = target_npz
@@ -286,11 +287,11 @@ def test_ensure_galaxy10_npz_md5_mismatch(tmp_path: Path) -> None:
     """Test ensure_galaxy10_npz regenerates file on MD5 mismatch."""
     target_npz = tmp_path / "galaxy10.npz"
 
-    dummy_data = {
-        "train_images": np.zeros((5, 10, 10, 3), dtype=np.uint8),
-        "train_labels": np.zeros((5, 1), dtype=np.int64),
-    }
-    np.savez_compressed(target_npz, **dummy_data)  # type: ignore
+    np.savez_compressed(
+        target_npz,
+        train_images=np.zeros((5, 10, 10, 3), dtype=np.uint8),
+        train_labels=np.zeros((5, 1), dtype=np.int64),
+    )
 
     mock_metadata = MagicMock()
     mock_metadata.path = target_npz
@@ -329,15 +330,15 @@ def test_ensure_galaxy10_npz_download_and_convert(tmp_path: Path) -> None:
     def mock_convert_impl(
         h5_path: Any, output_npz: Any, target_size: Any = 224, seed: Any = 42
     ) -> None:
-        dummy_data = {
-            "train_images": np.zeros((5, 10, 10, 3), dtype=np.uint8),
-            "train_labels": np.zeros((5, 1), dtype=np.int64),
-            "val_images": np.zeros((2, 10, 10, 3), dtype=np.uint8),
-            "val_labels": np.zeros((2, 1), dtype=np.int64),
-            "test_images": np.zeros((3, 10, 10, 3), dtype=np.uint8),
-            "test_labels": np.zeros((3, 1), dtype=np.int64),
-        }
-        np.savez_compressed(output_npz, **dummy_data)  # type: ignore
+        np.savez_compressed(
+            output_npz,
+            train_images=np.zeros((5, 10, 10, 3), dtype=np.uint8),
+            train_labels=np.zeros((5, 1), dtype=np.int64),
+            val_images=np.zeros((2, 10, 10, 3), dtype=np.uint8),
+            val_labels=np.zeros((2, 1), dtype=np.int64),
+            test_images=np.zeros((3, 10, 10, 3), dtype=np.uint8),
+            test_labels=np.zeros((3, 1), dtype=np.int64),
+        )
 
     with patch(
         "orchard.data_handler.fetchers.galaxy10_converter.download_galaxy10_h5",
@@ -370,7 +371,7 @@ class TestDownloadMutations:
         """requests.get should receive url, timeout, and stream=True."""
         target_h5 = tmp_path / "Galaxy10.h5"
         url = "https://example.com/galaxy10.h5"
-        captured = {}
+        captured: dict[str, Any] = {}
 
         mock_response = Mock()
         mock_response.iter_content.return_value = [b"data"]
@@ -379,18 +380,18 @@ class TestDownloadMutations:
         with patch("orchard.data_handler.fetchers.galaxy10_converter.requests.get") as mock_get:
             mock_get.return_value.__enter__.return_value = mock_response
 
-            def capture_call(*args: object, **kwargs: object) -> None:
+            def capture_call(*args: object, **kwargs: object) -> Any:
                 captured["args"] = args
-                captured["kwargs"] = kwargs  # type: ignore
-                return mock_get.return_value  # type: ignore
+                captured["kwargs"] = kwargs
+                return mock_get.return_value
 
             mock_get.side_effect = capture_call
 
             download_galaxy10_h5(url, target_h5, retries=1, timeout=120, chunk_size=4096)
 
         assert captured["args"] == (url,)
-        assert captured["kwargs"]["timeout"] == 120  # type: ignore
-        assert captured["kwargs"]["stream"] is True  # type: ignore
+        assert captured["kwargs"]["timeout"] == 120
+        assert captured["kwargs"]["stream"] is True
 
     def test_download_creates_parent_dir(self, tmp_path: Path) -> None:
         """Parent directory should be created."""
@@ -439,16 +440,8 @@ class TestDownloadMutations:
         url = "https://example.com/galaxy10.h5"
         tmp_file = target_h5.with_suffix(".tmp")
 
-        written_to_tmp = {"did": False}
-
         mock_response = Mock()
-
-        def iter_content_check(chunk_size: Any) -> None:  # type: ignore
-            # At this point, the file should be written to tmp, not target
-            yield b"data"
-            written_to_tmp["did"] = tmp_file.exists() or True
-
-        mock_response.iter_content = iter_content_check
+        mock_response.iter_content.return_value = [b"data"]
         mock_response.raise_for_status = Mock()
 
         with patch("orchard.data_handler.fetchers.galaxy10_converter.requests.get") as mock_get:
@@ -1004,9 +997,9 @@ class TestEnsureGalaxy10Mutations:
 
         md5_paths = []
 
-        def tracking_md5(path: Any) -> None:
+        def tracking_md5(path: Any) -> str:
             md5_paths.append(path)
-            return "real_md5"  # type: ignore
+            return "real_md5"
 
         def mock_convert(
             h5_path: Any, output_npz: Any, target_size: Any = 224, seed: Any = 42
