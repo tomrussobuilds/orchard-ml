@@ -8,47 +8,48 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader
 
 from orchard.trainer.engine import mixup_data, train_one_epoch, validate_epoch
 
 
 # FIXTURES
 @pytest.fixture
-def simple_model() -> None:
+def simple_model() -> nn.Sequential:
     """Simple 2-layer network for testing."""
-    return nn.Sequential(  # type: ignore
+    return nn.Sequential(
         nn.Flatten(),
         nn.Linear(28 * 28, 10),
     )
 
 
 @pytest.fixture
-def simple_loader() -> None:
+def simple_loader() -> MagicMock:
     """Mock dataloader with 2 batches."""
     batch1 = (torch.randn(4, 1, 28, 28), torch.randint(0, 10, (4,)))
     batch2 = (torch.randn(4, 1, 28, 28), torch.randint(0, 10, (4,)))
     loader = MagicMock()
     loader.__iter__ = MagicMock(return_value=iter([batch1, batch2]))
     loader.__len__ = MagicMock(return_value=2)
-    return loader  # type: ignore
+    return loader
 
 
 @pytest.fixture
-def criterion() -> None:
+def criterion() -> nn.CrossEntropyLoss:
     """CrossEntropy loss."""
-    return nn.CrossEntropyLoss()  # type: ignore
+    return nn.CrossEntropyLoss()
 
 
 @pytest.fixture
-def optimizer(simple_model: Any) -> None:
+def optimizer(simple_model: nn.Sequential) -> torch.optim.SGD:
     """SGD optimizer."""
-    return torch.optim.SGD(simple_model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0)  # type: ignore
+    return torch.optim.SGD(simple_model.parameters(), lr=0.01, momentum=0.0, weight_decay=0.0)
 
 
 # TESTS: train_one_epoch
@@ -112,12 +113,15 @@ def test_train_one_epoch_with_grad_clip(
 
 @pytest.mark.unit
 @pytest.mark.filterwarnings("ignore::UserWarning")
-def test_train_one_epoch_scaler_grad_clip_coverage(  # type: ignore
-    simple_model, simple_loader, criterion, optimizer
+def test_train_one_epoch_scaler_grad_clip_coverage(
+    simple_model: nn.Sequential,
+    simple_loader: MagicMock,
+    criterion: nn.CrossEntropyLoss,
+    optimizer: torch.optim.SGD,
 ) -> None:
     """Test scaler + grad_clip branch coverage."""
     device = torch.device("cpu")
-    scaler = torch.amp.GradScaler(enabled=True)  # type: ignore
+    scaler = torch.amp.grad_scaler.GradScaler(enabled=True)
 
     with patch("torch.nn.utils.clip_grad_norm_") as mock_clip:
         loss = train_one_epoch(
@@ -158,11 +162,11 @@ def test_train_one_epoch_scaler_grad_clip_minimal() -> None:
         unscale_called[0] = True
         return original_unscale(optimizer)
 
-    scaler.unscale_ = tracked_unscale  # type: ignore
+    setattr(scaler, "unscale_", tracked_unscale)
 
     loss = train_one_epoch(
         model=model,
-        loader=loader,  # type: ignore
+        loader=cast("DataLoader[Any]", loader),
         criterion=criterion,
         optimizer=optimizer,
         device=device,
@@ -179,8 +183,11 @@ def test_train_one_epoch_scaler_grad_clip_minimal() -> None:
 @pytest.mark.filterwarnings(
     "ignore:torch.cuda.amp.GradScaler is enabled, but CUDA is not available:UserWarning"
 )
-def test_train_one_epoch_with_scaler_and_grad_clip(  # type: ignore
-    simple_model, simple_loader, criterion, optimizer
+def test_train_one_epoch_with_scaler_and_grad_clip(
+    simple_model: nn.Sequential,
+    simple_loader: MagicMock,
+    criterion: nn.CrossEntropyLoss,
+    optimizer: torch.optim.SGD,
 ) -> None:
     """Test train_one_epoch with AMP scaler AND gradient clipping."""
     device = torch.device("cpu")
@@ -206,8 +213,8 @@ def test_train_one_epoch_with_mixup(
     """Test train_one_epoch with MixUp."""
     device = torch.device("cpu")
 
-    def mock_mixup(x: Any, y: Any) -> None:
-        return x, y, y, 0.5  # type: ignore
+    def mock_mixup(x: Any, y: Any) -> tuple[Any, Any, Any, float]:
+        return x, y, y, 0.5
 
     loss = train_one_epoch(
         model=simple_model,
@@ -236,8 +243,11 @@ def test_mixup_data_cuda_indexing() -> None:
 
 
 @pytest.mark.unit
-def test_train_one_epoch_updates_tqdm_postfix(  # type: ignore
-    simple_model, simple_loader, criterion, optimizer
+def test_train_one_epoch_updates_tqdm_postfix(
+    simple_model: nn.Sequential,
+    simple_loader: MagicMock,
+    criterion: nn.CrossEntropyLoss,
+    optimizer: torch.optim.SGD,
 ) -> None:
     """Test that tqdm postfix is updated with loss."""
     device = torch.device("cpu")

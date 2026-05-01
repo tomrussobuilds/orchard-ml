@@ -108,7 +108,7 @@ def trainer(
         )
 
         # Keep tmpdir alive
-        t._tmpdir = tmpdir  # type: ignore
+        setattr(t, "_tmpdir", tmpdir)
 
         yield t
 
@@ -477,7 +477,7 @@ def test_step_scheduler_reduce_on_plateau(
 @pytest.mark.unit
 def test_step_scheduler_step_lr(trainer: ModelTrainer) -> None:
     """Test scheduler step with StepLR."""
-    trainer.optimizer.step = MagicMock()  # type: ignore
+    setattr(trainer.optimizer, "step", MagicMock())
     step_scheduler(trainer.scheduler, 0.5)
 
 
@@ -569,7 +569,7 @@ def test_train_full_loop(
         {"loss": 0.3, "accuracy": 0.9, "auc": 0.84},
     ]
 
-    trainer.optimizer.step = MagicMock()  # type: ignore
+    setattr(trainer.optimizer, "step", MagicMock())
     trainer.optimizer.step()
     best_path, train_losses, val_metrics = trainer.train()
 
@@ -595,7 +595,7 @@ def test_train_early_stopping(
     trainer.epochs_no_improve = 0
 
     # --- 3. Mock optimizer step to suppress PyTorch warnings ---
-    trainer.optimizer.step = MagicMock()  # type: ignore
+    setattr(trainer.optimizer, "step", MagicMock())
     trainer.optimizer.step()
 
     # --- 4. Run trainer ---
@@ -691,7 +691,7 @@ def test_step_scheduler_calls_step_for_non_plateau(
         call_count[0] += 1
         original_step(*args, **kwargs)
 
-    t.scheduler.step = mock_step  # type: ignore
+    setattr(t.scheduler, "step", mock_step)
 
     step_scheduler(t.scheduler, 0.5)
 
@@ -743,7 +743,7 @@ def test_train_loads_existing_checkpoint_when_no_improvement(
         # Return constant metrics that won't improve best_auc
         mock_validate.return_value = {"loss": 0.3, "accuracy": 0.9, "auc": 0.5}
 
-        t.optimizer.step = MagicMock()  # type: ignore
+        setattr(t.optimizer, "step", MagicMock())
 
         best_path, _, _ = t.train()
 
@@ -916,7 +916,7 @@ def test_train_records_val_loss_and_monitor(
         {"loss": 0.2, "accuracy": 0.93, "auc": 0.92},
     ]
 
-    trainer.optimizer.step = MagicMock()  # type: ignore
+    setattr(trainer.optimizer, "step", MagicMock())
 
     _, train_losses, val_metrics = trainer.train()
 
@@ -943,7 +943,7 @@ def test_train_calls_tracker(
         {"loss": 0.3, "accuracy": 0.9, "auc": 0.80 + i * 0.01} for i in range(trainer.epochs)
     ]
 
-    trainer.optimizer.step = MagicMock()  # type: ignore
+    setattr(trainer.optimizer, "step", MagicMock())
 
     mock_tracker = MagicMock()
     trainer.tracker = mock_tracker
@@ -968,7 +968,7 @@ def test_train_early_stop_warning(
     mock_validate.return_value = {"loss": 0.5, "accuracy": 0.5, "auc": 0.5}
 
     trainer.best_metric = 0.95
-    trainer.optimizer.step = MagicMock()  # type: ignore
+    setattr(trainer.optimizer, "step", MagicMock())
 
     with patch("orchard.trainer.trainer.logger") as mock_logger:
         trainer.train()
@@ -992,7 +992,7 @@ def test_train_early_stop_warning_includes_epoch(
     mock_validate.return_value = {"loss": 0.5, "accuracy": 0.5, "auc": 0.5}
 
     trainer.best_metric = 0.95
-    trainer.optimizer.step = MagicMock()  # type: ignore
+    setattr(trainer.optimizer, "step", MagicMock())
 
     with patch("orchard.trainer.trainer.logger") as mock_logger:
         trainer.train()
@@ -1018,7 +1018,7 @@ def test_train_log_epoch_summary_receives_real_values(
         {"loss": 0.3, "accuracy": 0.9, "auc": 0.80 + i * 0.01} for i in range(trainer.epochs)
     ]
 
-    trainer.optimizer.step = MagicMock()  # type: ignore
+    setattr(trainer.optimizer, "step", MagicMock())
 
     with patch.object(trainer, "_log_epoch_summary") as mock_log:
         trainer.train()
@@ -1052,7 +1052,7 @@ def test_train_val_loss_extracted_from_metrics(
         use_tqdm=trainer._loop.options.use_tqdm,
         monitor_metric=trainer._loop.options.monitor_metric,
     )
-    trainer.optimizer.step = MagicMock()  # type: ignore
+    setattr(trainer.optimizer, "step", MagicMock())
 
     with patch.object(trainer, "_log_epoch_summary") as mock_log:
         trainer.train()
@@ -1110,7 +1110,7 @@ def test_handle_checkpointing_minimize_strict_less_than(
         {"loss": 0.30, "accuracy": 0.9, "auc": 0.8},
         {"loss": 0.30, "accuracy": 0.9, "auc": 0.8},
     ]
-    trainer.optimizer.step = MagicMock()  # type: ignore
+    setattr(trainer.optimizer, "step", MagicMock())
 
     trainer.train()
 

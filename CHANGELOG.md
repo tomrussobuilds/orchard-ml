@@ -73,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - constrain gitpython>=3.1.47 — command injection via Git options bypass
 - fix(deps)(deps-dev): bump mypy from 1.20.1 to 1.20.2 (#15)
 - use %pip instead of !pip for kernel-aware install
+- use subprocess.run for git commands to satisfy pylance
 
 ## [0.2.4] - 2026-03-25
 
