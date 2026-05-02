@@ -10,20 +10,18 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 
+from orchard.core.metadata import DatasetMetadata
 from orchard.data_handler.fetchers.cifar_converter import (
     _create_stratified_split,
     _download_and_convert,
     ensure_cifar_npz,
 )
-
-if TYPE_CHECKING:
-    from orchard.core.metadata import DatasetMetadata
 
 # (cifar_cls, train_ds, test_ds) bundle returned by the mock factory.
 MockBundle = tuple[Callable[..., MagicMock], MagicMock, MagicMock]
@@ -156,7 +154,7 @@ class TestDownloadAndConvert:
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=100, test_size=20)
 
         result = _download_and_convert(
-            cast("DatasetMetadata", cifar10_metadata), cast(type, cifar_cls)
+            cast(DatasetMetadata, cifar10_metadata), cast(type, cifar_cls)
         )
 
         assert result.exists()
@@ -260,7 +258,7 @@ class TestEnsureCifarNpz:
             patch("torchvision.datasets.CIFAR10", cifar_cls),
             patch("torchvision.datasets.CIFAR100", MagicMock()),
         ):
-            result = ensure_cifar_npz(cast("DatasetMetadata", cifar10_metadata))
+            result = ensure_cifar_npz(cast(DatasetMetadata, cifar10_metadata))
 
         assert result.exists()
 
@@ -274,7 +272,7 @@ class TestEnsureCifarNpz:
             patch("torchvision.datasets.CIFAR100", cifar_cls),
             patch("torchvision.datasets.CIFAR10", MagicMock()),
         ):
-            result = ensure_cifar_npz(cast("DatasetMetadata", cifar100_metadata))
+            result = ensure_cifar_npz(cast(DatasetMetadata, cifar100_metadata))
 
         assert result.exists()
 
@@ -380,7 +378,7 @@ class TestDownloadAndConvertMutations:
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=100, test_size=20)
 
         result = _download_and_convert(
-            cast("DatasetMetadata", cifar10_metadata), cast(type, cifar_cls)
+            cast(DatasetMetadata, cifar10_metadata), cast(type, cifar_cls)
         )
 
         with np.load(result) as data:
@@ -406,9 +404,7 @@ class TestDownloadAndConvertMutations:
         )
         cifar_cls, _, _ = mock_cifar_cls(num_classes=10, train_size=50, test_size=10)
 
-        result = _download_and_convert(
-            cast("DatasetMetadata", deep_metadata), cast(type, cifar_cls)
-        )
+        result = _download_and_convert(cast(DatasetMetadata, deep_metadata), cast(type, cifar_cls))
 
         assert result.exists()
 

@@ -166,7 +166,7 @@ def test_train_one_epoch_scaler_grad_clip_minimal() -> None:
 
     loss = train_one_epoch(
         model=model,
-        loader=cast("DataLoader[Any]", loader),
+        loader=cast(DataLoader[Any], loader),
         criterion=criterion,
         optimizer=optimizer,
         device=device,
