@@ -17,8 +17,11 @@ Expected Runtime: ~2 minutes on GPU, ~5 minutes on CPU
 
 from __future__ import annotations
 
+import logging
+from typing import cast
+
 from orchard.architectures import get_model
-from orchard.core import Config, LogStyle, RootOrchestrator
+from orchard.core import Config, LogStyle, RootOrchestrator, RunPaths
 from orchard.core.metadata.wrapper import DetectionRegistryWrapper
 from orchard.core.task_registry import get_task
 from orchard.data_handler import get_dataloaders
@@ -72,18 +75,19 @@ def run_detection_smoke_test(cfg: Config) -> None:
         Exception: Any failure during pipeline execution.
     """
     with RootOrchestrator(cfg) as orchestrator:
-        paths = orchestrator.paths
-        run_logger = orchestrator.run_logger
+        # Smoke test always runs on rank 0 → paths and run_logger are never None.
+        paths = cast(RunPaths, orchestrator.paths)
+        run_logger = cast(logging.Logger, orchestrator.run_logger)
         device = orchestrator.get_device()
 
-        run_logger.info("")  # type: ignore
-        run_logger.info(LogStyle.HEAVY)  # type: ignore
-        run_logger.info(f"{'DETECTION SMOKE TEST':^80}")  # type: ignore
-        run_logger.info(LogStyle.HEAVY)  # type: ignore
+        run_logger.info("")
+        run_logger.info(LogStyle.HEAVY)
+        run_logger.info(f"{'DETECTION SMOKE TEST':^80}")
+        run_logger.info(LogStyle.HEAVY)
 
         try:
             # SYNTHETIC DATA GENERATION
-            run_logger.info("[Stage 1/5] Generating synthetic detection data...")  # type: ignore
+            run_logger.info("[Stage 1/5] Generating synthetic detection data...")
             synth = create_synthetic_detection_dataset(
                 num_classes=1,
                 samples=20,
@@ -100,7 +104,7 @@ def run_detection_smoke_test(cfg: Config) -> None:
             )
 
             # DATALOADERS
-            run_logger.info("[Stage 2/5] Initializing detection DataLoaders...")  # type: ignore
+            run_logger.info("[Stage 2/5] Initializing detection DataLoaders...")
             train_loader, val_loader, test_loader = get_dataloaders(
                 data,
                 cfg.dataset,
@@ -111,7 +115,7 @@ def run_detection_smoke_test(cfg: Config) -> None:
             )
 
             # MODEL + TASK ADAPTERS
-            run_logger.info("[Stage 3/5] Testing FasterRCNN & task adapters...")  # type: ignore
+            run_logger.info("[Stage 3/5] Testing FasterRCNN & task adapters...")
             model = get_model(device=device, dataset_cfg=cfg.dataset, arch_cfg=cfg.architecture)
             task = get_task("detection")
             criterion = task.criterion_factory.get_criterion(cfg.training)
@@ -127,7 +131,7 @@ def run_detection_smoke_test(cfg: Config) -> None:
                 criterion=criterion,
                 device=device,
                 training=cfg.training,
-                output_path=paths.best_model_path,  # type: ignore
+                output_path=paths.best_model_path,
                 training_step=task.training_step,
                 validation_metrics=task.validation_metrics,
             )
@@ -135,21 +139,21 @@ def run_detection_smoke_test(cfg: Config) -> None:
             _, train_losses, val_metrics_history = trainer.train()
 
             # WEIGHT RECOVERY
-            run_logger.info("[Stage 4/5] Recovering weights and verifying checkpoint...")  # type: ignore
-            if not paths.best_model_path.exists():  # type: ignore
-                raise FileNotFoundError(f"Checkpoint not found: {paths.best_model_path}")  # type: ignore
+            run_logger.info("[Stage 4/5] Recovering weights and verifying checkpoint...")
+            if not paths.best_model_path.exists():
+                raise FileNotFoundError(f"Checkpoint not found: {paths.best_model_path}")
 
             trainer.load_best_weights()
 
             # DETECTION EVALUATION
-            run_logger.info("[Stage 5/5] Running detection evaluation (mAP)...")  # type: ignore
+            run_logger.info("[Stage 5/5] Running detection evaluation (mAP)...")
             test_metrics = task.eval_pipeline.run_evaluation(
                 model=model,
                 test_loader=test_loader,
                 train_losses=train_losses,
                 val_metrics_history=val_metrics_history,
                 class_names=["person", "object"],
-                paths=paths,  # type: ignore
+                paths=paths,
                 training=cfg.training,
                 dataset=cfg.dataset,
                 augmentation=cfg.augmentation,
@@ -163,26 +167,26 @@ def run_detection_smoke_test(cfg: Config) -> None:
             assert "map_75" in test_metrics, "mAP@75 metric missing from test results"
 
             # TEST SUMMARY
-            run_logger.info("")  # type: ignore
-            run_logger.info(LogStyle.DOUBLE)  # type: ignore
-            run_logger.info(f"{'DETECTION SMOKE TEST PASSED':^80}")  # type: ignore
-            run_logger.info(LogStyle.DOUBLE)  # type: ignore
-            run_logger.info(  # type: ignore
+            run_logger.info("")
+            run_logger.info(LogStyle.DOUBLE)
+            run_logger.info(f"{'DETECTION SMOKE TEST PASSED':^80}")
+            run_logger.info(LogStyle.DOUBLE)
+            run_logger.info(
                 f"{LogStyle.INDENT}{LogStyle.SUCCESS} mAP     : {test_metrics['map']:.4f}"
             )
-            run_logger.info(  # type: ignore
+            run_logger.info(
                 f"{LogStyle.INDENT}{LogStyle.ARROW} mAP@50  : {test_metrics['map_50']:.4f}"
             )
-            run_logger.info(  # type: ignore
+            run_logger.info(
                 f"{LogStyle.INDENT}{LogStyle.ARROW} mAP@75  : {test_metrics['map_75']:.4f}"
             )
-            run_logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Device  : {device}")  # type: ignore
-            run_logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Artifacts: {paths.root}")  # type: ignore
-            run_logger.info(LogStyle.DOUBLE)  # type: ignore
-            run_logger.info("")  # type: ignore
+            run_logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Device  : {device}")
+            run_logger.info(f"{LogStyle.INDENT}{LogStyle.ARROW} Artifacts: {paths.root}")
+            run_logger.info(LogStyle.DOUBLE)
+            run_logger.info("")
 
         except Exception as e:
-            run_logger.error(  # type: ignore
+            run_logger.error(
                 f"\n{LogStyle.WARNING} DETECTION SMOKE TEST FAILED: {str(e)}", exc_info=True
             )
             raise
