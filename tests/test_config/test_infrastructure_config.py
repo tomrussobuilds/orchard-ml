@@ -7,9 +7,10 @@ and compute cache flushing.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 from unittest.mock import patch
 
 import pytest
@@ -233,7 +234,7 @@ def test_prepare_environment_with_process_kill_enabled(
 
     class MockLogger:
         def __init__(self) -> None:
-            self.messages = []  # type: ignore
+            self.messages: list[tuple[str, str]] = []
 
         def info(self, msg: str, *args: Any) -> None:
             self.messages.append(("info", msg % args if args else msg))
@@ -270,7 +271,7 @@ def test_prepare_environment_skips_process_kill_on_shared_env(
 
     class MockLogger:
         def __init__(self) -> None:
-            self.messages = []  # type: ignore
+            self.messages: list[tuple[str, str]] = []
 
         def info(self, msg: str, *args: Any) -> None:
             self.messages.append(("info", msg % args if args else msg))
@@ -339,7 +340,7 @@ def test_flush_compute_cache_with_cuda(monkeypatch: pytest.MonkeyPatch) -> None:
 
     class MockLogger:
         def __init__(self) -> None:
-            self.debug_messages = []  # type: ignore
+            self.debug_messages: list[str] = []
 
         def debug(self, msg: str, *args: Any) -> None:
             self.debug_messages.append(msg % args if args else msg)
@@ -366,8 +367,8 @@ def test_flush_compute_cache_with_mps(monkeypatch: pytest.MonkeyPatch) -> None:
 
     class MockMPSBackend:
         @staticmethod
-        def is_available() -> None:
-            return True  # type: ignore
+        def is_available() -> bool:
+            return True
 
     class MockMPS:
         @staticmethod
@@ -382,7 +383,7 @@ def test_flush_compute_cache_with_mps(monkeypatch: pytest.MonkeyPatch) -> None:
 
     class MockLogger:
         def __init__(self) -> None:
-            self.debug_messages = []  # type: ignore
+            self.debug_messages: list[str] = []
 
         def debug(self, msg: str, *args: Any) -> None:
             self.debug_messages.append(msg % args if args else msg)
@@ -406,8 +407,8 @@ def test_flush_compute_cache_mps_failure(monkeypatch: pytest.MonkeyPatch) -> Non
 
     class MockMPSBackend:
         @staticmethod
-        def is_available() -> None:
-            return True  # type: ignore
+        def is_available() -> bool:
+            return True
 
     class MockMPS:
         @staticmethod
@@ -612,9 +613,9 @@ def test_release_resources_calls_flush_compute_cache(
 
     config = SimpleNamespace(hardware=MockHardware())
 
-    flush_calls: list[dict] = []  # type: ignore
+    flush_calls: list[dict[str, object]] = []
 
-    def tracking_flush(self, **kwargs: object) -> None:  # type: ignore
+    def tracking_flush(self: InfrastructureManager, **kwargs: object) -> None:
         flush_calls.append(kwargs)
 
     with patch("orchard.core.config.infrastructure_config.release_single_instance"):
@@ -655,9 +656,9 @@ def test_release_resources_default_logger_fallback(
 
     config = SimpleNamespace(hardware=MockHardware())
 
-    flush_calls: list[dict] = []  # type: ignore
+    flush_calls: list[dict[str, object]] = []
 
-    def tracking_flush(self, **kwargs: object) -> None:  # type: ignore
+    def tracking_flush(self: InfrastructureManager, **kwargs: object) -> None:
         flush_calls.append(kwargs)
 
     with patch("orchard.core.config.infrastructure_config.release_single_instance"):
@@ -665,7 +666,7 @@ def test_release_resources_default_logger_fallback(
         manager.release_resources(config)
 
     assert len(flush_calls) == 1
-    assert flush_calls[0]["log"].name == LOGGER_NAME
+    assert cast(logging.Logger, flush_calls[0]["log"]).name == LOGGER_NAME
 
 
 @pytest.mark.unit

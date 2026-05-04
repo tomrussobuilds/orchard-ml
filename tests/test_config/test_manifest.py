@@ -392,9 +392,9 @@ def test_deep_set_preserves_siblings() -> None:
 @pytest.mark.unit
 def test_dump_portable_relative_data_root() -> None:
     """Test dump_portable converts data_root inside PROJECT_ROOT to relative."""
-    from orchard.core.config import manifest as manifest_mod
+    from orchard.core.paths import PROJECT_ROOT
 
-    original_root = manifest_mod.PROJECT_ROOT  # type: ignore[attr-defined]
+    original_root = PROJECT_ROOT
     cfg = Config(
         dataset=DatasetConfig(
             name="bloodmnist",
@@ -443,9 +443,9 @@ def test_dump_portable_telemetry_uses_portable_dict() -> None:
 @pytest.mark.unit
 def test_dump_portable_relative_path_value() -> None:
     """dump_portable converts absolute data_root to ./relative string."""
-    from orchard.core.config import manifest as manifest_mod
+    from orchard.core.paths import PROJECT_ROOT
 
-    original_root = manifest_mod.PROJECT_ROOT  # type: ignore[attr-defined]
+    original_root = PROJECT_ROOT
     cfg = Config(
         dataset=DatasetConfig(
             name="bloodmnist",

@@ -8,6 +8,7 @@ constraints (paths, hyperparameters, probabilities).
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import pytest
 from pydantic import BaseModel, ValidationError
@@ -421,11 +422,12 @@ def test_log_level_literals() -> None:
     class Model(BaseModel):
         level: LogLevel
 
-    for level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
-        assert Model(level=level).level == level  # type: ignore
+    levels: tuple[LogLevel, ...] = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
+    for level in levels:
+        assert Model(level=level).level == level
 
     with pytest.raises(ValidationError):
-        Model(level="INVALID")  # type: ignore
+        Model(level=cast(LogLevel, "INVALID"))
 
 
 @pytest.mark.unit
@@ -435,14 +437,15 @@ def test_device_type_literals() -> None:
     class Model(BaseModel):
         device: DeviceType
 
-    for device in ["auto", "cpu", "cuda", "mps"]:
-        assert Model(device=device).device == device  # type: ignore
+    devices: tuple[DeviceType, ...] = ("auto", "cpu", "cuda", "mps")
+    for device in devices:
+        assert Model(device=device).device == device
 
     with pytest.raises(ValidationError):
-        Model(device="gpu")  # type: ignore
+        Model(device=cast(DeviceType, "gpu"))
 
     with pytest.raises(ValidationError):
-        Model(device="tpu")  # type: ignore
+        Model(device=cast(DeviceType, "tpu"))
 
 
 if __name__ == "__main__":
