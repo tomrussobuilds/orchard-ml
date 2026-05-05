@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import optuna
@@ -38,7 +38,7 @@ from orchard.optimization.orchestrator.exporters import (
 
 # FIXTURES
 @pytest.fixture
-def study() -> None:
+def study() -> MagicMock:
     """Fixture for creating a mock Optuna Study object."""
     study = MagicMock(spec=optuna.Study)
     trial_mock = MagicMock(spec=optuna.trial.FrozenTrial)
@@ -54,19 +54,19 @@ def study() -> None:
     study.trials = [trial_mock]
     study.study_name = "test_study"
     study.direction = optuna.study.StudyDirection.MAXIMIZE
-    return study  # type: ignore
+    return study
 
 
 @pytest.fixture
-def paths(tmpdir: Any) -> None:
+def paths(tmpdir: Any) -> MagicMock:
     """Fixture for creating a mock RunPaths object."""
     paths = MagicMock(spec=RunPaths)
     paths.reports = tmpdir.mkdir("reports")
-    return paths  # type: ignore
+    return paths
 
 
 @pytest.fixture
-def config() -> None:
+def config() -> Config:
     """Fixture for creating a valid Config object with ModelConfig and TrainingConfig."""
     model_config = {
         "name": "resnet_18",
@@ -77,7 +77,7 @@ def config() -> None:
 
     training_config = {"epochs": 10, "mixup_epochs": 5}
 
-    return Config(model=model_config, training=training_config)  # type: ignore
+    return Config(model=model_config, training=training_config)
 
 
 # TESTS
@@ -161,7 +161,7 @@ def test_build_best_trial_data_value_error() -> None:
     study = MagicMock(spec=optuna.Study)
     study.best_trial.side_effect = ValueError("No trials")
 
-    completed = []  # type: ignore
+    completed: list[optuna.trial.FrozenTrial] = []
 
     result = build_best_trial_data(study, completed)
 
@@ -181,7 +181,7 @@ def test_build_best_trial_data_value_error_with_completed_trials() -> None:
 
     type(study).best_trial = PropertyMock(side_effect=ValueError("Corrupted study"))
 
-    result = build_best_trial_data(study, completed)  # type: ignore
+    result = build_best_trial_data(study, cast("list[optuna.trial.FrozenTrial]", completed))
 
     assert result is None
 
@@ -201,7 +201,9 @@ def test_build_best_trial_data_value_error_direct_call() -> None:
     trial_mock.state = optuna.trial.TrialState.COMPLETE
     completed = [trial_mock]
 
-    result = build_best_trial_data(study, completed)  # type: ignore
+    result = build_best_trial_data(
+        cast(optuna.Study, study), cast("list[optuna.trial.FrozenTrial]", completed)
+    )
 
     assert result is None
 
@@ -265,7 +267,7 @@ def test_build_top_trials_dataframe_without_duration() -> None:
 
     sorted_trials = [trial1, trial2]
 
-    df = build_top_trials_dataframe(sorted_trials, "auc")  # type: ignore
+    df = build_top_trials_dataframe(cast("list[optuna.trial.FrozenTrial]", sorted_trials), "auc")
 
     assert len(df) == 2
     assert "Rank" in df.columns
@@ -292,7 +294,9 @@ def test_build_top_trials_dataframe_with_mixed_durations() -> None:
 
     sorted_trials = [trial1, trial2]
 
-    df = build_top_trials_dataframe(sorted_trials, "accuracy")  # type: ignore
+    df = build_top_trials_dataframe(
+        cast("list[optuna.trial.FrozenTrial]", sorted_trials), "accuracy"
+    )
 
     assert len(df) == 2
     assert "Duration (s)" in df.columns

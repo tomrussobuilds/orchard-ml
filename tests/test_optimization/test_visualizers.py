@@ -11,6 +11,7 @@ import logging
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -26,7 +27,7 @@ from orchard.optimization.orchestrator.visualizers import (
 
 
 @pytest.fixture
-def completed_trial():  # type: ignore
+def completed_trial() -> MagicMock:
     """Mock completed trial."""
     import optuna
 
@@ -46,7 +47,7 @@ def completed_trial():  # type: ignore
 
 
 @pytest.mark.unit
-def test_save_plot_success(completed_trial) -> None:  # type: ignore
+def test_save_plot_success(completed_trial: MagicMock) -> None:
     """Test save_plot saves HTML file."""
     study = MagicMock()
     study.trials = [completed_trial]
@@ -66,7 +67,7 @@ def test_save_plot_success(completed_trial) -> None:  # type: ignore
 
 @pytest.mark.unit
 @patch("orchard.optimization.orchestrator.visualizers.logger")
-def test_save_plot_handles_exception(mock_logger: MagicMock, completed_trial) -> None:  # type: ignore
+def test_save_plot_handles_exception(mock_logger: MagicMock, completed_trial: MagicMock) -> None:
     """Test save_plot logs warning with plot_name and exception on failure."""
     study = MagicMock()
     study.trials = [completed_trial]
@@ -109,8 +110,8 @@ def test_generate_visualizations_no_completed_trials() -> None:
 
 @pytest.mark.unit
 @patch("orchard.optimization.orchestrator.visualizers.has_completed_trials")
-def test_generate_visualizations_plotly_not_installed(  # type: ignore
-    mock_has_trials: MagicMock, completed_trial
+def test_generate_visualizations_plotly_not_installed(
+    mock_has_trials: MagicMock, completed_trial: MagicMock
 ) -> None:
     """Test generate_visualizations handles missing plotly gracefully."""
     from orchard.optimization.orchestrator.visualizers import generate_visualizations
@@ -126,7 +127,7 @@ def test_generate_visualizations_plotly_not_installed(  # type: ignore
             __builtins__.__import__ if hasattr(__builtins__, "__import__") else __import__
         )
 
-        def _selective_import(name, *args, **kwargs):  # type: ignore
+        def _selective_import(name: str, *args: Any, **kwargs: Any) -> Any:
             if name == "optuna.visualization" or name.startswith("optuna.visualization."):
                 raise ImportError("No module named 'plotly'")
             return original_import(name, *args, **kwargs)
@@ -138,8 +139,8 @@ def test_generate_visualizations_plotly_not_installed(  # type: ignore
 @pytest.mark.unit
 @patch("orchard.optimization.orchestrator.visualizers.has_completed_trials")
 @patch("orchard.optimization.orchestrator.visualizers.save_plot")
-def test_generate_visualizations_creates_all_plots(  # type: ignore
-    mock_save_plot: MagicMock, mock_has_trials: MagicMock, completed_trial
+def test_generate_visualizations_creates_all_plots(
+    mock_save_plot: MagicMock, mock_has_trials: MagicMock, completed_trial: MagicMock
 ) -> None:
     """Test generate_visualizations creates all four plot types."""
     from orchard.optimization.orchestrator.visualizers import generate_visualizations
@@ -186,7 +187,9 @@ def test_generate_visualizations_creates_all_plots(  # type: ignore
 
 @pytest.mark.unit
 @patch("orchard.optimization.orchestrator.visualizers.logging")
-def test_save_plot_applies_and_removes_filter(mock_logging: MagicMock, completed_trial) -> None:  # type: ignore
+def test_save_plot_applies_and_removes_filter(
+    mock_logging: MagicMock, completed_trial: MagicMock
+) -> None:
     """Test save_plot adds/removes _missing_params_filter on the correct logger."""
     study = MagicMock()
     study.trials = [completed_trial]
@@ -207,7 +210,9 @@ def test_save_plot_applies_and_removes_filter(mock_logging: MagicMock, completed
 
 @pytest.mark.unit
 @patch("orchard.optimization.orchestrator.visualizers.logging")
-def test_save_plot_removes_filter_on_exception(mock_logging: MagicMock, completed_trial) -> None:  # type: ignore
+def test_save_plot_removes_filter_on_exception(
+    mock_logging: MagicMock, completed_trial: MagicMock
+) -> None:
     """Test save_plot removes filter even when plot_fn raises."""
     study = MagicMock()
     study.trials = [completed_trial]

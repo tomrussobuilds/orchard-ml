@@ -8,6 +8,7 @@ and _apply_param_overrides().
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -207,7 +208,7 @@ def test_apply_overrides_maps_to_correct_sections() -> None:
     """Assert params are placed in their correct config sections."""
     builder, _ = _make_builder()
 
-    config_dict = {
+    config_dict: dict[str, dict[str, Any]] = {
         "training": {"learning_rate": 0.01},
         "architecture": {"dropout": 0.0},
         "augmentation": {"rotation_angle": 0},
@@ -218,9 +219,9 @@ def test_apply_overrides_maps_to_correct_sections() -> None:
         {"learning_rate": 0.005, "dropout": 0.5, "rotation_angle": 30},
     )
 
-    assert config_dict["training"]["learning_rate"] == 0.005  # type: ignore
-    assert config_dict["architecture"]["dropout"] == 0.5  # type: ignore
-    assert config_dict["augmentation"]["rotation_angle"] == 30  # type: ignore
+    assert config_dict["training"]["learning_rate"] == 0.005
+    assert config_dict["architecture"]["dropout"] == 0.5
+    assert config_dict["augmentation"]["rotation_angle"] == 30
 
 
 # ---------------------------------------------------------------------------
@@ -284,7 +285,11 @@ def test_apply_overrides_unknown_param_not_added() -> None:
     """Unknown param not in any mapping is silently skipped."""
     builder, _ = _make_builder()
 
-    config_dict = {"training": {}, "architecture": {}, "augmentation": {}}  # type: ignore
+    config_dict: dict[str, dict[str, Any]] = {
+        "training": {},
+        "architecture": {},
+        "augmentation": {},
+    }
     builder._apply_param_overrides(config_dict, {"totally_unknown": 99})
 
     assert "totally_unknown" not in config_dict["training"]
@@ -302,7 +307,11 @@ def test_apply_overrides_does_not_duplicate_across_sections() -> None:
     """Assert a param is placed in exactly one section (break works)."""
     builder, _ = _make_builder()
 
-    config_dict = {"training": {}, "architecture": {}, "augmentation": {}}  # type: ignore
+    config_dict: dict[str, dict[str, Any]] = {
+        "training": {},
+        "architecture": {},
+        "augmentation": {},
+    }
     builder._apply_param_overrides(config_dict, {"learning_rate": 0.001})
 
     # learning_rate belongs to "training" only
