@@ -63,7 +63,7 @@ def test_create_amp_scaler_enabled() -> None:
     """AMP scaler is GradScaler when use_amp=True."""
     training = make_training_config(use_amp=True)
     scaler = create_amp_scaler(training)
-    assert isinstance(scaler, torch.amp.GradScaler)  # type: ignore[attr-defined]
+    assert isinstance(scaler, torch.amp.grad_scaler.GradScaler)
 
 
 @pytest.mark.filterwarnings("ignore:.*GradScaler is enabled, but CUDA is not available.*")

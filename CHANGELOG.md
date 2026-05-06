@@ -47,6 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - remove type: ignore from test_trainer and test_engine — 24 annotations
 - remove type: ignore from converter tests + drop dead code — 25 annotations
 - remove type: ignore from smoke_test.py and smoke_test_detection.py — 47 annotations
+- remove type: ignore from test_config/{infrastructure,manifest,types} — 17 annotations
+- remove type: ignore from test_optimization cluster — 22 annotations
 
 ### Documentation
 

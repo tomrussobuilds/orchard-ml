@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from types import MappingProxyType
+from typing import Any, cast
 from unittest.mock import MagicMock
 
 import pytest
@@ -142,7 +143,7 @@ def test_get_registry_is_immutable() -> None:
     registry = get_registry()
 
     with pytest.raises(TypeError):
-        registry["y"] = _make_components()  # type: ignore[index]
+        cast("dict[str, Any]", registry)["y"] = _make_components()
 
 
 @pytest.mark.unit
@@ -175,7 +176,7 @@ def test_task_components_frozen() -> None:
     components = _make_components()
 
     with pytest.raises(AttributeError):
-        components.criterion_factory = MagicMock()  # type: ignore[misc]
+        setattr(components, "criterion_factory", MagicMock())
 
 
 # ── Protocol isinstance checks ────────────────────────────────────────────────
