@@ -943,7 +943,7 @@ class TestCommentedYaml:
     """Tests for commented YAML generation in init command."""
 
     @pytest.fixture()
-    def recipe_content(self, tmp_path: Path) -> None:
+    def recipe_content(self, tmp_path: Path) -> str:
         """Generate a recipe and return its content."""
         from typer.testing import CliRunner
 
@@ -952,7 +952,7 @@ class TestCommentedYaml:
         runner = CliRunner()
         target = tmp_path / "recipe.yaml"
         runner.invoke(app, ["init", str(target)])
-        return target.read_text()  # type: ignore
+        return target.read_text()
 
     def test_comments_present(self, recipe_content: Any) -> None:
         """Generated recipe contains field description comments."""
@@ -1100,9 +1100,10 @@ class TestYamlHelpers:
         from orchard.cli_app import _build_comment
 
         result = _build_comment({"description": "Batch size", "minimum": 1, "maximum": 128})
-        assert "Batch size" in result  # type: ignore
-        assert "1" in result  # type: ignore
-        assert "128" in result  # type: ignore
+        assert result is not None
+        assert "Batch size" in result
+        assert "1" in result
+        assert "128" in result
 
     def test_build_comment_no_description(self) -> None:
         from orchard.cli_app import _build_comment
@@ -1116,8 +1117,9 @@ class TestYamlHelpers:
         result = _build_comment(
             {"description": "LR", "exclusiveMinimum": 1e-8, "exclusiveMaximum": 1.0}
         )
-        assert "LR" in result  # type: ignore
-        assert "1e-08" in result  # type: ignore
+        assert result is not None
+        assert "LR" in result
+        assert "1e-08" in result
 
     def test_build_comment_upper_only(self) -> None:
         from orchard.cli_app import _build_comment
@@ -1179,10 +1181,10 @@ class TestCLIIntegration:
     """Integration tests that exercise real Config.from_recipe and RootOrchestrator phases."""
 
     @staticmethod
-    def _write_recipe(tmp_path: Path, overrides: Any = None) -> None:
+    def _write_recipe(tmp_path: Path, overrides: Any = None) -> Path:
         import yaml
 
-        content = {
+        content: dict[str, dict[str, Any]] = {
             "dataset": {"name": "bloodmnist", "resolution": 28, "force_rgb": True},
             "architecture": {"name": "mini_cnn", "pretrained": False},
             "training": {"epochs": 1, "mixup_epochs": 0, "use_amp": False, "seed": 42},
@@ -1192,10 +1194,10 @@ class TestCLIIntegration:
         if overrides:
             for k, v in overrides.items():
                 section, field = k.split(".", 1)
-                content[section][field] = v  # type: ignore
+                content[section][field] = v
         recipe = tmp_path / "recipe.yaml"
         recipe.write_text(yaml.dump(content), encoding="utf-8")
-        return recipe  # type: ignore
+        return recipe
 
     @patch("orchard.core.io.serialization.dump_requirements")
     @patch("orchard.core.orchestrator.InfrastructureManager")
