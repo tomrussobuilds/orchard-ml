@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - remove type: ignore from test_config/{infrastructure,manifest,types} — 17 annotations
 - remove type: ignore from test_optimization cluster — 22 annotations
 - remove type: ignore from task_registry/loop/integration — 4 annotations
+- remove type: ignore from test_cli_app — 8 annotations
 
 ### Documentation
 

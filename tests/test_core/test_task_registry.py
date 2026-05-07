@@ -143,7 +143,7 @@ def test_get_registry_is_immutable() -> None:
     registry = get_registry()
 
     with pytest.raises(TypeError):
-        cast("dict[str, Any]", registry)["y"] = _make_components()
+        cast(dict[str, Any], registry)["y"] = _make_components()
 
 
 @pytest.mark.unit
