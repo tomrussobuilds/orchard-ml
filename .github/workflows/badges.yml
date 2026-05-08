@@ -87,7 +87,7 @@ jobs:
       - name: Run mypy --strict
         id: mypy
         run: |
-          if mypy --strict orchard/ 2>/dev/null; then
+          if mypy --strict orchard/ tests/ 2>/dev/null; then
             echo "status=passing" >> "$GITHUB_OUTPUT"
             echo "color=2a6db2" >> "$GITHUB_OUTPUT"
           else
