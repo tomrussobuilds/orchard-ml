@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - bump the actions group with 2 updates
 - bump orhun/git-cliff-action in the actions group (#14)
 - expand mypy --strict to tests/ and forbid blanket type: ignore via ruff PGH003
+- install dev extras instead of duplicating tool versions in YAML
+- bump the actions group with 2 updates (#16)
 
 ### Changed
 
