@@ -86,6 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - use subprocess.run for git commands to satisfy pylance
 - unquote cast() forward-refs to satisfy CodeQL py/unused-import
 - unquote cast() forward-ref in test_task_registry to satisfy CodeQL py/unused-import
+- bump mako and gitpython constraints to clear 4 high-severity Dependabot alerts
 
 ## [0.2.4] - 2026-03-25
 
