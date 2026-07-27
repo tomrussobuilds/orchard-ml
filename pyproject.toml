@@ -227,4 +227,8 @@ constraint-dependencies = [
     # 3.1.49 fixes newline injection in config_writer().set_value() (RCE via core.hooksPath);
     # 3.1.50 fixes the section-parameter bypass of #49's patch.
     "gitpython>=3.1.50",
+    # cryptography: 48.0.1 clears a high-severity advisory. Capped at 48.x by
+    # mlflow (requires cryptography<49); pinned because the resolver otherwise
+    # falls back to 46.x (transitive via mlflow -> google-auth).
+    "cryptography>=48.0.1",
 ]
