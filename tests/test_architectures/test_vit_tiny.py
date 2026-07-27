@@ -13,9 +13,20 @@ from unittest.mock import MagicMock, patch
 import pytest
 import torch
 import torch.nn as nn
+from huggingface_hub.errors import (
+    HfHubHTTPError,
+    LocalEntryNotFoundError,
+    OfflineModeIsEnabled,
+)
 
 from orchard.architectures.vit_tiny import build_vit_tiny
 from orchard.exceptions import OrchardConfigError
+
+# Hub failures that mean the weights could not be downloaded (offline, rate
+# limit, transient outage) rather than a code defect. A successful
+# ``_has_internet`` TCP handshake does not guarantee the download itself
+# succeeds, so treat these as an environment skip instead of a failure.
+_HUB_UNREACHABLE = (LocalEntryNotFoundError, HfHubHTTPError, OfflineModeIsEnabled)
 
 
 def _has_internet() -> bool:
@@ -28,6 +39,24 @@ def _has_internet() -> bool:
 
 
 _requires_network = pytest.mark.skipif(not _has_internet(), reason="No network access")
+
+
+def _build_pretrained_vit_or_skip(
+    num_classes: int,
+    in_channels: int,
+    *,
+    weight_variant: str | None = None,
+) -> nn.Module:
+    """Build a pretrained ViT-Tiny, skipping the test if the Hub is unreachable."""
+    try:
+        return build_vit_tiny(
+            num_classes,
+            in_channels,
+            pretrained=True,
+            weight_variant=weight_variant,
+        )
+    except _HUB_UNREACHABLE as exc:
+        pytest.skip(f"HuggingFace Hub unreachable: {exc}")
 
 
 # FIXTURES
@@ -56,10 +85,9 @@ class TestBuildViTTiny:
         num_classes = 5
         in_channels = 3
 
-        model = build_vit_tiny(
+        model = _build_pretrained_vit_or_skip(
             num_classes,
             in_channels,
-            pretrained=True,
             weight_variant="vit_tiny_patch16_224.augreg_in21k_ft_in1k",
         )
 
@@ -81,10 +109,9 @@ class TestBuildViTTiny:
         num_classes = 2
         in_channels = 1
 
-        model = build_vit_tiny(
+        model = _build_pretrained_vit_or_skip(
             num_classes,
             in_channels,
-            pretrained=True,
             weight_variant="vit_tiny_patch16_224.augreg_in21k_ft_in1k",
         )
 
@@ -135,10 +162,9 @@ class TestBuildViTTiny:
     @_requires_network
     def test_weight_copy_consistency(self, device: torch.device) -> None:
         """Confirms that bias is preserved during patch embedding adaptation."""
-        model = build_vit_tiny(
+        model = _build_pretrained_vit_or_skip(
             2,
             1,
-            pretrained=True,
             weight_variant="vit_tiny_patch16_224.augreg_in21k_ft_in1k",
         )
 

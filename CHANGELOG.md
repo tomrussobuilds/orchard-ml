@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - survive typer 0.27 help rendering and numpy 2.5 stubs
+- sync uv.lock to patched versions, clearing 48 Dependabot alerts
 
 ## [0.2.5] - 2026-05-10
 
