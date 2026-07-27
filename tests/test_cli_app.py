@@ -171,7 +171,12 @@ class TestCLIHelp:
         assert result.exit_code == 0
         clean = _strip_ansi(result.output)
         assert "--set" in clean
-        assert "RECIPE" in clean
+        # The required 'recipe' positional argument is documented in the
+        # Arguments panel. typer renders its metavar as "RECIPE" (<0.27) or
+        # lowercase "{recipe}" (>=0.27), so match case-insensitively.
+        arguments = clean.split("Arguments", 1)[-1]
+        assert "recipe" in arguments.lower()
+        assert "[required]" in arguments
 
     def test_run_missing_recipe(self) -> None:
         from typer.testing import CliRunner
@@ -435,8 +440,11 @@ class TestCLIValidate:
         result = runner.invoke(app, ["validate", "--help"])
         assert result.exit_code == 0
         clean = _strip_ansi(result.output)
-        assert "RECIPE" in clean
         assert "--set" in clean
+        # See test_run_help: metavar case varies across typer versions.
+        arguments = clean.split("Arguments", 1)[-1]
+        assert "recipe" in arguments.lower()
+        assert "[required]" in arguments
 
     def test_validate_missing_recipe(self) -> None:
         from typer.testing import CliRunner
