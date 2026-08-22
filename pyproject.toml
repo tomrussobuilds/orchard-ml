@@ -225,10 +225,15 @@ constraint-dependencies = [
     "mako>=1.3.12",
     # GitPython: 3.1.47 fixed Git-options command injection; 3.1.48 fixes path traversal in reference APIs;
     # 3.1.49 fixes newline injection in config_writer().set_value() (RCE via core.hooksPath);
-    # 3.1.50 fixes the section-parameter bypass of #49's patch.
-    "gitpython>=3.1.50",
-    # cryptography: 48.0.1 clears a high-severity advisory. Capped at 48.x by
-    # mlflow (requires cryptography<49); pinned because the resolver otherwise
-    # falls back to 46.x (transitive via mlflow -> google-auth).
+    # 3.1.50 fixes the section-parameter bypass of #49's patch;
+    # 3.1.58 fixes a batch of high/medium advisories (option injection, unguarded
+    # option forwarding in init/read-tree, .gitmodules path escape, --pathspec-from-file read).
+    "gitpython>=3.1.58",
+    # cryptography: 48.0.1 clears a high-severity advisory. Pinned because the
+    # resolver otherwise falls back to 46.x (transitive via mlflow -> google-auth).
+    # Capped at 49.x by mlflow 3.15.1 (requires cryptography<50). GHSA-g6cj-pr64-35w5
+    # (PKCS#7 EnvelopedData Bleichenbacher oracle) is only fixed in 50.0.0, so it
+    # stays open (Dependabot alert #76, dismissed: path unreachable in orchard-ml);
+    # raise this floor to >=50 once mlflow relaxes the cap.
     "cryptography>=48.0.1",
 ]

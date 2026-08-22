@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - survive typer 0.27 help rendering and numpy 2.5 stubs
 - sync uv.lock to patched versions, clearing 48 Dependabot alerts
 - skip ViT-Tiny pretrained tests when the HF Hub is unreachable
+- bump mlflow and GitPython to patched versions
 
 ### Miscellaneous
 
