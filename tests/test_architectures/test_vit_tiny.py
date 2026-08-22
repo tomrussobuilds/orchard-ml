@@ -57,6 +57,7 @@ def _build_pretrained_vit_or_skip(
         )
     except _HUB_UNREACHABLE as exc:
         pytest.skip(f"HuggingFace Hub unreachable: {exc}")
+        raise  # unreachable: pytest.skip() raises Skipped; keeps returns non-mixed
 
 
 # FIXTURES

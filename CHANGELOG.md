@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Miscellaneous
 
 - drop pillow<12 pin from Colab setup cells
+- raise gitpython floor to 3.1.58 and document cryptography cap
 
 ## [0.2.5] - 2026-05-10
 
