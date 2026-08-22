@@ -10,11 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### CI
 
 - bump urllib3 in the uv group across 1 directory (#17)
+- bump the actions group across 1 directory with 10 updates (#27)
 
 ### Fixed
 
 - survive typer 0.27 help rendering and numpy 2.5 stubs
 - sync uv.lock to patched versions, clearing 48 Dependabot alerts
+- skip ViT-Tiny pretrained tests when the HF Hub is unreachable
 
 ## [0.2.5] - 2026-05-10
 
