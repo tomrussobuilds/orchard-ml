@@ -373,7 +373,7 @@ def test_save_detection_npz_ragged_boxes(tmp_path: Path) -> None:
         np.array([[0, 0, 10, 10], [5, 5, 15, 15], [20, 20, 30, 30]], dtype=np.float32),
         np.array([[0, 0, 10, 10]], dtype=np.float32),
     ]
-    labels = [np.ones(len(b), dtype=np.int64) for b in boxes]
+    labels = [np.array([1] * len(b), dtype=np.int64) for b in boxes]
 
     img_path = tmp_path / "images.npz"
     ann_path = tmp_path / "annotations.npz"
