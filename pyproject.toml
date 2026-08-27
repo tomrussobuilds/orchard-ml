@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=64.0", "wheel"]  # >=62.3 needed for recursive `**` package-data globs
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -99,7 +99,7 @@ include = ["orchard*"]
 exclude = ["tests*", "docs*"]
 
 [tool.setuptools.package-data]
-orchard = ["core/metadata/domains/*.yaml"]
+orchard = ["**/*.yaml"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"

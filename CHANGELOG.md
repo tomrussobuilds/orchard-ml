@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - sync uv.lock to patched versions, clearing 48 Dependabot alerts
 - skip ViT-Tiny pretrained tests when the HF Hub is unreachable
 - bump mlflow and GitPython to patched versions
+- fix(deps)(deps-dev): bump mypy from 1.20.2 to 2.3.1 (#18)
 
 ### Miscellaneous
 
