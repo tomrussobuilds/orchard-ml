@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - bump the actions group across 1 directory with 10 updates (#27)
 - bump sqlparse in the uv group across 1 directory (#32)
 - bump the actions group across 1 directory with 4 updates (#31)
+- bump the actions group with 2 updates (#33)
 
 ### Fixed
 
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - skip ViT-Tiny pretrained tests when the HF Hub is unreachable
 - bump mlflow and GitPython to patched versions
 - fix(deps)(deps-dev): bump mypy from 1.20.2 to 2.3.1 (#18)
+- include nested package data in wheel
 
 ### Miscellaneous
 
