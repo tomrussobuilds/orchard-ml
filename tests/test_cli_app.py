@@ -425,6 +425,49 @@ class TestCLIRun:
 
         assert result.exit_code != 0
 
+    @patch("orchard.create_tracker")
+    @patch("orchard.log_pipeline_summary")
+    @patch("orchard.run_training_phase")
+    @patch("orchard.RootOrchestrator")
+    @patch("orchard.Config")
+    def test_run_arms_bootstrap_warning_capture(
+        self,
+        mock_cfg_cls: MagicMock,
+        mock_orch_cls: MagicMock,
+        mock_train: MagicMock,
+        mock_summary: MagicMock,
+        mock_tracker_fn: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """Warnings from phases 1-3 are buffered, so Logger.setup can persist them."""
+        from typer.testing import CliRunner
+
+        from orchard.cli_app import app
+        from orchard.core.logger.logger import _BootstrapCapture
+        from orchard.core.logger.logger import logger as bootstrap_logger
+
+        recipe = tmp_path / "recipe.yaml"
+        recipe.write_text("dataset:\n  name: test\n")
+
+        mock_cfg = MagicMock()
+        mock_cfg.optuna = None
+        mock_cfg.export = None
+        mock_cfg_cls.from_recipe.return_value = mock_cfg
+        mock_orch_cls.return_value.__enter__.return_value = MagicMock()
+        mock_train.return_value = MagicMock()
+        mock_tracker_fn.return_value = MagicMock()
+
+        try:
+            CliRunner().invoke(app, ["run", str(recipe)])
+            armed = [h for h in bootstrap_logger.handlers if isinstance(h, _BootstrapCapture)]
+        finally:
+            for handler in bootstrap_logger.handlers[:]:
+                if isinstance(handler, _BootstrapCapture):
+                    handler.close()
+                    bootstrap_logger.removeHandler(handler)
+
+        assert len(armed) == 1
+
 
 # CLI VALIDATE COMMAND
 @pytest.mark.unit

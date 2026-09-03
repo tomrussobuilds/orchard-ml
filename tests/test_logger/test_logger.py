@@ -1012,3 +1012,207 @@ def test_setup_does_not_stack_warning_filters(tmp_path: Path) -> None:
     target = logging.getLogger("filter_stack_logger")
 
     assert len([f for f in target.filters if isinstance(f, WarningSymbolFilter)]) == 1
+
+
+# BOOTSTRAP CAPTURE
+@pytest.fixture
+def bootstrap_target(
+    request: pytest.FixtureRequest,
+) -> Iterator[tuple[logging.Logger, list[logging.LogRecord]]]:
+    """Provide a test-local logger plus the module buffer, both cleaned up afterwards."""
+    from orchard.core.logger.logger import _BOOTSTRAP_RECORDS
+
+    target = logging.getLogger(request.node.name)
+    target.setLevel(logging.INFO)
+    target.propagate = False
+    _BOOTSTRAP_RECORDS.clear()
+
+    yield target, _BOOTSTRAP_RECORDS
+
+    _BOOTSTRAP_RECORDS.clear()
+    for handler in target.handlers[:]:
+        handler.close()
+        target.removeHandler(handler)
+
+
+def _read_log_files(log_dir: Path) -> str:
+    """Concatenate every log file written under a directory."""
+    return "\n".join(path.read_text(encoding="utf-8") for path in log_dir.glob("*.log"))
+
+
+@pytest.mark.unit
+def test_capture_bootstrap_warnings_buffers_warning(
+    bootstrap_target: tuple[logging.Logger, list[logging.LogRecord]],
+) -> None:
+    """Warnings raised before a run log exists are held in the buffer."""
+    from orchard.core.logger import capture_bootstrap_warnings
+
+    target, buffer = bootstrap_target
+    capture_bootstrap_warnings(target)
+    target.warning("CUDA unavailable. Falling back to CPU.")
+
+    assert [record.getMessage() for record in buffer] == ["CUDA unavailable. Falling back to CPU."]
+
+
+@pytest.mark.unit
+def test_capture_bootstrap_warnings_ignores_below_warning(
+    bootstrap_target: tuple[logging.Logger, list[logging.LogRecord]],
+) -> None:
+    """INFO and DEBUG records are console progress noise, not worth replaying."""
+    from orchard.core.logger import capture_bootstrap_warnings
+
+    target, buffer = bootstrap_target
+    target.setLevel(logging.DEBUG)
+    capture_bootstrap_warnings(target)
+    target.info("Phase 1: seeding")
+    target.debug("Phase 2: threads")
+
+    assert buffer == []
+
+
+@pytest.mark.unit
+def test_capture_bootstrap_warnings_starts_from_empty_buffer(
+    bootstrap_target: tuple[logging.Logger, list[logging.LogRecord]],
+) -> None:
+    """Arming capture discards leftovers, so a run never inherits a previous one's warnings."""
+    from orchard.core.logger import capture_bootstrap_warnings
+
+    target, buffer = bootstrap_target
+    buffer.append(logging.LogRecord("stale", logging.WARNING, __file__, 1, "old run", (), None))
+
+    capture_bootstrap_warnings(target)
+
+    assert buffer == []
+
+
+@pytest.mark.unit
+def test_capture_bootstrap_warnings_does_not_stack_handlers(
+    bootstrap_target: tuple[logging.Logger, list[logging.LogRecord]],
+) -> None:
+    """Re-arming replaces the handler, so a record is never buffered twice."""
+    from orchard.core.logger import capture_bootstrap_warnings
+    from orchard.core.logger.logger import _BootstrapCapture
+
+    target, buffer = bootstrap_target
+    capture_bootstrap_warnings(target)
+    capture_bootstrap_warnings(target)
+    target.warning("buffered once")
+
+    assert len([h for h in target.handlers if isinstance(h, _BootstrapCapture)]) == 1
+    assert len(buffer) == 1
+
+
+@pytest.mark.unit
+def test_capture_bootstrap_warnings_caps_buffer(
+    bootstrap_target: tuple[logging.Logger, list[logging.LogRecord]],
+) -> None:
+    """The buffer stops growing at the cap, dropping the overflow."""
+    from orchard.core.logger import capture_bootstrap_warnings
+    from orchard.core.logger.logger import _MAX_BOOTSTRAP_RECORDS
+
+    # Asserted literally: the loop below must outrun the real cap to prove it holds.
+    assert _MAX_BOOTSTRAP_RECORDS == 100
+
+    target, buffer = bootstrap_target
+    capture_bootstrap_warnings(target)
+    for index in range(101):
+        target.warning("warning %d", index)
+
+    assert len(buffer) == 100
+    assert buffer[-1].getMessage() == "warning 99"
+
+
+@pytest.mark.unit
+def test_setup_replays_bootstrap_warnings_into_file(
+    tmp_path: Path, bootstrap_target: tuple[logging.Logger, list[logging.LogRecord]]
+) -> None:
+    """Buffered warnings land in the run log once the file handler exists."""
+    from orchard.core.logger import capture_bootstrap_warnings
+
+    target, buffer = bootstrap_target
+    capture_bootstrap_warnings(target)
+    target.warning("AMP requires GPU but CPU detected. Disabling AMP automatically.")
+
+    Logger.setup(name=target.name, log_dir=tmp_path, level="INFO")
+
+    assert "Disabling AMP automatically." in _read_log_files(tmp_path)
+    assert buffer == []
+
+
+@pytest.mark.unit
+def test_setup_replay_preserves_original_timestamp(
+    tmp_path: Path, bootstrap_target: tuple[logging.Logger, list[logging.LogRecord]]
+) -> None:
+    """A replayed warning keeps the time it was raised, not the time it was flushed."""
+    import time
+
+    from orchard.core.logger import capture_bootstrap_warnings
+
+    target, buffer = bootstrap_target
+    capture_bootstrap_warnings(target)
+    target.warning("raised long before the run directory existed")
+    buffer[0].created = 1_000_000_000.0
+
+    Logger.setup(name=target.name, log_dir=tmp_path, level="INFO")
+
+    expected = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(1_000_000_000.0))
+    assert f"{expected} - WARNING - raised long before" in _read_log_files(tmp_path)
+
+
+@pytest.mark.unit
+def test_setup_replay_does_not_duplicate_on_console(
+    tmp_path: Path,
+    bootstrap_target: tuple[logging.Logger, list[logging.LogRecord]],
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The console already showed these warnings; the replay must not print them again."""
+    from orchard.core.logger import capture_bootstrap_warnings
+
+    target, _ = bootstrap_target
+    capture_bootstrap_warnings(target)
+    target.warning("printed exactly once")
+    capsys.readouterr()
+
+    Logger.setup(name=target.name, log_dir=tmp_path, level="INFO")
+
+    assert "printed exactly once" not in capsys.readouterr().out
+    assert "printed exactly once" in _read_log_files(tmp_path)
+
+
+@pytest.mark.unit
+def test_routed_warning_reaches_the_run_log(
+    tmp_path: Path, bootstrap_target: tuple[logging.Logger, list[logging.LogRecord]]
+) -> None:
+    """End to end: a warnings.warn raised before phase 3 still lands in the run log."""
+    import warnings
+
+    from orchard.core.logger import capture_bootstrap_warnings, route_warnings_to_logger
+
+    target, _ = bootstrap_target
+    original = warnings.showwarning
+    try:
+        route_warnings_to_logger(target)
+        capture_bootstrap_warnings(target)
+        warnings.warn("CUDA requested but unavailable.", UserWarning, stacklevel=1)
+    finally:
+        warnings.showwarning = original
+
+    Logger.setup(name=target.name, log_dir=tmp_path, level="INFO")
+
+    assert "⚠ CUDA requested but unavailable." in _read_log_files(tmp_path)
+
+
+@pytest.mark.unit
+def test_setup_without_log_dir_keeps_buffer(
+    bootstrap_target: tuple[logging.Logger, list[logging.LogRecord]],
+) -> None:
+    """Console-only reconfiguration has nowhere to flush, so the buffer survives."""
+    from orchard.core.logger import capture_bootstrap_warnings
+
+    target, buffer = bootstrap_target
+    capture_bootstrap_warnings(target)
+    target.warning("still waiting for a run directory")
+
+    Logger.setup(name=target.name, log_dir=None, level="INFO")
+
+    assert [record.getMessage() for record in buffer] == ["still waiting for a run directory"]

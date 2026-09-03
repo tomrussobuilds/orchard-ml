@@ -58,6 +58,9 @@ _COMMENT_MAX_WIDTH = 80
 _YAML_INDENT = "    "
 _YAML_KEYWORDS = frozenset({"true", "false", "null", "yes", "no", "on", "off", ""})
 
+# JSON schema constraints carried over when flattening an ``anyOf`` variant
+_CONSTRAINT_KEYS = ("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "enum")
+
 
 # ── Version callback ──────────────────────────────────────────────────────
 
@@ -192,8 +195,8 @@ def run(
         run_optimization_phase,
         run_training_phase,
     )
+    from orchard.core.logger.logger import capture_bootstrap_warnings, route_warnings_to_logger
     from orchard.core.logger.logger import logger as bootstrap_logger
-    from orchard.core.logger.logger import route_warnings_to_logger
 
     if not recipe.exists():
         typer.echo(f"Error: recipe not found: {recipe}", err=True)
@@ -202,6 +205,10 @@ def run(
     # Route warnings through the logger from the very first config validation,
     # before RootOrchestrator reconfigures logging for the run directory.
     route_warnings_to_logger(bootstrap_logger)
+
+    # Phases 1-3 warn before that run directory exists, so buffer their records
+    # for Logger.setup to replay into the run log; console output is unchanged.
+    capture_bootstrap_warnings(bootstrap_logger)
 
     overrides = _parse_overrides(set_ or [])
     cfg = Config.from_recipe(recipe, overrides=overrides or None)
@@ -429,9 +436,6 @@ def _inline_ref(schema: dict[str, Any], defs: dict[str, Any]) -> dict[str, Any]:
         if k != "$ref":
             base[k] = v
     return base
-
-
-_CONSTRAINT_KEYS = ("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "enum")
 
 
 def _merge_any_of(schema: dict[str, Any]) -> dict[str, Any]:

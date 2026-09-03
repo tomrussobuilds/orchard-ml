@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Build
+
+- pin hook entries to the project venv
+
 ### CI
 
 - bump the actions group with 2 updates (#35)

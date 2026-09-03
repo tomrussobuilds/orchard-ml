@@ -10,6 +10,7 @@ Key Features:
 - Singleton-like Behavior: Prevents duplicate logger configurations
 - Dynamic Reconfiguration: Switches from console-only to file-based logging
 - Rotating File Handler: Automatic log rotation with size limits
+- Bootstrap Capture: Replays pre-run-directory warnings into the run log
 - Thread-safe: Safe for concurrent access across modules
 - Timestamp-based Files: Unique log files per experiment session
 """
@@ -36,6 +37,13 @@ _SEPARATOR_CHARS = {"━", "═", "─"}
 # [Benchmark — ONNX], [Trial 3 Hyperparameters]
 # but NOT data brackets like [T: 0.2131 | V: 0.1196] or [!]
 _SUBTITLE_RE = re.compile(r"\[([A-Za-z][A-Za-z0-9 \u2014\-]*)\]")
+
+# Warnings buffered before the run log file exists (see BOOTSTRAP CAPTURE below)
+_BOOTSTRAP_RECORDS: Final[list[logging.LogRecord]] = []
+
+# The pre-file-handler window emits a handful of records at most; the cap only
+# bounds memory should capture ever be left armed with no run log to drain into.
+_MAX_BOOTSTRAP_RECORDS: Final[int] = 100
 
 
 # WARNING ROUTING
@@ -65,6 +73,82 @@ def route_warnings_to_logger(target: logging.Logger) -> None:
         target.debug("%s   (%s at %s:%d)", LogStyle.INDENT, category.__name__, filename, lineno)
 
     warnings.showwarning = _showwarning
+
+
+# BOOTSTRAP CAPTURE
+# Determinism (phase 1) and device resolution (phase 2) run before the run
+# directory exists (phase 3), so their warnings reach a console-only logger and
+# nothing else. Buffering them lets Logger.setup persist them once the file
+# handler is up, without reordering the orchestration phases.
+class _BootstrapCapture(logging.Handler):
+    """
+    Buffer WARNING records emitted before the run log file exists.
+
+    Records are kept module-side rather than on the instance because
+    ``Logger._setup_logger`` closes and detaches every handler when it
+    reconfigures — the buffer has to outlive this handler.
+    """
+
+    def __init__(self) -> None:
+        """Capture WARNING and above; lower levels are console progress noise."""
+        super().__init__(level=logging.WARNING)
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """
+        Append a record to the module buffer, up to the cap.
+
+        Args:
+            record: Record already styled by WarningSymbolFilter.
+        """
+        if len(_BOOTSTRAP_RECORDS) < _MAX_BOOTSTRAP_RECORDS:
+            _BOOTSTRAP_RECORDS.append(record)
+
+
+def capture_bootstrap_warnings(target: logging.Logger) -> None:
+    """
+    Buffer a logger's warnings until a run log file is available.
+
+    Without this, a warning raised before the run directory exists (CPU
+    fallback, AMP auto-disable, seeding caveats) is visible on the console but
+    absent from ``run.log``, which is the artifact consulted after the fact.
+    ``Logger.setup`` replays whatever is buffered into the file handler it
+    provisions, preserving the original timestamps.
+
+    Args:
+        target: Bootstrap logger whose early warnings should be preserved.
+    """
+    _BOOTSTRAP_RECORDS.clear()
+
+    # Reset first: re-arming would otherwise stack handlers on the module-level
+    # logger and buffer every record once per armed handler.
+    for handler in target.handlers[:]:
+        if isinstance(handler, _BootstrapCapture):
+            handler.close()
+            target.removeHandler(handler)
+
+    target.addHandler(_BootstrapCapture())
+
+
+def _replay_bootstrap_warnings(target: logging.Logger) -> None:
+    """
+    Flush buffered bootstrap warnings into a logger's file handlers.
+
+    Console handlers are skipped: these records were already printed while the
+    logger was console-only, and replaying them would duplicate the output. The
+    buffer drains regardless of the configured level — a warning about the
+    environment a run started in is worth keeping even in a quiet log.
+
+    Args:
+        target: Freshly configured logger owning the run's file handler.
+    """
+    file_handlers = [h for h in target.handlers if isinstance(h, RotatingFileHandler)]
+    if not file_handlers:
+        return
+
+    for record in _BOOTSTRAP_RECORDS:
+        for handler in file_handlers:
+            handler.handle(record)
+    _BOOTSTRAP_RECORDS.clear()
 
 
 class WarningSymbolFilter(logging.Filter):
@@ -396,6 +480,7 @@ class Logger:
 
         configured = cls(name=name, log_dir=log_dir, level=numeric_level, **kwargs).get_logger()
         route_warnings_to_logger(configured)
+        _replay_bootstrap_warnings(configured)
         return configured
 
 
