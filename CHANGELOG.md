@@ -7,10 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### CI
+
+- bump the actions group with 2 updates (#35)
+
 ### Fixed
 
 - raise typer floor to 0.12.4
+- fix(deps)(deps): update plotly requirement from <7,>=6.0.0 to >=6.0.0,<8 in the viz group across 1 directory (#34)
 - never sample AMP-incompatible batch sizes
+
+### Styling
+
+- route warnings through the run log
 
 ## [0.2.6] - 2026-08-27
 

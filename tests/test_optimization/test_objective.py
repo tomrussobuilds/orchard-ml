@@ -1994,10 +1994,9 @@ def test_optuna_objective_survives_pydantic_validation_error() -> None:
     class _Probe(BaseModel):
         value: int
 
-    try:
+    with pytest.raises(ValidationError) as exc_info:
         _Probe(value="not-an-int")  # type: ignore[arg-type]
-    except ValidationError as exc:
-        validation_error = exc
+    validation_error = exc_info.value
 
     mock_cfg = MagicMock()
     mock_cfg.optuna.epochs = 10
