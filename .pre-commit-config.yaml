@@ -1,22 +1,26 @@
 repos:
   - repo: local
+    # Every hook is `language: system`, so it resolves through PATH.  Entries are
+    # pinned to .venv/bin because a commit made without the venv activated (the
+    # IDE source-control panel, a bare terminal) either fails to find the tool or
+    # -- worse -- silently picks up an unrelated copy from ~/.local or anaconda.
     hooks:
       - id: black
         name: black (formatting)
         language: system
-        entry: black --check --quiet
+        entry: .venv/bin/black --check --quiet
         types: [python]
 
       - id: ruff
         name: ruff (linting + import sorting)
         language: system
-        entry: ruff check --fix
+        entry: .venv/bin/ruff check --fix
         types: [python]
 
       - id: mypy
         name: mypy --strict (type checking)
         language: system
-        entry: mypy --strict --cache-dir /dev/null
+        entry: .venv/bin/mypy --strict --cache-dir /dev/null
         types: [python]
         pass_filenames: false
         args: [orchard/, tests/]
@@ -24,7 +28,7 @@ repos:
       - id: bandit
         name: bandit (security scan)
         language: system
-        entry: bandit -c pyproject.toml -r
+        entry: .venv/bin/bandit -c pyproject.toml -r
         types: [python]
 
       - id: test-coverage
@@ -37,7 +41,7 @@ repos:
       - id: mutmut-ratchet
         name: mutation score ratchet
         language: system
-        entry: python scripts/check_mutmut_registry.py --ratchet
+        entry: .venv/bin/python scripts/check_mutmut_registry.py --ratchet
         files: 'mutmut-registry\.yaml'
         pass_filenames: false
 
@@ -50,7 +54,7 @@ repos:
       - id: nbstripout
         name: strip notebook outputs
         language: system
-        entry: python scripts/strip_notebook_outputs.py
+        entry: .venv/bin/python scripts/strip_notebook_outputs.py
         types: [jupyter]
 
       - id: git-cliff
@@ -64,7 +68,7 @@ repos:
       - id: pre-push-quality-gate
         name: pre-push quality gate
         language: system
-        entry: bash -c 'ruff check orchard/ tests/ && bandit -c pyproject.toml -r orchard/ && mypy --strict orchard/ tests/'
+        entry: bash -c '.venv/bin/ruff check orchard/ tests/ && .venv/bin/bandit -c pyproject.toml -r orchard/ && .venv/bin/mypy --strict orchard/ tests/'
         pass_filenames: false
         always_run: true
         stages: [pre-push]

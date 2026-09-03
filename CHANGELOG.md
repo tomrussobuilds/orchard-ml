@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix(deps)(deps): update plotly requirement from <7,>=6.0.0 to >=6.0.0,<8 in the viz group across 1 directory (#34)
 - never sample AMP-incompatible batch sizes
 - drop AMP-incompatible batch size from the fasterrcnn search
+- stop counting hung and uncovered mutants as kills
 
 ### Miscellaneous
 

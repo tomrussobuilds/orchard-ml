@@ -6,6 +6,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-git-cliff v0.1.0.. -o CHANGELOG.md
+# Pinned to the venv: a commit made without it activated would not find git-cliff.
+"$SCRIPT_DIR/../.venv/bin/git-cliff" v0.1.0.. -o CHANGELOG.md
 cat "$SCRIPT_DIR/changelog-base.md" >> CHANGELOG.md
 git add CHANGELOG.md
