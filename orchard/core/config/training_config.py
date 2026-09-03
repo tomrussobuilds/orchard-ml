@@ -24,7 +24,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ...exceptions import OrchardConfigError
-from ..paths import DEFAULT_SEED
+from ..paths import AMP_MIN_BATCH_SIZE, DEFAULT_SEED
 from .types import (
     BatchSize,
     GradNorm,
@@ -37,6 +37,24 @@ from .types import (
     SmoothingValue,
     WeightDecay,
 )
+
+
+# AMP COMPATIBILITY RULE
+def is_amp_safe_batch_size(batch_size: int) -> bool:
+    """
+    Check whether a batch size is large enough for stable AMP training.
+
+    Single source of truth for the AMP/batch-size invariant: enforced here by
+    ``TrainingConfig.validate_amp`` and consulted upstream by the Optuna search
+    space, so trials never sample a batch size this config would reject.
+
+    Args:
+        batch_size: Candidate training batch size.
+
+    Returns:
+        True if the batch size is safe under mixed precision.
+    """
+    return batch_size >= AMP_MIN_BATCH_SIZE
 
 
 # TRAINING CONFIGURATION
@@ -132,14 +150,17 @@ class TrainingConfig(BaseModel):
         Validate AMP compatibility with batch size.
 
         Raises:
-            OrchardConfigError: If AMP enabled with batch_size < 4.
+            OrchardConfigError: If AMP enabled with batch_size below AMP_MIN_BATCH_SIZE.
 
         Returns:
             Validated TrainingConfig instance.
         """
-        if self.use_amp and self.batch_size < 4:
+        if self.use_amp and not is_amp_safe_batch_size(self.batch_size):
             raise OrchardConfigError(
-                "AMP enabled with very small batch size (<4) can cause NaN gradients."
+                f"AMP enabled with very small batch size "
+                f"(batch_size={self.batch_size} < {AMP_MIN_BATCH_SIZE}) "
+                f"can cause NaN gradients. Either raise batch_size to "
+                f"{AMP_MIN_BATCH_SIZE}+ or set training.use_amp=false."
             )
         return self
 

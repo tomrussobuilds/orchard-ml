@@ -26,6 +26,7 @@ Example:
 """
 
 from .constants import (
+    AMP_MIN_BATCH_SIZE,
     DEFAULT_SEED,
     HEALTHCHECK_LOGGER_NAME,
     HIGHRES_THRESHOLD,
@@ -55,6 +56,7 @@ from .run_paths import RunPaths
 __all__ = [
     # Constants
     "DEFAULT_SEED",
+    "AMP_MIN_BATCH_SIZE",
     "SUPPORTED_RESOLUTIONS",
     "HIGHRES_THRESHOLD",
     "METRIC_ACCURACY",

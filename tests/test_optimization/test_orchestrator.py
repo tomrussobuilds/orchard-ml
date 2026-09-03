@@ -537,6 +537,7 @@ class TestOrchestratorMutationKillers:
         mock_cfg.optuna.model_pool = ["resnet18", "vit"]
         overrides_sentinel = MagicMock()
         mock_cfg.optuna.search_space_overrides = overrides_sentinel
+        mock_cfg.training.use_amp = True
 
         orch = _make_orch(mock_cfg, mock_paths)
         with patch.object(orch, "_post_optimization_processing"):
@@ -549,6 +550,7 @@ class TestOrchestratorMutationKillers:
             model_pool=["resnet18", "vit"],
             overrides=overrides_sentinel,
             task_type=mock_cfg.task_type,
+            use_amp=True,
         )
 
     # optimize: verify OptunaObjective constructed with exact kwargs

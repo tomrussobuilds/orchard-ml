@@ -7,6 +7,7 @@ They ensure that search spaces are correctly defined and resolved for different 
 
 from __future__ import annotations
 
+import warnings
 from unittest.mock import MagicMock
 
 import pytest
@@ -856,3 +857,78 @@ def test_detection_task_skips_model_search() -> None:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+# AMP-AWARE BATCH SIZE FILTERING
+@pytest.mark.unit
+def test_batch_size_space_drops_amp_incompatible_choices() -> None:
+    """AMP-enabled studies never sample a batch size the Config validator rejects."""
+    custom_ov = SearchSpaceOverrides(batch_size_high_res=[2, 4, 6])
+    registry = SearchSpaceRegistry(custom_ov)
+
+    trial_mock = MagicMock(spec=Trial)
+    trial_mock.suggest_categorical = MagicMock(return_value=4)
+
+    with pytest.warns(UserWarning, match=r"\[2\] were removed"):
+        space = registry.get_batch_size_space(resolution=224, use_amp=True)
+    space["batch_size"](trial_mock)
+
+    trial_mock.suggest_categorical.assert_called_with("batch_size", [4, 6])
+
+
+@pytest.mark.unit
+def test_batch_size_space_keeps_small_choices_without_amp() -> None:
+    """Without AMP the small batch sizes stay in the space (no warning)."""
+    custom_ov = SearchSpaceOverrides(batch_size_high_res=[2, 4, 6])
+    registry = SearchSpaceRegistry(custom_ov)
+
+    trial_mock = MagicMock(spec=Trial)
+    trial_mock.suggest_categorical = MagicMock(return_value=2)
+
+    space = registry.get_batch_size_space(resolution=224, use_amp=False)
+    space["batch_size"](trial_mock)
+
+    trial_mock.suggest_categorical.assert_called_with("batch_size", [2, 4, 6])
+
+
+@pytest.mark.unit
+def test_batch_size_space_no_warning_when_all_choices_valid() -> None:
+    """Nothing dropped means no warning is emitted."""
+    registry = SearchSpaceRegistry(SearchSpaceOverrides(batch_size_high_res=[8, 16]))
+
+    trial_mock = MagicMock(spec=Trial)
+    trial_mock.suggest_categorical = MagicMock(return_value=8)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        space = registry.get_batch_size_space(resolution=224, use_amp=True)
+
+    space["batch_size"](trial_mock)
+    trial_mock.suggest_categorical.assert_called_with("batch_size", [8, 16])
+
+
+@pytest.mark.unit
+def test_batch_size_space_raises_when_amp_leaves_no_choice() -> None:
+    """A fully incompatible batch grid fails fast instead of mid-study."""
+    registry = SearchSpaceRegistry(SearchSpaceOverrides(batch_size_high_res=[1, 2]))
+
+    with pytest.raises(OrchardConfigError, match="AMP is enabled but every batch_size"):
+        registry.get_batch_size_space(resolution=224, use_amp=True)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("preset", ["quick", "full"])
+def test_get_search_space_propagates_use_amp(preset: str) -> None:
+    """Both presets forward use_amp down to the batch size sampler."""
+    custom_ov = SearchSpaceOverrides(batch_size_high_res=[2, 4, 6])
+
+    trial_mock = MagicMock(spec=Trial)
+    trial_mock.suggest_float = MagicMock(return_value=0.001)
+    trial_mock.suggest_int = MagicMock(return_value=5)
+    trial_mock.suggest_categorical = MagicMock(return_value=4)
+
+    with pytest.warns(UserWarning, match=r"\[2\] were removed"):
+        space = get_search_space(preset=preset, resolution=224, overrides=custom_ov, use_amp=True)
+    space["batch_size"](trial_mock)
+
+    trial_mock.suggest_categorical.assert_called_with("batch_size", [4, 6])

@@ -43,6 +43,10 @@ DEFAULT_SEED: Final[int] = 42
 # Minimum number of samples per split (val/test) — used by data loaders and synthetic datasets
 MIN_SPLIT_SAMPLES: Final[int] = 10
 
+# Smallest batch size considered numerically safe under AMP: below this, the loss
+# scaler sees too few samples per step and gradients can collapse to NaN.
+AMP_MIN_BATCH_SIZE: Final[int] = 4
+
 # Global logger identity used by all modules to ensure log synchronization
 LOGGER_NAME: Final[str] = "OrchardML"
 

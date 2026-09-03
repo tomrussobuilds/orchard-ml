@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import optuna
 import torch
+from pydantic import ValidationError
 
 from ...architectures import get_model
 from ...core import (
@@ -47,6 +48,7 @@ from ...core import (
 )
 from ...core.task_registry import get_task
 from ...data_handler import DatasetData, VisionDataset, get_dataloaders, load_dataset
+from ...exceptions import OrchardConfigError
 from ...trainer import (
     compute_class_weights,
     get_optimizer,
@@ -208,8 +210,19 @@ class OptunaObjective:
         # Sample parameters
         params = self._sample_params(trial)
 
-        # Build trial config
-        trial_cfg = self.config_builder.build(params)
+        # Build trial config. Cross-parameter validators (e.g. AMP vs batch_size)
+        # can reject a sampled combination — that must fail the trial, not the study.
+        try:
+            trial_cfg = self.config_builder.build(params)
+        except (OrchardConfigError, ValidationError) as e:
+            logger.error(
+                "%s%s Trial %d rejected by config validation: %s",
+                LogStyle.INDENT,
+                LogStyle.FAILURE,
+                trial.number,
+                e,
+            )
+            return self._worst_metric()
 
         # Inject recipe-level flags for logging (not Optuna params)
         log_params = {**params, "pretrained": self.cfg.architecture.pretrained}

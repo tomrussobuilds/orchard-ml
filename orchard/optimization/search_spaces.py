@@ -28,10 +28,12 @@ Example:
 
 from __future__ import annotations
 
+import warnings
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Callable
 
-from ..core.paths.constants import HIGHRES_THRESHOLD
+from ..core.config.training_config import is_amp_safe_batch_size
+from ..core.paths.constants import AMP_MIN_BATCH_SIZE, HIGHRES_THRESHOLD
 from ..exceptions import OrchardConfigError
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -192,26 +194,77 @@ class SearchSpaceRegistry:
             }
         )
 
-    def get_batch_size_space(self, resolution: int = 28) -> Mapping[str, _SamplerFn]:
+    def get_batch_size_space(
+        self, resolution: int = 28, use_amp: bool = False
+    ) -> Mapping[str, _SamplerFn]:
         """
         Batch size as categorical (resolution-aware).
 
+        When AMP is active, choices below AMP_MIN_BATCH_SIZE are dropped: the
+        Config validator rejects that combination, so sampling one would fail
+        the trial instead of exploring the space.
+
         Args:
             resolution: Input image resolution (e.g. 28, 32, 64, 128, 224)
+            use_amp: Whether mixed precision is enabled for the study
 
         Returns:
             Immutable mapping with batch_size sampler
+
+        Raises:
+            OrchardConfigError: If AMP leaves no valid batch size to sample
         """
         if resolution >= HIGHRES_THRESHOLD:
             batch_choices = list(self.ov.batch_size_high_res)
         else:
             batch_choices = list(self.ov.batch_size_low_res)
 
+        if use_amp:
+            batch_choices = self._filter_amp_batch_choices(batch_choices)
+
         return MappingProxyType(
             {
                 "batch_size": lambda trial: trial.suggest_categorical("batch_size", batch_choices),
             }
         )
+
+    @staticmethod
+    def _filter_amp_batch_choices(batch_choices: list[int]) -> list[int]:
+        """
+        Drop batch sizes incompatible with AMP, warning about what was removed.
+
+        The compatibility rule itself lives in ``core.config.training_config``
+        (``is_amp_safe_batch_size``); this only applies it to the search space.
+
+        Args:
+            batch_choices: Candidate batch sizes from the overrides
+
+        Returns:
+            Batch sizes that TrainingConfig accepts under AMP
+
+        Raises:
+            OrchardConfigError: If no candidate survives the filter
+        """
+        valid = [bs for bs in batch_choices if is_amp_safe_batch_size(bs)]
+
+        if not valid:
+            raise OrchardConfigError(
+                f"AMP is enabled but every batch_size candidate {batch_choices} is below "
+                f"{AMP_MIN_BATCH_SIZE}, which can cause NaN gradients. Either widen "
+                f"optuna.search_space_overrides.batch_size_* or set training.use_amp=false."
+            )
+
+        dropped = [bs for bs in batch_choices if not is_amp_safe_batch_size(bs)]
+        if dropped:
+            warnings.warn(
+                f"AMP is enabled: batch_size candidates {dropped} were removed from the "
+                f"search space (minimum under AMP is {AMP_MIN_BATCH_SIZE}). "
+                f"Set training.use_amp=false to explore them.",
+                UserWarning,
+                stacklevel=3,
+            )
+
+        return valid
 
     def get_scheduler_space(self) -> Mapping[str, _SamplerFn]:
         """
@@ -263,12 +316,15 @@ class SearchSpaceRegistry:
             }
         )
 
-    def get_full_space(self, resolution: int = 28) -> Mapping[str, _SamplerFn]:
+    def get_full_space(
+        self, resolution: int = 28, use_amp: bool = False
+    ) -> Mapping[str, _SamplerFn]:
         """
         Combined search space with all available parameters.
 
         Args:
             resolution: Input image resolution for batch size calculation
+            use_amp: Whether mixed precision is enabled (restricts batch sizes)
 
         Returns:
             Immutable unified mapping of all parameter samplers
@@ -277,12 +333,14 @@ class SearchSpaceRegistry:
         full_space.update(self.get_optimization_space())
         full_space.update(self.get_loss_space())
         full_space.update(self.get_regularization_space())
-        full_space.update(self.get_batch_size_space(resolution))
+        full_space.update(self.get_batch_size_space(resolution, use_amp))
         full_space.update(self.get_scheduler_space())
         full_space.update(self.get_augmentation_space())
         return MappingProxyType(full_space)
 
-    def get_quick_space(self, resolution: int = 28) -> Mapping[str, _SamplerFn]:
+    def get_quick_space(
+        self, resolution: int = 28, use_amp: bool = False
+    ) -> Mapping[str, _SamplerFn]:
         """
         Reduced search space for fast exploration (most impactful params).
 
@@ -295,6 +353,7 @@ class SearchSpaceRegistry:
 
         Args:
             resolution: Input image resolution for batch size calculation
+            use_amp: Whether mixed precision is enabled (restricts batch sizes)
 
         Returns:
             Immutable mapping of high-impact parameter samplers
@@ -303,7 +362,7 @@ class SearchSpaceRegistry:
         space.update(self.get_optimization_space())
         space.update(
             {
-                "batch_size": self.get_batch_size_space(resolution)["batch_size"],
+                "batch_size": self.get_batch_size_space(resolution, use_amp)["batch_size"],
                 "dropout": self.get_regularization_space()["dropout"],
             }
         )
@@ -341,6 +400,7 @@ def get_search_space(
     model_pool: list[str] | None = None,
     overrides: SearchSpaceOverrides | None = None,
     task_type: str = "classification",  # pragma: no mutate
+    use_amp: bool = False,
 ) -> Mapping[str, Any]:
     """
     Factory function to retrieve a search space preset.
@@ -355,19 +415,22 @@ def get_search_space(
         task_type: Task type. Detection tasks exclude classification-only
             parameters (criterion_type, focal_gamma, label_smoothing,
             mixup_alpha).
+        use_amp: Whether mixed precision is enabled. When True, batch sizes
+            the Config validator would reject are dropped from the space.
 
     Returns:
         Immutable mapping of parameter samplers keyed by parameter name
 
     Raises:
-        OrchardConfigError: If preset name not recognized
+        OrchardConfigError: If preset name not recognized, or if AMP leaves
+            no valid batch size to sample
     """
     registry = SearchSpaceRegistry(overrides)
 
     if preset == "quick":
-        space = dict(registry.get_quick_space(resolution))
+        space = dict(registry.get_quick_space(resolution, use_amp))
     elif preset == "full":
-        space = dict(registry.get_full_space(resolution))
+        space = dict(registry.get_full_space(resolution, use_amp))
     else:
         raise OrchardConfigError(f"Unknown preset '{preset}'. Available: quick, full")
 

@@ -136,6 +136,7 @@ class OptunaOrchestrator:
             model_pool=self.cfg.optuna.model_pool,
             overrides=self.cfg.optuna.search_space_overrides,
             task_type=self.cfg.task_type,
+            use_amp=self.cfg.training.use_amp,
         )
 
         objective = OptunaObjective(

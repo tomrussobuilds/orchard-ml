@@ -1942,3 +1942,82 @@ def test_call_logger_error_args_on_failure() -> None:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+# CONFIG VALIDATION GUARD
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("direction", "expected"),
+    [("maximize", -float("inf")), ("minimize", float("inf"))],
+)
+def test_optuna_objective_survives_invalid_trial_config(direction: str, expected: float) -> None:
+    """A config rejected by validation fails the trial, not the whole study."""
+    from orchard.exceptions import OrchardConfigError
+
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.training.monitor_direction = direction
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    mock_trial = MagicMock()
+    mock_trial.number = 1
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(),
+        model_factory=MagicMock(),
+    )
+
+    with (
+        patch.object(
+            objective.config_builder,
+            "build",
+            side_effect=OrchardConfigError("AMP enabled with very small batch size"),
+        ),
+        patch("orchard.optimization.objective.objective.log_trial_start") as mock_log_start,
+    ):
+        result = objective(mock_trial)
+
+    assert result == expected
+    mock_log_start.assert_not_called()
+
+
+@pytest.mark.unit
+def test_optuna_objective_survives_pydantic_validation_error() -> None:
+    """Pydantic ValidationError from config building is caught the same way."""
+    from pydantic import BaseModel, ValidationError
+
+    class _Probe(BaseModel):
+        value: int
+
+    try:
+        _Probe(value="not-an-int")  # type: ignore[arg-type]
+    except ValidationError as exc:
+        validation_error = exc
+
+    mock_cfg = MagicMock()
+    mock_cfg.optuna.epochs = 10
+    mock_cfg.training.monitor_metric = "auc"
+    mock_cfg.training.monitor_direction = "maximize"
+    mock_cfg.dataset._ensure_metadata = MagicMock()
+
+    mock_trial = MagicMock()
+    mock_trial.number = 3
+
+    objective = OptunaObjective(
+        cfg=mock_cfg,
+        search_space={},
+        device=torch.device("cpu"),
+        dataset_loader=MagicMock(return_value=MagicMock()),
+        dataloader_factory=MagicMock(),
+        model_factory=MagicMock(),
+    )
+
+    with patch.object(objective.config_builder, "build", side_effect=validation_error):
+        result = objective(mock_trial)
+
+    assert result == -float("inf")
