@@ -381,7 +381,11 @@ class OptunaConfig(BaseModel):
             Validated OptunaConfig instance (with warning if applicable).
         """
         if self.show_progress_bar and self.n_jobs != 1:
-            warnings.warn("show_progress_bar=True with n_jobs!=1 may corrupt tqdm output.")
+            warnings.warn(
+                "show_progress_bar=True with n_jobs!=1 may corrupt tqdm output.",
+                UserWarning,
+                stacklevel=2,
+            )
         return self
 
     def get_storage_url(self, paths: RunPaths) -> str | None:

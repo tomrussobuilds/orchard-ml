@@ -74,7 +74,6 @@ def log_optimization_header(cfg: "Config", logger_instance: logging.Logger | Non
     log.info("")
     I = LogStyle.INDENT  # noqa: E741
     A = LogStyle.ARROW
-    log.info("%s%s Dataset      : %s", I, A, cfg.dataset.dataset_name)
     model_search = "Enabled" if cfg.optuna.enable_model_search else "Disabled"  # pragma: no mutate
     log.info("%s%s Model Search : %s", I, A, model_search)
     if cfg.optuna.model_pool is not None:
@@ -188,7 +187,7 @@ def log_optimization_summary(
         except ValueError:
             log.error("%s%s Best trial lookup failed (check study integrity)", I, W)
     else:
-        log.warning("%s%s No trials completed", I, W)
+        log.warning("No trials completed")
 
     log.info("%s%s Device         : %s", I, A, str(device).upper())
     log.info("%s%s Artifacts      : %s", I, A, Path(paths.root).name)

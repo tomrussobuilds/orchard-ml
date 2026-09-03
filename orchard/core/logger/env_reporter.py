@@ -180,10 +180,7 @@ class Reporter(BaseModel):
 
         if requested_device != "cpu" and active_type == "cpu":
             logger_instance.warning(
-                "%s%s FALLBACK: Requested '%s' unavailable, using CPU",
-                I,
-                LogStyle.WARNING,
-                requested_device,
+                "FALLBACK: Requested '%s' unavailable, using CPU", requested_device
             )
 
         if active_type in ("cuda", "mps"):

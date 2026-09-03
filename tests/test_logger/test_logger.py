@@ -912,3 +912,99 @@ def test_color_formatter_failure_takes_priority_over_uppercase_header() -> None:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+# WARNING ROUTING
+@pytest.mark.unit
+def test_route_warnings_to_logger_formats_warning() -> None:
+    """Warnings are re-emitted as styled WARNING records instead of stderr noise."""
+    import warnings
+
+    from orchard.core.logger import route_warnings_to_logger
+
+    target = logging.getLogger("test_warning_routing")
+    original = warnings.showwarning
+    try:
+        route_warnings_to_logger(target)
+        with patch.object(target, "warning") as mock_warning:
+            warnings.warn("batch\nsize   too small", UserWarning, stacklevel=1)
+    finally:
+        warnings.showwarning = original
+
+    mock_warning.assert_called_once_with("%s%s %s", "  ", "⚠", "batch size too small")
+
+
+@pytest.mark.unit
+def test_route_warnings_to_logger_records_origin_at_debug() -> None:
+    """The source location is kept, but demoted to DEBUG so INFO logs stay clean."""
+    import warnings
+
+    from orchard.core.logger import route_warnings_to_logger
+
+    target = logging.getLogger("test_warning_routing_debug")
+    original = warnings.showwarning
+    try:
+        route_warnings_to_logger(target)
+        with patch.object(target, "debug") as mock_debug:
+            warnings.showwarning("boom", DeprecationWarning, "some/file.py", 42)
+    finally:
+        warnings.showwarning = original
+
+    mock_debug.assert_called_once_with(
+        "%s   (%s at %s:%d)", "  ", "DeprecationWarning", "some/file.py", 42
+    )
+
+
+@pytest.mark.unit
+def test_setup_installs_warning_routing(tmp_path: Path) -> None:
+    """Logger.setup wires the warning hook so CLI runs render warnings in style."""
+    import warnings
+
+    original = warnings.showwarning
+    try:
+        Logger.setup(name="warning_hook_logger", log_dir=tmp_path, level="INFO")
+        assert warnings.showwarning is not original
+    finally:
+        warnings.showwarning = original
+
+
+# WARNING SYMBOL FILTER
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("level", "msg", "expected"),
+    [
+        (logging.WARNING, "No completed trials.", "  ⚠ No completed trials."),
+        (logging.WARNING, "  ⚠ already styled", "  ⚠ already styled"),
+        (logging.INFO, "No completed trials.", "No completed trials."),
+    ],
+)
+def test_warning_symbol_filter(level: int, msg: str, expected: str) -> None:
+    """WARNING records gain the ⚠ symbol exactly once; other levels are untouched."""
+    from orchard.core.logger.logger import WarningSymbolFilter
+
+    record = logging.LogRecord("t", level, __file__, 1, msg, (), None)
+    assert WarningSymbolFilter().filter(record) is True
+    assert record.getMessage() == expected
+
+
+@pytest.mark.unit
+def test_warning_symbol_filter_ignores_non_string_msg() -> None:
+    """A non-str msg (e.g. an exception object) is passed through untouched."""
+    from orchard.core.logger.logger import WarningSymbolFilter
+
+    payload = ValueError("boom")
+    record = logging.LogRecord("t", logging.WARNING, __file__, 1, payload, (), None)
+    assert WarningSymbolFilter().filter(record) is True
+    assert record.msg is payload
+
+
+@pytest.mark.unit
+def test_setup_does_not_stack_warning_filters(tmp_path: Path) -> None:
+    """Reconfiguration replaces the filter instead of stacking duplicates."""
+    from orchard.core.logger.logger import WarningSymbolFilter
+
+    Logger(name="filter_stack_logger", log_dir=tmp_path)
+    Logger(name="filter_stack_logger", log_dir=tmp_path)
+    target = logging.getLogger("filter_stack_logger")
+
+    assert len([f for f in target.filters if isinstance(f, WarningSymbolFilter)]) == 1

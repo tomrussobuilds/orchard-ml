@@ -658,7 +658,7 @@ def test_hardware_section_exact_args_cpu() -> None:
 
 @pytest.mark.unit
 def test_hardware_section_fallback_warning_exact_args() -> None:
-    """Kill I, LogStyle.WARNING, requested_device arg swap/None mutations."""
+    """Kill requested_device arg swap/None mutations (⚠ is added by the logger filter)."""
     reporter = Reporter()
     log = MagicMock()
     cfg = MagicMock()
@@ -667,12 +667,10 @@ def test_hardware_section_fallback_warning_exact_args() -> None:
 
     reporter._log_hardware_section(log, cfg, device, 4, 2)
 
-    assert log.warning.called
-    warn_args = log.warning.call_args[0]
-    # args: (fmt, I, WARNING, requested_device)
-    assert warn_args[1] == LogStyle.INDENT
-    assert warn_args[2] == LogStyle.WARNING
-    assert warn_args[3] == "cuda"  # requested_device after .lower()
+    log.warning.assert_called_once_with(
+        "FALLBACK: Requested '%s' unavailable, using CPU",
+        "cuda",  # requested_device after .lower()
+    )
 
 
 @pytest.mark.unit
@@ -703,7 +701,7 @@ def test_hardware_section_lower_not_upper() -> None:
     # requested_device should be "cuda" (lower), not "CUDA" (upper)
     assert log.warning.called
     warn_args = log.warning.call_args[0]
-    assert warn_args[3] == "cuda"
+    assert warn_args[1] == "cuda"
 
 
 @pytest.mark.unit

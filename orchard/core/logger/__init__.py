@@ -15,7 +15,7 @@ Available Components:
 
 from ..paths.constants import LogStyle
 from .env_reporter import Reporter, ReporterProtocol
-from .logger import Logger
+from .logger import Logger, route_warnings_to_logger
 from .progress import (
     log_optimization_header,
     log_optimization_summary,
@@ -28,6 +28,7 @@ __all__ = [
     "Reporter",
     "ReporterProtocol",
     "LogStyle",
+    "route_warnings_to_logger",
     "log_optimization_header",
     "log_optimization_summary",
     "log_pipeline_summary",

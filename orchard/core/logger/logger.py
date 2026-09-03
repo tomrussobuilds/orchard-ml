@@ -20,10 +20,11 @@ import logging
 import os
 import re
 import sys
+import warnings
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any, ClassVar, Final
+from typing import Any, ClassVar, Final, TextIO
 
 from ..paths import LOGGER_NAME
 from ..paths.constants import LogStyle
@@ -35,6 +36,66 @@ _SEPARATOR_CHARS = {"━", "═", "─"}
 # [Benchmark — ONNX], [Trial 3 Hyperparameters]
 # but NOT data brackets like [T: 0.2131 | V: 0.1196] or [!]
 _SUBTITLE_RE = re.compile(r"\[([A-Za-z][A-Za-z0-9 \u2014\-]*)\]")
+
+
+# WARNING ROUTING
+def route_warnings_to_logger(target: logging.Logger) -> None:
+    """
+    Render ``warnings.warn`` output through the project logger.
+
+    Python's default warning format prints the source file, line, and the
+    offending statement, which breaks the visual rhythm of the run log. This
+    installs a ``showwarning`` hook that emits warnings as ordinary WARNING
+    records instead, keeping the ``warnings`` API (and its testability) intact.
+
+    Args:
+        target: Logger that receives the reformatted warning records.
+    """
+
+    def _showwarning(
+        message: Warning | str,
+        category: type[Warning],
+        filename: str,
+        lineno: int,
+        file: TextIO | None = None,  # noqa: ARG001 - signature fixed by warnings.showwarning
+        line: str | None = None,  # noqa: ARG001 - signature fixed by warnings.showwarning
+    ) -> None:
+        text = " ".join(str(message).split())
+        target.warning("%s%s %s", LogStyle.INDENT, LogStyle.WARNING, text)
+        target.debug("%s   (%s at %s:%d)", LogStyle.INDENT, category.__name__, filename, lineno)
+
+    warnings.showwarning = _showwarning
+
+
+class WarningSymbolFilter(logging.Filter):
+    """
+    Prefix WARNING records with the project warning symbol.
+
+    Keeps presentation out of the call sites: ``logger.warning("...")`` renders
+    in the same style as warnings routed through ``route_warnings_to_logger``,
+    without every site having to repeat ``LogStyle.WARNING``. Records that
+    already carry the symbol are left untouched, so the two paths never stack.
+
+    Attached to the logger (not a handler) so console and file output agree.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        """
+        Prepend the warning symbol in place, then let the record through.
+
+        Args:
+            record: Log record about to be handled.
+
+        Returns:
+            Always True — this filter reformats rather than discards.
+        """
+        if (
+            record.levelno == logging.WARNING
+            and isinstance(record.msg, str)
+            and LogStyle.WARNING not in record.getMessage()
+        ):
+            record.msg = f"{LogStyle.INDENT}{LogStyle.WARNING} {record.msg}"
+        return True
 
 
 class ColorFormatter(logging.Formatter):
@@ -263,6 +324,11 @@ class Logger:
                 handler.close()
                 self._log.removeHandler(handler)
 
+        # Warning styling is logger-level so console and file stay in sync;
+        # reset first, as reconfiguration would otherwise stack filters.
+        self._log.filters.clear()
+        self._log.addFilter(WarningSymbolFilter())
+
         # 1. Console Handler (Standard Output)
         console_h = logging.StreamHandler(sys.stdout)
         if sys.stdout.isatty():
@@ -328,7 +394,9 @@ class Logger:
         else:
             numeric_level = getattr(logging, level.upper(), logging.INFO)
 
-        return cls(name=name, log_dir=log_dir, level=numeric_level, **kwargs).get_logger()
+        configured = cls(name=name, log_dir=log_dir, level=numeric_level, **kwargs).get_logger()
+        route_warnings_to_logger(configured)
+        return configured
 
 
 # GLOBAL INSTANCE

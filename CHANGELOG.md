@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - raise typer floor to 0.12.4
+- never sample AMP-incompatible batch sizes
 
 ## [0.2.6] - 2026-08-27
 

@@ -127,8 +127,9 @@ def test_log_optimization_header_basic() -> None:
 
     log_optimization_header(cfg=mock_cfg, logger_instance=mock_logger)
 
-    # 9 lines: empty, dataset, model_search, search_space, trials, epochs/trial, metric, pruning, empty
-    assert mock_logger.info.call_count == 9
+    # 8 lines: empty, model_search, search_space, trials, epochs/trial, metric, pruning, empty
+    # (dataset is intentionally omitted: already shown in the environment header)
+    assert mock_logger.info.call_count == 8
     calls = [str(call) for call in mock_logger.info.call_args_list]
     log_output = " ".join(calls)
     assert "architecture_search" in log_output
@@ -152,8 +153,8 @@ def test_log_optimization_header_with_early_stopping() -> None:
 
     log_optimization_header(cfg=mock_cfg, logger_instance=mock_logger)
 
-    # 10 lines: 8 base + early_stop + empty line
-    assert mock_logger.info.call_count == 10
+    # 9 lines: 8 base + early_stop
+    assert mock_logger.info.call_count == 9
     calls = [str(call) for call in mock_logger.info.call_args_list]
     log_output = " ".join(calls)
     assert "Early Stop" in log_output or "0.95" in log_output
@@ -161,7 +162,7 @@ def test_log_optimization_header_with_early_stopping() -> None:
 
 @pytest.mark.unit
 def test_log_optimization_header_logs_only_search_params() -> None:
-    """Test log_optimization_header logs dataset, model search, and search params."""
+    """Test log_optimization_header logs search params only (no dataset duplicate)."""
     mock_logger = MagicMock()
     mock_cfg = MagicMock()
     mock_cfg.optuna.search_space_preset = "default"
@@ -176,8 +177,8 @@ def test_log_optimization_header_logs_only_search_params() -> None:
 
     calls = [str(call) for call in mock_logger.info.call_args_list]
     log_output = " ".join(calls)
-    # Should contain dataset, model search, and search params
-    assert "Dataset" in log_output
+    # Search params only — a dataset row would duplicate the environment header
+    assert "Dataset" not in log_output
     assert "Model Search" in log_output
     assert "Search Space" in log_output
     assert "Trials" in log_output
@@ -220,8 +221,8 @@ def test_log_optimization_header_with_model_pool() -> None:
 
     log_optimization_header(cfg=mock_cfg, logger_instance=mock_logger)
 
-    # 10 lines: 9 base + model_pool
-    assert mock_logger.info.call_count == 10
+    # 9 lines: 8 base + model_pool
+    assert mock_logger.info.call_count == 9
     calls = [str(call) for call in mock_logger.info.call_args_list]
     log_output = " ".join(calls)
     assert "Model Pool" in log_output
@@ -718,17 +719,8 @@ def test_log_optimization_summary_warning_no_completed() -> None:
         logger_instance=mock_logger,
     )
 
-    mock_logger.warning.assert_called()
-    # Verify exact positional args: (fmt, INDENT, WARNING_SYMBOL)
-    found = False
-    for call in mock_logger.warning.call_args_list:
-        args = call[0]
-        if len(args) >= 3 and "No trials completed" in args[0]:
-            assert args[1] == LogStyle.INDENT, f"Expected INDENT, got {args[1]!r}"
-            assert args[2] == LogStyle.WARNING, f"Expected WARNING symbol, got {args[2]!r}"
-            found = True
-            break
-    assert found, "No 'No trials completed' warning call found"
+    # Plain message: the ⚠ symbol is added by WarningSymbolFilter, not the call site
+    mock_logger.warning.assert_called_once_with("No trials completed")
 
 
 @pytest.mark.unit

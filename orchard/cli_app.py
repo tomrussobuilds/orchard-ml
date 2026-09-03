@@ -192,10 +192,16 @@ def run(
         run_optimization_phase,
         run_training_phase,
     )
+    from orchard.core.logger.logger import logger as bootstrap_logger
+    from orchard.core.logger.logger import route_warnings_to_logger
 
     if not recipe.exists():
         typer.echo(f"Error: recipe not found: {recipe}", err=True)
         raise typer.Exit(code=1)
+
+    # Route warnings through the logger from the very first config validation,
+    # before RootOrchestrator reconfigures logging for the run directory.
+    route_warnings_to_logger(bootstrap_logger)
 
     overrides = _parse_overrides(set_ or [])
     cfg = Config.from_recipe(recipe, overrides=overrides or None)
@@ -261,7 +267,7 @@ def run(
             )
 
         except KeyboardInterrupt:
-            run_logger.warning("%s Interrupted by user.", LogStyle.WARNING)
+            run_logger.warning("Interrupted by user.")
             raise SystemExit(1)
 
         except OrchardError as e:
