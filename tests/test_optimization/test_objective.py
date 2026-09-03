@@ -1972,18 +1972,24 @@ def test_optuna_objective_survives_invalid_trial_config(direction: str, expected
         model_factory=MagicMock(),
     )
 
+    error = OrchardConfigError("AMP enabled with very small batch size")
+
     with (
-        patch.object(
-            objective.config_builder,
-            "build",
-            side_effect=OrchardConfigError("AMP enabled with very small batch size"),
-        ),
+        patch.object(objective.config_builder, "build", side_effect=error),
         patch("orchard.optimization.objective.objective.log_trial_start") as mock_log_start,
+        patch("orchard.optimization.objective.objective.logger") as mock_logger,
     ):
         result = objective(mock_trial)
 
     assert result == expected
     mock_log_start.assert_not_called()
+    mock_logger.error.assert_called_once_with(
+        "%s%s Trial %d rejected by config validation: %s",
+        LogStyle.INDENT,
+        LogStyle.FAILURE,
+        1,
+        error,
+    )
 
 
 @pytest.mark.unit

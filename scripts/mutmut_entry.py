@@ -114,6 +114,15 @@ _LOGSTYLE_ATTRS: frozenset[str] = frozenset(
     }
 )
 
+# ---------------------------------------------------------------------------
+# Warning metadata skip: ``warnings.warn`` category and ``stacklevel`` args.
+# Neither is observable from a test — an omitted or ``None`` category already
+# means ``UserWarning``, and ``stacklevel`` only shifts the file/line the
+# warning is attributed to (which this project routes through the logger
+# anyway).  Mutating them yields equivalent mutants.
+# ---------------------------------------------------------------------------
+_WARNING_META_KWARGS: frozenset[str] = frozenset({"stacklevel", "category"})
+
 
 def _get_receiver_name(node: cst.Call) -> str | None:
     """Extract the receiver name from ``receiver.method(...)`` calls."""
@@ -140,8 +149,38 @@ def _is_logstyle_assign(node: cst.Assign) -> bool:
     )
 
 
+def _is_protocol_class(node: cst.CSTNode) -> bool:
+    """Return True if *node* is a class definition inheriting from ``Protocol``."""
+    if not isinstance(node, cst.ClassDef):
+        return False
+    for base in node.bases:
+        value = base.value
+        if isinstance(value, cst.Name) and value.value == "Protocol":
+            return True
+        if isinstance(value, cst.Attribute) and value.attr.value == "Protocol":
+            return True
+    return False
+
+
+def _is_warning_meta_arg(arg: cst.Arg) -> bool:
+    """Return True for ``warnings.warn`` category / ``stacklevel`` arguments."""
+    if arg.keyword is not None and arg.keyword.value in _WARNING_META_KWARGS:
+        return True
+    return isinstance(arg.value, cst.Name) and arg.value.value.endswith("Warning")
+
+
 def _patched_skip(self: fm.MutationVisitor, node: cst.CSTNode) -> bool:
     if _original_skip(self, node):
+        return True
+
+    # Protocol class skip: mutmut emits its mutant variants *inside* the class
+    # body, and since those names do not start with an underscore,
+    # ``typing._get_protocol_attrs`` counts them as protocol members.  Every
+    # ``isinstance(obj, SomeProtocol)`` check then fails in the mutated tree,
+    # which aborts the stats run and marks all mutants ``not_checked``.
+    # Protocol methods are declaration-only stubs anyway, so nothing of value
+    # is lost by leaving them unmutated.
+    if _is_protocol_class(node):
         return True
 
     # Full skip:  obj.method(...)  where method is a low-severity log helper.
@@ -185,6 +224,10 @@ def _patched_skip(self: fm.MutationVisitor, node: cst.CSTNode) -> bool:
             return True
         if isinstance(node, cst.Arg) and isinstance(node.value, _STRING_TYPES):
             return True
+        # Warning metadata (``UserWarning``, ``stacklevel=N``): skipping the Arg
+        # also suppresses literal mutations inside it (``stacklevel=3`` → ``4``).
+        if isinstance(node, cst.Arg) and _is_warning_meta_arg(node):
+            return True
 
     return False
 
@@ -221,9 +264,9 @@ def _patched_on_leave(self: fm.MutationVisitor, original_node: cst.CSTNode) -> N
 # ---------------------------------------------------------------------------
 # Post-filter: ``operator_arg_removal`` generates Call-level mutations that
 # replace each Arg.value with ``None`` or remove an Arg entirely.  When the
-# original Arg holds a string literal inside a _SKIP_LOG_STRINGS_METHODS
-# call, these mutations are cosmetic (the log message changes) and should be
-# discarded.
+# original Arg holds a string literal — or warning metadata such as
+# ``UserWarning`` / ``stacklevel`` — inside a _SKIP_LOG_STRINGS_METHODS call,
+# these mutations are cosmetic and should be discarded.
 # ---------------------------------------------------------------------------
 _original_create_mutations = fm.MutationVisitor._create_mutations
 
@@ -237,14 +280,17 @@ def _patched_create_mutations(self: fm.MutationVisitor, node: cst.CSTNode) -> No
     before = len(self.mutations)
     _original_create_mutations(self, node)
 
-    # Identify which original arg positions hold string literals.
-    string_arg_indices = {
-        i for i, arg in enumerate(node.args) if isinstance(arg.value, _STRING_TYPES)
+    # Identify which original arg positions are cosmetic: string literals, or
+    # warning metadata (category / stacklevel).
+    cosmetic_arg_indices = {
+        i
+        for i, arg in enumerate(node.args)
+        if isinstance(arg.value, _STRING_TYPES) or _is_warning_meta_arg(arg)
     }
-    if not string_arg_indices:
+    if not cosmetic_arg_indices:
         return  # nothing to filter
 
-    # Drop mutations that *only* differ in string-arg positions.
+    # Drop mutations that *only* differ in cosmetic-arg positions.
     filtered: list[fm.Mutation] = []
     for m in self.mutations[before:]:
         if not isinstance(m.mutated_node, cst.Call):
@@ -258,12 +304,12 @@ def _patched_create_mutations(self: fm.MutationVisitor, node: cst.CSTNode) -> No
         # Case 1: arg replaced with None (same arg count)
         if len(orig_args) == len(mut_args):
             changed = [i for i in range(len(orig_args)) if orig_args[i] is not mut_args[i]]
-            if changed and all(i in string_arg_indices for i in changed):
+            if changed and all(i in cosmetic_arg_indices for i in changed):
                 drop = True
 
         # Case 2: arg removed (one fewer arg)
         if len(mut_args) == len(orig_args) - 1:
-            for removed_idx in string_arg_indices:
+            for removed_idx in cosmetic_arg_indices:
                 remaining = [*orig_args[:removed_idx], *orig_args[removed_idx + 1 :]]
                 if len(remaining) == len(mut_args):
                     if all(

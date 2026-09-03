@@ -8,6 +8,47 @@ catches each one. Survived mutants indicate gaps in test assertions.
 
 ---
 
+<h2>Installing mutmut</h2>
+
+> [!IMPORTANT]
+> **mutmut is pinned to an exact commit of git `main`, not to a PyPI release.**
+>
+> ```toml
+> "mutmut @ git+https://github.com/boxed/mutmut.git@cd2f73da310c3fc90cffcb3e6c768cdeac14e18c"
+> ```
+>
+> No published release works. What the pinned commit carries:
+>
+> | Change | Available in |
+> |---|---|
+> | `mutmut.mutation.*` layout, imported by `scripts/mutmut_entry.py` | 3.6.0 onwards |
+> | `set_start_method` guard ([GH-466](https://github.com/boxed/mutmut/pull/466)) | after 3.5.0 |
+> | env scrubbing, `MUTANT_UNDER_TEST` ([#511](https://github.com/boxed/mutmut/issues/511)) | **after 3.7.0, `main` only** |
+> | `fix: mutate methods of decorated classes` ([#539](https://github.com/boxed/mutmut/pull/539)) | **after 3.7.0, `main` only** |
+>
+> So 3.5.0 is unusable (wrong layout) and 3.7.0 is the newest release yet still
+> ships the #511 bug: its trampoline does `os.environ.get("MUTANT_UNDER_TEST", "")`
+> on every call, verified directly on the wheel.
+>
+> The pin is an exact SHA, not `@main`, and that is not pedantry: mutant
+> *generation* changes between commits, so the registry ratchet only compares
+> like with like while the revision is frozen. Moving 3.5.0 → `cd2f73d` took
+> `search_spaces.py` from 327 mutants to 358. Treat a mutmut bump like a `mypy`
+> bump: deliberate, and followed by a re-baseline of the affected modules.
+>
+> After rebuilding the venv, `uv sync` restores the pinned commit. To install it
+> by hand:
+>
+> ```bash
+> uv pip install --no-deps \
+>   "mutmut @ git+https://github.com/boxed/mutmut.git@cd2f73da310c3fc90cffcb3e6c768cdeac14e18c"
+> ```
+>
+> `--no-deps` is deliberate: full resolution hits PyPI and has timed out on
+> `setproctitle`. Every mutmut dependency is already in the venv.
+
+---
+
 <h2>Configuration</h2>
 
 Mutation testing is configured in `pyproject.toml`:
@@ -111,7 +152,7 @@ and auto-updates when you test a module. Use `scripts/mutmut_run.py`:
 # Batch: run each .py file one by one (cleans cache, updates registry after each)
 .venv/bin/python scripts/mutmut_run.py --batch orchard/trainer/
 
-# Batch the whole project
+# Batch the whole project (directory expansion skips __init__.py, see Gotchas)
 .venv/bin/python scripts/mutmut_run.py --batch orchard/
 ```
 
@@ -184,11 +225,15 @@ rm -rf mutants/
 <h2>Gotchas</h2>
 
 > [!CAUTION]
-> **Never use `--batch` on `__init__.py` files**
+> **Never name an `__init__.py` explicitly in `--batch`**
 >
 > `_to_mutmut_glob` strips `.__init__` and appends `*`, so
 > `orchard/__init__.py` becomes glob `orchard*` — which matches the
-> **entire codebase**. Use `--report` instead for `__init__.py` and
+> **entire codebase**, in a single batch step with a 600 s timeout.
+>
+> Directory targets are safe: `_source_files` skips `__init__.py` when
+> expanding a directory, so `--batch orchard/` cannot trip this. The hazard is
+> only in passing one by name. Use `--report` for `__init__.py` and other
 > pure-declaration files (constants, re-exports) with no mutable logic:
 >
 > ```bash
@@ -200,6 +245,27 @@ rm -rf mutants/
 >
 > Batch mode has a **600-second (10 min) timeout per file**. If exceeded,
 > previous results are restored from the `.meta.bak` backup.
+
+> [!CAUTION]
+> **Decorated functions produce zero mutants**
+>
+> mutmut does not wrap a decorated function or method in a trampoline, so its
+> body is never mutated. Verified on the pinned commit:
+>
+> ```
+> training_config.py   1 trampoline  (the free function is_amp_safe_batch_size)
+>                      0             (both @model_validator methods)
+> cli_app.py           0             (run / init / validate / main, @app.command)
+> ```
+>
+> The consequence is that **Pydantic validators and Typer commands are not
+> mutation tested at all**. Ten non-trivial files sit at `total: 0`, essentially
+> the whole config layer. Read a 100 % score on a config module as "nothing was
+> measured", not as "fully covered".
+>
+> This is distinct from [#539](https://github.com/boxed/mutmut/pull/539) and
+> [#558](https://github.com/boxed/mutmut/issues/558), which cover decorated
+> *classes*. Not yet reported upstream.
 
 > [!NOTE]
 > **CI does not run mutmut**
@@ -267,20 +333,10 @@ RuntimeError: context has already been set
 ```
 
 **Status:** fixed upstream in [GH-466](https://github.com/boxed/mutmut/pull/466)
-(merged into `main`). The fix guards the call with `get_start_method(allow_none=True)`
-and is included in mutmut **> 3.5.0**. If you are still on 3.5.0, either install
-from git:
-
-```bash
-uv pip install "mutmut @ git+https://github.com/boxed/mutmut.git@main"
-```
-
-or apply the local patch:
-
-```bash
-sed -i "s/set_start_method('fork')/set_start_method('fork', force=True)/" \
-    .venv/lib/python3.*/site-packages/mutmut/__main__.py
-```
+(merged into `main`) and present in the installed build. See
+[Installing mutmut](#installing-mutmut) — the `sed` patch that used to be
+documented here is obsolete, and would not have helped anyway: on PyPI 3.5.0
+the blocker is the package layout, not that one line.
 
 ---
 
@@ -296,21 +352,14 @@ rewrites `__CrossDomainValidator_validate_trampoline` to
 
 **Status:** fixed upstream in [boxed/mutmut#499](https://github.com/boxed/mutmut/pull/499)
 (merged 2026-04-16, reported in [#498](https://github.com/boxed/mutmut/issues/498)).
-The fix uses a `_mutmut_` prefix instead of `_{class_name}_`, which is always
-safe regardless of class name. No local patch needed once you install a release
-that includes this fix.
-
-If you are still on a build that predates the fix, apply the patch manually:
-
-```bash
-sed -i 's/prefix = f"_{class_name}_{method_name}"/prefix = f"_mutmut_{class_name}_{method_name}"/' \
-    .venv/lib/python3.*/site-packages/mutmut/mutation/trampoline_templates.py \
-    .venv/lib/python3.*/site-packages/mutmut/mutation/file_mutation.py
-```
+The pinned commit generates prefixes of the form
+`x{CLASS_NAME_SEPARATOR}{class_name}{CLASS_NAME_SEPARATOR}`, which never starts
+with a double underscore and so is immune to name mangling. No local patch is
+needed, and the `sed` recipe once documented here no longer matches anything.
 
 ---
 
-<h2>Pending Issue: env scrubbing wipes `MUTANT_UNDER_TEST`</h2>
+<h2>Resolved Issue: env scrubbing wipes `MUTANT_UNDER_TEST`</h2>
 
 When tests use `patch.dict(os.environ, ..., clear=True)`, mutmut v3
 trampolines break because `MUTANT_UNDER_TEST` is wiped from the environment.
@@ -319,23 +368,55 @@ silently lowering the mutation score (measured impact on
 `orchard/core/environment/hardware.py`: 19 false survivors, 85.7 % vs. the
 true 97.0 %).
 
-**Status:** reported upstream as
-[boxed/mutmut#511](https://github.com/boxed/mutmut/issues/511) with two
-proposed fixes (sticky cache vs. import-time cache, both verified locally).
-Awaiting maintainer review.
+**Status:** fixed upstream. Reported as
+[boxed/mutmut#511](https://github.com/boxed/mutmut/issues/511), closed as
+completed on 2026-08-17 via [#552](https://github.com/boxed/mutmut/pull/552).
+The trampoline now keeps the mutant name in module state
+(`mutation/trampoline.py`) and only *prefers* the environment variable when
+present, so scrubbing `os.environ` no longer deactivates the mutant. The fix
+landed **after** the 3.7.0 tag, so it exists only on `main`: verified present in
+the pinned commit `cd2f73d`, and verified *absent* from PyPI 3.7.0.
 
-**Workaround:** use the `mutmut_safe_env()` helper from `tests/conftest.py`,
-which re-injects `MUTANT_UNDER_TEST` into the patched env:
+**Workaround removed (2026-09-03).** The `mutmut_safe_env()` helper that
+re-injected `MUTANT_UNDER_TEST` into the patched env is gone, along with its 17
+call sites in `tests/test_environment/test_hardware.py` and
+`tests/test_paths/test_constants.py`. Verified on the original repro: without
+the helper, `orchard/core/environment/hardware.py` scores **97.7 %**
+(133 mutants, 3 survivors) instead of the 85.7 % the bug used to cause.
+
+Scrubbing the environment in a test is safe again:
 
 ```python
-from tests.conftest import mutmut_safe_env
-
 def test_something():
-    with patch.dict(os.environ, mutmut_safe_env(MY_VAR="1"), clear=True):
+    with patch.dict(os.environ, {"MY_VAR": "1"}, clear=True):
         ...
 ```
 
-Once the upstream fix lands, the helper can be removed and every
-`mutmut_safe_env(...)` call replaced with a plain dict literal.
+---
+
+<h2>Pending Issue: mutants leak into `Protocol` class namespaces</h2>
+
+mutmut emits its mutant variants **inside** the class body. For a
+`runtime_checkable` `Protocol`, those names do not start with an underscore, so
+`typing._get_protocol_attrs` counts them as protocol members:
+
+```python
+# in the mutated tree
+_get_protocol_attrs(TaskEvalPipeline)
+['run_evaluation',
+ 'xǁTaskEvalPipelineǁrun_evaluation__mutmut_1',
+ 'xǁTaskEvalPipelineǁrun_evaluation__mutmut_2',
+ 'xǁTaskEvalPipelineǁrun_evaluation__mutmut_orig']
+```
+
+Every `isinstance(obj, SomeProtocol)` check then fails, which aborts the stats
+run and marks **all** mutants `not_checked` — for every module, not just the one
+being measured.
+
+**Status:** not yet reported upstream (observed on the pinned commit `cd2f73d`).
+
+**Workaround:** `scripts/mutmut_entry.py` skips class definitions inheriting
+from `Protocol` (`_is_protocol_class`). Protocol methods are declaration-only
+stubs, so no meaningful mutant is lost.
 
 ---

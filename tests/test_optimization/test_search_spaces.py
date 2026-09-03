@@ -932,3 +932,26 @@ def test_get_search_space_propagates_use_amp(preset: str) -> None:
     space["batch_size"](trial_mock)
 
     trial_mock.suggest_categorical.assert_called_with("batch_size", [4, 6])
+
+
+@pytest.mark.unit
+def test_amp_filtering_is_off_by_default() -> None:
+    """Every entry point defaults to use_amp=False: small batch sizes survive."""
+    custom_ov = SearchSpaceOverrides(batch_size_high_res=[2, 4, 6])
+    registry = SearchSpaceRegistry(custom_ov)
+
+    trial_mock = MagicMock(spec=Trial)
+    trial_mock.suggest_float = MagicMock(return_value=0.001)
+    trial_mock.suggest_int = MagicMock(return_value=5)
+    trial_mock.suggest_categorical = MagicMock(return_value=2)
+
+    spaces = [
+        registry.get_batch_size_space(224),
+        registry.get_full_space(224),
+        registry.get_quick_space(224),
+        get_search_space("full", resolution=224, overrides=custom_ov),
+    ]
+
+    for space in spaces:
+        space["batch_size"](trial_mock)
+        trial_mock.suggest_categorical.assert_called_with("batch_size", [2, 4, 6])

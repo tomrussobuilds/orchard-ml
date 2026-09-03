@@ -11,7 +11,6 @@ Fixtures are automatically discovered by pytest across all test modules.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any
 
@@ -22,22 +21,6 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from orchard.core import Config, OptunaConfig, TrainingConfig
 from orchard.core.metadata import DatasetMetadata
-
-
-def mutmut_safe_env(**extra: str) -> dict[str, str]:
-    """
-    Build an env dict that preserves ``MUTANT_UNDER_TEST``.
-
-    Use with ``patch.dict(os.environ, mutmut_safe_env(...), clear=True)``
-    so that mutmut v3 trampolines keep working even when the test
-    needs a clean environment.
-    """
-    env: dict[str, str] = {}
-    mut = os.environ.get("MUTANT_UNDER_TEST")
-    if mut is not None:
-        env["MUTANT_UNDER_TEST"] = mut
-    env.update(extra)
-    return env
 
 
 # CONFIG FACTORIES

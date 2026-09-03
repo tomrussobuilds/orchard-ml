@@ -47,12 +47,19 @@ REGISTRY_PATH = ROOT / "mutmut-registry.yaml"
 
 
 def _source_files(target: str) -> list[Path]:
-    """Resolve a target (file or directory) to a list of .py source files."""
+    """
+    Resolve a target (file or directory) to a list of .py source files.
+
+    Directory expansion skips ``__init__.py``: ``_to_mutmut_glob`` strips the
+    ``.__init__`` suffix and appends ``*``, so ``orchard/__init__.py`` would
+    become the glob ``orchard*`` and mutate the entire codebase in a single
+    batch step. Name them explicitly (or use ``--report``) to inspect them.
+    """
     p = ROOT / target
     if p.is_file() and p.suffix == ".py":
         return [p]
     if p.is_dir():
-        return sorted(f for f in p.rglob("*.py") if f.name != "__pycache__")
+        return sorted(f for f in p.rglob("*.py") if f.name != "__init__.py")
     sys.exit(f"Target not found: {target}")
     return []  # unreachable — satisfies static analysis
 

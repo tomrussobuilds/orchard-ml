@@ -957,15 +957,19 @@ def test_route_warnings_to_logger_records_origin_at_debug() -> None:
 
 @pytest.mark.unit
 def test_setup_installs_warning_routing(tmp_path: Path) -> None:
-    """Logger.setup wires the warning hook so CLI runs render warnings in style."""
+    """Logger.setup wires the warning hook to the logger it just configured."""
     import warnings
 
     original = warnings.showwarning
     try:
-        Logger.setup(name="warning_hook_logger", log_dir=tmp_path, level="INFO")
+        configured = Logger.setup(name="warning_hook_logger", log_dir=tmp_path, level="INFO")
         assert warnings.showwarning is not original
+        with patch.object(configured, "warning") as mock_warning:
+            warnings.warn("routed", UserWarning, stacklevel=1)
     finally:
         warnings.showwarning = original
+
+    mock_warning.assert_called_once_with("%s%s %s", "  ", "⚠", "routed")
 
 
 # WARNING SYMBOL FILTER

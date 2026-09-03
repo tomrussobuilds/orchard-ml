@@ -23,7 +23,6 @@ from orchard.core.environment import (
     get_vram_info,
     to_device_obj,
 )
-from tests.conftest import mutmut_safe_env
 
 
 # SYSTEM CONFIGURATION
@@ -31,7 +30,7 @@ from tests.conftest import mutmut_safe_env
 @patch("platform.system", return_value="Linux")
 def test_configure_system_libraries_linux(mock_platform: MagicMock) -> None:
     """Test configure_system_libraries sets Agg backend on Linux."""
-    with patch.dict(os.environ, mutmut_safe_env(), clear=True):
+    with patch.dict(os.environ, {}, clear=True):
         configure_system_libraries()
 
         assert matplotlib.get_backend() == "Agg"
@@ -45,7 +44,7 @@ def test_configure_system_libraries_linux(mock_platform: MagicMock) -> None:
 def test_configure_system_libraries_docker(mock_path: MagicMock, mock_platform: MagicMock) -> None:
     """Test configure_system_libraries detects Docker environment."""
     mock_path.return_value.exists.return_value = True
-    with patch.dict(os.environ, mutmut_safe_env(), clear=True):
+    with patch.dict(os.environ, {}, clear=True):
         configure_system_libraries()
 
         assert matplotlib.get_backend() == "Agg"
@@ -65,7 +64,7 @@ def test_configure_system_libraries_docker_env_var(mock_platform: MagicMock) -> 
 @patch("platform.system", return_value="Windows")
 def test_configure_system_libraries_windows(mock_platform: MagicMock) -> None:
     """Test configure_system_libraries skips Agg backend on Windows."""
-    with patch.dict(os.environ, mutmut_safe_env(), clear=True):
+    with patch.dict(os.environ, {}, clear=True):
         original_backend = matplotlib.get_backend()
 
         configure_system_libraries()
@@ -81,7 +80,7 @@ def test_configure_system_libraries_non_linux_non_docker_skips(
 ) -> None:
     """Test non-Linux, non-Docker environment skips all configuration."""
     mock_path.return_value.exists.return_value = False
-    with patch.dict(os.environ, mutmut_safe_env(), clear=True):
+    with patch.dict(os.environ, {}, clear=True):
         matplotlib.rcParams["pdf.fonttype"] = 3
         matplotlib.rcParams["ps.fonttype"] = 3
 
@@ -99,7 +98,7 @@ def test_configure_system_libraries_linux_only_no_docker(
 ) -> None:
     """Test is_linux alone triggers configuration (kills or→and mutant)."""
     mock_path.return_value.exists.return_value = False
-    with patch.dict(os.environ, mutmut_safe_env(), clear=True):
+    with patch.dict(os.environ, {}, clear=True):
         matplotlib.rcParams["pdf.fonttype"] = 3
         matplotlib.rcParams["ps.fonttype"] = 3
 
@@ -118,7 +117,7 @@ def test_configure_system_libraries_docker_env_only_no_linux(
 ) -> None:
     """Test is_docker via IN_DOCKER env var alone triggers config (kills is_linux mutants)."""
     mock_path.return_value.exists.return_value = False
-    with patch.dict(os.environ, mutmut_safe_env(IN_DOCKER="TRUE"), clear=True):
+    with patch.dict(os.environ, {"IN_DOCKER": "TRUE"}, clear=True):
         matplotlib.rcParams["pdf.fonttype"] = 3
         matplotlib.rcParams["ps.fonttype"] = 3
 
@@ -133,7 +132,7 @@ def test_configure_system_libraries_docker_env_only_no_linux(
 @patch("platform.system", return_value="Darwin")
 def test_configure_system_libraries_dockerenv_file_only(mock_platform: MagicMock) -> None:
     """Test is_docker via /.dockerenv file alone triggers config (exact path)."""
-    with patch.dict(os.environ, mutmut_safe_env(), clear=True):
+    with patch.dict(os.environ, {}, clear=True):
         matplotlib.rcParams["pdf.fonttype"] = 3
 
         with patch("orchard.core.environment.hardware.Path") as MockPath:
@@ -154,7 +153,7 @@ def test_configure_system_libraries_docker_env_wrong_value(
 ) -> None:
     """Test IN_DOCKER with wrong value still works via dockerenv file."""
     mock_path.return_value.exists.return_value = True
-    with patch.dict(os.environ, mutmut_safe_env(IN_DOCKER="false"), clear=True):
+    with patch.dict(os.environ, {"IN_DOCKER": "false"}, clear=True):
         matplotlib.rcParams["pdf.fonttype"] = 3
 
         configure_system_libraries()
@@ -171,7 +170,7 @@ def test_configure_system_libraries_no_docker_no_linux_skips(
 ) -> None:
     """Test non-Linux non-Docker truly skips (kills or→and and string mutants)."""
     mock_path.return_value.exists.return_value = False
-    with patch.dict(os.environ, mutmut_safe_env(), clear=True):
+    with patch.dict(os.environ, {}, clear=True):
         matplotlib.rcParams["pdf.fonttype"] = 3
         matplotlib.rcParams["ps.fonttype"] = 3
 
