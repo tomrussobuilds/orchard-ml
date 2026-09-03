@@ -76,26 +76,45 @@ def _to_mutmut_glob(source: Path) -> str:
     return f"{dotted}*"
 
 
+_SURVIVED_CODES = frozenset({0})
+_TIMEOUT_CODES = frozenset({-24, 24, 36, 152, 255})  # SIGXCPU and mutmut's own timeout
+_NO_TESTS_CODES = frozenset({5, 33})  # pytest collected nothing for this mutant
+
+_OUTCOMES = ("killed", "survived", "timeout", "no_tests", "not_checked")
+
+
 def _parse_meta(meta_path: Path) -> dict[str, int]:
-    """Parse a .meta file and return counts: total, killed, survived, not_checked."""
+    """
+    Parse a .meta file and return per-outcome mutant counts.
+
+    Exit codes follow mutmut's own ``status_by_exit_code`` table. Timeouts and
+    uncovered mutants get their own buckets rather than being folded into
+    ``killed``: a mutant that merely made the suite exceed its CPU limit, or
+    that no test ever exercised, was never caught by an assertion, and counting
+    it as a kill inflates the score.
+    """
+    counts = dict.fromkeys(("total", *_OUTCOMES), 0)
     if not meta_path.exists():
-        return {"total": 0, "killed": 0, "survived": 0, "not_checked": 0}
+        return counts
 
     with open(meta_path) as f:
         data = json.load(f)
 
     exit_codes = data.get("exit_code_by_key", {})
-    total = len(exit_codes)
-    killed = sum(1 for v in exit_codes.values() if v is not None and v != 0)
-    survived = sum(1 for v in exit_codes.values() if v == 0)
-    not_checked = sum(1 for v in exit_codes.values() if v is None)
+    counts["total"] = len(exit_codes)
+    for code in exit_codes.values():
+        if code is None:
+            counts["not_checked"] += 1
+        elif code in _SURVIVED_CODES:
+            counts["survived"] += 1
+        elif code in _TIMEOUT_CODES:
+            counts["timeout"] += 1
+        elif code in _NO_TESTS_CODES:
+            counts["no_tests"] += 1
+        else:
+            counts["killed"] += 1
 
-    return {
-        "total": total,
-        "killed": killed,
-        "survived": survived,
-        "not_checked": not_checked,
-    }
+    return counts
 
 
 def _meta_path_for(source: Path) -> Path:
@@ -122,9 +141,7 @@ def _update_registry(sources: list[Path]) -> dict[str, Any]:
         entry = {
             "last_run": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "total": counts["total"],
-            "killed": counts["killed"],
-            "survived": counts["survived"],
-            "not_checked": counts["not_checked"],
+            **{k: counts[k] for k in _OUTCOMES},
             "score": score,
         }
         registry[key] = entry
@@ -145,28 +162,25 @@ def _print_table(entries: dict[str, Any]) -> None:
         print("No mutation results found.")
         return
 
-    header = f"{'Module':<55} {'Total':>5} {'Kill':>5} {'Surv':>5} {'N/C':>5} {'Score':>7}"
+    header = (
+        f"{'Module':<55} {'Total':>5} {'Kill':>5} {'Surv':>5} "
+        f"{'T/O':>5} {'N/T':>5} {'N/C':>5} {'Score':>7}"
+    )
     print(header)
     print("-" * len(header))
 
+    def row(label: str, e: dict[str, Any], score: float) -> str:
+        cells = " ".join(f"{e.get(k, 0):>5}" for k in ("total", *_OUTCOMES))
+        return f"{label:<55} {cells} {f'{score:.1f}%':>7}"
+
     for key, e in sorted(entries.items()):
-        score_str = f"{e['score']:.1f}%"
-        print(
-            f"{key:<55} {e['total']:>5} {e['killed']:>5} "
-            f"{e['survived']:>5} {e['not_checked']:>5} {score_str:>7}"
-        )
+        print(row(key, e, e["score"]))
 
     # Summary
-    totals = {
-        k: sum(e[k] for e in entries.values())
-        for k in ("total", "killed", "survived", "not_checked")
-    }
+    totals = {k: sum(e.get(k, 0) for e in entries.values()) for k in ("total", *_OUTCOMES)}
     overall = round(totals["killed"] / totals["total"] * 100, 1) if totals["total"] else 0.0
     print("-" * len(header))
-    print(
-        f"{'TOTAL':<55} {totals['total']:>5} {totals['killed']:>5} "
-        f"{totals['survived']:>5} {totals['not_checked']:>5} {overall:.1f}%"
-    )
+    print(row("TOTAL", totals, overall))
 
 
 def _is_fresh(source: Path, registry: dict[str, Any]) -> bool:
@@ -303,7 +317,9 @@ def run_batch(targets: list[str], clean: bool = True) -> None:
         cmd = [sys.executable, ENTRY_SCRIPT, "run", glob]
         timed_out = False
         try:
-            subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=600)  # nosec B603
+            subprocess.run(
+                cmd, cwd=ROOT, capture_output=True, text=True, timeout=2400
+            )  # nosec B603
         except subprocess.TimeoutExpired:
             timed_out = True
 

@@ -182,9 +182,26 @@ strict = true
 ignore_missing_imports = true
 exclude = ["docs/", "build/", "dist/"]
 
+# The mutmut entry point exists to monkey-patch mutmut's MutationVisitor: it rebinds
+# methods on the class and parks a ``_log_string_depth`` counter on the instance.
+# Both are exactly what these codes are meant to catch, so mypy is right in general
+# and wrong here.  Scoped to this one module — the CI gate type-checks orchard/ and
+# tests/, so this only quiets the editor.  Two names because scripts/ has no
+# __init__.py: mypy resolves the file as a top-level module, editors often as a path.
+[[tool.mypy.overrides]]
+module = ["mutmut_entry", "scripts.mutmut_entry"]
+disable_error_code = ["method-assign", "attr-defined", "assignment"]
+
 [tool.mutmut]
 paths_to_mutate = ["orchard/"]
 tests_dir = ["tests/"]
+# mutmut caps each mutant at (estimated_test_time + timeout_constant) * timeout_multiplier
+# seconds of wall time.  The estimate comes from duration_by_test, which clocks only the
+# test body — for torch tests the model fixtures dominate and are invisible to it, so the
+# estimate collapses to ~0s and the cap to its 15s floor.  This lifts that floor to 90s so
+# a genuinely slow test is not mistaken for a hang.  It is headroom, not the fix for the
+# mass timeouts: those came from forking a live OpenMP pool, handled in mutmut_entry.py.
+timeout_constant = 6.0
 
 [tool.ruff]
 line-length = 100

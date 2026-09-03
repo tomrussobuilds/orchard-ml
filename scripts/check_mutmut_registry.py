@@ -76,6 +76,18 @@ def _git_last_modified(path: str) -> datetime | None:
     return datetime.fromisoformat(line.replace("Z", "+00:00"))
 
 
+def _undetected(entry: dict[str, Any]) -> int:
+    """
+    Count mutants no assertion caught.
+
+    ``no_tests`` mutants are as undetected as surviving ones — nothing ever
+    exercised them — so a module shifting kills into that bucket must trip the
+    ratchet just like one that grew survivors.  Entries written before the
+    bucket existed simply report zero.
+    """
+    return int(entry.get("survived", 0)) + int(entry.get("no_tests", 0))
+
+
 def check_ratchet() -> list[str]:
     """Return list of error messages for modules whose score dropped."""
     current = _load_registry(REGISTRY_PATH)
@@ -87,12 +99,12 @@ def check_ratchet() -> list[str]:
             continue  # removed module, OK
         cur_score = current[module].get("score", 0.0)
         base_score = base_entry.get("score", 0.0)
-        cur_survived = current[module].get("survived", 0)
-        base_survived = base_entry.get("survived", 0)
-        if cur_score < base_score and cur_survived > base_survived:
+        cur_undetected = _undetected(current[module])
+        base_undetected = _undetected(base_entry)
+        if cur_score < base_score and cur_undetected > base_undetected:
             errors.append(
                 f"  {module}: {base_score:.1f}% -> {cur_score:.1f}% "
-                f"(survived {base_survived} -> {cur_survived})"
+                f"(undetected {base_undetected} -> {cur_undetected})"
             )
 
     return errors

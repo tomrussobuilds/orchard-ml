@@ -961,6 +961,29 @@ def test_create_temp_loader_uses_default_batch_size() -> None:
 
 
 @pytest.mark.unit
+def test_create_temp_loader_shuffles_in_process() -> None:
+    """Verify create_temp_loader shuffles and loads on the main process."""
+    rng = np.random.default_rng(seed=42)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_path = Path(tmpdir) / "dummy.npz"
+        np.savez(
+            tmp_path,
+            train_images=rng.integers(0, 255, (20, 28, 28), dtype=np.uint8),
+            train_labels=rng.integers(0, 2, (20, 1), dtype=np.int64),
+        )
+
+        loader = create_temp_loader(tmp_path)
+
+        # shuffle=True is what makes DataLoader pick RandomSampler over
+        # SequentialSampler; a health check on an ordered dataset would
+        # otherwise only ever see the first classes.
+        assert isinstance(loader.sampler, torch.utils.data.RandomSampler)
+        # num_workers=0 keeps loading in-process: forking workers for a
+        # throwaway health-check loader costs more than it saves.
+        assert loader.num_workers == 0
+
+
+@pytest.mark.unit
 def test_build_uses_lazy_when_lazy_loading_true(mock_metadata: MagicMock) -> None:
     """Verify build() calls VisionDataset.lazy when lazy_loading=True."""
     mock_ds_meta = MagicMock(in_channels=1)

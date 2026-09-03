@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """
-Patched mutmut entry point that skips mutations on logging and warning calls.
+Patched mutmut entry point: pins the thread pools, then filters log mutations.
 
-This avoids scattering ``# pragma: no mutate`` across every logger/warnings
-line.  Two suppression levels are provided:
+The thread pinning is unrelated to mutation filtering but has to happen here,
+because this module is imported before anything can pull in torch — see the
+comment on the ``os.environ`` block below for why forking a live OpenMP pool
+turns every torch-heavy mutant into a spurious timeout.
+
+The mutation filtering avoids scattering ``# pragma: no mutate`` across every
+logger/warnings line.  Two suppression levels are provided:
 
 1. **Full skip** (``_SKIP_METHODS``): the entire ``Call`` node is excluded —
    call, arguments, and string content.  Used for low-severity log calls
@@ -23,10 +28,25 @@ Usage (drop-in replacement for ``python -m mutmut``):
 
 from __future__ import annotations
 
-import runpy
+import os
 
-import libcst as cst
-import mutmut.mutation.file_mutation as fm
+# Pin the numeric thread pools to a single thread *before* anything imports torch.
+#
+# mutmut runs each mutant in a child produced by bare ``fork()`` from a parent that
+# has already imported the test suite, so torch's OpenMP pool is live at fork time.
+# ``fork()`` clones only the calling thread: the child inherits a pool that believes
+# its workers exist, and the first parallel region blocks forever waiting on threads
+# that were never cloned.  The parent then reaps the child at its wall-clock limit
+# and records a timeout — which is why the timeouts landed exclusively on the
+# torch-heavy modules, and why raising the limit moved the durations without
+# reducing the count.  With one thread there is no pool to inherit and no wait.
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+
+import runpy  # noqa: E402
+
+import libcst as cst  # noqa: E402
+import mutmut.mutation.file_mutation as fm  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Full-skip: the entire Call node + children are excluded from mutation.

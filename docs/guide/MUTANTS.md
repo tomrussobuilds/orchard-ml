@@ -159,14 +159,31 @@ and auto-updates when you test a module. Use `scripts/mutmut_run.py`:
 **Output example:**
 
 ```
-Module                                                  Total  Kill  Surv   N/C   Score
----------------------------------------------------------------------------------------
-orchard/architectures/factory.py                           80    80     0     0  100.0%
-orchard/cli_app.py                                        507   477    30     0   94.1%
-orchard/core/environment/hardware.py                      133   129     4     0   97.0%
----------------------------------------------------------------------------------------
-TOTAL                                                     720   686    34     0   95.3%
+Module                                              Total  Kill  Surv   T/O   N/T   N/C   Score
+-----------------------------------------------------------------------------------------------
+orchard/architectures/factory.py                       78    60    18     0     0     0   76.9%
+orchard/cli_app.py                                    523   493    30     0     0     0   94.3%
+orchard/tracking/tracker.py                            78    30     0     0    48     0   38.5%
+-----------------------------------------------------------------------------------------------
+TOTAL                                                 679   583    48     0    48     0   85.9%
 ```
+
+<h3>Outcome categories</h3>
+
+Exit codes are classified per mutmut's own `status_by_exit_code` table. The
+distinction matters because each category needs a different fix:
+
+| Column | Exit code | Meaning | Fix |
+| --- | --- | --- | --- |
+| `Kill` | 1, 3 | A test failed — the mutant was caught | none |
+| `Surv` | 0 | Tests ran and passed — nothing asserts the mutated behaviour | add assertions |
+| `T/O` | -24, 24, 36, 152, 255 | The mutant exceeded its wall-clock budget | see the OpenMP note below |
+| `N/T` | 5, 33 | No test covers this code at all — nothing ran | write a test |
+| `N/C` | `None` | Never checked — an incomplete run | re-run the module |
+
+Only `Kill` counts toward the score. Folding timeouts into `Kill` (as any
+`exit != 0` rule does) inflates it: a mutant that merely hung was never caught
+by an assertion.
 
 The registry YAML is tracked in git so you can see score evolution across commits.
 
@@ -182,6 +199,11 @@ The registry YAML is tracked in git so you can see score evolution across commit
 # Both
 .venv/bin/python scripts/check_mutmut_registry.py --ratchet --freshness
 ```
+
+The ratchet fires when a module's score drops **and** its undetected count grows,
+where undetected is `survived + no_tests`. Counting both matters: a module whose
+kills slide into `no_tests` has regressed just as surely as one that grew
+survivors, and comparing `survived` alone would wave it through.
 
 ---
 
@@ -229,7 +251,7 @@ rm -rf mutants/
 >
 > `_to_mutmut_glob` strips `.__init__` and appends `*`, so
 > `orchard/__init__.py` becomes glob `orchard*` — which matches the
-> **entire codebase**, in a single batch step with a 600 s timeout.
+> **entire codebase**, in a single batch step with a 2400 s timeout.
 >
 > Directory targets are safe: `_source_files` skips `__init__.py` when
 > expanding a directory, so `--batch orchard/` cannot trip this. The hazard is
@@ -243,8 +265,34 @@ rm -rf mutants/
 > [!NOTE]
 > **Batch timeout**
 >
-> Batch mode has a **600-second (10 min) timeout per file**. If exceeded,
+> Batch mode has a **2400-second (40 min) timeout per file**. If exceeded,
 > previous results are restored from the `.meta.bak` backup.
+>
+> The per-file cap and mutmut's own per-mutant cap are different things: this
+> one bounds the whole module, `timeout_constant` in `pyproject.toml` bounds a
+> single mutant.
+
+> [!CAUTION]
+> **Forking a live OpenMP pool fakes mass timeouts**
+>
+> mutmut runs each mutant in a child made by bare `fork()`, from a parent that
+> has already imported the test suite. If torch's OpenMP pool is live at fork
+> time, the child inherits a pool whose worker threads were never cloned, and
+> the first parallel region blocks forever. The parent reaps it at the
+> wall-clock limit and records a **timeout**.
+>
+> `scripts/mutmut_entry.py` pins `OMP_NUM_THREADS` and `MKL_NUM_THREADS` to `1`
+> before anything imports torch, which removes the pool and the deadlock with it.
+>
+> The symptom is distinctive, and worth recognising if it ever comes back:
+> timeouts land **only** on the torch-heavy modules, and every mutant's duration
+> sits exactly on the limit. Raising the limit then moves the durations without
+> reducing the count — proof the mutants are blocked, not slow.
+>
+> Measured impact when this was found: 635 timeouts across the project, down to
+> 31. `orchard/evaluation/tta.py` reported a fake `100.0 %` (its 64 timeouts had
+> been counted as kills); once measured it scored **71.7 %**, exposing 41 genuine
+> survivors. The full re-baseline also dropped from 1 h 20 m to 25 min.
 
 > [!CAUTION]
 > **Decorated functions produce zero mutants**
