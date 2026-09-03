@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix(deps)(deps): update plotly requirement from <7,>=6.0.0 to >=6.0.0,<8 in the viz group across 1 directory (#34)
 - never sample AMP-incompatible batch sizes
 
+### Miscellaneous
+
+- pin the tool to a commit and close the mutation gaps
+
 ### Styling
 
 - route warnings through the run log

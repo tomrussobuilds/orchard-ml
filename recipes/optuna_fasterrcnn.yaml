@@ -70,4 +70,7 @@ optuna:
   search_space_preset: "full"
   enable_model_search: false
   search_space_overrides:
-    batch_size_high_res: [2, 4, 6]
+    # AMP requires batch_size >= 4 (below that the loss scaler can produce NaN
+    # gradients), so smaller candidates would be dropped from the search space.
+    # Set training.use_amp=false if you need to explore them.
+    batch_size_high_res: [4, 6]
