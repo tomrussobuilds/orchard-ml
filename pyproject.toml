@@ -86,8 +86,10 @@ dev = [
     "pypistats>=1.13.0",
 ]
 docs = [
-    "mkdocs>=1.6.0",
-    "mkdocs-material>=9.7.0",
+    # Upper bound: MkDocs 2.0 removes the plugin system and theming API with no
+    # migration path, so it would break this site the day it lands on PyPI.
+    "mkdocs>=1.6.0,<2",
+    "mkdocs-material>=9.7.7",  # GHSA-xvg9-69gf-fjrf: DOM XSS in search.suggest
     "mkdocstrings[python]>=1.0.0",
     "mkdocs-gen-files>=0.6.0",
     "mkdocs-literate-nav>=0.6.3",

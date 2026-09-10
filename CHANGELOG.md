@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- replay bootstrap warnings into the run log
+
 ### Build
 
 - pin hook entries to the project venv
