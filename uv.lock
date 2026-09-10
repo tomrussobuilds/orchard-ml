@@ -3759,12 +3759,12 @@ dev = [
     { name = "types-requests" },
 ]
 docs = [
-    { name = "mkdocs" },
     { name = "mkdocs-gen-files" },
     { name = "mkdocs-literate-nav" },
     { name = "mkdocs-material" },
     { name = "mkdocs-section-index" },
     { name = "mkdocstrings", extra = ["python"] },
+    { name = "properdocs" },
 ]
 notebooks = [
     { name = "ipython", version = "8.38.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -3785,7 +3785,6 @@ requires-dist = [
     { name = "ipython", marker = "python_full_version >= '3.11' and extra == 'notebooks'", specifier = ">=9.0.0" },
     { name = "ipython", marker = "python_full_version < '3.11' and extra == 'notebooks'", specifier = ">=8.0.0,<9" },
     { name = "matplotlib", specifier = ">=3.9.0,<4" },
-    { name = "mkdocs", marker = "extra == 'docs'", specifier = ">=1.6.0,<2" },
     { name = "mkdocs-gen-files", marker = "extra == 'docs'", specifier = ">=0.6.0" },
     { name = "mkdocs-literate-nav", marker = "extra == 'docs'", specifier = ">=0.6.3" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.7.7" },
@@ -3805,6 +3804,7 @@ requires-dist = [
     { name = "pillow", specifier = ">=12.1.1,<13" },
     { name = "plotly", specifier = ">=6.0.0,<8" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0.0" },
+    { name = "properdocs", marker = "extra == 'docs'", specifier = ">=1.6.7" },
     { name = "psutil", specifier = ">=7.2.2,<8" },
     { name = "pycocotools", specifier = ">=2.0.0,<3" },
     { name = "pydantic", specifier = ">=2.10.0,<3" },

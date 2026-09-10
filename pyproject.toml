@@ -86,9 +86,12 @@ dev = [
     "pypistats>=1.13.0",
 ]
 docs = [
-    # Upper bound: MkDocs 2.0 removes the plugin system and theming API with no
-    # migration path, so it would break this site the day it lands on PyPI.
-    "mkdocs>=1.6.0,<2",
+    # ProperDocs continues the MkDocs 1.x line. MkDocs 2.0 removes the plugin
+    # system and theming API with no migration path, and the gen-files,
+    # literate-nav and section-index plugins already depend on ProperDocs.
+    # mkdocs itself still arrives transitively via mkdocs-material and
+    # mkdocstrings, which have yet to switch; it is no longer what builds the site.
+    "properdocs>=1.6.7",
     "mkdocs-material>=9.7.7",  # GHSA-xvg9-69gf-fjrf: DOM XSS in search.suggest
     "mkdocstrings[python]>=1.0.0",
     "mkdocs-gen-files>=0.6.0",

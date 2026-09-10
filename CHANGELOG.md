@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### CI
 
 - bump the actions group with 2 updates (#35)
+- bump the actions group with 3 updates (#36)
 
 ### Fixed
 
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - never sample AMP-incompatible batch sizes
 - drop AMP-incompatible batch size from the fasterrcnn search
 - stop counting hung and uncovered mutants as kills
+- patch mkdocs-material XSS and bound mkdocs below 2.0
 
 ### Miscellaneous
 
