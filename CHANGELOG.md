@@ -14,11 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Build
 
 - pin hook entries to the project venv
+- build the site with ProperDocs instead of MkDocs
 
 ### CI
 
 - bump the actions group with 2 updates (#35)
 - bump the actions group with 3 updates (#36)
+- bump anyio in the uv group across 1 directory (#39)
 
 ### Fixed
 
