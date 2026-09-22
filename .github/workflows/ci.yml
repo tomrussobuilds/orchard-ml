@@ -164,7 +164,12 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: smoke-test-${{ matrix.task }}-outputs
-          path: outputs/
+          # Model weights are reproducible from the run and dwarf everything else
+          # (a Faster R-CNN checkpoint alone is ~160 MB) — keep logs and metrics only.
+          path: |
+            outputs/
+            !outputs/**/*.pth
+            !outputs/**/*.onnx
           retention-days: 7
 
   # Job 4: Build & Deploy Documentation (main only, after smoke test)
