@@ -3796,7 +3796,7 @@ requires-dist = [
     { name = "onnxruntime", marker = "python_full_version < '3.14'", specifier = ">=1.20.0,<2" },
     { name = "onnxscript", specifier = ">=0.2.0,<1" },
     { name = "openpyxl", specifier = ">=3.1.0,<4" },
-    { name = "optuna", specifier = ">=4.7.0,<5" },
+    { name = "optuna", specifier = ">=4.7.0,<6" },
     { name = "orchard-ml", extras = ["test"], marker = "extra == 'dev'" },
     { name = "pandas", specifier = ">=2.0.0,<4" },
     { name = "pillow", specifier = ">=12.1.1,<13" },
