@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - pin hook entries to the project venv
 - build the site with ProperDocs instead of MkDocs
+- drop Python 3.10 and require Pillow 13
 
 ### CI
 
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - bump cryptography in the uv group across 1 directory (#41)
 - bump the actions group with 4 updates (#42)
 - bump the actions group with 6 updates (#46)
+- bump the uv group across 1 directory with 3 updates (#44)
 
 ### Fixed
 
