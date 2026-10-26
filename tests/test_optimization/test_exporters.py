@@ -58,10 +58,11 @@ def study() -> MagicMock:
 
 
 @pytest.fixture
-def paths(tmpdir: Any) -> MagicMock:
+def paths(tmp_path: Path) -> MagicMock:
     """Fixture for creating a mock RunPaths object."""
     paths = MagicMock(spec=RunPaths)
-    paths.reports = tmpdir.mkdir("reports")
+    paths.reports = tmp_path / "reports"
+    paths.reports.mkdir()
     return paths
 
 
