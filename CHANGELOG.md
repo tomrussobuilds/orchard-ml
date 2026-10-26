@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - bump the actions group with 2 updates (#35)
 - bump the actions group with 3 updates (#36)
 - bump anyio in the uv group across 1 directory (#39)
+- exclude model weights from smoke test artifacts
+- bump the actions group across 1 directory with 5 updates (#40)
+- bump cryptography in the uv group across 1 directory (#41)
+- bump the actions group with 4 updates (#42)
+- bump the actions group with 6 updates (#46)
 
 ### Fixed
 

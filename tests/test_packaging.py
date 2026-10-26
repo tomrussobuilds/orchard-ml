@@ -9,7 +9,6 @@ distribution raises ``FileNotFoundError`` at import time.
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
@@ -55,7 +54,6 @@ def test_medical_registry_yaml_is_present() -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.skipif(sys.version_info < (3, 11), reason="tomllib requires Python 3.11+")
 def test_all_package_data_files_are_declared() -> None:
     """
     Every data file under ``orchard`` matches a declared package-data glob.

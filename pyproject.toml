@@ -7,7 +7,7 @@ name = "orchard-ml"
 version = "0.2.6"
 description = "Type-Safe Deep Learning Framework for Computer Vision"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "MIT"
 authors = [
     { name = "Tommaso Russo", email = "tomrussobuilds@users.noreply.github.com" }
@@ -15,7 +15,6 @@ authors = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -29,7 +28,10 @@ dependencies = [
     "numpy>=2.0.0,<3",
     "pandas>=2.0.0,<4",  # floor kept low: pandas 3.x has issues on Python 3.14
     "scikit-learn>=1.5.0,<2",
-    "Pillow>=12.1.1,<13",
+    # Pillow: 13.0.0 clears a batch of advisories (8 critical) and is the first
+    # release to fix them, so the floor is raised rather than capped. It requires
+    # Python >=3.11, which is why 3.10 support was dropped.
+    "Pillow>=13.0.0,<14",
     "h5py>=3.15.0,<4",
     "pydantic>=2.10.0,<3",
     "pyyaml>=6.0,<7",
@@ -62,8 +64,7 @@ orchard = "orchard.cli_app:app"
 
 [project.optional-dependencies]
 notebooks = [
-    "ipython>=9.0.0; python_version >= '3.11'",
-    "ipython>=8.0.0,<9; python_version < '3.11'",
+    "ipython>=9.0.0",
 ]
 test = [
     "pytest>=9.0.0",
@@ -159,7 +160,7 @@ exclude_lines = [
 
 [tool.black]
 line-length = 100
-target-version = ["py310", "py311", "py312", "py313"]
+target-version = ["py311", "py312", "py313"]
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -180,7 +181,7 @@ skips = ["B101"]
 
 [tool.mypy]
 # Target 3.12 so mypy can parse PEP 695 `type` statements in third-party
-# stubs (e.g. numpy>=2.5). Runtime compatibility with 3.10+ is guarded by
+# stubs (e.g. numpy>=2.5). Runtime compatibility with 3.11+ is guarded by
 # the pytest matrix, not the type-check target.
 python_version = "3.12"
 strict = true
@@ -210,7 +211,7 @@ timeout_constant = 6.0
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
+target-version = "py311"
 extend-exclude = ["notebooks"]
 
 [tool.ruff.lint]
