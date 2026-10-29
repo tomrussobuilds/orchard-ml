@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - patch mkdocs-material XSS and bound mkdocs below 2.0
 - bump 12 locked packages to clear security advisories
 - fix(deps)(deps-dev): bump mypy from 2.3.1 to 2.4.0 (#45)
+- drop remaining 3.10 references after the floor bump
 
 ### Miscellaneous
 
