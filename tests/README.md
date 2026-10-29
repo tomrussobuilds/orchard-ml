@@ -67,7 +67,7 @@ pytest tests/ -n auto
 GitHub Actions automatically run on every push:
 
 - ✅ **Code Quality**: Black, Ruff formatting and linting checks
-- ✅ **Multi-Python Testing**: Unit tests across Python 3.10–3.14
+- ✅ **Multi-Python Testing**: Unit tests across Python 3.11–3.14
 - ✅ **Smoke Test**: 1-epoch end-to-end validation (~30s, CPU-only)
 - ✅ **Documentation**: README.md presence verification
 - ✅ **Security Scanning**: Bandit (code analysis) and pip-audit (dependency vulnerabilities)
